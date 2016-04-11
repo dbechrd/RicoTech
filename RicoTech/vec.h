@@ -12,7 +12,6 @@ static GLfloat vec_length(GLfloat *v)
 {
     return sqrtf(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
 }
-
 static void vec_normalize(GLfloat *inout_v)
 {
     GLfloat rlen = 1.0f/vec_length(inout_v);

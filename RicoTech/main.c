@@ -1,121 +1,254 @@
-//#include <SFML/Window.h>
-//#include <SFML/Graphics.h>
-//#include <SFML/System/Types.h>
-//#include <SFML/System/Clock.h>
-//#include <SFML/System.h>
+#ifdef __APPLE__
+#define __gl_h_
+//#define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
+#endif
 
-#include <GL/glew.h>
+#include <GL/gl3w.h>
+#include <SDL/SDL.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
-//#include <SFML/OpenGL.h>
-
-#include "meshes.h"
-#include "vec.h"
+#include "geom.h"
 #include "util.h"
 #include "structs.h"
 
 static int make_resources(const char *vertex_shader_file);
-static GLuint make_buffer(const GLenum target, const void *buffer_data, const GLsizei buffer_size);
+static GLuint make_vao();
 static GLuint make_texture(const char *filename);
 static GLuint make_shader(const GLenum type, const char *filename);
 static GLuint make_program(const GLuint vertex_shader, const GLuint fragment_shader);
-static void update_timer(const sfClock* clock);
+static void update_timer();
 static void render(void);
 void show_info_log(
 	GLuint object,
 	PFNGLGETSHADERIVPROC glGet__iv,
 	PFNGLGETSHADERINFOLOGPROC glGet__InfoLog);
 
-int main(int argc, const char *argv[])
+void APIENTRY openglCallbackFunction(GLenum source,
+	GLenum type,
+	GLuint id,
+	GLenum severity,
+	GLsizei length,
+	const GLchar *message,
+	const void *userParam) {
+
+	char *typeStr, *severityStr;
+
+	switch (type) {
+	case GL_DEBUG_TYPE_ERROR:
+		typeStr = "ERROR\0";
+		break;
+	case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+		typeStr = "DEPRC\0";
+		break;
+	case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+		typeStr = "UNDEF\0";
+		break;
+	case GL_DEBUG_TYPE_PORTABILITY:
+		typeStr = "PORT \0";
+		break;
+	case GL_DEBUG_TYPE_PERFORMANCE:
+		typeStr = "PERF \0";
+		break;
+	case GL_DEBUG_TYPE_OTHER:
+		typeStr = "OTHER\0";
+		break;
+	default:
+		typeStr = "?????\0";
+		break;
+	}
+
+	switch (severity) {
+	case GL_DEBUG_SEVERITY_LOW:
+		severityStr = "LOW ";
+		break;
+	case GL_DEBUG_SEVERITY_MEDIUM:
+		severityStr = "MED ";
+		break;
+	case GL_DEBUG_SEVERITY_HIGH:
+		severityStr = "HIGH";
+		break;
+	default:
+		severityStr = "????";
+		break;
+	}
+
+	fprintf(stderr, "[%s][%s][%d] %s\n", typeStr, severityStr, id, message);
+}
+
+int main(int argc, char *argv[])
 {
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
+
+#if _DEBUG
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+#endif
+
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+	//SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+	//SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+	//SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+	//SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+	//SDL_GL_SetSwapInterval(1);
+
 	//Initialize window
-	sfVideoMode videoMode = {800, 600};
-	sfRenderWindow *window = sfRenderWindow_create(videoMode,
-		"Test Window", sfTitlebar | sfClose, NULL);
+	SDL_Window *window = SDL_CreateWindow("Test Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, SDL_WINDOW_OPENGL);
+	SDL_GLContext context = SDL_GL_CreateContext(window);
 
-	//sfRenderWindow_setVerticalSyncEnabled(window, sfTrue);
-
-	glewInit();
-
-	if (!GLEW_VERSION_2_0)
+	if (gl3wInit())
 	{
-		char *glew = NULL;
-		if (GLEW_VERSION_4_5) glew = "4.5";
-		else if (GLEW_VERSION_4_4) glew = "4.4";
-		else if (GLEW_VERSION_4_3) glew = "4.3";
-		else if (GLEW_VERSION_4_2) glew = "4.2";
-		else if (GLEW_VERSION_4_1) glew = "4.1";
-		else if (GLEW_VERSION_4_0) glew = "4.0";
-		else if (GLEW_VERSION_3_3) glew = "3.3";
-		else if (GLEW_VERSION_3_2) glew = "3.2";
-		else if (GLEW_VERSION_3_1) glew = "3.1";
-		else if (GLEW_VERSION_3_0) glew = "3.0";
-		else if (GLEW_VERSION_2_1) glew = "2.1";
-		else if (GLEW_VERSION_2_0) glew = "2.0";
-		else if (GLEW_VERSION_1_5) glew = "1.5";
-		else if (GLEW_VERSION_1_4) glew = "1.4";
-		else if (GLEW_VERSION_1_3) glew = "1.3";
-		else if (GLEW_VERSION_1_2) glew = "1.2";
-		else if (GLEW_VERSION_1_1) glew = "1.1";
-
-		fprintf(stderr, "OpenGL 2.0 not available\n");
-		fprintf(stdout, "GLEW version: %s\n", glew);
-
+		fprintf(stderr, "gl3wInit failed.\n");
 		getchar();
 		return 1;
 	}
 
-	if (!make_resources(argc >= 2 ? argv[1] : "rotation.v.glsl"))
+	fprintf(stdout, "OpenGL = \"%s\"\nGLSL = \"%s\"\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
+
+	if (!gl3wIsSupported(3, 1))
 	{
-		fprintf(stderr, "Failed to load resources\n");
+		fprintf(stderr, "OpenGL 3.2 not supported.\n");
 		getchar();
 		return 1;
 	}
 
-	sfClock *clock = sfClock_create();
-
-	while(sfRenderWindow_isOpen(window))
+#if _DEBUG
+	if (glDebugMessageCallback != NULL)
 	{
-		sfEvent event;
-		while (sfRenderWindow_pollEvent(window, &event))
+		fprintf(stdout, "Registered glDebugMessageCallback.\n");
+		fprintf(stderr, "[TYPE][SEVERITY][ID] MESSAGE\n");
+		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+		glDebugMessageCallback(openglCallbackFunction, NULL);
+		GLuint unusedIds = 0;
+		glDebugMessageControl(GL_DONT_CARE,
+			GL_DONT_CARE,
+			GL_DONT_CARE,
+			0,
+			&unusedIds,
+			true);
+	}
+	else
+	{
+		fprintf(stderr, "glDebugMessageCallback not available.\n");
+	}
+#endif
+
+	if (!make_resources(argc >= 2 ? argv[1] : "durian.v.glsl"))
+	{
+		fprintf(stderr, "Failed to load resources.\n");
+		getchar();
+		return 1;
+	}
+
+
+	RegularPoly *pentagon = RegularPoly_create(Vec4_create(1.0f, 0.0f, 1.0f, 1.0f), 20);
+	
+	GLuint pentagon_vao;
+
+	glGenVertexArrays(1, &pentagon_vao);
+	glBindVertexArray(pentagon_vao);
+
+	GLuint pentagon_vbo; // = make_buffer(GL_ARRAY_BUFFER, pentagon->vertices, sizeof(Vec4)*pentagon->count);
+
+	glGenBuffers(1, &pentagon_vbo);
+
+	glBindBuffer(GL_ARRAY_BUFFER, pentagon_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(pentagon->vertices[0])*pentagon->count, pentagon->vertices, GL_STATIC_DRAW);
+
+	GLuint pentagon_vshader = make_shader(
+		GL_VERTEX_SHADER,
+		"poly.v.glsl"
+		);
+	SDL_assert(pentagon_vshader != 0);
+
+	GLuint pentagon_fshader = make_shader(
+		GL_FRAGMENT_SHADER,
+		"poly.f.glsl"
+		);
+	SDL_assert(pentagon_fshader != 0);
+
+	GLuint pentagon_program = make_program(
+		pentagon_vshader,
+		pentagon_fshader
+		);
+	SDL_assert(pentagon_program != 0);
+
+	GLint penta_prog_position = glGetAttribLocation(pentagon_program, "position");
+	if (penta_prog_position == -1)
+	{
+		fprintf(stderr, "Failed to get atrribute location for position.\n");
+		return 1;
+	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, pentagon_vbo);
+
+	//(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer);
+	glVertexAttribPointer(penta_prog_position, 4, GL_FLOAT, GL_FALSE, 0, 0);
+
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pentagon_elements);
+	glEnableVertexAttribArray(penta_prog_position);
+
+	glBindVertexArray(0);
+	glDeleteBuffers(1, &pentagon_vbo);
+
+
+
+	SDL_Event windowEvent;
+	while (true)
+	{
+		if (SDL_PollEvent(&windowEvent))
 		{
-			if (event.type == sfEvtClosed)
+			if (windowEvent.type == SDL_QUIT)
 			{
-				sfRenderWindow_close(window);
+				break;
 			}
-			else if (event.type == sfEvtResized)
+			if (windowEvent.type == SDL_KEYUP && windowEvent.key.keysym.sym == SDLK_ESCAPE)
 			{
-				glViewport(0, 0, event.size.width, event.size.height);
+				break;
 			}
+			//TODO: Handle resize event
+			/*if (windowEvent.type == SDL_WINDOWEVENT_SIZE)
+			{
+				glViewport(0, 0, windowEvent.window.event..size.width, event.size.height);
+				break;
+			}*/
 		}
 
-		sfColor color = sfColor_fromRGB(0, 120, 0);
-		sfRenderWindow_clear(window, color);
-
-		update_timer(clock);
-
+		update_timer();
 		render();
-		sfRenderWindow_display(window);
+		
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+		glUseProgram(pentagon_program);
+		glBindVertexArray(pentagon_vao);
+
+		//(GLenum mode, GLint first, GLsizei count)
+		glDrawArrays(
+			GL_TRIANGLE_FAN,
+			0,
+			pentagon->count
+			);
+
+		glBindVertexArray(0);
+
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+		SDL_GL_SwapWindow(window);
 	}
 
+	RegularPoly_destroy(pentagon);
+
+	SDL_GL_DeleteContext(context);
+	SDL_DestroyWindow(window);
+	SDL_Quit();
 	return 0;
 }
 
 static int make_resources(const char *vertex_shader_file)
 {
-	g_resources.vertex_buffer = make_buffer(
-		GL_ARRAY_BUFFER,
-		g_vertex_buffer_data,
-		sizeof(g_vertex_buffer_data)
-	);
-	g_resources.element_buffer = make_buffer(
-		GL_ELEMENT_ARRAY_BUFFER,
-		g_element_buffer_data,
-		sizeof(g_element_buffer_data)
-	);
-
 	g_resources.textures[0] = make_texture("hello1.tga");
 	g_resources.textures[1] = make_texture("hello2.tga");
 
@@ -180,10 +313,41 @@ static int make_resources(const char *vertex_shader_file)
 	if (getUniformLocations == 0)
 		return 0;
 
+	g_resources.vao = make_vao();
+
 	return 1;
 }
 
-static GLuint make_buffer(const GLenum target, const void *buffer_data, const GLsizei buffer_size)
+static GLuint make_vao()
+{
+	GLuint vao;
+
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+
+	glGenBuffers(NUM_BUFFERS, g_resources.vbos);
+
+	glBindBuffer(GL_ARRAY_BUFFER, g_resources.vbos[VBO_POSITION]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertices), g_vertices, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_resources.vbos[VBO_POSITION_ELEM]);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(g_indices), g_indices, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(g_resources.attributes.position);
+
+	//(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer);
+	glVertexAttribPointer(g_resources.attributes.position, 4, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 4, 0);
+
+	glBindVertexArray(0);
+
+	//TODO: Figure out when it makes sense to delete buffers. These are global for testing,
+	//		so they never go out of scope; therefore, it doesn't matter that they don't get deleted.
+	//glDeleteBuffers(2, g_resources.vbos);
+
+	return vao;
+}
+
+static GLuint make_buffer_old(const GLenum target, const void *buffer_data, const GLsizei buffer_size)
 {
 	GLuint buffer = 0;
 	glGenBuffers(1, &buffer);
@@ -272,15 +436,14 @@ static GLuint make_program(const GLuint vertex_shader, const GLuint fragment_sha
 	return program;
 }
 
-static void update_timer(const sfClock *clock)
+static void update_timer()
 {
-	float milliseconds = sfTime_asSeconds(sfClock_getElapsedTime(clock));
-	g_resources.timer = (GLfloat)milliseconds; //sinf((float)milliseconds * 0.001f) * 1.0f + 1.0f;
+	g_resources.timer = (GLfloat)SDL_GetTicks() / 1000.0f; //sinf((float)milliseconds * 0.001f) * 1.0f + 1.0f;
 }
 
 static void render(void)
 {
-	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+	glClearColor(0.1f, 0.1f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	glUseProgram(g_resources.program);
@@ -295,26 +458,18 @@ static void render(void)
 	glBindTexture(GL_TEXTURE_2D, g_resources.textures[1]);
 	glUniform1i(g_resources.uniforms.textures[1], 1);
 
-	glBindBuffer(GL_ARRAY_BUFFER, g_resources.vertex_buffer);
-	glVertexAttribPointer(
-		g_resources.attributes.position,
-		4,
-		GL_FLOAT,
-		GL_FALSE,
-		sizeof(GLfloat)*4,
-		(void*)0
-	);
-	glEnableVertexAttribArray(g_resources.attributes.position);
+	glBindVertexArray(g_resources.vao);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_resources.element_buffer);
+	//(GLenum mode, GLsizei count, GLenum type, const void *indices);
 	glDrawElements(
 		GL_TRIANGLE_STRIP,
 		4,
 		GL_UNSIGNED_SHORT,
 		(void*)0
-	);
+		);
 
-	glDisableVertexAttribArray(g_resources.attributes.position);
+	glBindVertexArray(0);
+	glUseProgram(0);
 }
 
 void show_info_log(
