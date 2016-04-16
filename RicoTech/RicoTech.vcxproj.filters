@@ -27,6 +27,12 @@
     <ClCompile Include="geom.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="rect.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bullet.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="structs.h">
@@ -39,6 +45,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vec.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="bullet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
