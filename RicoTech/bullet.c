@@ -34,9 +34,9 @@ void Bullet_update(Bullet *bullet)
     bullet->vel.z += bullet->acc.z;
 
     Rect_move(bullet->rect,
-        bullet->rect->x + bullet->vel.x,
-        bullet->rect->y + bullet->vel.y,
-        bullet->rect->z + bullet->vel.z);
+        bullet->rect->pos.x + bullet->vel.x,
+        bullet->rect->pos.y + bullet->vel.y,
+        bullet->rect->pos.z + bullet->vel.z);
 
 }
 

@@ -26,11 +26,18 @@ Vec3 *Vec3_create(GLfloat x, GLfloat y, GLfloat z);
 void Vec3_destroy(Vec3 *vec);
 
 typedef struct RegularPoly {
+    Vec3 pos;
+    GLfloat radius;
+
     Vec4 *vertices;
     unsigned int count;
+    GLuint vao;
 } RegularPoly;
 
-RegularPoly *RegularPoly_create(const Vec4 *p, const unsigned int count);
+RegularPoly *RegularPoly_create(const Vec3 center, const GLfloat radius, const unsigned int vertex_count);
 void RegularPoly_destroy(RegularPoly *poly);
+
+void RegularPoly_move(RegularPoly *poly, const GLfloat x, const GLfloat y, const GLfloat z);
+void RegularPoly_render(RegularPoly *poly);
 
 #endif

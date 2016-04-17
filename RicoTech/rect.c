@@ -6,10 +6,9 @@
 
 //static const int rect_indices[6] = { 1, 3, 2, 3, 4, 2 };
 
+static char rect_init = 0;
 static GLuint rect_program;
 static GLint rect_prog_attrib_position;
-
-static char rect_init = 0;
 
 static void Rect_rebuildVAO(Rect *rect);
 
@@ -55,7 +54,7 @@ static char Rect_init()
     return 1;
 }
 
-Rect *Rect_create(GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h)
+Rect *Rect_create(const Vec3 bottom_left, const GLfloat w, const GLfloat h)
 {
     if (!rect_init && !Rect_init())
     {
@@ -65,9 +64,7 @@ Rect *Rect_create(GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h)
 
     Rect *rect = (Rect*)malloc(sizeof(Rect));
 
-    rect->x = x;
-    rect->y = y;
-    rect->z = z;
+    rect->pos = bottom_left;
 
     rect->w = w;
     rect->h = h;
@@ -89,16 +86,16 @@ void Rect_destroy(Rect *rect)
     rect = NULL;
 }
 
-void Rect_move(Rect *rect, GLfloat x, GLfloat y, GLfloat z)
+void Rect_move(Rect *rect, const GLfloat x, const GLfloat y, const GLfloat z)
 {
-    rect->x = x;
-    rect->y = y;
-    rect->z = z;
+    rect->pos.x = x;
+    rect->pos.y = y;
+    rect->pos.z = z;
 
     Rect_rebuildVAO(rect);
 }
 
-void Rect_resize(Rect *rect, GLfloat w, GLfloat h)
+void Rect_resize(Rect *rect, const GLfloat w, const GLfloat h)
 {
     rect->w = w;
     rect->h = h;
@@ -113,10 +110,10 @@ static void Rect_rebuildVAO(Rect *rect)
         glDeleteVertexArrays(1, &rect->vao);
     }
 
-    rect->vertices[0] = (Vec4) { rect->x          , rect->y          , rect->z, 1.0f };
-    rect->vertices[1] = (Vec4) { rect->x + rect->w, rect->y          , rect->z, 1.0f };
-    rect->vertices[2] = (Vec4) { rect->x          , rect->y + rect->h, rect->z, 1.0f };
-    rect->vertices[3] = (Vec4) { rect->x + rect->w, rect->y + rect->h, rect->z, 1.0f };
+    rect->vertices[0] = (Vec4) { rect->pos.x          , rect->pos.y          , rect->pos.z, 1.0f };
+    rect->vertices[1] = (Vec4) { rect->pos.x + rect->w, rect->pos.y          , rect->pos.z, 1.0f };
+    rect->vertices[2] = (Vec4) { rect->pos.x          , rect->pos.y + rect->h, rect->pos.z, 1.0f };
+    rect->vertices[3] = (Vec4) { rect->pos.x + rect->w, rect->pos.y + rect->h, rect->pos.z, 1.0f };
 
     glGenVertexArrays(1, &rect->vao);
     glBindVertexArray(rect->vao);

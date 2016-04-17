@@ -16,6 +16,8 @@
 #include "rect.h"
 #include "bullet.h"
 
+#define BULLET_MAX 100
+
 static int make_resources(const char *vertex_shader_file);
 static GLuint make_vao();
 //static GLuint make_texture(const char *filename);
@@ -56,6 +58,7 @@ void APIENTRY openglCallbackFunction(GLenum source,
         break;
     case GL_DEBUG_TYPE_OTHER:
         typeStr = "OTHER\0";
+        return;
         break;
     default:
         typeStr = "?????\0";
@@ -138,76 +141,60 @@ int main(int argc, char *argv[])
     }
 #endif
 
+    /*
     if (!make_resources(argc >= 2 ? argv[1] : "durian.v.glsl"))
     {
         fprintf(stderr, "Failed to load resources.\n");
         getchar();
         return 1;
     }
+    */
 
-    Rect *player = Rect_create(0.0f, 0.0f, 1.0f, 32.0f, 64.0f);
+    Rect *player = Rect_create((Vec3) { 20.0f, 0.0f, 1.0f }, 16.0f, 64.0f);
     if (!player)
     {
+        fprintf(stderr, "Failed to create player.\n");
+        getchar();
         return 1;
     }
 
-    Rect *floor = Rect_create(-512.0f, 0.0f, 1.0f, 1024.0f, 1.0f);
-
-    Bullet *bullet = NULL;
-
-    RegularPoly *pentagon = RegularPoly_create(Vec4_create(300.0f, 0.0f, 1.0f, 1.0f), 5);
-    
-    GLuint pentagon_vshader = make_shader(
-        GL_VERTEX_SHADER,
-        "poly.v.glsl"
-        );
-    SDL_assert(pentagon_vshader != 0);
-
-    GLuint pentagon_fshader = make_shader(
-        GL_FRAGMENT_SHADER,
-        "poly.f.glsl"
-        );
-    SDL_assert(pentagon_fshader != 0);
-
-    GLuint pentagon_program = make_program(
-        pentagon_vshader,
-        pentagon_fshader
-        );
-    SDL_assert(pentagon_program != 0);
-
-    GLint penta_prog_position = glGetAttribLocation(pentagon_program, "position");
-    if (penta_prog_position == -1)
+    unsigned int player_ammo = 20;
+    Bullet *ammo_hud[BULLET_MAX];
+    for (unsigned int i = 0; i < BULLET_MAX; i++)
     {
-        fprintf(stderr, "Failed to get atrribute location for position.\n");
-        return 1;
+        ammo_hud[i] = Bullet_create(
+            Rect_create((Vec3) { 10.0f + (10.0f * i), 750.0f, 1.0f }, 4.0f, 2.0f)
+        );
     }
 
-    GLuint pentagon_vao;
+    unsigned int bullet_count = 0;
+    Bullet *bullets[BULLET_MAX] = { NULL };
 
-    glGenVertexArrays(1, &pentagon_vao);
-    glBindVertexArray(pentagon_vao);
+    Rect *floor = Rect_create((Vec3) { 0.0f, 0.0f, 1.0f }, 1024.0f, 10.0f);
+    if (!floor)
+    {
+        fprintf(stderr, "Failed to create floor.\n");
+        getchar();
+        return 1;
+    }
+    GLfloat floor_top = floor->pos.y + floor->h;
 
-    GLuint pentagon_vbo; // = make_buffer(GL_ARRAY_BUFFER, pentagon->vertices, sizeof(Vec4)*pentagon->count);
-
-    glGenBuffers(1, &pentagon_vbo);
-
-    glBindBuffer(GL_ARRAY_BUFFER, pentagon_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(pentagon->vertices[0])*pentagon->count, pentagon->vertices, GL_STATIC_DRAW);
-
-    //(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer);
-    glVertexAttribPointer(penta_prog_position, 4, GL_FLOAT, GL_FALSE, 0, 0);
-
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pentagon_elements);
-    glEnableVertexAttribArray(penta_prog_position);
-
-    glBindVertexArray(0);
-    glDeleteBuffers(1, &pentagon_vbo);
+    RegularPoly *player_head = RegularPoly_create((Vec3) { 300.0f, 200.0f, 1.0f }, 20.0f, 10);
+    if (!player_head)
+    {
+        fprintf(stderr, "Failed to create pentagon.\n");
+        getchar();
+        return 1;
+    }
 
     GLfloat player_dxvel = 10.0f;
     GLfloat player_xvel = 0.0f;
 
     GLfloat player_dyvel = 20.0f;
     GLfloat player_yvel = 0.0f;
+
+    GLfloat bullet_dxvel = 20.0f;
+    GLfloat bullet_xvel = bullet_dxvel;
 
     char jump_pressed = 0;
     char shoot_pressed = 0;
@@ -223,24 +210,21 @@ int main(int argc, char *argv[])
             }
             if (windowEvent.type == SDL_KEYUP)
             {
-                if (windowEvent.key.keysym.sym == SDLK_a
-                 || windowEvent.key.keysym.sym == SDLK_LEFT)
+                if (windowEvent.key.keysym.sym == SDLK_a)
                 {
                     player_xvel -= -player_dxvel;
                 }
-                if (windowEvent.key.keysym.sym == SDLK_d
-                 || windowEvent.key.keysym.sym == SDLK_RIGHT)
+                if (windowEvent.key.keysym.sym == SDLK_d)
                 {
                     player_xvel -= player_dxvel;
                 }
-                if (windowEvent.key.keysym.sym == SDLK_w
-                 || windowEvent.key.keysym.sym == SDLK_UP)
-                {
-                    jump_pressed = 0;
-                }
-                if (windowEvent.key.keysym.sym == SDLK_SPACE)
+                if (windowEvent.key.keysym.sym == SDLK_j)
                 {
                     shoot_pressed = 0;
+                }
+                if (windowEvent.key.keysym.sym == SDLK_w)
+                {
+                    jump_pressed = 0;
                 }
                 if (windowEvent.key.keysym.sym == SDLK_ESCAPE)
                 {
@@ -249,24 +233,27 @@ int main(int argc, char *argv[])
             }
             if (windowEvent.type == SDL_KEYDOWN && !windowEvent.key.repeat)
             {
-                if (windowEvent.key.keysym.sym == SDLK_a
-                 || windowEvent.key.keysym.sym == SDLK_LEFT)
+                if (windowEvent.key.keysym.sym == SDLK_a)
                 {
                     player_xvel += -player_dxvel;
+                    bullet_xvel = -bullet_dxvel;
                 }
-                if (windowEvent.key.keysym.sym == SDLK_d
-                 || windowEvent.key.keysym.sym == SDLK_RIGHT)
+                if (windowEvent.key.keysym.sym == SDLK_d)
                 {
                     player_xvel += player_dxvel;
+                    bullet_xvel = bullet_dxvel;
                 }
-                if (windowEvent.key.keysym.sym == SDLK_w
-                 || windowEvent.key.keysym.sym == SDLK_UP)
+                if (windowEvent.key.keysym.sym == SDLK_r)
                 {
-                    jump_pressed = 1;
+                    player_ammo = BULLET_MAX;
                 }
-                if (windowEvent.key.keysym.sym == SDLK_SPACE)
+                if (windowEvent.key.keysym.sym == SDLK_j)
                 {
                     shoot_pressed = 1;
+                }
+                if (windowEvent.key.keysym.sym == SDLK_w)
+                {
+                    jump_pressed = 1;
                 }
             }
 
@@ -278,81 +265,134 @@ int main(int argc, char *argv[])
             }*/
         }
 
-
         update_timer();
 
-        if (jump_pressed && player->y == 0.0f)
+        //Jump force
+        if (jump_pressed && player->pos.y == floor_top)
         {
             player_yvel += player_dyvel;
         }
 
+        //Gravity
         player_yvel -= 1.0f;
-        player->y += player_yvel;
 
-        if (player->y < 0.0f)
+        //Player update
+        player->pos.y += player_yvel;
+
+        //Collision
+        if (player->pos.y < floor_top)
         {
             player_yvel = 0.0f;
-            player->y = 0.0f;
+            player->pos.y = floor_top;
         }
 
-        if (shoot_pressed && bullet == NULL)
+
+        //Player shoot
+        if (shoot_pressed && player_ammo > 0 && bullet_count < BULLET_MAX)
         {
             Rect *rect = Rect_create(
-                player->x + (player->w / 2.0f),
-                player->y + (player->h / 2.0f),
-                player->z,
+                (Vec3) { player->pos.x + (player->w / 2.0f),
+                         player->pos.y + (player->h / 1.5f),
+                         player->pos.z },
                 4.0f, 2.0f);
-            bullet = Bullet_create(rect);
-            bullet->vel.x = 20.0f;
+
+            //Find available bullet slot
+            for (unsigned int i = 0; i < BULLET_MAX; i++)
+            {
+                if (bullets[i] != NULL)
+                    continue;
+
+                bullets[i] = Bullet_create(rect);
+                bullets[i]->vel.x = bullet_xvel;
+                break;
+            }
+
+            player_ammo--;
+            bullet_count++;
         }
 
-        if (bullet != NULL)
+        //Update active bullets
+        if (bullet_count > 0)
         {
-            if (bullet->rect->x < -512.0f || bullet->rect->x > 512.0f)
+            for (unsigned int i = 0; i < BULLET_MAX; i++)
             {
-                Bullet_destroy(bullet);
-                bullet = NULL;
-            }
-            else
-            {
-                Bullet_update(bullet);
+                if (bullets[i] == NULL)
+                    continue;
+
+                if (bullets[i]->rect->pos.x < 0.0f || bullets[i]->rect->pos.x > 1024.0f)
+                {
+                    Bullet_destroy(bullets[i]);
+                    bullets[i] = NULL;
+                    bullet_count--;
+                }
+                else
+                {
+                    Bullet_update(bullets[i]);
+                }
             }
         }
 
         glClearColor(0.1f, 0.1f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        //render();
-        
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-        glUseProgram(pentagon_program);
-        glBindVertexArray(pentagon_vao);
+        //render();
 
-        //(GLenum mode, GLint first, GLsizei count)
-        glDrawArrays(
-            GL_TRIANGLE_FAN,
-            0,
-            pentagon->count
-        );
-
-        glBindVertexArray(0);
-
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-        Rect_move(player, player->x + player_xvel, player->y, player->z);
+        Rect_move(player, player->pos.x + player_xvel, player->pos.y, player->pos.z);
+        RegularPoly_move(player_head,
+            player->pos.x + (player->w / 2.0f),
+            player->pos.y + player->h + (player_head->radius),
+            player->pos.z);
 
         Rect_render(floor);
         Rect_render(player);
-        if (bullet != NULL)
+        RegularPoly_render(player_head);
+
+        if (bullet_count > 0)
         {
-            Bullet_render(bullet);
+            //Render active bullets
+            for (unsigned int i = 0; i < BULLET_MAX; i++)
+            {
+                if (bullets[i] == NULL)
+                    continue;
+
+                Bullet_render(bullets[i]);
+            }
         }
+
+        //HUD
+        for (unsigned int i = 0; i < player_ammo; i++)
+        {
+            Bullet_render(ammo_hud[i]);
+        }
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
         SDL_GL_SwapWindow(window);
     }
 
-    RegularPoly_destroy(pentagon);
+    for (int i = 0; i < BULLET_MAX; i++)
+    {
+        Bullet_destroy(ammo_hud[i]);
+        ammo_hud[i] = NULL;
+    }
+
+    RegularPoly_destroy(player_head);
+    Rect_destroy(floor);
+    Rect_destroy(player);
+
+    //Destroy active bullets
+    if (bullet_count > 0)
+    {
+        for (unsigned int i = 0; i < BULLET_MAX; i++)
+        {
+            if (bullets[i] == NULL)
+                continue;
+
+            Bullet_destroy(bullets[i]);
+        }
+    }
 
     SDL_GL_DeleteContext(context);
     SDL_DestroyWindow(window);

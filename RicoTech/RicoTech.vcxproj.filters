@@ -10,8 +10,10 @@
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
     <Filter Include="Shaders">
-      <UniqueIdentifier>{4abcac98-19fa-4548-95bf-df0a9f965e05}</UniqueIdentifier>
-      <Extensions>glsl</Extensions>
+      <UniqueIdentifier>{0eb130d9-37d4-443c-b5b9-ec31cbc588d8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Textures">
+      <UniqueIdentifier>{90e36961-5190-4e07-98fe-f6fc0f72e5b5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -55,23 +57,27 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="hello1.tga" />
-    <Image Include="hello2.tga" />
+    <Image Include="hello1.tga">
+      <Filter>Textures</Filter>
+    </Image>
+    <Image Include="hello2.tga">
+      <Filter>Textures</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
-    <None Include="durian.v.glsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="durian.f.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="rotation.v.glsl">
+    <None Include="durian.v.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="poly.f.glsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="poly.v.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="poly.f.glsl">
+    <None Include="rotation.v.glsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
