@@ -10,99 +10,51 @@
 #include <stdio.h>
 #include <math.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_ONLY_TGA
+#include "stb_image.h"
+
 #include "geom.h"
 #include "util.h"
 #include "structs.h"
-#include "rect.h"
-#include "bullet.h"
-
-#define BULLET_MAX 100
-
-static int make_resources(const char *vertex_shader_file);
-static GLuint make_vao();
-//static GLuint make_texture(const char *filename);
-//static GLuint make_shader(const GLenum type, const char *filename);
-//static GLuint make_program(const GLuint vertex_shader, const GLuint fragment_shader);
-static void update_timer();
-static void render(void);
-//void show_info_log(
-//    GLuint object,
-//    PFNGLGETSHADERIVPROC glGet__iv,
-//    PFNGLGETSHADERINFOLOGPROC glGet__InfoLog);
-
-void APIENTRY openglCallbackFunction(GLenum source,
-    GLenum type,
-    GLuint id,
-    GLenum severity,
-    GLsizei length,
-    const GLchar *message,
-    const void *userParam) {
-
-    char *typeStr, *severityStr;
-
-    switch (type) {
-    case GL_DEBUG_TYPE_ERROR:
-        typeStr = "ERROR\0";
-        break;
-    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-        typeStr = "DEPRC\0";
-        break;
-    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-        typeStr = "UNDEF\0";
-        break;
-    case GL_DEBUG_TYPE_PORTABILITY:
-        typeStr = "PORT \0";
-        break;
-    case GL_DEBUG_TYPE_PERFORMANCE:
-        typeStr = "PERF \0";
-        break;
-    case GL_DEBUG_TYPE_OTHER:
-        typeStr = "OTHER\0";
-        return;
-        break;
-    default:
-        typeStr = "?????\0";
-        break;
-    }
-
-    switch (severity) {
-    case GL_DEBUG_SEVERITY_LOW:
-        severityStr = "LOW ";
-        break;
-    case GL_DEBUG_SEVERITY_MEDIUM:
-        severityStr = "MED ";
-        break;
-    case GL_DEBUG_SEVERITY_HIGH:
-        severityStr = "HIGH";
-        break;
-    default:
-        severityStr = "????";
-        break;
-    }
-
-    fprintf(stderr, "[%s][%s][%d] %s\n", typeStr, severityStr, id, message);
-}
+#include "glref.h"
 
 int main(int argc, char *argv[])
 {
+    stbi_set_flip_vertically_on_load(1);
+
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
 
 #if _DEBUG
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 #endif
 
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    //SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+                        SDL_GL_CONTEXT_PROFILE_CORE);
+    //                    SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
-    //SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-    //SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    //SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-    //SDL_GL_SetSwapInterval(1);
+    SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+    //SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1); //Default on
+    //SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24); //Default 16 bits
 
     //Initialize window
-    SDL_Window *window = SDL_CreateWindow("Test Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1024, 768, SDL_WINDOW_OPENGL);
+    SDL_Window *window = SDL_CreateWindow("Test Window", SDL_WINDOWPOS_CENTERED,
+                                          SDL_WINDOWPOS_CENTERED, 1024, 768,
+                                          SDL_WINDOW_OPENGL);
     SDL_GLContext context = SDL_GL_CreateContext(window);
+
+    SDL_GL_SetSwapInterval(0); //V-sync, default on
+    const char *error = SDL_GetError();
+    if (error)
+    {
+        fprintf(stderr, "%s\n", SDL_GetError());
+    }
+
+    {
+        int swap = SDL_GL_GetSwapInterval();
+        fprintf(stdout, "V-sync = %s\n", (swap) ? "Enabled" : "Disabled");
+    }
 
     if (gl3wInit())
     {
@@ -111,9 +63,10 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    fprintf(stdout, "OpenGL = \"%s\"\nGLSL = \"%s\"\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
+    fprintf(stdout, "OpenGL = \"%s\"\nGLSL = \"%s\"\n", glGetString(GL_VERSION),
+            glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-    if (!gl3wIsSupported(3, 1))
+    if (!gl3wIsSupported(3, 2))
     {
         fprintf(stderr, "OpenGL 3.2 not supported.\n");
         getchar();
@@ -121,6 +74,12 @@ int main(int argc, char *argv[])
     }
 
 #if _DEBUG
+    {
+        GLint gl_max_vertex_attribs;
+        glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &gl_max_vertex_attribs);
+        printf("GL_MAX_VERTEX_ATTRIBS = %d\n", gl_max_vertex_attribs);
+    }
+
     if (glDebugMessageCallback != NULL)
     {
         fprintf(stdout, "Registered glDebugMessageCallback.\n");
@@ -129,11 +88,11 @@ int main(int argc, char *argv[])
         glDebugMessageCallback(openglCallbackFunction, NULL);
         GLuint unusedIds = 0;
         glDebugMessageControl(GL_DONT_CARE,
-            GL_DONT_CARE,
-            GL_DONT_CARE,
-            0,
-            &unusedIds,
-            true);
+                              GL_DONT_CARE,
+                              GL_DONT_CARE,
+                              0,
+                              &unusedIds,
+                              true);
     }
     else
     {
@@ -141,258 +100,303 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    /*
-    if (!make_resources(argc >= 2 ? argv[1] : "durian.v.glsl"))
-    {
-        fprintf(stderr, "Failed to load resources.\n");
-        getchar();
-        return 1;
-    }
-    */
+    ////////////////////////////////////////////////////////////////////////////
 
-    Rect *player = Rect_create((Vec3) { 20.0f, 0.0f, 1.0f }, 16.0f, 64.0f);
-    if (!player)
-    {
-        fprintf(stderr, "Failed to create player.\n");
-        getchar();
-        return 1;
-    }
+    //// Test translate / scale order
+    //mat5 scale = mat5_scale((struct vec4) { 10.0f, 11.0f, 12.0f, 1.0f });
+    //mat5 trans = mat5_translate((struct vec4) { 2.f, 3.f, 4.f, 1.f });
+    //mat5 result = mat5_create_empty();
+    //
+    //printf("Trans * Scale\n");
+    //mat5_mul(trans, scale, result);
+    //mat5_print(result);
 
-    unsigned int player_ammo = 20;
-    Bullet *ammo_hud[BULLET_MAX];
-    for (unsigned int i = 0; i < BULLET_MAX; i++)
-    {
-        ammo_hud[i] = Bullet_create(
-            Rect_create((Vec3) { 10.0f + (10.0f * i), 750.0f, 1.0f }, 4.0f, 2.0f)
-        );
-    }
+    mat5 a = mat5_create(
+        3.f, 2.f, 9.f, 6.f,
+        9.f, 6.f, 3.f, 5.f,
+        9.f, 7.f, 6.f, 5.f,
+        1.f, 5.f, 3.f, 3.f
+    );
 
-    unsigned int bullet_count = 0;
-    Bullet *bullets[BULLET_MAX] = { NULL };
+    mat5 b = mat5_create(
+        5.f, 1.f, 3.f, 2.f,
+        1.f, 6.f, 4.f, 3.f,
+        9.f, 2.f, 1.f, 4.f,
+        7.f, 5.f, 5.f, 3.f
+    );
 
-    Rect *floor = Rect_create((Vec3) { 0.0f, 0.0f, 1.0f }, 1024.0f, 10.0f);
-    if (!floor)
-    {
-        fprintf(stderr, "Failed to create floor.\n");
-        getchar();
-        return 1;
-    }
-    GLfloat floor_top = floor->pos.y + floor->h;
+    //--------------------------------------------------------------------------
+    //// Test old and new translate
+    //struct vec4 trans = (struct vec4) { 2.0f, 3.0f, 4.0f };
+    //mat5 b = mat5_create_translate(trans);
+    //mat5 result = mat5_create_empty();
+    //
+    //mat5_mul(a, b, result);
+    //mat5_print(result);
+    //
+    //mat5_translate(a, trans);
+    //mat5_print(a);
+    //printf("translate valid: %i\n\n", mat5_equals(a, result));
 
-    RegularPoly *player_head = RegularPoly_create((Vec3) { 300.0f, 200.0f, 1.0f }, 20.0f, 10);
-    if (!player_head)
-    {
-        fprintf(stderr, "Failed to create pentagon.\n");
-        getchar();
-        return 1;
-    }
+    //--------------------------------------------------------------------------
+    //// Test old and new scale
+    //struct vec4 scale = (struct vec4) { 2.0f, 3.0f, 4.0f };
+    //mat5 b = mat5_create_scale(scale);
+    //mat5 result = mat5_create_empty();
+    //
+    //mat5_mul(a, b, result);
+    //mat5_print(result);
+    //
+    //mat5_scale(a, scale);
+    //mat5_print(a);
+    //printf("scale valid: %i\n\n", mat5_equals(a, result));
 
-    GLfloat player_dxvel = 10.0f;
-    GLfloat player_xvel = 0.0f;
+    //--------------------------------------------------------------------------
+    //// Test rot x
+    //mat5 b = mat5_create_rotx(18);
+    //mat5 result = mat5_create_empty();
+    //
+    //mat5_mul(a, b, result);
+    //mat5_print(result);
+    //
+    //mat5_rotx(a, 18);
+    //mat5_print(a);
+    //printf("rot x valid: %i\n\n", mat5_equals(a, result));
 
-    GLfloat player_dyvel = 20.0f;
-    GLfloat player_yvel = 0.0f;
+    //--------------------------------------------------------------------------
+    //// Test rot y
+    //mat5 b = mat5_create_roty(18);
+    //mat5 result = mat5_create_empty();
 
-    GLfloat bullet_dxvel = 20.0f;
-    GLfloat bullet_xvel = bullet_dxvel;
+    //mat5_mul(a, b, result);
+    //mat5_print(result);
 
-    char jump_pressed = 0;
-    char shoot_pressed = 0;
+    //mat5_roty(a, 18);
+    //mat5_print(a);
+    //printf("rot y valid: %i\n\n", mat5_equals(a, result));
 
+    //--------------------------------------------------------------------------
+    //// Test rot z
+    //mat5 b = mat5_create_rotz(18);
+    //mat5 result = mat5_create_empty();
+
+    //mat5_mul(a, b, result);
+    //mat5_print(result);
+
+    //mat5_rotz(a, 18);
+    //mat5_print(a);
+    //printf("rot z valid: %i\n\n", mat5_equals(a, result));
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+
+    init_glref();
+
+    //Human walk speed empiracallly found to be 33 steps in 20 seconds. That
+    //is approximately 1.65 steps per second. At 60 fps, that is 0.0275 steps
+    //per frame. Typical walking stride is ~0.762 meters (30 inches). Distance
+    //travelled per frame (60hz) is 0.762 * 0.0275 = 0.020955 ~= 0.021
+
+    //TODO: This assumes 1/60th second (60fps), this should be 1.65 * dt.
+    GLfloat view_trans_delta = 1.65f;
+    struct vec4 view_trans_vel = { 0.0f, 0.0f, 0.0f, 1.0f };
+    bool sprint = false;
+
+    GLfloat view_scale_delta = 0.1f;
+    struct vec4 view_scale_vel = { 0.0f, 0.0f, 0.0f, 1.0f };
+    
+    GLfloat view_rot_delta = 0.1f;
+
+    GLenum lineMode = GL_FILL;
+
+    bool mouse_lock = true;
+    SDL_SetRelativeMouseMode(mouse_lock);
+
+    bool pause = false;
+    bool quit = false;
+    GLuint time = SDL_GetTicks();
     SDL_Event windowEvent;
-    while (true)
+    while (!quit)
     {
-        if (SDL_PollEvent(&windowEvent))
+        while (SDL_PollEvent(&windowEvent))
         {
             if (windowEvent.type == SDL_QUIT)
             {
+                quit = true;
                 break;
             }
-            if (windowEvent.type == SDL_KEYUP)
+            else if (windowEvent.type == SDL_MOUSEMOTION)
             {
-                if (windowEvent.key.keysym.sym == SDLK_a)
+                int dx = windowEvent.motion.xrel;
+                int dy = windowEvent.motion.yrel;
+                //fprintf(stderr, "dx: %d dy: %d\n", dx, dy);
+
+                view_rot.x += dy * view_rot_delta;
+                view_rot.y += dx * view_rot_delta;
+            }
+            else if (windowEvent.type == SDL_KEYDOWN && !windowEvent.key.repeat)
+            {
+                if (windowEvent.key.keysym.sym == SDLK_LCTRL)
                 {
-                    player_xvel -= -player_dxvel;
+                    sprint = true;
                 }
-                if (windowEvent.key.keysym.sym == SDLK_d)
+
+                if (windowEvent.key.keysym.sym == SDLK_q)
                 {
-                    player_xvel -= player_dxvel;
+                    view_trans_vel.y += view_trans_delta;
                 }
-                if (windowEvent.key.keysym.sym == SDLK_j)
+                else if (windowEvent.key.keysym.sym == SDLK_e)
                 {
-                    shoot_pressed = 0;
+                    view_trans_vel.y -= view_trans_delta;
                 }
-                if (windowEvent.key.keysym.sym == SDLK_w)
+                else if (windowEvent.key.keysym.sym == SDLK_a)
                 {
-                    jump_pressed = 0;
+                    view_trans_vel.x += view_trans_delta;
                 }
-                if (windowEvent.key.keysym.sym == SDLK_ESCAPE)
+                else if (windowEvent.key.keysym.sym == SDLK_d)
                 {
-                    break;
+                    view_trans_vel.x -= view_trans_delta;
+                }
+                else if (windowEvent.key.keysym.sym == SDLK_w)
+                {
+                    view_trans_vel.z += view_trans_delta;
+                }
+                else if (windowEvent.key.keysym.sym == SDLK_s)
+                {
+                    view_trans_vel.z -= view_trans_delta;
+                }
+                else if (windowEvent.key.keysym.sym == SDLK_p)
+                {
+                    pause = true;
+                }
+                else if (windowEvent.key.keysym.sym == SDLK_m)
+                {
+                    mouse_lock = !mouse_lock;
+                    SDL_SetRelativeMouseMode(mouse_lock);
+                }
+                else if (windowEvent.key.keysym.sym == SDLK_1)
+                {
+                    lineMode = GL_LINE;
+                }
+                else if (windowEvent.key.keysym.sym == SDLK_2)
+                {
+                    lineMode = GL_FILL;
                 }
             }
-            if (windowEvent.type == SDL_KEYDOWN && !windowEvent.key.repeat)
+            else if (windowEvent.type == SDL_KEYUP)
             {
-                if (windowEvent.key.keysym.sym == SDLK_a)
+                if (windowEvent.key.keysym.sym == SDLK_LCTRL)
                 {
-                    player_xvel += -player_dxvel;
-                    bullet_xvel = -bullet_dxvel;
+                    sprint = false;
                 }
-                if (windowEvent.key.keysym.sym == SDLK_d)
+
+                if (windowEvent.key.keysym.sym == SDLK_q)
                 {
-                    player_xvel += player_dxvel;
-                    bullet_xvel = bullet_dxvel;
+                    view_trans_vel.y -= view_trans_delta;
                 }
-                if (windowEvent.key.keysym.sym == SDLK_r)
+                else if (windowEvent.key.keysym.sym == SDLK_e)
                 {
-                    player_ammo = BULLET_MAX;
+                    view_trans_vel.y += view_trans_delta;
                 }
-                if (windowEvent.key.keysym.sym == SDLK_j)
+                else if (windowEvent.key.keysym.sym == SDLK_a)
                 {
-                    shoot_pressed = 1;
+                    view_trans_vel.x -= view_trans_delta;
                 }
-                if (windowEvent.key.keysym.sym == SDLK_w)
+                else if (windowEvent.key.keysym.sym == SDLK_d)
                 {
-                    jump_pressed = 1;
+                    view_trans_vel.x += view_trans_delta;
+                }
+                else if (windowEvent.key.keysym.sym == SDLK_w)
+                {
+                    view_trans_vel.z -= view_trans_delta;
+                }
+                else if (windowEvent.key.keysym.sym == SDLK_s)
+                {
+                    view_trans_vel.z += view_trans_delta;
+                }
+                else if (windowEvent.key.keysym.sym == SDLK_p)
+                {
+                    pause = false;
+                }
+                else if (windowEvent.key.keysym.sym == SDLK_ESCAPE)
+                {
+                    quit = true;
+                    break;
                 }
             }
 
             //TODO: Handle resize event
             /*if (windowEvent.type == SDL_WINDOWEVENT_SIZE)
             {
-                glViewport(0, 0, windowEvent.window.event..size.width, event.size.height);
+                glViewport(0, 0, windowEvent.window.event.size.width,
+                           event.size.height);
                 break;
             }*/
         }
+        if (quit) break;
 
-        update_timer();
+        GLuint newTime = SDL_GetTicks();
+        GLfloat dt = (float)(newTime - time) / 1000.0f;
+        time = newTime;
 
-        //Jump force
-        if (jump_pressed && player->pos.y == floor_top)
+        GLfloat cos_head = cosf(view_rot.y * (float)M_PI / 180.0f);
+        GLfloat sin_head = sinf(view_rot.y * (float)M_PI / 180.0f);
+
+        GLfloat view_dx = (view_trans_vel.x * cos_head
+                         - view_trans_vel.z * sin_head) * dt;
+        GLfloat view_dz = (view_trans_vel.z * cos_head
+                         + view_trans_vel.x * sin_head) * dt;
+
+        if (sprint)
         {
-            player_yvel += player_dyvel;
+            view_dx *= 2.0f;
+            view_dz *= 2.0f;
         }
 
-        //Gravity
-        player_yvel -= 1.0f;
+        view_trans.x += view_dx;
+        view_trans.y += view_trans_vel.y * dt;
+        view_trans.z += view_dz;
 
-        //Player update
-        player->pos.y += player_yvel;
-
-        //Collision
-        if (player->pos.y < floor_top)
+        if (pause)
         {
-            player_yvel = 0.0f;
-            player->pos.y = floor_top;
+            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            // Very Important:    *** DEFINITELY ***
+            //                    DO NOT REMOVE this variable
+            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            int asdfwaagasdfsahhgfd = 5;
+            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         }
 
+        //view_trans.x += view_trans_vel.x * dt;
+        //view_trans.y += view_trans_vel.y * dt;
+        //view_trans.z += view_trans_vel.z * dt;
 
-        //Player shoot
-        if (shoot_pressed && player_ammo > 0 && bullet_count < BULLET_MAX)
-        {
-            Rect *rect = Rect_create(
-                (Vec3) { player->pos.x + (player->w / 2.0f),
-                         player->pos.y + (player->h / 1.5f),
-                         player->pos.z },
-                4.0f, 2.0f);
+        view_scale.x += view_scale_vel.x * dt;
+        view_scale.y += view_scale_vel.y * dt;
+        view_scale.z += view_scale_vel.z * dt;
 
-            //Find available bullet slot
-            for (unsigned int i = 0; i < BULLET_MAX; i++)
-            {
-                if (bullets[i] != NULL)
-                    continue;
+        //TODO: Gravity
 
-                bullets[i] = Bullet_create(rect);
-                bullets[i]->vel.x = bullet_xvel;
-                break;
-            }
-
-            player_ammo--;
-            bullet_count++;
-        }
-
-        //Update active bullets
-        if (bullet_count > 0)
-        {
-            for (unsigned int i = 0; i < BULLET_MAX; i++)
-            {
-                if (bullets[i] == NULL)
-                    continue;
-
-                if (bullets[i]->rect->pos.x < 0.0f || bullets[i]->rect->pos.x > 1024.0f)
-                {
-                    Bullet_destroy(bullets[i]);
-                    bullets[i] = NULL;
-                    bullet_count--;
-                }
-                else
-                {
-                    Bullet_update(bullets[i]);
-                }
-            }
-        }
+        //TODO: Collision
 
         glClearColor(0.1f, 0.1f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        //glClearDepth(0.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glPolygonMode(GL_FRONT_AND_BACK, lineMode);
 
-        //render();
-
-        Rect_move(player, player->pos.x + player_xvel, player->pos.y, player->pos.z);
-        RegularPoly_move(player_head,
-            player->pos.x + (player->w / 2.0f),
-            player->pos.y + player->h + (player_head->radius),
-            player->pos.z);
-
-        Rect_render(floor);
-        Rect_render(player);
-        RegularPoly_render(player_head);
-
-        if (bullet_count > 0)
-        {
-            //Render active bullets
-            for (unsigned int i = 0; i < BULLET_MAX; i++)
-            {
-                if (bullets[i] == NULL)
-                    continue;
-
-                Bullet_render(bullets[i]);
-            }
-        }
-
-        //HUD
-        for (unsigned int i = 0; i < player_ammo; i++)
-        {
-            Bullet_render(ammo_hud[i]);
-        }
-
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        update_glref(dt);
+        render_glref();
 
         SDL_GL_SwapWindow(window);
     }
 
-    for (int i = 0; i < BULLET_MAX; i++)
-    {
-        Bullet_destroy(ammo_hud[i]);
-        ammo_hud[i] = NULL;
-    }
-
-    RegularPoly_destroy(player_head);
-    Rect_destroy(floor);
-    Rect_destroy(player);
-
-    //Destroy active bullets
-    if (bullet_count > 0)
-    {
-        for (unsigned int i = 0; i < BULLET_MAX; i++)
-        {
-            if (bullets[i] == NULL)
-                continue;
-
-            Bullet_destroy(bullets[i]);
-        }
-    }
+    //====================================================================
+    // Cleanup
+    //====================================================================
+    free_glref();
 
     SDL_GL_DeleteContext(context);
     SDL_DestroyWindow(window);
@@ -400,144 +404,13 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-static int make_resources(const char *vertex_shader_file)
-{
-    g_resources.textures[0] = make_texture("hello1.tga");
-    g_resources.textures[1] = make_texture("hello2.tga");
+///////////////////////////////////////////////////////////////////
 
-    if (g_resources.textures[0] == 0 || g_resources.textures[1] == 0)
-        return 0;
-
-    g_resources.vertex_shader = make_shader(
-        GL_VERTEX_SHADER,
-        vertex_shader_file
-    );
-    if (g_resources.vertex_shader == 0)
-        return 0;
-
-    g_resources.fragment_shader = make_shader(
-        GL_FRAGMENT_SHADER,
-        "durian.f.glsl"
-    );
-    if (g_resources.fragment_shader == 0)
-        return 0;
-
-    g_resources.program = make_program(
-        g_resources.vertex_shader,
-        g_resources.fragment_shader
-    );
-    if (g_resources.program == 0)
-        return 0;
-
-    int getUniformLocations = 1;
-
-    g_resources.uniforms.timer
-        = glGetUniformLocation(g_resources.program, "timer");
-    if (g_resources.uniforms.timer == -1)
-    {
-        fprintf(stderr, "Failed to get uniform location for timer.\n");
-        getUniformLocations = 0;
-    }
-
-    g_resources.uniforms.textures[0]
-        = glGetUniformLocation(g_resources.program, "textures[0]");
-    if (g_resources.uniforms.textures[0] == -1)
-    {
-        fprintf(stderr, "Failed to get uniform location for textures[0].\n");
-        getUniformLocations = 0;
-    }
-
-    g_resources.uniforms.textures[1]
-        = glGetUniformLocation(g_resources.program, "textures[1]");
-    if (g_resources.uniforms.textures[1] == -1)
-    {
-        fprintf(stderr, "Failed to get uniform location for textures[1].\n");
-        getUniformLocations = 0;
-    }
-
-    g_resources.attributes.position
-        = glGetAttribLocation(g_resources.program, "position");
-    if (g_resources.attributes.position == -1)
-    {
-        fprintf(stderr, "Failed to get atrribute location for position.\n");
-        getUniformLocations = 0;
-    }
-
-    if (getUniformLocations == 0)
-        return 0;
-
-    g_resources.vao = make_vao();
-
-    return 1;
-}
-
-static GLuint make_vao()
-{
-    GLuint vao;
-
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-
-    glGenBuffers(NUM_BUFFERS, g_resources.vbos);
-
-    glBindBuffer(GL_ARRAY_BUFFER, g_resources.vbos[VBO_POSITION]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertices), g_vertices, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_resources.vbos[VBO_POSITION_ELEM]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(g_indices), g_indices, GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(g_resources.attributes.position);
-
-    //(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer);
-    glVertexAttribPointer(g_resources.attributes.position, 4, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 4, 0);
-
-    glBindVertexArray(0);
-
-    //TODO: Figure out when it makes sense to delete buffers. These are global for testing,
-    //        so they never go out of scope; therefore, it doesn't matter that they don't get deleted.
-    //glDeleteBuffers(2, g_resources.vbos);
-
-    return vao;
-}
-
-static GLuint make_buffer_old(const GLenum target, const void *buffer_data, const GLsizei buffer_size)
+static GLuint orig_make_buffer(const GLenum target, const void *buffer_data, const GLsizei buffer_size)
 {
     GLuint buffer = 0;
     glGenBuffers(1, &buffer);
     glBindBuffer(target, buffer);
     glBufferData(target, buffer_size, buffer_data, GL_STATIC_DRAW);
     return buffer;
-}
-
-static void update_timer()
-{
-    g_resources.timer = (GLfloat)SDL_GetTicks() / 1000.0f; //sinf((float)milliseconds * 0.001f) * 1.0f + 1.0f;
-}
-
-static void render(void)
-{
-    glUseProgram(g_resources.program);
-
-    glUniform1f(g_resources.uniforms.timer, g_resources.timer);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, g_resources.textures[0]);
-    glUniform1i(g_resources.uniforms.textures[0], 0);
-
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, g_resources.textures[1]);
-    glUniform1i(g_resources.uniforms.textures[1], 1);
-
-    glBindVertexArray(g_resources.vao);
-
-    //(GLenum mode, GLsizei count, GLenum type, const void *indices);
-    glDrawElements(
-        GL_TRIANGLE_STRIP,
-        4,
-        GL_UNSIGNED_SHORT,
-        (void*)0
-    );
-
-    glBindVertexArray(0);
-    glUseProgram(0);
 }

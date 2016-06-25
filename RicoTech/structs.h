@@ -11,7 +11,7 @@ struct {
     GLuint vao;
     GLuint vbos[NUM_BUFFERS];
     GLuint textures[2];
-    GLuint vertex_shader, fragment_shader, program;
+    GLuint program_id;
 
     struct {
         GLint timer;
@@ -25,7 +25,7 @@ struct {
     GLfloat timer;
 } g_resources;
 
-static const struct Vec4 g_vertices[] = {
+static const struct vec4 g_vertices[] = {
     {-1.0f, -1.0f, 0.0f, 1.0f },
     { 1.0f, -1.0f, 0.0f, 1.0f },
     {-1.0f,  1.0f, 0.0f, 1.0f },

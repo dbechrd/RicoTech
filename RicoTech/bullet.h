@@ -4,16 +4,18 @@
 #include <GL/gl3w.h>
 #include "rect.h"
 
-typedef struct Bullet {
-    Rect *rect;
-    Vec3 vel;
-    Vec3 acc;
-} Bullet;
+struct bullet {
+    struct rect *rect;
+    struct vec4 vel;
+    struct vec4 acc;
+};
 
-Bullet *Bullet_create(Rect *rect);
-void Bullet_destroy(Bullet *bullet);
+struct bullet *make_bullet(struct rect *rect);
+void free_bullet(struct bullet *);
 
-void Bullet_update(Bullet *bullet);
-void Bullet_render(Bullet *bullet);
+void set_bullet_size(struct bullet *, GLfloat w, GLfloat h, GLfloat d);
+void set_bullet_pos(struct bullet *, GLfloat x, GLfloat y, GLfloat z);
+void update_bullet(struct bullet *);
+void render_bullet(struct bullet *);
 
 #endif

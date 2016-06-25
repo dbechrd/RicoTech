@@ -11,21 +11,21 @@
 
 void *file_contents(const char *filename, GLint *length)
 {
-    FILE *f = fopen(filename, "r");
+    FILE *fs = fopen(filename, "r");
     void *buffer;
 
-    if (!f) {
+    if (!fs) {
         fprintf(stderr, "Unable to open %s for reading\n", filename);
         return NULL;
     }
 
-    fseek(f, 0, SEEK_END);
-    *length = ftell(f);
-    fseek(f, 0, SEEK_SET);
+    fseek(fs, 0, SEEK_END);
+    *length = ftell(fs);
+    fseek(fs, 0, SEEK_SET);
 
     buffer = malloc(*length + 1);
-    *length = fread(buffer, 1, *length, f);
-    fclose(f);
+    *length = fread(buffer, 1, *length, fs);
+    fclose(fs);
     ((char*)buffer)[*length] = '\0';
 
     return buffer;
@@ -39,7 +39,7 @@ static short le_short(unsigned char *bytes)
 void *read_tga(const char *filename, int *width, int *height)
 {
     struct tga_header {
-        char  id_length;
+        unsigned char  id_length;
         char  color_map_type;
         char  data_type_code;
         unsigned char  color_map_origin[2];
@@ -52,7 +52,7 @@ void *read_tga(const char *filename, int *width, int *height)
         char  bits_per_pixel;
         char  image_descriptor;
     } header;
-    int i, color_map_size, pixels_size;
+    size_t i, color_map_size, pixels_size;
     FILE *f;
     size_t read;
     void *pixels;
@@ -113,10 +113,90 @@ void *read_tga(const char *filename, int *width, int *height)
     return pixels;
 }
 
-void show_info_log(
-    GLuint object,
-    PFNGLGETSHADERIVPROC glGet__iv,
-    PFNGLGETSHADERINFOLOGPROC glGet__InfoLog)
+////////////////////////////////////////////////////////////////////////////////
+
+void APIENTRY openglCallbackFunction(GLenum source, GLenum type, GLuint id,
+                                     GLenum severity, GLsizei length,
+                                     const GLchar *message,
+                                     const void *userParam)
+{
+    //HACK: Get rid of warning-as-error for unused parameters
+    (void)length;
+    (void)userParam;
+
+    char *typeStr, *sourceStr, *severityStr;
+
+    switch (type) {
+    case GL_DEBUG_TYPE_ERROR:
+        typeStr = "ERROR";
+        break;
+    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+        typeStr = "DEPRC";
+        break;
+    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+        typeStr = "UNDEF";
+        break;
+    case GL_DEBUG_TYPE_PORTABILITY:
+        typeStr = "PORT ";
+        break;
+    case GL_DEBUG_TYPE_PERFORMANCE:
+        typeStr = "PERF ";
+        break;
+    case GL_DEBUG_TYPE_OTHER:
+        typeStr = "OTHER";
+        return;
+        break;
+    default:
+        typeStr = "?????";
+        break;
+    }
+
+    switch (source) {
+    case GL_DEBUG_SOURCE_API:
+        sourceStr = "API            ";
+        break;
+    case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+        sourceStr = "WINDOW SYSTEM  ";
+        break;
+    case GL_DEBUG_SOURCE_SHADER_COMPILER:
+        sourceStr = "SHADER COMPILER";
+        break;
+    case GL_DEBUG_SOURCE_THIRD_PARTY:
+        sourceStr = "THIRD PARTY    ";
+        break;
+    case GL_DEBUG_SOURCE_APPLICATION:
+        sourceStr = "APPLICATION    ";
+        break;
+    case GL_DEBUG_SOURCE_OTHER:
+        sourceStr = "OTHER          ";
+        return;
+        break;
+    default:
+        sourceStr = "???????????????";
+        break;
+    }
+
+    switch (severity) {
+    case GL_DEBUG_SEVERITY_LOW:
+        severityStr = "LOW ";
+        break;
+    case GL_DEBUG_SEVERITY_MEDIUM:
+        severityStr = "MED ";
+        break;
+    case GL_DEBUG_SEVERITY_HIGH:
+        severityStr = "HIGH";
+        break;
+    default:
+        severityStr = "????";
+        break;
+    }
+
+    fprintf(stderr, "[%s][%s][%d] %s\n", typeStr, severityStr, id, message);
+}
+
+void show_info_log(GLuint object,
+                   PFNGLGETSHADERIVPROC glGet__iv,
+                   PFNGLGETSHADERINFOLOGPROC glGet__InfoLog)
 {
     GLint log_length;
     char *log;
@@ -128,7 +208,7 @@ void show_info_log(
     free(log);
 };
 
-GLuint make_texture(const char *filename)
+GLuint orig_make_texture(const char *filename)
 {
     GLuint texture;
     int width, height;
@@ -158,7 +238,7 @@ GLuint make_texture(const char *filename)
     return texture;
 }
 
-GLuint make_shader(const GLenum type, const char *filename)
+GLuint orig_make_shader(GLenum type, const char *filename)
 {
     GLint length;
     GLchar *source = file_contents(filename, &length);
@@ -173,6 +253,7 @@ GLuint make_shader(const GLenum type, const char *filename)
     shader = glCreateShader(type);
     glShaderSource(shader, 1, (const GLchar**)&source, &length);
     free(source);
+    source = NULL;
     glCompileShader(shader);
 
     glGetShaderiv(shader, GL_COMPILE_STATUS, &shader_ok);
@@ -187,23 +268,48 @@ GLuint make_shader(const GLenum type, const char *filename)
     return shader;
 }
 
-GLuint make_program(const GLuint vertex_shader, const GLuint fragment_shader)
+GLuint orig_make_program(const char *vertex_shader_filename,
+                    const char *fragment_shader_filename)
 {
     GLint program_ok;
 
-    GLuint program = glCreateProgram();
-    glAttachShader(program, vertex_shader);
-    glAttachShader(program, fragment_shader);
-    glLinkProgram(program);
-
-    glGetProgramiv(program, GL_LINK_STATUS, &program_ok);
-    if (!program_ok)
+    GLuint vertex_shader = make_shader(GL_VERTEX_SHADER,
+                                       vertex_shader_filename);
+    if (!vertex_shader)
     {
-        fprintf(stderr, "Failed to link shader program:\n");
-        show_info_log(program, glGetProgramiv, glGetProgramInfoLog);
-        glDeleteProgram(program);
+        fprintf(stderr, "Failed to make vertex shader.\n");
         return 0;
     }
 
-    return program;
+    GLuint fragment_shader = make_shader(GL_FRAGMENT_SHADER, 
+                                         fragment_shader_filename);
+    if (!fragment_shader)
+    {
+        glDeleteShader(vertex_shader);
+
+        fprintf(stderr, "Rect: Failed to make fragment shader.\n");
+        return 0;
+    }
+
+    GLuint program_id = glCreateProgram();
+    glAttachShader(program_id, vertex_shader);
+    glAttachShader(program_id, fragment_shader);
+    glLinkProgram(program_id);
+
+    glDetachShader(program_id, vertex_shader);
+    glDetachShader(program_id, fragment_shader);
+
+    glDeleteShader(vertex_shader);
+    glDeleteShader(fragment_shader);
+
+    glGetProgramiv(program_id, GL_LINK_STATUS, &program_ok);
+    if (!program_ok)
+    {
+        fprintf(stderr, "Failed to link shader program:\n");
+        show_info_log(program_id, glGetProgramiv, glGetProgramInfoLog);
+        glDeleteProgram(program_id);
+        return 0;
+    }
+
+    return program_id;
 }

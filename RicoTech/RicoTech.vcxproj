@@ -75,6 +75,8 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <CompileAs>CompileAsC</CompileAs>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -100,6 +102,8 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <CompileAs>CompileAsC</CompileAs>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -127,19 +131,30 @@
     <ClCompile Include="bullet.c" />
     <ClCompile Include="geom.c" />
     <ClCompile Include="gl3w.c" />
+    <ClCompile Include="glref.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="mesh.c" />
+    <Natvis Include="notes.c" />
+    <ClCompile Include="program.c" />
     <ClCompile Include="rect.c" />
+    <ClCompile Include="regularpoly.c" />
     <ClCompile Include="util.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bullet.h" />
     <ClInclude Include="geom.h" />
+    <ClInclude Include="glref.h" />
+    <ClInclude Include="mesh.h" />
+    <ClInclude Include="program.h" />
     <ClInclude Include="rect.h" />
+    <ClInclude Include="regularpoly.h" />
+    <ClInclude Include="shader.h" />
+    <ClInclude Include="stb_image.h" />
     <ClInclude Include="structs.h" />
     <ClInclude Include="util.h" />
-    <ClInclude Include="vec.h" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="basic.tga" />
     <Image Include="hello1.tga">
       <DeploymentContent>true</DeploymentContent>
     </Image>
@@ -148,6 +163,8 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
+    <None Include="default_frag.glsl" />
+    <None Include="default_vert.glsl" />
     <None Include="durian.f.glsl">
       <DeploymentContent>true</DeploymentContent>
       <FileType>Document</FileType>

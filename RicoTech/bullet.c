@@ -1,21 +1,19 @@
+#include <stdlib.h>
 #include "bullet.h"
 
-#include <stdlib.h>
-
-Bullet *Bullet_create(Rect *rect)
+struct bullet *make_bullet(struct rect *rect)
 {
-    Bullet *bullet = malloc(sizeof(Bullet));
+    struct bullet *bullet = malloc(sizeof(struct bullet));
 
     bullet->rect = rect;
 
-    //TODO: Dunno what the point of Vector4 is, probably not necessary
-    bullet->vel = (Vec3) { 0.0f, 0.0f, 0.0f };
-    bullet->acc = (Vec3) { 0.0f, 0.0f, 0.0f };
+    bullet->vel = (struct vec4) { 0.0f, 0.0f, 0.0f, 1.0f };
+    bullet->acc = (struct vec4) { 0.0f, 0.0f, 0.0f, 1.0f };
 
     return bullet;
 }
 
-void Bullet_destroy(Bullet *bullet)
+void free_bullet(struct bullet *bullet)
 {
     free(bullet->rect);
     bullet->rect = NULL;
@@ -23,24 +21,33 @@ void Bullet_destroy(Bullet *bullet)
     bullet = NULL;
 }
 
-void Bullet_update(Bullet *bullet)
+void set_bullet_size(struct bullet *bullet, GLfloat w, GLfloat h, GLfloat d)
 {
-    bullet->vel.x += bullet->acc.x;
-    bullet->vel.y += bullet->acc.y;
-    bullet->vel.z += bullet->acc.z;
-
-    bullet->vel.x += bullet->acc.x;
-    bullet->vel.y += bullet->acc.y;
-    bullet->vel.z += bullet->acc.z;
-
-    Rect_move(bullet->rect,
-        bullet->rect->pos.x + bullet->vel.x,
-        bullet->rect->pos.y + bullet->vel.y,
-        bullet->rect->pos.z + bullet->vel.z);
-
+    set_rect_size(bullet->rect, w, h, false);
 }
 
-void Bullet_render(Bullet *bullet)
+void set_bullet_pos(struct bullet *bullet, GLfloat x, GLfloat y, GLfloat z)
 {
-    Rect_render(bullet->rect);
+    set_rect_pos(bullet->rect, x, y, z, false);
+}
+
+void update_bullet(struct bullet *bullet)
+{
+    bullet->vel.x += bullet->acc.x;
+    bullet->vel.y += bullet->acc.y;
+    bullet->vel.z += bullet->acc.z;
+
+    bullet->vel.x += bullet->acc.x;
+    bullet->vel.y += bullet->acc.y;
+    bullet->vel.z += bullet->acc.z;
+
+    set_rect_pos(bullet->rect,
+                 bullet->rect->pos.x + bullet->vel.x,
+                 bullet->rect->pos.y + bullet->vel.y,
+                 bullet->rect->pos.z + bullet->vel.z, true);
+}
+
+void render_bullet(struct bullet *bullet)
+{
+    render_rect(bullet->rect);
 }

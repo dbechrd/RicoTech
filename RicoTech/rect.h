@@ -1,22 +1,28 @@
 #ifndef RECT_H
 #define RECT_H
 
+#include <stdbool.h>
 #include <GL/gl3w.h>
 #include "geom.h"
 
-typedef struct Rect {
-    Vec3 pos;
+struct rect {
+    struct vec4 pos;
     GLfloat w, h;
 
-    Vec4 vertices[4];
+    struct vec4 vertices[4];
     GLuint vao;
-} Rect;
+    bool dirty_vao;
+};
 
-Rect *Rect_create(const Vec3 bottom_left, const GLfloat w, const GLfloat h);
-void Rect_destroy(Rect *rect);
+int set_rect_program(const char *vertex_shader_filename,
+                     const char *fragment_shader_filename);
 
-void Rect_move(Rect *rect, const GLfloat x, const GLfloat y, const GLfloat z);
-void Rect_resize(Rect *rect, const GLfloat w, const GLfloat h);
-void Rect_render(Rect *rect);
+struct rect *make_rect(struct vec4 bottom_left, GLfloat w, GLfloat h);
+void free_rect(struct rect *);
+
+void set_rect_size(struct rect *, GLfloat w, GLfloat h, bool rebuild);
+void set_rect_pos(struct rect *, GLfloat x, GLfloat y, GLfloat z, bool rebuild);
+void resize_rect(struct rect *, GLfloat w, GLfloat h, bool rebuild);
+void render_rect(struct rect *);
 
 #endif

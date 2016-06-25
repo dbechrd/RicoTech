@@ -35,18 +35,24 @@
     <ClCompile Include="bullet.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="mesh.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="regularpoly.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="glref.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="program.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="structs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="util.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="geom.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vec.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="rect.h">
@@ -55,12 +61,36 @@
     <ClInclude Include="bullet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="regularpoly.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="glref.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stb_image.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="program.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="shader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="hello1.tga">
       <Filter>Textures</Filter>
     </Image>
     <Image Include="hello2.tga">
+      <Filter>Textures</Filter>
+    </Image>
+    <Image Include="basic.tga">
       <Filter>Textures</Filter>
     </Image>
   </ItemGroup>
@@ -80,5 +110,14 @@
     <None Include="rotation.v.glsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="default_frag.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="default_vert.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="notes.c" />
   </ItemGroup>
 </Project>
