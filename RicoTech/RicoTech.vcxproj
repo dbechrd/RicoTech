@@ -138,10 +138,12 @@
     <ClCompile Include="program.c" />
     <ClCompile Include="rect.c" />
     <ClCompile Include="regularpoly.c" />
+    <ClCompile Include="texture.c" />
     <ClCompile Include="util.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bullet.h" />
+    <ClInclude Include="const.h" />
     <ClInclude Include="geom.h" />
     <ClInclude Include="glref.h" />
     <ClInclude Include="mesh.h" />
@@ -150,7 +152,7 @@
     <ClInclude Include="regularpoly.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="stb_image.h" />
-    <ClInclude Include="structs.h" />
+    <ClInclude Include="texture.h" />
     <ClInclude Include="util.h" />
   </ItemGroup>
   <ItemGroup>
@@ -163,8 +165,12 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <None Include="default_frag.glsl" />
-    <None Include="default_vert.glsl" />
+    <None Include="default.frag.glsl">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="default.vert.glsl">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
     <None Include="durian.f.glsl">
       <DeploymentContent>true</DeploymentContent>
       <FileType>Document</FileType>

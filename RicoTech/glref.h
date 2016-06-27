@@ -3,9 +3,13 @@
 
 #include "geom.h"
 
-extern struct vec4 view_scale;
-extern struct vec4 view_trans;
-extern struct vec4 view_rot;
+struct camera {
+    struct vec4 scale;
+    struct vec4 rot;
+    struct vec4 trans;
+};
+
+extern struct camera view_camera;
 
 void init_glref();
 void update_glref(GLfloat dt);

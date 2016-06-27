@@ -21,9 +21,9 @@ void free_bullet(struct bullet *bullet)
     bullet = NULL;
 }
 
-void set_bullet_size(struct bullet *bullet, GLfloat w, GLfloat h, GLfloat d)
+void set_bullet_size(struct bullet *bullet, GLfloat width, GLfloat height, GLfloat d)
 {
-    set_rect_size(bullet->rect, w, h, false);
+    set_rect_size(bullet->rect, width, height, false);
 }
 
 void set_bullet_pos(struct bullet *bullet, GLfloat x, GLfloat y, GLfloat z)

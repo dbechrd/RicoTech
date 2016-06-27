@@ -1,6 +1,5 @@
 #include "rect.h"
 #include "util.h"
-#include "structs.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
@@ -18,7 +17,7 @@ int set_rect_program(const char *vertex_shader_filename,
         glDeleteProgram(rect_program);
     }
 
-    rect_program = make_program(vertex_shader_filename,
+    rect_program = orig_make_program(vertex_shader_filename,
                                 fragment_shader_filename);
     if (!rect_program)
     {
@@ -51,18 +50,18 @@ static void rebuild_vao(struct rect *rect)
     rect->vertices[0].z = rect->pos.z;
     rect->vertices[0].w = 1.0f;
 
-    rect->vertices[1].x = rect->pos.x + rect->w;
+    rect->vertices[1].x = rect->pos.x + rect->width;
     rect->vertices[1].y = rect->pos.y;
     rect->vertices[1].z = rect->pos.z;
     rect->vertices[1].w = 1.0f;
 
     rect->vertices[2].x = rect->pos.x;
-    rect->vertices[2].y = rect->pos.y + rect->h,
+    rect->vertices[2].y = rect->pos.y + rect->height,
     rect->vertices[2].z = rect->pos.z;
     rect->vertices[2].w = 1.0f;
 
-    rect->vertices[3].x = rect->pos.x + rect->w;
-    rect->vertices[3].y = rect->pos.y + rect->h,
+    rect->vertices[3].x = rect->pos.x + rect->width;
+    rect->vertices[3].y = rect->pos.y + rect->height,
     rect->vertices[3].z = rect->pos.z;
     rect->vertices[3].w = 1.0f;
 
@@ -96,26 +95,26 @@ static void rebuild_vao(struct rect *rect)
     rect->dirty_vao = false;
 }
 
-static void init_rect(struct rect *rect, struct vec4 bottom_left, GLfloat w,
-                      GLfloat h)
+static void init_rect(struct rect *rect, struct vec4 bottom_left, GLfloat width,
+                      GLfloat height)
 {
     rect->pos = bottom_left;
 
-    rect->w = w;
-    rect->h = h;
+    rect->width = width;
+    rect->height = height;
 
     rect->vao = 0;
     rect->dirty_vao = true;
     rebuild_vao(rect);
 }
 
-struct rect *make_rect(struct vec4 bottom_left, GLfloat w, GLfloat h)
+struct rect *make_rect(struct vec4 bottom_left, GLfloat width, GLfloat height)
 {
     struct rect *rect = malloc(sizeof(struct rect));
     if (!rect)
         return NULL;
 
-    init_rect(rect, bottom_left, w, h);
+    init_rect(rect, bottom_left, width, height);
 
     return rect;
 }
@@ -131,10 +130,10 @@ void free_rect(struct rect *rect)
     rect = NULL;
 }
 
-void set_rect_size(struct rect *rect, GLfloat w, GLfloat h, bool rebuild)
+void set_rect_size(struct rect *rect, GLfloat width, GLfloat height, bool rebuild)
 {
-    rect->w = w;
-    rect->h = h;
+    rect->width = width;
+    rect->height = height;
 
     if (rebuild)
         rebuild_vao(rect);
@@ -155,10 +154,10 @@ void set_rect_pos(struct rect *rect, GLfloat x, GLfloat y, GLfloat z,
         rect->dirty_vao = true;
 }
 
-void resize_rect(struct rect *rect, GLfloat w, GLfloat h, bool rebuild)
+void resize_rect(struct rect *rect, GLfloat width, GLfloat height, bool rebuild)
 {
-    rect->w = w;
-    rect->h = h;
+    rect->width = width;
+    rect->height = height;
     
     if (rebuild)
         rebuild_vao(rect);

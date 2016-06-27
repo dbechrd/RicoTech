@@ -1,10 +1,19 @@
 #ifndef SHADER_H
 #define SHADER_H
 
+#include "util.h"
 #include <GL/gl3w.h>
+#include <stdlib.h>
+#include <stdio.h>
 
-enum { SHADER_VERTEX, SHADER_FRAGMENT };
-
+/*************************************************************************
+| Shader types:
+|
+| GL_VERTEX_SHADER      Vertex shader.
+| GL_GEOMETRY_SHADER    Geometry shader.
+| GL_FRAGMENT_SHADER    Fragment shader.
+|
+*************************************************************************/
 static inline GLuint make_shader(const GLenum type, const char *filename)
 {
     GLint len;
@@ -33,6 +42,11 @@ static inline GLuint make_shader(const GLenum type, const char *filename)
     }
 
     return shader;
+}
+
+static inline void free_shader(GLuint shader)
+{
+    glDeleteShader(shader);
 }
 
 #endif // SHADER_H

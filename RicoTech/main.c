@@ -3,21 +3,21 @@
 //#define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
 #endif
 
+#include "const.h"
+#include "geom.h"
+#include "util.h"
+#include "glref.h"
+
 #include <GL/gl3w.h>
 #include <SDL/SDL.h>
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_ONLY_TGA
 #include "stb_image.h"
 
-#include "geom.h"
-#include "util.h"
-#include "structs.h"
-#include "glref.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
 
 int main(int argc, char *argv[])
 {
@@ -40,7 +40,8 @@ int main(int argc, char *argv[])
 
     //Initialize window
     SDL_Window *window = SDL_CreateWindow("Test Window", SDL_WINDOWPOS_CENTERED,
-                                          SDL_WINDOWPOS_CENTERED, 1024, 768,
+                                          SDL_WINDOWPOS_CENTERED,
+                                          SCREEN_W, SCREEN_H,
                                           SDL_WINDOW_OPENGL);
     SDL_GLContext context = SDL_GL_CreateContext(window);
 
@@ -105,20 +106,20 @@ int main(int argc, char *argv[])
     //// Test translate / scale order
     //mat5 scale = mat5_scale((struct vec4) { 10.0f, 11.0f, 12.0f, 1.0f });
     //mat5 trans = mat5_translate((struct vec4) { 2.f, 3.f, 4.f, 1.f });
-    //mat5 result = mat5_create_empty();
+    //mat5 result = make_mat5_empty();
     //
     //printf("Trans * Scale\n");
     //mat5_mul(trans, scale, result);
     //mat5_print(result);
 
-    mat5 a = mat5_create(
+    mat5 a = make_mat5(
         3.f, 2.f, 9.f, 6.f,
         9.f, 6.f, 3.f, 5.f,
         9.f, 7.f, 6.f, 5.f,
         1.f, 5.f, 3.f, 3.f
     );
 
-    mat5 b = mat5_create(
+    mat5 b = make_mat5(
         5.f, 1.f, 3.f, 2.f,
         1.f, 6.f, 4.f, 3.f,
         9.f, 2.f, 1.f, 4.f,
@@ -128,8 +129,8 @@ int main(int argc, char *argv[])
     //--------------------------------------------------------------------------
     //// Test old and new translate
     //struct vec4 trans = (struct vec4) { 2.0f, 3.0f, 4.0f };
-    //mat5 b = mat5_create_translate(trans);
-    //mat5 result = mat5_create_empty();
+    //mat5 b = make_mat5_translate(trans);
+    //mat5 result = make_mat5_empty();
     //
     //mat5_mul(a, b, result);
     //mat5_print(result);
@@ -141,8 +142,8 @@ int main(int argc, char *argv[])
     //--------------------------------------------------------------------------
     //// Test old and new scale
     //struct vec4 scale = (struct vec4) { 2.0f, 3.0f, 4.0f };
-    //mat5 b = mat5_create_scale(scale);
-    //mat5 result = mat5_create_empty();
+    //mat5 b = make_mat5_scale(scale);
+    //mat5 result = make_mat5_empty();
     //
     //mat5_mul(a, b, result);
     //mat5_print(result);
@@ -153,8 +154,8 @@ int main(int argc, char *argv[])
 
     //--------------------------------------------------------------------------
     //// Test rot x
-    //mat5 b = mat5_create_rotx(18);
-    //mat5 result = mat5_create_empty();
+    //mat5 b = make_mat5_rotx(18);
+    //mat5 result = make_mat5_empty();
     //
     //mat5_mul(a, b, result);
     //mat5_print(result);
@@ -165,8 +166,8 @@ int main(int argc, char *argv[])
 
     //--------------------------------------------------------------------------
     //// Test rot y
-    //mat5 b = mat5_create_roty(18);
-    //mat5 result = mat5_create_empty();
+    //mat5 b = make_mat5_roty(18);
+    //mat5 result = make_mat5_empty();
 
     //mat5_mul(a, b, result);
     //mat5_print(result);
@@ -177,8 +178,8 @@ int main(int argc, char *argv[])
 
     //--------------------------------------------------------------------------
     //// Test rot z
-    //mat5 b = mat5_create_rotz(18);
-    //mat5 result = mat5_create_empty();
+    //mat5 b = make_mat5_rotz(18);
+    //mat5 result = make_mat5_empty();
 
     //mat5_mul(a, b, result);
     //mat5_print(result);
@@ -203,6 +204,7 @@ int main(int argc, char *argv[])
     GLfloat view_trans_delta = 1.65f;
     struct vec4 view_trans_vel = { 0.0f, 0.0f, 0.0f, 1.0f };
     bool sprint = false;
+    bool fly = false;
 
     GLfloat view_scale_delta = 0.1f;
     struct vec4 view_scale_vel = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -233,8 +235,8 @@ int main(int argc, char *argv[])
                 int dy = windowEvent.motion.yrel;
                 //fprintf(stderr, "dx: %d dy: %d\n", dx, dy);
 
-                view_rot.x += dy * view_rot_delta;
-                view_rot.y += dx * view_rot_delta;
+                view_camera.rot.x += dy * view_rot_delta;
+                view_camera.rot.y += dx * view_rot_delta;
             }
             else if (windowEvent.type == SDL_KEYDOWN && !windowEvent.key.repeat)
             {
@@ -266,6 +268,10 @@ int main(int argc, char *argv[])
                 else if (windowEvent.key.keysym.sym == SDLK_s)
                 {
                     view_trans_vel.z -= view_trans_delta;
+                }
+                else if (windowEvent.key.keysym.sym == SDLK_f)
+                {
+                    fly = !fly;
                 }
                 else if (windowEvent.key.keysym.sym == SDLK_p)
                 {
@@ -341,13 +347,21 @@ int main(int argc, char *argv[])
         GLfloat dt = (float)(newTime - time) / 1000.0f;
         time = newTime;
 
-        GLfloat cos_head = cosf(view_rot.y * (float)M_PI / 180.0f);
-        GLfloat sin_head = sinf(view_rot.y * (float)M_PI / 180.0f);
+        GLfloat cos_head = cosf(view_camera.rot.y * (float)M_PI / 180.0f);
+        GLfloat sin_head = sinf(view_camera.rot.y * (float)M_PI / 180.0f);
 
         GLfloat view_dx = (view_trans_vel.x * cos_head
                          - view_trans_vel.z * sin_head) * dt;
+        GLfloat view_dy = view_trans_vel.y * dt;
         GLfloat view_dz = (view_trans_vel.z * cos_head
                          + view_trans_vel.x * sin_head) * dt;
+
+        if (fly)
+        {
+            view_dx *= 5.0f;
+            view_dy *= 5.0f;
+            view_dz *= 5.0f;
+        }
 
         if (sprint)
         {
@@ -355,9 +369,9 @@ int main(int argc, char *argv[])
             view_dz *= 2.0f;
         }
 
-        view_trans.x += view_dx;
-        view_trans.y += view_trans_vel.y * dt;
-        view_trans.z += view_dz;
+        view_camera.trans.x += view_dx;
+        view_camera.trans.y += view_dy;
+        view_camera.trans.z += view_dz;
 
         if (pause)
         {
@@ -369,13 +383,9 @@ int main(int argc, char *argv[])
             //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         }
 
-        //view_trans.x += view_trans_vel.x * dt;
-        //view_trans.y += view_trans_vel.y * dt;
-        //view_trans.z += view_trans_vel.z * dt;
-
-        view_scale.x += view_scale_vel.x * dt;
-        view_scale.y += view_scale_vel.y * dt;
-        view_scale.z += view_scale_vel.z * dt;
+        view_camera.scale.x += view_scale_vel.x * dt;
+        view_camera.scale.y += view_scale_vel.y * dt;
+        view_camera.scale.z += view_scale_vel.z * dt;
 
         //TODO: Gravity
 

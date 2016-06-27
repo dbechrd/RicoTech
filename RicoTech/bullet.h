@@ -13,7 +13,7 @@ struct bullet {
 struct bullet *make_bullet(struct rect *rect);
 void free_bullet(struct bullet *);
 
-void set_bullet_size(struct bullet *, GLfloat w, GLfloat h, GLfloat d);
+void set_bullet_size(struct bullet *, GLfloat width, GLfloat height, GLfloat d);
 void set_bullet_pos(struct bullet *, GLfloat x, GLfloat y, GLfloat z);
 void update_bullet(struct bullet *);
 void render_bullet(struct bullet *);

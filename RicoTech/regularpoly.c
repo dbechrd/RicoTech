@@ -11,7 +11,7 @@ static GLint regularpoly_prog_attrib_position = -1;
 int init_regularpoly_program(const char *vertex_shader_filename,
                              const char *fragment_shader_filename)
 {
-    regularpoly_program = make_program(
+    regularpoly_program = orig_make_program(
         vertex_shader_filename,
         fragment_shader_filename
     );

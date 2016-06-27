@@ -47,11 +47,11 @@
     <ClCompile Include="program.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="texture.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="structs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="geom.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -82,6 +82,12 @@
     <ClInclude Include="shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="const.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="texture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="hello1.tga">
@@ -110,10 +116,10 @@
     <None Include="rotation.v.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="default_frag.glsl">
+    <None Include="default.frag.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="default_vert.glsl">
+    <None Include="default.vert.glsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

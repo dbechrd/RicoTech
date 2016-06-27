@@ -273,7 +273,7 @@ GLuint orig_make_program(const char *vertex_shader_filename,
 {
     GLint program_ok;
 
-    GLuint vertex_shader = make_shader(GL_VERTEX_SHADER,
+    GLuint vertex_shader = orig_make_shader(GL_VERTEX_SHADER,
                                        vertex_shader_filename);
     if (!vertex_shader)
     {
@@ -281,7 +281,7 @@ GLuint orig_make_program(const char *vertex_shader_filename,
         return 0;
     }
 
-    GLuint fragment_shader = make_shader(GL_FRAGMENT_SHADER, 
+    GLuint fragment_shader = orig_make_shader(GL_FRAGMENT_SHADER,
                                          fragment_shader_filename);
     if (!fragment_shader)
     {

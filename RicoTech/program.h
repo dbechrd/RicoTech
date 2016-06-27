@@ -4,64 +4,41 @@
 #include "shader.h"
 #include <GL/gl3w.h>
 
+//--------------------------------------------------------------------------
+// General-purpose
+//--------------------------------------------------------------------------
+
+//Cleanup: I don't think there's any reason to make these globally accessible
+
+//static inline GLuint make_program(GLuint vertex_shader, GLuint fragment_shader);
+//static inline void free_program(GLuint program);
+//
+//static inline GLint program_get_attrib_location(GLuint program,
+//                                                const char* name);
+//static inline GLint program_get_uniform_location(GLuint program,
+//                                                 const char* name);
+
+//--------------------------------------------------------------------------
+// Default program
+//--------------------------------------------------------------------------
+
 struct program_default {
     GLuint program;
 
-    GLint uniform_time;  //float
-    GLint uniform_model; //mat4
-    GLint uniform_view;  //mat4
-    GLint uniform_proj;  //mat4
-    GLint uniform_tex;   //sampler2D
-                         
-    GLint vertex_pos;    //vec4
-    GLint vertex_col;    //vec4
-    GLint vertex_uv;     //vec2
+    //TODO: Don't set these from outside, create wrapper methods to enforce type
+    GLint u_time;     //float
+    GLint u_scale_uv; //vec4
+    GLint u_model;    //mat4
+    GLint u_view;     //mat4
+    GLint u_proj;     //mat4
+    GLint u_tex;      //sampler2D
+
+    GLint vert_pos;   //vec4
+    GLint vert_col;   //vec4
+    GLint vert_uv;    //vec2
 };
 
-static inline GLuint make_program(GLuint vertex_shader, GLuint fragment_shader)
-{
-    GLint status;
-    GLuint program = glCreateProgram();
-
-    glAttachShader(program, vertex_shader);
-    glAttachShader(program, fragment_shader);
-    glLinkProgram(program);
-
-    glDetachShader(program, vertex_shader);
-    glDetachShader(program, fragment_shader);
-
-    glDeleteShader(vertex_shader);
-    glDeleteShader(fragment_shader);
-
-    glGetProgramiv(program, GL_LINK_STATUS, &status);
-    if (!status)
-    {
-        fprintf(stderr, "Failed to link shader program:\n");
-        show_info_log(program, glGetProgramiv, glGetProgramInfoLog);
-        glDeleteProgram(program);
-        return 0;
-    }
-
-    return program;
-}
-
-static inline struct program_default program_default_locations(GLuint program)
-{
-    struct program_default loc;
-
-    loc.program = program;
-
-    loc.uniform_time = glGetUniformLocation(program, "u_time");
-    loc.uniform_model = glGetUniformLocation(program, "u_model");
-    loc.uniform_view = glGetUniformLocation(program, "u_view");
-    loc.uniform_proj = glGetUniformLocation(program, "u_proj");
-    loc.uniform_tex = glGetUniformLocation(program, "u_tex");
-
-    loc.vertex_pos = glGetAttribLocation(program, "vert_pos");
-    loc.vertex_col = glGetAttribLocation(program, "vert_col");
-    loc.vertex_uv = glGetAttribLocation(program, "vert_uv");
-
-    return loc;
-}
+struct program_default *make_program_default();
+void free_program_default(struct program_default **program);
 
 #endif // PROGRAM_H
