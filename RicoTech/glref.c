@@ -232,6 +232,7 @@ void update_glref(GLfloat dt)
     bleh.x = 5;
 
     glUniformMatrix4fv(prog_default->u_view, 1, GL_FALSE, view_matrix);
+    free_mat5(&view_matrix);
 
     glUseProgram(0);
 }
@@ -260,7 +261,8 @@ void render_glref()
         mat5_rotx(model_matrix, -90.0f);
         mat5_scale(model_matrix, (struct vec4) { 64.0f, 64.0f, 1.0f });
         glUniformMatrix4fv(prog_default->u_model, 1, GL_FALSE, model_matrix);
-    
+        free_mat5(&model_matrix);
+
         // Model texture
         // Note: We don't have to do this every time as long as we make sure
         //       the correct textures are bound before each draw to the texture
@@ -294,7 +296,8 @@ void render_glref()
         mat5_translate(model_matrix, (struct vec4) { 0.0f, 1.0f, -3.0f });
         //mat5_scale(model_matrix, (struct vec4) { 1.0f, 1.0f, 1.0f });
         glUniformMatrix4fv(prog_default->u_model, 1, GL_FALSE, model_matrix);
-    
+        free_mat5(&model_matrix);
+
         // Model texture
         // Note: We don't have to do this every time as long as we make sure
         //       the correct textures are bound before each draw to the texture
@@ -302,7 +305,7 @@ void render_glref()
         //glUniform1i(prog_default->u_tex, 0);
 
         // UV-coord scale
-        uv_scale = (struct tex2) { 2.0f, 2.0f };
+        uv_scale = (struct tex2) { 1.0f, 1.0f };
         glUniform2f(prog_default->u_scale_uv, uv_scale.u, uv_scale.v);
 
         // Bind texture(s)
@@ -313,6 +316,76 @@ void render_glref()
         glBindVertexArray(vao);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
+
+    //--------------------------------------------------------------------------
+    // Walls, because I can
+    //--------------------------------------------------------------------------
+
+        glBindVertexArray(vao);
+
+        // Bind texture
+        glBindTexture(tex_default->target, tex_default->texture);
+
+        // UV-coord scale
+        uv_scale = (struct tex2) { 8.0f, 2.5f };
+        glUniform2f(prog_default->u_scale_uv, uv_scale.u, uv_scale.v);
+
+    //--------------------------------------------------------------------------
+
+        // Model transform
+        model_matrix = make_mat5_ident();
+        mat5_translate(model_matrix, (struct vec4) { 0.0f, 2.5f, -8.0f });
+        mat5_scale(model_matrix, (struct vec4) { 8.0f, 2.5f, 1.0f });
+        glUniformMatrix4fv(prog_default->u_model, 1, GL_FALSE, model_matrix);
+        free_mat5(&model_matrix);
+
+        // Draw
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+    //--------------------------------------------------------------------------
+
+        // Model transform
+        model_matrix = make_mat5_ident();
+        mat5_translate(model_matrix, (struct vec4) { -8.0f, 2.5f, 0.0f });
+        mat5_roty(model_matrix, 90.0f);
+        mat5_scale(model_matrix, (struct vec4) { 8.0f, 2.5f, 1.0f });
+        glUniformMatrix4fv(prog_default->u_model, 1, GL_FALSE, model_matrix);
+        free_mat5(&model_matrix);
+
+        // Draw
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+    //--------------------------------------------------------------------------
+
+        // Model transform
+        model_matrix = make_mat5_ident();
+        mat5_translate(model_matrix, (struct vec4) { 0.0f, 2.5f, 8.0f });
+        mat5_roty(model_matrix, 180.0f);
+        mat5_scale(model_matrix, (struct vec4) { 8.0f, 2.5f, 1.0f });
+        glUniformMatrix4fv(prog_default->u_model, 1, GL_FALSE, model_matrix);
+        free_mat5(&model_matrix);
+
+        // Draw
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+    //--------------------------------------------------------------------------
+
+        // Model transform
+        model_matrix = make_mat5_ident();
+        mat5_translate(model_matrix, (struct vec4) { 8.0f, 2.5f, 0.0f });
+        mat5_roty(model_matrix, -90.0f);
+        mat5_scale(model_matrix, (struct vec4) { 8.0f, 2.5f, 1.0f });
+        glUniformMatrix4fv(prog_default->u_model, 1, GL_FALSE, model_matrix);
+        free_mat5(&model_matrix);
+
+        // Draw
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+    //--------------------------------------------------------------------------
+
+        glBindVertexArray(0);
+
+    //--------------------------------------------------------------------------
 
     glUseProgram(0);
     glBindTexture(tex_default->target, 0);
@@ -329,6 +402,7 @@ void render_glref()
         mat5_translate(model_matrix, (struct vec4) { 0.0f, 1.0f, -4.0f });
         mat5_roty(model_matrix, 30.0f);
         glUniformMatrix4fv(prog_default->u_model, 1, GL_FALSE, model_matrix);
+        free_mat5(&model_matrix);
 
         // Model texture
         // Note: We don't have to do this every time as long as we make sure
@@ -366,5 +440,7 @@ void free_glref()
     glDeleteVertexArrays(1, &vao);
 
     free_texture(&tex_default);
+    free_texture(&tex_hello1);
+    free_texture(&tex_grass);
     free_program_default(&prog_default);
 }
