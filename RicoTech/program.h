@@ -23,7 +23,7 @@
 //--------------------------------------------------------------------------
 
 struct program_default {
-    GLuint program;
+    GLuint prog_id;
 
     //TODO: Don't set these from outside, create wrapper methods to enforce type
     GLint u_time;     //float

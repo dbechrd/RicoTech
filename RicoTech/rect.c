@@ -110,7 +110,7 @@ static void init_rect(struct rect *rect, struct vec4 bottom_left, GLfloat width,
 
 struct rect *make_rect(struct vec4 bottom_left, GLfloat width, GLfloat height)
 {
-    struct rect *rect = malloc(sizeof(struct rect));
+    struct rect *rect = calloc(1, sizeof(struct rect));
     if (!rect)
         return NULL;
 

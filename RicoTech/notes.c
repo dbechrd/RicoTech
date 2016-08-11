@@ -103,4 +103,7 @@ void notes()
     glEnableVertexAttribArray(ccc);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eee);
 
+    //Note: Setting vec4 W component to 0.0f makes a mesh ignore the camera
+    //      and be rendered relative to the viewport. This might be useful for
+    //      effects like a skybox.
 }

@@ -7,7 +7,7 @@ struct texture *make_texture(GLenum target, const char *filename)
 {
     struct texture *tex;
 
-    tex = (struct texture *)malloc(sizeof(struct texture));
+    tex = (struct texture *)calloc(1, sizeof(struct texture));
 
     tex->target = target;
 

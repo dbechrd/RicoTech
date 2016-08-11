@@ -1,6 +1,7 @@
 #ifndef GEOM_H
 #define GEOM_H
 
+#include "program.h"
 #include <GL/gl3w.h>
 #include <malloc.h>
 #include <math.h>
@@ -15,9 +16,22 @@
 #define M_2PI 6.28318530717958647692528676655900576
 #endif
 
+#ifndef BBOX_EPSILON
+#define BBOX_EPSILON 0.001f
+#endif
+
 struct col4 {
     GLfloat r, g, b, a; //TODO: Is a, r, g, b better?
 };
+
+static struct col4 COLOR_BLACK   = { 0.0f, 0.0f, 0.0f, 1.0f };
+static struct col4 COLOR_RED     = { 1.0f, 0.0f, 0.0f, 1.0f };
+static struct col4 COLOR_GREEN   = { 0.0f, 1.0f, 0.0f, 1.0f };
+static struct col4 COLOR_BLUE    = { 0.0f, 0.0f, 1.0f, 1.0f };
+static struct col4 COLOR_YELLOW  = { 1.0f, 1.0f, 0.0f, 1.0f };
+static struct col4 COLOR_CYAN    = { 0.0f, 1.0f, 1.0f, 1.0f };
+static struct col4 COLOR_MAGENTA = { 1.0f, 0.0f, 1.0f, 1.0f };
+static struct col4 COLOR_WHITE   = { 1.0f, 1.0f, 1.0f, 1.0f };
 
 struct tex2 {
     GLfloat u, v;
@@ -85,86 +99,6 @@ struct vertex {
     struct col4 col;
     struct tex2 tex;
 };
-
-////////////////////////////////////////////////////////////////////////////////
-
-struct bbox {
-    struct vec4 p0;
-    struct vec4 p1;
-};
-
-static inline struct bbox *make_bbox(const struct vec4 p0, const struct vec4 p1)
-{
-    struct bbox *bbox = (struct bbox *)malloc(sizeof(struct bbox));
-    bbox->p0 = p0;
-    bbox->p1 = p1;
-    return bbox;
-}
-
-static inline struct bbox *make_bbox_mesh(const struct vertex *verts,
-                                          int count)
-{
-    struct vec4 p0 = (struct vec4) { 9999.0f, 9999.0f, 9999.0f };
-    struct vec4 p1 = (struct vec4) { -9999.0f, -9999.0f, -9999.0f };
-
-    // Find bounds of mesh
-    for (int i = 0; i < count; ++i)
-    {
-        if (verts[i].pos.x < p0.x)
-            p0.x = verts[i].pos.x;
-        else if (verts[i].pos.x > p1.x)
-            p1.x = verts[i].pos.x;
-
-        if (verts[i].pos.y < p0.y)
-            p0.y = verts[i].pos.y;
-        else if (verts[i].pos.y > p1.y)
-            p1.y = verts[i].pos.y;
-
-        if (verts[i].pos.z < p0.z)
-            p0.z = verts[i].pos.z;
-        else if (verts[i].pos.z > p1.z)
-            p1.z = verts[i].pos.z;
-    }
-
-    // Prevent infinitesimally small bounds
-    if (p0.x == p1.x)
-    {
-        p0.x -= 0.01f;
-        p1.x += 0.01f;
-    }
-    if (p0.y == p1.y)
-    {
-        p0.y -= 0.01f;
-        p1.y += 0.01f;
-    }
-    if (p0.z == p1.z)
-    {
-        p0.z -= 0.01f;
-        p1.z += 0.01f;
-    }
-
-    return make_bbox(p0, p1);
-}
-
-static inline bool bbox_intersects(const struct bbox *a, const struct bbox *b)
-{
-    if (a->p1.x < b->p0.x) return false;
-    if (b->p1.x < a->p0.x) return false;
-    
-    if (a->p1.y < b->p0.y) return false;
-    if (b->p1.y < a->p0.y) return false;
-    
-    if (a->p1.z < b->p0.z) return false;
-    if (b->p1.z < a->p0.z) return false;
-
-    return true;
-}
-
-static inline void free_bbox(struct bbox **bbox)
-{
-    free(*bbox);
-    *bbox = NULL;
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -532,5 +466,104 @@ static inline void free_mat5(mat5 *m)
     free(*m);
     *m = NULL;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+struct bbox {
+    struct program_default *program;
+    struct vertex vertices[8];
+    //struct vec4 p0;
+    //struct vec4 p1;
+
+    //TODO: Make BBox shader program that takes color as uniform?
+    struct col4 color;
+};
+
+void bbox_init(const struct bbox *box);
+void bbox_render(const struct bbox *box, mat5 model_matrix);
+
+static inline struct bbox *make_bbox(const struct vec4 p0, const struct vec4 p1,
+                                     const struct col4 color)
+{
+    struct bbox *bbox = (struct bbox *)calloc(1, sizeof(struct bbox));
+    bbox->program = make_program_default();
+    bbox->vertices[0] = (struct vertex) { (struct vec4) { p0.x, p0.y, p0.z, 1.0f }, COLOR_BLACK, (struct tex2) { 0.0f, 1.0f } };
+    bbox->vertices[1] = (struct vertex) { (struct vec4) { p1.x, p0.y, p0.z, 1.0f }, COLOR_RED, (struct tex2) { 0.0f, 1.0f } };
+    bbox->vertices[2] = (struct vertex) { (struct vec4) { p1.x, p1.y, p0.z, 1.0f }, COLOR_YELLOW, (struct tex2) { 0.0f, 1.0f } };
+    bbox->vertices[3] = (struct vertex) { (struct vec4) { p0.x, p1.y, p0.z, 1.0f }, COLOR_GREEN, (struct tex2) { 0.0f, 1.0f } };
+    bbox->vertices[4] = (struct vertex) { (struct vec4) { p0.x, p0.y, p1.z, 1.0f }, COLOR_BLUE, (struct tex2) { 0.0f, 1.0f } };
+    bbox->vertices[5] = (struct vertex) { (struct vec4) { p1.x, p0.y, p1.z, 1.0f }, COLOR_MAGENTA, (struct tex2) { 0.0f, 1.0f } };
+    bbox->vertices[6] = (struct vertex) { (struct vec4) { p1.x, p1.y, p1.z, 1.0f }, COLOR_WHITE, (struct tex2) { 0.0f, 1.0f } };
+    bbox->vertices[7] = (struct vertex) { (struct vec4) { p0.x, p1.y, p1.z, 1.0f }, COLOR_CYAN, (struct tex2) { 0.0f, 1.0f } };
+    bbox->color = color;
+    return bbox;
+}
+
+static inline struct bbox *make_bbox_mesh(const struct vertex *verts,
+                                          int count)
+{
+    struct vec4 p0 = (struct vec4) { 9999.0f, 9999.0f, 9999.0f };
+    struct vec4 p1 = (struct vec4) { -9999.0f, -9999.0f, -9999.0f };
+
+    // Find bounds of mesh
+    for (int i = 0; i < count; ++i)
+    {
+        if (verts[i].pos.x < p0.x)
+            p0.x = verts[i].pos.x;
+        else if (verts[i].pos.x > p1.x)
+            p1.x = verts[i].pos.x;
+
+        if (verts[i].pos.y < p0.y)
+            p0.y = verts[i].pos.y;
+        else if (verts[i].pos.y > p1.y)
+            p1.y = verts[i].pos.y;
+
+        if (verts[i].pos.z < p0.z)
+            p0.z = verts[i].pos.z;
+        else if (verts[i].pos.z > p1.z)
+            p1.z = verts[i].pos.z;
+    }
+
+    // Prevent infinitesimally small bounds
+    if (p0.x == p1.x)
+    {
+        p0.x -= BBOX_EPSILON;
+        p1.x += BBOX_EPSILON;
+    }
+    if (p0.y == p1.y)
+    {
+        p0.y -= BBOX_EPSILON;
+        p1.y += BBOX_EPSILON;
+    }
+    if (p0.z == p1.z)
+    {
+        p0.z -= BBOX_EPSILON;
+        p1.z += BBOX_EPSILON;
+    }
+
+    return make_bbox(p0, p1, COLOR_RED);
+}
+
+static inline bool bbox_intersects(const struct bbox *a, const struct bbox *b)
+{
+    if (a->vertices[7].pos.x < b->vertices[0].pos.x) return false;
+    if (b->vertices[7].pos.x < a->vertices[0].pos.x) return false;
+
+    if (a->vertices[7].pos.y < b->vertices[0].pos.y) return false;
+    if (b->vertices[7].pos.y < a->vertices[0].pos.y) return false;
+
+    if (a->vertices[7].pos.z < b->vertices[0].pos.z) return false;
+    if (b->vertices[7].pos.z < a->vertices[0].pos.z) return false;
+
+    return true;
+}
+
+static inline void free_bbox(struct bbox **bbox)
+{
+    free(*bbox);
+    *bbox = NULL;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 #endif

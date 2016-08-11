@@ -3,7 +3,7 @@
 
 struct bullet *make_bullet(struct rect *rect)
 {
-    struct bullet *bullet = malloc(sizeof(struct bullet));
+    struct bullet *bullet = calloc(1, sizeof(struct bullet));
 
     bullet->rect = rect;
 

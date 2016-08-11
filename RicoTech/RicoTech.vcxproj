@@ -155,40 +155,6 @@
     <ClInclude Include="texture.h" />
     <ClInclude Include="util.h" />
   </ItemGroup>
-  <ItemGroup>
-    <Image Include="basic.tga" />
-    <Image Include="hello1.tga">
-      <DeploymentContent>true</DeploymentContent>
-    </Image>
-    <Image Include="hello2.tga">
-      <DeploymentContent>true</DeploymentContent>
-    </Image>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="default.frag.glsl">
-      <DeploymentContent>true</DeploymentContent>
-    </None>
-    <None Include="default.vert.glsl">
-      <DeploymentContent>true</DeploymentContent>
-    </None>
-    <None Include="durian.f.glsl">
-      <DeploymentContent>true</DeploymentContent>
-      <FileType>Document</FileType>
-    </None>
-    <None Include="durian.v.glsl">
-      <DeploymentContent>true</DeploymentContent>
-      <FileType>Document</FileType>
-    </None>
-    <None Include="poly.f.glsl">
-      <DeploymentContent>true</DeploymentContent>
-      <FileType>Document</FileType>
-    </None>
-    <None Include="poly.v.glsl">
-      <DeploymentContent>true</DeploymentContent>
-      <FileType>Document</FileType>
-    </None>
-    <None Include="rotation.v.glsl" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -131,7 +131,7 @@ void init_glref()
     //                sizeof(new_subelement), &new_subelement);
 
     //--------------------------------------------------------------------------
-    glUseProgram(prog_default->program);
+    glUseProgram(prog_default->prog_id);
 
     //--------------------------------------------------------------------------
     // Get vertex shader attribute locations and set pointers (size/type/stride)
@@ -147,7 +147,7 @@ void init_glref()
 
     if (prog_default->vert_col >= 0)
     {
-        glVertexAttribPointer(prog_default->vert_col, 3, GL_FLOAT, GL_FALSE,
+        glVertexAttribPointer(prog_default->vert_col, 4, GL_FLOAT, GL_FALSE,
                                 10 * sizeof(GL_FLOAT),
                                 (GLvoid *)(4 * sizeof(GL_FLOAT)));
         glEnableVertexAttribArray(prog_default->vert_col);
@@ -192,7 +192,11 @@ void init_glref()
     
     //TODO: Apply model transformations to bounding box
     obj_bbox = make_bbox_mesh(vertices, VERT_COUNT);
-    free_bbox(&obj_bbox);
+    //obj_bbox = make_bbox(
+    //    (struct vec4) { -0.1f, 1.0f, -0.2f },
+    //    (struct vec4) {  0.1f, 1.2f, -0.3f },
+    //    (struct col4) { 1.0f, 0.0f, 0.0f, 1.0f });
+    bbox_init(obj_bbox);
 }
 
 void update_glref(GLfloat dt)
@@ -215,7 +219,7 @@ void update_glref(GLfloat dt)
     |
     *************************************************************************/
 
-    glUseProgram(prog_default->program);
+    glUseProgram(prog_default->prog_id);
 
     //Delta time
     glUniform1f(prog_default->u_time, dt);
@@ -227,9 +231,6 @@ void update_glref(GLfloat dt)
     mat5_roty(view_matrix, view_camera.rot.y);
     mat5_rotz(view_matrix, view_camera.rot.z);
     mat5_translate(view_matrix, view_camera.trans);
-
-    struct vec4 bleh = view_camera.trans;
-    bleh.x = 5;
 
     glUniformMatrix4fv(prog_default->u_view, 1, GL_FALSE, view_matrix);
     free_mat5(&view_matrix);
@@ -253,7 +254,7 @@ void render_glref()
     // Ground object
     //--------------------------------------------------------------------------
 
-    glUseProgram(prog_default->program);
+    glUseProgram(prog_default->prog_id);
 
         // Model transform
         model_matrix = make_mat5_ident();
@@ -289,7 +290,7 @@ void render_glref()
     // Ruler object
     //--------------------------------------------------------------------------
 
-    glUseProgram(prog_default->program);
+    glUseProgram(prog_default->prog_id);
 
         // Model transform
         model_matrix = make_mat5_ident();
@@ -394,7 +395,7 @@ void render_glref()
     // Hello object
     //--------------------------------------------------------------------------
 
-    glUseProgram(prog_default->program);
+    glUseProgram(prog_default->prog_id);
 
         // Model transform
         model_matrix = make_mat5_ident();
@@ -402,7 +403,6 @@ void render_glref()
         mat5_translate(model_matrix, (struct vec4) { 0.0f, 1.0f, -4.0f });
         mat5_roty(model_matrix, 30.0f);
         glUniformMatrix4fv(prog_default->u_model, 1, GL_FALSE, model_matrix);
-        free_mat5(&model_matrix);
 
         // Model texture
         // Note: We don't have to do this every time as long as we make sure
@@ -426,6 +426,9 @@ void render_glref()
     glUseProgram(0);
     glBindTexture(tex_default->target, 0);
 
+    bbox_render(obj_bbox, model_matrix);
+    free_mat5(&model_matrix);
+
     // Clean up
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -443,4 +446,5 @@ void free_glref()
     free_texture(&tex_hello1);
     free_texture(&tex_grass);
     free_program_default(&prog_default);
+    free_bbox(&obj_bbox);
 }

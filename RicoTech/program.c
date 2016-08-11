@@ -69,57 +69,60 @@ static inline GLint program_get_uniform_location(GLuint program,
 // Default program
 //==============================================================================
 
+static struct program_default *prog_default = NULL;
+
 static inline void program_default_get_locations(struct program_default *p)
 {
     // Get uniform locations
-    (*p).u_time = program_get_uniform_location((*p).program, "u_time");
-    (*p).u_scale_uv = program_get_uniform_location((*p).program, "u_scale_uv");
-    (*p).u_model = program_get_uniform_location((*p).program, "u_model");
-    (*p).u_view = program_get_uniform_location((*p).program, "u_view");
-    (*p).u_proj = program_get_uniform_location((*p).program, "u_proj");
-    (*p).u_tex = program_get_uniform_location((*p).program, "u_tex");
+    (*p).u_time = program_get_uniform_location((*p).prog_id, "u_time");
+    (*p).u_scale_uv = program_get_uniform_location((*p).prog_id, "u_scale_uv");
+    (*p).u_model = program_get_uniform_location((*p).prog_id, "u_model");
+    (*p).u_view = program_get_uniform_location((*p).prog_id, "u_view");
+    (*p).u_proj = program_get_uniform_location((*p).prog_id, "u_proj");
+    (*p).u_tex = program_get_uniform_location((*p).prog_id, "u_tex");
     
     // Get vertex attribute locations
-    (*p).vert_pos = program_get_attrib_location((*p).program, "vert_pos");
-    (*p).vert_col = program_get_attrib_location((*p).program, "vert_col");
-    (*p).vert_uv = program_get_attrib_location((*p).program, "vert_uv");
+    (*p).vert_pos = program_get_attrib_location((*p).prog_id, "vert_pos");
+    (*p).vert_col = program_get_attrib_location((*p).prog_id, "vert_col");
+    (*p).vert_uv = program_get_attrib_location((*p).prog_id, "vert_uv");
 }
 
 struct program_default *make_program_default()
 {
-    struct program_default *prog_default = NULL;
+    if (prog_default != NULL)
+        return prog_default;
+
+    GLuint vshader = 0;
+    GLuint fshader = 0;
+    GLuint program = 0;
 
     // Compile shaders
-    GLuint vshader = make_shader(GL_VERTEX_SHADER, "default.vert.glsl");
-    if (!vshader) goto err_vert;
+    vshader = make_shader(GL_VERTEX_SHADER, "default.vert.glsl");
+    if (!vshader) goto cleanup;
 
-    GLuint fshader = make_shader(GL_FRAGMENT_SHADER, "default.frag.glsl");
-    if (!fshader) goto err_frag;
+    fshader = make_shader(GL_FRAGMENT_SHADER, "default.frag.glsl");
+    if (!fshader) goto cleanup;
     
     // Link shader program
-    GLuint program = make_program(vshader, fshader);
-    if (!program) goto err_prog;
+    program = make_program(vshader, fshader);
+    if (!program) goto cleanup;
 
     // Create default program object
     prog_default =
-        (struct program_default *)malloc(sizeof(struct program_default));
+        (struct program_default *)calloc(1, sizeof(struct program_default));
 
-    prog_default->program = program;
+    prog_default->prog_id = program;
     program_default_get_locations(prog_default);
 
-    vshader = 0;
-
-err_prog:
+cleanup:
     free_shader(fshader);
-err_frag:
     free_shader(vshader);
-err_vert:
     return prog_default;
 }
 
 void free_program_default(struct program_default **program)
 {
-    glDeleteProgram((*program)->program);
+    glDeleteProgram((*program)->prog_id);
     free(*program);
     *program = NULL;
 

@@ -7,7 +7,7 @@ struct mesh *make_mesh(const struct mesh_vertex *vertex_data,
                        GLsizei element_count,
                        GLenum hint)
 {
-    struct mesh *mesh = malloc(sizeof(struct mesh));
+    struct mesh *mesh = calloc(1, sizeof(struct mesh));
 
     glGenBuffers(1, &mesh->vertex_buffer);
     glGenBuffers(1, &mesh->element_buffer);

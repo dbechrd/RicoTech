@@ -46,7 +46,10 @@ static inline GLuint make_shader(const GLenum type, const char *filename)
 
 static inline void free_shader(GLuint shader)
 {
-    glDeleteShader(shader);
+    if (shader)
+    {
+        glDeleteShader(shader);
+    }
 }
 
 #endif // SHADER_H

@@ -82,14 +82,14 @@ static void rebuild_vao(struct regularpoly *poly)
 struct regularpoly *make_regularpoly(struct vec4 center, GLfloat radius,
                                      unsigned int vertex_count)
 {
-    struct regularpoly *poly = malloc(sizeof(struct regularpoly));
+    struct regularpoly *poly = calloc(1, sizeof(struct regularpoly));
     if (!poly)
         return NULL;
 
     poly->pos = center;
     poly->radius = radius;
 
-    poly->vertices = malloc(sizeof(struct vec4) * vertex_count);
+    poly->vertices = calloc(1, sizeof(struct vec4) * vertex_count);
     poly->count = vertex_count;
 
     poly->vao = 0;
