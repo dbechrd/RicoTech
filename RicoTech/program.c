@@ -107,7 +107,7 @@ struct program_default *make_program_default()
     program = make_program(vshader, fshader);
     if (!program) goto cleanup;
 
-    // Create default program object
+    // Create program object
     prog_default =
         (struct program_default *)calloc(1, sizeof(struct program_default));
 
@@ -125,17 +125,62 @@ void free_program_default(struct program_default **program)
     glDeleteProgram((*program)->prog_id);
     free(*program);
     *program = NULL;
+}
 
-    // No need to zero memory if we're storing program as a pointer
-    //(*program).program = PROGRAM_NULL;
-    //
-    //(*program).uniform_time = LOCATION_NULL;
-    //(*program).uniform_model = LOCATION_NULL;
-    //(*program).uniform_view = LOCATION_NULL;
-    //(*program).uniform_proj = LOCATION_NULL;
-    //(*program).uniform_tex = LOCATION_NULL;
-    //
-    //(*program).vertex_pos = LOCATION_NULL;
-    //(*program).vertex_col = LOCATION_NULL;
-    //(*program).vertex_uv = LOCATION_NULL;
+//==============================================================================
+// BBox program
+//==============================================================================
+
+static struct program_bbox *prog_bbox = NULL;
+
+static inline void program_bbox_get_locations(struct program_bbox *p)
+{
+    // Get uniform locations
+    (*p).u_model = program_get_uniform_location((*p).prog_id, "u_model");
+    (*p).u_view = program_get_uniform_location((*p).prog_id, "u_view");
+    (*p).u_proj = program_get_uniform_location((*p).prog_id, "u_proj");
+    (*p).u_color = program_get_uniform_location((*p).prog_id, "u_color");
+
+    // Get vertex attribute locations
+    (*p).vert_pos = program_get_attrib_location((*p).prog_id, "vert_pos");
+}
+
+struct program_bbox *make_program_bbox()
+{
+    if (prog_bbox != NULL)
+        return prog_bbox;
+
+    GLuint vshader = 0;
+    GLuint fshader = 0;
+    GLuint program = 0;
+
+    // Compile shaders
+    vshader = make_shader(GL_VERTEX_SHADER, "bbox.vert.glsl");
+    if (!vshader) goto cleanup;
+
+    fshader = make_shader(GL_FRAGMENT_SHADER, "bbox.frag.glsl");
+    if (!fshader) goto cleanup;
+
+    // Link shader program
+    program = make_program(vshader, fshader);
+    if (!program) goto cleanup;
+
+    // Create program object
+    prog_bbox =
+        (struct program_bbox *)calloc(1, sizeof(struct program_bbox));
+
+    prog_bbox->prog_id = program;
+    program_bbox_get_locations(prog_bbox);
+
+cleanup:
+    free_shader(fshader);
+    free_shader(vshader);
+    return prog_bbox;
+}
+
+void free_program_bbox(struct program_bbox **program)
+{
+    glDeleteProgram((*program)->prog_id);
+    free(*program);
+    *program = NULL;
 }

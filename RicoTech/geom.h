@@ -17,7 +17,7 @@
 #endif
 
 #ifndef BBOX_EPSILON
-#define BBOX_EPSILON 0.001f
+#define BBOX_EPSILON 0.1f
 #endif
 
 struct col4 {
@@ -98,6 +98,10 @@ struct vertex {
     struct vec4 pos;
     struct col4 col;
     struct tex2 tex;
+};
+
+struct vertex_bbox {
+    struct vec4 pos;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -384,6 +388,8 @@ static inline mat5 make_mat5_perspective(float width, float height,
     return proj_matrix;
 }
 
+//TODO: const GLfloat *foo[4] or something?? Second dimension doesn't decay.
+
 //This is about twice as fast as the loop version (~15ns vs. 30ns)
 static inline void mat5_mul(const mat5 a, const mat5 b, mat5 result)
 {
@@ -470,8 +476,8 @@ static inline void free_mat5(mat5 *m)
 ////////////////////////////////////////////////////////////////////////////////
 
 struct bbox {
-    struct program_default *program;
-    struct vertex vertices[8];
+    struct program_bbox *program;
+    struct vertex_bbox vertices[8];
     //struct vec4 p0;
     //struct vec4 p1;
 
@@ -482,25 +488,26 @@ struct bbox {
 void bbox_init(const struct bbox *box);
 void bbox_render(const struct bbox *box, mat5 model_matrix);
 
-static inline struct bbox *make_bbox(const struct vec4 p0, const struct vec4 p1,
-                                     const struct col4 color)
+static inline struct bbox *make_bbox(struct vec4 p0, struct vec4 p1,
+                                     struct col4 color)
 {
     struct bbox *bbox = (struct bbox *)calloc(1, sizeof(struct bbox));
-    bbox->program = make_program_default();
-    bbox->vertices[0] = (struct vertex) { (struct vec4) { p0.x, p0.y, p0.z, 1.0f }, COLOR_BLACK, (struct tex2) { 0.0f, 1.0f } };
-    bbox->vertices[1] = (struct vertex) { (struct vec4) { p1.x, p0.y, p0.z, 1.0f }, COLOR_RED, (struct tex2) { 0.0f, 1.0f } };
-    bbox->vertices[2] = (struct vertex) { (struct vec4) { p1.x, p1.y, p0.z, 1.0f }, COLOR_YELLOW, (struct tex2) { 0.0f, 1.0f } };
-    bbox->vertices[3] = (struct vertex) { (struct vec4) { p0.x, p1.y, p0.z, 1.0f }, COLOR_GREEN, (struct tex2) { 0.0f, 1.0f } };
-    bbox->vertices[4] = (struct vertex) { (struct vec4) { p0.x, p0.y, p1.z, 1.0f }, COLOR_BLUE, (struct tex2) { 0.0f, 1.0f } };
-    bbox->vertices[5] = (struct vertex) { (struct vec4) { p1.x, p0.y, p1.z, 1.0f }, COLOR_MAGENTA, (struct tex2) { 0.0f, 1.0f } };
-    bbox->vertices[6] = (struct vertex) { (struct vec4) { p1.x, p1.y, p1.z, 1.0f }, COLOR_WHITE, (struct tex2) { 0.0f, 1.0f } };
-    bbox->vertices[7] = (struct vertex) { (struct vec4) { p0.x, p1.y, p1.z, 1.0f }, COLOR_CYAN, (struct tex2) { 0.0f, 1.0f } };
+    bbox->program = make_program_bbox();
+    bbox->vertices[0] = (struct vertex_bbox) { (struct vec4) { p0.x, p0.y, p0.z, 1.0f }};
+    bbox->vertices[1] = (struct vertex_bbox) { (struct vec4) { p1.x, p0.y, p0.z, 1.0f }};
+    bbox->vertices[2] = (struct vertex_bbox) { (struct vec4) { p1.x, p1.y, p0.z, 1.0f }};
+    bbox->vertices[3] = (struct vertex_bbox) { (struct vec4) { p0.x, p1.y, p0.z, 1.0f }};
+    bbox->vertices[4] = (struct vertex_bbox) { (struct vec4) { p0.x, p0.y, p1.z, 1.0f }};
+    bbox->vertices[5] = (struct vertex_bbox) { (struct vec4) { p1.x, p0.y, p1.z, 1.0f }};
+    bbox->vertices[6] = (struct vertex_bbox) { (struct vec4) { p1.x, p1.y, p1.z, 1.0f }};
+    bbox->vertices[7] = (struct vertex_bbox) { (struct vec4) { p0.x, p1.y, p1.z, 1.0f }};
     bbox->color = color;
     return bbox;
 }
 
 static inline struct bbox *make_bbox_mesh(const struct vertex *verts,
-                                          int count)
+                                          int count,
+                                          struct col4 color)
 {
     struct vec4 p0 = (struct vec4) { 9999.0f, 9999.0f, 9999.0f };
     struct vec4 p1 = (struct vec4) { -9999.0f, -9999.0f, -9999.0f };
@@ -541,7 +548,7 @@ static inline struct bbox *make_bbox_mesh(const struct vertex *verts,
         p1.z += BBOX_EPSILON;
     }
 
-    return make_bbox(p0, p1, COLOR_RED);
+    return make_bbox(p0, p1, color);
 }
 
 static inline bool bbox_intersects(const struct bbox *a, const struct bbox *b)
@@ -563,6 +570,10 @@ static inline void free_bbox(struct bbox **bbox)
     free(*bbox);
     *bbox = NULL;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+extern mat5 view_matrix;
 
 ////////////////////////////////////////////////////////////////////////////////
 

@@ -41,4 +41,22 @@ struct program_default {
 struct program_default *make_program_default();
 void free_program_default(struct program_default **program);
 
+//--------------------------------------------------------------------------
+// BBox program
+//--------------------------------------------------------------------------
+
+struct program_bbox {
+    GLuint prog_id;
+
+    GLint u_model;  //mat4
+    GLint u_view;   //mat4
+    GLint u_proj;   //mat4
+    GLint u_color;  //vec4
+
+    GLint vert_pos; //vec4
+};
+
+struct program_bbox *make_program_bbox();
+void free_program_bbox(struct program_bbox **program);
+
 #endif // PROGRAM_H

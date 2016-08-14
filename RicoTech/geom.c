@@ -1,10 +1,13 @@
 #include "const.h"
 #include "geom.h"
+#include "program.h"
 #include <stdlib.h>
 
 ////////////////////////////////////////////////////////////////////////////////
 // Bounding box
 ////////////////////////////////////////////////////////////////////////////////
+
+mat5 view_matrix = NULL;
 
 static GLuint vao;
 static GLuint vbos[2];
@@ -60,26 +63,20 @@ void bbox_init(const struct bbox *box)
     if (box->program->vert_pos >= 0)
     {
         glVertexAttribPointer(box->program->vert_pos, 4, GL_FLOAT, GL_FALSE,
-                              10 * sizeof(GL_FLOAT),
+                              4 * sizeof(GL_FLOAT),
                               (GLvoid *)(0));
         glEnableVertexAttribArray(box->program->vert_pos);
     }
 
-    if (box->program->vert_col >= 0)
-    {
-        glVertexAttribPointer(box->program->vert_col, 4, GL_FLOAT, GL_FALSE,
-                              10 * sizeof(GL_FLOAT),
-                              (GLvoid *)(4 * sizeof(GL_FLOAT)));
-        glEnableVertexAttribArray(box->program->vert_col);
-    }
+    //--------------------------------------------------------------------------
+    // Bind projection matrix
+    //--------------------------------------------------------------------------
+    mat5 proj_matrix = make_mat5_perspective(SCREEN_W, SCREEN_H,
+                                             Z_NEAR, Z_FAR, Z_FOV_DEG);
 
-    if (box->program->vert_uv >= 0)
-    {
-        glVertexAttribPointer(box->program->vert_uv, 2, GL_FLOAT, GL_FALSE,
-                              10 * sizeof(GL_FLOAT),
-                              (GLvoid *)(8 * sizeof(GL_FLOAT)));
-        glEnableVertexAttribArray(box->program->vert_uv);
-    }
+    glUniformMatrix4fv(box->program->u_proj, 1, GL_FALSE, proj_matrix);
+
+    free_mat5(&proj_matrix);
 
     glUseProgram(0);
     //--------------------------------------------------------------------------
@@ -95,18 +92,9 @@ void bbox_render(const struct bbox *box, mat5 model_matrix)
     //--------------------------------------------------------------------------
     // Draw
     //--------------------------------------------------------------------------
-
-    //mat5 model_matrix;
-    //struct tex2 uv_scale;
-
-    //TODO: Don't have multiple textures / model matrices for single mesh
-    //      Let the mesh render itself, set uniforms in mesh_init()
-
-    //--------------------------------------------------------------------------
-    // Hello object
-    //--------------------------------------------------------------------------
-
     glUseProgram(box->program->prog_id);
+
+    glUniformMatrix4fv(box->program->u_view, 1, GL_FALSE, view_matrix);
 
     // Model transform
     //model_matrix = make_mat5_ident();
@@ -129,6 +117,12 @@ void bbox_render(const struct bbox *box, mat5 model_matrix)
     // Bind texture(s)
     //glActiveTexture(GL_TEXTURE0);
     //glBindTexture(target, texture);
+
+    // BBox color
+    glUniform4f(box->program->u_color, box->color.r, box->color.g,
+                                       box->color.b, box->color.a);
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // Draw
     glBindVertexArray(vao);

@@ -365,11 +365,11 @@ int main(int argc, char *argv[])
 
         if (sprint)
         {
-            view_dx *= 20.0f;
-            view_dz *= 20.0f;
+            view_dx *= 10.0f;
+            view_dz *= 10.0f;
             
             //Debug: Sprint vertically.. yeah.. what?
-            view_dy *= 20.0f;
+            view_dy *= 10.0f;
         }
 
         view_camera.trans.x += view_dx;
