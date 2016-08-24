@@ -64,7 +64,7 @@ static void init_sdl()
     }
 }
 
-static void init_gl3w()
+static int init_gl3w()
 {
     if (gl3wInit())
     {
@@ -82,6 +82,8 @@ static void init_gl3w()
         getchar();
         return 1;
     }
+    
+    return 0;
 }
 
 static void init_opengl()
