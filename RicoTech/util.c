@@ -1,7 +1,5 @@
 #include "util.h"
 
-//#include <math.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -31,6 +29,102 @@ void *file_contents(const char *filename, GLint *length)
     return buffer;
 }
 
+void APIENTRY openglCallbackFunction(GLenum source, GLenum type, GLuint id,
+                                     GLenum severity, GLsizei length,
+                                     const GLchar *message,
+                                     const void *userParam)
+{
+    //HACK: Get rid of warning-as-error for unused parameters
+    (void)length;
+    (void)userParam;
+
+    char *typeStr, *sourceStr, *severityStr;
+
+    switch (type) {
+        case GL_DEBUG_TYPE_ERROR:
+            typeStr = "ERROR";
+            break;
+        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+            typeStr = "DEPRC";
+            break;
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+            typeStr = "UNDEF";
+            break;
+        case GL_DEBUG_TYPE_PORTABILITY:
+            typeStr = "PORT ";
+            break;
+        case GL_DEBUG_TYPE_PERFORMANCE:
+            typeStr = "PERF ";
+            break;
+        case GL_DEBUG_TYPE_OTHER:
+            typeStr = "OTHER";
+            return;
+            break;
+        default:
+            typeStr = "?????";
+            break;
+    }
+
+    switch (source) {
+        case GL_DEBUG_SOURCE_API:
+            sourceStr = "API            ";
+            break;
+        case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+            sourceStr = "WINDOW SYSTEM  ";
+            break;
+        case GL_DEBUG_SOURCE_SHADER_COMPILER:
+            sourceStr = "SHADER COMPILER";
+            break;
+        case GL_DEBUG_SOURCE_THIRD_PARTY:
+            sourceStr = "THIRD PARTY    ";
+            break;
+        case GL_DEBUG_SOURCE_APPLICATION:
+            sourceStr = "APPLICATION    ";
+            break;
+        case GL_DEBUG_SOURCE_OTHER:
+            sourceStr = "OTHER          ";
+            return;
+            break;
+        default:
+            sourceStr = "???????????????";
+            break;
+    }
+
+    switch (severity) {
+        case GL_DEBUG_SEVERITY_LOW:
+            severityStr = "LOW ";
+            break;
+        case GL_DEBUG_SEVERITY_MEDIUM:
+            severityStr = "MED ";
+            break;
+        case GL_DEBUG_SEVERITY_HIGH:
+            severityStr = "HIGH";
+            break;
+        default:
+            severityStr = "????";
+            break;
+    }
+
+    fprintf(stderr, "[%s][%s][%d] %s\n", typeStr, severityStr, id, message);
+}
+
+void show_info_log(GLuint object,
+                   PFNGLGETSHADERIVPROC glGet__iv,
+                   PFNGLGETSHADERINFOLOGPROC glGet__InfoLog)
+{
+    GLint log_length;
+    char *log;
+
+    glGet__iv(object, GL_INFO_LOG_LENGTH, &log_length);
+    log = malloc(log_length);
+    glGet__InfoLog(object, log_length, NULL, log);
+    fprintf(stderr, "%s", log);
+    free(log);
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+/*
 static short le_short(unsigned char *bytes)
 {
     return bytes[0] | ((char)bytes[1] << 8);
@@ -112,204 +206,4 @@ void *read_tga(const char *filename, int *width, int *height)
 
     return pixels;
 }
-
-////////////////////////////////////////////////////////////////////////////////
-
-void APIENTRY openglCallbackFunction(GLenum source, GLenum type, GLuint id,
-                                     GLenum severity, GLsizei length,
-                                     const GLchar *message,
-                                     const void *userParam)
-{
-    //HACK: Get rid of warning-as-error for unused parameters
-    (void)length;
-    (void)userParam;
-
-    char *typeStr, *sourceStr, *severityStr;
-
-    switch (type) {
-    case GL_DEBUG_TYPE_ERROR:
-        typeStr = "ERROR";
-        break;
-    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-        typeStr = "DEPRC";
-        break;
-    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-        typeStr = "UNDEF";
-        break;
-    case GL_DEBUG_TYPE_PORTABILITY:
-        typeStr = "PORT ";
-        break;
-    case GL_DEBUG_TYPE_PERFORMANCE:
-        typeStr = "PERF ";
-        break;
-    case GL_DEBUG_TYPE_OTHER:
-        typeStr = "OTHER";
-        return;
-        break;
-    default:
-        typeStr = "?????";
-        break;
-    }
-
-    switch (source) {
-    case GL_DEBUG_SOURCE_API:
-        sourceStr = "API            ";
-        break;
-    case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
-        sourceStr = "WINDOW SYSTEM  ";
-        break;
-    case GL_DEBUG_SOURCE_SHADER_COMPILER:
-        sourceStr = "SHADER COMPILER";
-        break;
-    case GL_DEBUG_SOURCE_THIRD_PARTY:
-        sourceStr = "THIRD PARTY    ";
-        break;
-    case GL_DEBUG_SOURCE_APPLICATION:
-        sourceStr = "APPLICATION    ";
-        break;
-    case GL_DEBUG_SOURCE_OTHER:
-        sourceStr = "OTHER          ";
-        return;
-        break;
-    default:
-        sourceStr = "???????????????";
-        break;
-    }
-
-    switch (severity) {
-    case GL_DEBUG_SEVERITY_LOW:
-        severityStr = "LOW ";
-        break;
-    case GL_DEBUG_SEVERITY_MEDIUM:
-        severityStr = "MED ";
-        break;
-    case GL_DEBUG_SEVERITY_HIGH:
-        severityStr = "HIGH";
-        break;
-    default:
-        severityStr = "????";
-        break;
-    }
-
-    fprintf(stderr, "[%s][%s][%d] %s\n", typeStr, severityStr, id, message);
-}
-
-void show_info_log(GLuint object,
-                   PFNGLGETSHADERIVPROC glGet__iv,
-                   PFNGLGETSHADERINFOLOGPROC glGet__InfoLog)
-{
-    GLint log_length;
-    char *log;
-
-    glGet__iv(object, GL_INFO_LOG_LENGTH, &log_length);
-    log = malloc(log_length);
-    glGet__InfoLog(object, log_length, NULL, log);
-    fprintf(stderr, "%s", log);
-    free(log);
-};
-
-GLuint orig_make_texture(const char *filename)
-{
-    GLuint texture;
-    int width, height;
-    void *pixels = read_tga(filename, &width, &height);
-
-    if (!pixels)
-    {
-        return 0;
-    }
-
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-    glTexImage2D(
-        GL_TEXTURE_2D, 0,
-        GL_RGB8,
-        width, height, 0,
-        GL_BGR, GL_UNSIGNED_BYTE,
-        pixels
-        );
-
-    free(pixels);
-    return texture;
-}
-
-GLuint orig_make_shader(GLenum type, const char *filename)
-{
-    GLint length;
-    GLchar *source = file_contents(filename, &length);
-    GLuint shader;
-    GLint shader_ok;
-
-    if (!source)
-    {
-        return 0;
-    }
-
-    shader = glCreateShader(type);
-    glShaderSource(shader, 1, (const GLchar**)&source, &length);
-    free(source);
-    source = NULL;
-    glCompileShader(shader);
-
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &shader_ok);
-    if (!shader_ok)
-    {
-        fprintf(stderr, "Failed to compile %s:\n", filename);
-        show_info_log(shader, glGetShaderiv, glGetShaderInfoLog);
-        glDeleteShader(shader);
-        return 0;
-    }
-
-    return shader;
-}
-
-GLuint orig_make_program(const char *vertex_shader_filename,
-                    const char *fragment_shader_filename)
-{
-    GLint program_ok;
-
-    GLuint vertex_shader = orig_make_shader(GL_VERTEX_SHADER,
-                                       vertex_shader_filename);
-    if (!vertex_shader)
-    {
-        fprintf(stderr, "Failed to make vertex shader.\n");
-        return 0;
-    }
-
-    GLuint fragment_shader = orig_make_shader(GL_FRAGMENT_SHADER,
-                                         fragment_shader_filename);
-    if (!fragment_shader)
-    {
-        glDeleteShader(vertex_shader);
-
-        fprintf(stderr, "Rect: Failed to make fragment shader.\n");
-        return 0;
-    }
-
-    GLuint program_id = glCreateProgram();
-    glAttachShader(program_id, vertex_shader);
-    glAttachShader(program_id, fragment_shader);
-    glLinkProgram(program_id);
-
-    glDetachShader(program_id, vertex_shader);
-    glDetachShader(program_id, fragment_shader);
-
-    glDeleteShader(vertex_shader);
-    glDeleteShader(fragment_shader);
-
-    glGetProgramiv(program_id, GL_LINK_STATUS, &program_ok);
-    if (!program_ok)
-    {
-        fprintf(stderr, "Failed to link shader program:\n");
-        show_info_log(program_id, glGetProgramiv, glGetProgramInfoLog);
-        glDeleteProgram(program_id);
-        return 0;
-    }
-
-    return program_id;
-}
+*/

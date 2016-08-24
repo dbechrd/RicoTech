@@ -6,7 +6,6 @@
 struct texture *make_texture(GLenum target, const char *filename)
 {
     struct texture *tex;
-
     tex = (struct texture *)calloc(1, sizeof(struct texture));
 
     tex->target = target;
@@ -19,6 +18,8 @@ struct texture *make_texture(GLenum target, const char *filename)
     if (!pixels)
     {
         fprintf(stderr, "Failed to load texture: %s", filename);
+        
+        //TODO?: Return default texture
         return NULL;
     }
 

@@ -19,10 +19,16 @@
 #include <stdio.h>
 #include <math.h>
 
-int main(int argc, char *argv[])
+static SDL_Window *window = NULL;
+static SDL_GLContext context = NULL;
+
+static inline void init_stb()
 {
     stbi_set_flip_vertically_on_load(1);
+}
 
+static void init_sdl()
+{
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
 
 #if _DEBUG
@@ -39,13 +45,13 @@ int main(int argc, char *argv[])
     //SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24); //Default 16 bits
 
     //Initialize window
-    SDL_Window *window = SDL_CreateWindow("Test Window", SDL_WINDOWPOS_CENTERED,
-                                          SDL_WINDOWPOS_CENTERED,
-                                          SCREEN_W, SCREEN_H,
-                                          SDL_WINDOW_OPENGL);
-    SDL_GLContext context = SDL_GL_CreateContext(window);
+    window = SDL_CreateWindow("Test Window",
+                              SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                              SCREEN_W, SCREEN_H, SDL_WINDOW_OPENGL);
+    context = SDL_GL_CreateContext(window);
 
-    SDL_GL_SetSwapInterval(0); //V-sync, default on
+    //Turn off V-sync
+    SDL_GL_SetSwapInterval(0); //Default on
     const char *error = SDL_GetError();
     if (error)
     {
@@ -56,7 +62,10 @@ int main(int argc, char *argv[])
         int swap = SDL_GL_GetSwapInterval();
         fprintf(stdout, "V-sync = %s\n", (swap) ? "Enabled" : "Disabled");
     }
+}
 
+static void init_gl3w()
+{
     if (gl3wInit())
     {
         fprintf(stderr, "gl3wInit failed.\n");
@@ -73,7 +82,10 @@ int main(int argc, char *argv[])
         getchar();
         return 1;
     }
+}
 
+static void init_opengl()
+{
 #if _DEBUG
     {
         GLint gl_max_vertex_attribs;
@@ -85,15 +97,13 @@ int main(int argc, char *argv[])
     {
         fprintf(stdout, "Registered glDebugMessageCallback.\n");
         fprintf(stderr, "[TYPE][SEVERITY][ID] MESSAGE\n");
+        
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
         glDebugMessageCallback(openglCallbackFunction, NULL);
+        
         GLuint unusedIds = 0;
-        glDebugMessageControl(GL_DONT_CARE,
-                              GL_DONT_CARE,
-                              GL_DONT_CARE,
-                              0,
-                              &unusedIds,
-                              true);
+        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0,
+                              &unusedIds, true);
     }
     else
     {
@@ -101,101 +111,29 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    ////////////////////////////////////////////////////////////////////////////
+    glEnable(GL_DEPTH_TEST); //Enable depth testing. Default off.
+    glDepthFunc(GL_LEQUAL);  //Depth test mode. Default GL_LESS.
+}
 
-    //// Test translate / scale order
-    //mat5 scale = mat5_scale((struct vec4) { 10.0f, 11.0f, 12.0f, 1.0f });
-    //mat5 trans = mat5_translate((struct vec4) { 2.f, 3.f, 4.f, 1.f });
-    //mat5 result = make_mat5_empty();
-    //
-    //printf("Trans * Scale\n");
-    //mat5_mul(trans, scale, result);
-    //mat5_print(result);
+static void rico_init()
+{
+    init_stb();
+    init_sdl();
+    init_gl3w();
+    init_opengl();
+}
 
-    mat5 a = make_mat5(
-        3.f, 2.f, 9.f, 6.f,
-        9.f, 6.f, 3.f, 5.f,
-        9.f, 7.f, 6.f, 5.f,
-        1.f, 5.f, 3.f, 3.f
-    );
+int main(int argc, char *argv[])
+{
+    rico_init();
 
-    mat5 b = make_mat5(
-        5.f, 1.f, 3.f, 2.f,
-        1.f, 6.f, 4.f, 3.f,
-        9.f, 2.f, 1.f, 4.f,
-        7.f, 5.f, 5.f, 3.f
-    );
-
-    //--------------------------------------------------------------------------
-    //// Test old and new translate
-    //struct vec4 trans = (struct vec4) { 2.0f, 3.0f, 4.0f };
-    //mat5 b = make_mat5_translate(trans);
-    //mat5 result = make_mat5_empty();
-    //
-    //mat5_mul(a, b, result);
-    //mat5_print(result);
-    //
-    //mat5_translate(a, trans);
-    //mat5_print(a);
-    //printf("translate valid: %i\n\n", mat5_equals(a, result));
-
-    //--------------------------------------------------------------------------
-    //// Test old and new scale
-    //struct vec4 scale = (struct vec4) { 2.0f, 3.0f, 4.0f };
-    //mat5 b = make_mat5_scale(scale);
-    //mat5 result = make_mat5_empty();
-    //
-    //mat5_mul(a, b, result);
-    //mat5_print(result);
-    //
-    //mat5_scale(a, scale);
-    //mat5_print(a);
-    //printf("scale valid: %i\n\n", mat5_equals(a, result));
-
-    //--------------------------------------------------------------------------
-    //// Test rot x
-    //mat5 b = make_mat5_rotx(18);
-    //mat5 result = make_mat5_empty();
-    //
-    //mat5_mul(a, b, result);
-    //mat5_print(result);
-    //
-    //mat5_rotx(a, 18);
-    //mat5_print(a);
-    //printf("rot x valid: %i\n\n", mat5_equals(a, result));
-
-    //--------------------------------------------------------------------------
-    //// Test rot y
-    //mat5 b = make_mat5_roty(18);
-    //mat5 result = make_mat5_empty();
-
-    //mat5_mul(a, b, result);
-    //mat5_print(result);
-
-    //mat5_roty(a, 18);
-    //mat5_print(a);
-    //printf("rot y valid: %i\n\n", mat5_equals(a, result));
-
-    //--------------------------------------------------------------------------
-    //// Test rot z
-    //mat5 b = make_mat5_rotz(18);
-    //mat5 result = make_mat5_empty();
-
-    //mat5_mul(a, b, result);
-    //mat5_print(result);
-
-    //mat5_rotz(a, 18);
-    //mat5_print(a);
-    //printf("rot z valid: %i\n\n", mat5_equals(a, result));
-
-    ////////////////////////////////////////////////////////////////////////////
-
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
+    //TODO: Use Unity test framework (http://www.throwtheswitch.org/unity)
+    //http://www.drdobbs.com/testing/unit-testing-in-c-tools-and-conventions/240156344
+    //run_tests();
 
     init_glref();
 
-    //Human walk speed empiracallly found to be 33 steps in 20 seconds. That
+    //Human walk speed empirically found to be 33 steps in 20 seconds. That
     //is approximately 1.65 steps per second. At 60 fps, that is 0.0275 steps
     //per frame. Typical walking stride is ~0.762 meters (30 inches). Distance
     //travelled per frame (60hz) is 0.762 * 0.0275 = 0.020955 ~= 0.021
@@ -419,6 +357,7 @@ int main(int argc, char *argv[])
 
 ///////////////////////////////////////////////////////////////////
 
+//TODO: Make buffer somewhere else.. idk where yet
 static GLuint orig_make_buffer(const GLenum target, const void *buffer_data, const GLsizei buffer_size)
 {
     GLuint buffer = 0;

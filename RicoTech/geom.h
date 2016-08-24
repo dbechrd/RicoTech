@@ -39,31 +39,9 @@ struct tex2 {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-//struct vec2 {
-//    GLfloat x, y;
-//};
-//
-//struct vec2 *make_vec2(GLfloat x, GLfloat y);
-//void free_vec2(struct vec2 *);
-
-////////////////////////////////////////////////////////////////////////////////
-
-//struct vec3 {
-//    GLfloat x, y, z;
-//};
-//
-//struct vec3 *make_vec3(GLfloat x, GLfloat y, GLfloat z);
-//void free_vec3(struct vec3 *);
-
-////////////////////////////////////////////////////////////////////////////////
-
-//TODO: Do I really need to store W, or can I just use vec3 for everything?
 struct vec4 {
     GLfloat x, y, z, w;
 };
-
-//struct vec4 *make_vec4(GLfloat x, GLfloat y, GLfloat z, GLfloat w);
-//void free_vec4(struct vec4 *);
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -98,10 +76,6 @@ struct vertex {
     struct vec4 pos;
     struct col4 col;
     struct tex2 tex;
-};
-
-struct vertex_bbox {
-    struct vec4 pos;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -477,7 +451,7 @@ static inline void free_mat5(mat5 *m)
 
 struct bbox {
     struct program_bbox *program;
-    struct vertex_bbox vertices[8];
+    struct vec4 vertices[8];
     //struct vec4 p0;
     //struct vec4 p1;
 
@@ -493,14 +467,14 @@ static inline struct bbox *make_bbox(struct vec4 p0, struct vec4 p1,
 {
     struct bbox *bbox = (struct bbox *)calloc(1, sizeof(struct bbox));
     bbox->program = make_program_bbox();
-    bbox->vertices[0] = (struct vertex_bbox) { (struct vec4) { p0.x, p0.y, p0.z, 1.0f }};
-    bbox->vertices[1] = (struct vertex_bbox) { (struct vec4) { p1.x, p0.y, p0.z, 1.0f }};
-    bbox->vertices[2] = (struct vertex_bbox) { (struct vec4) { p1.x, p1.y, p0.z, 1.0f }};
-    bbox->vertices[3] = (struct vertex_bbox) { (struct vec4) { p0.x, p1.y, p0.z, 1.0f }};
-    bbox->vertices[4] = (struct vertex_bbox) { (struct vec4) { p0.x, p0.y, p1.z, 1.0f }};
-    bbox->vertices[5] = (struct vertex_bbox) { (struct vec4) { p1.x, p0.y, p1.z, 1.0f }};
-    bbox->vertices[6] = (struct vertex_bbox) { (struct vec4) { p1.x, p1.y, p1.z, 1.0f }};
-    bbox->vertices[7] = (struct vertex_bbox) { (struct vec4) { p0.x, p1.y, p1.z, 1.0f }};
+    bbox->vertices[0] = (struct vec4) { p0.x, p0.y, p0.z, 1.0f };
+    bbox->vertices[1] = (struct vec4) { p1.x, p0.y, p0.z, 1.0f };
+    bbox->vertices[2] = (struct vec4) { p1.x, p1.y, p0.z, 1.0f };
+    bbox->vertices[3] = (struct vec4) { p0.x, p1.y, p0.z, 1.0f };
+    bbox->vertices[4] = (struct vec4) { p0.x, p0.y, p1.z, 1.0f };
+    bbox->vertices[5] = (struct vec4) { p1.x, p0.y, p1.z, 1.0f };
+    bbox->vertices[6] = (struct vec4) { p1.x, p1.y, p1.z, 1.0f };
+    bbox->vertices[7] = (struct vec4) { p0.x, p1.y, p1.z, 1.0f };
     bbox->color = color;
     return bbox;
 }
@@ -553,14 +527,14 @@ static inline struct bbox *make_bbox_mesh(const struct vertex *verts,
 
 static inline bool bbox_intersects(const struct bbox *a, const struct bbox *b)
 {
-    if (a->vertices[7].pos.x < b->vertices[0].pos.x) return false;
-    if (b->vertices[7].pos.x < a->vertices[0].pos.x) return false;
+    if (a->vertices[7].x < b->vertices[0].x) return false;
+    if (b->vertices[7].x < a->vertices[0].x) return false;
 
-    if (a->vertices[7].pos.y < b->vertices[0].pos.y) return false;
-    if (b->vertices[7].pos.y < a->vertices[0].pos.y) return false;
+    if (a->vertices[7].y < b->vertices[0].y) return false;
+    if (b->vertices[7].y < a->vertices[0].y) return false;
 
-    if (a->vertices[7].pos.z < b->vertices[0].pos.z) return false;
-    if (b->vertices[7].pos.z < a->vertices[0].pos.z) return false;
+    if (a->vertices[7].z < b->vertices[0].z) return false;
+    if (b->vertices[7].z < a->vertices[0].z) return false;
 
     return true;
 }

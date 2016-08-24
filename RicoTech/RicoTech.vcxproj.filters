@@ -23,12 +23,6 @@
     <ClCompile Include="geom.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="rect.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="bullet.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="mesh.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -44,15 +38,15 @@
     <ClCompile Include="texture.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="rico_physics.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test_geom.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="geom.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="rect.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="bullet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="mesh.h">
@@ -80,6 +74,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="texture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rico_physics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="test_geom.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

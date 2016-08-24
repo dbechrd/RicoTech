@@ -1,32 +1,20 @@
 #include "regularpoly.h"
 #include "util.h"
+#include "program.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
 #include <math.h>
 
-static GLuint regularpoly_program = 0;
-static GLint regularpoly_prog_attrib_position = -1;
+static struct program_bbox *regularpoly_program = NULL;
 
 int init_regularpoly_program(const char *vertex_shader_filename,
                              const char *fragment_shader_filename)
 {
-    regularpoly_program = orig_make_program(
-        vertex_shader_filename,
-        fragment_shader_filename
-    );
+    regularpoly_program = make_program_bbox();
     if (!regularpoly_program)
     {
         fprintf(stderr, "regularpoly: Failed to make program.\n");
-        return 0;
-    }
-
-    regularpoly_prog_attrib_position = glGetAttribLocation(regularpoly_program,
-                                                           "position");
-    if (regularpoly_prog_attrib_position == -1)
-    {
-        fprintf(stderr,
-                "regularpoly: Failed to get atrribute location for position.\n");
         return 0;
     }
 
@@ -69,9 +57,9 @@ static void rebuild_vao(struct regularpoly *poly)
 
     //(GLuint index, GLint size, GLenum type,
     // GLboolean normalized, GLsizei stride, const void *pointer);
-    glVertexAttribPointer(regularpoly_prog_attrib_position, 4, GL_FLOAT,
+    glVertexAttribPointer(regularpoly_program->prog_id, 4, GL_FLOAT,
                           GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(regularpoly_prog_attrib_position);
+    glEnableVertexAttribArray(regularpoly_program->vert_pos);
 
     glBindVertexArray(0);
     glDeleteBuffers(1, &poly_vbo);
@@ -124,7 +112,7 @@ void set_regularpoly_pos(struct regularpoly *poly, GLfloat x, GLfloat y, GLfloat
 
 void render_regularpoly(struct regularpoly *poly)
 {
-    assert(regularpoly_program);
+    assert(regularpoly_program->prog_id);
 
     if (poly->dirty_vao)
     {
@@ -132,7 +120,7 @@ void render_regularpoly(struct regularpoly *poly)
         rebuild_vao(poly);
     }
 
-    glUseProgram(regularpoly_program);
+    glUseProgram(regularpoly_program->prog_id);
     glBindVertexArray(poly->vao);
 
     //(GLenum mode, GLint first, GLsizei count)
