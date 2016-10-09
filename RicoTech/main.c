@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
             {
                 if (windowEvent.key.keysym.sym == SDLK_LCTRL)
                 {
-                    sprint = true;
+                    sprint = !sprint;
                 }
 
                 if (windowEvent.key.keysym.sym == SDLK_q)
@@ -235,7 +235,7 @@ int main(int argc, char *argv[])
             {
                 if (windowEvent.key.keysym.sym == SDLK_LCTRL)
                 {
-                    sprint = false;
+                    //sprint = false;
                 }
 
                 if (windowEvent.key.keysym.sym == SDLK_q)
@@ -287,14 +287,36 @@ int main(int argc, char *argv[])
         GLfloat dt = (float)(newTime - time) / 1000.0f;
         time = newTime;
 
-        GLfloat cos_head = cosf(view_camera.rot.y * (float)M_PI / 180.0f);
-        GLfloat sin_head = sinf(view_camera.rot.y * (float)M_PI / 180.0f);
+        GLfloat cos_head_x = cosf(view_camera.rot.x * (float)M_PI / 180.0f);
+        GLfloat sin_head_x = sinf(view_camera.rot.x * (float)M_PI / 180.0f);
 
-        GLfloat view_dx = (view_trans_vel.x * cos_head
-                         - view_trans_vel.z * sin_head) * dt;
-        GLfloat view_dy = view_trans_vel.y * dt;
-        GLfloat view_dz = (view_trans_vel.z * cos_head
-                         + view_trans_vel.x * sin_head) * dt;
+        GLfloat cos_head_y = cosf(view_camera.rot.y * (float)M_PI / 180.0f);
+        GLfloat sin_head_y = sinf(view_camera.rot.y * (float)M_PI / 180.0f);
+
+        //GLfloat view_dx = (view_trans_vel.x * cos_head
+        //                 - view_trans_vel.z * sin_head) * dt;
+        ////GLfloat view_dy = view_trans_vel.y * dt;
+        //GLfloat view_dy = (view_trans_vel.x * cos_head
+        //                 - view_trans_vel.z * sin_head) * dt;
+        //GLfloat view_dz = (view_trans_vel.z * cos_head
+        //                 + view_trans_vel.x * sin_head) * dt;
+
+        /*GLfloat view_dx = view_trans_vel.x * cos_head_y
+                        - view_trans_vel.z * sin_head_y;
+        GLfloat view_dy = view_trans_vel.y;
+        GLfloat view_dz = view_trans_vel.z * cos_head_y
+                        + view_trans_vel.x * sin_head_y;*/
+
+        GLfloat view_dx = view_trans_vel.x * cos_head_y
+                        - view_trans_vel.z * sin_head_y;
+        GLfloat view_dy = view_trans_vel.y;
+        //GLfloat view_dy = view_trans_vel.z * sin_head_x;
+        GLfloat view_dz = view_trans_vel.z * cos_head_y
+                        + view_trans_vel.x * sin_head_y;
+
+        view_dx *= dt;
+        view_dy *= dt;
+        view_dz *= dt;
 
         if (fly)
         {

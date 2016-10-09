@@ -7,21 +7,18 @@
 // Bounding box
 ////////////////////////////////////////////////////////////////////////////////
 
-mat5 view_matrix = NULL;
-
-static GLuint vao;
-static GLuint vbos[2];
+mat4 view_matrix = NULL;
 
 enum { VBO_VERTEX, VBO_ELEMENT };
 
-void bbox_init(const struct bbox *box)
+void bbox_init(struct bbox *box)
 {
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
+    glGenVertexArrays(1, &box->vao);
+    glBindVertexArray(box->vao);
 
-    glGenBuffers(2, vbos);
+    glGenBuffers(2, box->vbos);
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbos[VBO_VERTEX]);
+    glBindBuffer(GL_ARRAY_BUFFER, box->vbos[VBO_VERTEX]);
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(box->vertices), box->vertices,
                  GL_STATIC_DRAW);
@@ -31,7 +28,7 @@ void bbox_init(const struct bbox *box)
     //--------------------------------------------------------------------------
 
     // Bind element buffer
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[VBO_ELEMENT]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, box->vbos[VBO_ELEMENT]);
 
     // Bbox faces
     //GLuint elements[36] = {
@@ -71,12 +68,12 @@ void bbox_init(const struct bbox *box)
     //--------------------------------------------------------------------------
     // Bind projection matrix
     //--------------------------------------------------------------------------
-    mat5 proj_matrix = make_mat5_perspective(SCREEN_W, SCREEN_H,
+    mat4 proj_matrix = make_mat4_perspective(SCREEN_W, SCREEN_H,
                                              Z_NEAR, Z_FAR, Z_FOV_DEG);
 
     glUniformMatrix4fv(box->program->u_proj, 1, GL_FALSE, proj_matrix);
 
-    free_mat5(&proj_matrix);
+    free_mat4(&proj_matrix);
 
     glUseProgram(0);
     //--------------------------------------------------------------------------
@@ -87,7 +84,13 @@ void bbox_init(const struct bbox *box)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void bbox_render(const struct bbox *box, mat5 model_matrix)
+void bbox_render(const struct bbox *box, mat4 model_matrix)
+{
+    bbox_render_color(box, model_matrix, box->color);
+}
+
+void bbox_render_color(const struct bbox *box, mat4 model_matrix,
+                       const struct col4 color)
 {
     //--------------------------------------------------------------------------
     // Draw
@@ -97,12 +100,12 @@ void bbox_render(const struct bbox *box, mat5 model_matrix)
     glUniformMatrix4fv(box->program->u_view, 1, GL_FALSE, view_matrix);
 
     // Model transform
-    //model_matrix = make_mat5_ident();
-    //mat5_scale(model_matrix, (struct vec4) { 10.0f, 10.0f, 10.0f });
-    //mat5_translate(model_matrix, (struct vec4) { 0.0f, 0.0f, 0.0f });
-    //mat5_roty(model_matrix, 30.0f);
+    //model_matrix = make_mat4_ident();
+    //mat4_scale(model_matrix, (struct vec4) { 10.0f, 10.0f, 10.0f });
+    //mat4_translate(model_matrix, (struct vec4) { 0.0f, 0.0f, 0.0f });
+    //mat4_roty(model_matrix, 30.0f);
     glUniformMatrix4fv(box->program->u_model, 1, GL_FALSE, model_matrix);
-    //free_mat5(&model_matrix);
+    //free_mat4(&model_matrix);
 
     // Model texture
     // Note: We don't have to do this every time as long as we make sure
@@ -119,13 +122,12 @@ void bbox_render(const struct bbox *box, mat5 model_matrix)
     //glBindTexture(target, texture);
 
     // BBox color
-    glUniform4f(box->program->u_color, box->color.r, box->color.g,
-                                       box->color.b, box->color.a);
+    glUniform4f(box->program->u_color, color.r, color.g, color.b, color.a);
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // Draw
-    glBindVertexArray(vao);
+    glBindVertexArray(box->vao);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 

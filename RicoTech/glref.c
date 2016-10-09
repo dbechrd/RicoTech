@@ -26,6 +26,7 @@ static struct texture *tex_hello1;
 static struct texture *tex_grass;
 
 static struct bbox *obj_bbox;
+static struct bbox *axis_bbox;
 
 enum { VBO_VERTEX, VBO_ELEMENT };
 
@@ -164,12 +165,12 @@ void init_glref()
     //--------------------------------------------------------------------------
     // Bind projection matrix
     //--------------------------------------------------------------------------
-    mat5 proj_matrix = make_mat5_perspective(SCREEN_W, SCREEN_H,
+    mat4 proj_matrix = make_mat4_perspective(SCREEN_W, SCREEN_H,
                                                 Z_NEAR, Z_FAR, Z_FOV_DEG);
 
     glUniformMatrix4fv(prog_default->u_proj, 1, GL_FALSE, proj_matrix);
 
-    free_mat5(&proj_matrix);
+    free_mat4(&proj_matrix);
 
     glUseProgram(0);
     //--------------------------------------------------------------------------
@@ -192,11 +193,17 @@ void init_glref()
     
     //TODO: Apply model transformations to bounding box
     obj_bbox = make_bbox_mesh(vertices, VERT_COUNT, COLOR_GREEN);
-    //obj_bbox = make_bbox(
-    //    (struct vec4) { -0.1f, 1.0f, -0.2f },
-    //    (struct vec4) {  0.1f, 1.2f, -0.3f },
-    //    (struct col4) { 1.0f, 0.0f, 0.0f, 1.0f });
     bbox_init(obj_bbox);
+
+    //--------------------------------------------------------------------------
+    // Create axis label bboxes
+    //--------------------------------------------------------------------------
+    axis_bbox = make_bbox(
+        (struct vec4) { -0.5f, -0.5f, -0.5f, 1.0f },
+        (struct vec4) {  0.5f,  0.5f,  0.5f, 1.0f },
+        COLOR_WHITE
+    );
+    bbox_init(axis_bbox);
 }
 
 void update_glref(GLfloat dt)
@@ -226,14 +233,14 @@ void update_glref(GLfloat dt)
 
     //View transform
     if (view_matrix)
-        free_mat5(&view_matrix);
+        free_mat4(&view_matrix);
 
-    view_matrix = make_mat5_ident();
-    mat5_scale(view_matrix, view_camera.scale);
-    mat5_rotx(view_matrix, view_camera.rot.x);
-    mat5_roty(view_matrix, view_camera.rot.y);
-    mat5_rotz(view_matrix, view_camera.rot.z);
-    mat5_translate(view_matrix, view_camera.trans);
+    view_matrix = make_mat4_ident();
+    mat4_scale(view_matrix, view_camera.scale);
+    mat4_rotx(view_matrix, view_camera.rot.x);
+    mat4_roty(view_matrix, view_camera.rot.y);
+    mat4_rotz(view_matrix, view_camera.rot.z);
+    mat4_translate(view_matrix, view_camera.trans);
 
     glUniformMatrix4fv(prog_default->u_view, 1, GL_FALSE, view_matrix);
 
@@ -246,7 +253,7 @@ void render_glref()
     // Draw
     //--------------------------------------------------------------------------
 
-    mat5 model_matrix;
+    mat4 model_matrix;
     struct tex2 uv_scale;
 
     //TODO: Don't have multiple textures / model matrices for single mesh
@@ -260,10 +267,10 @@ void render_glref()
     glUseProgram(prog_default->prog_id);
 
         // Model transform
-        model_matrix = make_mat5_ident();
-        //mat5_translate(model_matrix, (struct vec4) { 0.0f, 0.0f, 0.0f });
-        mat5_rotx(model_matrix, -90.0f);
-        mat5_scale(model_matrix, (struct vec4) { 64.0f, 64.0f, 1.0f });
+        model_matrix = make_mat4_ident();
+        //mat4_translate(model_matrix, (struct vec4) { 0.0f, 0.0f, 0.0f });
+        mat4_rotx(model_matrix, -90.0f);
+        mat4_scale(model_matrix, (struct vec4) { 64.0f, 64.0f, 1.0f });
         glUniformMatrix4fv(prog_default->u_model, 1, GL_FALSE, model_matrix);
 
         // Model texture
@@ -289,7 +296,7 @@ void render_glref()
     glBindTexture(tex_grass->target, 0);
 
     //bbox_render(obj_bbox, model_matrix);
-    free_mat5(&model_matrix);
+    free_mat4(&model_matrix);
 
     //--------------------------------------------------------------------------
     // Ruler object
@@ -299,9 +306,9 @@ void render_glref()
     glUseProgram(prog_default->prog_id);
 
         // Model transform
-        model_matrix = make_mat5_ident();
-        mat5_translate(model_matrix, (struct vec4) { 0.0f, 1.0f, -3.0f });
-        //mat5_scale(model_matrix, (struct vec4) { 1.0f, 1.0f, 1.0f });
+        model_matrix = make_mat4_ident();
+        mat4_translate(model_matrix, (struct vec4) { 0.0f, 1.0f, -3.0f });
+        //mat4_scale(model_matrix, (struct vec4) { 1.0f, 1.0f, 1.0f });
         glUniformMatrix4fv(prog_default->u_model, 1, GL_FALSE, model_matrix);
 
         // Model texture
@@ -326,16 +333,16 @@ void render_glref()
     glUseProgram(0);
 
     bbox_render(obj_bbox, model_matrix);
-    free_mat5(&model_matrix);
+    free_mat4(&model_matrix);
 
     //--------------------------------------------------------------------------
     // Walls, because I can
     //--------------------------------------------------------------------------
 
-    mat5 model_matrix_wall1;
-    mat5 model_matrix_wall2;
-    mat5 model_matrix_wall3;
-    mat5 model_matrix_wall4;
+    mat4 model_matrix_wall1;
+    mat4 model_matrix_wall2;
+    mat4 model_matrix_wall3;
+    mat4 model_matrix_wall4;
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glUseProgram(prog_default->prog_id);
@@ -351,9 +358,9 @@ void render_glref()
     //--------------------------------------------------------------------------
 
     // Model transform
-    model_matrix_wall1 = make_mat5_ident();
-    mat5_translate(model_matrix_wall1, (struct vec4) { 0.0f, 2.5f, -8.0f });
-    mat5_scale(model_matrix_wall1, (struct vec4) { 8.0f, 2.5f, 1.0f });
+    model_matrix_wall1 = make_mat4_ident();
+    mat4_translate(model_matrix_wall1, (struct vec4) { 0.0f, 2.5f, -8.0f });
+    mat4_scale(model_matrix_wall1, (struct vec4) { 8.0f, 2.5f, 1.0f });
     glUniformMatrix4fv(prog_default->u_model, 1, GL_FALSE, model_matrix_wall1);
 
     // Draw
@@ -362,10 +369,10 @@ void render_glref()
     //--------------------------------------------------------------------------
 
     // Model transform
-    model_matrix_wall2 = make_mat5_ident();
-    mat5_translate(model_matrix_wall2, (struct vec4) { -8.0f, 2.5f, 0.0f });
-    mat5_roty(model_matrix_wall2, 90.0f);
-    mat5_scale(model_matrix_wall2, (struct vec4) { 8.0f, 2.5f, 1.0f });
+    model_matrix_wall2 = make_mat4_ident();
+    mat4_translate(model_matrix_wall2, (struct vec4) { -8.0f, 2.5f, 0.0f });
+    mat4_roty(model_matrix_wall2, 90.0f);
+    mat4_scale(model_matrix_wall2, (struct vec4) { 8.0f, 2.5f, 1.0f });
     glUniformMatrix4fv(prog_default->u_model, 1, GL_FALSE, model_matrix_wall2);
 
     // Draw
@@ -374,10 +381,10 @@ void render_glref()
     //--------------------------------------------------------------------------
 
     // Model transform
-    model_matrix_wall3 = make_mat5_ident();
-    mat5_translate(model_matrix_wall3, (struct vec4) { 0.0f, 2.5f, 8.0f });
-    mat5_roty(model_matrix_wall3, 180.0f);
-    mat5_scale(model_matrix_wall3, (struct vec4) { 8.0f, 2.5f, 1.0f });
+    model_matrix_wall3 = make_mat4_ident();
+    mat4_translate(model_matrix_wall3, (struct vec4) { 0.0f, 2.5f, 8.0f });
+    mat4_roty(model_matrix_wall3, 180.0f);
+    mat4_scale(model_matrix_wall3, (struct vec4) { 8.0f, 2.5f, 1.0f });
     glUniformMatrix4fv(prog_default->u_model, 1, GL_FALSE, model_matrix_wall3);
 
     // Draw
@@ -386,10 +393,10 @@ void render_glref()
     //--------------------------------------------------------------------------
 
     // Model transform
-    model_matrix_wall4 = make_mat5_ident();
-    mat5_translate(model_matrix_wall4, (struct vec4) { 8.0f, 2.5f, 0.0f });
-    mat5_roty(model_matrix_wall4, -90.0f);
-    mat5_scale(model_matrix_wall4, (struct vec4) { 8.0f, 2.5f, 1.0f });
+    model_matrix_wall4 = make_mat4_ident();
+    mat4_translate(model_matrix_wall4, (struct vec4) { 8.0f, 2.5f, 0.0f });
+    mat4_roty(model_matrix_wall4, -90.0f);
+    mat4_scale(model_matrix_wall4, (struct vec4) { 8.0f, 2.5f, 1.0f });
     glUniformMatrix4fv(prog_default->u_model, 1, GL_FALSE, model_matrix_wall4);
 
     // Draw
@@ -406,10 +413,10 @@ void render_glref()
     bbox_render(obj_bbox, model_matrix_wall3);
     bbox_render(obj_bbox, model_matrix_wall4);
 
-    free_mat5(&model_matrix_wall1);
-    free_mat5(&model_matrix_wall2);
-    free_mat5(&model_matrix_wall3);
-    free_mat5(&model_matrix_wall4);
+    free_mat4(&model_matrix_wall1);
+    free_mat4(&model_matrix_wall2);
+    free_mat4(&model_matrix_wall3);
+    free_mat4(&model_matrix_wall4);
 
     //--------------------------------------------------------------------------
     // Hello object
@@ -419,10 +426,10 @@ void render_glref()
     glUseProgram(prog_default->prog_id);
 
         // Model transform
-        model_matrix = make_mat5_ident();
-        mat5_scale(model_matrix, (struct vec4) { 1.0f, 2.0f, 1.0f });
-        mat5_translate(model_matrix, (struct vec4) { 0.0f, 1.0f, -4.0f });
-        mat5_roty(model_matrix, 30.0f);
+        model_matrix = make_mat4_ident();
+        mat4_scale(model_matrix, (struct vec4) { 1.0f, 2.0f, 1.0f });
+        mat4_translate(model_matrix, (struct vec4) { 0.0f, 1.0f, -4.0f });
+        mat4_roty(model_matrix, 30.0f);
         glUniformMatrix4fv(prog_default->u_model, 1, GL_FALSE, model_matrix);
 
         // Model texture
@@ -448,7 +455,35 @@ void render_glref()
     glBindTexture(tex_default->target, 0);
 
     bbox_render(obj_bbox, model_matrix);
-    free_mat5(&model_matrix);
+    free_mat4(&model_matrix);
+
+    //--------------------------------------------------------------------------
+    // Axis BBox objects
+    //--------------------------------------------------------------------------
+
+    model_matrix = make_mat4_ident();
+
+    // X-axis label
+    mat4_ident(model_matrix);
+    mat4_scale(model_matrix, (struct vec4) { 1.0f, 0.01f, 0.01f });
+    mat4_translate(model_matrix, (struct vec4) { 0.5f, 0.0f, 0.0f });
+    bbox_render_color(axis_bbox, model_matrix, COLOR_RED);
+
+    // Y-axis label
+    mat4_ident(model_matrix);
+    mat4_scale(model_matrix, (struct vec4) { 0.01f, 1.0f, 0.01f });
+    mat4_translate(model_matrix, (struct vec4) { 0.0f, 0.5f, 0.0f });
+    bbox_render_color(axis_bbox, model_matrix, COLOR_GREEN);
+
+    // Z-axis label
+    mat4_ident(model_matrix);
+    mat4_scale(model_matrix, (struct vec4) { 0.01f, 0.01f, 1.0f });
+    mat4_translate(model_matrix, (struct vec4) { 0.0f, 0.0f, 0.5f });
+    bbox_render_color(axis_bbox, model_matrix, COLOR_BLUE);
+
+    free_mat4(&model_matrix);
+
+    //--------------------------------------------------------------------------
 
     // Clean up
     glBindBuffer(GL_ARRAY_BUFFER, 0);

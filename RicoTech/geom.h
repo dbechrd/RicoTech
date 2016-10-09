@@ -97,34 +97,34 @@ struct vertex {
 #define M23 14
 #define M33 15
 
-typedef GLfloat *mat5;
+typedef GLfloat *mat4;
 
 //This is faster if the matrix is going to be immediately populated
-static inline mat5 make_mat5_empty()
+static inline mat4 make_mat4_empty()
 {
-    return (mat5)malloc(16 * sizeof(mat5));
+    return (mat4)malloc(16 * sizeof(mat4));
 }
 
-static inline mat5 make_mat5_zero()
+static inline mat4 make_mat4_zero()
 {
-    return (mat5)calloc(16, sizeof(mat5));
+    return (mat4)calloc(16, sizeof(mat4));
 }
 
 //Store as column-major, one-dimensional array of floats
-static inline mat5 make_mat5(
+static inline mat4 make_mat4(
     GLfloat m00, GLfloat m01, GLfloat m02, GLfloat m03,
     GLfloat m10, GLfloat m11, GLfloat m12, GLfloat m13,
     GLfloat m20, GLfloat m21, GLfloat m22, GLfloat m23,
     GLfloat m30, GLfloat m31, GLfloat m32, GLfloat m33)
 {
-    mat5 mat = make_mat5_empty();
+    mat4 mat = make_mat4_empty();
     mat[M00] = m00; mat[M01] = m01; mat[M02] = m02; mat[M03] = m03;
     mat[M10] = m10; mat[M11] = m11; mat[M12] = m12; mat[M13] = m13;
     mat[M20] = m20; mat[M21] = m21; mat[M22] = m22; mat[M23] = m23;
     mat[M30] = m30; mat[M31] = m31; mat[M32] = m32; mat[M33] = m33;
     return mat;
 
-    //mat5 mat = (mat5)malloc(16 * sizeof(mat5));
+    //mat4 mat = (mat4)malloc(16 * sizeof(mat4));
     //mat[0] = m00; mat[4] = m01;  mat[8] = m02; mat[12] = m03;
     //mat[1] = m10; mat[5] = m11;  mat[9] = m12; mat[13] = m13;
     //mat[2] = m20; mat[6] = m21; mat[10] = m22; mat[14] = m23;
@@ -132,26 +132,45 @@ static inline mat5 make_mat5(
     //return mat;
 }
 
-static inline mat5 make_mat5_ident()
+static inline mat4 make_mat4_ident()
 {
-    return make_mat5(
+    return make_mat4(
         1, 0, 0, 0,
         0, 1, 0, 0,
         0, 0, 1, 0,
         0, 0, 0, 1
     );
 }
-
-static inline mat5 make_mat5_translate(struct vec4 v)
+static inline void mat4_ident(mat4 m)
 {
-    return make_mat5(
+    m[M00] = 1;
+    m[M10] = 0;
+    m[M20] = 0;
+    m[M30] = 0;
+    m[M01] = 0;
+    m[M11] = 1;
+    m[M21] = 0;
+    m[M31] = 0;
+    m[M02] = 0;
+    m[M12] = 0;
+    m[M22] = 1;
+    m[M32] = 0;
+    m[M03] = 0;
+    m[M13] = 0;
+    m[M23] = 0;
+    m[M33] = 1;
+}
+
+static inline mat4 make_mat4_translate(struct vec4 v)
+{
+    return make_mat4(
         1, 0, 0, v.x,
         0, 1, 0, v.y,
         0, 0, 1, v.z,
         0, 0, 0, 1
     );
 }
-static inline void mat5_translate(mat5 m, struct vec4 v)
+static inline void mat4_translate(mat4 m, struct vec4 v)
 {
     m[M03] += m[M00]*v.x + m[M01]*v.y + m[M02]*v.z;
     m[M13] += m[M10]*v.x + m[M11]*v.y + m[M12]*v.z;
@@ -159,7 +178,7 @@ static inline void mat5_translate(mat5 m, struct vec4 v)
     m[M33] += m[M30]*v.x + m[M31]*v.y + m[M32]*v.z;
 }
 
-//static inline void mat5_translate_other(mat5 m, struct vec4 v)
+//static inline void mat4_translate_other(mat4 m, struct vec4 v)
 //{
 //    m[M30] += m[M00]*v.x + m[M10]*v.y + m[M20]*v.z;
 //    m[M31] += m[M01]*v.x + m[M11]*v.y + m[M21]*v.z;
@@ -167,16 +186,16 @@ static inline void mat5_translate(mat5 m, struct vec4 v)
 //    m[M33] += m[M03]*v.x + m[M13]*v.y + m[M23]*v.z;
 //}
 
-static inline mat5 make_mat5_scale(struct vec4 s)
+static inline mat4 make_mat4_scale(struct vec4 s)
 {
-    return make_mat5(
+    return make_mat4(
         s.x,   0,   0, 0,
           0, s.y,   0, 0,
           0,   0, s.z, 0,
           0,   0,   0, 1
     );
 }
-static inline void mat5_scale(mat5 m, struct vec4 s)
+static inline void mat4_scale(mat4 m, struct vec4 s)
 {
     m[M00] *= s.x;
     m[M10] *= s.x;
@@ -192,19 +211,19 @@ static inline void mat5_scale(mat5 m, struct vec4 s)
     m[M32] *= s.z;
 }
 
-static inline mat5 make_mat5_rotx(float deg)
+static inline mat4 make_mat4_rotx(float deg)
 {
     double r = deg * M_PI / 180;
     float s = (float)sin(r);
     float c = (float)cos(r);
-    return make_mat5(
+    return make_mat4(
         1, 0, 0, 0,
         0, c,-s, 0,
         0, s, c, 0,
         0, 0, 0, 1
     );
 }
-static inline void mat5_rotx(mat5 m, float deg)
+static inline void mat4_rotx(mat4 m, float deg)
 {
     double r = deg * M_PI / 180;
     float s = (float)sin(r);
@@ -229,19 +248,19 @@ static inline void mat5_rotx(mat5 m, float deg)
     m[M32] =    tmp*-s + m[M32]*c;
 }
 
-static inline mat5 make_mat5_roty(float deg)
+static inline mat4 make_mat4_roty(float deg)
 {
     double r = deg * M_PI / 180;
     float s = (float)sin(r);
     float c = (float)cos(r);
-    return make_mat5(
+    return make_mat4(
          c, 0, s, 0,
          0, 1, 0, 0,
         -s, 0, c, 0,
          0, 0, 0, 1
     );
 }
-static inline void mat5_roty(mat5 m, float deg)
+static inline void mat4_roty(mat4 m, float deg)
 {
     double r = deg * M_PI / 180;
     float s = (float)sin(r);
@@ -266,19 +285,19 @@ static inline void mat5_roty(mat5 m, float deg)
     m[M32] =    tmp*s + m[M32]* c;
 }
 
-static inline mat5 make_mat5_rotz(float deg)
+static inline mat4 make_mat4_rotz(float deg)
 {
     double r = deg * M_PI / 180;
     float s = (float)sin(r);
     float c = (float)cos(r);
-    return make_mat5(
+    return make_mat4(
         c,-s, 0, 0,
         s, c, 0, 0,
         0, 0, 1, 0,
         0, 0, 0, 1
     );
 }
-static inline void mat5_rotz(mat5 m, float deg)
+static inline void mat4_rotz(mat4 m, float deg)
 {
     double r = deg * M_PI / 180;
     float s = (float)sin(r);
@@ -303,16 +322,16 @@ static inline void mat5_rotz(mat5 m, float deg)
     m[M31] =    tmp*-s + m[M31]*c;
 }
 
-static inline mat5 make_mat5_transpose(const mat5 m)
+static inline mat4 make_mat4_transpose(const mat4 m)
 {
-    return make_mat5(
+    return make_mat4(
         m[M00], m[M10], m[M20], m[M30],
         m[M01], m[M11], m[M21], m[M31],
         m[M02], m[M12], m[M22], m[M32],
         m[M03], m[M13], m[M23], m[M33]
     );
 }
-static inline void mat5_transpose(mat5 m)
+static inline void mat4_transpose(mat4 m)
 {
     GLfloat tmp;
 
@@ -342,7 +361,7 @@ static inline void mat5_transpose(mat5 m)
 }
 
 //Calculate PERSPECTIVE projection
-static inline mat5 make_mat5_perspective(float width, float height,
+static inline mat4 make_mat4_perspective(float width, float height,
                                            float z_near, float z_far,
                                            float fov_deg)
 {
@@ -351,7 +370,7 @@ static inline mat5 make_mat5_perspective(float width, float height,
     float fov_rads = fov_deg * (float)M_PI / 180.0f;
     float fov_calc = 1.0f / (float)tan(fov_rads / 2.0f);
 
-    mat5 proj_matrix = make_mat5_ident();
+    mat4 proj_matrix = make_mat4_ident();
 
     proj_matrix[M00] = fov_calc / aspect;
     proj_matrix[M11] = fov_calc;
@@ -365,7 +384,7 @@ static inline mat5 make_mat5_perspective(float width, float height,
 //TODO: const GLfloat *foo[4] or something?? Second dimension doesn't decay.
 
 //This is about twice as fast as the loop version (~15ns vs. 30ns)
-static inline void mat5_mul(const mat5 a, const mat5 b, mat5 result)
+static inline void mat4_mul(const mat4 a, const mat4 b, mat4 result)
 {
     result[M00] = a[M00]*b[M00] + a[M01]*b[M10] + a[M02]*b[M20] + a[M03]*b[M30];
     result[M10] = a[M10]*b[M00] + a[M11]*b[M10] + a[M12]*b[M20] + a[M13]*b[M30];
@@ -386,23 +405,23 @@ static inline void mat5_mul(const mat5 a, const mat5 b, mat5 result)
 }
 
 //If I hard-code all of the operations in-place, I probably don't need these two
-//static inline void mat5_mul_into_a(mat5 *const a, const mat5 b)
+//static inline void mat4_mul_into_a(mat4 *const a, const mat4 b)
 //{
-//    mat5 result = make_mat5_empty();
-//    mat5_mul(*a, b, result);
+//    mat4 result = make_mat4_empty();
+//    mat4_mul(*a, b, result);
 //    free(*a);
 //    *a = result;
 //}
 //
-//static inline void mat5_mul_into_b(const mat5 a, mat5 *const b)
+//static inline void mat4_mul_into_b(const mat4 a, mat4 *const b)
 //{
-//    mat5 result = make_mat5_empty();
-//    mat5_mul(a, *b, result);
+//    mat4 result = make_mat4_empty();
+//    mat4_mul(a, *b, result);
 //    free(*b);
 //    *b = result;
 //}
 
-//static inline void mat5_mul2(const mat5 a, const mat5 b, mat5 result)
+//static inline void mat4_mul2(const mat4 a, const mat4 b, mat4 result)
 //{
 //    for (int aj = 0; aj < 4; ++aj)
 //    {
@@ -417,7 +436,7 @@ static inline void mat5_mul(const mat5 a, const mat5 b, mat5 result)
 //    }
 //}
 
-static inline int mat5_equals(const mat5 a, const mat5 b)
+static inline int mat4_equals(const mat4 a, const mat4 b)
 {
     for (int i = 0; i < 16; ++i)
     {
@@ -428,7 +447,7 @@ static inline int mat5_equals(const mat5 a, const mat5 b)
 }
 
 //Debug: Print matrix in row-major form
-static inline void mat5_print(const mat5 m)
+static inline void mat4_print(const mat4 m)
 {
     for (int i = 0; i < 4; ++i)
     {
@@ -441,7 +460,7 @@ static inline void mat5_print(const mat5 m)
     printf("\n");
 }
 
-static inline void free_mat5(mat5 *m)
+static inline void free_mat4(mat4 *m)
 {
     free(*m);
     *m = NULL;
@@ -450,6 +469,8 @@ static inline void free_mat5(mat5 *m)
 ////////////////////////////////////////////////////////////////////////////////
 
 struct bbox {
+    GLuint vao;
+    GLuint vbos[2];
     struct program_bbox *program;
     struct vec4 vertices[8];
     //struct vec4 p0;
@@ -459,8 +480,10 @@ struct bbox {
     struct col4 color;
 };
 
-void bbox_init(const struct bbox *box);
-void bbox_render(const struct bbox *box, mat5 model_matrix);
+void bbox_init(struct bbox *box);
+void bbox_render(const struct bbox *box, mat4 model_matrix);
+void bbox_render_color(const struct bbox *box, mat4 model_matrix,
+                       const struct col4 color);
 
 static inline struct bbox *make_bbox(struct vec4 p0, struct vec4 p1,
                                      struct col4 color)
@@ -547,7 +570,7 @@ static inline void free_bbox(struct bbox **bbox)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-extern mat5 view_matrix;
+extern mat4 view_matrix;
 
 ////////////////////////////////////////////////////////////////////////////////
 
