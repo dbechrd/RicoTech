@@ -128,8 +128,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="rico_physics.c" />
     <ClCompile Include="geom.c" />
+    <ClCompile Include="rico_physics.c" />
+    <ClCompile Include="bbox.c" />
     <ClCompile Include="gl3w.c" />
     <ClCompile Include="glref.c" />
     <ClCompile Include="main.c" />
@@ -142,6 +143,7 @@
     <ClCompile Include="util.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="bbox.h" />
     <ClInclude Include="rico_physics.h" />
     <ClInclude Include="const.h" />
     <ClInclude Include="geom.h" />

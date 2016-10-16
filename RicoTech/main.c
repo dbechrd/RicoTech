@@ -3,12 +3,12 @@
 //#define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
 #endif
 
+#include <GL/gl3w.h>
 #include "const.h"
 #include "geom.h"
 #include "util.h"
 #include "glref.h"
 
-#include <GL/gl3w.h>
 #include <SDL/SDL.h>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -146,11 +146,11 @@ int main(int argc, char *argv[])
     bool sprint = false;
     bool fly = false;
 
-    GLfloat view_scale_delta = 0.1f;
     struct vec4 view_scale_vel = { 0.0f, 0.0f, 0.0f, 1.0f };
-    
-    GLfloat view_rot_delta = 0.1f;
+    float view_rot_delta = 0.1f;
+    float view_rotx_limit = 70.0f;
 
+    //Cleanup: This doesn't work.. probably have to implement in shader?
     GLenum lineMode = GL_FILL;
 
     bool mouse_lock = true;
@@ -176,6 +176,11 @@ int main(int argc, char *argv[])
                 //fprintf(stderr, "dx: %d dy: %d\n", dx, dy);
 
                 view_camera.rot.x += dy * view_rot_delta;
+                if (view_camera.rot.x < -view_rotx_limit)
+                    view_camera.rot.x = -view_rotx_limit;
+                if (view_camera.rot.x > view_rotx_limit)
+                    view_camera.rot.x = view_rotx_limit;
+
                 view_camera.rot.y += dx * view_rot_delta;
             }
             else if (windowEvent.type == SDL_KEYDOWN && !windowEvent.key.repeat)

@@ -20,9 +20,6 @@
     <ClCompile Include="gl3w.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="geom.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="mesh.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -42,6 +39,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="test_geom.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bbox.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="geom.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -80,6 +83,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="test_geom.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="bbox.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

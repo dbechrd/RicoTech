@@ -5,6 +5,7 @@
 #include "shader.h"
 #include "program.h"
 #include "texture.h"
+#include "bbox.h"
 #include "stb_image.h"
 
 #include <GL/gl3w.h>
@@ -267,7 +268,7 @@ void render_glref()
     glUseProgram(prog_default->prog_id);
 
         // Model transform
-        model_matrix = make_mat4_ident();
+        mat4_ident(model_matrix);
         //mat4_translate(model_matrix, (struct vec4) { 0.0f, 0.0f, 0.0f });
         mat4_rotx(model_matrix, -90.0f);
         mat4_scale(model_matrix, (struct vec4) { 64.0f, 64.0f, 1.0f });
