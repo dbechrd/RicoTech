@@ -128,6 +128,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="camera.c" />
     <ClCompile Include="geom.c" />
     <ClCompile Include="rico_physics.c" />
     <ClCompile Include="bbox.c" />
@@ -135,7 +136,10 @@
     <ClCompile Include="glref.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="mesh.c" />
-    <Natvis Include="notes.c" />
+    <Natvis Include="notes.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </Natvis>
     <ClCompile Include="program.c" />
     <ClCompile Include="regularpoly.c" />
     <ClCompile Include="test_geom.c" />
@@ -144,6 +148,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bbox.h" />
+    <ClInclude Include="camera.h" />
+    <ClInclude Include="rico_obj.h" />
     <ClInclude Include="rico_physics.h" />
     <ClInclude Include="const.h" />
     <ClInclude Include="geom.h" />

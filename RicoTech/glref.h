@@ -2,14 +2,7 @@
 #define GLREF_H
 
 #include "geom.h"
-
-struct camera {
-    struct vec4 scale;
-    struct vec4 rot;
-    struct vec4 trans;
-};
-
-extern struct camera view_camera;
+#include "camera.h"
 
 void init_glref();
 void update_glref(GLfloat dt);

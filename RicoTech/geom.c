@@ -8,3 +8,4 @@ const struct col4 COLOR_YELLOW  = { 1.0f, 1.0f, 0.0f, 1.0f };
 const struct col4 COLOR_CYAN    = { 0.0f, 1.0f, 1.0f, 1.0f };
 const struct col4 COLOR_MAGENTA = { 1.0f, 0.0f, 1.0f, 1.0f };
 const struct col4 COLOR_WHITE   = { 1.0f, 1.0f, 1.0f, 1.0f };
+const struct col4 COLOR_GRAY    = { 0.5f, 0.5f, 0.5f, 1.0f };

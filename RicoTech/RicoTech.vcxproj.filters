@@ -9,6 +9,12 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
+    <Filter Include="Header Files\tests">
+      <UniqueIdentifier>{70b620c8-918d-4aad-846c-0d3b67183abd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\tests">
+      <UniqueIdentifier>{b2cc3731-6794-43db-9c70-146642dcd5c5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c">
@@ -38,13 +44,16 @@
     <ClCompile Include="rico_physics.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="test_geom.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="bbox.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="geom.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test_geom.c">
+      <Filter>Source Files\tests</Filter>
+    </ClCompile>
+    <ClCompile Include="camera.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -82,10 +91,16 @@
     <ClInclude Include="rico_physics.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="test_geom.h">
+    <ClInclude Include="bbox.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="bbox.h">
+    <ClInclude Include="test_geom.h">
+      <Filter>Header Files\tests</Filter>
+    </ClInclude>
+    <ClInclude Include="camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rico_obj.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

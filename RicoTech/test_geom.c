@@ -13,14 +13,14 @@ void test_geom()
     //mat4_mul(trans, scale, result);
     //mat4_print(result);
 
-    mat4 a = make_mat4(
+    struct mat4 *a = make_mat4(
         3.f, 2.f, 9.f, 6.f,
         9.f, 6.f, 3.f, 5.f,
         9.f, 7.f, 6.f, 5.f,
         1.f, 5.f, 3.f, 3.f
     );
 
-    mat4 b = make_mat4(
+    struct mat4 *b = make_mat4(
         5.f, 1.f, 3.f, 2.f,
         1.f, 6.f, 4.f, 3.f,
         9.f, 2.f, 1.f, 4.f,

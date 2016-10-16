@@ -3,8 +3,8 @@
 
 #include <GL/gl3w.h>
 
-struct texture {
-    GLuint texture;
+struct rico_texture {
+    GLuint texture_id;
     GLenum target;
 
     GLsizei width;
@@ -12,12 +12,17 @@ struct texture {
     GLsizei bpp;
 };
 
-struct texture *make_texture(GLenum target, const char *filename);
-void free_texture(struct texture **tex);
+struct rico_texture *make_texture(GLenum target, const char *filename);
+void free_texture(struct rico_texture **tex);
 
-static inline bind_texture(const struct texture *tex)
+static inline texture_bind(const struct rico_texture *tex)
 {
-    glBindTexture(GL_TEXTURE_2D, tex->texture);
+    glBindTexture(tex->target, tex->texture_id);
+}
+
+static inline texture_unbind(const struct rico_texture *tex)
+{
+    glBindTexture(tex->target, 0);
 }
 
 #endif // TEXTURE_H

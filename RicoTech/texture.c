@@ -3,10 +3,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-struct texture *make_texture(GLenum target, const char *filename)
+struct rico_texture *make_texture(GLenum target, const char *filename)
 {
-    struct texture *tex;
-    tex = (struct texture *)calloc(1, sizeof(struct texture));
+    struct rico_texture *tex;
+    tex = (struct rico_texture *)calloc(1, sizeof(struct rico_texture));
 
     tex->target = target;
 
@@ -46,8 +46,8 @@ struct texture *make_texture(GLenum target, const char *filename)
     | GL_TEXTURE_CUBE_MAP_ARRAY         v
     |
     *************************************************************************/
-    glCreateTextures(tex->target, 1, &tex->texture);
-    glBindTexture(tex->target, tex->texture);
+    glCreateTextures(tex->target, 1, &tex->texture_id);
+    glBindTexture(tex->target, tex->texture_id);
 
     //--------------------------------------------------------------------------
     // Configure texture wrapping (for uv-coords outside range 0.0f - 1.0f)
@@ -114,9 +114,9 @@ struct texture *make_texture(GLenum target, const char *filename)
     return tex;
 }
 
-void free_texture(struct texture **tex)
+void free_texture(struct rico_texture **tex)
 {
-    glDeleteTextures(1, &(*tex)->texture);
+    glDeleteTextures(1, &(*tex)->texture_id);
     free(*tex);
     *tex = NULL;
 }

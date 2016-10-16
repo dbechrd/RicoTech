@@ -60,7 +60,7 @@ static void init_sdl()
 
     {
         int swap = SDL_GL_GetSwapInterval();
-        fprintf(stdout, "V-sync = %s\n", (swap) ? "Enabled" : "Disabled");
+        fprintf(stdout, "VSync = %s\n", (swap) ? "Enabled" : "Disabled");
     }
 }
 
@@ -150,9 +150,6 @@ int main(int argc, char *argv[])
     float view_rot_delta = 0.1f;
     float view_rotx_limit = 70.0f;
 
-    //Cleanup: This doesn't work.. probably have to implement in shader?
-    GLenum lineMode = GL_FILL;
-
     bool mouse_lock = true;
     SDL_SetRelativeMouseMode(mouse_lock);
 
@@ -229,11 +226,11 @@ int main(int argc, char *argv[])
                 }
                 else if (windowEvent.key.keysym.sym == SDLK_1)
                 {
-                    lineMode = GL_LINE;
+                    view_polygon_mode = GL_LINE;
                 }
                 else if (windowEvent.key.keysym.sym == SDLK_2)
                 {
-                    lineMode = GL_FILL;
+                    view_polygon_mode = GL_FILL;
                 }
             }
             else if (windowEvent.type == SDL_KEYUP)
@@ -357,6 +354,28 @@ int main(int argc, char *argv[])
         view_camera.scale.y += view_scale_vel.y * dt;
         view_camera.scale.z += view_scale_vel.z * dt;
 
+        /*======================================================================
+        | Row Major    |
+        |===============
+        | model = trans * rot * scale
+        | view = trans * rot * scale
+        | gl_Position = proj * view * model * vec
+        |=======================================================================
+        | Column Major |
+        |===============
+        | model = scale * rot * trans
+        | view = scale * rot * trans
+        | gl_Position = vec * model * view * proj
+        |=====================================================================*/
+
+        //Update view transform
+        mat4_ident(&view_matrix);
+        mat4_scale(&view_matrix, view_camera.scale);
+        mat4_rotx(&view_matrix, view_camera.rot.x);
+        mat4_roty(&view_matrix, view_camera.rot.y);
+        mat4_rotz(&view_matrix, view_camera.rot.z);
+        mat4_translate(&view_matrix, view_camera.trans);
+
         //TODO: Gravity
 
         //TODO: Collision
@@ -365,7 +384,7 @@ int main(int argc, char *argv[])
         //glClearDepth(0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glPolygonMode(GL_FRONT_AND_BACK, lineMode);
+        glPolygonMode(GL_FRONT_AND_BACK, view_polygon_mode);
 
         update_glref(dt);
         render_glref();

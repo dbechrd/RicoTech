@@ -1,19 +1,12 @@
 #ifndef GEOM_H
 #define GEOM_H
 
-#include "program.h"
+#include "const.h"
+#include <GL\gl3w.h>
 #include <malloc.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdbool.h>
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846264338327950288
-#endif
-
-#ifndef M_2PI
-#define M_2PI 6.28318530717958647692528676655900576
-#endif
 
 //------------------------------------------------------------------------------
 // RGBA color
@@ -31,16 +24,17 @@ extern const struct col4 COLOR_YELLOW;
 extern const struct col4 COLOR_CYAN;
 extern const struct col4 COLOR_MAGENTA;
 extern const struct col4 COLOR_WHITE;
+extern const struct col4 COLOR_GRAY;
 
 //------------------------------------------------------------------------------
-// Texture coordinates
+// 2D Texture coordinates
 //------------------------------------------------------------------------------
 struct tex2 {
     GLfloat u, v;
 };
 
 //------------------------------------------------------------------------------
-// Vector
+// 4D Vector
 //------------------------------------------------------------------------------
 struct vec4 {
     GLfloat x, y, z, w;
@@ -72,19 +66,13 @@ static inline struct vec4 vec_normalize(struct vec4 v)
 }
 
 //------------------------------------------------------------------------------
-// Mesh vertex
+// 4D Matrix
 //------------------------------------------------------------------------------
-
-struct vertex {
-    struct vec4 pos;
-    struct col4 col;
-    struct tex2 tex;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
 struct mat4 {
-    GLfloat m[4][4];
+    union {
+        GLfloat m[4][4]; //Matrix
+        GLfloat a[16];   //Array
+    };
 };
 
 //This is faster if the matrix is going to be immediately populated
@@ -397,67 +385,11 @@ static inline void mat4_mul(const struct mat4 *a, const struct mat4 *b,
     }
 }
 
-//TODO: const GLfloat *foo[4] or something?? Second dimension doesn't decay.
-
-////This is about twice as fast as the loop version (~15ns vs. 30ns)
-//static inline void mat4_mul(const struct mat4 *a, const struct mat4 *b,
-//                            struct mat4 *result)
-//{
-//    result[M00] = a[M00] * b[M00] + a[M01] * b[M10] + a[M02] * b[M20] + a[M03] * b[M30];
-//    result[M10] = a[M10] * b[M00] + a[M11] * b[M10] + a[M12] * b[M20] + a[M13] * b[M30];
-//    result[M20] = a[M20] * b[M00] + a[M21] * b[M10] + a[M22] * b[M20] + a[M23] * b[M30];
-//    result[M30] = a[M30] * b[M00] + a[M31] * b[M10] + a[M32] * b[M20] + a[M33] * b[M30];
-//    result[M01] = a[M00] * b[M01] + a[M01] * b[M11] + a[M02] * b[M21] + a[M03] * b[M31];
-//    result[M11] = a[M10] * b[M01] + a[M11] * b[M11] + a[M12] * b[M21] + a[M13] * b[M31];
-//    result[M21] = a[M20] * b[M01] + a[M21] * b[M11] + a[M22] * b[M21] + a[M23] * b[M31];
-//    result[M31] = a[M30] * b[M01] + a[M31] * b[M11] + a[M32] * b[M21] + a[M33] * b[M31];
-//    result[M02] = a[M00] * b[M02] + a[M01] * b[M12] + a[M02] * b[M22] + a[M03] * b[M32];
-//    result[M12] = a[M10] * b[M02] + a[M11] * b[M12] + a[M12] * b[M22] + a[M13] * b[M32];
-//    result[M22] = a[M20] * b[M02] + a[M21] * b[M12] + a[M22] * b[M22] + a[M23] * b[M32];
-//    result[M32] = a[M30] * b[M02] + a[M31] * b[M12] + a[M32] * b[M22] + a[M33] * b[M32];
-//    result[M03] = a[M00] * b[M03] + a[M01] * b[M13] + a[M02] * b[M23] + a[M03] * b[M33];
-//    result[M13] = a[M10] * b[M03] + a[M11] * b[M13] + a[M12] * b[M23] + a[M13] * b[M33];
-//    result[M23] = a[M20] * b[M03] + a[M21] * b[M13] + a[M22] * b[M23] + a[M23] * b[M33];
-//    result[M33] = a[M30] * b[M03] + a[M31] * b[M13] + a[M32] * b[M23] + a[M33] * b[M33];
-//}
-
-//If I hard-code all of the operations in-place, I probably don't need these two
-//static inline void mat4_mul_into_a(mat4 *const a, const mat4 b)
-//{
-//    mat4 result = make_mat4_empty();
-//    mat4_mul(*a, b, result);
-//    free(*a);
-//    *a = result;
-//}
-//
-//static inline void mat4_mul_into_b(const mat4 a, mat4 *const b)
-//{
-//    mat4 result = make_mat4_empty();
-//    mat4_mul(a, *b, result);
-//    free(*b);
-//    *b = result;
-//}
-
-//static inline void mat4_mul2(const mat4 a, const mat4 b, mat4 result)
-//{
-//    for (int aj = 0; aj < 4; ++aj)
-//    {
-//        for (int bi = 0; bi < 4; ++bi)
-//        {
-//            result[aj + bi * 4] = 0;
-//            for (int n = 0; n < 4; ++n)
-//            {
-//                result[aj + bi * 4] += a[aj + n * 4] * b[n + bi * 4];
-//            }
-//        }
-//    }
-//}
-
 static inline int mat4_equals(const struct mat4 *a, const struct mat4 *b)
 {
-    for (int i = 0; i < 4; ++j)
+    for (int i = 0; i < 4; ++i)
     {
-        for (int j = 0; j < 4; ++i)
+        for (int j = 0; j < 4; ++j)
         {
             if (a->m[i][j] != b->m[i][j])
                 return 0;
@@ -473,7 +405,7 @@ static inline void mat4_print(const struct mat4 *m)
     {
         for (int j = 0; j < 4; ++j)
         {
-            printf("%f ", m->[j][i]);
+            printf("%f ", m->m[j][i]);
         }
         printf("\n");
     }
@@ -873,10 +805,6 @@ static inline void free_mat4(struct mat4 *m)
 //    free(*m);
 //    *m = NULL;
 //}
-
-////////////////////////////////////////////////////////////////////////////////
-
-extern struct mat4 view_matrix;
 
 ////////////////////////////////////////////////////////////////////////////////
 
