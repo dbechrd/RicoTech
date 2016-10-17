@@ -349,23 +349,28 @@ static inline void mat4_transpose(struct mat4 *m)
 }
 
 //Calculate PERSPECTIVE projection
-static inline struct mat4 *make_mat4_perspective(float width, float height,
-                                                 float z_near, float z_far,
-                                                 float fov_deg)
+static inline void mat4_perspective(struct mat4 *m, float width,
+                                    float height, float z_near,
+                                    float z_far, float fov_deg)
 {
     float aspect = width / height;
     float z_range = z_far - z_near;
     float fov_rads = fov_deg * (float)M_PI / 180.0f;
     float fov_calc = 1.0f / (float)tan(fov_rads / 2.0f);
 
+    m->m[0][0] = fov_calc / aspect;
+    m->m[1][1] = fov_calc;
+    m->m[2][2] = (z_far + z_near) / z_range;
+    m->m[2][3] = -1.0f;
+    m->m[3][2] = 2.0f * (z_far * z_near) / z_range;
+}
+
+static inline struct mat4 *make_mat4_perspective(float width, float height,
+                                                 float z_near, float z_far,
+                                                 float fov_deg)
+{
     struct mat4 *proj_matrix = make_mat4_ident();
-
-    proj_matrix->m[0][0] = fov_calc / aspect;
-    proj_matrix->m[1][1] = fov_calc;
-    proj_matrix->m[2][2] = (z_far + z_near) / z_range;
-    proj_matrix->m[2][3] = -1.0f;
-    proj_matrix->m[3][2] = 2.0f * (z_far * z_near) / z_range;
-
+    mat4_perspective(proj_matrix, width, height, z_near, z_far, fov_deg);
     return proj_matrix;
 }
 
@@ -412,10 +417,10 @@ static inline void mat4_print(const struct mat4 *m)
     printf("\n");
 }
 
-static inline void free_mat4(struct mat4 *m)
+static inline void free_mat4(struct mat4 **m)
 {
-    free(m);
-    m = NULL;
+    free(*m);
+    *m = NULL;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -8,6 +8,7 @@
 #include "bbox.h"
 #include "camera.h"
 #include "mesh.h"
+#include "rico_obj.h"
 #include "stb_image.h"
 
 #include <GL/gl3w.h>
@@ -29,10 +30,13 @@ static struct rico_texture *tex_default;
 static struct rico_texture *tex_hello1;
 static struct rico_texture *tex_grass;
 
-static struct rico_mesh *obj_mesh;
+static struct rico_obj obj_ground;
 
-static struct bbox *obj_bbox;
-static struct bbox *axis_bbox;
+static const struct bbox *axis_bbox;
+
+static struct mat4 x_axis_transform;
+static struct mat4 y_axis_transform;
+static struct mat4 z_axis_transform;
 
 void init_glref()
 {
@@ -55,13 +59,8 @@ void init_glref()
     if (!prog_bbox) return;
 
     // Set projection matrix uniform
-    struct mat4 *proj_matrix = make_mat4_perspective(SCREEN_W, SCREEN_H,
-                                                     Z_NEAR, Z_FAR, Z_FOV_DEG);
-
-    program_default_uniform_projection(prog_default, proj_matrix);
-    program_bbox_uniform_projection(prog_bbox, proj_matrix);
-
-    free_mat4(proj_matrix);
+    mat4_perspective(&proj_matrix, SCREEN_W, SCREEN_H, Z_NEAR, Z_FAR,
+                     Z_FOV_DEG);
 
     /*************************************************************************
     | Frequency of access:
@@ -116,12 +115,12 @@ void init_glref()
     //--------------------------------------------------------------------------
     // Create mesh
     //--------------------------------------------------------------------------
-    obj_mesh = make_mesh(prog_default, tex_grass, vertices, VERT_COUNT,
-                         elements, ELEMENT_COUNT, GL_STATIC_DRAW);
+    obj_ground.trans = (struct vec4) { 0.0f, 0.0f, 0.0f, 1.0f };
+    obj_ground.rot.x = -90.0f;
+    obj_ground.scale = (struct vec4) { 64.0f, 64.0f, 1.0f, 1.0f };
 
-    obj_mesh->trans = (struct vec4) { 0.0f, 0.0f, 0.0f, 1.0f };
-    obj_mesh->rot.x = -90.0f;
-    obj_mesh->scale = (struct vec4) { 64.0f, 64.0f, 1.0f, 1.0f };
+    obj_ground.mesh = make_mesh(prog_default, tex_grass, vertices, VERT_COUNT,
+                                elements, ELEMENT_COUNT, GL_STATIC_DRAW);
 
     //--------------------------------------------------------------------------
     // Create axis label bboxes
@@ -130,7 +129,21 @@ void init_glref()
         (struct vec4) { -0.5f, -0.5f, -0.5f, 1.0f },
         (struct vec4) {  0.5f,  0.5f,  0.5f, 1.0f }
     );
-    bbox_init(axis_bbox);
+
+    // X-axis label
+    mat4_ident(&x_axis_transform);
+    mat4_scale(&x_axis_transform, (struct vec4) { 1.0f, 0.01f, 0.01f });
+    mat4_translate(&x_axis_transform, (struct vec4) { 0.5f, 0.0f, 0.0f });
+
+    // Y-axis label
+    mat4_ident(&y_axis_transform);
+    mat4_scale(&y_axis_transform, (struct vec4) { 0.01f, 1.0f, 0.01f });
+    mat4_translate(&y_axis_transform, (struct vec4) { 0.0f, 0.5f, 0.0f });
+
+    // Z-axis label
+    mat4_ident(&z_axis_transform);
+    mat4_scale(&z_axis_transform, (struct vec4) { 0.01f, 0.01f, 1.0f });
+    mat4_translate(&z_axis_transform, (struct vec4) { 0.0f, 0.0f, 0.5f });
 }
 
 void update_glref(GLfloat dt)
@@ -143,6 +156,7 @@ void update_glref(GLfloat dt)
     // Set uniforms
     glUniform1f(prog_default->u_time, dt);
     glUniformMatrix4fv(prog_default->u_view, 1, GL_TRUE, view_matrix.a);
+    glUniformMatrix4fv(prog_default->u_proj, 1, GL_TRUE, proj_matrix.a);
 
     glUseProgram(0);
 
@@ -151,6 +165,7 @@ void update_glref(GLfloat dt)
 
     // Set uniforms
     glUniformMatrix4fv(prog_bbox->u_view, 1, GL_TRUE, view_matrix.a);
+    glUniformMatrix4fv(prog_bbox->u_proj, 1, GL_TRUE, proj_matrix.a);
 
     glUseProgram(0);
 }
@@ -170,66 +185,14 @@ void render_glref()
     //--------------------------------------------------------------------------
     // Ground object
     //--------------------------------------------------------------------------
-    mesh_render(obj_mesh);
+    rico_obj_render(&obj_ground);
 
     //--------------------------------------------------------------------------
-    // Axis BBox objects
+    // Axes labels (bboxes)
     //--------------------------------------------------------------------------
-    struct mat4 axis_transform;
-    mat4_ident(&axis_transform);
-
-    // X-axis label
-    mat4_ident(&axis_transform);
-    mat4_scale(&axis_transform, (struct vec4) { 1.0f, 0.01f, 0.01f });
-    mat4_translate(&axis_transform, (struct vec4) { 0.5f, 0.0f, 0.0f });
-    bbox_render_color(axis_bbox, &axis_transform, COLOR_RED);
-
-    // Y-axis label
-    mat4_ident(&axis_transform);
-    mat4_scale(&axis_transform, (struct vec4) { 0.01f, 1.0f, 0.01f });
-    mat4_translate(&axis_transform, (struct vec4) { 0.0f, 0.5f, 0.0f });
-    bbox_render_color(axis_bbox, &axis_transform, COLOR_GREEN);
-
-    // Z-axis label
-    mat4_ident(&axis_transform);
-    mat4_scale(&axis_transform, (struct vec4) { 0.01f, 0.01f, 1.0f });
-    mat4_translate(&axis_transform, (struct vec4) { 0.0f, 0.0f, 0.5f });
-    bbox_render_color(axis_bbox, &axis_transform, COLOR_BLUE);
-
-    //--------------------------------------------------------------------------
-
-    //glUseProgram(prog_default->prog_id);
-
-    //    // Model transform
-    //    mat4_ident(&model_matrix);
-    //    //mat4_translate(model_matrix, (struct vec4) { 0.0f, 0.0f, 0.0f });
-    //    mat4_rotx(&model_matrix, -90.0f);
-    //    mat4_scale(&model_matrix, (struct vec4) { 64.0f, 64.0f, 1.0f });
-    //    glUniformMatrix4fv(prog_default->u_model, 1, GL_TRUE, model_matrix.a);
-
-    //    // Model texture
-    //    // Note: We don't have to do this every time as long as we make sure
-    //    //       the correct textures are bound before each draw to the texture
-    //    //       index assumed when the program was initialized.
-    //    //glUniform1i(prog_default->u_tex, 0);
-
-    //    // UV-coord scale
-    //    uv_scale = (struct tex2) { 128.0f, 128.0f };
-    //    glUniform2f(prog_default->u_scale_uv, uv_scale.u, uv_scale.v);
-
-    //    // Bind texture(s)
-    //    //glActiveTexture(GL_TEXTURE0);
-    //    glBindTexture(tex_grass->target, tex_grass->texture_id);
-
-    //    // Draw
-    //    glBindVertexArray(vao);
-    //    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-    //    glBindVertexArray(0);
-
-    //glUseProgram(0);
-    //glBindTexture(tex_grass->target, 0);
-
-    //bbox_render(obj_bbox, &model_matrix);
+    bbox_render_color(axis_bbox, &x_axis_transform, COLOR_RED);
+    bbox_render_color(axis_bbox, &y_axis_transform, COLOR_GREEN);
+    bbox_render_color(axis_bbox, &z_axis_transform, COLOR_BLUE);
 
     ////--------------------------------------------------------------------------
     //// Ruler object
@@ -400,7 +363,6 @@ void free_glref()
     free_texture(&tex_default);
     free_texture(&tex_hello1);
     free_texture(&tex_grass);
-    free_mesh(&obj_mesh);
+    free_mesh(&obj_ground.mesh);
     free_program_default(&prog_default);
-    free_bbox(&obj_bbox);
 }

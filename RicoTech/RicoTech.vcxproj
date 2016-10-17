@@ -130,6 +130,11 @@
   <ItemGroup>
     <ClCompile Include="camera.c" />
     <ClCompile Include="geom.c" />
+    <ClCompile Include="ignoreme.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="rico_obj.c" />
     <ClCompile Include="rico_physics.c" />
     <ClCompile Include="bbox.c" />
     <ClCompile Include="gl3w.c" />

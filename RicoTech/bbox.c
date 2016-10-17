@@ -7,12 +7,14 @@
 #define BBOX_EPSILON 0.1f
 #endif
 
-struct bbox *make_bbox(struct vec4 p0, struct vec4 p1)
+static void bbox_init(struct bbox *box);
+
+const struct bbox *make_bbox(struct vec4 p0, struct vec4 p1)
 {
     return make_bbox_color(p0, p1, COLOR_WHITE);
 }
 
-struct bbox *make_bbox_color(struct vec4 p0, struct vec4 p1, struct col4 color)
+const struct bbox *make_bbox_color(struct vec4 p0, struct vec4 p1, struct col4 color)
 {
     struct bbox *bbox = (struct bbox *)calloc(1, sizeof(struct bbox));
     bbox->prog = make_program_bbox();
@@ -25,10 +27,12 @@ struct bbox *make_bbox_color(struct vec4 p0, struct vec4 p1, struct col4 color)
     bbox->vertices[6] = (struct vec4) { p1.x, p1.y, p1.z, 1.0f };
     bbox->vertices[7] = (struct vec4) { p0.x, p1.y, p1.z, 1.0f };
     bbox->color = color;
+
+    bbox_init(bbox);
     return bbox;
 }
 
-struct bbox *make_bbox_mesh(const struct mesh_vertex *verts, int count)
+const struct bbox *make_bbox_mesh(const struct mesh_vertex *verts, int count)
 {
     struct vec4 p0 = (struct vec4) { 9999.0f, 9999.0f, 9999.0f };
     struct vec4 p1 = (struct vec4) { -9999.0f, -9999.0f, -9999.0f };
@@ -72,7 +76,7 @@ struct bbox *make_bbox_mesh(const struct mesh_vertex *verts, int count)
     return make_bbox(p0, p1);
 }
 
-void bbox_init(struct bbox *box)
+static void bbox_init(struct bbox *box)
 {
     glGenVertexArrays(1, &box->vao);
     glBindVertexArray(box->vao);
@@ -128,12 +132,12 @@ void bbox_init(struct bbox *box)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void bbox_render(const struct bbox *box, struct mat4 *model_matrix)
+void bbox_render(const struct bbox *box, const struct mat4 *model_matrix)
 {
     bbox_render_color(box, model_matrix, box->color);
 }
 
-void bbox_render_color(const struct bbox *box, struct mat4 *model_matrix,
+void bbox_render_color(const struct bbox *box, const struct mat4 *model_matrix,
                        const struct col4 color)
 {
     //--------------------------------------------------------------------------

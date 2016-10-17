@@ -10,19 +10,13 @@ struct rico_mesh {
     struct program_default *prog;
     GLuint vao;
     GLuint vbos[2];
+    GLsizei element_count;
     
     //TODO: Support multiple textures (per mesh?)
     const struct rico_texture *texture;
 
     //TODO: Can I make this a non-pointer member?
-    struct bbox *bbox;
-
-    //HACK: Too lazy to use rico_object at the moment
-    //-----------------------------------
-    struct vec4 trans;
-    struct vec4 rot;
-    struct vec4 scale;
-    //-----------------------------------
+    const struct bbox *bbox;
 };
 
 struct mesh_vertex {
@@ -39,9 +33,9 @@ struct rico_mesh *make_mesh(struct program_default *program,
                             const struct mesh_vertex *vertex_data,
                             uint32 vertex_count, const GLuint *element_data,
                             uint32 element_count, GLenum hint);
-void free_mesh(struct rico_mesh **);
+void free_mesh(struct rico_mesh **mesh);
 
-void mesh_update(struct rico_mesh *);
-void mesh_render(const struct rico_mesh *);
+void mesh_update(struct rico_mesh *mesh);
+void mesh_render(const struct rico_mesh *mesh, const struct mat4 *model_matrix);
 
 #endif

@@ -11,6 +11,7 @@ struct camera {
 
 extern struct camera view_camera;
 extern struct mat4 view_matrix;
+extern struct mat4 proj_matrix;
 extern GLenum view_polygon_mode;
 
 #endif // CAMERA_H

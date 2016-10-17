@@ -13,11 +13,13 @@ struct rico_obj {
     //TODO: Refactor into rico_transform
     //TODO: Animation
     struct vec4 trans;
-    struct mat4 rot;
+    struct vec4 rot;
     struct vec4 scale;
 
     //TODO: Support multiple meshes
-    struct rico_mesh mesh;
+    struct rico_mesh *mesh;
 };
+
+void rico_obj_render(const struct rico_obj *obj);
 
 #endif // RICO_OBJ_H

@@ -22,12 +22,11 @@ struct bbox {
     struct col4 color;
 };
 
-struct bbox *make_bbox(struct vec4 p0, struct vec4 p1);
-struct bbox *make_bbox_color(struct vec4 p0, struct vec4 p1, struct col4 color);
-struct bbox *make_bbox_mesh(const struct mesh_vertex *verts, int count);
-void bbox_init(struct bbox *box);
-void bbox_render(const struct bbox *box, struct mat4 *model_matrix);
-void bbox_render_color(const struct bbox *box, struct mat4 *model_matrix,
+const struct bbox *make_bbox(struct vec4 p0, struct vec4 p1);
+const struct bbox *make_bbox_color(struct vec4 p0, struct vec4 p1, struct col4 color);
+const struct bbox *make_bbox_mesh(const struct mesh_vertex *verts, int count);
+void bbox_render(const struct bbox *box, const struct mat4 *model_matrix);
+void bbox_render_color(const struct bbox *box, const struct mat4 *model_matrix,
                        const struct col4 color);
 bool bbox_intersects(const struct bbox *a, const struct bbox *b);
 
