@@ -31,6 +31,12 @@ static struct rico_texture *tex_hello1;
 static struct rico_texture *tex_grass;
 
 static struct rico_obj obj_ground;
+static struct rico_obj obj_ruler;
+static struct rico_obj obj_wall1;
+static struct rico_obj obj_wall2;
+static struct rico_obj obj_wall3;
+static struct rico_obj obj_wall4;
+static struct rico_obj obj_hello;
 
 static const struct bbox *axis_bbox;
 
@@ -113,14 +119,57 @@ void init_glref()
     tex_grass = make_texture(GL_TEXTURE_2D, "grass.tga");
 
     //--------------------------------------------------------------------------
-    // Create mesh
+    // Create  meshes
     //--------------------------------------------------------------------------
+    
+    // Ground
     obj_ground.trans = (struct vec4) { 0.0f, 0.0f, 0.0f, 1.0f };
     obj_ground.rot.x = -90.0f;
     obj_ground.scale = (struct vec4) { 64.0f, 64.0f, 1.0f, 1.0f };
-
     obj_ground.mesh = make_mesh(prog_default, tex_grass, vertices, VERT_COUNT,
                                 elements, ELEMENT_COUNT, GL_STATIC_DRAW);
+
+    struct rico_mesh *mesh_rect_default =
+        make_mesh(prog_default, tex_default, vertices, VERT_COUNT, elements,
+                  ELEMENT_COUNT, GL_STATIC_DRAW);
+
+    // Ruler
+    obj_ruler.trans = (struct vec4) { 0.0f, 1.0f, -3.0f };
+    obj_ruler.scale = (struct vec4) { 1.0f, 1.0f, 1.0f, 1.0f };
+    obj_ruler.mesh = mesh_rect_default;
+
+    // Walls are all the same size for now
+    struct vec4 wall_scale = (struct vec4) { 8.0f, 2.5f, 1.0f };
+
+    // Wall front
+    obj_wall1.trans = (struct vec4) { 0.0f, 2.5f, -8.0f };
+    obj_wall1.scale = wall_scale;
+    obj_wall1.mesh = mesh_rect_default;
+
+    // Wall left
+    obj_wall2.trans = (struct vec4) { -8.0f, 2.5f, 0.0f };
+    obj_wall2.rot.y = 0.0f;
+    obj_wall2.scale = wall_scale;
+    obj_wall2.mesh = mesh_rect_default;
+
+    // Wall back
+    obj_wall3.trans = (struct vec4) { 0.0f, 2.5f, 8.0f };
+    obj_wall3.rot.y = 180.0f;
+    obj_wall3.scale = wall_scale;
+    obj_wall3.mesh = mesh_rect_default;
+
+    // Wall right
+    obj_wall4.trans = (struct vec4) { 8.0f, 2.5f, 0.0f };
+    obj_wall4.rot.y = -90.0f;
+    obj_wall4.scale = wall_scale;
+    obj_wall4.mesh = mesh_rect_default;
+
+    // Hello
+    obj_hello.trans = (struct vec4) { 0.0f, 2.0f, -4.0f };
+    obj_hello.rot.y = 30.0f;
+    obj_hello.scale = (struct vec4) { 1.0f, 2.0f, 1.0f };
+    obj_hello.mesh = make_mesh(prog_default, tex_hello1, vertices, VERT_COUNT,
+                               elements, ELEMENT_COUNT, GL_STATIC_DRAW);
 
     //--------------------------------------------------------------------------
     // Create axis label bboxes
@@ -173,19 +222,17 @@ void update_glref(GLfloat dt)
 void render_glref()
 {
     //--------------------------------------------------------------------------
-    // Draw
-    //--------------------------------------------------------------------------
-
-    //struct mat4 model_matrix;
-    //struct tex2 uv_scale;
-
-    //TODO: Don't have multiple textures / model matrices for single mesh
-    //      Let the mesh render itself, set uniforms in mesh_init()
-
-    //--------------------------------------------------------------------------
-    // Ground object
+    // Render objects
     //--------------------------------------------------------------------------
     rico_obj_render(&obj_ground);
+    rico_obj_render(&obj_ruler);
+    
+    rico_obj_render(&obj_wall1);
+    rico_obj_render(&obj_wall2);
+    rico_obj_render(&obj_wall3);
+    rico_obj_render(&obj_wall4);
+
+    rico_obj_render(&obj_hello);
 
     //--------------------------------------------------------------------------
     // Axes labels (bboxes)
@@ -193,167 +240,6 @@ void render_glref()
     bbox_render_color(axis_bbox, &x_axis_transform, COLOR_RED);
     bbox_render_color(axis_bbox, &y_axis_transform, COLOR_GREEN);
     bbox_render_color(axis_bbox, &z_axis_transform, COLOR_BLUE);
-
-    ////--------------------------------------------------------------------------
-    //// Ruler object
-    ////--------------------------------------------------------------------------
-    //glUseProgram(prog_default->prog_id);
-
-    //    // Model transform
-    //    mat4_ident(&model_matrix);
-    //    mat4_translate(&model_matrix, (struct vec4) { 0.0f, 1.0f, -3.0f });
-    //    //mat4_scale(model_matrix, (struct vec4) { 1.0f, 1.0f, 1.0f });
-    //    glUniformMatrix4fv(prog_default->u_model, 1, GL_TRUE, model_matrix.a);
-
-    //    // Model texture
-    //    // Note: We don't have to do this every time as long as we make sure
-    //    //       the correct textures are bound before each draw to the texture
-    //    //       index assumed when the program was initialized.
-    //    //glUniform1i(prog_default->u_tex, 0);
-
-    //    // UV-coord scale
-    //    uv_scale = (struct tex2) { 1.0f, 1.0f };
-    //    glUniform2f(prog_default->u_scale_uv, uv_scale.u, uv_scale.v);
-
-    //    // Bind texture(s)
-    //    //glActiveTexture(GL_TEXTURE0);
-    //    glBindTexture(tex_default->target, tex_default->texture);
-
-    //    // Draw
-    //    glBindVertexArray(vao);
-    //    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-    //    glBindVertexArray(0);
-
-    //glUseProgram(0);
-
-    //bbox_render(obj_bbox, &model_matrix);
-
-    ////--------------------------------------------------------------------------
-    //// Walls, because I can
-    ////--------------------------------------------------------------------------
-
-    //struct mat4 *model_matrix_wall1;
-    //struct mat4 *model_matrix_wall2;
-    //struct mat4 *model_matrix_wall3;
-    //struct mat4 *model_matrix_wall4;
-
-    //glUseProgram(prog_default->prog_id);
-    //glBindVertexArray(vao);
-
-    //// Bind texture
-    //glBindTexture(tex_default->target, tex_default->texture);
-
-    //// UV-coord scale
-    //uv_scale = (struct tex2) { 8.0f, 2.5f };
-    //glUniform2f(prog_default->u_scale_uv, uv_scale.u, uv_scale.v);
-
-    ////--------------------------------------------------------------------------
-
-    //// Model transform
-    //model_matrix_wall1 = make_mat4_ident();
-    //mat4_translate(model_matrix_wall1, (struct vec4) { 0.0f, 2.5f, -8.0f });
-    //mat4_scale(model_matrix_wall1, (struct vec4) { 8.0f, 2.5f, 1.0f });
-    //glUniformMatrix4fv(prog_default->u_model, 1, GL_TRUE,
-    //                   model_matrix_wall1->a);
-
-    //// Draw
-    //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-    ////--------------------------------------------------------------------------
-
-    //// Model transform
-    //model_matrix_wall2 = make_mat4_ident();
-    //mat4_translate(model_matrix_wall2, (struct vec4) { -8.0f, 2.5f, 0.0f });
-    //mat4_roty(model_matrix_wall2, 90.0f);
-    //mat4_scale(model_matrix_wall2, (struct vec4) { 8.0f, 2.5f, 1.0f });
-    //glUniformMatrix4fv(prog_default->u_model, 1, GL_TRUE,
-    //                   model_matrix_wall2->a);
-
-    //// Draw
-    //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-    ////--------------------------------------------------------------------------
-
-    //// Model transform
-    //model_matrix_wall3 = make_mat4_ident();
-    //mat4_translate(model_matrix_wall3, (struct vec4) { 0.0f, 2.5f, 8.0f });
-    //mat4_roty(model_matrix_wall3, 180.0f);
-    //mat4_scale(model_matrix_wall3, (struct vec4) { 8.0f, 2.5f, 1.0f });
-    //glUniformMatrix4fv(prog_default->u_model, 1, GL_TRUE,
-    //                   model_matrix_wall3->a);
-
-    //// Draw
-    //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-    ////--------------------------------------------------------------------------
-
-    //// Model transform
-    //model_matrix_wall4 = make_mat4_ident();
-    //mat4_translate(model_matrix_wall4, (struct vec4) { 8.0f, 2.5f, 0.0f });
-    //mat4_roty(model_matrix_wall4, -90.0f);
-    //mat4_scale(model_matrix_wall4, (struct vec4) { 8.0f, 2.5f, 1.0f });
-    //glUniformMatrix4fv(prog_default->u_model, 1, GL_TRUE,
-    //                   model_matrix_wall4->a);
-
-    //// Draw
-    //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-    ////--------------------------------------------------------------------------
-
-    //glBindVertexArray(0);
-    //glUseProgram(0);
-    //glBindTexture(tex_default->target, 0);
-
-    //bbox_render(obj_bbox, model_matrix_wall1);
-    //bbox_render(obj_bbox, model_matrix_wall2);
-    //bbox_render(obj_bbox, model_matrix_wall3);
-    //bbox_render(obj_bbox, model_matrix_wall4);
-
-    //free_mat4(model_matrix_wall1);
-    //free_mat4(model_matrix_wall2);
-    //free_mat4(model_matrix_wall3);
-    //free_mat4(model_matrix_wall4);
-
-    ////--------------------------------------------------------------------------
-    //// Hello object
-    ////--------------------------------------------------------------------------
-    //glUseProgram(prog_default->prog_id);
-
-    //    // Model transform
-    //    mat4_ident(&model_matrix);
-    //    mat4_scale(&model_matrix, (struct vec4) { 1.0f, 2.0f, 1.0f });
-    //    mat4_translate(&model_matrix, (struct vec4) { 0.0f, 1.0f, -4.0f });
-    //    mat4_roty(&model_matrix, 30.0f);
-    //    glUniformMatrix4fv(prog_default->u_model, 1, GL_TRUE, model_matrix.a);
-
-    //    // Model texture
-    //    // Note: We don't have to do this every time as long as we make sure
-    //    //       the correct textures are bound before each draw to the texture
-    //    //       index assumed when the program was initialized.
-    //    //glUniform1i(prog_default->u_tex, 0);
-
-    //    // UV-coord scale
-    //    uv_scale = (struct tex2) { 1.0f, 2.0f };
-    //    glUniform2f(prog_default->u_scale_uv, uv_scale.u, uv_scale.v);
-
-    //    // Bind texture(s)
-    //    //glActiveTexture(GL_TEXTURE0);
-    //    glBindTexture(tex_hello1->target, tex_hello1->texture);
-
-    //    // Draw
-    //    glBindVertexArray(vao);
-    //    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-    //    glBindVertexArray(0);
-
-    //glUseProgram(0);
-    //glBindTexture(tex_default->target, 0);
-
-    //bbox_render(obj_bbox, &model_matrix);
-
-    ////--------------------------------------------------------------------------
-    //// Clean up
-    //glBindBuffer(GL_ARRAY_BUFFER, 0);
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 void free_glref()
 {

@@ -127,7 +127,7 @@ void free_program_default(struct program_default **program)
     //TODO: Handle error
     if ((*program)->ref_count > 0) {
         printf("Cannot delete a program in use!");
-        crash;
+        //TODO: crash;
     }
 
     glDeleteProgram((*program)->prog_id);

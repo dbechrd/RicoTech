@@ -119,7 +119,8 @@ void mesh_update(struct rico_mesh *mesh)
     //TODO: Animate the mesh.
 }
 
-void mesh_render(const struct rico_mesh *mesh, const struct mat4 *model_matrix)
+void mesh_render(const struct rico_mesh *mesh, const struct mat4 *model_matrix,
+                 struct vec4 uv_scale)
 {
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glUseProgram(mesh->prog->prog_id);
@@ -134,8 +135,7 @@ void mesh_render(const struct rico_mesh *mesh, const struct mat4 *model_matrix)
     glUniform1i(mesh->prog->u_tex, 0);
 
     // UV-coord scale
-    struct tex2 uv_scale = (struct tex2) { 128.0f, 128.0f };
-    glUniform2f(mesh->prog->u_scale_uv, uv_scale.u, uv_scale.v);
+    glUniform2f(mesh->prog->u_scale_uv, uv_scale.x, uv_scale.y);
     
     // Bind texture(s)
     //glActiveTexture(GL_TEXTURE0);

@@ -16,5 +16,5 @@ void rico_obj_render(const struct rico_obj *obj)
     mat4_scale(&model_matrix, obj->scale);
 
     // Render mesh
-    mesh_render(obj->mesh, &model_matrix);
+    mesh_render(obj->mesh, &model_matrix, obj->scale);
 }

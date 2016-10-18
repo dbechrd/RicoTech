@@ -36,6 +36,7 @@ struct rico_mesh *make_mesh(struct program_default *program,
 void free_mesh(struct rico_mesh **mesh);
 
 void mesh_update(struct rico_mesh *mesh);
-void mesh_render(const struct rico_mesh *mesh, const struct mat4 *model_matrix);
+void mesh_render(const struct rico_mesh *mesh, const struct mat4 *model_matrix,
+                 struct vec4 uv_scale);
 
 #endif
