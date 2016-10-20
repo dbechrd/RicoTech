@@ -110,7 +110,7 @@ void free_mesh(struct rico_mesh **mesh)
     glDeleteBuffers(2, (*mesh)->vbos);
     glDeleteVertexArrays(1, &(*mesh)->vao);
     free(*mesh);
-    (*mesh) = NULL;
+    *mesh = NULL;
 }
 
 void mesh_update(struct rico_mesh *mesh)

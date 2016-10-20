@@ -143,20 +143,24 @@ int main(int argc, char *argv[])
     //TODO: This assumes 1/60th second (60fps), this should be 1.65 * dt.
     GLfloat view_trans_delta = 1.65f;
     struct vec4 view_trans_vel = { 0.0f, 0.0f, 0.0f, 1.0f };
-    bool sprint = false;
-    bool fly = false;
-
     struct vec4 view_scale_vel = { 0.0f, 0.0f, 0.0f, 1.0f };
     float view_rot_delta = 0.1f;
     float view_rotx_limit = 70.0f;
 
-    bool mouse_lock = true;
-    SDL_SetRelativeMouseMode(mouse_lock);
+    bool sprint = false;
+    bool fly = false;
 
+    bool ambient_light = true;
+
+    bool mouse_lock = true;
     bool pause = false;
     bool quit = false;
+
+    SDL_SetRelativeMouseMode(mouse_lock);
+
     GLuint time = SDL_GetTicks();
     SDL_Event windowEvent;
+
     while (!quit)
     {
         while (SDL_PollEvent(&windowEvent))
@@ -214,6 +218,10 @@ int main(int argc, char *argv[])
                 else if (windowEvent.key.keysym.sym == SDLK_f)
                 {
                     fly = !fly;
+                }
+                else if (windowEvent.key.keysym.sym == SDLK_l)
+                {
+                    ambient_light = !ambient_light;
                 }
                 else if (windowEvent.key.keysym.sym == SDLK_p)
                 {
@@ -386,7 +394,7 @@ int main(int argc, char *argv[])
 
         glPolygonMode(GL_FRONT_AND_BACK, view_polygon_mode);
 
-        update_glref(dt);
+        update_glref(dt, ambient_light);
         render_glref();
 
         SDL_GL_SwapWindow(window);

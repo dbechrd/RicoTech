@@ -1,5 +1,31 @@
 #include "rico_obj.h"
 
+#define RICO_OBJ_POOL_SIZE 20
+
+struct rico_obj rico_obj_pool[RICO_OBJ_POOL_SIZE];
+uint32 next_uid = 1;
+
+//TODO: Should default W component be 0 or 1?
+const struct rico_obj RICO_OBJ_DEFAULT = {
+    0,
+    { 0.0f, 0.0f, 0.0f, 0.0f },
+    { 0.0f, 0.0f, 0.0f, 0.0f },
+    { 1.0f, 1.0f, 1.0f, 0.0f },
+    NULL
+};
+
+struct rico_obj *make_rico_obj()
+{
+    //TODO: Handle out-of-memory
+    //TODO: Implement reuse of pool objects
+    if (next_uid >= RICO_OBJ_POOL_SIZE)
+        return NULL;
+
+    rico_obj_pool[next_uid] = RICO_OBJ_DEFAULT;
+    rico_obj_pool[next_uid].uid = next_uid;
+    return &rico_obj_pool[next_uid++];
+}
+
 void rico_obj_render(const struct rico_obj *obj)
 {
     // Model transform

@@ -19,6 +19,8 @@ struct program_default {
     GLint u_model;    //mat4
     GLint u_view;     //mat4
     GLint u_proj;     //mat4
+
+    GLint u_ambient;  //vec4
     GLint u_tex;      //sampler2D
 
     GLint vert_pos;   //vec4

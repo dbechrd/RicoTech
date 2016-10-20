@@ -40,6 +40,9 @@ struct vec4 {
     GLfloat x, y, z, w;
 };
 
+extern const struct vec4 VEC4_ZERO;
+extern const struct vec4 VEC4_UNIT;
+
 static inline struct vec4 vec_cross(struct vec4 a, struct vec4 b)
 {
     struct vec4 r;

@@ -5,7 +5,7 @@
 #include "camera.h"
 
 void init_glref();
-void update_glref(GLfloat dt);
+void update_glref(GLfloat dt, bool ambient_light);
 void render_glref();
 void free_glref();
 
