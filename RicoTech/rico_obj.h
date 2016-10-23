@@ -1,7 +1,6 @@
 #ifndef RICO_OBJ_H
 #define RICO_OBJ_H
 
-#include "const.h"
 #include "geom.h"
 #include "mesh.h"
 #include <GL/gl3w.h>

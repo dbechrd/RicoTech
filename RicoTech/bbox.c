@@ -14,7 +14,8 @@ const struct bbox *make_bbox(struct vec4 p0, struct vec4 p1)
     return make_bbox_color(p0, p1, COLOR_WHITE);
 }
 
-const struct bbox *make_bbox_color(struct vec4 p0, struct vec4 p1, struct col4 color)
+const struct bbox *make_bbox_color(struct vec4 p0, struct vec4 p1,
+                                   struct col4 color)
 {
     struct bbox *bbox = (struct bbox *)calloc(1, sizeof(struct bbox));
     bbox->prog = make_program_bbox();

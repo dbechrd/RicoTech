@@ -3,8 +3,8 @@
 
 #include <GL/gl3w.h>
 
-void *file_contents(const char *filename, GLint *length);
-void *read_tga(const char *filename, int *width, int *height);
+void *file_contents(const char *filename, int *length);
+//void *read_tga(const char *filename, int *width, int *height);
 
 void APIENTRY openglCallbackFunction(GLenum source, GLenum type, GLuint id,
                                      GLenum severity, GLsizei length,
@@ -15,9 +15,18 @@ void show_info_log(GLuint object,
                    PFNGLGETSHADERIVPROC glGet__iv,
                    PFNGLGETSHADERINFOLOGPROC glGet__InfoLog);
 
-GLuint orig_make_texture(const char *filename);
-GLuint orig_make_shader(GLenum type, const char *filename);
-GLuint orig_make_program(const char *vertex_shader_filename,
-                    const char *fragment_shader_filename);
+inline unsigned short swap_16bit(unsigned short us)
+{
+    return (unsigned short)(((us & 0xFF00) >> 8) |
+                            ((us & 0x00FF) << 8));
+}
+
+inline unsigned long swap_32bit(unsigned long ul)
+{
+    return (unsigned long)(((ul & 0xFF000000) >> 24) |
+                           ((ul & 0x00FF0000) >>  8) |
+                           ((ul & 0x0000FF00) <<  8) |
+                           ((ul & 0x000000FF) << 24));
+}
 
 #endif

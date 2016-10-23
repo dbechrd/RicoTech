@@ -1,9 +1,10 @@
 #include "rico_obj.h"
+#include "const.h"
 
 #define RICO_OBJ_POOL_SIZE 20
 
-struct rico_obj rico_obj_pool[RICO_OBJ_POOL_SIZE];
-uint32 next_uid = 1;
+static struct rico_obj rico_obj_pool[RICO_OBJ_POOL_SIZE];
+static uint32 next_uid = 1;
 
 //TODO: Should default W component be 0 or 1?
 const struct rico_obj RICO_OBJ_DEFAULT = {

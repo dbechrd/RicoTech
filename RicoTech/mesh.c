@@ -32,7 +32,6 @@ struct rico_mesh *make_mesh(struct program_default *program,
                  element_data, GL_STATIC_DRAW);
 
     //==============================================================================
-    //Cleanup: bug check
     glUseProgram(mesh->prog->prog_id);
 
     //--------------------------------------------------------------------------
@@ -91,7 +90,6 @@ struct rico_mesh *make_mesh(struct program_default *program,
     //--------------------------------------------------------------------------
     glUniformMatrix4fv(mesh->prog->u_proj, 1, GL_TRUE, proj_matrix.a);
 
-    //Cleanup: bug check
     glUseProgram(0);
 
     glBindVertexArray(0);

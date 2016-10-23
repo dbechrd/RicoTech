@@ -153,7 +153,6 @@ int main(int argc, char *argv[])
     bool ambient_light = true;
 
     bool mouse_lock = true;
-    bool pause = false;
     bool quit = false;
 
     SDL_SetRelativeMouseMode(mouse_lock);
@@ -225,7 +224,7 @@ int main(int argc, char *argv[])
                 }
                 else if (windowEvent.key.keysym.sym == SDLK_p)
                 {
-                    pause = true;
+                    SDL_TriggerBreakpoint();
                 }
                 else if (windowEvent.key.keysym.sym == SDLK_m)
                 {
@@ -243,11 +242,6 @@ int main(int argc, char *argv[])
             }
             else if (windowEvent.type == SDL_KEYUP)
             {
-                if (windowEvent.key.keysym.sym == SDLK_LCTRL)
-                {
-                    //sprint = false;
-                }
-
                 if (windowEvent.key.keysym.sym == SDLK_q)
                 {
                     view_trans_vel.y -= view_trans_delta;
@@ -271,10 +265,6 @@ int main(int argc, char *argv[])
                 else if (windowEvent.key.keysym.sym == SDLK_s)
                 {
                     view_trans_vel.z += view_trans_delta;
-                }
-                else if (windowEvent.key.keysym.sym == SDLK_p)
-                {
-                    pause = false;
                 }
                 else if (windowEvent.key.keysym.sym == SDLK_ESCAPE)
                 {
@@ -347,16 +337,6 @@ int main(int argc, char *argv[])
         view_camera.trans.x += view_dx;
         view_camera.trans.y += view_dy;
         view_camera.trans.z += view_dz;
-
-        if (pause)
-        {
-            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            // Very Important:    *** DEFINITELY ***
-            //                    DO NOT REMOVE this variable
-            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            int asdfwaagasdfsahhgfd = 5;
-            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        }
 
         view_camera.scale.x += view_scale_vel.x * dt;
         view_camera.scale.y += view_scale_vel.y * dt;

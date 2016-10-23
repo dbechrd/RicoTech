@@ -10,6 +10,7 @@
 #include "mesh.h"
 #include "rico_obj.h"
 #include "stb_image.h"
+#include "font.h"
 
 #include <GL/gl3w.h>
 #include <SDL/SDL_assert.h>
@@ -53,6 +54,8 @@ void init_glref()
     // Initialize camera
     //--------------------------------------------------------------------------
     
+    struct font *font = make_font("courier_new.bff");
+
     //Note: Player's eyes are at 1.7 meters
     view_camera.scale = (struct vec4) { 1.0f, 1.0f, 1.0f };
     view_camera.rot   = (struct vec4) { 0.0f, 0.0f, 0.0f };
@@ -124,7 +127,6 @@ void init_glref()
     //--------------------------------------------------------------------------
     // Create world objects
     //--------------------------------------------------------------------------
-    
     obj_ground = make_rico_obj();
     obj_ruler = make_rico_obj();
     obj_wall1 = make_rico_obj();
@@ -188,7 +190,7 @@ void init_glref()
     obj_hello->rot.y = 30.0f;
     obj_hello->scale = (struct vec4) { 1.0f, 2.0f, 1.0f };
     obj_hello->mesh = make_mesh(prog_default, tex_hello1, vertices, VERT_COUNT,
-                               elements, ELEMENT_COUNT, GL_STATIC_DRAW);
+                                elements, ELEMENT_COUNT, GL_STATIC_DRAW);
 
     //--------------------------------------------------------------------------
     // Create axis label bboxes
@@ -214,10 +216,21 @@ void init_glref()
     mat4_translate(&z_axis_transform, (struct vec4) { 0.0f, 0.0f, 0.5f });
 }
 
+//TODO: Put this somewhere reasonable
+static struct col4 ambient = { 0.7f, 0.6f, 0.4f, 1.0f };
+static GLfloat ambient_sign = -1.0f;
+
 void update_glref(GLfloat dt, bool ambient_light)
 {
-    //TODO: Put this somewhere reasonable
-    static const struct vec4 ambient = { 0.7f, 0.6f, 0.4f, 1.0f };
+    //static const struct col4 delta_ambient = { 0.01f, 0.01f, 0.01f, 0.0f };
+    //
+    //ambient.r += delta_ambient.r * dt * ambient_sign;
+    //ambient.g += delta_ambient.g * dt * ambient_sign;
+    //ambient.b += delta_ambient.b * dt * ambient_sign;
+    //
+    //GLfloat ambient_sum = ambient.r + ambient.g + ambient.b;
+    //if (ambient_sum <= 0.1f || ambient_sum >= 2.7f)
+    //    ambient_sign *= -1.0f;
 
     //--------------------------------------------------------------------------
     // Update uniforms
@@ -242,6 +255,11 @@ void update_glref(GLfloat dt, bool ambient_light)
     // Set uniforms
     glUniformMatrix4fv(prog_bbox->u_view, 1, GL_TRUE, view_matrix.a);
     glUniformMatrix4fv(prog_bbox->u_proj, 1, GL_TRUE, proj_matrix.a);
+
+    if (ambient_light)
+        glUniform4fv(prog_default->u_ambient, 1, (const GLfloat *)&ambient);
+    else
+        glUniform4fv(prog_default->u_ambient, 1, (const GLfloat *)&VEC4_UNIT);
 
     glUseProgram(0);
 }

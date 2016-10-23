@@ -7,7 +7,7 @@
 * Boring, non-OpenGL-related utility functions
 */
 
-void *file_contents(const char *filename, GLint *length)
+void *file_contents(const char *filename, int *length)
 {
     FILE *fs = fopen(filename, "r");
     void *buffer;
