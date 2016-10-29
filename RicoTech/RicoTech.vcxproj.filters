@@ -17,9 +17,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="util.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -63,6 +60,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="shader.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main_nuke.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -113,6 +116,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="font.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="nuklear.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="nuklear_sdl_gl3.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

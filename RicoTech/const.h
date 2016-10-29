@@ -53,7 +53,12 @@ typedef unsigned long ulong;
 // Macros
 //------------------------------------------------------------------------------
 #define sizeof_member(type, member) sizeof(((type *)0)->member)
-#define crash char*p=0;p[0]++
+
+#ifdef RICO_DEBUG
+#define assert(exp) if(!(exp)) {*(int*)0=0;}
+#else
+#define assert(exp)
+#endif
 
 //------------------------------------------------------------------------------
 // Enums

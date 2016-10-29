@@ -1,5 +1,5 @@
 #include "mesh.h"
-#include "bbox.h"
+#include "texture.h"
 #include "camera.h"
 #include <stdlib.h>
 
@@ -9,7 +9,7 @@ struct rico_mesh *make_mesh(struct program_default *program,
                             uint32 vertex_count, const GLuint *element_data,
                             uint32 element_count, GLenum hint)
 {
-    struct rico_mesh *mesh = calloc(1, sizeof(struct rico_mesh));
+    struct rico_mesh *mesh = calloc(1, sizeof(*mesh));
 
     program->ref_count++;
     mesh->prog = program;
@@ -95,9 +95,10 @@ struct rico_mesh *make_mesh(struct program_default *program,
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    //==============================================================================
+    //==========================================================================
 
-    mesh->bbox = make_bbox_mesh(vertex_data, vertex_count);
+    bbox_init_mesh(&(mesh->bbox), vertex_data, vertex_count,
+                   COLOR_GRAY_HIGHLIGHT);
 
     return mesh;
 }
@@ -120,7 +121,9 @@ void mesh_update(struct rico_mesh *mesh)
 void mesh_render(const struct rico_mesh *mesh, const struct mat4 *model_matrix,
                  struct vec4 uv_scale)
 {
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    if (view_polygon_mode != GL_FILL)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
     glUseProgram(mesh->prog->prog_id);
 
     glUniformMatrix4fv(mesh->prog->u_view, 1, GL_TRUE, view_matrix.a);
@@ -147,9 +150,8 @@ void mesh_render(const struct rico_mesh *mesh, const struct mat4 *model_matrix,
     glUseProgram(0);
     texture_unbind(mesh->texture);
 
-    glPolygonMode(GL_FRONT_AND_BACK, view_polygon_mode);
-
-    bbox_render_color(mesh->bbox, model_matrix, COLOR_CYAN);
+    if (view_polygon_mode != GL_FILL)
+        glPolygonMode(GL_FRONT_AND_BACK, view_polygon_mode);
 
     // Clean up
     glBindBuffer(GL_ARRAY_BUFFER, 0);

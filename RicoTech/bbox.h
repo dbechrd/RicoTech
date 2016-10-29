@@ -3,7 +3,6 @@
 
 #include "geom.h"
 #include "program.h"
-#include "mesh.h"
 #include <GL/gl3w.h>
 //#include <malloc.h>
 //#include <math.h>
@@ -20,12 +19,14 @@ struct bbox {
     //TODO: No reason to store vertices
     struct vec4 vertices[8];
     struct col4 color;
+
+    bool wireframe;
 };
 
-const struct bbox *make_bbox(struct vec4 p0, struct vec4 p1);
-const struct bbox *make_bbox_color(struct vec4 p0, struct vec4 p1,
-                                   struct col4 color);
-const struct bbox *make_bbox_mesh(const struct mesh_vertex *verts, int count);
+void bbox_init(struct bbox *bbox, struct vec4 p0, struct vec4 p1,
+               struct col4 color);
+void bbox_init_mesh(struct bbox *bbox, const struct mesh_vertex *verts,
+                    int count, struct col4 color);
 void bbox_render(const struct bbox *box, const struct mat4 *model_matrix);
 void bbox_render_color(const struct bbox *box, const struct mat4 *model_matrix,
                        const struct col4 color);

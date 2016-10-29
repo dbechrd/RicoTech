@@ -3,28 +3,45 @@
 
 #define RICO_OBJ_POOL_SIZE 20
 
+//TODO: Allocate from heap pool, not stack
 static struct rico_obj rico_obj_pool[RICO_OBJ_POOL_SIZE];
+
+//TODO: Instantiate rico_obj_pool[0] (handle 0) with a special default object
+//      that can be used to visually represent a NULL object in-game
+static uint32 next_handle = 1;
+
+//TODO: Move this to some global UID handler
 static uint32 next_uid = 1;
 
-//TODO: Should default W component be 0 or 1?
-const struct rico_obj RICO_OBJ_DEFAULT = {
-    0,
-    { 0.0f, 0.0f, 0.0f, 0.0f },
-    { 0.0f, 0.0f, 0.0f, 0.0f },
-    { 1.0f, 1.0f, 1.0f, 0.0f },
-    NULL
-};
-
-struct rico_obj *make_rico_obj()
+struct rico_obj *rico_obj_create(const struct rico_mesh *mesh,
+                                 const struct bbox *bbox)
 {
     //TODO: Handle out-of-memory
     //TODO: Implement reuse of pool objects
-    if (next_uid >= RICO_OBJ_POOL_SIZE)
+    if (next_handle >= RICO_OBJ_POOL_SIZE)
         return NULL;
 
-    rico_obj_pool[next_uid] = RICO_OBJ_DEFAULT;
-    rico_obj_pool[next_uid].uid = next_uid;
-    return &rico_obj_pool[next_uid++];
+    struct rico_obj *obj = &rico_obj_pool[next_handle];
+    next_handle++;
+
+    //TODO: Should default W component be 0 or 1?
+    obj->uid = next_uid++;
+    obj->handle = next_handle;
+    obj->scale = (struct vec4) { 1.0f, 1.0f, 1.0f, 1.0f };
+    obj->mesh = mesh;
+    obj->bbox = *bbox;
+    return obj;
+}
+
+struct rico_obj *rico_obj_fetch(uint32 handle)
+{
+    return &rico_obj_pool[handle];
+}
+
+//HACK: Is iterating all objects really a useful thing to do?
+uint32 rico_obj_next(uint32 handle)
+{
+    return (handle < next_handle - 1) ? ++handle : 0;
 }
 
 void rico_obj_render(const struct rico_obj *obj)
@@ -44,4 +61,7 @@ void rico_obj_render(const struct rico_obj *obj)
 
     // Render mesh
     mesh_render(obj->mesh, &model_matrix, obj->scale);
+
+    // Render bbox
+    bbox_render(&(obj->bbox), &model_matrix);
 }

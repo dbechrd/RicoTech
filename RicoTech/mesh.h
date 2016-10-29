@@ -1,22 +1,22 @@
 #ifndef MESH_H
 #define MESH_H
 
-#include "geom.h"
-#include "program.h"
-#include "texture.h"
+#include "bbox.h"
 #include <GL/gl3w.h>
 
 struct rico_mesh {
+    //TODO: Relace with program handle
     struct program_default *prog;
+
     GLuint vao;
     GLuint vbos[2];
     GLsizei element_count;
     
+    //TODO: Replace with texture handle
     //TODO: Support multiple textures (per mesh?)
     const struct rico_texture *texture;
 
-    //TODO: Can I make this a non-pointer member?
-    const struct bbox *bbox;
+    struct bbox bbox;
 };
 
 struct mesh_vertex {

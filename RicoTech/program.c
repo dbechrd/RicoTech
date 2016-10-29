@@ -205,7 +205,7 @@ void free_program_bbox(struct program_bbox **program)
     //TODO: Handle error
     if ((*program)->ref_count > 0) {
         printf("Cannot delete a program in use!");
-        crash;
+        assert(0);
     }
 
     glDeleteProgram((*program)->prog_id);

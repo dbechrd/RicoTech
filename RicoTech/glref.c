@@ -24,6 +24,8 @@
 //static GLuint vao;
 //static GLuint vbos[2];
 
+static uint32 selected_handle = 0;
+
 static struct program_default *prog_default;
 static struct program_bbox *prog_bbox;
 
@@ -31,18 +33,15 @@ static struct rico_texture *tex_default;
 static struct rico_texture *tex_hello1;
 static struct rico_texture *tex_grass;
 
-//TODO: Pool allocator
-static struct rico_obj *objects[20] = { NULL };
-
 static struct rico_obj *obj_ground;
+static struct rico_obj *obj_hello;
 static struct rico_obj *obj_ruler;
 static struct rico_obj *obj_wall1;
 static struct rico_obj *obj_wall2;
 static struct rico_obj *obj_wall3;
 static struct rico_obj *obj_wall4;
-static struct rico_obj *obj_hello;
 
-static const struct bbox *axis_bbox;
+static struct bbox axis_bbox;
 
 static struct mat4 x_axis_transform;
 static struct mat4 y_axis_transform;
@@ -50,16 +49,25 @@ static struct mat4 z_axis_transform;
 
 void init_glref()
 {
+    // TODO: Create resource loaders to handle:
+    //       fonts, shaders, textures, meshes, etc.
+
+    //--------------------------------------------------------------------------
+    // Initialize fonts
+    //--------------------------------------------------------------------------
+    struct font *font = make_font("courier_new.bff");
+
     //--------------------------------------------------------------------------
     // Initialize camera
     //--------------------------------------------------------------------------
-    
-    struct font *font = make_font("courier_new.bff");
-
     //Note: Player's eyes are at 1.7 meters
     view_camera.scale = (struct vec4) { 1.0f, 1.0f, 1.0f };
     view_camera.rot   = (struct vec4) { 0.0f, 0.0f, 0.0f };
     view_camera.trans = (struct vec4) { 0.0f,-1.7f,-4.0f };
+
+    // Set projection matrix uniform
+    mat4_perspective(&proj_matrix, SCREEN_W, SCREEN_H, Z_NEAR, Z_FAR,
+                     Z_FOV_DEG);
 
     //--------------------------------------------------------------------------
     // Create shader program
@@ -69,10 +77,6 @@ void init_glref()
 
     prog_bbox = make_program_bbox();
     if (!prog_bbox) return;
-
-    // Set projection matrix uniform
-    mat4_perspective(&proj_matrix, SCREEN_W, SCREEN_H, Z_NEAR, Z_FAR,
-                     Z_FOV_DEG);
 
     /*************************************************************************
     | Frequency of access:
@@ -120,84 +124,82 @@ void init_glref()
     //--------------------------------------------------------------------------
     // Create textures
     //--------------------------------------------------------------------------
-    tex_default = make_texture(GL_TEXTURE_2D, "basic.tga");
-    tex_hello1 = make_texture(GL_TEXTURE_2D, "hello1.tga");
     tex_grass = make_texture(GL_TEXTURE_2D, "grass.tga");
+    tex_hello1 = make_texture(GL_TEXTURE_2D, "hello1.tga");
+    tex_default = make_texture(GL_TEXTURE_2D, "basic.tga");
+
+    //--------------------------------------------------------------------------
+    // Create meshes
+    //--------------------------------------------------------------------------
+    const struct rico_mesh *mesh_grass =
+        make_mesh(prog_default, tex_grass, vertices, VERT_COUNT, elements,
+                  ELEMENT_COUNT, GL_STATIC_DRAW);
+
+    const struct rico_mesh *mesh_hello =
+        make_mesh(prog_default, tex_hello1, vertices, VERT_COUNT, elements,
+                  ELEMENT_COUNT, GL_STATIC_DRAW);
+
+    const struct rico_mesh *mesh_default =
+        make_mesh(prog_default, tex_default, vertices, VERT_COUNT, elements,
+                  ELEMENT_COUNT, GL_STATIC_DRAW);
 
     //--------------------------------------------------------------------------
     // Create world objects
     //--------------------------------------------------------------------------
-    obj_ground = make_rico_obj();
-    obj_ruler = make_rico_obj();
-    obj_wall1 = make_rico_obj();
-    obj_wall2 = make_rico_obj();
-    obj_wall3 = make_rico_obj();
-    obj_wall4 = make_rico_obj();
-    obj_hello = make_rico_obj();
-
-    objects[0] = obj_ground;
-    objects[1] = obj_ruler;
-    objects[2] = obj_wall1;
-    objects[3] = obj_wall2;
-    objects[4] = obj_wall3;
-    objects[5] = obj_wall4;
-    objects[6] = obj_hello;
 
     // Ground
+    obj_ground = rico_obj_create(mesh_grass, &mesh_grass->bbox);
     obj_ground->trans = (struct vec4) { 0.0f, 0.0f, 0.0f, 1.0f };
     obj_ground->rot.x = -90.0f;
     obj_ground->scale = (struct vec4) { 64.0f, 64.0f, 1.0f, 1.0f };
     obj_ground->mesh = make_mesh(prog_default, tex_grass, vertices, VERT_COUNT,
                                 elements, ELEMENT_COUNT, GL_STATIC_DRAW);
 
-    struct rico_mesh *mesh_rect_default =
-        make_mesh(prog_default, tex_default, vertices, VERT_COUNT, elements,
-                  ELEMENT_COUNT, GL_STATIC_DRAW);
+    // Hello
+    obj_hello = rico_obj_create(mesh_hello, &mesh_hello->bbox);
+    obj_hello->trans = (struct vec4) { 0.0f, 2.0f, -4.0f };
+    obj_hello->rot.y = 30.0f;
+    obj_hello->scale = (struct vec4) { 1.0f, 2.0f, 1.0f };
 
     // Ruler
+    obj_ruler = rico_obj_create(mesh_default, &mesh_default->bbox);
     obj_ruler->trans = (struct vec4) { 0.0f, 1.0f, -3.0f };
     obj_ruler->scale = (struct vec4) { 1.0f, 1.0f, 1.0f, 1.0f };
-    obj_ruler->mesh = mesh_rect_default;
 
     // Walls are all the same size for now
     struct vec4 wall_scale = (struct vec4) { 8.0f, 2.5f, 1.0f };
 
     // Wall front
+    obj_wall1 = rico_obj_create(mesh_default, &mesh_default->bbox);
     obj_wall1->trans = (struct vec4) { 0.0f, 2.5f, -8.0f };
     obj_wall1->scale = wall_scale;
-    obj_wall1->mesh = mesh_rect_default;
 
     // Wall left
+    obj_wall2 = rico_obj_create(mesh_default, &mesh_default->bbox);
     obj_wall2->trans = (struct vec4) { -8.0f, 2.5f, 0.0f };
     obj_wall2->rot.y = 0.0f;
     obj_wall2->scale = wall_scale;
-    obj_wall2->mesh = mesh_rect_default;
 
     // Wall back
+    obj_wall3 = rico_obj_create(mesh_default, &mesh_default->bbox);
     obj_wall3->trans = (struct vec4) { 0.0f, 2.5f, 8.0f };
     obj_wall3->rot.y = 180.0f;
     obj_wall3->scale = wall_scale;
-    obj_wall3->mesh = mesh_rect_default;
 
     // Wall right
+    obj_wall4 = rico_obj_create(mesh_default, &mesh_default->bbox);
     obj_wall4->trans = (struct vec4) { 8.0f, 2.5f, 0.0f };
     obj_wall4->rot.y = -90.0f;
     obj_wall4->scale = wall_scale;
-    obj_wall4->mesh = mesh_rect_default;
-
-    // Hello
-    obj_hello->trans = (struct vec4) { 0.0f, 2.0f, -4.0f };
-    obj_hello->rot.y = 30.0f;
-    obj_hello->scale = (struct vec4) { 1.0f, 2.0f, 1.0f };
-    obj_hello->mesh = make_mesh(prog_default, tex_hello1, vertices, VERT_COUNT,
-                                elements, ELEMENT_COUNT, GL_STATIC_DRAW);
 
     //--------------------------------------------------------------------------
     // Create axis label bboxes
     //--------------------------------------------------------------------------
-    axis_bbox = make_bbox(
+    bbox_init(
+        &axis_bbox,
         (struct vec4) { -0.5f, -0.5f, -0.5f, 1.0f },
-        (struct vec4) {  0.5f,  0.5f,  0.5f, 1.0f }
+        (struct vec4) {  0.5f,  0.5f,  0.5f, 1.0f },
+        COLOR_WHITE
     );
 
     // X-axis label
@@ -214,6 +216,26 @@ void init_glref()
     mat4_ident(&z_axis_transform);
     mat4_scale(&z_axis_transform, (struct vec4) { 0.01f, 0.01f, 1.0f });
     mat4_translate(&z_axis_transform, (struct vec4) { 0.0f, 0.0f, 0.5f });
+}
+
+void select_next_obj()
+{
+    // Deselect current object
+    if (selected_handle > 0)
+    {
+        struct bbox *bbox = &rico_obj_fetch(selected_handle)->bbox;
+        bbox->color = COLOR_GRAY_HIGHLIGHT;
+        bbox->wireframe = true;
+    }
+
+    // Select next object
+    selected_handle = rico_obj_next(selected_handle);
+    if (selected_handle > 0)
+    {
+        struct bbox *bbox = &rico_obj_fetch(selected_handle)->bbox;
+        bbox->color = COLOR_RED_HIGHLIGHT;
+        bbox->wireframe = false;
+    }
 }
 
 //TODO: Put this somewhere reasonable
@@ -270,28 +292,35 @@ void render_glref()
     // Render objects
     //--------------------------------------------------------------------------
     rico_obj_render(obj_ground);
+    rico_obj_render(obj_hello);
     rico_obj_render(obj_ruler);
     rico_obj_render(obj_wall1);
     rico_obj_render(obj_wall2);
     rico_obj_render(obj_wall3);
     rico_obj_render(obj_wall4);
-    rico_obj_render(obj_hello);
 
     //--------------------------------------------------------------------------
     // Axes labels (bboxes)
     //--------------------------------------------------------------------------
-    bbox_render_color(axis_bbox, &x_axis_transform, COLOR_RED);
-    bbox_render_color(axis_bbox, &y_axis_transform, COLOR_GREEN);
-    bbox_render_color(axis_bbox, &z_axis_transform, COLOR_BLUE);
+    bbox_render_color(&axis_bbox, &x_axis_transform, COLOR_RED);
+    bbox_render_color(&axis_bbox, &y_axis_transform, COLOR_GREEN);
+    bbox_render_color(&axis_bbox, &z_axis_transform, COLOR_BLUE);
 }
 void free_glref()
 {
     //--------------------------------------------------------------------------
     // Clean up
     //--------------------------------------------------------------------------
-    free_texture(&tex_default);
-    free_texture(&tex_hello1);
-    free_texture(&tex_grass);
+    //TODO: Free all game objects
     free_rico_obj(&obj_ground);
+
+    //TODO: Free all meshes
+    
+    //TODO: Free all textures
+    free_texture(&tex_grass);
+    free_texture(&tex_hello1);
+    free_texture(&tex_default);
+
+    //TODO: Free all programs
     free_program_default(&prog_default);
 }

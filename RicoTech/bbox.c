@@ -2,22 +2,19 @@
 #include "const.h"
 #include "camera.h"
 #include "geom.h"
+#include "mesh.h"
+#include "program.h"
+#include <GL/gl3w.h>
 
 #ifndef BBOX_EPSILON
 #define BBOX_EPSILON 0.1f
 #endif
 
-static void bbox_init(struct bbox *box);
+static void init_gl(struct bbox *box);
 
-const struct bbox *make_bbox(struct vec4 p0, struct vec4 p1)
+void bbox_init(struct bbox *bbox, struct vec4 p0, struct vec4 p1,
+                struct col4 color)
 {
-    return make_bbox_color(p0, p1, COLOR_WHITE);
-}
-
-const struct bbox *make_bbox_color(struct vec4 p0, struct vec4 p1,
-                                   struct col4 color)
-{
-    struct bbox *bbox = (struct bbox *)calloc(1, sizeof(struct bbox));
     bbox->prog = make_program_bbox();
     bbox->vertices[0] = (struct vec4) { p0.x, p0.y, p0.z, 1.0f };
     bbox->vertices[1] = (struct vec4) { p1.x, p0.y, p0.z, 1.0f };
@@ -28,12 +25,13 @@ const struct bbox *make_bbox_color(struct vec4 p0, struct vec4 p1,
     bbox->vertices[6] = (struct vec4) { p1.x, p1.y, p1.z, 1.0f };
     bbox->vertices[7] = (struct vec4) { p0.x, p1.y, p1.z, 1.0f };
     bbox->color = color;
+    bbox->wireframe = true;
 
-    bbox_init(bbox);
-    return bbox;
+    init_gl(bbox);
 }
 
-const struct bbox *make_bbox_mesh(const struct mesh_vertex *verts, int count)
+void bbox_init_mesh(struct bbox *bbox, const struct mesh_vertex *verts,
+                    int count, struct col4 color)
 {
     struct vec4 p0 = (struct vec4) { 9999.0f, 9999.0f, 9999.0f };
     struct vec4 p1 = (struct vec4) { -9999.0f, -9999.0f, -9999.0f };
@@ -74,29 +72,13 @@ const struct bbox *make_bbox_mesh(const struct mesh_vertex *verts, int count)
         p1.z += BBOX_EPSILON;
     }
 
-    return make_bbox(p0, p1);
+    bbox_init(bbox, p0, p1, color);
 }
 
-static void bbox_init(struct bbox *box)
+static void init_gl(struct bbox *bbox)
 {
-    glGenVertexArrays(1, &box->vao);
-    glBindVertexArray(box->vao);
-
-    glGenBuffers(2, box->vbos);
-
-    glBindBuffer(GL_ARRAY_BUFFER, box->vbos[VBO_VERTEX]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(box->vertices), box->vertices,
-                 GL_STATIC_DRAW);
-
-    //--------------------------------------------------------------------------
-    // Bind element data to buffer
-    //--------------------------------------------------------------------------
-
-    // Bind element buffer
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, box->vbos[VBO_ELEMENT]);
-
     // Bbox faces
-    GLuint elements[36] = {
+    static GLuint elements[36] = {
         0, 1, 2, 2, 3, 0,
         4, 0, 3, 3, 7, 4,
         5, 4, 7, 7, 6, 5,
@@ -104,30 +86,40 @@ static void bbox_init(struct bbox *box)
         3, 2, 6, 6, 7, 3,
         4, 5, 1, 1, 0, 4
     };
+
+    //--------------------------------------------------------------------------
+    // Generate VAO and buffers
+    //--------------------------------------------------------------------------
+    glGenVertexArrays(1, &bbox->vao);
+    glBindVertexArray(bbox->vao);
+
+    glGenBuffers(2, bbox->vbos);
+
+    //--------------------------------------------------------------------------
+    // Vertex buffer
+    //--------------------------------------------------------------------------
+    glBindBuffer(GL_ARRAY_BUFFER, bbox->vbos[VBO_VERTEX]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(bbox->vertices), bbox->vertices,
+                 GL_STATIC_DRAW);
+
+    //--------------------------------------------------------------------------
+    // Element buffer
+    //--------------------------------------------------------------------------
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bbox->vbos[VBO_ELEMENT]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elements), elements,
                  GL_STATIC_DRAW);
 
     //--------------------------------------------------------------------------
-    // Get vertex shader attribute locations and set pointers (size/type/stride)
+    // Shader attribute pointers
     //--------------------------------------------------------------------------
-    if (box->prog->vert_pos >= 0)
+    if (bbox->prog->vert_pos >= 0)
     {
-        glVertexAttribPointer(box->prog->vert_pos, 4, GL_FLOAT, GL_FALSE,
-                              sizeof(struct vec4),
-                              (GLvoid *)(0));
-        glEnableVertexAttribArray(box->prog->vert_pos);
+        glVertexAttribPointer(bbox->prog->vert_pos, 4, GL_FLOAT, GL_FALSE,
+                              sizeof(struct vec4), (GLvoid *)(0));
+        glEnableVertexAttribArray(bbox->prog->vert_pos);
     }
 
-    //--------------------------------------------------------------------------
-    // Bind projection matrix
-    //--------------------------------------------------------------------------
-    //struct mat4 *proj_matrix = make_mat4_perspective(SCREEN_W, SCREEN_H,
-    //                                                 Z_NEAR, Z_FAR, Z_FOV_DEG);
-    //
-    //glUniformMatrix4fv(box->program->u_proj, 1, GL_TRUE, proj_matrix->a);
-    //
-    //free_mat4(proj_matrix);
-
+    // Clean up
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -174,11 +166,15 @@ void bbox_render_color(const struct bbox *box, const struct mat4 *model_matrix,
     glUniform4f(box->prog->u_color, color.r, color.g, color.b, color.a);
 
     // Draw
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    if (box->wireframe)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
     glBindVertexArray(box->vao);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
-    glPolygonMode(GL_FRONT_AND_BACK, view_polygon_mode);
+
+    if (box->wireframe)
+        glPolygonMode(GL_FRONT_AND_BACK, view_polygon_mode);
 
     glUseProgram(0);
     //glBindTexture(tex_default->target, 0);

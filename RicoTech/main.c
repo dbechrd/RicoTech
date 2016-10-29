@@ -3,12 +3,16 @@
 //#define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
 #endif
 
-#include <GL/gl3w.h>
+#ifndef RICO_DEBUG
+#define RICO_DEBUG
+#endif
+
 #include "const.h"
-#include "geom.h"
+#include "camera.h"
 #include "util.h"
 #include "glref.h"
-
+#include <stdbool.h>
+#include <GL/gl3w.h>
 #include <SDL/SDL.h>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -115,6 +119,10 @@ static void init_opengl()
 
     glEnable(GL_DEPTH_TEST); //Enable depth testing. Default off.
     glDepthFunc(GL_LEQUAL);  //Depth test mode. Default GL_LESS.
+
+    glEnable(GL_BLEND);
+    glBlendEquation(GL_FUNC_ADD);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 static void rico_init()
@@ -189,8 +197,11 @@ int main(int argc, char *argv[])
                 {
                     sprint = !sprint;
                 }
-
-                if (windowEvent.key.keysym.sym == SDLK_q)
+                else if (windowEvent.key.keysym.sym == SDLK_TAB)
+                {
+                    select_next_obj();
+                }
+                else if (windowEvent.key.keysym.sym == SDLK_q)
                 {
                     view_trans_vel.y += view_trans_delta;
                 }
@@ -287,6 +298,7 @@ int main(int argc, char *argv[])
         GLfloat dt = (float)(newTime - time) / 1000.0f;
         time = newTime;
 
+        //TODO: Refactor all of this crap out into Camera
         GLfloat cos_head_x = cosf(view_camera.rot.x * (float)M_PI / 180.0f);
         GLfloat sin_head_x = sinf(view_camera.rot.x * (float)M_PI / 180.0f);
 
