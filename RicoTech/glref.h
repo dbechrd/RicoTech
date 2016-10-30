@@ -6,6 +6,9 @@
 
 void init_glref();
 void select_next_obj();
+void select_prev_obj();
+void translate_selected(struct vec4 offset);
+void rotate_selected(struct vec4 offset);
 void update_glref(GLfloat dt, bool ambient_light);
 void render_glref();
 void free_glref();

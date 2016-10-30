@@ -43,6 +43,10 @@ uint32 rico_obj_next(uint32 handle)
 {
     return (handle < next_handle - 1) ? ++handle : 0;
 }
+uint32 rico_obj_prev(uint32 handle)
+{
+    return (handle > 0) ? --handle : next_handle - 1;
+}
 
 void rico_obj_render(const struct rico_obj *obj)
 {

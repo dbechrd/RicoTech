@@ -53,29 +53,59 @@ struct vec4 {
 extern const struct vec4 VEC4_ZERO;
 extern const struct vec4 VEC4_UNIT;
 
-static inline struct vec4 vec_cross(struct vec4 a, struct vec4 b)
+static inline struct vec4 vec_add(const struct vec4 a, const struct vec4 b)
 {
-    struct vec4 r;
-    r.x = a.y*b.z - a.z*b.y;
-    r.y = a.z*b.x - a.x*b.z;
-    r.z = a.x*b.y - a.y*b.x;
-    r.w = 1.0f;
-
-    return r;
+    return (struct vec4) {
+        a.x + b.x,
+        a.y + b.y,
+        a.z + b.z,
+        1.0f
+    };
 }
-static inline GLfloat vec_length(struct vec4 v)
+static inline struct vec4 vec_sub(const struct vec4 a, const struct vec4 b)
 {
-    return sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
+    return (struct vec4) {
+        a.x - b.x,
+        a.y - b.y,
+        a.z - b.z,
+        1.0f
+    };
 }
-static inline struct vec4 vec_normalize(struct vec4 v)
+static inline struct vec4 vec_cross(const struct vec4 a, const struct vec4 b)
+{
+    return (struct vec4) {
+        a.y * b.z - a.z * b.y,
+        a.z * b.x - a.x * b.z,
+        a.x * b.y - a.y * b.x,
+        1.0f
+    };
+}
+static inline GLfloat vec_length(const struct vec4 v)
+{
+    return sqrtf(
+        v.x * v.x +
+        v.y * v.y +
+        v.z * v.z
+    );
+}
+static inline struct vec4 vec_negate(const struct vec4 v)
+{
+    return (struct vec4) { -v.x, -v.y, -v.z, v.w };
+}
+static inline struct vec4 vec_normalize(const struct vec4 v)
 {
     GLfloat len = 1.0f / vec_length(v);
-    v.x *= len;
-    v.y *= len;
-    v.z *= len;
-    v.w = 0.0f;
 
-    return v;
+    return (struct vec4) {
+        v.x * len,
+        v.y * len,
+        v.z * len,
+        0.0f
+    };
+}
+static inline bool vec_equals(const struct vec4 a, const struct vec4 b)
+{
+    return (a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w);
 }
 
 //------------------------------------------------------------------------------
@@ -85,17 +115,25 @@ struct mat4 {
     union {
         GLfloat m[4][4]; //Matrix
         GLfloat a[16];   //Array
+        /*struct {
+            GLfloat m00, m01, m02, m03;
+            GLfloat m10, m11, m12, m13;
+            GLfloat m20, m21, m22, m23;
+            GLfloat m30, m31, m32, m33;
+        };*/
     };
 };
 
 //This is faster if the matrix is going to be immediately populated
 static inline struct mat4 *make_mat4_empty()
 {
+    // TODO: Get rid of these allocs
     return malloc(sizeof(struct mat4));
 }
 
 static inline struct mat4 *make_mat4_zero()
 {
+    // TODO: Get rid of these allocs
     return calloc(16, sizeof(struct mat4));
 }
 

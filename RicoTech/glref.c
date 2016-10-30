@@ -218,7 +218,7 @@ void init_glref()
     mat4_translate(&z_axis_transform, (struct vec4) { 0.0f, 0.0f, 0.5f });
 }
 
-void select_next_obj()
+void select_obj(uint32 handle)
 {
     // Deselect current object
     if (selected_handle > 0)
@@ -228,13 +228,54 @@ void select_next_obj()
         bbox->wireframe = true;
     }
 
-    // Select next object
-    selected_handle = rico_obj_next(selected_handle);
-    if (selected_handle > 0)
+    // Select requested object
+    if (handle > 0)
     {
-        struct bbox *bbox = &rico_obj_fetch(selected_handle)->bbox;
+        struct bbox *bbox = &rico_obj_fetch(handle)->bbox;
         bbox->color = COLOR_RED_HIGHLIGHT;
         bbox->wireframe = false;
+    }
+    selected_handle = handle;
+}
+void select_next_obj()
+{
+    select_obj(rico_obj_next(selected_handle));
+}
+void select_prev_obj()
+{
+    select_obj(rico_obj_prev(selected_handle));
+}
+
+
+void translate_selected(struct vec4 offset)
+{
+    if (vec_equals(offset, VEC4_ZERO))
+    {
+        if (camera_lock)
+            view_camera.trans = vec_add(view_camera.trans,
+                                        rico_obj_fetch(selected_handle)->trans);
+
+        rico_obj_fetch(selected_handle)->trans = VEC4_ZERO;
+    }
+    else
+    {
+        struct vec4 *trans = &rico_obj_fetch(selected_handle)->trans;
+        *trans = vec_add(*trans, offset);
+
+        if (camera_lock)
+            view_camera.trans = vec_sub(view_camera.trans, offset);
+    }
+}
+void rotate_selected(struct vec4 offset)
+{
+    if (vec_equals(offset, VEC4_ZERO))
+    {
+        rico_obj_fetch(selected_handle)->rot = VEC4_ZERO;
+    }
+    else
+    {
+        struct vec4 *rot = &rico_obj_fetch(selected_handle)->rot;
+        *rot = vec_add(*rot, offset);
     }
 }
 

@@ -31,7 +31,6 @@ struct rico_mesh *make_mesh(struct program_default *program,
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, element_count * sizeof(GLuint),
                  element_data, GL_STATIC_DRAW);
 
-    //==============================================================================
     glUseProgram(mesh->prog->prog_id);
 
     //--------------------------------------------------------------------------
@@ -39,6 +38,8 @@ struct rico_mesh *make_mesh(struct program_default *program,
     //--------------------------------------------------------------------------
     if (mesh->prog->vert_pos >= 0)
     {
+        // TODO: How to get size of mesh_vertex.pos dynamically? Why doesn't
+        //       sizeof_member work?
         glVertexAttribPointer(mesh->prog->vert_pos, 4, GL_FLOAT, GL_FALSE,
                               sizeof(struct mesh_vertex),
                               (GLvoid *)offsetof(struct mesh_vertex, pos));
@@ -60,30 +61,6 @@ struct rico_mesh *make_mesh(struct program_default *program,
                               (GLvoid *)offsetof(struct mesh_vertex, uv));
         glEnableVertexAttribArray(mesh->prog->vert_uv);
     }
-
-    //if (mesh->prog->vert_pos >= 0)
-    //{
-    //    glVertexAttribPointer(mesh->prog->vert_pos, 4, GL_FLOAT, GL_FALSE,
-    //                          6 * sizeof(GL_FLOAT),
-    //                          (GLvoid *)(0));
-    //    glEnableVertexAttribArray(mesh->prog->vert_pos);
-    //}
-    //
-    ////if (mesh->prog->vert_col >= 0)
-    ////{
-    ////    glVertexAttribPointer(mesh->prog->vert_col, 4, GL_FLOAT, GL_FALSE,
-    ////                          10 * sizeof(GL_FLOAT),
-    ////                          (GLvoid *)(4 * sizeof(GL_FLOAT)));
-    ////    glEnableVertexAttribArray(mesh->prog->vert_col);
-    ////}
-    //
-    //if (mesh->prog->vert_uv >= 0)
-    //{
-    //    glVertexAttribPointer(mesh->prog->vert_uv, 2, GL_FLOAT, GL_FALSE,
-    //                          6 * sizeof(GL_FLOAT),
-    //                          (GLvoid *)(4 * sizeof(GL_FLOAT)));
-    //    glEnableVertexAttribArray(mesh->prog->vert_uv);
-    //}
 
     //--------------------------------------------------------------------------
     // Bind projection matrix

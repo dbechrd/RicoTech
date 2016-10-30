@@ -33,6 +33,7 @@ struct rico_obj *rico_obj_create(const struct rico_mesh *mesh,
                                  const struct bbox *bbox);
 struct rico_obj *rico_obj_fetch(uint32 handle);
 uint32 rico_obj_next(uint32 handle);
+uint32 rico_obj_prev(uint32 handle);
 void rico_obj_render(const struct rico_obj *obj);
 
 static inline void free_rico_obj(struct rico_obj **obj)

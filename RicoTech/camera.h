@@ -14,4 +14,6 @@ extern struct mat4 view_matrix;
 extern struct mat4 proj_matrix;
 extern GLenum view_polygon_mode;
 
+extern bool camera_lock;
+
 #endif // CAMERA_H

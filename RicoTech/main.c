@@ -155,8 +155,8 @@ int main(int argc, char *argv[])
     float view_rot_delta = 0.1f;
     float view_rotx_limit = 70.0f;
 
-    bool sprint = false;
-    bool fly = false;
+    bool sprint = true;
+    bool fly = true;
 
     bool ambient_light = true;
 
@@ -191,64 +191,170 @@ int main(int argc, char *argv[])
 
                 view_camera.rot.y += dx * view_rot_delta;
             }
-            else if (windowEvent.type == SDL_KEYDOWN && !windowEvent.key.repeat)
+            else if (windowEvent.type == SDL_KEYDOWN)
             {
-                if (windowEvent.key.keysym.sym == SDLK_LCTRL)
+                struct vec4 delta = { 0 };
+
+                if (windowEvent.key.keysym.sym == SDLK_TAB)
                 {
-                    sprint = !sprint;
+                    if (windowEvent.key.keysym.mod & KMOD_SHIFT)
+                    {
+                        select_prev_obj();
+                    }
+                    else
+                    {
+                        select_next_obj();
+                    }
                 }
-                else if (windowEvent.key.keysym.sym == SDLK_TAB)
+                else if (windowEvent.key.keysym.sym == SDLK_0)
                 {
-                    select_next_obj();
+                    if (windowEvent.key.keysym.mod & KMOD_CTRL)
+                    {
+                        rotate_selected(VEC4_ZERO);
+                    }
+                    else
+                    {
+                        translate_selected(VEC4_ZERO);
+                    }
                 }
-                else if (windowEvent.key.keysym.sym == SDLK_q)
+                else if (windowEvent.key.keysym.sym == SDLK_UP)
                 {
-                    view_trans_vel.y += view_trans_delta;
+                    if (windowEvent.key.keysym.mod & KMOD_CTRL)
+                    {
+                        delta.x = -1.0f;
+                        rotate_selected(delta);
+                    }
+                    else
+                    {
+                        delta.z = -1.0f;
+                        translate_selected(delta);
+                    }
                 }
-                else if (windowEvent.key.keysym.sym == SDLK_e)
+                else if (windowEvent.key.keysym.sym == SDLK_DOWN)
                 {
-                    view_trans_vel.y -= view_trans_delta;
+                    if (windowEvent.key.keysym.mod & KMOD_CTRL)
+                    {
+                        delta.x = 1.0f;
+                        rotate_selected(delta);
+                    }
+                    else
+                    {
+                        delta.z = 1.0f;
+                        translate_selected(delta);
+                    }
                 }
-                else if (windowEvent.key.keysym.sym == SDLK_a)
+                else if (windowEvent.key.keysym.sym == SDLK_LEFT)
                 {
-                    view_trans_vel.x += view_trans_delta;
+                    if (windowEvent.key.keysym.mod & KMOD_CTRL)
+                    {
+                        delta.y = -1.0f;
+                        rotate_selected(delta);
+                    }
+                    else
+                    {
+                        delta.x = -1.0f;
+                        translate_selected(delta);
+                    }
                 }
-                else if (windowEvent.key.keysym.sym == SDLK_d)
+                else if (windowEvent.key.keysym.sym == SDLK_RIGHT)
                 {
-                    view_trans_vel.x -= view_trans_delta;
+                    if (windowEvent.key.keysym.mod & KMOD_CTRL)
+                    {
+                        delta.y = 1.0f;
+                        rotate_selected(delta);
+                    }
+                    else
+                    {
+                        delta.x = 1.0f;
+                        translate_selected(delta);
+                    }
                 }
-                else if (windowEvent.key.keysym.sym == SDLK_w)
+                else if (windowEvent.key.keysym.sym == SDLK_PAGEUP)
                 {
-                    view_trans_vel.z += view_trans_delta;
+                    if (windowEvent.key.keysym.mod & KMOD_CTRL)
+                    {
+                        delta.z = -1.0f;
+                        rotate_selected(delta);
+                    }
+                    else
+                    {
+                        delta.y = 1.0f;
+                        translate_selected(delta);
+                    }
                 }
-                else if (windowEvent.key.keysym.sym == SDLK_s)
+                else if (windowEvent.key.keysym.sym == SDLK_PAGEDOWN)
                 {
-                    view_trans_vel.z -= view_trans_delta;
+                    if (windowEvent.key.keysym.mod & KMOD_CTRL)
+                    {
+                        delta.z = 1.0f;
+                        rotate_selected(delta);
+                    }
+                    else
+                    {
+                        delta.y = -1.0f;
+                        translate_selected(delta);
+                    }
                 }
-                else if (windowEvent.key.keysym.sym == SDLK_f)
+
+                if (!windowEvent.key.repeat)
                 {
-                    fly = !fly;
-                }
-                else if (windowEvent.key.keysym.sym == SDLK_l)
-                {
-                    ambient_light = !ambient_light;
-                }
-                else if (windowEvent.key.keysym.sym == SDLK_p)
-                {
-                    SDL_TriggerBreakpoint();
-                }
-                else if (windowEvent.key.keysym.sym == SDLK_m)
-                {
-                    mouse_lock = !mouse_lock;
-                    SDL_SetRelativeMouseMode(mouse_lock);
-                }
-                else if (windowEvent.key.keysym.sym == SDLK_1)
-                {
-                    view_polygon_mode = GL_LINE;
-                }
-                else if (windowEvent.key.keysym.sym == SDLK_2)
-                {
-                    view_polygon_mode = GL_FILL;
+                    if (windowEvent.key.keysym.sym == SDLK_r)
+                    {
+                        sprint = !sprint;
+                    }
+                    else if (windowEvent.key.keysym.sym == SDLK_q)
+                    {
+                        view_trans_vel.y += view_trans_delta;
+                    }
+                    else if (windowEvent.key.keysym.sym == SDLK_e)
+                    {
+                        view_trans_vel.y -= view_trans_delta;
+                    }
+                    else if (windowEvent.key.keysym.sym == SDLK_a)
+                    {
+                        view_trans_vel.x += view_trans_delta;
+                    }
+                    else if (windowEvent.key.keysym.sym == SDLK_d)
+                    {
+                        view_trans_vel.x -= view_trans_delta;
+                    }
+                    else if (windowEvent.key.keysym.sym == SDLK_w)
+                    {
+                        view_trans_vel.z += view_trans_delta;
+                    }
+                    else if (windowEvent.key.keysym.sym == SDLK_s)
+                    {
+                        view_trans_vel.z -= view_trans_delta;
+                    }
+                    else if (windowEvent.key.keysym.sym == SDLK_f)
+                    {
+                        fly = !fly;
+                    }
+                    else if (windowEvent.key.keysym.sym == SDLK_c)
+                    {
+                        camera_lock = !camera_lock;
+                    }
+                    else if (windowEvent.key.keysym.sym == SDLK_l)
+                    {
+                        ambient_light = !ambient_light;
+                    }
+                    else if (windowEvent.key.keysym.sym == SDLK_p)
+                    {
+                        SDL_TriggerBreakpoint();
+                    }
+                    else if (windowEvent.key.keysym.sym == SDLK_m)
+                    {
+                        mouse_lock = !mouse_lock;
+                        SDL_SetRelativeMouseMode(mouse_lock);
+                    }
+                    else if (windowEvent.key.keysym.sym == SDLK_1)
+                    {
+                        view_polygon_mode = GL_LINE;
+                    }
+                    else if (windowEvent.key.keysym.sym == SDLK_2)
+                    {
+                        view_polygon_mode = GL_FILL;
+                    }
                 }
             }
             else if (windowEvent.type == SDL_KEYUP)
@@ -330,20 +436,19 @@ int main(int argc, char *argv[])
         view_dy *= dt;
         view_dz *= dt;
 
-        if (fly)
+        if (!fly)
         {
-            view_dx *= 5.0f;
-            view_dy *= 5.0f;
-            view_dz *= 5.0f;
+            view_dy *= 0.0f;
+            view_camera.trans.y = -1.7f;
         }
 
         if (sprint)
         {
-            view_dx *= 10.0f;
-            view_dz *= 10.0f;
+            view_dx *= 5.0f;
+            view_dz *= 5.0f;
             
             //Debug: Sprint vertically.. yeah.. what?
-            view_dy *= 10.0f;
+            view_dy *= 5.0f;
         }
 
         view_camera.trans.x += view_dx;

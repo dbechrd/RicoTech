@@ -95,7 +95,7 @@ struct font *make_font(const char *filename)
     memcpy(font->Width, &buffer[WIDTH_DATA_OFFSET], 256);
 
     // Create texture
-    glGenTextures(1, &font->TexID);
+    glCreateTextures(GL_TEXTURE_2D, 1, &font->TexID);
     glBindTexture(GL_TEXTURE_2D, font->TexID);
 
     // Fonts should be rendered at native resolution, so no need for filtering
