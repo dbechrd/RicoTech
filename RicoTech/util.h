@@ -15,13 +15,18 @@ void show_info_log(GLuint object,
                    PFNGLGETSHADERIVPROC glGet__iv,
                    PFNGLGETSHADERINFOLOGPROC glGet__InfoLog);
 
-inline unsigned short swap_16bit(unsigned short us)
+static inline int str_starts_with(const char *str, const char *prefix)
+{
+    return strncmp(str, prefix, strlen(prefix)) == 0;
+}
+
+static inline unsigned short swap_16bit(unsigned short us)
 {
     return (unsigned short)(((us & 0xFF00) >> 8) |
                             ((us & 0x00FF) << 8));
 }
 
-inline unsigned long swap_32bit(unsigned long ul)
+static inline unsigned long swap_32bit(unsigned long ul)
 {
     return (unsigned long)(((ul & 0xFF000000) >> 24) |
                            ((ul & 0x00FF0000) >>  8) |

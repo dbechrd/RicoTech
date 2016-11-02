@@ -2,12 +2,12 @@
 #include "const.h"
 #include "camera.h"
 #include "geom.h"
-#include "mesh.h"
+#include "rico_mesh.h"
 #include "program.h"
 #include <GL/gl3w.h>
 
 #ifndef BBOX_EPSILON
-#define BBOX_EPSILON 0.1f
+#define BBOX_EPSILON 0.001f
 #endif
 
 static void init_gl(struct bbox *box);
@@ -56,6 +56,14 @@ void bbox_init_mesh(struct bbox *bbox, const struct mesh_vertex *verts,
     }
 
     // Prevent infinitesimally small bounds
+    p0.x -= BBOX_EPSILON;
+    p1.x += BBOX_EPSILON;
+    p0.y -= BBOX_EPSILON;
+    p1.y += BBOX_EPSILON;
+    p0.z -= BBOX_EPSILON;
+    p1.z += BBOX_EPSILON;
+
+    /*
     if (p0.x == p1.x)
     {
         p0.x -= BBOX_EPSILON;
@@ -71,6 +79,7 @@ void bbox_init_mesh(struct bbox *bbox, const struct mesh_vertex *verts,
         p0.z -= BBOX_EPSILON;
         p1.z += BBOX_EPSILON;
     }
+    */
 
     bbox_init(bbox, p0, p1, color);
 }

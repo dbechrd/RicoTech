@@ -4,11 +4,12 @@
 #include "geom.h"
 #include "camera.h"
 
-void init_glref();
+void init_glref(struct rico_mesh **meshes, int mesh_count);
 void select_next_obj();
 void select_prev_obj();
 void translate_selected(struct vec4 offset);
 void rotate_selected(struct vec4 offset);
+void duplicate_selected();
 void update_glref(GLfloat dt, bool ambient_light);
 void render_glref();
 void free_glref();

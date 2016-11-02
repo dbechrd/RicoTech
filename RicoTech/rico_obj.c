@@ -1,7 +1,7 @@
 #include "rico_obj.h"
 #include "const.h"
 
-#define RICO_OBJ_POOL_SIZE 20
+#define RICO_OBJ_POOL_SIZE 50
 
 //TODO: Allocate from heap pool, not stack
 static struct rico_obj rico_obj_pool[RICO_OBJ_POOL_SIZE];
@@ -13,19 +13,23 @@ static uint32 next_handle = 1;
 //TODO: Move this to some global UID handler
 static uint32 next_uid = 1;
 
-struct rico_obj *rico_obj_create(const struct rico_mesh *mesh,
+struct rico_obj *rico_obj_create(const char *name, const struct rico_mesh *mesh,
                                  const struct bbox *bbox)
 {
     //TODO: Handle out-of-memory
     //TODO: Implement reuse of pool objects
     if (next_handle >= RICO_OBJ_POOL_SIZE)
+    {
+        fprintf(stderr, "Out of memory: Object pool exceeded max size of %d.\n",
+                RICO_OBJ_POOL_SIZE);
         return NULL;
+    }
 
     struct rico_obj *obj = &rico_obj_pool[next_handle];
     next_handle++;
 
     //TODO: Should default W component be 0 or 1?
-    obj->uid = next_uid++;
+    uid_init(name, &obj->uid);
     obj->handle = next_handle;
     obj->scale = (struct vec4) { 1.0f, 1.0f, 1.0f, 1.0f };
     obj->mesh = mesh;

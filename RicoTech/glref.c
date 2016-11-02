@@ -4,10 +4,10 @@
 #include "util.h"
 #include "shader.h"
 #include "program.h"
-#include "texture.h"
+#include "rico_texture.h"
 #include "bbox.h"
 #include "camera.h"
-#include "mesh.h"
+#include "rico_mesh.h"
 #include "rico_obj.h"
 #include "stb_image.h"
 #include "font.h"
@@ -40,6 +40,9 @@ static struct rico_obj *obj_wall1;
 static struct rico_obj *obj_wall2;
 static struct rico_obj *obj_wall3;
 static struct rico_obj *obj_wall4;
+static struct rico_obj *obj_wall5;
+static struct rico_obj *arr_objects[50] = { 0 };
+static int idx_arr_objects = 0;
 
 static struct bbox axis_bbox;
 
@@ -47,7 +50,7 @@ static struct mat4 x_axis_transform;
 static struct mat4 y_axis_transform;
 static struct mat4 z_axis_transform;
 
-void init_glref()
+void init_glref(struct rico_mesh **meshes, int mesh_count)
 {
     // TODO: Create resource loaders to handle:
     //       fonts, shaders, textures, meshes, etc.
@@ -132,37 +135,35 @@ void init_glref()
     // Create meshes
     //--------------------------------------------------------------------------
     const struct rico_mesh *mesh_grass =
-        make_mesh(prog_default, tex_grass, vertices, VERT_COUNT, elements,
-                  ELEMENT_COUNT, GL_STATIC_DRAW);
+        make_mesh("grass", prog_default, tex_grass, vertices, VERT_COUNT,
+                  elements, ELEMENT_COUNT, GL_STATIC_DRAW);
 
     const struct rico_mesh *mesh_hello =
-        make_mesh(prog_default, tex_hello1, vertices, VERT_COUNT, elements,
-                  ELEMENT_COUNT, GL_STATIC_DRAW);
+        make_mesh("hello", prog_default, tex_hello1, vertices, VERT_COUNT,
+                  elements, ELEMENT_COUNT, GL_STATIC_DRAW);
 
     const struct rico_mesh *mesh_default =
-        make_mesh(prog_default, tex_default, vertices, VERT_COUNT, elements,
-                  ELEMENT_COUNT, GL_STATIC_DRAW);
+        make_mesh("default", prog_default, tex_default, vertices, VERT_COUNT,
+                  elements, ELEMENT_COUNT, GL_STATIC_DRAW);
 
     //--------------------------------------------------------------------------
     // Create world objects
     //--------------------------------------------------------------------------
 
     // Ground
-    obj_ground = rico_obj_create(mesh_grass, &mesh_grass->bbox);
+    obj_ground = rico_obj_create("Ground", mesh_grass, &mesh_grass->bbox);
     obj_ground->trans = (struct vec4) { 0.0f, 0.0f, 0.0f, 1.0f };
     obj_ground->rot.x = -90.0f;
     obj_ground->scale = (struct vec4) { 64.0f, 64.0f, 1.0f, 1.0f };
-    obj_ground->mesh = make_mesh(prog_default, tex_grass, vertices, VERT_COUNT,
-                                elements, ELEMENT_COUNT, GL_STATIC_DRAW);
 
     // Hello
-    obj_hello = rico_obj_create(mesh_hello, &mesh_hello->bbox);
+    obj_hello = rico_obj_create("Hello", mesh_hello, &mesh_hello->bbox);
     obj_hello->trans = (struct vec4) { 0.0f, 2.0f, -4.0f };
-    obj_hello->rot.y = 30.0f;
+    obj_hello->rot.y = 40.0f;
     obj_hello->scale = (struct vec4) { 1.0f, 2.0f, 1.0f };
 
     // Ruler
-    obj_ruler = rico_obj_create(mesh_default, &mesh_default->bbox);
+    obj_ruler = rico_obj_create("Ruler", mesh_default, &mesh_default->bbox);
     obj_ruler->trans = (struct vec4) { 0.0f, 1.0f, -3.0f };
     obj_ruler->scale = (struct vec4) { 1.0f, 1.0f, 1.0f, 1.0f };
 
@@ -170,27 +171,56 @@ void init_glref()
     struct vec4 wall_scale = (struct vec4) { 8.0f, 2.5f, 1.0f };
 
     // Wall front
-    obj_wall1 = rico_obj_create(mesh_default, &mesh_default->bbox);
+    obj_wall1 = rico_obj_create("wall1", mesh_hello, &mesh_hello->bbox);
     obj_wall1->trans = (struct vec4) { 0.0f, 2.5f, -8.0f };
     obj_wall1->scale = wall_scale;
 
     // Wall left
-    obj_wall2 = rico_obj_create(mesh_default, &mesh_default->bbox);
+    obj_wall2 = rico_obj_create("wall2", mesh_hello, &mesh_hello->bbox);
     obj_wall2->trans = (struct vec4) { -8.0f, 2.5f, 0.0f };
     obj_wall2->rot.y = 0.0f;
     obj_wall2->scale = wall_scale;
 
     // Wall back
-    obj_wall3 = rico_obj_create(mesh_default, &mesh_default->bbox);
+    obj_wall3 = rico_obj_create("wall3", mesh_hello, &mesh_hello->bbox);
     obj_wall3->trans = (struct vec4) { 0.0f, 2.5f, 8.0f };
     obj_wall3->rot.y = 180.0f;
     obj_wall3->scale = wall_scale;
 
     // Wall right
-    obj_wall4 = rico_obj_create(mesh_default, &mesh_default->bbox);
+    obj_wall4 = rico_obj_create("wall4", mesh_hello, &mesh_hello->bbox);
     obj_wall4->trans = (struct vec4) { 8.0f, 2.5f, 0.0f };
     obj_wall4->rot.y = -90.0f;
     obj_wall4->scale = wall_scale;
+
+    // Wall five
+    obj_wall5 = rico_obj_create("wall5", mesh_hello, &mesh_hello->bbox);
+    obj_wall5->trans = (struct vec4) { 4.0f, 2.5f, 0.0f };
+    obj_wall5->rot.y = -90.0f;
+    obj_wall5->scale = wall_scale;
+
+    {
+        int i;
+        for (i = 0; i < mesh_count; i++)
+        {
+            arr_objects[i] = rico_obj_create(meshes[i]->uid.name, meshes[i],
+                                             &meshes[i]->bbox);
+            arr_objects[i]->trans = (struct vec4) { 0.0f, 0.01f, 0.0f };
+            arr_objects[i]->scale = VEC4_UNIT;
+            
+            // HACK: I want the walls to be taller for now
+            if (i == 0) {
+                arr_objects[i]->scale.x = 2.0f;
+                arr_objects[i]->scale.z = 2.0f;
+            }
+            else {
+                arr_objects[i]->scale.x = 2.0f;
+                arr_objects[i]->scale.y = 2.0f;
+                arr_objects[i]->scale.z = 2.0f;
+            }
+        }
+        idx_arr_objects = i;
+    }
 
     //--------------------------------------------------------------------------
     // Create axis label bboxes
@@ -246,7 +276,6 @@ void select_prev_obj()
     select_obj(rico_obj_prev(selected_handle));
 }
 
-
 void translate_selected(struct vec4 offset)
 {
     if (vec_equals(offset, VEC4_ZERO))
@@ -276,6 +305,25 @@ void rotate_selected(struct vec4 offset)
     {
         struct vec4 *rot = &rico_obj_fetch(selected_handle)->rot;
         *rot = vec_add(*rot, offset);
+    }
+}
+void duplicate_selected()
+{
+    struct rico_obj *selected = rico_obj_fetch(selected_handle);
+    
+    int i = idx_arr_objects;
+
+    char name[20];
+    sprintf(name, "Duplicate %d", i);
+
+    arr_objects[i] = rico_obj_create(name, selected->mesh,
+                                     &selected->mesh->bbox);
+    if (arr_objects[i])
+    {
+        arr_objects[i]->trans = selected->trans;
+        arr_objects[i]->rot = selected->rot;
+        arr_objects[i]->scale = selected->scale;
+        idx_arr_objects++;
     }
 }
 
@@ -339,6 +387,11 @@ void render_glref()
     rico_obj_render(obj_wall2);
     rico_obj_render(obj_wall3);
     rico_obj_render(obj_wall4);
+
+    for (int i = 0; arr_objects[i] != NULL; i++)
+    {
+        rico_obj_render(arr_objects[i]);
+    }
 
     //--------------------------------------------------------------------------
     // Axes labels (bboxes)

@@ -11,6 +11,8 @@
 #include "camera.h"
 #include "util.h"
 #include "glref.h"
+#include "rico_texture.h"
+#include "load_object.h"
 #include <stdbool.h>
 #include <GL/gl3w.h>
 #include <SDL/SDL.h>
@@ -125,12 +127,23 @@ static void init_opengl()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
+static struct rico_mesh **meshes;
+static int mesh_count;
+
+static void rico_init_objects()
+{
+    RICO_TEXTURE_DEFAULT = make_texture(GL_TEXTURE_2D, "basic.tga");
+    printf("Loading objects...\n");
+    load_objects("spawn.obj", &meshes, &mesh_count);
+}
+
 static void rico_init()
 {
     init_stb();
     init_sdl();
     init_gl3w();
     init_opengl();
+    rico_init_objects();
 }
 
 int main(int argc, char *argv[])
@@ -141,7 +154,7 @@ int main(int argc, char *argv[])
     //http://www.drdobbs.com/testing/unit-testing-in-c-tools-and-conventions/240156344
     //run_tests();
 
-    init_glref();
+    init_glref(meshes, mesh_count);
 
     //Human walk speed empirically found to be 33 steps in 20 seconds. That
     //is approximately 1.65 steps per second. At 60 fps, that is 0.0275 steps
@@ -154,6 +167,10 @@ int main(int argc, char *argv[])
     struct vec4 view_scale_vel = { 0.0f, 0.0f, 0.0f, 1.0f };
     float view_rot_delta = 0.1f;
     float view_rotx_limit = 70.0f;
+
+    float selected_rot_delta = 1.0f;
+
+    bool d_down = false;
 
     bool sprint = true;
     bool fly = true;
@@ -221,7 +238,7 @@ int main(int argc, char *argv[])
                 {
                     if (windowEvent.key.keysym.mod & KMOD_CTRL)
                     {
-                        delta.x = -1.0f;
+                        delta.x = -selected_rot_delta;
                         rotate_selected(delta);
                     }
                     else
@@ -234,7 +251,7 @@ int main(int argc, char *argv[])
                 {
                     if (windowEvent.key.keysym.mod & KMOD_CTRL)
                     {
-                        delta.x = 1.0f;
+                        delta.x = selected_rot_delta;
                         rotate_selected(delta);
                     }
                     else
@@ -247,7 +264,7 @@ int main(int argc, char *argv[])
                 {
                     if (windowEvent.key.keysym.mod & KMOD_CTRL)
                     {
-                        delta.y = -1.0f;
+                        delta.y = -selected_rot_delta;
                         rotate_selected(delta);
                     }
                     else
@@ -260,7 +277,7 @@ int main(int argc, char *argv[])
                 {
                     if (windowEvent.key.keysym.mod & KMOD_CTRL)
                     {
-                        delta.y = 1.0f;
+                        delta.y = selected_rot_delta;
                         rotate_selected(delta);
                     }
                     else
@@ -273,7 +290,7 @@ int main(int argc, char *argv[])
                 {
                     if (windowEvent.key.keysym.mod & KMOD_CTRL)
                     {
-                        delta.z = -1.0f;
+                        delta.z = -selected_rot_delta;
                         rotate_selected(delta);
                     }
                     else
@@ -286,7 +303,7 @@ int main(int argc, char *argv[])
                 {
                     if (windowEvent.key.keysym.mod & KMOD_CTRL)
                     {
-                        delta.z = 1.0f;
+                        delta.z = selected_rot_delta;
                         rotate_selected(delta);
                     }
                     else
@@ -314,8 +331,14 @@ int main(int argc, char *argv[])
                     {
                         view_trans_vel.x += view_trans_delta;
                     }
+                    else if (windowEvent.key.keysym.sym == SDLK_d
+                          && windowEvent.key.keysym.mod & KMOD_CTRL)
+                    {
+                        duplicate_selected();
+                    }
                     else if (windowEvent.key.keysym.sym == SDLK_d)
                     {
+                        d_down = true;
                         view_trans_vel.x -= view_trans_delta;
                     }
                     else if (windowEvent.key.keysym.sym == SDLK_w)
@@ -355,6 +378,13 @@ int main(int argc, char *argv[])
                     {
                         view_polygon_mode = GL_FILL;
                     }
+                    else if (windowEvent.key.keysym.sym == SDLK_7)
+                    {
+                        if (selected_rot_delta == 1.0f)
+                            selected_rot_delta = (float)M_SEVENTH_DEG;
+                        else
+                            selected_rot_delta = 1.0f;
+                    }
                 }
             }
             else if (windowEvent.type == SDL_KEYUP)
@@ -371,8 +401,9 @@ int main(int argc, char *argv[])
                 {
                     view_trans_vel.x -= view_trans_delta;
                 }
-                else if (windowEvent.key.keysym.sym == SDLK_d)
+                else if (d_down && windowEvent.key.keysym.sym == SDLK_d)
                 {
+                    d_down = false;
                     view_trans_vel.x += view_trans_delta;
                 }
                 else if (windowEvent.key.keysym.sym == SDLK_w)

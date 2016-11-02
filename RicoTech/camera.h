@@ -3,6 +3,15 @@
 
 #include "geom.h"
 
+//------------------------------------------------------------------------------
+//TODO: Probably should prefix these?
+#define SCREEN_W 1024
+#define SCREEN_H 768
+
+#define Z_NEAR 1.0f
+#define Z_FAR 100.0f
+#define Z_FOV_DEG 50.0f
+
 struct camera {
     struct vec4 scale;
     struct vec4 rot;

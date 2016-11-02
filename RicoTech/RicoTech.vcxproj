@@ -131,6 +131,7 @@
     <ClCompile Include="camera.c" />
     <ClCompile Include="font.c" />
     <ClCompile Include="geom.c" />
+    <ClCompile Include="load_object.c" />
     <ClCompile Include="main_nuke.c" />
     <ClCompile Include="rico_obj.c" />
     <ClCompile Include="rico_physics.c" />
@@ -138,7 +139,7 @@
     <ClCompile Include="gl3w.c" />
     <ClCompile Include="glref.c" />
     <ClCompile Include="main.c" />
-    <ClCompile Include="mesh.c" />
+    <ClCompile Include="rico_mesh.c" />
     <Natvis Include="notes.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -147,13 +148,15 @@
     <ClCompile Include="regularpoly.c" />
     <ClCompile Include="shader.c" />
     <ClCompile Include="test_geom.c" />
-    <ClCompile Include="texture.c" />
+    <ClCompile Include="rico_texture.c" />
+    <ClCompile Include="rico_uid.c" />
     <ClCompile Include="util.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bbox.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="font.h" />
+    <ClInclude Include="load_object.h" />
     <ClInclude Include="nuklear.h" />
     <ClInclude Include="nuklear_sdl_gl3.h" />
     <ClInclude Include="rico_obj.h" />
@@ -161,13 +164,14 @@
     <ClInclude Include="const.h" />
     <ClInclude Include="geom.h" />
     <ClInclude Include="glref.h" />
-    <ClInclude Include="mesh.h" />
+    <ClInclude Include="rico_mesh.h" />
     <ClInclude Include="program.h" />
     <ClInclude Include="regularpoly.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="test_geom.h" />
-    <ClInclude Include="texture.h" />
+    <ClInclude Include="rico_texture.h" />
+    <ClInclude Include="rico_uid.h" />
     <ClInclude Include="util.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

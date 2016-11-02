@@ -405,9 +405,12 @@ static inline void mat4_perspective(struct mat4 *m, float width,
                                     float z_far, float fov_deg)
 {
     float aspect = width / height;
-    float z_range = z_far - z_near;
+    float z_range = (z_far - z_near);
     float fov_rads = fov_deg * (float)M_PI / 180.0f;
     float fov_calc = 1.0f / (float)tan(fov_rads / 2.0f);
+
+    // Flip Z-axis so that +Z is toward the player
+    z_range *= -1.0f;
 
     m->m[0][0] = fov_calc / aspect;
     m->m[1][1] = fov_calc;
