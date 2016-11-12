@@ -1,23 +1,76 @@
 #include "rico_mesh.h"
 #include "rico_texture.h"
+#include "rico_pool.h"
 #include "camera.h"
 #include <stdlib.h>
 
-struct rico_mesh *make_mesh(const char *name, struct program_default *program,
-                            uint32 vertex_count,
-                            const struct mesh_vertex *vertex_data,
-                            uint32 element_count,
-                            const GLuint *element_data,
-                            GLenum hint)
-{
-    if (program == NULL)
-        program = make_program_default();
+struct rico_mesh {
+    struct rico_uid uid;
 
-    struct rico_mesh *mesh = calloc(1, sizeof(*mesh));
+    //TODO: Replace with program handle
+    struct program_default *prog;
+
+    GLuint vao;
+    GLuint vbos[2];
+    GLsizei element_count;
+
+    struct bbox bbox;
+};
+
+uint32 RICO_MESH_DEFAULT = 0;
+static struct rico_pool meshes;
+
+static int build_mesh(struct rico_mesh *mesh, uint32 vertex_count,
+                      const struct mesh_vertex *vertex_data,
+                      uint32 element_count, const GLuint *element_data,
+                      GLenum hint);
+
+int rico_mesh_init(uint32 pool_size)
+{
+    return pool_init("Meshes", pool_size, sizeof(struct rico_mesh),
+                     &meshes);
+}
+
+int mesh_load(const char *name, struct program_default *program,
+              uint32 vertex_count, const struct mesh_vertex *vertex_data,
+              uint32 element_count, const GLuint *element_data, GLenum hint,
+              uint32 *_handle)
+{
+    int err;
+    *_handle = RICO_MESH_DEFAULT;
+
+    err = pool_alloc(&meshes, _handle);
+    if (err) return err;
+
+    struct rico_mesh *mesh = pool_read(&meshes, *_handle);
     uid_init(name, &mesh->uid);
 
-    program->ref_count++;
+    if (program == NULL)
+    {
+        err = make_program_default(&program);
+        if (err) return err;
+    }
     mesh->prog = program;
+    
+    // TODO: What am I doing with program ref counting? Should probably refcount
+    //       program pool by uid, and check if already loaded when user requests
+    //       a new program.. or something?
+    //mesh->program->ref_count++;
+
+    err = build_mesh(mesh, vertex_count, vertex_data, element_count,
+                     element_data, hint);
+    if (err) return err;
+
+    err = bbox_init_mesh(&mesh->bbox, vertex_data, vertex_count,
+                         COLOR_GRAY_HIGHLIGHT);
+    return err;
+}
+
+static int build_mesh(struct rico_mesh *mesh, uint32 vertex_count,
+                      const struct mesh_vertex *vertex_data,
+                      uint32 element_count, const GLuint *element_data,
+                      GLenum hint)
+{
     mesh->element_count = element_count;
 
     glGenVertexArrays(1, &mesh->vao);
@@ -31,7 +84,7 @@ struct rico_mesh *make_mesh(const char *name, struct program_default *program,
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->vbos[VBO_ELEMENT]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, element_count * sizeof(GLuint),
-                 element_data, GL_STATIC_DRAW);
+                 element_data, hint);
 
     glUseProgram(mesh->prog->prog_id);
 
@@ -76,30 +129,42 @@ struct rico_mesh *make_mesh(const char *name, struct program_default *program,
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     //==========================================================================
 
-    bbox_init_mesh(&(mesh->bbox), vertex_data, vertex_count,
-                   COLOR_GRAY_HIGHLIGHT);
-
-    return mesh;
+    return SUCCESS;
 }
 
-void free_mesh(struct rico_mesh **mesh)
+void mesh_free(uint32 *handle)
 {
-    (*mesh)->prog->ref_count--;
-    glDeleteBuffers(2, (*mesh)->vbos);
-    glDeleteVertexArrays(1, &(*mesh)->vao);
-    free(*mesh);
-    *mesh = NULL;
+    struct rico_mesh *mesh = pool_read(&meshes, *handle);
+
+    glDeleteBuffers(2, mesh->vbos);
+    glDeleteVertexArrays(1, &mesh->vao);
+    
+    pool_free(&meshes, handle);
 }
 
-void mesh_update(struct rico_mesh *mesh)
+const char *mesh_name(uint32 handle)
 {
-    UNUSED(mesh);
+    struct rico_mesh *mesh = pool_read(&meshes, handle);
+    return mesh->uid.name;
+}
+
+const struct bbox *mesh_bbox(uint32 handle)
+{
+    struct rico_mesh *mesh = pool_read(&meshes, handle);
+    return &mesh->bbox;
+}
+
+void mesh_update(uint32 handle)
+{
+    UNUSED(handle);
     //TODO: Animate the mesh.
 }
 
-void mesh_render(const struct rico_mesh *mesh, uint32 tex,
-                 const struct mat4 *model_matrix, struct vec4 uv_scale)
+void mesh_render(uint32 handle, uint32 tex, const struct mat4 *model_matrix,
+                 struct vec4 uv_scale)
 {
+    struct rico_mesh *mesh = pool_read(&meshes, handle);
+
     //if (view_polygon_mode != GL_FILL)
     //    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glPolygonMode(GL_FRONT_AND_BACK, view_polygon_mode);

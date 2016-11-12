@@ -19,6 +19,8 @@
 #include "util.h"
 #include "glref.h"
 #include "rico_texture.h"
+#include "rico_mesh.h"
+#include "rico_obj.h"
 #include "load_object.h"
 
 #include <stdbool.h>
@@ -128,37 +130,73 @@ static void init_opengl()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-static struct rico_mesh **meshes;
-static int mesh_count;
-
-static void rico_init_objects()
+static int rico_init_textures()
 {
-    texture_set_default(GL_TEXTURE_2D, "texture/basic.tga");
-    printf("Loading objects...\n");
-    load_objects("model/spawn.obj", &meshes, &mesh_count);
+    printf("Loading textures\n");
+
+    int err = rico_texture_init(RICO_TEXTURE_POOL_SIZE);
+    if (err) return err;
+
+    err = texture_load_file("DEFAULT", GL_TEXTURE_2D, "texture/basic.tga",
+                            &RICO_TEXTURE_DEFAULT);
+    return err;
 }
 
-static void rico_init()
+static int rico_init_meshes()
+{
+    printf("Loading meshes\n");
+
+    int err = rico_mesh_init(RICO_MESH_POOL_SIZE);
+    if (err) return err;
+
+    // TODO: Load a default mesh
+    //err = mesh_load(...);
+    return err;
+}
+
+static uint32 meshes[100];
+static uint32 mesh_count;
+
+static int rico_init_objects()
+{
+    printf("Loading objects\n");
+
+    int err = rico_object_init(RICO_OBJECT_POOL_SIZE);
+    if (err) return err;
+
+    // TODO: Load a default object
+    //err = rico_obj_load(...);
+    return load_objects("model/spawn.obj", meshes, &mesh_count);
+}
+
+static int rico_init()
 {
     init_stb();
     init_sdl();
     init_gl3w();
     init_opengl();
-    rico_init_objects();
+    
+    int err = rico_init_textures();
+    if (err) return err;
+
+    err = rico_init_meshes();
+    if (err) return err;
+
+    err = rico_init_objects();
+    return err;
 }
 
-int main(int argc, char *argv[])
+int mymain()
 {
-    UNUSED(argc);
-    UNUSED(argv);
-    
-    rico_init();
+    int err = rico_init();
+    if (err) return err;
 
     //TODO: Use Unity test framework (http://www.throwtheswitch.org/unity)
     //http://www.drdobbs.com/testing/unit-testing-in-c-tools-and-conventions/240156344
     //run_tests();
 
-    init_glref(meshes, mesh_count);
+    err = init_glref(meshes, mesh_count);
+    if (err) return err;
 
     //Human walk speed empirically found to be 33 steps in 20 seconds. That
     //is approximately 1.65 steps per second. At 60 fps, that is 0.0275 steps
@@ -542,6 +580,21 @@ int main(int argc, char *argv[])
     SDL_DestroyWindow(window);
     SDL_Quit();
     return 0;
+}
+
+int main(int argc, char *argv[])
+{
+    UNUSED(argc);
+    UNUSED(argv);
+
+    int err = mymain();
+    if (err)
+    {
+        printf("[Main] Exit error = %d\n", err);
+        getchar();
+    }
+
+    return err;
 }
 
 ///////////////////////////////////////////////////////////////////

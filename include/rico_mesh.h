@@ -6,19 +6,6 @@
 #include "rico_texture.h"
 #include <GL/gl3w.h>
 
-struct rico_mesh {
-    struct rico_uid uid;
-
-    //TODO: Replace with program handle
-    struct program_default *prog;
-
-    GLuint vao;
-    GLuint vbos[2];
-    GLsizei element_count;
-
-    struct bbox bbox;
-};
-
 struct mesh_vertex {
     struct vec4 pos;
     struct col4 col;
@@ -28,15 +15,18 @@ struct mesh_vertex {
     //GLubyte specular[4];
 };
 
-struct rico_mesh *make_mesh(const char *name, struct program_default *program,
-                            uint32 vertex_count,
-                            const struct mesh_vertex *vertex_data,
-                            uint32 element_count,
-                            const GLuint *element_data,
-                            GLenum hint);
-void free_mesh(struct rico_mesh **mesh);
-void mesh_update(struct rico_mesh *mesh);
-void mesh_render(const struct rico_mesh *mesh, uint32 tex,
-                 const struct mat4 *model_matrix, struct vec4 uv_scale);
+extern uint32 RICO_MESH_DEFAULT;
+
+int rico_mesh_init(uint32 pool_size);
+int mesh_load(const char *name, struct program_default *program,
+              uint32 vertex_count, const struct mesh_vertex *vertex_data,
+              uint32 element_count, const GLuint *element_data, GLenum hint,
+              uint32 *_handle);
+void mesh_free(uint32 *handle);
+const char *mesh_name(uint32 handle);
+const struct bbox *mesh_bbox(uint32 handle);
+void mesh_update(uint32 handle);
+void mesh_render(uint32 handle, uint32 tex, const struct mat4 *model_matrix,
+                 struct vec4 uv_scale);
 
 #endif

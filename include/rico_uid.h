@@ -6,11 +6,11 @@
 
 struct rico_uid {
     uint32 uid;
-    char name[50];
+    const char *name;
 };
 
 extern struct rico_uid UID_NULL;
 
-void uid_init(const char *name, struct rico_uid *result);
+void uid_init(const char *name, struct rico_uid *_uid);
 
 #endif // UID_H

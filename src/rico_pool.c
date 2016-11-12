@@ -1,0 +1,80 @@
+#include "rico_pool.h"
+#include "stdlib.h"
+#include "stdio.h"
+
+static void pool_print(struct rico_pool *pool);
+
+// TODO: Allocate from heap pool, don't keep calling calloc
+int pool_init(const char *name, uint32 count, uint32 size,
+              struct rico_pool *_pool)
+{
+    struct rico_pool pool;
+    uid_init(name, &pool.uid);
+    pool.count = count;
+    pool.size = size;
+    pool.pool = calloc(count, size);
+    pool.handles = calloc(count, sizeof(uint32));
+    pool.active = 0;
+
+    if (!pool.pool) return ERR_BAD_ALLOC;
+    if (!pool.handles) return ERR_BAD_ALLOC;
+
+    // Initialize free list
+    for (uint32 i = 0; i < count; i++)
+    {
+        pool.handles[i] = i;
+    }
+
+    *_pool = pool;
+    printf("[Pool] Initialized (name: %s) (uid: %d)\n",
+           pool.uid.name, pool.uid.uid);
+    pool_print(&pool);
+    return SUCCESS;
+}
+
+int pool_alloc(struct rico_pool *pool, uint32 *_handle)
+{
+    rico_assert(pool);
+    if (pool->active == pool->count)
+    {
+        fprintf(stderr, "[Pool] [%s] Out of memory. Exceeded max elements [%d].\n",
+                pool->uid.name, pool->count);
+
+        return ERR_POOL_OUT_OF_MEMORY;
+    }
+    
+    *_handle = pool->handles[pool->active];
+    pool->active++;
+    printf("[Pool] Alloc handle: %d\n", *_handle);
+    pool_print(pool);
+    return SUCCESS;
+}
+
+int pool_free(struct rico_pool *pool, uint32 *handle)
+{
+    rico_assert(pool);
+
+    //Reorder handle list
+    for (uint32 i = *handle; i <= pool->active; i++)
+    {
+        pool->handles[i] = pool->handles[i + 1];
+    }
+    pool->active--;
+    pool->handles[pool->active] = *handle;
+    
+    printf("[Pool] Free handle: %d\n", *handle);
+    pool_print(pool);
+    
+    *handle = 0;
+    return SUCCESS;
+}
+
+static void pool_print(struct rico_pool *pool)
+{
+    printf("[Pool] Active handles: [");
+    for (uint32 i = 0; i < pool->active; i++)
+    {
+        printf("%d ", pool->handles[i]);
+    }
+    printf("\b]\n");
+}

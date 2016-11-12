@@ -1,60 +1,68 @@
 #include "rico_obj.h"
 #include "const.h"
+#include "rico_pool.h"
 
-//TODO: Allocate from heap pool, not stack
-#define POOL_SIZE 50
-static struct rico_obj pool[POOL_SIZE];
+uint32 RICO_OBJECT_DEFAULT = 0;
+static struct rico_pool objects;
 
-//TODO: Instantiate pool[0] (handle 0) with a special default object
-//      that can be used to visually represent a NULL object in-game
-static uint32 next_handle = 1;
-
-struct rico_obj *rico_obj_create(const char *name, const struct rico_mesh *mesh,
-                                 uint32 texture, const struct bbox *bbox)
+int rico_object_init(uint32 pool_size)
 {
-    //TODO: Handle out-of-memory
-    //TODO: Implement reuse of pool objects
-    if (next_handle >= POOL_SIZE)
-    {
-        fprintf(stderr, "Out of memory: Object pool exceeded max size of %d.\n",
-                POOL_SIZE);
-        return NULL;
-    }
+    return pool_init("Objects", pool_size, sizeof(struct rico_obj),
+                     &objects);
+}
 
-    struct rico_obj *obj = &pool[next_handle++];
+int rico_obj_create(const char *name, uint32 mesh, uint32 texture,
+                    const struct bbox *bbox, uint32 *_handle)
+{
+    int err;
+    *_handle = RICO_OBJECT_DEFAULT;
+
+    err = pool_alloc(&objects, _handle);
+    if (err) return err;
+
+    struct rico_obj *obj = pool_read(&objects, *_handle);
 
     //TODO: Should default W component be 0 or 1?
     uid_init(name, &obj->uid);
-    obj->handle = next_handle;
     obj->scale = (struct vec4) { 1.0f, 1.0f, 1.0f, 1.0f };
     obj->mesh = mesh;
-
-    //HACK: Use default texture if none specified
     obj->texture = texture;
+    //HACK: Use mesh bbox if none specified
+    obj->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(mesh);
 
-    //HACK: Use default bbox if none specified
-    obj->bbox = (bbox != NULL) ? *bbox : mesh->bbox;
-
-    return obj;
+    return err;
 }
 
+void rico_obj_free(uint32 *handle)
+{
+    struct rico_obj *obj = pool_read(&objects, *handle);
+    obj->uid = UID_NULL;
+    pool_free(&objects, handle);
+    *handle = RICO_OBJECT_DEFAULT;
+}
+
+//HACK: DANGER WILL ROBINSON!!!
 struct rico_obj *rico_obj_fetch(uint32 handle)
 {
-    return &pool[handle];
+    return pool_read(&objects, handle);
 }
 
 //HACK: Is iterating all objects really a useful thing to do?
 uint32 rico_obj_next(uint32 handle)
 {
-    return (handle < next_handle - 1) ? ++handle : 0;
+    return pool_next(&objects, handle);
+    //return (handle < next_handle - 1) ? ++handle : 0;
 }
 uint32 rico_obj_prev(uint32 handle)
 {
-    return (handle > 0) ? --handle : next_handle - 1;
+    return pool_prev(&objects, handle);
+    //return (handle > 0) ? --handle : next_handle - 1;
 }
 
-void rico_obj_render(const struct rico_obj *obj)
+void rico_obj_render(uint32 handle)
 {
+    struct rico_obj *obj = pool_read(&objects, handle);
+
     // Model transform
     struct mat4 model_matrix;
     mat4_ident(&model_matrix);

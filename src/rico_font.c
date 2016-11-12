@@ -93,7 +93,7 @@ struct rico_font *make_font(const char *filename)
     // Store character widths
     memcpy(font->Width, &buffer[WIDTH_DATA_OFFSET], 256);
 
-    make_texture_pixels(GL_TEXTURE_2D, width, height, bpp,
+    texture_load_pixels(filename, GL_TEXTURE_2D, width, height, bpp,
                         &buffer[MAP_DATA_OFFSET], &font->texture);
 
 cleanup:
@@ -120,9 +120,10 @@ void font_setblend(const struct rico_font *font)
 	}
 }
 
-void font_render(const struct rico_font *font, int x, int y, const char *text,
-                 struct col4 bg, struct rico_mesh **_mesh, uint32 *_texture)
+int font_render(const struct rico_font *font, int x, int y, const char *text,
+                struct col4 bg, uint32 *_mesh, uint32 *_texture)
 {
+    int err;
     //font_setblend(font);
 
     int text_len = strlen(text);
@@ -221,8 +222,8 @@ void font_render(const struct rico_font *font, int x, int y, const char *text,
     //     printf("e %d\n", elements[i]);
     // }
 
-    *_mesh = make_mesh("font", make_program_default(), vertex_count,
-                       vertices, element_count, elements, GL_STATIC_DRAW);
+    err = mesh_load("font", NULL, vertex_count, vertices, element_count,
+                    elements, GL_STATIC_DRAW, _mesh);
     *_texture = font->texture;
 
     free(vertices);
@@ -240,6 +241,8 @@ void font_render(const struct rico_font *font, int x, int y, const char *text,
 //
     //mesh_render(mesh, &model_matrix, VEC4_UNIT);
     ///////////////////////////////////////////////////
+
+    return err;
 }
 
 /*

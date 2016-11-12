@@ -32,17 +32,17 @@ uint32 tex_grass;
 uint32 tex_rock;
 uint32 tex_hello;
 
-static struct rico_obj *obj_fonttest;
-static struct rico_obj *obj_ground;
-static struct rico_obj *obj_hello;
-static struct rico_obj *obj_ruler;
-static struct rico_obj *obj_wall1;
-static struct rico_obj *obj_wall2;
-static struct rico_obj *obj_wall3;
-static struct rico_obj *obj_wall4;
-static struct rico_obj *obj_wall5;
-static struct rico_obj *arr_objects[50] = { 0 };
-static int idx_arr_objects = 0;
+uint32 obj_fonttest;
+uint32 obj_ground;
+uint32 obj_hello;
+uint32 obj_ruler;
+uint32 obj_wall1;
+uint32 obj_wall2;
+uint32 obj_wall3;
+uint32 obj_wall4;
+uint32 obj_wall5;
+uint32 arr_objects[50] = { 0 };
+static uint32 idx_arr_objects = 0;
 
 static struct bbox axis_bbox;
 
@@ -50,8 +50,10 @@ static struct mat4 x_axis_transform;
 static struct mat4 y_axis_transform;
 static struct mat4 z_axis_transform;
 
-void init_glref(struct rico_mesh **meshes, int mesh_count)
+int init_glref(uint32 *meshes, uint32 mesh_count)
 {
+    int err;
+
     //--------------------------------------------------------------------------
     // Initialize fonts
     //--------------------------------------------------------------------------
@@ -72,11 +74,11 @@ void init_glref(struct rico_mesh **meshes, int mesh_count)
     //--------------------------------------------------------------------------
     // Create shader program
     //--------------------------------------------------------------------------
-    prog_default = make_program_default();
-    if (!prog_default) return;
+    err = make_program_default(&prog_default);
+    if (err) return err;
 
-    prog_bbox = make_program_bbox();
-    if (!prog_bbox) return;
+    err = make_program_bbox(&prog_bbox);
+    if (err) return err;
 
     /*************************************************************************
     | Frequency of access:
@@ -124,103 +126,107 @@ void init_glref(struct rico_mesh **meshes, int mesh_count)
     //--------------------------------------------------------------------------
     // Create textures
     //--------------------------------------------------------------------------
-    make_texture_file(GL_TEXTURE_2D, "texture/grass.tga", &tex_grass);
-    make_texture_file(GL_TEXTURE_2D, "texture/clean_bricks.tga", &tex_rock);
-    make_texture_file(GL_TEXTURE_2D, "texture/hello.tga", &tex_hello);
+    texture_load_file("grass", GL_TEXTURE_2D, "texture/grass.tga", &tex_grass);
+    texture_load_file("rock", GL_TEXTURE_2D, "texture/clean_bricks.tga", &tex_rock);
+    texture_load_file("hello", GL_TEXTURE_2D, "texture/hello.tga", &tex_hello);
+    texture_free(&tex_grass);
+    texture_load_file("grass", GL_TEXTURE_2D, "texture/grass.tga", &tex_grass);
 
     //--------------------------------------------------------------------------
     // Create meshes
     //--------------------------------------------------------------------------
-    const struct rico_mesh *mesh_default =
-        make_mesh("default", prog_default, VERT_COUNT, vertices, ELEMENT_COUNT,
-                  elements, GL_STATIC_DRAW);
+    uint32 mesh_default;
+    err = mesh_load("default", prog_default, VERT_COUNT, vertices, ELEMENT_COUNT,
+                    elements, GL_STATIC_DRAW, &mesh_default);
+    if (err) return err;
 
     //--------------------------------------------------------------------------
     // Create world objects
     //--------------------------------------------------------------------------
 
     // Font Test
-    struct rico_mesh *mesh_font;
+    uint32 mesh_font;
     uint32 tex_font;
     font_render(font, 0, 0, "This is a test.\nYay!", COLOR_RED, &mesh_font,
                 &tex_font);
 
-    obj_fonttest = rico_obj_create("Font Test", mesh_font, tex_font, NULL);
-    obj_fonttest->trans = (struct vec4) { 0.0f, 2.0f, 0.0f, 1.0f };
-    obj_fonttest->scale = (struct vec4) { 1.0f, 1.0f, 1.0f, 1.0f };
+    rico_obj_create("Font Test", mesh_font, tex_font, NULL, &obj_fonttest);
+    rico_obj_fetch(obj_fonttest)->trans = (struct vec4) { 0.0f, 2.0f, 0.0f, 1.0f };
+    rico_obj_fetch(obj_fonttest)->scale = (struct vec4) { 1.0f, 1.0f, 1.0f, 1.0f };
 
     // Ground
-    obj_ground = rico_obj_create("Ground", mesh_default, tex_rock, NULL);
-    obj_ground->trans = (struct vec4) { 0.0f, 0.0f, 0.0f, 1.0f };
-    obj_ground->rot.x = -90.0f;
-    obj_ground->scale = (struct vec4) { 64.0f, 64.0f, 1.0f, 1.0f };
+    rico_obj_create("Ground", mesh_default, tex_rock, NULL, &obj_ground);
+    rico_obj_fetch(obj_ground)->trans = (struct vec4) { 0.0f, 0.0f, 0.0f, 1.0f };
+    rico_obj_fetch(obj_ground)->rot.x = -90.0f;
+    rico_obj_fetch(obj_ground)->scale = (struct vec4) { 64.0f, 64.0f, 1.0f, 1.0f };
 
     // Hello
-    obj_hello = rico_obj_create("Hello", mesh_default, tex_hello, NULL);
-    obj_hello->trans = (struct vec4) { 0.0f, 2.0f, -4.0f, 1.0f };
-    obj_hello->rot.y = 40.0f;
-    obj_hello->scale = (struct vec4) { 1.0f, 2.0f, 1.0f, 1.0f };
+    rico_obj_create("Hello", mesh_default, tex_hello, NULL, &obj_hello);
+    rico_obj_fetch(obj_hello)->trans = (struct vec4) { 0.0f, 2.0f, -4.0f, 1.0f };
+    rico_obj_fetch(obj_hello)->rot.y = 40.0f;
+    rico_obj_fetch(obj_hello)->scale = (struct vec4) { 1.0f, 2.0f, 1.0f, 1.0f };
 
     // Ruler
-    obj_ruler = rico_obj_create("Ruler", mesh_default, RICO_TEXTURE_DEFAULT,
-                                NULL);
-    obj_ruler->trans = (struct vec4) { 0.0f, 1.0f, -3.0f, 1.0f };
-    obj_ruler->scale = (struct vec4) { 1.0f, 1.0f, 1.0f, 1.0f };
+    rico_obj_create("Ruler", mesh_default, RICO_TEXTURE_DEFAULT, NULL, &obj_ruler);
+    rico_obj_fetch(obj_ruler)->trans = (struct vec4) { 0.0f, 1.0f, -3.0f, 1.0f };
+    rico_obj_fetch(obj_ruler)->scale = (struct vec4) { 1.0f, 1.0f, 1.0f, 1.0f };
 
     // Walls are all the same size for now
     struct vec4 wall_scale = (struct vec4) { 8.0f, 2.5f, 1.0f, 1.0f };
 
     // Wall front
-    obj_wall1 = rico_obj_create("wall1", mesh_default, tex_hello, NULL);
-    obj_wall1->trans = (struct vec4) { 0.0f, 2.5f, -8.0f, 1.0f };
-    obj_wall1->scale = wall_scale;
+    rico_obj_create("wall1", mesh_default, tex_hello, NULL, &obj_wall1);
+    rico_obj_fetch(obj_wall1)->trans = (struct vec4) { 0.0f, 2.5f, -8.0f, 1.0f };
+    rico_obj_fetch(obj_wall1)->scale = wall_scale;
 
     // Wall left
-    obj_wall2 = rico_obj_create("wall2", mesh_default, tex_hello, NULL);
-    obj_wall2->trans = (struct vec4) { -8.0f, 2.5f, 0.0f, 1.0f };
-    obj_wall2->rot.y = 0.0f;
-    obj_wall2->scale = wall_scale;
+    rico_obj_create("wall2", mesh_default, tex_hello, NULL, &obj_wall2);
+    rico_obj_fetch(obj_wall2)->trans = (struct vec4) { -8.0f, 2.5f, 0.0f, 1.0f };
+    rico_obj_fetch(obj_wall2)->rot.y = 0.0f;
+    rico_obj_fetch(obj_wall2)->scale = wall_scale;
 
     // Wall back
-    obj_wall3 = rico_obj_create("wall3", mesh_default, tex_hello, NULL);
-    obj_wall3->trans = (struct vec4) { 0.0f, 2.5f, 8.0f, 1.0f };
-    obj_wall3->rot.y = 180.0f;
-    obj_wall3->scale = wall_scale;
+    rico_obj_create("wall3", mesh_default, tex_hello, NULL, &obj_wall3);
+    rico_obj_fetch(obj_wall3)->trans = (struct vec4) { 0.0f, 2.5f, 8.0f, 1.0f };
+    rico_obj_fetch(obj_wall3)->rot.y = 180.0f;
+    rico_obj_fetch(obj_wall3)->scale = wall_scale;
 
     // Wall right
-    obj_wall4 = rico_obj_create("wall4", mesh_default, tex_hello, NULL);
-    obj_wall4->trans = (struct vec4) { 8.0f, 2.5f, 0.0f, 1.0f };
-    obj_wall4->rot.y = -90.0f;
-    obj_wall4->scale = wall_scale;
+    rico_obj_create("wall4", mesh_default, tex_hello, NULL, &obj_wall4);
+    rico_obj_fetch(obj_wall4)->trans = (struct vec4) { 8.0f, 2.5f, 0.0f, 1.0f };
+    rico_obj_fetch(obj_wall4)->rot.y = -90.0f;
+    rico_obj_fetch(obj_wall4)->scale = wall_scale;
 
     // Wall five
-    obj_wall5 = rico_obj_create("wall5", mesh_default, tex_hello, NULL);
-    obj_wall5->trans = (struct vec4) { 4.0f, 2.5f, 0.0f, 1.0f };
-    obj_wall5->rot.y = -90.0f;
-    obj_wall5->scale = wall_scale;
+    rico_obj_create("wall5", mesh_default, tex_hello, NULL, &obj_wall5);
+    rico_obj_fetch(obj_wall5)->trans = (struct vec4) { 4.0f, 2.5f, 0.0f, 1.0f };
+    rico_obj_fetch(obj_wall5)->rot.y = -90.0f;
+    rico_obj_fetch(obj_wall5)->scale = wall_scale;
 
     {
-        int i;
-        for (i = 0; i < mesh_count; i++)
+        struct rico_obj *mesh_obj;
+        for (uint32 i = 0; i < mesh_count; i++)
         {
-            arr_objects[i] = rico_obj_create(meshes[i]->uid.name, meshes[i],
-                                             RICO_TEXTURE_DEFAULT,
-                                             &meshes[i]->bbox);
-            arr_objects[i]->trans = (struct vec4) { 0.0f, 0.01f, 0.0f, 1.0f };
-            arr_objects[i]->scale = VEC4_UNIT;
+            rico_obj_create(mesh_name(meshes[i]), meshes[i], RICO_TEXTURE_DEFAULT,
+                            mesh_bbox(meshes[i]), &arr_objects[i]);
+            
+            mesh_obj = rico_obj_fetch(arr_objects[i]);
+                                            
+            mesh_obj->trans = (struct vec4) { 0.0f, 0.01f, 0.0f, 1.0f };
+            mesh_obj->scale = VEC4_UNIT;
             
             // HACK: I want the walls to be taller for now
             if (i == 0) {
-                arr_objects[i]->scale.x = 2.0f;
-                arr_objects[i]->scale.z = 2.0f;
+                mesh_obj->scale.x = 2.0f;
+                mesh_obj->scale.z = 2.0f;
             }
             else {
-                arr_objects[i]->scale.x = 2.0f;
-                arr_objects[i]->scale.y = 2.0f;
-                arr_objects[i]->scale.z = 2.0f;
+                mesh_obj->scale.x = 2.0f;
+                mesh_obj->scale.y = 2.0f;
+                mesh_obj->scale.z = 2.0f;
             }
         }
-        idx_arr_objects = i;
+        idx_arr_objects = mesh_count;
     }
 
     //--------------------------------------------------------------------------
@@ -247,6 +253,8 @@ void init_glref(struct rico_mesh **meshes, int mesh_count)
     mat4_ident(&z_axis_transform);
     mat4_scale(&z_axis_transform, (struct vec4) { 0.01f, 0.01f, 1.0f, 1.0f });
     mat4_translate(&z_axis_transform, (struct vec4) { 0.0f, 0.0f, 0.5f, 1.0f });
+    
+    return SUCCESS;
 }
 
 void select_obj(uint32 handle)
@@ -317,13 +325,15 @@ void duplicate_selected()
     char name[20];
     sprintf(name, "Duplicate %d", i);
 
-    arr_objects[i] = rico_obj_create(name, selected->mesh, selected->texture,
-                                     &selected->mesh->bbox);
+    rico_obj_create(name, selected->mesh, selected->texture,
+                    mesh_bbox(selected->mesh), &arr_objects[i]);
+
+    struct rico_obj *new_obj = rico_obj_fetch(arr_objects[i]);
     if (arr_objects[i])
     {
-        arr_objects[i]->trans = selected->trans;
-        arr_objects[i]->rot = selected->rot;
-        arr_objects[i]->scale = selected->scale;
+        new_obj->trans = selected->trans;
+        new_obj->rot = selected->rot;
+        new_obj->scale = selected->scale;
         idx_arr_objects++;
     }
 }
@@ -378,7 +388,7 @@ void render_glref()
     rico_obj_render(obj_wall3);
     rico_obj_render(obj_wall4);
 
-    for (int i = 0; arr_objects[i] != NULL; i++)
+    for (uint32 i = 0; i < idx_arr_objects; i++)
     {
         rico_obj_render(arr_objects[i]);
     }
@@ -398,14 +408,14 @@ void free_glref()
     // Clean up
     //--------------------------------------------------------------------------
     //TODO: Free all game objects
-    free_rico_obj(&obj_ground);
+    rico_obj_free(&obj_ground);
 
     //TODO: Free all meshes
     
     //TODO: Free all textures
-    free_texture(&tex_grass);
-    free_texture(&tex_rock);
-    free_texture(&tex_hello);
+    texture_free(&tex_grass);
+    texture_free(&tex_rock);
+    texture_free(&tex_hello);
 
     //TODO: Free all programs
     free_program_default(&prog_default);

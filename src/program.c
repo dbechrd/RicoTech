@@ -10,7 +10,8 @@
 // General-purpose
 //==============================================================================
 
-static inline GLuint make_program(GLuint vertex_shader, GLuint fragment_shader)
+static int make_program(GLuint vertex_shader, GLuint fragment_shader,
+                        GLuint *_program)
 {
     GLint status;
     GLuint program = glCreateProgram();
@@ -30,15 +31,16 @@ static inline GLuint make_program(GLuint vertex_shader, GLuint fragment_shader)
 
         //Clean up
         glDeleteProgram(program);
-        return 0;
+        return ERR_SHADER_LINK;
     }
 
-    return program;
+    *_program = program;
+    return SUCCESS;
 }
 
 static inline void free_program(GLuint program)
 {
-    glDeleteProgram(program);
+    if (program) glDeleteProgram(program);
 }
 
 static inline GLint program_get_attrib_location(GLuint program,
@@ -89,12 +91,14 @@ static inline void program_default_get_locations(struct program_default *p)
     p->u_tex = program_get_uniform_location(p->prog_id, "u_tex");
 }
 
-struct program_default *make_program_default()
+int make_program_default(struct program_default **_program)
 {
     static struct program_default *prog_default = NULL;
+    int err;
 
     if (prog_default != NULL) {
-        return prog_default;
+        *_program = prog_default;
+        return SUCCESS;
     }
 
     GLuint vshader = 0;
@@ -102,27 +106,28 @@ struct program_default *make_program_default()
     GLuint program = 0;
 
     // Compile shaders
-    vshader = make_shader(GL_VERTEX_SHADER, "shader/default.vert.glsl");
-    if (!vshader) goto cleanup;
+    err = make_shader(GL_VERTEX_SHADER, "shader/default.vert.glsl", &vshader);
+    if (err) goto cleanup;
 
-    fshader = make_shader(GL_FRAGMENT_SHADER, "shader/default.frag.glsl");
-    if (!fshader) goto cleanup;
-    
+    err = make_shader(GL_FRAGMENT_SHADER, "shader/default.frag.glsl", &fshader);
+    if (err) goto cleanup;
+
     // Link shader program
-    program = make_program(vshader, fshader);
-    if (!program) goto cleanup;
+    err = make_program(vshader, fshader, &program);
+    if (err) goto cleanup;
 
     // Create program object
     prog_default = calloc(1, sizeof(struct program_default));
     prog_default->prog_id = program;
 
-    // Initialize
+    // Query shader locations
     program_default_get_locations(prog_default);
 
 cleanup:
     free_shader(fshader);
     free_shader(vshader);
-    return prog_default;
+    *_program = prog_default;
+    return err;
 }
 
 void free_program_default(struct program_default **program)
@@ -164,12 +169,14 @@ static inline void program_bbox_get_locations(struct program_bbox *p)
     p->u_ambient = program_get_uniform_location(p->prog_id, "u_ambient");
 }
 
-struct program_bbox *make_program_bbox()
+int make_program_bbox(struct program_bbox **_program)
 {
     static struct program_bbox *prog_bbox = NULL;
+    int err;
 
     if (prog_bbox != NULL) {
-        return prog_bbox;
+        *_program = prog_bbox;
+        return SUCCESS;
     }
 
     GLuint vshader = 0;
@@ -177,27 +184,28 @@ struct program_bbox *make_program_bbox()
     GLuint program = 0;
 
     // Compile shaders
-    vshader = make_shader(GL_VERTEX_SHADER, "shader/bbox.vert.glsl");
-    if (!vshader) goto cleanup;
+    err = make_shader(GL_VERTEX_SHADER, "shader/bbox.vert.glsl", &vshader);
+    if (err) goto cleanup;
 
-    fshader = make_shader(GL_FRAGMENT_SHADER, "shader/bbox.frag.glsl");
-    if (!fshader) goto cleanup;
+    err = make_shader(GL_FRAGMENT_SHADER, "shader/bbox.frag.glsl", &fshader);
+    if (err) goto cleanup;
 
     // Link shader program
-    program = make_program(vshader, fshader);
-    if (!program) goto cleanup;
+    err = make_program(vshader, fshader, &program);
+    if (err) goto cleanup;
 
     // Create program object
     prog_bbox = calloc(1, sizeof(struct program_bbox));
     prog_bbox->prog_id = program;
 
-    // Initialize
+    // Query shader locations
     program_bbox_get_locations(prog_bbox);
 
 cleanup:
     free_shader(fshader);
     free_shader(vshader);
-    return prog_bbox;
+    *_program = prog_bbox;
+    return err;
 }
 
 void free_program_bbox(struct program_bbox **program)
@@ -205,7 +213,7 @@ void free_program_bbox(struct program_bbox **program)
     //TODO: Handle error
     if ((*program)->ref_count > 0) {
         printf("Cannot delete a program in use!");
-        assert(0);
+        rico_assert(0);
     }
 
     glDeleteProgram((*program)->prog_id);

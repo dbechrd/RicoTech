@@ -9,18 +9,14 @@
 struct rico_obj {
     struct rico_uid uid;
 
-    //TODO: Create a uid -> handle map for each subsystem?
-    uint32 handle;
-
     //TODO: Refactor into rico_transform
     //TODO: Animation
     struct vec4 trans;
     struct vec4 rot;
     struct vec4 scale;
 
-    //TODO: Replace with handle
     //TODO: Support multiple meshes
-    const struct rico_mesh *mesh;
+    uint32 mesh;
 
     //TODO: Support multiple textures (per mesh?)
     uint32 texture;
@@ -32,18 +28,16 @@ struct rico_obj {
 //extern struct rico_obj rico_obj_pool[];
 //extern uint32 next_uid;
 
-struct rico_obj *rico_obj_create(const char *name, const struct rico_mesh *mesh,
-                                 uint32 texture, const struct bbox *bbox);
+int rico_object_init(uint32 pool_size);
+int rico_obj_create(const char *name, uint32 mesh, uint32 texture,
+                    const struct bbox *bbox, uint32 *_handle);
 struct rico_obj *rico_obj_fetch(uint32 handle);
+void rico_obj_translate(struct vec4 v);
+void rico_obj_translate(struct vec4 v);
+void rico_obj_translate(struct vec4 v);
 uint32 rico_obj_next(uint32 handle);
 uint32 rico_obj_prev(uint32 handle);
-void rico_obj_render(const struct rico_obj *obj);
-
-static inline void free_rico_obj(struct rico_obj **obj)
-{
-    (*obj)->uid = UID_NULL;
-    (*obj)->handle = 0;
-    *obj = NULL;
-}
+void rico_obj_render(uint32 handle);
+void rico_obj_free(uint32 *handle);
 
 #endif // RICO_OBJ_H

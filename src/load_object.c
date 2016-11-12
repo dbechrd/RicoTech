@@ -23,7 +23,7 @@ struct OBJ_FACE {
 };
 
 enum OBJ_LINE_TYPE line_type(const char *line);
-bool load_mesh(const char *line, struct rico_mesh *mesh);
+//bool load_mesh(const char *line, struct rico_mesh *mesh);
 
 char* strsep(char** stringp, const char* delim)
 {
@@ -45,10 +45,9 @@ char* strsep(char** stringp, const char* delim)
     return start;
 }
 
-void load_objects(const char *filename, struct rico_mesh ***out_meshes, 
-                  int *out_mesh_count)
+int load_objects(const char *filename, uint32 *_meshes, uint32 *_mesh_count)
 {
-    
+    int err;
     int length;
     char *buffer = file_contents(filename, &length);
     char *buffer_ptr = buffer;
@@ -65,7 +64,6 @@ void load_objects(const char *filename, struct rico_mesh ***out_meshes,
     char *name = NULL;
     struct mesh_vertex vertices[MESH_VERTICES_MAX] = { 0 };
     GLuint elements[MESH_VERTICES_MAX];
-    struct rico_mesh **meshes = calloc(100, sizeof(*meshes));
     int idx_vertex = 0;
     int idx_mesh = 0;
 
@@ -129,8 +127,9 @@ void load_objects(const char *filename, struct rico_mesh ***out_meshes,
             UNUSED(normals);
             
             // TODO: Get program and texture from somewhere
-            meshes[idx_mesh] = make_mesh(name, NULL, idx_vertex, vertices,
-                                         idx_vertex, elements, GL_STATIC_DRAW);
+            err = mesh_load(name, NULL, idx_vertex, vertices, idx_vertex, elements,
+                            GL_STATIC_DRAW, &_meshes[idx_mesh]);
+            if (err) goto cleanup;
 
             name = NULL;
             idx_vertex = 0;
@@ -139,11 +138,12 @@ void load_objects(const char *filename, struct rico_mesh ***out_meshes,
         tok = strsep(&buffer_ptr, "\n");
     }
 
-    free(buffer);
-
+    *_mesh_count = idx_mesh;
     printf("Loaded %s\n", filename);
-    *out_meshes = meshes;
-    *out_mesh_count = idx_mesh;
+    
+cleanup:
+    free(buffer);
+    return SUCCESS;
 }
 
 //enum OBJ_LINE_TYPE line_type(const char *line)
@@ -162,14 +162,14 @@ void load_objects(const char *filename, struct rico_mesh ***out_meshes,
 //        return OBJ_IGNORE;
 //}
 
-bool load_mesh(const char *line, struct rico_mesh *mesh)
-{
-    static const char *prefix = "o ";
-    if (!str_starts_with(line, prefix))
-        return false;
+// bool load_mesh(const char *line, struct rico_mesh *mesh)
+// {
+//     static const char *prefix = "o ";
+//     if (!str_starts_with(line, prefix))
+//         return false;
 
-    line += strlen(prefix);
+//     line += strlen(prefix);
 
-    uid_init(line, &mesh->uid);
-    return line;
-}
+//     uid_init(line, &mesh->uid);
+//     return line;
+// }

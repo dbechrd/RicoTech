@@ -10,12 +10,14 @@
 #define BBOX_EPSILON 0.001f
 #endif
 
-static void init_gl(struct bbox *box);
+static int init_gl(struct bbox *bbox);
 
-void bbox_init(struct bbox *bbox, struct vec4 p0, struct vec4 p1,
-               struct col4 color)
+int bbox_init(struct bbox *bbox, struct vec4 p0, struct vec4 p1,
+              struct col4 color)
 {
-    bbox->prog = make_program_bbox();
+    int err = make_program_bbox(&bbox->prog);
+    if (err) return err;
+
     bbox->vertices[0] = (struct vec4) { p0.x, p0.y, p0.z, 1.0f };
     bbox->vertices[1] = (struct vec4) { p1.x, p0.y, p0.z, 1.0f };
     bbox->vertices[2] = (struct vec4) { p1.x, p1.y, p0.z, 1.0f };
@@ -27,10 +29,10 @@ void bbox_init(struct bbox *bbox, struct vec4 p0, struct vec4 p1,
     bbox->color = color;
     bbox->wireframe = true;
 
-    init_gl(bbox);
+    return init_gl(bbox);
 }
 
-void bbox_init_mesh(struct bbox *bbox, const struct mesh_vertex *verts,
+int bbox_init_mesh(struct bbox *bbox, const struct mesh_vertex *verts,
                     int count, struct col4 color)
 {
     struct vec4 p0 = (struct vec4) { 9999.0f, 9999.0f, 9999.0f, 0.0f };
@@ -63,28 +65,10 @@ void bbox_init_mesh(struct bbox *bbox, const struct mesh_vertex *verts,
     p0.z -= BBOX_EPSILON;
     p1.z += BBOX_EPSILON;
 
-    /*
-    if (p0.x == p1.x)
-    {
-        p0.x -= BBOX_EPSILON;
-        p1.x += BBOX_EPSILON;
-    }
-    if (p0.y == p1.y)
-    {
-        p0.y -= BBOX_EPSILON;
-        p1.y += BBOX_EPSILON;
-    }
-    if (p0.z == p1.z)
-    {
-        p0.z -= BBOX_EPSILON;
-        p1.z += BBOX_EPSILON;
-    }
-    */
-
-    bbox_init(bbox, p0, p1, color);
+    return bbox_init(bbox, p0, p1, color);
 }
 
-static void init_gl(struct bbox *bbox)
+static int init_gl(struct bbox *bbox)
 {
     // Bbox faces
     static GLuint elements[36] = {
@@ -132,6 +116,7 @@ static void init_gl(struct bbox *bbox)
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    return SUCCESS;
 }
 
 void bbox_render(const struct bbox *box, const struct mat4 *model_matrix)

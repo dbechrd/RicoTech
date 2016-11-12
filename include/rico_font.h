@@ -20,8 +20,6 @@ struct rico_font {
 };
 
 struct rico_font *make_font(const char *filename);
-void font_render(const struct rico_font *font, int x, int y,
-                 const char *text, struct col4 bg,
-                 struct rico_mesh **_mesh, uint32 *_out_texture);
-
+int font_render(const struct rico_font *font, int x, int y, const char *text,
+                struct col4 bg, uint32 *_mesh, uint32 *_texture);
 #endif // RICO_FONT_H

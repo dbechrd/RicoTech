@@ -31,8 +31,9 @@ typedef unsigned char uchar;
 typedef unsigned long ulong;
 
 //------------------------------------------------------------------------------
-// Math / Physics constants
+// Rico constants
 //------------------------------------------------------------------------------
+// Math / Physics
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327950288
 #endif
@@ -43,9 +44,15 @@ typedef unsigned long ulong;
 
 #define M_SEVENTH_DEG 51.428571428571428571428571428571
 
+// Memory constants
+#define RICO_TEXTURE_POOL_SIZE 50
+#define RICO_MESH_POOL_SIZE 50
+#define RICO_OBJECT_POOL_SIZE 50
+
 //------------------------------------------------------------------------------
 // Error codes
 //------------------------------------------------------------------------------
+//TODO: Replace with ERR enum values
 #define ERR_GL_LINK_FAILED GL_FALSE
 #define ERR_GL_ATTRIB_NOTFOUND -1
 
@@ -57,12 +64,22 @@ typedef unsigned long ulong;
 #ifdef RICO_DEBUG
 #define rico_assert(exp) if(!(exp)) {*(int*)0=0;}
 #else
-#define assert(exp)
+#define rico_assert(exp)
 #endif
 
 //------------------------------------------------------------------------------
 // Enums
 //------------------------------------------------------------------------------
 enum { VBO_VERTEX, VBO_ELEMENT };
+
+enum {
+    SUCCESS,
+    ERR_BAD_ALLOC,
+    ERR_POOL_OUT_OF_MEMORY,
+    ERR_FILE_LOAD,
+    ERR_TEXTURE_UNSUPPORTED_BPP,
+    ERR_SHADER_COMPILE,
+    ERR_SHADER_LINK
+};
 
 #endif // CONST_H

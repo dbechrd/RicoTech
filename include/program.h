@@ -31,7 +31,7 @@ struct program_default {
     GLint u_tex;      //sampler2D
 };
 
-struct program_default *make_program_default();
+int make_program_default(struct program_default **_program);
 void free_program_default(struct program_default **program);
 void program_default_uniform_projection(struct program_default *program,
                                         struct mat4 *proj);
@@ -57,7 +57,7 @@ struct program_bbox {
     GLint u_ambient;
 };
 
-struct program_bbox *make_program_bbox();
+int make_program_bbox(struct program_bbox **_program);
 void free_program_bbox(struct program_bbox **program);
 void program_bbox_uniform_projection(struct program_bbox *program,
                                      struct mat4 *proj);

@@ -1,9 +1,10 @@
 #include "shader.h"
+#include "const.h"
 #include <GL/gl3w.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-GLuint make_shader(const GLenum type, const char *filename)
+int make_shader(const GLenum type, const char *filename, GLuint *_shader)
 {
     GLint len;
     GLchar *source;
@@ -11,10 +12,7 @@ GLuint make_shader(const GLenum type, const char *filename)
     GLint status;
 
     source = file_contents(filename, &len);
-    if (!source)
-    {
-        return 0;
-    }
+    if (!source) return ERR_FILE_LOAD;
 
     shader = glCreateShader(type);
     glShaderSource(shader, 1, (const GLchar**)&source, &len);
@@ -27,8 +25,9 @@ GLuint make_shader(const GLenum type, const char *filename)
         fprintf(stderr, "Failed to compile shader '%s':\n", filename);
         show_info_log(shader, glGetShaderiv, glGetShaderInfoLog);
         glDeleteShader(shader);
-        return 0;
+        return ERR_SHADER_COMPILE;
     }
 
-    return shader;
+    *_shader = shader;
+    return SUCCESS;
 }

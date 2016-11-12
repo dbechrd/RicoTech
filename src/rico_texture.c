@@ -1,5 +1,6 @@
 #include "rico_texture.h"
 #include "rico_uid.h"
+#include "rico_pool.h"
 #include "stb_image.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -15,110 +16,63 @@ struct rico_texture {
     GLsizei bpp;
 };
 
+uint32 RICO_TEXTURE_DEFAULT = 0;
+static struct rico_pool textures;
+
 static int build_texture(struct rico_texture *tex, const void *pixels);
-static int texture_load_file(uint32 handle, GLenum target, const char *filename);
-static int texture_load_pixels(uint32 handle, GLenum target, int width,
-                               int height, int bpp, const void *pixels);
 
-//TODO: Allocate from heap pool, not stack
-#define POOL_SIZE 50
-static struct rico_texture pool[POOL_SIZE];
-
-//TODO: Instantiate pool[0] (handle 0) with a special default object
-//      that can be used to visually represent a NULL object in-game
-static uint32 next_handle = 1;
-
-int texture_set_default(GLenum target, const char *filename)
+int rico_texture_init(uint32 pool_size)
 {
-    return texture_load_file(RICO_TEXTURE_DEFAULT, target, filename);
+    return pool_init("Textures", pool_size, sizeof(struct rico_texture),
+                     &textures);
 }
 
-int make_texture_file(GLenum target, const char *filename, uint32 *_handle)
+int texture_load_file(const char *name, GLenum target, const char *filename,
+                      uint32 *_handle)
 {
-    //TODO: Handle out-of-memory
-    //TODO: Implement reuse of pool objects
-    if (next_handle >= POOL_SIZE)
-    {
-        fprintf(stderr, "Out of memory: Texture pool exceeded max size of %d.\n",
-                POOL_SIZE);
+    int err;
+    *_handle = RICO_TEXTURE_DEFAULT;
 
-        //TODO: Proper error codes
-        *_handle = RICO_TEXTURE_DEFAULT;
-        return 1; //ERR_OUT_OF_MEMORY
-    }
+    err = pool_alloc(&textures, _handle);
+    if (err) return err;
 
-    int err = texture_load_file(next_handle, target, filename);
-    if (err) {
-        *_handle = RICO_TEXTURE_DEFAULT;
-        return err;
-    }
-
-    *_handle = next_handle++;
-    return 0;
-}
-
-int make_texture_pixels(GLenum target, int width, int height, int bpp,
-                        const void *pixels, uint32 *_handle)
-{
-    //TODO: Handle out-of-memory
-    //TODO: Implement reuse of pool objects
-    if (next_handle >= POOL_SIZE)
-    {
-        fprintf(stderr, "Out of memory: Texture pool exceeded max size of %d.\n",
-                POOL_SIZE);
-
-        //TODO: Proper error codes
-        *_handle = RICO_TEXTURE_DEFAULT;
-        return 1; //ERR_OUT_OF_MEMORY
-    }
-
-    int err = texture_load_pixels(next_handle, target, width, height, bpp,
-                                  pixels);
-    if (err) {
-        *_handle = RICO_TEXTURE_DEFAULT;
-        return err;
-    }
-
-    *_handle = next_handle++;
-    return 0;
-}
-
-static int texture_load_file(uint32 handle, GLenum target, const char *filename)
-{
-    int err = 0;
-
-    struct rico_texture *tex = &pool[handle];
+    struct rico_texture *tex = pool_read(&textures, *_handle);
+    uid_init(name, &tex->uid);
     tex->gl_target = target;
 
-    //--------------------------------------------------------------------------
     // Load raw texture data
-    //--------------------------------------------------------------------------
-    unsigned char* pixels =
-        stbi_load(filename, &tex->width, &tex->height, &tex->bpp, 4);
-    tex->bpp = 32;
-
+    unsigned char* pixels = stbi_load(filename, &tex->width, &tex->height,
+                                      &tex->bpp, 4);
     if (!pixels)
     {
         fprintf(stderr, "Failed to load texture file: %s", filename);
-        err = 1; //ERR_FILE
+        err = ERR_FILE_LOAD;
         goto cleanup;
     }
 
-    if (build_texture(tex, pixels))
-    {
-        fprintf(stderr, "Failed to build GL texture: %s", filename);
-        err = 1; //ERR_FILE
-    }
+    // Requested bit depth is 32-bit, but stbi_load returns original depth of
+    // image file in bytes.
+    tex->bpp = 32;
+
+    // Build GL texture
+    err = build_texture(tex, pixels); 
 
 cleanup:
     stbi_image_free(pixels);
     return err;
 }
 
-static int texture_load_pixels(uint32 handle, GLenum target, int width,
-                               int height, int bpp, const void *pixels)
+int texture_load_pixels(const char *name, GLenum target, int width, int height,
+                        int bpp, const void *pixels, uint32 *_handle)
 {
-    struct rico_texture *tex = &pool[handle];
+    int err;
+    *_handle = RICO_TEXTURE_DEFAULT;
+
+    err = pool_alloc(&textures, _handle);
+    if (err) return err;
+
+    struct rico_texture *tex = pool_read(&textures, *_handle);
+    uid_init(name, &tex->uid);
     tex->gl_target = target;
     tex->width = width;
     tex->height = height;
@@ -222,7 +176,7 @@ static int build_texture(struct rico_texture *tex, const void *pixels)
         format = GL_RGBA;
         break;
     default: // Unsupported BPP
-        assert(0);
+        return ERR_TEXTURE_UNSUPPORTED_BPP;
     }
 
     glTexImage2D(tex->gl_target, 0, format, tex->width, tex->height, 0, format,
@@ -239,24 +193,35 @@ static int build_texture(struct rico_texture *tex, const void *pixels)
 
     // Unbind the texture
     glBindTexture(tex->gl_target, 0);
-    return 0;
+    return SUCCESS;
+}
+
+void texture_free(uint32 *handle)
+{
+    struct rico_texture *tex = pool_read(&textures, *handle);
+    glDeleteTextures(1, &tex->gl_id);
+
+    //Hack: How to mark this as deleted?
+    tex->gl_id = 9999999;
+
+    pool_free(&textures, handle);
+    *handle = RICO_TEXTURE_DEFAULT;
+}
+
+const char *texture_name(uint32 handle)
+{
+    struct rico_texture *tex = pool_read(&textures, handle);
+    return tex->uid.name;
 }
 
 void texture_bind(uint32 handle)
 {
-    glBindTexture(pool[handle].gl_target, pool[handle].gl_id);
+    struct rico_texture *tex = pool_read(&textures, handle);
+    glBindTexture(tex->gl_target, tex->gl_id);
 }
 
 void texture_unbind(uint32 handle)
 {
-    glBindTexture(pool[handle].gl_target, 0);
-}
-
-void free_texture(uint32 *handle)
-{
-    glDeleteTextures(1, &pool[*handle].gl_id);
-
-    //Hack: How to mark this as deleted?
-    pool[*handle].gl_id = 9999999;
-    *handle = RICO_TEXTURE_DEFAULT;
+    struct rico_texture *tex = pool_read(&textures, handle);
+    glBindTexture(tex->gl_target, 0);
 }
