@@ -1,30 +1,27 @@
 #include "rico_obj.h"
 #include "const.h"
 
-#define RICO_OBJ_POOL_SIZE 50
-
 //TODO: Allocate from heap pool, not stack
-static struct rico_obj rico_obj_pool[RICO_OBJ_POOL_SIZE];
+#define POOL_SIZE 50
+static struct rico_obj pool[POOL_SIZE];
 
-//TODO: Instantiate rico_obj_pool[0] (handle 0) with a special default object
+//TODO: Instantiate pool[0] (handle 0) with a special default object
 //      that can be used to visually represent a NULL object in-game
 static uint32 next_handle = 1;
 
 struct rico_obj *rico_obj_create(const char *name, const struct rico_mesh *mesh,
-                                 const struct rico_texture *texture,
-                                 const struct bbox *bbox)
+                                 uint32 texture, const struct bbox *bbox)
 {
     //TODO: Handle out-of-memory
     //TODO: Implement reuse of pool objects
-    if (next_handle >= RICO_OBJ_POOL_SIZE)
+    if (next_handle >= POOL_SIZE)
     {
         fprintf(stderr, "Out of memory: Object pool exceeded max size of %d.\n",
-                RICO_OBJ_POOL_SIZE);
+                POOL_SIZE);
         return NULL;
     }
 
-    struct rico_obj *obj = &rico_obj_pool[next_handle];
-    next_handle++;
+    struct rico_obj *obj = &pool[next_handle++];
 
     //TODO: Should default W component be 0 or 1?
     uid_init(name, &obj->uid);
@@ -33,9 +30,9 @@ struct rico_obj *rico_obj_create(const char *name, const struct rico_mesh *mesh,
     obj->mesh = mesh;
 
     //HACK: Use default texture if none specified
-    obj->texture = (texture != NULL) ? texture : RICO_TEXTURE_DEFAULT;
+    obj->texture = texture;
 
-    //HACK: Use default texture if none specified
+    //HACK: Use default bbox if none specified
     obj->bbox = (bbox != NULL) ? *bbox : mesh->bbox;
 
     return obj;
@@ -43,7 +40,7 @@ struct rico_obj *rico_obj_create(const char *name, const struct rico_mesh *mesh,
 
 struct rico_obj *rico_obj_fetch(uint32 handle)
 {
-    return &rico_obj_pool[handle];
+    return &pool[handle];
 }
 
 //HACK: Is iterating all objects really a useful thing to do?

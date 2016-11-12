@@ -22,9 +22,8 @@ struct rico_obj {
     //TODO: Support multiple meshes
     const struct rico_mesh *mesh;
 
-    //TODO: Replace with texture handle
     //TODO: Support multiple textures (per mesh?)
-    const struct rico_texture *texture;
+    uint32 texture;
 
     struct bbox bbox;
 };
@@ -34,8 +33,7 @@ struct rico_obj {
 //extern uint32 next_uid;
 
 struct rico_obj *rico_obj_create(const char *name, const struct rico_mesh *mesh,
-                                 const struct rico_texture *texture,
-                                 const struct bbox *bbox);
+                                 uint32 texture, const struct bbox *bbox);
 struct rico_obj *rico_obj_fetch(uint32 handle);
 uint32 rico_obj_next(uint32 handle);
 uint32 rico_obj_prev(uint32 handle);

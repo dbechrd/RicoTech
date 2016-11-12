@@ -2,6 +2,7 @@
 #include "const.h"
 #include "util.h"
 #include "rico_mesh.h"
+#include "rico_texture.h"
 #include <GL/gl3w.h>
 #include <stdlib.h>
 
@@ -54,34 +55,27 @@ struct rico_font *make_font(const char *filename)
         goto cleanup;
 
     // Read bff header
-    /*ImgX = swap_32bit((int)buffer[2]);
-    ImgY = swap_32bit((int)buffer[6]);
-    font->CellX = buffer[10];
-    font->CellY = buffer[14];*/
-    
-    struct rico_texture *tex = calloc(1, sizeof(*tex));
-    tex->target = GL_TEXTURE_2D;
-
-    memcpy(&tex->width, &buffer[2], sizeof(int));
-    memcpy(&tex->height, &buffer[6], sizeof(int));
+    int width, height, bpp;
+    memcpy(&width, &buffer[2], sizeof(int));
+    memcpy(&height, &buffer[6], sizeof(int));
     memcpy(&font->CellX, &buffer[10], sizeof(int));
     memcpy(&font->CellY, &buffer[14], sizeof(int));
 
-    tex->bpp = buffer[18];
+    bpp = buffer[18];
     font->Base = buffer[19];
 
     // Check filesize
-    if (length != (MAP_DATA_OFFSET + (tex->width * tex->height * tex->bpp / 8)))
+    if (length != (MAP_DATA_OFFSET + (width * height * bpp / 8)))
         goto cleanup;
 
     // Calculate font params
-    font->RowPitch = tex->width / font->CellX;
-    font->ColFactor = (float)font->CellX / tex->width;
-    font->RowFactor = (float)font->CellY / tex->height;
+    font->RowPitch = width / font->CellX;
+    font->ColFactor = (float)font->CellX / width;
+    font->RowFactor = (float)font->CellY / height;
     font->YOffset = font->CellY;
 
     // Determine blending options based on BPP
-    switch (tex->bpp)
+    switch (bpp)
     {
     case 8: // Greyscale
         font->RenderStyle = BFG_RS_ALPHA;
@@ -99,45 +93,11 @@ struct rico_font *make_font(const char *filename)
     // Store character widths
     memcpy(font->Width, &buffer[WIDTH_DATA_OFFSET], 256);
 
-    // Create texture
-    glCreateTextures(tex->target, 1, &tex->texture_id);
-    glBindTexture(tex->target, tex->texture_id);
-
-    // Fonts should be rendered at native resolution, so no need for filtering
-    glTexParameteri(tex->target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(tex->target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    // Stop chararcters from bleeding over edges
-    glTexParameteri(tex->target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(tex->target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-    // Tex creation params are dependent on BPP
-    switch (font->RenderStyle)
-    {
-    case BFG_RS_ALPHA:
-        glTexImage2D(tex->target, 0, GL_RED, tex->width, tex->height, 0,
-                     GL_RED, GL_UNSIGNED_BYTE, &buffer[MAP_DATA_OFFSET]);
-        break;
-
-    case BFG_RS_RGB:
-        glTexImage2D(tex->target, 0, GL_RGB, tex->width, tex->height, 0,
-                     GL_RGB, GL_UNSIGNED_BYTE, &buffer[MAP_DATA_OFFSET]);
-        break;
-
-    case BFG_RS_RGBA:
-        glTexImage2D(tex->target, 0, GL_RGBA, tex->width, tex->height, 0,
-                     GL_RGBA, GL_UNSIGNED_BYTE, &buffer[MAP_DATA_OFFSET]);
-        break;
-    }
-
-    // TODO: Do we want font mipmaps? Probably not...
-    //glGenerateMipmap(tex->target);
-
-    font->tex = tex;
+    make_texture_pixels(GL_TEXTURE_2D, width, height, bpp,
+                        &buffer[MAP_DATA_OFFSET], &font->texture);
 
 cleanup:
     free(buffer);
-    glBindTexture(tex->target, 0);
     return font;
 }
 
@@ -160,17 +120,9 @@ void font_setblend(const struct rico_font *font)
 	}
 }
 
-void font_render(const struct rico_font *font, int x, int y,
-                 const char *text, struct col4 bg,
-                 struct rico_mesh **out_mesh,
-                 struct rico_texture **out_texture)
+void font_render(const struct rico_font *font, int x, int y, const char *text,
+                 struct col4 bg, struct rico_mesh **_mesh, uint32 *_texture)
 {
-    // UNUSED(font);
-    // UNUSED(x);
-    // UNUSED(y);
-    // UNUSED(text);
-    // UNUSED(bg);
-
     //font_setblend(font);
 
     int text_len = strlen(text);
@@ -203,7 +155,6 @@ void font_render(const struct rico_font *font, int x, int y,
             continue;
         }
 
-        // Cleanup: DIRTY233d
         row = (text[i] - font->Base) / font->RowPitch;
         col = (text[i] - font->Base) - (row * font->RowPitch);
         
@@ -259,19 +210,20 @@ void font_render(const struct rico_font *font, int x, int y,
         cur_x += xOffset;
     }
 
-    for (int i = 0; i < 8; i++)
-    {
-        printf("v %f %f %f %f %f\n", vertices[i].pos.x, vertices[i].pos.y, vertices[i].pos.z, vertices[i].uv.u, vertices[i].uv.v);
-    }
+    // for (int i = 0; i < 8; i++)
+    // {
+    //     printf("v %f %f %f %f %f\n", vertices[i].pos.x, vertices[i].pos.y,
+    //     vertices[i].pos.z, vertices[i].uv.u, vertices[i].uv.v);
+    // }
 
-    for (int i = 0; i < 12; i++)
-    {
-        printf("e %d\n", elements[i]);
-    }
+    // for (int i = 0; i < 12; i++)
+    // {
+    //     printf("e %d\n", elements[i]);
+    // }
 
-    (*out_mesh) = make_mesh("font", make_program_default(), vertices, vertex_count,
-                         elements, element_count, GL_STATIC_DRAW);
-    (*out_texture) = font->tex;
+    *_mesh = make_mesh("font", make_program_default(), vertex_count,
+                       vertices, element_count, elements, GL_STATIC_DRAW);
+    *_texture = font->texture;
 
     free(vertices);
     free(elements);

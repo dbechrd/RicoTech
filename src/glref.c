@@ -28,10 +28,9 @@ static uint32 selected_handle = 0;
 static struct program_default *prog_default;
 static struct program_bbox *prog_bbox;
 
-static struct rico_texture *tex_grass;
-static struct rico_texture *tex_rock;
-static struct rico_texture *tex_hello;
-static struct rico_texture *tex_default;
+uint32 tex_grass;
+uint32 tex_rock;
+uint32 tex_hello;
 
 static struct rico_obj *obj_fonttest;
 static struct rico_obj *obj_ground;
@@ -53,9 +52,6 @@ static struct mat4 z_axis_transform;
 
 void init_glref(struct rico_mesh **meshes, int mesh_count)
 {
-    // TODO: Create resource loaders to handle:
-    //       fonts, shaders, textures, meshes, etc.
-
     //--------------------------------------------------------------------------
     // Initialize fonts
     //--------------------------------------------------------------------------
@@ -128,17 +124,16 @@ void init_glref(struct rico_mesh **meshes, int mesh_count)
     //--------------------------------------------------------------------------
     // Create textures
     //--------------------------------------------------------------------------
-    tex_grass = make_texture(GL_TEXTURE_2D, "texture/grass.tga");
-    tex_rock = make_texture(GL_TEXTURE_2D, "texture/clean_bricks.tga");
-    tex_hello = make_texture(GL_TEXTURE_2D, "texture/hello.tga");
-    tex_default = make_texture(GL_TEXTURE_2D, "texture/basic.tga");
+    make_texture_file(GL_TEXTURE_2D, "texture/grass.tga", &tex_grass);
+    make_texture_file(GL_TEXTURE_2D, "texture/clean_bricks.tga", &tex_rock);
+    make_texture_file(GL_TEXTURE_2D, "texture/hello.tga", &tex_hello);
 
     //--------------------------------------------------------------------------
     // Create meshes
     //--------------------------------------------------------------------------
     const struct rico_mesh *mesh_default =
-        make_mesh("default", prog_default, vertices, VERT_COUNT, elements,
-                  ELEMENT_COUNT, GL_STATIC_DRAW);
+        make_mesh("default", prog_default, VERT_COUNT, vertices, ELEMENT_COUNT,
+                  elements, GL_STATIC_DRAW);
 
     //--------------------------------------------------------------------------
     // Create world objects
@@ -146,7 +141,7 @@ void init_glref(struct rico_mesh **meshes, int mesh_count)
 
     // Font Test
     struct rico_mesh *mesh_font;
-    struct rico_texture *tex_font;
+    uint32 tex_font;
     font_render(font, 0, 0, "This is a test.\nYay!", COLOR_RED, &mesh_font,
                 &tex_font);
 
@@ -167,7 +162,8 @@ void init_glref(struct rico_mesh **meshes, int mesh_count)
     obj_hello->scale = (struct vec4) { 1.0f, 2.0f, 1.0f, 1.0f };
 
     // Ruler
-    obj_ruler = rico_obj_create("Ruler", mesh_default, tex_default, NULL);
+    obj_ruler = rico_obj_create("Ruler", mesh_default, RICO_TEXTURE_DEFAULT,
+                                NULL);
     obj_ruler->trans = (struct vec4) { 0.0f, 1.0f, -3.0f, 1.0f };
     obj_ruler->scale = (struct vec4) { 1.0f, 1.0f, 1.0f, 1.0f };
 
@@ -208,7 +204,8 @@ void init_glref(struct rico_mesh **meshes, int mesh_count)
         for (i = 0; i < mesh_count; i++)
         {
             arr_objects[i] = rico_obj_create(meshes[i]->uid.name, meshes[i],
-                                             NULL, &meshes[i]->bbox);
+                                             RICO_TEXTURE_DEFAULT,
+                                             &meshes[i]->bbox);
             arr_objects[i]->trans = (struct vec4) { 0.0f, 0.01f, 0.0f, 1.0f };
             arr_objects[i]->scale = VEC4_UNIT;
             
@@ -407,8 +404,8 @@ void free_glref()
     
     //TODO: Free all textures
     free_texture(&tex_grass);
+    free_texture(&tex_rock);
     free_texture(&tex_hello);
-    free_texture(&tex_default);
 
     //TODO: Free all programs
     free_program_default(&prog_default);

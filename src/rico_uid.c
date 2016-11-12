@@ -6,6 +6,6 @@ static uint32 next_uid = 1;
 
 void uid_init(const char *name, struct rico_uid *result)
 {
-    (*result).uid = next_uid++;
-    strcpy((*result).name, name);
+    result->uid = next_uid++;
+    strcpy(result->name, name);
 }

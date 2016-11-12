@@ -133,7 +133,7 @@ static int mesh_count;
 
 static void rico_init_objects()
 {
-    RICO_TEXTURE_DEFAULT = make_texture(GL_TEXTURE_2D, "texture/basic.tga");
+    texture_set_default(GL_TEXTURE_2D, "texture/basic.tga");
     printf("Loading objects...\n");
     load_objects("model/spawn.obj", &meshes, &mesh_count);
 }

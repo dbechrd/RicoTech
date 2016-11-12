@@ -1,30 +1,17 @@
 #ifndef TEXTURE_H
 #define TEXTURE_H
 
+#include "rico_uid.h"
 #include <GL/gl3w.h>
 
-struct rico_texture {
-    GLuint texture_id;
-    GLenum target;
+#define RICO_TEXTURE_DEFAULT 0
 
-    GLsizei width;
-    GLsizei height;
-    GLsizei bpp;
-};
-
-extern struct rico_texture *RICO_TEXTURE_DEFAULT;
-
-struct rico_texture *make_texture(GLenum target, const char *filename);
-void free_texture(struct rico_texture **tex);
-
-static inline void texture_bind(const struct rico_texture *tex)
-{
-    glBindTexture(tex->target, tex->texture_id);
-}
-
-static inline void texture_unbind(const struct rico_texture *tex)
-{
-    glBindTexture(tex->target, 0);
-}
+int texture_set_default(GLenum target, const char *filename);
+int make_texture_file(GLenum target, const char *filename, uint32 *_handle);
+int make_texture_pixels(GLenum target, int width, int height, int bpp,
+                        const void *pixels, uint32 *_handle);
+void free_texture(uint32 *handle);
+void texture_bind(uint32 handle);
+void texture_unbind(uint32 handle);
 
 #endif // TEXTURE_H

@@ -2,6 +2,7 @@
 #define UID_H
 
 #include "const.h"
+#include "rico_string.h"
 
 struct rico_uid {
     uint32 uid;

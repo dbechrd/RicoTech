@@ -1,0 +1,17 @@
+2016-11-08
+Custom file format for objects
+
+rico_uid
+    name    [handle]    (string hash, internationalization)
+
+rico_obj
+    uid
+    mesh        [handle]    (multiple?)
+    texture     [handle]    (multiple?)
+    pos, rot, scale
+
+rico_texture
+    uid
+
+rico_mesh
+    uid

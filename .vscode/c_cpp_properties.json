@@ -20,7 +20,8 @@
             "name": "Win32",
             "includePath": [
                 "c:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/include",
-                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.10240.0/ucrt"
+                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.10240.0/ucrt",
+                "${workspaceRoot}/include"
             ],
             "browse" : {
                 "limitSymbolsToIncludedHeaders" : true,

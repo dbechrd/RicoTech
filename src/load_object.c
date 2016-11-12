@@ -78,11 +78,11 @@ void load_objects(const char *filename, struct rico_mesh ***out_meshes,
     {
         if (str_starts_with(tok, "o "))
         {
-            name = tok + strlen("o ");
+            name = tok + 2;
         }
         else if (str_starts_with(tok, "v "))
         {
-            char *pos = tok + strlen("v ");
+            char *pos = tok + 2;
             positions[idx_pos].x = strtof(pos, &pos);
             positions[idx_pos].y = strtof(pos, &pos);
             positions[idx_pos].z = strtof(pos, &pos);
@@ -91,14 +91,14 @@ void load_objects(const char *filename, struct rico_mesh ***out_meshes,
         }
         else if (str_starts_with(tok, "vt "))
         {
-            char *pos = tok + strlen("vt ");
+            char *pos = tok + 3;
             texcoords[idx_tex].u = strtof(pos, &pos);
             texcoords[idx_tex].v = strtof(pos, &pos);
             idx_tex++;
         }
         else if (str_starts_with(tok, "vn "))
         {
-            char *pos = tok + strlen("vn ");
+            char *pos = tok + 3;
             normals[idx_normal].x = strtof(pos, &pos);
             normals[idx_normal].y = strtof(pos, &pos);
             normals[idx_normal].z = strtof(pos, &pos);
@@ -107,7 +107,7 @@ void load_objects(const char *filename, struct rico_mesh ***out_meshes,
         }
         else if (str_starts_with(tok, "f "))
         {
-            char *tok_ptr = tok + strlen("f ");
+            char *tok_ptr = tok + 2;
             char *vert = strsep(&tok_ptr, " ");
             while (vert != NULL)
             {
@@ -115,7 +115,7 @@ void load_objects(const char *filename, struct rico_mesh ***out_meshes,
                 vert++;
                 long vert_tex = strtol(vert, &vert, 0);
                 vert++;
-                //int vert_normal = strtoi(idx, &idx);
+                //long vert_normal = strtol(vert, &vert);
                 //vert++;
                 vertices[idx_vertex].pos = positions[vert_pos - 1];
                 vertices[idx_vertex].uv = texcoords[vert_tex - 1];
@@ -129,8 +129,8 @@ void load_objects(const char *filename, struct rico_mesh ***out_meshes,
             UNUSED(normals);
             
             // TODO: Get program and texture from somewhere
-            meshes[idx_mesh] = make_mesh(name, NULL, vertices, idx_vertex,
-                                         elements, idx_vertex, GL_STATIC_DRAW);
+            meshes[idx_mesh] = make_mesh(name, NULL, idx_vertex, vertices,
+                                         idx_vertex, elements, GL_STATIC_DRAW);
 
             name = NULL;
             idx_vertex = 0;
@@ -138,12 +138,6 @@ void load_objects(const char *filename, struct rico_mesh ***out_meshes,
         }
         tok = strsep(&buffer_ptr, "\n");
     }
-
-    /*while (tok != NULL)
-    {
-        printf("> %s\n", tok);
-        tok = strtok(NULL, "\n");
-    }*/
 
     free(buffer);
 
