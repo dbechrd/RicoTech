@@ -25,9 +25,12 @@ int pool_init(const char *name, uint32 count, uint32 size,
         pool.handles[i] = i;
     }
 
-    *_pool = pool;
+#ifdef RICO_DEBUG_INFO
     printf("[Pool %d %s] Initialized\n", pool.uid.uid, pool.uid.name);
     pool_print(&pool);
+#endif
+
+    *_pool = pool;
     return SUCCESS;
 }
 
@@ -44,9 +47,13 @@ int pool_alloc(struct rico_pool *pool, uint32 *_handle)
     
     *_handle = pool->handles[pool->active];
     pool->active++;
+
+#ifdef RICO_DEBUG_INFO
     printf("[Pool %d %s] Alloc handle: %d\n", pool->uid.uid, pool->uid.name,
            *_handle);
     pool_print(pool);
+#endif
+
     return SUCCESS;
 }
 
@@ -61,15 +68,18 @@ int pool_free(struct rico_pool *pool, uint32 *handle)
     }
     pool->active--;
     pool->handles[pool->active] = *handle;
-    
+
+#ifdef RICO_DEBUG_INFO
     printf("[Pool %d %s] Free handle: %d\n", pool->uid.uid, pool->uid.name,
            *handle);
     pool_print(pool);
-    
+#endif
+
     *handle = 0;
     return SUCCESS;
 }
 
+#ifdef RICO_DEBUG_INFO
 static void pool_print(struct rico_pool *pool)
 {
     printf("[Pool %d %s] Active handles: ", pool->uid.uid, pool->uid.name);
@@ -87,3 +97,4 @@ static void pool_print(struct rico_pool *pool)
     }
     printf("\b]\n");
 }
+#endif

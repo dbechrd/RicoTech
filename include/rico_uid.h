@@ -6,7 +6,7 @@
 
 struct rico_uid {
     uint32 uid;
-    const char *name;
+    char name[30]; //TODO: Waste of memory; dynamically allocate strings
 };
 
 extern struct rico_uid UID_NULL;

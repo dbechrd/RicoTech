@@ -4,7 +4,7 @@ Custom file format for objects
 rico_uid
     name    [handle]    (string hash, internationalization)
 
-rico_obj
+object
     uid
     mesh        [handle]    (multiple?)
     texture     [handle]    (multiple?)

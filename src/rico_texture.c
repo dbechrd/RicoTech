@@ -200,9 +200,7 @@ void texture_free(uint32 *handle)
 {
     struct rico_texture *tex = pool_read(&textures, *handle);
     glDeleteTextures(1, &tex->gl_id);
-
-    //Hack: How to mark this as deleted?
-    tex->gl_id = 9999999;
+    tex->uid = UID_NULL;
 
     pool_free(&textures, handle);
     *handle = RICO_TEXTURE_DEFAULT;
@@ -216,6 +214,9 @@ const char *texture_name(uint32 handle)
 
 void texture_bind(uint32 handle)
 {
+    // TODO: When is this useful in the context of this application? 
+    //glActiveTexture(GL_TEXTURE0);
+    
     struct rico_texture *tex = pool_read(&textures, handle);
     glBindTexture(tex->gl_target, tex->gl_id);
 }

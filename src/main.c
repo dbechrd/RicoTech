@@ -3,10 +3,6 @@
 //#define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
 #endif
 
-#ifndef RICO_DEBUG
-#define RICO_DEBUG
-#endif
-
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_ONLY_TGA
 #include "stb/stb_image.h"
@@ -20,7 +16,7 @@
 #include "glref.h"
 #include "rico_texture.h"
 #include "rico_mesh.h"
-#include "rico_obj.h"
+#include "rico_object.h"
 #include "load_object.h"
 
 #include <stdbool.h>
@@ -30,6 +26,10 @@
 
 static SDL_Window *window = NULL;
 static SDL_GLContext context = NULL;
+
+// This is really stupid, move it somehwere else
+static uint32 meshes[100];
+static uint32 mesh_count;
 
 static inline void init_stb()
 {
@@ -54,7 +54,7 @@ static void init_sdl()
     //SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24); //Default 16 bits
 
     //Initialize window
-    window = SDL_CreateWindow("Test Window",
+    window = SDL_CreateWindow("RicoTech",
                               SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                               SCREEN_W, SCREEN_H, SDL_WINDOW_OPENGL);
     context = SDL_GL_CreateContext(window);
@@ -151,22 +151,16 @@ static int rico_init_meshes()
 
     // TODO: Load a default mesh
     //err = mesh_load(...);
+    err = load_obj_file("model/spawn.obj", meshes, &mesh_count);
     return err;
 }
-
-static uint32 meshes[100];
-static uint32 mesh_count;
 
 static int rico_init_objects()
 {
     printf("Loading objects\n");
 
-    int err = rico_object_init(RICO_OBJECT_POOL_SIZE);
-    if (err) return err;
-
-    // TODO: Load a default object
-    //err = rico_obj_load(...);
-    return load_objects("model/spawn.obj", meshes, &mesh_count);
+    int err = object_init(RICO_OBJECT_POOL_SIZE);
+    return err;
 }
 
 static int rico_init()

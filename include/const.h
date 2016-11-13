@@ -33,6 +33,15 @@ typedef unsigned long ulong;
 //------------------------------------------------------------------------------
 // Rico constants
 //------------------------------------------------------------------------------
+// Debug
+#ifndef RICO_DEBUG
+#define RICO_DEBUG
+#endif
+
+#ifndef RICO_DEBUG_INFO
+#define RICO_DEBUG_INFO
+#endif
+
 // Math / Physics
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327950288
@@ -44,10 +53,18 @@ typedef unsigned long ulong;
 
 #define M_SEVENTH_DEG 51.428571428571428571428571428571
 
+#ifndef EPSILON
+#define EPSILON 0.001f
+#endif
+
 // Memory constants
 #define RICO_TEXTURE_POOL_SIZE 50
 #define RICO_MESH_POOL_SIZE 50
 #define RICO_OBJECT_POOL_SIZE 50
+
+#define RICO_SHADER_POS_LOC 0
+#define RICO_SHADER_COL_LOC 1
+#define RICO_SHADER_UV_LOC 2
 
 //------------------------------------------------------------------------------
 // Error codes

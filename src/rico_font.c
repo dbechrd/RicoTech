@@ -127,6 +127,8 @@ int font_render(const struct rico_font *font, int x, int y, const char *text,
     //font_setblend(font);
 
     int text_len = strlen(text);
+
+    // Truncate strings that are too long to render
     if (BFG_MAXSTRING < text_len)
         text_len = BFG_MAXSTRING;
 
@@ -222,26 +224,13 @@ int font_render(const struct rico_font *font, int x, int y, const char *text,
     //     printf("e %d\n", elements[i]);
     // }
 
-    err = mesh_load("font", NULL, vertex_count, vertices, element_count,
-                    elements, GL_STATIC_DRAW, _mesh);
+    err = mesh_load("font", vertex_count, vertices, element_count, elements,
+                    GL_STATIC_DRAW, _mesh);
     *_texture = font->texture;
 
+    // Clean up
     free(vertices);
     free(elements);
-
-    ///////////////////////////////////////////////////
-    // Test font render immediately
-    //struct mat4 model_matrix;
-    //mat4_ident(&model_matrix);
-    //mat4_translate(&model_matrix, VEC4_ZERO);
-    //mat4_rotx(&model_matrix, 0.0f);
-    //mat4_roty(&model_matrix, 0.0f);
-    //mat4_rotz(&model_matrix, 0.0f);
-    //mat4_scale(&model_matrix, VEC4_UNIT);
-//
-    //mesh_render(mesh, &model_matrix, VEC4_UNIT);
-    ///////////////////////////////////////////////////
-
     return err;
 }
 

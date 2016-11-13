@@ -6,10 +6,6 @@
 #include "program.h"
 #include <GL/gl3w.h>
 
-#ifndef BBOX_EPSILON
-#define BBOX_EPSILON 0.001f
-#endif
-
 static int init_gl(struct bbox *bbox);
 
 int bbox_init(struct bbox *bbox, struct vec4 p0, struct vec4 p1,
@@ -58,12 +54,12 @@ int bbox_init_mesh(struct bbox *bbox, const struct mesh_vertex *verts,
     }
 
     // Prevent infinitesimally small bounds
-    p0.x -= BBOX_EPSILON;
-    p1.x += BBOX_EPSILON;
-    p0.y -= BBOX_EPSILON;
-    p1.y += BBOX_EPSILON;
-    p0.z -= BBOX_EPSILON;
-    p1.z += BBOX_EPSILON;
+    p0.x -= EPSILON;
+    p1.x += EPSILON;
+    p0.y -= EPSILON;
+    p1.y += EPSILON;
+    p0.z -= EPSILON;
+    p1.z += EPSILON;
 
     return bbox_init(bbox, p0, p1, color);
 }

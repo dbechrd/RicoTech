@@ -1,7 +1,7 @@
 #include "util.h"
 #include "geom.h"
 #include "rico_mesh.h"
-#include "rico_obj.h"
+#include "rico_object.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -25,7 +25,7 @@ struct OBJ_FACE {
 enum OBJ_LINE_TYPE line_type(const char *line);
 //bool load_mesh(const char *line, struct rico_mesh *mesh);
 
-char* strsep(char** stringp, const char* delim)
+static char* strsep(char** stringp, const char* delim)
 {
     char* start = *stringp;
     char* p;
@@ -45,7 +45,7 @@ char* strsep(char** stringp, const char* delim)
     return start;
 }
 
-int load_objects(const char *filename, uint32 *_meshes, uint32 *_mesh_count)
+int load_obj_file(const char *filename, uint32 *_meshes, uint32 *_mesh_count)
 {
     int err;
     int length;
@@ -127,7 +127,7 @@ int load_objects(const char *filename, uint32 *_meshes, uint32 *_mesh_count)
             UNUSED(normals);
             
             // TODO: Get program and texture from somewhere
-            err = mesh_load(name, NULL, idx_vertex, vertices, idx_vertex, elements,
+            err = mesh_load(name, idx_vertex, vertices, idx_vertex, elements,
                             GL_STATIC_DRAW, &_meshes[idx_mesh]);
             if (err) goto cleanup;
 
