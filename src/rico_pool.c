@@ -26,8 +26,7 @@ int pool_init(const char *name, uint32 count, uint32 size,
     }
 
     *_pool = pool;
-    printf("[Pool] Initialized (name: %s) (uid: %d)\n",
-           pool.uid.name, pool.uid.uid);
+    printf("[Pool %d %s] Initialized\n", pool.uid.uid, pool.uid.name);
     pool_print(&pool);
     return SUCCESS;
 }
@@ -37,15 +36,16 @@ int pool_alloc(struct rico_pool *pool, uint32 *_handle)
     rico_assert(pool);
     if (pool->active == pool->count)
     {
-        fprintf(stderr, "[Pool] [%s] Out of memory. Exceeded max elements [%d].\n",
-                pool->uid.name, pool->count);
+        fprintf(stderr, "[Pool %d %s] Out of memory. Exceeded max elements [%d].\n",
+                pool->uid.uid, pool->uid.name, pool->count);
 
         return ERR_POOL_OUT_OF_MEMORY;
     }
     
     *_handle = pool->handles[pool->active];
     pool->active++;
-    printf("[Pool] Alloc handle: %d\n", *_handle);
+    printf("[Pool %d %s] Alloc handle: %d\n", pool->uid.uid, pool->uid.name,
+           *_handle);
     pool_print(pool);
     return SUCCESS;
 }
@@ -62,7 +62,8 @@ int pool_free(struct rico_pool *pool, uint32 *handle)
     pool->active--;
     pool->handles[pool->active] = *handle;
     
-    printf("[Pool] Free handle: %d\n", *handle);
+    printf("[Pool %d %s] Free handle: %d\n", pool->uid.uid, pool->uid.name,
+           *handle);
     pool_print(pool);
     
     *handle = 0;
@@ -71,7 +72,15 @@ int pool_free(struct rico_pool *pool, uint32 *handle)
 
 static void pool_print(struct rico_pool *pool)
 {
-    printf("[Pool] Active handles: [");
+    printf("[Pool %d %s] Active handles: ", pool->uid.uid, pool->uid.name);
+
+    if (pool->active == 0)
+    {
+        printf("None\n");
+        return;
+    }
+
+    printf("[");
     for (uint32 i = 0; i < pool->active; i++)
     {
         printf("%d ", pool->handles[i]);
