@@ -7,9 +7,9 @@
 * Boring, non-OpenGL-related utility functions
 */
 
-void *file_contents(const char *filename, int *length)
+void *file_contents(const char *filename, int *_length)
 {
-    FILE *fs = fopen(filename, "r");
+    FILE *fs = fopen(filename, "rb");
     void *buffer;
 
     if (!fs) {
@@ -18,13 +18,13 @@ void *file_contents(const char *filename, int *length)
     }
 
     fseek(fs, 0, SEEK_END);
-    *length = ftell(fs);
+    *_length = ftell(fs);
     fseek(fs, 0, SEEK_SET);
 
-    buffer = malloc(*length + 1);
-    *length = fread(buffer, 1, *length, fs);
+    buffer = malloc(*_length + 1);
+    *_length = fread(buffer, 1, *_length, fs);
     fclose(fs);
-    ((char*)buffer)[*length] = '\0';
+    ((char*)buffer)[*_length] = '\0';
 
     return buffer;
 }

@@ -10,6 +10,7 @@
 #include "rico_mesh.h"
 #include "rico_object.h"
 #include "rico_font.h"
+#include "rico_chunk.h"
 
 #include <GL/gl3w.h>
 #include <SDL/SDL_assert.h>
@@ -54,9 +55,16 @@ int init_glref(uint32 *meshes, uint32 mesh_count)
 {
     int err;
 
+    // Cleanup: Test chunk loader
+    struct rico_chunk chunkA = (struct rico_chunk) { "This is some data yo" };
+    struct rico_chunk chunkB;
+    chunk_save("chunky.bin", &chunkA);
+    chunk_load("chunky.bin", &chunkB);
+
     //--------------------------------------------------------------------------
     // Initialize fonts
     //--------------------------------------------------------------------------
+    // TODO: Add error handling to make_font()
     struct rico_font *font = make_font("font/courier_new.bff");
 
     //--------------------------------------------------------------------------
@@ -82,14 +90,14 @@ int init_glref(uint32 *meshes, uint32 mesh_count)
 
     /*************************************************************************
     | Frequency of access:
-    | 
+    |
     | STREAM  Data store contents modified once and used at most a few times.
     | STATIC  Data store contents modified once and used many times.
     | DYNAMIC Data store contents modified repeatedly and used many times.
     |
     **************************************************************************
     | Nature of access:
-    | 
+    |
     | DRAW    The data store contents are modified by the application, and used
     |         as the source for GL drawing and image specification commands.
     | READ    The data store contents are modified by reading data from the GL,
@@ -129,7 +137,7 @@ int init_glref(uint32 *meshes, uint32 mesh_count)
     texture_load_file("grass", GL_TEXTURE_2D, "texture/grass.tga", &tex_grass);
     texture_load_file("bricks", GL_TEXTURE_2D, "texture/clean_bricks.tga", &tex_rock);
     texture_load_file("hello", GL_TEXTURE_2D, "texture/hello.tga", &tex_hello);
-    
+
     // Cleanup: Memory pool free/reuse test
     texture_free(&tex_grass);
     texture_load_file("grass", GL_TEXTURE_2D, "texture/grass.tga", &tex_grass);
@@ -204,10 +212,9 @@ int init_glref(uint32 *meshes, uint32 mesh_count)
     {
         for (uint32 i = 0; i < mesh_count; i++)
         {
-            printf("Create object for mesh[%d]\n", i);
             object_create(mesh_name(meshes[i]), meshes[i], RICO_TEXTURE_DEFAULT,
                           mesh_bbox(meshes[i]), &arr_objects[i]);
-            
+
             // HACK: Don't z-fight ground plane
             object_trans(arr_objects[i], 0.0f, EPSILON, 0.0f);
         }
@@ -238,7 +245,7 @@ int init_glref(uint32 *meshes, uint32 mesh_count)
     mat4_ident(&z_axis_transform);
     mat4_scale(&z_axis_transform, (struct vec4) { 0.01f, 0.01f, 1.0f, 1.0f });
     mat4_translate(&z_axis_transform, (struct vec4) { 0.0f, 0.0f, 0.5f, 1.0f });
-    
+
     return SUCCESS;
 }
 
@@ -301,7 +308,7 @@ void rotate_selected(struct vec4 offset)
 void duplicate_selected()
 {
     struct rico_object *selected = object_fetch(selected_handle);
-    
+
     int i = idx_arr_objects;
 
     char name[20];
@@ -393,7 +400,7 @@ void free_glref()
     object_free(&obj_ground);
 
     //TODO: Free all meshes
-    
+
     //TODO: Free all textures
     texture_free(&tex_grass);
     texture_free(&tex_rock);

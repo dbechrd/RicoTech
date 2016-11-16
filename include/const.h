@@ -39,7 +39,7 @@ typedef unsigned long ulong;
 #endif
 
 #ifndef RICO_DEBUG_INFO
-#define RICO_DEBUG_INFO
+//#define RICO_DEBUG_INFO
 #endif
 
 // Math / Physics

@@ -3,7 +3,7 @@
 
 #include <GL/gl3w.h>
 
-void *file_contents(const char *filename, int *length);
+void *file_contents(const char *filename, int *_length);
 //void *read_tga(const char *filename, int *width, int *height);
 
 void APIENTRY openglCallbackFunction(GLenum source, GLenum type, GLuint id,
