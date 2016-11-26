@@ -39,7 +39,9 @@ typedef unsigned long ulong;
 #endif
 
 #ifndef RICO_DEBUG_INFO
-//#define RICO_DEBUG_INFO
+#define RICO_DEBUG_UID
+#define RICO_DEBUG_POOL
+#define RICO_DEBUG_CHUNK
 #endif
 
 // Math / Physics
@@ -93,7 +95,9 @@ enum {
     SUCCESS,
     ERR_BAD_ALLOC,
     ERR_POOL_OUT_OF_MEMORY,
-    ERR_FILE_LOAD,
+    ERR_FILE_WRITE,
+    ERR_FILE_READ,
+    ERR_TEXTURE_LOAD,
     ERR_TEXTURE_UNSUPPORTED_BPP,
     ERR_SHADER_COMPILE,
     ERR_SHADER_LINK

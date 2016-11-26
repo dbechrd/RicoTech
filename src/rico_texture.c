@@ -46,7 +46,7 @@ int texture_load_file(const char *name, GLenum target, const char *filename,
     if (!pixels)
     {
         fprintf(stderr, "Failed to load texture file: %s", filename);
-        err = ERR_FILE_LOAD;
+        err = ERR_TEXTURE_LOAD;
         goto cleanup;
     }
 
@@ -55,7 +55,7 @@ int texture_load_file(const char *name, GLenum target, const char *filename,
     tex->bpp = 32;
 
     // Build GL texture
-    err = build_texture(tex, pixels); 
+    err = build_texture(tex, pixels);
 
 cleanup:
     stbi_image_free(pixels);
@@ -196,14 +196,13 @@ static int build_texture(struct rico_texture *tex, const void *pixels)
     return SUCCESS;
 }
 
-void texture_free(uint32 *handle)
+void texture_free(uint32 handle)
 {
-    struct rico_texture *tex = pool_read(&textures, *handle);
+    struct rico_texture *tex = pool_read(&textures, handle);
     glDeleteTextures(1, &tex->gl_id);
     tex->uid = UID_NULL;
 
     pool_free(&textures, handle);
-    *handle = RICO_TEXTURE_DEFAULT;
 }
 
 const char *texture_name(uint32 handle)
@@ -214,9 +213,9 @@ const char *texture_name(uint32 handle)
 
 void texture_bind(uint32 handle)
 {
-    // TODO: When is this useful in the context of this application? 
+    // TODO: When is this useful in the context of this application?
     //glActiveTexture(GL_TEXTURE0);
-    
+
     struct rico_texture *tex = pool_read(&textures, handle);
     glBindTexture(tex->gl_target, tex->gl_id);
 }
@@ -225,4 +224,9 @@ void texture_unbind(uint32 handle)
 {
     struct rico_texture *tex = pool_read(&textures, handle);
     glBindTexture(tex->gl_target, 0);
+}
+
+struct rico_pool *texture_pool_unsafe()
+{
+    return &textures;
 }

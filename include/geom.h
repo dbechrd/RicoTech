@@ -122,8 +122,9 @@ static inline bool vec_equals(const struct vec4 a, const struct vec4 b)
 //------------------------------------------------------------------------------
 struct mat4 {
     union {
-        GLfloat m[4][4]; //Matrix
-        GLfloat a[16];   //Array
+        struct vec4 v[4]; //Vectors
+        GLfloat a[16];    //Array
+        GLfloat m[4][4];  //Matrix
         /*struct {
             GLfloat m00, m01, m02, m03;
             GLfloat m10, m11, m12, m13;
@@ -132,6 +133,8 @@ struct mat4 {
         };*/
     };
 };
+
+extern const struct mat4 MAT4_IDENT;
 
 //This is faster if the matrix is going to be immediately populated
 static inline struct mat4 *make_mat4_empty()
@@ -182,31 +185,29 @@ static inline struct mat4 *make_mat4(
 
 static inline struct mat4 *make_mat4_ident()
 {
-    return make_mat4(
-        1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1
-    );
+    struct mat4 *mat = make_mat4_empty();
+    *mat = MAT4_IDENT;
+    return mat;
 }
 static inline void mat4_ident(struct mat4 *m)
 {
-    m->m[0][0] = 1;
-    m->m[1][0] = 0;
-    m->m[2][0] = 0;
-    m->m[3][0] = 0;
-    m->m[0][1] = 0;
-    m->m[1][1] = 1;
-    m->m[2][1] = 0;
-    m->m[3][1] = 0;
-    m->m[0][2] = 0;
-    m->m[1][2] = 0;
-    m->m[2][2] = 1;
-    m->m[3][2] = 0;
-    m->m[0][3] = 0;
-    m->m[1][3] = 0;
-    m->m[2][3] = 0;
-    m->m[3][3] = 1;
+    *m = MAT4_IDENT;
+    // m->m[0][0] = 1;
+    // m->m[1][0] = 0;
+    // m->m[2][0] = 0;
+    // m->m[3][0] = 0;
+    // m->m[0][1] = 0;
+    // m->m[1][1] = 1;
+    // m->m[2][1] = 0;
+    // m->m[3][1] = 0;
+    // m->m[0][2] = 0;
+    // m->m[1][2] = 0;
+    // m->m[2][2] = 1;
+    // m->m[3][2] = 0;
+    // m->m[0][3] = 0;
+    // m->m[1][3] = 0;
+    // m->m[2][3] = 0;
+    // m->m[3][3] = 1;
 }
 
 static inline struct mat4 *make_mat4_translate(struct vec4 v)
@@ -746,11 +747,11 @@ static inline void free_mat4(struct mat4 **m)
 //    tmp = m[M01];
 //    m[M01] = m[M10];
 //    m[M10] = tmp;
-//    
+//
 //    tmp = m[M02];
 //    m[M02] = m[M20];
 //    m[M20] = tmp;
-//    
+//
 //    tmp = m[M03];
 //    m[M03] = m[M30];
 //    m[M30] = tmp;
@@ -758,7 +759,7 @@ static inline void free_mat4(struct mat4 **m)
 //    tmp = m[M12];
 //    m[M12] = m[M21];
 //    m[M21] = tmp;
-//    
+//
 //    tmp = m[M13];
 //    m[M13] = m[M31];
 //    m[M31] = tmp;

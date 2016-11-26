@@ -4,13 +4,14 @@
 #include "util.h"
 #include "shader.h"
 #include "program.h"
-#include "rico_texture.h"
 #include "bbox.h"
 #include "camera.h"
+#include "rico_texture.h"
 #include "rico_mesh.h"
 #include "rico_object.h"
 #include "rico_font.h"
 #include "rico_chunk.h"
+#include "rico_pool.h"
 
 #include <GL/gl3w.h>
 #include <SDL/SDL_assert.h>
@@ -29,21 +30,13 @@ static uint32 selected_handle = 0;
 static struct program_default *prog_default;
 static struct program_bbox *prog_bbox;
 
-uint32 tex_grass;
-uint32 tex_rock;
-uint32 tex_hello;
+static uint32 tex_grass;
+static uint32 tex_rock;
+static uint32 tex_hello;
+static uint32 tex_font_test;
 
-uint32 obj_fonttest;
-uint32 obj_ground;
-uint32 obj_hello;
-uint32 obj_ruler;
-uint32 obj_wall1;
-uint32 obj_wall2;
-uint32 obj_wall3;
-uint32 obj_wall4;
-uint32 obj_wall5;
-uint32 arr_objects[50] = { 0 };
-static uint32 idx_arr_objects = 0;
+static uint32 mesh_default;
+static uint32 mesh_font_test;
 
 static struct bbox axis_bbox;
 
@@ -51,15 +44,9 @@ static struct mat4 x_axis_transform;
 static struct mat4 y_axis_transform;
 static struct mat4 z_axis_transform;
 
-int init_glref(uint32 *meshes, uint32 mesh_count)
+int init_glref()
 {
     int err;
-
-    // Cleanup: Test chunk loader
-    struct rico_chunk chunkA = (struct rico_chunk) { "This is some data yo" };
-    struct rico_chunk chunkB;
-    chunk_save("chunky.bin", &chunkA);
-    chunk_load("chunky.bin", &chunkB);
 
     //--------------------------------------------------------------------------
     // Initialize fonts
@@ -132,6 +119,13 @@ int init_glref(uint32 *meshes, uint32 mesh_count)
     const GLuint elements[ELEMENT_COUNT] = { 0, 1, 3, 1, 2, 3 };
 
     //--------------------------------------------------------------------------
+    // Create meshes
+    //--------------------------------------------------------------------------
+    err = mesh_load("default", VERT_COUNT, vertices, ELEMENT_COUNT, elements,
+                    GL_STATIC_DRAW, &mesh_default);
+    if (err) return err;
+
+    //--------------------------------------------------------------------------
     // Create textures
     //--------------------------------------------------------------------------
     texture_load_file("grass", GL_TEXTURE_2D, "texture/grass.tga", &tex_grass);
@@ -139,26 +133,66 @@ int init_glref(uint32 *meshes, uint32 mesh_count)
     texture_load_file("hello", GL_TEXTURE_2D, "texture/hello.tga", &tex_hello);
 
     // Cleanup: Memory pool free/reuse test
-    texture_free(&tex_grass);
+    texture_free(tex_grass);
     texture_load_file("grass", GL_TEXTURE_2D, "texture/grass.tga", &tex_grass);
 
     //--------------------------------------------------------------------------
-    // Create meshes
+    // Create 3D strings
     //--------------------------------------------------------------------------
-    uint32 mesh_default;
-    err = mesh_load("default", VERT_COUNT, vertices, ELEMENT_COUNT, elements,
-                    GL_STATIC_DRAW, &mesh_default);
-    if (err) return err;
+    // Font Test
+    font_render(font, 0, 0, "This is a test.\nYay!", COLOR_RED, &mesh_font_test,
+                &tex_font_test);
+
+    //--------------------------------------------------------------------------
+    // Create axis label bboxes
+    //--------------------------------------------------------------------------
+    bbox_init(
+        &axis_bbox,
+        (struct vec4) { -0.5f, -0.5f, -0.5f, 1.0f },
+        (struct vec4) {  0.5f,  0.5f,  0.5f, 1.0f },
+        COLOR_WHITE
+    );
+
+    // X-axis label
+    mat4_ident(&x_axis_transform);
+    mat4_scale(&x_axis_transform, (struct vec4) { 1.0f, 0.01f, 0.01f, 1.0f });
+    mat4_translate(&x_axis_transform, (struct vec4) { 0.5f, 0.0f, 0.0f, 1.0f });
+
+    // Y-axis label
+    mat4_ident(&y_axis_transform);
+    mat4_scale(&y_axis_transform, (struct vec4) { 0.01f, 1.0f, 0.01f, 1.0f });
+    mat4_translate(&y_axis_transform, (struct vec4) { 0.0f, 0.5f, 0.0f, 1.0f });
+
+    // Z-axis label
+    mat4_ident(&z_axis_transform);
+    mat4_scale(&z_axis_transform, (struct vec4) { 0.01f, 0.01f, 1.0f, 1.0f });
+    mat4_translate(&z_axis_transform, (struct vec4) { 0.0f, 0.0f, 0.5f, 1.0f });
+
+    return SUCCESS;
+}
+
+int init_manual_chunk(uint32 *meshes, uint32 mesh_count)
+{
+    int err;
+    uint32 obj_fonttest;
+    uint32 obj_ground;
+    uint32 obj_hello;
+    uint32 obj_ruler;
+    uint32 obj_wall1;
+    uint32 obj_wall2;
+    uint32 obj_wall3;
+    uint32 obj_wall4;
+    uint32 obj_wall5;
+    uint32 arr_objects[50] = { 0 };
+
+    // Initialize object pool
+    object_init(RICO_OBJECT_POOL_SIZE);
 
     //--------------------------------------------------------------------------
     // Create world objects
     //--------------------------------------------------------------------------
-
-    // Font Test
-    uint32 mesh_font, tex_font;
-    font_render(font, 0, 0, "This is a test.\nYay!", COLOR_RED, &mesh_font,
-                &tex_font);
-    object_create("Font Test", mesh_font, tex_font, NULL, &obj_fonttest);
+    object_create("Font Test", mesh_font_test, tex_font_test, NULL,
+                  &obj_fonttest);
     object_trans(obj_fonttest, 0.0f, 2.0f, 0.0f);
     object_scale(obj_fonttest, 1.0f, 1.0f, 1.0f);
 
@@ -218,48 +252,39 @@ int init_glref(uint32 *meshes, uint32 mesh_count)
             // HACK: Don't z-fight ground plane
             object_trans(arr_objects[i], 0.0f, EPSILON, 0.0f);
         }
-        idx_arr_objects = mesh_count;
     }
 
     //--------------------------------------------------------------------------
-    // Create axis label bboxes
+    // Save manual chunk
     //--------------------------------------------------------------------------
-    bbox_init(
-        &axis_bbox,
-        (struct vec4) { -0.5f, -0.5f, -0.5f, 1.0f },
-        (struct vec4) {  0.5f,  0.5f,  0.5f, 1.0f },
-        COLOR_WHITE
-    );
+    struct rico_pool *chunk_tex_pool = texture_pool_unsafe();
+    struct rico_pool *chunk_mesh_pool = mesh_pool_unsafe();
+    struct rico_pool *chunk_obj_pool = object_pool_get_unsafe();
 
-    // X-axis label
-    mat4_ident(&x_axis_transform);
-    mat4_scale(&x_axis_transform, (struct vec4) { 1.0f, 0.01f, 0.01f, 1.0f });
-    mat4_translate(&x_axis_transform, (struct vec4) { 0.5f, 0.0f, 0.0f, 1.0f });
+    struct rico_chunk chunkA;
 
-    // Y-axis label
-    mat4_ident(&y_axis_transform);
-    mat4_scale(&y_axis_transform, (struct vec4) { 0.01f, 1.0f, 0.01f, 1.0f });
-    mat4_translate(&y_axis_transform, (struct vec4) { 0.0f, 0.5f, 0.0f, 1.0f });
+    err = chunk_init("my_first_chunk", chunk_tex_pool->count, chunk_mesh_pool->count,
+                     chunk_obj_pool->count, chunk_tex_pool, chunk_mesh_pool,
+                     chunk_obj_pool, &chunkA);
+    if (err) return err;
 
-    // Z-axis label
-    mat4_ident(&z_axis_transform);
-    mat4_scale(&z_axis_transform, (struct vec4) { 0.01f, 0.01f, 1.0f, 1.0f });
-    mat4_translate(&z_axis_transform, (struct vec4) { 0.0f, 0.0f, 0.5f, 1.0f });
-
-    return SUCCESS;
+    err = chunk_save("../res/chunks/chunky.bin", &chunkA);
+    return err;
 }
 
 void select_obj(uint32 handle)
 {
     // Deselect current object
-    if (selected_handle > 0)
-        object_deselect(selected_handle);
+    object_deselect(selected_handle);
 
     // Select requested object
-    if (handle > 0)
-        object_select(handle);
+    object_select(handle);
 
     selected_handle = handle;
+
+    struct rico_object *obj = object_fetch(selected_handle);
+    printf("[Obj %d][%d %s] Selected\n", selected_handle, obj->uid.uid,
+           obj->uid.name);
 }
 
 void select_next_obj()
@@ -293,6 +318,7 @@ void translate_selected(struct vec4 offset)
         obj->trans = vec_add(obj->trans, offset);
     }
 }
+
 void rotate_selected(struct vec4 offset)
 {
     if (vec_equals(offset, VEC4_ZERO))
@@ -305,26 +331,31 @@ void rotate_selected(struct vec4 offset)
         *rot = vec_add(*rot, offset);
     }
 }
+
 void duplicate_selected()
 {
     struct rico_object *selected = object_fetch(selected_handle);
 
-    int i = idx_arr_objects;
+    uint32 newObj;
+    object_create("Duplicate", selected->mesh, selected->texture,
+                  mesh_bbox(selected->mesh), &newObj);
 
-    char name[20];
-    sprintf(name, "Duplicate %d", i);
-
-    object_create(name, selected->mesh, selected->texture,
-                    mesh_bbox(selected->mesh), &arr_objects[i]);
-
-    struct rico_object *new_obj = object_fetch(arr_objects[i]);
-    if (arr_objects[i])
+    struct rico_object *new_obj = object_fetch(newObj);
+    if (newObj)
     {
         new_obj->trans = selected->trans;
         new_obj->rot = selected->rot;
         new_obj->scale = selected->scale;
-        idx_arr_objects++;
     }
+
+    select_obj(newObj);
+}
+
+void delete_selected()
+{
+    uint32 handle = selected_handle;
+    select_prev_obj();
+    object_free(handle);
 }
 
 //TODO: Put this somewhere reasonable (e.g. lighting module)
@@ -369,18 +400,20 @@ void render_glref()
     //--------------------------------------------------------------------------
     // Render objects
     //--------------------------------------------------------------------------
-    object_render(obj_ground, prog_default);
-    object_render(obj_hello, prog_default);
-    object_render(obj_ruler, prog_default);
-    object_render(obj_wall1, prog_default);
-    object_render(obj_wall2, prog_default);
-    object_render(obj_wall3, prog_default);
-    object_render(obj_wall4, prog_default);
+    object_render_all(prog_default);
 
-    for (uint32 i = 0; i < idx_arr_objects; i++)
-    {
-        object_render(arr_objects[i], prog_default);
-    }
+    // object_render(obj_ground, prog_default);
+    // object_render(obj_hello, prog_default);
+    // object_render(obj_ruler, prog_default);
+    // object_render(obj_wall1, prog_default);
+    // object_render(obj_wall2, prog_default);
+    // object_render(obj_wall3, prog_default);
+    // object_render(obj_wall4, prog_default);
+
+    // for (uint32 i = 0; i < idx_arr_objects; i++)
+    // {
+    //     object_render(arr_objects[i], prog_default);
+    // }
 
     //--------------------------------------------------------------------------
     // Axes labels (bboxes)
@@ -389,7 +422,7 @@ void render_glref()
     bbox_render_color(&axis_bbox, &y_axis_transform, COLOR_GREEN);
     bbox_render_color(&axis_bbox, &z_axis_transform, COLOR_BLUE);
 
-    object_render(obj_fonttest, prog_default);
+    // object_render(obj_fonttest, prog_default);
 }
 void free_glref()
 {
@@ -397,14 +430,14 @@ void free_glref()
     // Clean up
     //--------------------------------------------------------------------------
     //TODO: Free all game objects
-    object_free(&obj_ground);
+    object_free_all();
 
     //TODO: Free all meshes
 
     //TODO: Free all textures
-    texture_free(&tex_grass);
-    texture_free(&tex_rock);
-    texture_free(&tex_hello);
+    texture_free(tex_grass);
+    texture_free(tex_rock);
+    texture_free(tex_hello);
 
     //TODO: Free all programs
     free_program_default(&prog_default);

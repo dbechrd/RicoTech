@@ -32,6 +32,8 @@ struct rico_object {
 int object_init(uint32 pool_size);
 int object_create(const char *name, uint32 mesh, uint32 texture,
                   const struct bbox *bbox, uint32 *_handle);
+void object_free(uint32 handle);
+void object_free_all();
 struct rico_object *object_fetch(uint32 handle);
 uint32 object_next(uint32 handle);
 uint32 object_prev(uint32 handle);
@@ -43,6 +45,9 @@ void object_rot_y(uint32 handle, float deg);
 void object_rot_z(uint32 handle, float deg);
 void object_scale(uint32 handle, float x, float y, float z);
 void object_render(uint32 handle, const struct program_default *prog);
-void object_free(uint32 *handle);
+void object_render_all(const struct program_default *prog);
+
+struct rico_pool *object_pool_get_unsafe();
+void object_pool_set_unsafe(struct rico_pool *pool);
 
 #endif // RICO_OBJ_H

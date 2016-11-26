@@ -21,10 +21,12 @@ int rico_mesh_init(uint32 pool_size);
 int mesh_load(const char *name, uint32 vertex_count,
               const struct mesh_vertex *vertex_data, uint32 element_count,
               const GLuint *element_data, GLenum hint, uint32 *_handle);
-void mesh_free(uint32 *handle);
+void mesh_free(uint32 handle);
 const char *mesh_name(uint32 handle);
 const struct bbox *mesh_bbox(uint32 handle);
 void mesh_update(uint32 handle);
 void mesh_render(uint32 handle);
+
+struct rico_pool *mesh_pool_unsafe();
 
 #endif

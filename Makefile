@@ -11,7 +11,7 @@ OBJ_DIR := obj
 LIB_DIR := lib
 DLL_DIR := dll
 RES_DIR := res
-RES_SUBDIRS := font shader model texture
+RES_SUBDIRS := chunks font shader model texture
 BIN_DIR := bin
 
 BIN_EXE := $(BIN_DIR)/RicoTech.exe
@@ -23,7 +23,8 @@ OBJECTS := $(patsubst $(SRC_DIR)/%,$(OBJ_DIR)/%,$(SOURCES:.c=.o))
 DLLS := $(wildcard $(DLL_DIR)/*.dll)
 BIN_DLLS := $(patsubst $(DLL_DIR)/%,$(BIN_DIR)/%,$(DLLS))
 
-RESOURCES := $(wildcard $(RES_DIR)/font/*.bff)
+RESOURCES := $(wildcard $(RES_DIR)/chunks/*.bin)
+RESOURCES += $(wildcard $(RES_DIR)/font/*.bff)
 RESOURCES += $(wildcard $(RES_DIR)/shader/*.glsl)
 RESOURCES += $(wildcard $(RES_DIR)/model/*.obj)
 RESOURCES += $(wildcard $(RES_DIR)/texture/*.tga)
@@ -40,7 +41,7 @@ LIBS  := -L$(LIB_DIR) $(_LIBS)
 
 # Compiler & flags
 CC = gcc
-CFLAGS = -Wall -Wextra -Werror -Wno-unused-function
+CFLAGS = -Wall -Wextra -Werror -Wno-unused-function # -Og
 LDFLAGS = # None
 
 default: prebuild build postbuild

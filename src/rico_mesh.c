@@ -72,19 +72,19 @@ static int build_mesh(struct rico_mesh *mesh, uint32 vertex_count,
     //--------------------------------------------------------------------------
     // Get vertex shader attribute locations and set pointers (size/type/stride)
     //--------------------------------------------------------------------------
-    
+
     // TODO: How to get size of mesh_vertex.pos dynamically? Why doesn't
     //       sizeof_member work?
     glVertexAttribPointer(RICO_SHADER_POS_LOC, 4, GL_FLOAT, GL_FALSE,
                           sizeof(struct mesh_vertex),
                           (GLvoid *)offsetof(struct mesh_vertex, pos));
     glEnableVertexAttribArray(RICO_SHADER_POS_LOC);
-    
+
     glVertexAttribPointer(RICO_SHADER_COL_LOC, 4, GL_FLOAT, GL_FALSE,
                           sizeof(struct mesh_vertex),
                           (GLvoid *)offsetof(struct mesh_vertex, col));
     glEnableVertexAttribArray(RICO_SHADER_COL_LOC);
-    
+
     glVertexAttribPointer(RICO_SHADER_UV_LOC, 2, GL_FLOAT, GL_FALSE,
                           sizeof(struct mesh_vertex),
                           (GLvoid *)offsetof(struct mesh_vertex, uv));
@@ -97,13 +97,13 @@ static int build_mesh(struct rico_mesh *mesh, uint32 vertex_count,
     return SUCCESS;
 }
 
-void mesh_free(uint32 *handle)
+void mesh_free(uint32 handle)
 {
-    struct rico_mesh *mesh = pool_read(&meshes, *handle);
+    struct rico_mesh *mesh = pool_read(&meshes, handle);
 
     glDeleteBuffers(2, mesh->vbos);
     glDeleteVertexArrays(1, &mesh->vao);
-    
+
     pool_free(&meshes, handle);
 }
 
@@ -133,4 +133,9 @@ void mesh_render(uint32 handle)
     glBindVertexArray(mesh->vao);
     glDrawElements(GL_TRIANGLES, mesh->element_count, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
+}
+
+struct rico_pool *mesh_pool_unsafe()
+{
+    return &meshes;
 }

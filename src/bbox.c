@@ -14,14 +14,8 @@ int bbox_init(struct bbox *bbox, struct vec4 p0, struct vec4 p1,
     int err = make_program_bbox(&bbox->prog);
     if (err) return err;
 
-    bbox->vertices[0] = (struct vec4) { p0.x, p0.y, p0.z, 1.0f };
-    bbox->vertices[1] = (struct vec4) { p1.x, p0.y, p0.z, 1.0f };
-    bbox->vertices[2] = (struct vec4) { p1.x, p1.y, p0.z, 1.0f };
-    bbox->vertices[3] = (struct vec4) { p0.x, p1.y, p0.z, 1.0f };
-    bbox->vertices[4] = (struct vec4) { p0.x, p0.y, p1.z, 1.0f };
-    bbox->vertices[5] = (struct vec4) { p1.x, p0.y, p1.z, 1.0f };
-    bbox->vertices[6] = (struct vec4) { p1.x, p1.y, p1.z, 1.0f };
-    bbox->vertices[7] = (struct vec4) { p0.x, p1.y, p1.z, 1.0f };
+    bbox->p0 = p0;
+    bbox->p1 = p1;
     bbox->color = color;
     bbox->wireframe = true;
 
@@ -66,6 +60,17 @@ int bbox_init_mesh(struct bbox *bbox, const struct mesh_vertex *verts,
 
 static int init_gl(struct bbox *bbox)
 {
+    struct vec4 vertices[8] = {
+        (struct vec4) { bbox->p0.x, bbox->p0.y, bbox->p0.z, 1.0f },
+        (struct vec4) { bbox->p1.x, bbox->p0.y, bbox->p0.z, 1.0f },
+        (struct vec4) { bbox->p1.x, bbox->p1.y, bbox->p0.z, 1.0f },
+        (struct vec4) { bbox->p0.x, bbox->p1.y, bbox->p0.z, 1.0f },
+        (struct vec4) { bbox->p0.x, bbox->p0.y, bbox->p1.z, 1.0f },
+        (struct vec4) { bbox->p1.x, bbox->p0.y, bbox->p1.z, 1.0f },
+        (struct vec4) { bbox->p1.x, bbox->p1.y, bbox->p1.z, 1.0f },
+        (struct vec4) { bbox->p0.x, bbox->p1.y, bbox->p1.z, 1.0f }
+    };
+
     // Bbox faces
     static GLuint elements[36] = {
         0, 1, 2, 2, 3, 0,
@@ -88,7 +93,7 @@ static int init_gl(struct bbox *bbox)
     // Vertex buffer
     //--------------------------------------------------------------------------
     glBindBuffer(GL_ARRAY_BUFFER, bbox->vbos[VBO_VERTEX]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(bbox->vertices), bbox->vertices,
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices,
                  GL_STATIC_DRAW);
 
     //--------------------------------------------------------------------------
@@ -176,14 +181,14 @@ void bbox_render_color(const struct bbox *box, const struct mat4 *model_matrix,
 
 bool bbox_intersects(const struct bbox *a, const struct bbox *b)
 {
-    if (a->vertices[7].x < b->vertices[0].x) return false;
-    if (b->vertices[7].x < a->vertices[0].x) return false;
+    if (a->p1.x < b->p0.x) return false;
+    if (b->p1.x < a->p0.x) return false;
 
-    if (a->vertices[7].y < b->vertices[0].y) return false;
-    if (b->vertices[7].y < a->vertices[0].y) return false;
+    if (a->p1.y < b->p0.y) return false;
+    if (b->p1.y < a->p0.y) return false;
 
-    if (a->vertices[7].z < b->vertices[0].z) return false;
-    if (b->vertices[7].z < a->vertices[0].z) return false;
+    if (a->p1.z < b->p0.z) return false;
+    if (b->p1.z < a->p0.z) return false;
 
     return true;
 }

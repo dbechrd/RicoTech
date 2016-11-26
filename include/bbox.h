@@ -18,8 +18,7 @@ struct bbox {
     GLuint vbos[2];
     struct program_bbox *prog;
 
-    //TODO: No reason to store vertices
-    struct vec4 vertices[8];
+    struct vec4 p0, p1;
     struct col4 color;
 
     bool wireframe;

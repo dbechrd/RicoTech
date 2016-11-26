@@ -21,4 +21,10 @@ const struct col4 COLOR_WHITE_HIGHLIGHT   = { 1.0f, 1.0f, 1.0f, 0.5f };
 const struct col4 COLOR_GRAY_HIGHLIGHT    = { 0.5f, 0.5f, 0.5f, 0.5f };
 
 const struct vec4 VEC4_ZERO = { 0 };
-const struct vec4 VEC4_UNIT = { 1.0f, 1.0f, 1.0f, 0.0f }; //TODO: W is 1 or 0?
+const struct vec4 VEC4_UNIT = { 1.0f, 1.0f, 1.0f, 1.0f };
+const struct mat4 MAT4_IDENT = {
+    (struct vec4) { 1.0f, 0.0f, 0.0f, 0.0f },
+    (struct vec4) { 0.0f, 1.0f, 0.0f, 0.0f },
+    (struct vec4) { 0.0f, 0.0f, 1.0f, 0.0f },
+    (struct vec4) { 0.0f, 0.0f, 0.0f, 1.0f }
+};

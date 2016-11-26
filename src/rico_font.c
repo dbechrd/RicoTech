@@ -145,7 +145,7 @@ int font_render(const struct rico_font *font, int x, int y, const char *text,
     int idx_element = 0;
 
     int cur_x = x;
-    int cur_y = y;
+    int cur_y = y - font->YOffset;
 
     int row, col;
     GLfloat u0, v0, u1, v1;
@@ -160,7 +160,7 @@ int font_render(const struct rico_font *font, int x, int y, const char *text,
 
         row = (text[i] - font->Base) / font->RowPitch;
         col = (text[i] - font->Base) - (row * font->RowPitch);
-        
+
         u0 = col * font->ColFactor;
         v0 = row * font->RowFactor;
         u1 = u0 + font->ColFactor;

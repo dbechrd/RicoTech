@@ -18,6 +18,7 @@
 #include "rico_mesh.h"
 #include "rico_object.h"
 #include "load_object.h"
+#include "rico_chunk.h"
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -30,6 +31,8 @@ static SDL_GLContext context = NULL;
 // This is really stupid, move it somehwere else
 static uint32 meshes[100];
 static uint32 mesh_count;
+
+static struct rico_chunk first_chunk;
 
 static inline void init_stb()
 {
@@ -91,7 +94,7 @@ static int init_gl3w()
         getchar();
         return 1;
     }
-    
+
     return 0;
 }
 
@@ -108,10 +111,10 @@ static void init_opengl()
     {
         fprintf(stdout, "Registered glDebugMessageCallback.\n");
         fprintf(stderr, "[TYPE][SEVERITY][ID] MESSAGE\n");
-        
+
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
         glDebugMessageCallback(openglCallbackFunction, NULL);
-        
+
         GLuint unusedIds = 0;
         glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0,
                               &unusedIds, true);
@@ -122,12 +125,12 @@ static void init_opengl()
     }
 #endif
 
-    glEnable(GL_DEPTH_TEST); //Enable depth testing. Default off.
     glDepthFunc(GL_LEQUAL);  //Depth test mode. Default GL_LESS.
+    glEnable(GL_DEPTH_TEST); //Enable depth testing. Default off.
 
-    glEnable(GL_BLEND);
     glBlendEquation(GL_FUNC_ADD);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
 }
 
 static int rico_init_textures()
@@ -158,8 +161,7 @@ static int rico_init_meshes()
 static int rico_init_objects()
 {
     printf("Loading objects\n");
-
-    int err = object_init(RICO_OBJECT_POOL_SIZE);
+    int err = chunk_load("chunks/chunky.bin", &first_chunk);
     return err;
 }
 
@@ -169,14 +171,11 @@ static int rico_init()
     init_sdl();
     init_gl3w();
     init_opengl();
-    
+
     int err = rico_init_textures();
     if (err) return err;
 
     err = rico_init_meshes();
-    if (err) return err;
-
-    err = rico_init_objects();
     return err;
 }
 
@@ -190,6 +189,12 @@ int mymain()
     //run_tests();
 
     err = init_glref(meshes, mesh_count);
+    if (err) return err;
+
+    // Initialize objects
+    // err = init_manual_chunk(meshes, mesh_count);
+    // if (err) return err;
+    err = rico_init_objects();
     if (err) return err;
 
     //Human walk speed empirically found to be 33 steps in 20 seconds. That
@@ -208,9 +213,9 @@ int mymain()
     float selected_rot_delta = DEFAULT_ROT_DELTA;
 
     bool d_down = false;
+    bool s_down = false;
 
     bool sprint = true;
-    bool fly = true;
 
     bool ambient_light = true;
 
@@ -382,13 +387,19 @@ int mymain()
                     {
                         view_trans_vel.z += view_trans_delta;
                     }
+                    else if (windowEvent.key.keysym.sym == SDLK_s
+                          && windowEvent.key.keysym.mod & KMOD_CTRL)
+                    {
+                        chunk_save("../res/chunks/chunky.bin", &first_chunk);
+                    }
                     else if (windowEvent.key.keysym.sym == SDLK_s)
                     {
+                        s_down = true;
                         view_trans_vel.z -= view_trans_delta;
                     }
                     else if (windowEvent.key.keysym.sym == SDLK_f)
                     {
-                        fly = !fly;
+                        view_camera.trans.y = -1.7f;
                     }
                     else if (windowEvent.key.keysym.sym == SDLK_c)
                     {
@@ -422,6 +433,10 @@ int mymain()
                         else
                             selected_rot_delta = DEFAULT_ROT_DELTA;
                     }
+                    else if (windowEvent.key.keysym.sym == SDLK_DELETE)
+                    {
+                        delete_selected();
+                    }
                 }
             }
             else if (windowEvent.type == SDL_KEYUP)
@@ -447,8 +462,9 @@ int mymain()
                 {
                     view_trans_vel.z -= view_trans_delta;
                 }
-                else if (windowEvent.key.keysym.sym == SDLK_s)
+                else if (s_down && windowEvent.key.keysym.sym == SDLK_s)
                 {
+                    s_down = false;
                     view_trans_vel.z += view_trans_delta;
                 }
                 else if (windowEvent.key.keysym.sym == SDLK_ESCAPE)
@@ -504,17 +520,11 @@ int mymain()
         view_dy *= dt;
         view_dz *= dt;
 
-        if (!fly)
-        {
-            view_dy *= 0.0f;
-            view_camera.trans.y = -1.7f;
-        }
-
         if (sprint)
         {
             view_dx *= 5.0f;
             view_dz *= 5.0f;
-            
+
             //Debug: Sprint vertically.. yeah.. what?
             view_dy *= 5.0f;
         }

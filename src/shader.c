@@ -12,7 +12,7 @@ int make_shader(const GLenum type, const char *filename, GLuint *_shader)
     GLint status;
 
     source = file_contents(filename, &len);
-    if (!source) return ERR_FILE_LOAD;
+    if (!source) return ERR_FILE_READ;
 
     shader = glCreateShader(type);
     glShaderSource(shader, 1, (const GLchar**)&source, &len);
