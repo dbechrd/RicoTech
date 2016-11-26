@@ -212,6 +212,8 @@ int mymain()
     const float DEFAULT_ROT_DELTA = 5.0f;
     float selected_rot_delta = DEFAULT_ROT_DELTA;
 
+    view_camera.fill_mode = GL_FILL;
+
     bool d_down = false;
     bool s_down = false;
 
@@ -285,7 +287,7 @@ int mymain()
                     }
                     else
                     {
-                        delta.z = -1.0f;
+                        delta.y = 1.0f;
                         translate_selected(delta);
                     }
                 }
@@ -298,7 +300,7 @@ int mymain()
                     }
                     else
                     {
-                        delta.z = 1.0f;
+                        delta.y = -1.0f;
                         translate_selected(delta);
                     }
                 }
@@ -337,7 +339,7 @@ int mymain()
                     }
                     else
                     {
-                        delta.y = 1.0f;
+                        delta.z = -1.0f;
                         translate_selected(delta);
                     }
                 }
@@ -350,7 +352,7 @@ int mymain()
                     }
                     else
                     {
-                        delta.y = -1.0f;
+                        delta.z = 1.0f;
                         translate_selected(delta);
                     }
                 }
@@ -403,7 +405,7 @@ int mymain()
                     }
                     else if (windowEvent.key.keysym.sym == SDLK_c)
                     {
-                        camera_lock = !camera_lock;
+                        view_camera.locked = !view_camera.locked;
                     }
                     else if (windowEvent.key.keysym.sym == SDLK_l)
                     {
@@ -420,11 +422,11 @@ int mymain()
                     }
                     else if (windowEvent.key.keysym.sym == SDLK_1)
                     {
-                        view_polygon_mode = GL_LINE;
+                        view_camera.fill_mode = GL_LINE;
                     }
                     else if (windowEvent.key.keysym.sym == SDLK_2)
                     {
-                        view_polygon_mode = GL_FILL;
+                        view_camera.fill_mode = GL_FILL;
                     }
                     else if (windowEvent.key.keysym.sym == SDLK_7)
                     {
@@ -552,12 +554,12 @@ int mymain()
         |=====================================================================*/
 
         //Update view transform
-        mat4_ident(&view_matrix);
-        mat4_scale(&view_matrix, view_camera.scale);
-        mat4_rotx(&view_matrix, view_camera.rot.x);
-        mat4_roty(&view_matrix, view_camera.rot.y);
-        mat4_rotz(&view_matrix, view_camera.rot.z);
-        mat4_translate(&view_matrix, view_camera.trans);
+        mat4_ident(&view_camera.view_matrix);
+        mat4_scale(&view_camera.view_matrix, view_camera.scale);
+        mat4_rotx(&view_camera.view_matrix, view_camera.rot.x);
+        mat4_roty(&view_camera.view_matrix, view_camera.rot.y);
+        mat4_rotz(&view_camera.view_matrix, view_camera.rot.z);
+        mat4_translate(&view_camera.view_matrix, view_camera.trans);
 
         //TODO: Gravity
 
@@ -567,7 +569,7 @@ int mymain()
         //glClearDepth(0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glPolygonMode(GL_FRONT_AND_BACK, view_polygon_mode);
+        glPolygonMode(GL_FRONT_AND_BACK, view_camera.fill_mode);
 
         update_glref(dt, ambient_light);
         render_glref();

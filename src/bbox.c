@@ -1,7 +1,7 @@
 #include "bbox.h"
 #include "const.h"
-#include "camera.h"
 #include "geom.h"
+#include "camera.h"
 #include "rico_mesh.h"
 #include "program.h"
 #include <GL/gl3w.h>
@@ -120,28 +120,27 @@ static int init_gl(struct bbox *bbox)
     return SUCCESS;
 }
 
-void bbox_render(const struct bbox *box, const struct mat4 *model_matrix)
+void bbox_render(const struct bbox *box, const struct mat4 *proj_matrix,
+                 const struct mat4 *view_matrix,
+                 const struct mat4 *model_matrix)
 {
-    bbox_render_color(box, model_matrix, box->color);
+    bbox_render_color(box, proj_matrix, view_matrix, model_matrix, box->color);
 }
 
-void bbox_render_color(const struct bbox *box, const struct mat4 *model_matrix,
-                       const struct col4 color)
+void bbox_render_color(const struct bbox *box, const struct mat4 *proj_matrix,
+                       const struct mat4 *view_matrix,
+                       const struct mat4 *model_matrix, const struct col4 color)
 {
     //--------------------------------------------------------------------------
     // Draw
     //--------------------------------------------------------------------------
     glUseProgram(box->prog->prog_id);
 
-    glUniformMatrix4fv(box->prog->u_view, 1, GL_TRUE, view_matrix.a);
+    UNUSED(proj_matrix);
 
-    // Model transform
-    //model_matrix = make_mat4_ident();
-    //mat4_scale(model_matrix, (struct vec4) { 10.0f, 10.0f, 10.0f });
-    //mat4_translate(model_matrix, (struct vec4) { 0.0f, 0.0f, 0.0f });
-    //mat4_roty(model_matrix, 30.0f);
+    glUniformMatrix4fv(box->prog->u_proj, 1, GL_TRUE, proj_matrix->a);
+    glUniformMatrix4fv(box->prog->u_view, 1, GL_TRUE, view_matrix->a);
     glUniformMatrix4fv(box->prog->u_model, 1, GL_TRUE, model_matrix->a);
-    //free_mat4(&model_matrix);
 
     // Model texture
     // Note: We don't have to do this every time as long as we make sure
@@ -169,7 +168,7 @@ void bbox_render_color(const struct bbox *box, const struct mat4 *model_matrix,
     glBindVertexArray(0);
 
     if (box->wireframe)
-        glPolygonMode(GL_FRONT_AND_BACK, view_polygon_mode);
+        glPolygonMode(GL_FRONT_AND_BACK, view_camera.fill_mode);
 
     glUseProgram(0);
     //glBindTexture(tex_default->target, 0);

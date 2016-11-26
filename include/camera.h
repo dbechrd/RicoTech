@@ -7,6 +7,7 @@
 //TODO: Probably should prefix these?
 #define SCREEN_W 1024
 #define SCREEN_H 768
+#define SCREEN_ASPECT SCREEN_W / SCREEN_H
 
 #define Z_NEAR 1.0f
 #define Z_FAR 100.0f
@@ -16,13 +17,12 @@ struct camera {
     struct vec4 scale;
     struct vec4 rot;
     struct vec4 trans;
+    struct mat4 view_matrix;
+    struct mat4 proj_matrix;
+    GLenum fill_mode;
+    bool locked;
 };
 
 extern struct camera view_camera;
-extern struct mat4 view_matrix;
-extern struct mat4 proj_matrix;
-extern GLenum view_polygon_mode;
-
-extern bool camera_lock;
 
 #endif // CAMERA_H

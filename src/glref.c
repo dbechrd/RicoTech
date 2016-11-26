@@ -63,8 +63,8 @@ int init_glref()
     view_camera.trans = (struct vec4) { 0.0f, -1.7f, -4.0f, 0.0f };
 
     // Set projection matrix uniform
-    mat4_perspective(&proj_matrix, SCREEN_W, SCREEN_H, Z_NEAR, Z_FAR,
-                     Z_FOV_DEG);
+    mat4_perspective(&view_camera.proj_matrix, SCREEN_W, SCREEN_H, Z_NEAR,
+                     Z_FAR, Z_FOV_DEG);
 
     //--------------------------------------------------------------------------
     // Create shader program
@@ -140,8 +140,8 @@ int init_glref()
     // Create 3D strings
     //--------------------------------------------------------------------------
     // Font Test
-    font_render(font, 0, 0, "This is a test.\nYay!", COLOR_RED, &mesh_font_test,
-                &tex_font_test);
+    font_render(font, 0, 0, "This is a test.\nYay!", COLOR_DARK_RED,
+                &mesh_font_test, &tex_font_test);
 
     //--------------------------------------------------------------------------
     // Create axis label bboxes
@@ -186,29 +186,40 @@ int init_manual_chunk(uint32 *meshes, uint32 mesh_count)
     uint32 arr_objects[50] = { 0 };
 
     // Initialize object pool
-    object_init(RICO_OBJECT_POOL_SIZE);
+    err = object_init(RICO_OBJECT_POOL_SIZE);
+    if (err) return err;
 
     //--------------------------------------------------------------------------
     // Create world objects
     //--------------------------------------------------------------------------
-    object_create("Font Test", mesh_font_test, tex_font_test, NULL,
-                  &obj_fonttest);
+    // World font object
+    object_create("World String Test", OBJ_STRING_WORLD, mesh_font_test,
+                  tex_font_test, NULL, &obj_fonttest);
     object_trans(obj_fonttest, 0.0f, 2.0f, 0.0f);
     object_scale(obj_fonttest, 1.0f, 1.0f, 1.0f);
 
+    // Screen font object
+    object_create("Screen String Test", OBJ_STRING_SCREEN, mesh_font_test,
+                  tex_font_test, NULL, &obj_fonttest);
+    object_trans(obj_fonttest, -1.0f, 1.0f, 0.0f);
+    object_scale(obj_fonttest, 0.125f, 0.125f * SCREEN_ASPECT, 1.0f);
+
     // Ground
-    object_create("Ground", mesh_default, tex_rock, NULL, &obj_ground);
+    object_create("Ground", OBJ_DEFAULT, mesh_default, tex_rock, NULL,
+                  &obj_ground);
     object_rot_x(obj_ground, -90.0f);
     object_scale(obj_ground, 64.0f, 64.0f, 1.0f);
 
     // Hello
-    object_create("Hello", mesh_default, tex_hello, NULL, &obj_hello);
+    object_create("Hello", OBJ_DEFAULT, mesh_default, tex_hello, NULL,
+                  &obj_hello);
     object_trans(obj_hello, 0.0f, 2.0f, -4.0f);
     object_rot_y(obj_hello, 40.0f);
     object_scale(obj_hello, 1.0f, 2.0f, 1.0f);
 
     // Ruler
-    object_create("Ruler", mesh_default, RICO_TEXTURE_DEFAULT, NULL, &obj_ruler);
+    object_create("Ruler", OBJ_DEFAULT, mesh_default, RICO_TEXTURE_DEFAULT, NULL,
+                  &obj_ruler);
     object_trans(obj_ruler, 0.0f, 1.0f, -3.0f);
     object_scale(obj_ruler, 1.0f, 1.0f, 1.0f);
 
@@ -216,29 +227,34 @@ int init_manual_chunk(uint32 *meshes, uint32 mesh_count)
     struct vec4 wall_scale = (struct vec4) { 8.0f, 2.5f, 1.0f, 1.0f };
 
     // Wall front
-    object_create("wall1", mesh_default, tex_hello, NULL, &obj_wall1);
+    object_create("wall1", OBJ_DEFAULT, mesh_default, tex_hello, NULL,
+                  &obj_wall1);
     object_trans(obj_wall1, 0.0f, 2.5f, -8.0f);
     object_scale(obj_wall1, wall_scale.x, wall_scale.y, wall_scale.z);
 
     // Wall left
-    object_create("wall2", mesh_default, tex_hello, NULL, &obj_wall2);
+    object_create("wall2", OBJ_DEFAULT, mesh_default, tex_hello, NULL,
+                  &obj_wall2);
     object_trans(obj_wall2, -8.0f, 2.5f, 0.0f);
     object_scale(obj_wall2, wall_scale.x, wall_scale.y, wall_scale.z);
 
     // Wall back
-    object_create("wall3", mesh_default, tex_hello, NULL, &obj_wall3);
+    object_create("wall3", OBJ_DEFAULT, mesh_default, tex_hello, NULL,
+                  &obj_wall3);
     object_trans(obj_wall3, 0.0f, 2.5f, 8.0f);
     object_rot_y(obj_wall3, 180.0f);
     object_scale(obj_wall3, wall_scale.x, wall_scale.y, wall_scale.z);
 
     // Wall right
-    object_create("wall4", mesh_default, tex_hello, NULL, &obj_wall4);
+    object_create("wall4", OBJ_DEFAULT, mesh_default, tex_hello, NULL,
+                  &obj_wall4);
     object_trans(obj_wall4, 8.0f, 2.5f, 0.0f);
     object_rot_y(obj_wall4, -90.0f);
     object_scale(obj_wall4, wall_scale.x, wall_scale.y, wall_scale.z);
 
     // Wall five
-    object_create("wall5", mesh_default, tex_hello, NULL, &obj_wall5);
+    object_create("wall5", OBJ_DEFAULT, mesh_default, tex_hello, NULL,
+                  &obj_wall5);
     object_trans(obj_wall5, 4.0f, 2.5f, 0.0f);
     object_rot_y(obj_wall5, -90.0f);
     object_scale(obj_wall5, wall_scale.x, wall_scale.y, wall_scale.z);
@@ -246,8 +262,9 @@ int init_manual_chunk(uint32 *meshes, uint32 mesh_count)
     {
         for (uint32 i = 0; i < mesh_count; i++)
         {
-            object_create(mesh_name(meshes[i]), meshes[i], RICO_TEXTURE_DEFAULT,
-                          mesh_bbox(meshes[i]), &arr_objects[i]);
+            object_create(mesh_name(meshes[i]), OBJ_DEFAULT, meshes[i],
+                          RICO_TEXTURE_DEFAULT, mesh_bbox(meshes[i]),
+                          &arr_objects[i]);
 
             // HACK: Don't z-fight ground plane
             object_trans(arr_objects[i], 0.0f, EPSILON, 0.0f);
@@ -303,7 +320,7 @@ void translate_selected(struct vec4 offset)
 
     if (vec_equals(offset, VEC4_ZERO))
     {
-        if (camera_lock)
+        if (view_camera.locked && obj->type != OBJ_STRING_SCREEN)
         {
             view_camera.trans = vec_add(view_camera.trans, obj->trans);
         }
@@ -311,7 +328,7 @@ void translate_selected(struct vec4 offset)
     }
     else
     {
-        if (camera_lock)
+        if (view_camera.locked && obj->type != OBJ_STRING_SCREEN)
         {
             view_camera.trans = vec_sub(view_camera.trans, offset);
         }
@@ -337,8 +354,8 @@ void duplicate_selected()
     struct rico_object *selected = object_fetch(selected_handle);
 
     uint32 newObj;
-    object_create("Duplicate", selected->mesh, selected->texture,
-                  mesh_bbox(selected->mesh), &newObj);
+    object_create("Duplicate", selected->type, selected->mesh,
+                  selected->texture, mesh_bbox(selected->mesh), &newObj);
 
     struct rico_object *new_obj = object_fetch(newObj);
     if (newObj)
@@ -370,22 +387,6 @@ void update_glref(GLfloat dt, bool ambient_light)
 
     // Set uniforms
     glUniform1f(prog_default->u_time, dt);
-    glUniformMatrix4fv(prog_default->u_view, 1, GL_TRUE, view_matrix.a);
-    glUniformMatrix4fv(prog_default->u_proj, 1, GL_TRUE, proj_matrix.a);
-
-    if (ambient_light)
-        glUniform4fv(prog_default->u_ambient, 1, (const GLfloat *)&ambient);
-    else
-        glUniform4fv(prog_default->u_ambient, 1, (const GLfloat *)&VEC4_UNIT);
-
-    glUseProgram(0);
-
-    //--------------------------------------------------------------------------
-    glUseProgram(prog_bbox->prog_id);
-
-    // Set uniforms
-    glUniformMatrix4fv(prog_bbox->u_view, 1, GL_TRUE, view_matrix.a);
-    glUniformMatrix4fv(prog_bbox->u_proj, 1, GL_TRUE, proj_matrix.a);
 
     if (ambient_light)
         glUniform4fv(prog_default->u_ambient, 1, (const GLfloat *)&ambient);
@@ -400,29 +401,20 @@ void render_glref()
     //--------------------------------------------------------------------------
     // Render objects
     //--------------------------------------------------------------------------
-    object_render_all(prog_default);
-
-    // object_render(obj_ground, prog_default);
-    // object_render(obj_hello, prog_default);
-    // object_render(obj_ruler, prog_default);
-    // object_render(obj_wall1, prog_default);
-    // object_render(obj_wall2, prog_default);
-    // object_render(obj_wall3, prog_default);
-    // object_render(obj_wall4, prog_default);
-
-    // for (uint32 i = 0; i < idx_arr_objects; i++)
-    // {
-    //     object_render(arr_objects[i], prog_default);
-    // }
+    object_render_type(OBJ_DEFAULT, prog_default);
+    object_render_type(OBJ_STRING_WORLD, prog_default);
 
     //--------------------------------------------------------------------------
     // Axes labels (bboxes)
     //--------------------------------------------------------------------------
-    bbox_render_color(&axis_bbox, &x_axis_transform, COLOR_RED);
-    bbox_render_color(&axis_bbox, &y_axis_transform, COLOR_GREEN);
-    bbox_render_color(&axis_bbox, &z_axis_transform, COLOR_BLUE);
+    bbox_render_color(&axis_bbox, &view_camera.proj_matrix,
+                      &view_camera.view_matrix, &x_axis_transform, COLOR_RED);
+    bbox_render_color(&axis_bbox, &view_camera.proj_matrix,
+                      &view_camera.view_matrix, &y_axis_transform, COLOR_GREEN);
+    bbox_render_color(&axis_bbox, &view_camera.proj_matrix,
+                      &view_camera.view_matrix, &z_axis_transform, COLOR_BLUE);
 
-    // object_render(obj_fonttest, prog_default);
+    object_render_type(OBJ_STRING_SCREEN, prog_default);
 }
 void free_glref()
 {

@@ -36,6 +36,14 @@ extern const struct col4 COLOR_MAGENTA_HIGHLIGHT;
 extern const struct col4 COLOR_WHITE_HIGHLIGHT;
 extern const struct col4 COLOR_GRAY_HIGHLIGHT;
 
+extern const struct col4 COLOR_DARK_RED;
+extern const struct col4 COLOR_DARK_GREEN;
+extern const struct col4 COLOR_DARK_BLUE;
+extern const struct col4 COLOR_DARK_YELLOW;
+extern const struct col4 COLOR_DARK_CYAN;
+extern const struct col4 COLOR_DARK_MAGENTA;
+extern const struct col4 COLOR_DARK_GRAY;
+
 //------------------------------------------------------------------------------
 // 2D Texture coordinates
 //------------------------------------------------------------------------------

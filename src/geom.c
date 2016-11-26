@@ -20,6 +20,14 @@ const struct col4 COLOR_MAGENTA_HIGHLIGHT = { 1.0f, 0.0f, 1.0f, 0.5f };
 const struct col4 COLOR_WHITE_HIGHLIGHT   = { 1.0f, 1.0f, 1.0f, 0.5f };
 const struct col4 COLOR_GRAY_HIGHLIGHT    = { 0.5f, 0.5f, 0.5f, 0.5f };
 
+const struct col4 COLOR_DARK_RED     = { 0.5f, 0.0f, 0.0f, 1.0f };
+const struct col4 COLOR_DARK_GREEN   = { 0.0f, 0.5f, 0.0f, 1.0f };
+const struct col4 COLOR_DARK_BLUE    = { 0.0f, 0.0f, 0.5f, 1.0f };
+const struct col4 COLOR_DARK_YELLOW  = { 0.5f, 0.5f, 0.0f, 1.0f };
+const struct col4 COLOR_DARK_CYAN    = { 0.0f, 0.5f, 0.5f, 1.0f };
+const struct col4 COLOR_DARK_MAGENTA = { 0.5f, 0.0f, 0.5f, 1.0f };
+const struct col4 COLOR_DARK_GRAY    = { 0.25f, 0.25f, 0.25f, 1.0f };
+
 const struct vec4 VEC4_ZERO = { 0 };
 const struct vec4 VEC4_UNIT = { 1.0f, 1.0f, 1.0f, 1.0f };
 const struct mat4 MAT4_IDENT = {

@@ -6,6 +6,9 @@
 uint32 RICO_OBJECT_DEFAULT = 0;
 static struct rico_pool *objects;
 
+static void object_render_direct(const struct rico_object *obj,
+                                 const struct program_default *prog);
+
 int object_init(uint32 pool_size)
 {
     objects = calloc(1, sizeof(*objects));
@@ -13,8 +16,8 @@ int object_init(uint32 pool_size)
                      objects);
 }
 
-int object_create(const char *name, uint32 mesh, uint32 texture,
-                  const struct bbox *bbox, uint32 *_handle)
+int object_create(const char *name, enum rico_object_type type, uint32 mesh,
+                  uint32 texture, const struct bbox *bbox, uint32 *_handle)
 {
     int err;
     *_handle = RICO_OBJECT_DEFAULT;
@@ -30,6 +33,7 @@ int object_create(const char *name, uint32 mesh, uint32 texture,
 
     //TODO: Should default W component be 0 or 1?
     uid_init(name, &obj->uid);
+    obj->type = type;
     obj->scale = (struct vec4) { 1.0f, 1.0f, 1.0f, 1.0f };
     obj->mesh = mesh;
     obj->texture = texture;
@@ -122,34 +126,52 @@ void object_scale(uint32 handle, float x, float y, float z)
 
 void object_render(uint32 handle, const struct program_default *prog)
 {
-    struct rico_object *obj = pool_read(objects, handle);
+    object_render_direct(pool_read(objects, handle), prog);
+}
+
+static void object_render_direct(const struct rico_object *obj,
+                                 const struct program_default *prog)
+{
+    glPolygonMode(GL_FRONT_AND_BACK, view_camera.fill_mode);
+    glUseProgram(prog->prog_id);
 
     // Model transform
+    struct mat4 proj_matrix;
+    struct mat4 view_matrix;
     struct mat4 model_matrix;
-    mat4_ident(&model_matrix);
 
     //HACK: Order of these operations might not always be the same.. should
     //      probably just store the transformation matrix directly rather than
     //      trying to figure out which order to do what.
+    mat4_ident(&model_matrix);
     mat4_translate(&model_matrix, obj->trans);
     mat4_rotx(&model_matrix, obj->rot.x);
     mat4_roty(&model_matrix, obj->rot.y);
     mat4_rotz(&model_matrix, obj->rot.z);
     mat4_scale(&model_matrix, obj->scale);
 
-    glPolygonMode(GL_FRONT_AND_BACK, view_polygon_mode);
+    if (obj->type == OBJ_DEFAULT || obj->type == OBJ_STRING_WORLD)
+    {
+        proj_matrix = view_camera.proj_matrix;
+        view_matrix = view_camera.view_matrix;
 
-    glUseProgram(prog->prog_id);
+        // HACK: This only works when object is uniformly scaled on X/Y plane.
+        // TODO: UV scaling in general only works when object is uniformly scaled.
+        //       Maybe I should only allow textured objects to be uniformly scaled?
+        // UV-coord scale
+        glUniform2f(prog->u_scale_uv, obj->scale.x, obj->scale.y);
+    }
+    else if (obj->type == OBJ_STRING_SCREEN)
+    {
+        proj_matrix = MAT4_IDENT;
+        view_matrix = MAT4_IDENT;
+
+        glUniform2f(prog->u_scale_uv, 1.0f, 1.0f);
+    }
+
     glUniformMatrix4fv(prog->u_proj, 1, GL_TRUE, proj_matrix.a);
     glUniformMatrix4fv(prog->u_view, 1, GL_TRUE, view_matrix.a);
     glUniformMatrix4fv(prog->u_model, 1, GL_TRUE, model_matrix.a);
-
-    if (handle == 0)
-    {
-        glUniformMatrix4fv(prog->u_proj, 1, GL_TRUE, MAT4_IDENT.a);
-        glUniformMatrix4fv(prog->u_view, 1, GL_TRUE, view_matrix.a);
-        glUniformMatrix4fv(prog->u_model, 1, GL_TRUE, model_matrix.a);
-    }
 
     // Model texture
     // Note: We don't have to do this every time as long as we make sure
@@ -157,11 +179,7 @@ void object_render(uint32 handle, const struct program_default *prog)
     //       index assumed when the program was initialized.
     glUniform1i(prog->u_tex, 0);
 
-    // HACK: This only works when object is uniformly scaled on X/Y plane.
-    // TODO: UV scaling in general only works when object is uniformly scaled.
-    //       Maybe I should only allow textured objects to be uniformly scaled?
-    // UV-coord scale
-    glUniform2f(prog->u_scale_uv, obj->scale.x, obj->scale.y);
+
 
     // Bind texture and render mesh
     //
@@ -173,14 +191,20 @@ void object_render(uint32 handle, const struct program_default *prog)
     glUseProgram(0);
 
     // Render bbox
-    bbox_render(&(obj->bbox), &model_matrix);
+    bbox_render(&(obj->bbox), &proj_matrix, &view_matrix, &model_matrix);
 }
 
-void object_render_all(const struct program_default *prog)
+void object_render_type(enum rico_object_type type,
+                       const struct program_default *prog)
 {
+    struct rico_object *obj;
     for (uint32 i = 0; i < objects->active; ++i)
     {
-        object_render(objects->handles[i], prog);
+        obj = pool_read(objects, objects->handles[i]);
+        if (obj->type == type)
+        {
+            object_render_direct(obj, prog);
+        }
     }
 }
 
