@@ -129,7 +129,8 @@ int init_glref()
     // Create textures
     //--------------------------------------------------------------------------
     texture_load_file("grass", GL_TEXTURE_2D, "texture/grass.tga", &tex_grass);
-    texture_load_file("bricks", GL_TEXTURE_2D, "texture/clean_bricks.tga", &tex_rock);
+    texture_load_file("bricks", GL_TEXTURE_2D, "texture/clean_bricks.tga",
+                      &tex_rock);
     texture_load_file("hello", GL_TEXTURE_2D, "texture/hello.tga", &tex_hello);
 
     // Cleanup: Memory pool free/reuse test
@@ -280,9 +281,9 @@ int init_manual_chunk(uint32 *meshes, uint32 mesh_count)
 
     struct rico_chunk chunkA;
 
-    err = chunk_init("my_first_chunk", chunk_tex_pool->count, chunk_mesh_pool->count,
-                     chunk_obj_pool->count, chunk_tex_pool, chunk_mesh_pool,
-                     chunk_obj_pool, &chunkA);
+    err = chunk_init("my_first_chunk", chunk_tex_pool->count,
+                     chunk_mesh_pool->count, chunk_obj_pool->count,
+                     chunk_tex_pool, chunk_mesh_pool, chunk_obj_pool, &chunkA);
     if (err) return err;
 
     err = chunk_save("../res/chunks/chunky.bin", &chunkA);
@@ -296,7 +297,6 @@ void select_obj(uint32 handle)
 
     // Select requested object
     object_select(handle);
-
     selected_handle = handle;
 
     struct rico_object *obj = object_fetch(selected_handle);
@@ -384,8 +384,6 @@ void update_glref(GLfloat dt, bool ambient_light)
     // Update uniforms
     //--------------------------------------------------------------------------
     glUseProgram(prog_default->prog_id);
-
-    // Set uniforms
     glUniform1f(prog_default->u_time, dt);
 
     if (ambient_light)

@@ -60,6 +60,7 @@ int bbox_init_mesh(struct bbox *bbox, const struct mesh_vertex *verts,
 
 static int init_gl(struct bbox *bbox)
 {
+    // Bbox vertices
     struct vec4 vertices[8] = {
         (struct vec4) { bbox->p0.x, bbox->p0.y, bbox->p0.z, 1.0f },
         (struct vec4) { bbox->p1.x, bbox->p0.y, bbox->p0.z, 1.0f },

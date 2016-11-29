@@ -8,13 +8,13 @@
 struct rico_pool {
     struct rico_uid uid;
     uint32 count;        // number of elements
-    uint32 size;         // size of each element
+    uint32 stride;       // size of each element
     uint32 active;       // number of elements in use
     uint32 *handles;     // pool handles
     void *pool;          // element pool
 };
 
-int pool_init(const char *name, uint32 count, uint32 size,
+int pool_init(const char *name, uint32 count, uint32 stride,
               struct rico_pool *_pool);
 int pool_alloc(struct rico_pool *pool, uint32 *_handle);
 int pool_free(struct rico_pool *pool, uint32 handle);
@@ -27,7 +27,7 @@ static inline void *pool_read(struct rico_pool *pool, uint32 handle)
 {
     rico_assert(pool);
     rico_assert(handle < pool->count);
-    return (void *)&(((char *)pool->pool)[pool->size * handle]);
+    return (void *)&(((char *)pool->pool)[pool->stride * handle]);
 }
 
 #endif // RICO_POOL_H

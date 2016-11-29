@@ -47,7 +47,7 @@ static char* strsep(char** stringp, const char* delim)
 
 int load_obj_file(const char *filename, uint32 *_meshes, uint32 *_mesh_count)
 {
-    int err;
+    int err = SUCCESS;
     int length;
     char *buffer = file_contents(filename, &length);
     char *buffer_ptr = buffer;
@@ -125,7 +125,7 @@ int load_obj_file(const char *filename, uint32 *_meshes, uint32 *_mesh_count)
         else if (str_starts_with(tok, "oe"))
         {
             UNUSED(normals);
-            
+
             // TODO: Get program and texture from somewhere
             err = mesh_load(name, idx_vertex, vertices, idx_vertex, elements,
                             GL_STATIC_DRAW, &_meshes[idx_mesh]);
@@ -140,10 +140,10 @@ int load_obj_file(const char *filename, uint32 *_meshes, uint32 *_mesh_count)
 
     *_mesh_count = idx_mesh;
     printf("Loaded %s\n", filename);
-    
+
 cleanup:
     free(buffer);
-    return SUCCESS;
+    return err;
 }
 
 //enum OBJ_LINE_TYPE line_type(const char *line)

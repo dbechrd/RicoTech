@@ -5,19 +5,19 @@
 static void pool_print_handles(struct rico_pool *pool);
 
 // TODO: Allocate from heap pool, don't keep calling calloc
-int pool_init(const char *name, uint32 count, uint32 size,
+int pool_init(const char *name, uint32 count, uint32 stride,
               struct rico_pool *_pool)
 {
     struct rico_pool pool;
     uid_init(name, &pool.uid);
     pool.count = count;
-    pool.size = size;
+    pool.stride = stride;
     pool.active = 0;
 
     pool.handles = calloc(count, sizeof(uint32));
     if (!pool.handles) return ERR_BAD_ALLOC;
 
-    pool.pool = calloc(count, size);
+    pool.pool = calloc(count, stride);
     if (!pool.pool) return ERR_BAD_ALLOC;
 
     // Initialize free list
@@ -73,15 +73,16 @@ int pool_free(struct rico_pool *pool, uint32 handle)
     }
 
     // Move deleted handle to free list
-    // E.g. [0 1 2 3 4][5 6 7 8 9]
-    //      Free handle 2
-    //      [0 1 3 4][2 5 6 7 8 9]
-    for (; i < pool->active; i++)
-    {
-        pool->handles[i] = pool->handles[i + 1];
-    }
+    // E.g. [0 1 2 3 4|5 6 7 8 9]
+    //      Free handle 1 (swaps with 4)
+    //      [0 4 2 3|1 5 6 7 8 9]
+
     pool->active--;
-    pool->handles[pool->active] = handle;
+    if (pool->active > 0)
+    {
+        pool->handles[i] = pool->handles[pool->active];
+        pool->handles[pool->active] = handle;
+    }
 
 #ifdef RICO_DEBUG_POOL
     printf("[Pool %d][%s] Free handle: %d", pool->uid.uid, pool->uid.name,
@@ -129,12 +130,12 @@ int pool_save(const struct rico_pool *pool, FILE *fs)
     // Header
     fwrite(&pool->uid,    sizeof(pool->uid),    1, fs);
     fwrite(&pool->count,  sizeof(pool->count),  1, fs);
-    fwrite(&pool->size,   sizeof(pool->size),   1, fs);
+    fwrite(&pool->stride, sizeof(pool->stride),   1, fs);
     fwrite(&pool->active, sizeof(pool->active), 1, fs);
 
     // Data
     fwrite(pool->handles, sizeof(*pool->handles), pool->count, fs);
-    fwrite(pool->pool,    pool->size,             pool->count, fs);
+    fwrite(pool->pool,    pool->stride,           pool->count, fs);
 
     return SUCCESS;
 }
@@ -146,7 +147,7 @@ int pool_load(FILE *fs, struct rico_pool *_pool)
     // Header
     fread(&pool.uid,    sizeof(pool.uid),    1, fs);
     fread(&pool.count,  sizeof(pool.count),  1, fs);
-    fread(&pool.size,   sizeof(pool.size),   1, fs);
+    fread(&pool.stride, sizeof(pool.stride),   1, fs);
     fread(&pool.active, sizeof(pool.active), 1, fs);
 
     // Data
@@ -155,11 +156,11 @@ int pool_load(FILE *fs, struct rico_pool *_pool)
         pool.handles = calloc(pool.count, sizeof(uint32));
         if (!pool.handles) return ERR_BAD_ALLOC;
 
-        pool.pool = calloc(pool.count, pool.size);
+        pool.pool = calloc(pool.count, pool.stride);
         if (!pool.pool) return ERR_BAD_ALLOC;
 
         fread(pool.handles, sizeof(*pool.handles), pool.count, fs);
-        fread(pool.pool,    pool.size,             pool.count, fs);
+        fread(pool.pool,    pool.stride,           pool.count, fs);
     }
 
     #ifdef RICO_DEBUG_POOL

@@ -86,7 +86,6 @@ static int build_texture(struct rico_texture *tex, const void *pixels)
     //--------------------------------------------------------------------------
     // Generate textures
     //--------------------------------------------------------------------------
-
     /*************************************************************************
     | Common texture binding targets:
     |
@@ -112,7 +111,6 @@ static int build_texture(struct rico_texture *tex, const void *pixels)
     //--------------------------------------------------------------------------
     // Configure texture wrapping (for uv-coords outside range 0.0f - 1.0f)
     //--------------------------------------------------------------------------
-
     /*************************************************************************
     | Wrapping modes:
     |
@@ -124,16 +122,15 @@ static int build_texture(struct rico_texture *tex, const void *pixels)
     *************************************************************************/
     glTexParameteri(tex->gl_target, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(tex->gl_target, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    //glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT);
+    //glTexParameteri(tex->gl_target, GL_TEXTURE_WRAP_R, GL_REPEAT);
 
     // For GL_CLAMP_TO_BORDER
     //float color[] = { 1.0f, 0.0f, 0.0f, 1.0f };
-    //glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color);
+    //glTexParameterfv(tex->gl_target, GL_TEXTURE_BORDER_COLOR, color);
 
     //--------------------------------------------------------------------------
     // Configure texture filtering
     //--------------------------------------------------------------------------
-
     /*************************************************************************
     | Filering modes:
     |
@@ -161,7 +158,6 @@ static int build_texture(struct rico_texture *tex, const void *pixels)
     | GLenum    type
     | const void *pixels
     *************************************************************************/
-
     // Tex creation params are dependent on BPP
     GLenum format;
     switch (tex->bpp)
@@ -190,7 +186,6 @@ static int build_texture(struct rico_texture *tex, const void *pixels)
     //--------------------------------------------------------------------------
     // Clean up
     //--------------------------------------------------------------------------
-
     // Unbind the texture
     glBindTexture(tex->gl_target, 0);
     return SUCCESS;

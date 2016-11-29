@@ -156,8 +156,9 @@ static void object_render_direct(const struct rico_object *obj,
         view_matrix = view_camera.view_matrix;
 
         // HACK: This only works when object is uniformly scaled on X/Y plane.
-        // TODO: UV scaling in general only works when object is uniformly scaled.
-        //       Maybe I should only allow textured objects to be uniformly scaled?
+        // TODO: UV scaling in general only works when object is uniformly
+        //       scaled. Maybe I should only allow textured objects to be
+        //       uniformly scaled?
         // UV-coord scale
         glUniform2f(prog->u_scale_uv, obj->scale.x, obj->scale.y);
     }
@@ -178,8 +179,6 @@ static void object_render_direct(const struct rico_object *obj,
     //       the correct textures are bound before each draw to the texture
     //       index assumed when the program was initialized.
     glUniform1i(prog->u_tex, 0);
-
-
 
     // Bind texture and render mesh
     //
