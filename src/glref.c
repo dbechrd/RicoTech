@@ -194,33 +194,33 @@ int init_manual_chunk(uint32 *meshes, uint32 mesh_count)
     // Create world objects
     //--------------------------------------------------------------------------
     // World font object
-    object_create("World String Test", OBJ_STRING_WORLD, mesh_font_test,
-                  tex_font_test, NULL, &obj_fonttest);
+    object_create(&obj_fonttest, "World String Test", OBJ_STRING_WORLD,
+                  mesh_font_test, tex_font_test, NULL);
     object_trans(obj_fonttest, 0.0f, 2.0f, 0.0f);
     object_scale(obj_fonttest, 1.0f, 1.0f, 1.0f);
 
     // Screen font object
-    object_create("Screen String Test", OBJ_STRING_SCREEN, mesh_font_test,
-                  tex_font_test, NULL, &obj_fonttest);
+    object_create(&obj_fonttest, "Screen String Test", OBJ_STRING_SCREEN,
+                  mesh_font_test, tex_font_test, NULL);
     object_trans(obj_fonttest, -1.0f, 1.0f, 0.0f);
     object_scale(obj_fonttest, 0.125f, 0.125f * SCREEN_ASPECT, 1.0f);
 
     // Ground
-    object_create("Ground", OBJ_DEFAULT, mesh_default, tex_rock, NULL,
-                  &obj_ground);
+    object_create(&obj_ground, "Ground", OBJ_DEFAULT, mesh_default, tex_rock,
+                  NULL);
     object_rot_x(obj_ground, -90.0f);
     object_scale(obj_ground, 64.0f, 64.0f, 1.0f);
 
     // Hello
-    object_create("Hello", OBJ_DEFAULT, mesh_default, tex_hello, NULL,
-                  &obj_hello);
+    object_create(&obj_hello, "Hello", OBJ_DEFAULT, mesh_default, tex_hello,
+                  NULL);
     object_trans(obj_hello, 0.0f, 2.0f, -4.0f);
     object_rot_y(obj_hello, 40.0f);
     object_scale(obj_hello, 1.0f, 2.0f, 1.0f);
 
     // Ruler
-    object_create("Ruler", OBJ_DEFAULT, mesh_default, RICO_TEXTURE_DEFAULT, NULL,
-                  &obj_ruler);
+    object_create(&obj_ruler, "Ruler", OBJ_DEFAULT, mesh_default, RICO_TEXTURE_DEFAULT,
+                  NULL);
     object_trans(obj_ruler, 0.0f, 1.0f, -3.0f);
     object_scale(obj_ruler, 1.0f, 1.0f, 1.0f);
 
@@ -228,34 +228,34 @@ int init_manual_chunk(uint32 *meshes, uint32 mesh_count)
     struct vec4 wall_scale = (struct vec4) { 8.0f, 2.5f, 1.0f, 1.0f };
 
     // Wall front
-    object_create("wall1", OBJ_DEFAULT, mesh_default, tex_hello, NULL,
-                  &obj_wall1);
+    object_create(&obj_wall1, "wall1", OBJ_DEFAULT, mesh_default, tex_hello,
+                  NULL);
     object_trans(obj_wall1, 0.0f, 2.5f, -8.0f);
     object_scale(obj_wall1, wall_scale.x, wall_scale.y, wall_scale.z);
 
     // Wall left
-    object_create("wall2", OBJ_DEFAULT, mesh_default, tex_hello, NULL,
-                  &obj_wall2);
+    object_create(&obj_wall2, "wall2", OBJ_DEFAULT, mesh_default, tex_hello,
+                  NULL);
     object_trans(obj_wall2, -8.0f, 2.5f, 0.0f);
     object_scale(obj_wall2, wall_scale.x, wall_scale.y, wall_scale.z);
 
     // Wall back
-    object_create("wall3", OBJ_DEFAULT, mesh_default, tex_hello, NULL,
-                  &obj_wall3);
+    object_create(&obj_wall3, "wall3", OBJ_DEFAULT, mesh_default, tex_hello,
+                  NULL);
     object_trans(obj_wall3, 0.0f, 2.5f, 8.0f);
     object_rot_y(obj_wall3, 180.0f);
     object_scale(obj_wall3, wall_scale.x, wall_scale.y, wall_scale.z);
 
     // Wall right
-    object_create("wall4", OBJ_DEFAULT, mesh_default, tex_hello, NULL,
-                  &obj_wall4);
+    object_create(&obj_wall4, "wall4", OBJ_DEFAULT, mesh_default, tex_hello,
+                  NULL);
     object_trans(obj_wall4, 8.0f, 2.5f, 0.0f);
     object_rot_y(obj_wall4, -90.0f);
     object_scale(obj_wall4, wall_scale.x, wall_scale.y, wall_scale.z);
 
     // Wall five
-    object_create("wall5", OBJ_DEFAULT, mesh_default, tex_hello, NULL,
-                  &obj_wall5);
+    object_create(&obj_wall5, "wall5", OBJ_DEFAULT, mesh_default, tex_hello,
+                  NULL);
     object_trans(obj_wall5, 4.0f, 2.5f, 0.0f);
     object_rot_y(obj_wall5, -90.0f);
     object_scale(obj_wall5, wall_scale.x, wall_scale.y, wall_scale.z);
@@ -263,9 +263,9 @@ int init_manual_chunk(uint32 *meshes, uint32 mesh_count)
     {
         for (uint32 i = 0; i < mesh_count; i++)
         {
-            object_create(mesh_name(meshes[i]), OBJ_DEFAULT, meshes[i],
-                          RICO_TEXTURE_DEFAULT, mesh_bbox(meshes[i]),
-                          &arr_objects[i]);
+            object_create(&arr_objects[i], mesh_name(meshes[i]), OBJ_DEFAULT,
+                          meshes[i], RICO_TEXTURE_DEFAULT,
+                          mesh_bbox(meshes[i]));
 
             // HACK: Don't z-fight ground plane
             object_trans(arr_objects[i], 0.0f, EPSILON, 0.0f);
@@ -354,8 +354,8 @@ void duplicate_selected()
     struct rico_object *selected = object_fetch(selected_handle);
 
     uint32 newObj;
-    object_create("Duplicate", selected->type, selected->mesh,
-                  selected->texture, mesh_bbox(selected->mesh), &newObj);
+    object_create(&newObj, "Duplicate", selected->type, selected->mesh,
+                  selected->texture, mesh_bbox(selected->mesh));
 
     struct rico_object *new_obj = object_fetch(newObj);
     if (newObj)

@@ -121,6 +121,14 @@ static int init_gl(struct bbox *bbox)
     return SUCCESS;
 }
 
+void bbox_free(struct bbox **bbox)
+{
+    glDeleteBuffers(2, (*bbox)->vbos);
+    glDeleteVertexArrays(1, &(*bbox)->vao);
+    free(*bbox);
+    *bbox = NULL;
+}
+
 void bbox_render(const struct bbox *box, const struct mat4 *proj_matrix,
                  const struct mat4 *view_matrix,
                  const struct mat4 *model_matrix)
@@ -132,63 +140,26 @@ void bbox_render_color(const struct bbox *box, const struct mat4 *proj_matrix,
                        const struct mat4 *view_matrix,
                        const struct mat4 *model_matrix, const struct col4 color)
 {
-    //--------------------------------------------------------------------------
-    // Draw
-    //--------------------------------------------------------------------------
+    if (box->wireframe && view_camera.fill_mode != GL_LINE)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    // Set shader program
     glUseProgram(box->prog->prog_id);
 
-    UNUSED(proj_matrix);
-
+    // Transform
     glUniformMatrix4fv(box->prog->u_proj, 1, GL_TRUE, proj_matrix->a);
     glUniformMatrix4fv(box->prog->u_view, 1, GL_TRUE, view_matrix->a);
     glUniformMatrix4fv(box->prog->u_model, 1, GL_TRUE, model_matrix->a);
 
-    // Model texture
-    // Note: We don't have to do this every time as long as we make sure
-    //       the correct textures are bound before each draw to the texture
-    //       index assumed when the program was initialized.
-    //glUniform1i(box->program->u_tex, 0);
-
-    // UV-coord scale
-    //uv_scale = (struct tex2) { 1.0f, 1.0f };
-    //glUniform2f(box->program->u_scale_uv, uv_scale.u, uv_scale.v);
-
-    // Bind texture(s)
-    //glActiveTexture(GL_TEXTURE0);
-    //glBindTexture(target, texture);
-
-    // BBox color
+    // Color
     glUniform4f(box->prog->u_color, color.r, color.g, color.b, color.a);
 
     // Draw
-    if (box->wireframe)
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
     glBindVertexArray(box->vao);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
-
-    if (box->wireframe)
-        glPolygonMode(GL_FRONT_AND_BACK, view_camera.fill_mode);
-
     glUseProgram(0);
-    //glBindTexture(tex_default->target, 0);
 
-    // Clean up
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-}
-
-bool bbox_intersects(const struct bbox *a, const struct bbox *b)
-{
-    if (a->p1.x < b->p0.x) return false;
-    if (b->p1.x < a->p0.x) return false;
-
-    if (a->p1.y < b->p0.y) return false;
-    if (b->p1.y < a->p0.y) return false;
-
-    if (a->p1.z < b->p0.z) return false;
-    if (b->p1.z < a->p0.z) return false;
-
-    return true;
+    if (box->wireframe && view_camera.fill_mode != GL_LINE)
+        glPolygonMode(GL_FRONT_AND_BACK, view_camera.fill_mode);
 }

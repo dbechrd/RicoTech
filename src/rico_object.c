@@ -16,8 +16,8 @@ int object_init(uint32 pool_size)
                      objects);
 }
 
-int object_create(const char *name, enum rico_object_type type, uint32 mesh,
-                  uint32 texture, const struct bbox *bbox, uint32 *_handle)
+int object_create(uint32 *_handle, const char *name, enum rico_object_type type,
+                  uint32 mesh, uint32 texture, const struct bbox *bbox)
 {
     int err;
     *_handle = RICO_OBJECT_DEFAULT;
@@ -32,7 +32,7 @@ int object_create(const char *name, enum rico_object_type type, uint32 mesh,
     struct rico_object *obj = pool_read(objects, *_handle);
 
     //TODO: Should default W component be 0 or 1?
-    uid_init(name, &obj->uid);
+    uid_init(&obj->uid, RICO_UID_OBJECT, name);
     obj->type = type;
     obj->scale = (struct vec4) { 1.0f, 1.0f, 1.0f, 1.0f };
     obj->mesh = mesh;
@@ -194,7 +194,7 @@ static void object_render_direct(const struct rico_object *obj,
 }
 
 void object_render_type(enum rico_object_type type,
-                       const struct program_default *prog)
+                        const struct program_default *prog)
 {
     struct rico_object *obj;
     for (uint32 i = 0; i < objects->active; ++i)
@@ -205,6 +205,48 @@ void object_render_type(enum rico_object_type type,
             object_render_direct(obj, prog);
         }
     }
+}
+
+int object_serialize(uint32 handle, FILE *fs)
+{
+    struct rico_object *obj = pool_read(objects, handle);
+    fwrite(&obj->uid,     sizeof(obj->uid),     1, fs);
+    fwrite(&obj->type,    sizeof(obj->type),    1, fs);
+    fwrite(&obj->trans,   sizeof(obj->trans),   1, fs);
+    fwrite(&obj->rot,     sizeof(obj->rot),     1, fs);
+    fwrite(&obj->scale,   sizeof(obj->scale),   1, fs);
+    fwrite(&obj->mesh,    sizeof(obj->mesh),    1, fs);
+    fwrite(&obj->texture, sizeof(obj->texture), 1, fs);
+
+    //TODO: (struct rico_uid *)(obj->bbox)->serialize()
+    fwrite(&obj->bbox,    sizeof(obj->bbox),    1, fs);
+    return SUCCESS;
+}
+
+int object_deserialize(uint32 *_handle, struct rico_pool *pool, FILE *fs)
+{
+    //int err = pool_alloc(pool, _handle);
+    //if (err) return err;
+
+    struct rico_object *obj = pool_read(pool, *_handle);
+
+    fread(&obj->uid,     sizeof(obj->uid),     1, fs);
+    fread(&obj->type,    sizeof(obj->type),    1, fs);
+    fread(&obj->trans,   sizeof(obj->trans),   1, fs);
+    fread(&obj->rot,     sizeof(obj->rot),     1, fs);
+    fread(&obj->scale,   sizeof(obj->scale),   1, fs);
+    fread(&obj->mesh,    sizeof(obj->mesh),    1, fs);
+    fread(&obj->texture, sizeof(obj->texture), 1, fs);
+    fread(&obj->bbox,    sizeof(obj->bbox),    1, fs);
+
+    // TODO: MESH MUST BE LOADED LOADED FIRST!!
+    // obj->bbox = *mesh_bbox(obj->mesh);
+
+    // HACK: Regenerate bounding bbox
+    bbox_init(&obj->bbox, obj->bbox.p0, obj->bbox.p1,
+              obj->bbox.color);
+
+    return SUCCESS;
 }
 
 struct rico_pool *object_pool_get_unsafe()

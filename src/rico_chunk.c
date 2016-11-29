@@ -55,7 +55,7 @@ int chunk_init(const char *name, uint32 tex_count, uint32 mesh_count,
     UNUSED(meshes);
 
     struct rico_chunk chunk;
-    uid_init(name, &chunk.uid);
+    uid_init(&chunk.uid, RICO_UID_CHUNK, name);
     chunk.tex_count = 0; //tex_count;
     chunk.mesh_count = 0; //mesh_count;
     chunk.obj_count = obj_count;
@@ -99,9 +99,9 @@ int chunk_save(const char *filename, const struct rico_chunk *chunk)
     fwrite(&chunk->obj_count,  sizeof(chunk->obj_count),  1, fs);
 
     // Pools
-    pool_save(&chunk->textures, fs);
-    pool_save(&chunk->meshes, fs);
-    pool_save(&chunk->objects, fs);
+    pool_serialize(&chunk->textures, fs);
+    pool_serialize(&chunk->meshes, fs);
+    pool_serialize(&chunk->objects, fs);
 
     fclose(fs);
 
@@ -149,21 +149,9 @@ int chunk_load(const char *filename, struct rico_chunk *_chunk)
     fread(&_chunk->obj_count,  sizeof(_chunk->obj_count),  1, fs);
 
     // Pools
-    pool_load(fs, &_chunk->textures);
-    pool_load(fs, &_chunk->meshes);
-    pool_load(fs, &_chunk->objects);
-
-    // HACK: Set object pool directly and re-generate bounding boxes.
-    // Note: Should not even store bounding box info that will become invalid;
-    //       just store v0, v1, and color.
-    object_pool_set_unsafe(&_chunk->objects);
-    for (uint32 i = 0; i < _chunk->objects.active; ++i)
-    {
-        struct rico_object *obj = object_fetch(_chunk->objects.handles[i]);
-
-        bbox_init(&obj->bbox, obj->bbox.p0, obj->bbox.p1,
-                  obj->bbox.color);
-    }
+    pool_deserialize(&_chunk->textures, fs);
+    pool_deserialize(&_chunk->meshes, fs);
+    pool_deserialize(&_chunk->objects, fs);
 
     fclose(fs);
 

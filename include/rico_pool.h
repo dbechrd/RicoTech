@@ -20,10 +20,10 @@ int pool_alloc(struct rico_pool *pool, uint32 *_handle);
 int pool_free(struct rico_pool *pool, uint32 handle);
 uint32 pool_next(struct rico_pool *pool, uint32 handle);
 uint32 pool_prev(struct rico_pool *pool, uint32 handle);
-int pool_save(const struct rico_pool *pool, FILE *fs);
-int pool_load(FILE *fs, struct rico_pool *_pool);
+int pool_serialize(const struct rico_pool *pool, FILE *fs);
+int pool_deserialize(struct rico_pool *_pool, FILE *fs);
 
-static inline void *pool_read(struct rico_pool *pool, uint32 handle)
+static inline void *pool_read(const struct rico_pool *pool, uint32 handle)
 {
     rico_assert(pool);
     rico_assert(handle < pool->count);

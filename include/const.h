@@ -86,6 +86,10 @@ typedef unsigned long ulong;
 #define rico_assert(exp)
 #endif
 
+// Used to generate enums
+#define GEN_LIST(val) val,
+#define GEN_STRING(val) #val,
+
 //------------------------------------------------------------------------------
 // Enums
 //------------------------------------------------------------------------------

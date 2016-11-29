@@ -1,4 +1,5 @@
 #include "rico_pool.h"
+#include "rico_object.h"
 #include "stdlib.h"
 #include "stdio.h"
 
@@ -8,8 +9,10 @@ static void pool_print_handles(struct rico_pool *pool);
 int pool_init(const char *name, uint32 count, uint32 stride,
               struct rico_pool *_pool)
 {
+    rico_assert(count > 0);
+
     struct rico_pool pool;
-    uid_init(name, &pool.uid);
+    uid_init(&pool.uid, RICO_UID_POOL, name);
     pool.count = count;
     pool.stride = stride;
     pool.active = 0;
@@ -125,29 +128,38 @@ uint32 pool_prev(struct rico_pool *pool, uint32 handle)
     return 0;
 }
 
-int pool_save(const struct rico_pool *pool, FILE *fs)
+int pool_serialize(const struct rico_pool *pool, FILE *fs)
 {
     // Header
     fwrite(&pool->uid,    sizeof(pool->uid),    1, fs);
     fwrite(&pool->count,  sizeof(pool->count),  1, fs);
-    fwrite(&pool->stride, sizeof(pool->stride),   1, fs);
+    fwrite(&pool->stride, sizeof(pool->stride), 1, fs);
     fwrite(&pool->active, sizeof(pool->active), 1, fs);
 
     // Data
     fwrite(pool->handles, sizeof(*pool->handles), pool->count, fs);
-    fwrite(pool->pool,    pool->stride,           pool->count, fs);
+    //fwrite(pool->pool,    pool->stride,           pool->count, fs);
+    for (uint32 i = 0; i < pool->active; ++i)
+    {
+        enum rico_uid_type *type =
+            (enum rico_uid_type *)pool_read(pool, pool->handles[i]);
+        if (!RicoSerializers[*type])
+            break;
+
+        RicoSerializers[*type](pool->handles[i], fs);
+    }
 
     return SUCCESS;
 }
 
-int pool_load(FILE *fs, struct rico_pool *_pool)
+int pool_deserialize(struct rico_pool *_pool, FILE *fs)
 {
     struct rico_pool pool = { 0 };
 
     // Header
     fread(&pool.uid,    sizeof(pool.uid),    1, fs);
     fread(&pool.count,  sizeof(pool.count),  1, fs);
-    fread(&pool.stride, sizeof(pool.stride),   1, fs);
+    fread(&pool.stride, sizeof(pool.stride), 1, fs);
     fread(&pool.active, sizeof(pool.active), 1, fs);
 
     // Data
@@ -160,7 +172,16 @@ int pool_load(FILE *fs, struct rico_pool *_pool)
         if (!pool.pool) return ERR_BAD_ALLOC;
 
         fread(pool.handles, sizeof(*pool.handles), pool.count, fs);
-        fread(pool.pool,    pool.stride,           pool.count, fs);
+        //fread(pool.pool,    pool.stride,           pool.count, fs);
+        for (uint32 i = 0; i < pool.active; ++i)
+        {
+            enum rico_uid_type *type =
+                (enum rico_uid_type *)pool_read(&pool, pool.handles[i]);
+            if (!RicoDeserializers[*type])
+                break;
+
+            RicoDeserializers[*type](&pool.handles[i], &pool, fs);
+        }
     }
 
     #ifdef RICO_DEBUG_POOL

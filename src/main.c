@@ -162,6 +162,7 @@ static int rico_init_objects()
 {
     printf("Loading objects\n");
     int err = chunk_load("chunks/chunky.bin", &first_chunk);
+    object_pool_set_unsafe(&first_chunk.objects);
     return err;
 }
 
@@ -171,6 +172,9 @@ static int rico_init()
     init_sdl();
     init_gl3w();
     init_opengl();
+
+    RicoSerializers[RICO_UID_OBJECT] = &object_serialize;
+    RicoDeserializers[RICO_UID_OBJECT] = &object_deserialize;
 
     int err = rico_init_textures();
     if (err) return err;
@@ -192,10 +196,10 @@ int mymain()
     if (err) return err;
 
     // Initialize objects
-    // err = init_manual_chunk(meshes, mesh_count);
-    // if (err) return err;
-    err = rico_init_objects();
+    err = init_manual_chunk(meshes, mesh_count);
     if (err) return err;
+    // err = rico_init_objects();
+    // if (err) return err;
 
     //Human walk speed empirically found to be 33 steps in 20 seconds. That
     //is approximately 1.65 steps per second. At 60 fps, that is 0.0275 steps

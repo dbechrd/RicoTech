@@ -38,7 +38,7 @@ int mesh_load(const char *name, uint32 vertex_count,
     if (err) return err;
 
     struct rico_mesh *mesh = pool_read(&meshes, *_handle);
-    uid_init(name, &mesh->uid);
+    uid_init(&mesh->uid, RICO_UID_MESH, name);
 
     err = build_mesh(mesh, vertex_count, vertex_data, element_count,
                      element_data, hint);
