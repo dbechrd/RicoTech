@@ -68,7 +68,7 @@ static void open_libgl(void)
         kCFURLPOSIXPathStyle, true);
 
     bundle = CFBundleCreate(kCFAllocatorDefault, bundleURL);
-    rico_assert(bundle != NULL);
+    RICO_ASSERT(bundle != NULL);
 }
 
 static void close_libgl(void)

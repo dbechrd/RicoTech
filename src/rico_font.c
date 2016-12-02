@@ -123,7 +123,7 @@ void font_setblend(const struct rico_font *font)
 int font_render(const struct rico_font *font, int x, int y, const char *text,
                 struct col4 bg, uint32 *_mesh, uint32 *_texture)
 {
-    int err;
+    enum rico_error err;
     //font_setblend(font);
 
     int text_len = strlen(text);

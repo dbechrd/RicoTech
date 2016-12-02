@@ -24,14 +24,14 @@ static int make_program(GLuint vertex_shader, GLuint fragment_shader,
     glDetachShader(program, fragment_shader);
 
     glGetProgramiv(program, GL_LINK_STATUS, &status);
-    if (status == ERR_GL_LINK_FAILED)
+    if (status == GL_FALSE)
     {
         fprintf(stderr, "Failed to link shader program:\n");
         show_info_log(program, glGetProgramiv, glGetProgramInfoLog);
 
         //Clean up
         glDeleteProgram(program);
-        return ERR_SHADER_LINK;
+        return RICO_ERROR(ERR_SHADER_LINK);
     }
 
     *_program = program;
@@ -47,7 +47,7 @@ static inline GLint program_get_attrib_location(GLuint program,
                                                 const char* name)
 {
     GLint location = glGetAttribLocation(program, name);
-    if (location == ERR_GL_ATTRIB_NOTFOUND)
+    if (location < 0)
     {
         fprintf(stderr, "[Program %d] Location not found for attribute '%s'. "
                 "Possibly optimized out.\n", program, name);
@@ -60,7 +60,7 @@ static inline GLint program_get_uniform_location(GLuint program,
                                                  const char* name)
 {
     GLint location = glGetUniformLocation(program, name);
-    if (location == ERR_GL_ATTRIB_NOTFOUND)
+    if (location < 0)
     {
         fprintf(stderr, "[Program %d] Location not found for attribute '%s'. "
                 "Possibly optimized out.\n", program, name);
@@ -94,7 +94,7 @@ static inline void program_default_get_locations(struct program_default *p)
 int make_program_default(struct program_default **_program)
 {
     static struct program_default *prog_default = NULL;
-    int err;
+    enum rico_error err;
 
     if (prog_default != NULL) {
         *_program = prog_default;
@@ -172,7 +172,7 @@ static inline void program_bbox_get_locations(struct program_bbox *p)
 int make_program_bbox(struct program_bbox **_program)
 {
     static struct program_bbox *prog_bbox = NULL;
-    int err;
+    enum rico_error err;
 
     if (prog_bbox != NULL) {
         *_program = prog_bbox;
@@ -213,7 +213,7 @@ void free_program_bbox(struct program_bbox **program)
     //TODO: Handle error
     if ((*program)->ref_count > 0) {
         printf("Cannot delete a program in use!");
-        rico_assert(0);
+        RICO_ASSERT(0);
     }
 
     glDeleteProgram((*program)->prog_id);

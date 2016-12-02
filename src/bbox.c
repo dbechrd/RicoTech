@@ -11,7 +11,7 @@ static int init_gl(struct bbox *bbox);
 int bbox_init(struct bbox *bbox, struct vec4 p0, struct vec4 p1,
               struct col4 color)
 {
-    int err = make_program_bbox(&bbox->prog);
+    enum rico_error err = make_program_bbox(&bbox->prog);
     if (err) return err;
 
     bbox->p0 = p0;
@@ -19,7 +19,8 @@ int bbox_init(struct bbox *bbox, struct vec4 p0, struct vec4 p1,
     bbox->color = color;
     bbox->wireframe = true;
 
-    return init_gl(bbox);
+    err = init_gl(bbox);
+    return err;
 }
 
 int bbox_init_mesh(struct bbox *bbox, const struct mesh_vertex *verts,
@@ -121,12 +122,10 @@ static int init_gl(struct bbox *bbox)
     return SUCCESS;
 }
 
-void bbox_free(struct bbox **bbox)
+void bbox_free_mesh(struct bbox *bbox)
 {
-    glDeleteBuffers(2, (*bbox)->vbos);
-    glDeleteVertexArrays(1, &(*bbox)->vao);
-    free(*bbox);
-    *bbox = NULL;
+    glDeleteBuffers(2, bbox->vbos);
+    glDeleteVertexArrays(1, &bbox->vao);
 }
 
 void bbox_render(const struct bbox *box, const struct mat4 *proj_matrix,

@@ -1,7 +1,22 @@
 #ifndef CONST_H
 #define CONST_H
 
-#define UNUSED(x) (void)(x)
+// Debug
+#ifndef RICO_DEBUG
+    #define RICO_DEBUG
+#endif
+
+#ifdef RICO_DEBUG
+#ifndef RICO_DEBUG_ERROR_ASSERT
+    #define RICO_DEBUG_ERROR_ASSERT
+#endif
+#ifndef RICO_DEBUG_INFO
+    #define RICO_DEBUG_INFO
+    #define RICO_DEBUG_UID
+    #define RICO_DEBUG_POOL
+    #define RICO_DEBUG_CHUNK
+#endif
+#endif
 
 // Cleanup: This is probably dumb
 typedef signed char int8_t;
@@ -33,17 +48,6 @@ typedef unsigned long ulong;
 //------------------------------------------------------------------------------
 // Rico constants
 //------------------------------------------------------------------------------
-// Debug
-#ifndef RICO_DEBUG
-#define RICO_DEBUG
-#endif
-
-#ifndef RICO_DEBUG_INFO
-#define RICO_DEBUG_UID
-#define RICO_DEBUG_POOL
-#define RICO_DEBUG_CHUNK
-#endif
-
 // Math / Physics
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327950288
@@ -69,42 +73,53 @@ typedef unsigned long ulong;
 #define RICO_SHADER_UV_LOC 2
 
 //------------------------------------------------------------------------------
-// Error codes
-//------------------------------------------------------------------------------
-//TODO: Replace with ERR enum values
-#define ERR_GL_LINK_FAILED GL_FALSE
-#define ERR_GL_ATTRIB_NOTFOUND -1
-
-//------------------------------------------------------------------------------
 // Macros
 //------------------------------------------------------------------------------
 #define sizeof_member(type, member) sizeof(((type *)0)->member)
 
-#ifdef RICO_DEBUG
-#define rico_assert(exp) if(!(exp)) {*(int*)0=0;}
-#else
-#define rico_assert(exp)
-#endif
-
 // Used to generate enums
 #define GEN_LIST(val) val,
 #define GEN_STRING(val) #val,
+
+#define UNUSED(x) (void)(x)
+
+#ifdef RICO_DEBUG
+    #define RICO_ASSERT(exp) if(!(exp)) {*(int*)0=0;}
+#else
+    #define RICO_ASSERT(exp)
+#endif
 
 //------------------------------------------------------------------------------
 // Enums
 //------------------------------------------------------------------------------
 enum { VBO_VERTEX, VBO_ELEMENT };
 
-enum {
-    SUCCESS,
-    ERR_BAD_ALLOC,
-    ERR_POOL_OUT_OF_MEMORY,
-    ERR_FILE_WRITE,
-    ERR_FILE_READ,
-    ERR_TEXTURE_LOAD,
-    ERR_TEXTURE_UNSUPPORTED_BPP,
-    ERR_SHADER_COMPILE,
-    ERR_SHADER_LINK
+#define RICO_ERRORS(f) \
+    f(SUCCESS)                      \
+    f(ERR_BAD_ALLOC)                \
+    f(ERR_POOL_OUT_OF_MEMORY)       \
+    f(ERR_FILE_WRITE)               \
+    f(ERR_FILE_READ)                \
+    f(ERR_FILE_SIGNATURE)           \
+    f(ERR_SERIALIZER_NULL)          \
+    f(ERR_DESERIALIZER_NULL)        \
+    f(ERR_TEXTURE_LOAD)             \
+    f(ERR_TEXTURE_UNSUPPORTED_BPP)  \
+    f(ERR_SHADER_COMPILE)           \
+    f(ERR_SHADER_LINK)              \
+    f(ERR_COUNT)
+
+enum rico_error {
+    RICO_ERRORS(GEN_LIST)
 };
+extern const char *rico_error_string[];
+
+#ifdef RICO_DEBUG
+    enum rico_error rico_error_print(enum rico_error err, const char *file,
+                                     int line);
+    #define RICO_ERROR(err) rico_error_print(err, __FILE__, __LINE__)
+#else
+    #define RICO_ERROR(err) err
+#endif
 
 #endif // CONST_H

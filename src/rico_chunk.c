@@ -74,10 +74,13 @@ int chunk_init(const char *name, uint32 tex_count, uint32 mesh_count,
 
 int chunk_save(const char *filename, const struct rico_chunk *chunk)
 {
+    enum rico_error err;
+
     FILE *fs = fopen(filename, "wb");
     if (!fs) {
         fprintf(stderr, "Unable to open %s for writing\n", filename);
-        return ERR_FILE_WRITE;
+        err = RICO_ERROR(ERR_FILE_WRITE);
+        goto cleanup;
     }
 
     // TODO: Separate dynamic data from static data. Textures, meshes, and
@@ -85,12 +88,8 @@ int chunk_save(const char *filename, const struct rico_chunk *chunk)
     //       should be loaded as part of the save file. Save file can also
     //       override static objects' positions, states, etc.
 
-    //--------------------------------------------------------------------------
-    // fwrite(_SrcBuf, _ElementSize, _Count, _Stream)
-    //--------------------------------------------------------------------------
-
     // File signature
-    fwrite(SIGNATURE, sizeof(SIGNATURE), 1, fs);
+    fwrite(SIGNATURE, SIGNATURE_SIZE, 1, fs);
 
     // Chunk header
     fwrite(&chunk->uid,        sizeof(chunk->uid),        1, fs);
@@ -99,17 +98,22 @@ int chunk_save(const char *filename, const struct rico_chunk *chunk)
     fwrite(&chunk->obj_count,  sizeof(chunk->obj_count),  1, fs);
 
     // Pools
-    pool_serialize(&chunk->textures, fs);
-    pool_serialize(&chunk->meshes, fs);
-    pool_serialize(&chunk->objects, fs);
+    //err = rico_serializer(&chunk->textures, fs);
+    //if (err) goto cleanup;
+    //err = rico_serializer(&chunk->meshes, fs);
+    //if (err) goto cleanup;
+    err = rico_serializer(&chunk->objects, fs);
+    if (err) goto cleanup;
 
-    fclose(fs);
 
 #ifdef RICO_DEBUG_CHUNK
     printf("[Chunk %d][%s] Chunk saved to %s\n", chunk->uid.uid,
            chunk->uid.name, filename);
 #endif
-    return SUCCESS;
+
+cleanup:
+    fclose(fs);
+    return err;
 }
 
 //header
@@ -121,25 +125,27 @@ int chunk_save(const char *filename, const struct rico_chunk *chunk)
 
 int chunk_load(const char *filename, struct rico_chunk *_chunk)
 {
+    enum rico_error err;
+
     FILE *fs = fopen(filename, "rb");
     if (!fs) {
         fprintf(stderr, "Unable to open %s for reading\n", filename);
-        return ERR_FILE_READ;
+        err = RICO_ERROR(ERR_FILE_READ);
+        goto cleanup;
     }
 
     // TODO: Wrap fread() calls in something that checks if fread() return
     //       value (bytes read) is less than requested bytes. If so, check
     //       for EOF with feof() or error with ferror().
 
-    //--------------------------------------------------------------------------
-    // fread(_DstBuf, _ElementSize, _Count, _Stream)
-    //--------------------------------------------------------------------------
+    // File signature
     char SIGNATURE_BUFFER[SIGNATURE_SIZE];
     fread(&SIGNATURE_BUFFER, SIGNATURE_SIZE, 1, fs);
     if (strncmp(SIGNATURE_BUFFER, SIGNATURE, SIGNATURE_SIZE))
     {
        fprintf(stderr, "Invalid chunk signature\n");
-       return ERR_FILE_READ;
+       err = RICO_ERROR(ERR_FILE_SIGNATURE);
+       goto cleanup;
     }
 
     // Chunk header
@@ -149,17 +155,23 @@ int chunk_load(const char *filename, struct rico_chunk *_chunk)
     fread(&_chunk->obj_count,  sizeof(_chunk->obj_count),  1, fs);
 
     // Pools
-    pool_deserialize(&_chunk->textures, fs);
-    pool_deserialize(&_chunk->meshes, fs);
-    pool_deserialize(&_chunk->objects, fs);
+    //err = rico_deserializer(&_chunk->textures, fs);
+    //if (err) goto cleanup;
+    //err = rico_deserializer(&_chunk->meshes, fs);
+    //if (err) goto cleanup;
 
-    fclose(fs);
+    fread(&_chunk->objects, sizeof(struct rico_uid), 1, fs);
+    err = rico_deserializer(&_chunk->objects, fs);
+    if (err) goto cleanup;
 
 #ifdef RICO_DEBUG_CHUNK
     printf("[Chunk %d][%s] Chunk loaded from %s\n", _chunk->uid.uid,
            _chunk->uid.name, filename);
 #endif
-    return SUCCESS;
+
+cleanup:
+    fclose(fs);
+    return err;
 }
 
 #ifdef RICO_DEBUG_CHUNK

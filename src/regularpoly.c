@@ -10,7 +10,7 @@ static struct program_bbox *regularpoly_program = NULL;
 
 int init_regularpoly_program()
 {
-    int err = make_program_bbox(&regularpoly_program);
+    enum rico_error err = make_program_bbox(&regularpoly_program);
     if (err) {
         fprintf(stderr, "regularpoly: Failed to make program.\n");
     }
@@ -25,7 +25,7 @@ static void rebuild_vao(struct regularpoly *poly)
         glDeleteVertexArrays(1, &poly->vao);
     }
 
-    rico_assert(regularpoly_program);
+    RICO_ASSERT(regularpoly_program);
 
     double delta_angle = M_2PI / (double)poly->count;
     double angle = 0;
@@ -104,12 +104,12 @@ void set_regularpoly_pos(struct regularpoly *poly, GLfloat x, GLfloat y, GLfloat
         rebuild_vao(poly);
     else
         poly->dirty_vao = true;
-        
+
 }
 
 void render_regularpoly(struct regularpoly *poly)
 {
-    rico_assert(regularpoly_program->prog_id);
+    RICO_ASSERT(regularpoly_program->prog_id);
 
     if (poly->dirty_vao)
     {

@@ -13,14 +13,14 @@ void test_geom()
     //mat4_mul(trans, scale, result);
     //mat4_print(result);
 
-    struct mat4 *a = make_mat4(
+    struct mat4 a = make_mat4(
         3.f, 2.f, 9.f, 6.f,
         9.f, 6.f, 3.f, 5.f,
         9.f, 7.f, 6.f, 5.f,
         1.f, 5.f, 3.f, 3.f
     );
 
-    struct mat4 *b = make_mat4(
+    struct mat4 b = make_mat4(
         5.f, 1.f, 3.f, 2.f,
         1.f, 6.f, 4.f, 3.f,
         9.f, 2.f, 1.f, 4.f,
@@ -31,9 +31,9 @@ void test_geom()
     //// Test old and new translate
     //struct vec4 trans = (struct vec4) { 2.0f, 3.0f, 4.0f };
     //mat4 b = make_mat4_translate(trans);
-    struct mat4 *result = make_mat4_empty();
+    struct mat4 result = { 0 };
     //
-    mat4_mul(a, b, result);
+    mat4_mul(&a, &b, &result);
     //mat4_print(result);
     //
     //mat4_translate(a, trans);

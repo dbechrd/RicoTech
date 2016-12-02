@@ -30,7 +30,7 @@ int rico_texture_init(uint32 pool_size)
 int texture_load_file(const char *name, GLenum target, const char *filename,
                       uint32 *_handle)
 {
-    int err;
+    enum rico_error err;
     *_handle = RICO_TEXTURE_DEFAULT;
 
     err = pool_alloc(&textures, _handle);
@@ -46,7 +46,7 @@ int texture_load_file(const char *name, GLenum target, const char *filename,
     if (!pixels)
     {
         fprintf(stderr, "Failed to load texture file: %s", filename);
-        err = ERR_TEXTURE_LOAD;
+        err = RICO_ERROR(ERR_TEXTURE_LOAD);
         goto cleanup;
     }
 
@@ -65,7 +65,7 @@ cleanup:
 int texture_load_pixels(const char *name, GLenum target, int width, int height,
                         int bpp, const void *pixels, uint32 *_handle)
 {
-    int err;
+    enum rico_error err;
     *_handle = RICO_TEXTURE_DEFAULT;
 
     err = pool_alloc(&textures, _handle);
@@ -172,7 +172,7 @@ static int build_texture(struct rico_texture *tex, const void *pixels)
         format = GL_RGBA;
         break;
     default: // Unsupported BPP
-        return ERR_TEXTURE_UNSUPPORTED_BPP;
+        return RICO_ERROR(ERR_TEXTURE_UNSUPPORTED_BPP);
     }
 
     glTexImage2D(tex->gl_target, 0, format, tex->width, tex->height, 0, format,

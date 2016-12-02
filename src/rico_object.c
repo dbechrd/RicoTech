@@ -2,6 +2,7 @@
 #include "const.h"
 #include "rico_pool.h"
 #include "camera.h"
+#include <malloc.h>
 
 uint32 RICO_OBJECT_DEFAULT = 0;
 static struct rico_pool *objects;
@@ -19,7 +20,7 @@ int object_init(uint32 pool_size)
 int object_create(uint32 *_handle, const char *name, enum rico_object_type type,
                   uint32 mesh, uint32 texture, const struct bbox *bbox)
 {
-    int err;
+    enum rico_error err;
     *_handle = RICO_OBJECT_DEFAULT;
 
 #ifdef RICO_DEBUG_INFO
@@ -31,10 +32,9 @@ int object_create(uint32 *_handle, const char *name, enum rico_object_type type,
 
     struct rico_object *obj = pool_read(objects, *_handle);
 
-    //TODO: Should default W component be 0 or 1?
     uid_init(&obj->uid, RICO_UID_OBJECT, name);
     obj->type = type;
-    obj->scale = (struct vec4) { 1.0f, 1.0f, 1.0f, 1.0f };
+    obj->scale = VEC4_UNIT;
     obj->mesh = mesh;
     obj->texture = texture;
     //HACK: Use mesh bbox if none specified
@@ -150,17 +150,25 @@ static void object_render_direct(const struct rico_object *obj,
     mat4_rotz(&model_matrix, obj->rot.z);
     mat4_scale(&model_matrix, obj->scale);
 
-    if (obj->type == OBJ_DEFAULT || obj->type == OBJ_STRING_WORLD)
+    if (obj->type == OBJ_DEFAULT)
     {
         proj_matrix = view_camera.proj_matrix;
         view_matrix = view_camera.view_matrix;
 
         // HACK: This only works when object is uniformly scaled on X/Y plane.
-        // TODO: UV scaling in general only works when object is uniformly
-        //       scaled. Maybe I should only allow textured objects to be
-        //       uniformly scaled?
+        /* TODO: UV scaling in general only works when object is uniformly
+               scaled. Maybe I should only allow textured objects to be
+               uniformly scaled?
+        */
         // UV-coord scale
         glUniform2f(prog->u_scale_uv, obj->scale.x, obj->scale.y);
+    }
+    else if (obj->type == OBJ_STRING_WORLD)
+    {
+        proj_matrix = view_camera.proj_matrix;
+        view_matrix = view_camera.view_matrix;
+
+        glUniform2f(prog->u_scale_uv, 1.0f, 1.0f);
     }
     else if (obj->type == OBJ_STRING_SCREEN)
     {
@@ -207,9 +215,9 @@ void object_render_type(enum rico_object_type type,
     }
 }
 
-int object_serialize(uint32 handle, FILE *fs)
+int object_serialize(const void *handle, FILE *fs)
 {
-    struct rico_object *obj = pool_read(objects, handle);
+    const struct rico_object *obj = handle;
     fwrite(&obj->uid,     sizeof(obj->uid),     1, fs);
     fwrite(&obj->type,    sizeof(obj->type),    1, fs);
     fwrite(&obj->trans,   sizeof(obj->trans),   1, fs);
@@ -223,14 +231,10 @@ int object_serialize(uint32 handle, FILE *fs)
     return SUCCESS;
 }
 
-int object_deserialize(uint32 *_handle, struct rico_pool *pool, FILE *fs)
+int object_deserialize(void *_handle, FILE *fs)
 {
-    //int err = pool_alloc(pool, _handle);
-    //if (err) return err;
-
-    struct rico_object *obj = pool_read(pool, *_handle);
-
-    fread(&obj->uid,     sizeof(obj->uid),     1, fs);
+    struct rico_object *obj = _handle;
+    //fread(&obj->uid,     sizeof(obj->uid),     1, fs);
     fread(&obj->type,    sizeof(obj->type),    1, fs);
     fread(&obj->trans,   sizeof(obj->trans),   1, fs);
     fread(&obj->rot,     sizeof(obj->rot),     1, fs);
@@ -256,6 +260,6 @@ struct rico_pool *object_pool_get_unsafe()
 
 void object_pool_set_unsafe(struct rico_pool *pool)
 {
-    rico_assert(!objects);
+    RICO_ASSERT(!objects);
     objects = pool;
 }

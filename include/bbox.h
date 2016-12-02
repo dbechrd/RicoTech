@@ -23,7 +23,7 @@ int bbox_init(struct bbox *bbox, struct vec4 p0, struct vec4 p1,
               struct col4 color);
 int bbox_init_mesh(struct bbox *bbox, const struct mesh_vertex *verts,
                    int count, struct col4 color);
-void bbox_free(struct bbox **bbox);
+void bbox_free_mesh(struct bbox *bbox);
 void bbox_render(const struct bbox *box, const struct mat4 *proj_matrix,
                  const struct mat4 *view_matrix,
                  const struct mat4 *model_matrix);

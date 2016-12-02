@@ -31,7 +31,7 @@ int mesh_load(const char *name, uint32 vertex_count,
               const struct mesh_vertex *vertex_data, uint32 element_count,
               const GLuint *element_data, GLenum hint, uint32 *_handle)
 {
-    int err;
+    enum rico_error err;
     *_handle = RICO_MESH_DEFAULT;
 
     err = pool_alloc(&meshes, _handle);

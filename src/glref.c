@@ -46,7 +46,7 @@ static struct mat4 z_axis_transform;
 
 int init_glref()
 {
-    int err;
+    enum rico_error err;
 
     //--------------------------------------------------------------------------
     // Initialize fonts
@@ -63,8 +63,8 @@ int init_glref()
     view_camera.trans = (struct vec4) { 0.0f, -1.7f, -4.0f, 0.0f };
 
     // Set projection matrix uniform
-    mat4_perspective(&view_camera.proj_matrix, SCREEN_W, SCREEN_H, Z_NEAR,
-                     Z_FAR, Z_FOV_DEG);
+    view_camera.proj_matrix = make_mat4_perspective(SCREEN_W, SCREEN_H, Z_NEAR,
+                                                    Z_FAR, Z_FOV_DEG);
 
     //--------------------------------------------------------------------------
     // Create shader program
@@ -128,31 +128,40 @@ int init_glref()
     //--------------------------------------------------------------------------
     // Create textures
     //--------------------------------------------------------------------------
-    texture_load_file("grass", GL_TEXTURE_2D, "texture/grass.tga", &tex_grass);
-    texture_load_file("bricks", GL_TEXTURE_2D, "texture/clean_bricks.tga",
+    err = texture_load_file("grass", GL_TEXTURE_2D, "texture/grass.tga",
+                            &tex_grass);
+    if (err) return err;
+    err = texture_load_file("bricks", GL_TEXTURE_2D, "texture/clean_bricks.tga",
                       &tex_rock);
-    texture_load_file("hello", GL_TEXTURE_2D, "texture/hello.tga", &tex_hello);
+    if (err) return err;
+    err = texture_load_file("hello", GL_TEXTURE_2D, "texture/hello.tga",
+                            &tex_hello);
+    if (err) return err;
 
     // Cleanup: Memory pool free/reuse test
     texture_free(tex_grass);
-    texture_load_file("grass", GL_TEXTURE_2D, "texture/grass.tga", &tex_grass);
+    err = texture_load_file("grass", GL_TEXTURE_2D, "texture/grass.tga",
+                            &tex_grass);
+    if (err) return err;
 
     //--------------------------------------------------------------------------
     // Create 3D strings
     //--------------------------------------------------------------------------
     // Font Test
-    font_render(font, 0, 0, "This is a test.\nYay!", COLOR_DARK_RED,
-                &mesh_font_test, &tex_font_test);
+    err = font_render(font, 0, 0, "This is a test.\nYay!", COLOR_DARK_RED,
+                      &mesh_font_test, &tex_font_test);
+    if (err) return err;
 
     //--------------------------------------------------------------------------
     // Create axis label bboxes
     //--------------------------------------------------------------------------
-    bbox_init(
+    err = bbox_init(
         &axis_bbox,
         (struct vec4) { -0.5f, -0.5f, -0.5f, 1.0f },
         (struct vec4) {  0.5f,  0.5f,  0.5f, 1.0f },
         COLOR_WHITE
     );
+    if (err) return err;
 
     // X-axis label
     mat4_ident(&x_axis_transform);
@@ -169,12 +178,12 @@ int init_glref()
     mat4_scale(&z_axis_transform, (struct vec4) { 0.01f, 0.01f, 1.0f, 1.0f });
     mat4_translate(&z_axis_transform, (struct vec4) { 0.0f, 0.0f, 0.5f, 1.0f });
 
-    return SUCCESS;
+    return err;
 }
 
 int init_manual_chunk(uint32 *meshes, uint32 mesh_count)
 {
-    int err;
+    enum rico_error err;
     uint32 obj_fonttest;
     uint32 obj_ground;
     uint32 obj_hello;
@@ -194,33 +203,38 @@ int init_manual_chunk(uint32 *meshes, uint32 mesh_count)
     // Create world objects
     //--------------------------------------------------------------------------
     // World font object
-    object_create(&obj_fonttest, "World String Test", OBJ_STRING_WORLD,
-                  mesh_font_test, tex_font_test, NULL);
+    err = object_create(&obj_fonttest, "World String Test", OBJ_STRING_WORLD,
+                        mesh_font_test, tex_font_test, NULL);
+    if (err) return err;
     object_trans(obj_fonttest, 0.0f, 2.0f, 0.0f);
     object_scale(obj_fonttest, 1.0f, 1.0f, 1.0f);
 
     // Screen font object
-    object_create(&obj_fonttest, "Screen String Test", OBJ_STRING_SCREEN,
+    err = object_create(&obj_fonttest, "Screen String Test", OBJ_STRING_SCREEN,
                   mesh_font_test, tex_font_test, NULL);
+    if (err) return err;
     object_trans(obj_fonttest, -1.0f, 1.0f, 0.0f);
     object_scale(obj_fonttest, 0.125f, 0.125f * SCREEN_ASPECT, 1.0f);
 
     // Ground
-    object_create(&obj_ground, "Ground", OBJ_DEFAULT, mesh_default, tex_rock,
-                  NULL);
+    err = object_create(&obj_ground, "Ground", OBJ_DEFAULT, mesh_default,
+                        tex_rock, NULL);
+    if (err) return err;
     object_rot_x(obj_ground, -90.0f);
     object_scale(obj_ground, 64.0f, 64.0f, 1.0f);
 
     // Hello
-    object_create(&obj_hello, "Hello", OBJ_DEFAULT, mesh_default, tex_hello,
-                  NULL);
+    err = object_create(&obj_hello, "Hello", OBJ_DEFAULT, mesh_default,
+                        tex_hello, NULL);
+    if (err) return err;
     object_trans(obj_hello, 0.0f, 2.0f, -4.0f);
     object_rot_y(obj_hello, 40.0f);
     object_scale(obj_hello, 1.0f, 2.0f, 1.0f);
 
     // Ruler
-    object_create(&obj_ruler, "Ruler", OBJ_DEFAULT, mesh_default, RICO_TEXTURE_DEFAULT,
-                  NULL);
+    err = object_create(&obj_ruler, "Ruler", OBJ_DEFAULT, mesh_default,
+                        RICO_TEXTURE_DEFAULT, NULL);
+    if (err) return err;
     object_trans(obj_ruler, 0.0f, 1.0f, -3.0f);
     object_scale(obj_ruler, 1.0f, 1.0f, 1.0f);
 
@@ -228,34 +242,39 @@ int init_manual_chunk(uint32 *meshes, uint32 mesh_count)
     struct vec4 wall_scale = (struct vec4) { 8.0f, 2.5f, 1.0f, 1.0f };
 
     // Wall front
-    object_create(&obj_wall1, "wall1", OBJ_DEFAULT, mesh_default, tex_hello,
-                  NULL);
+    err = object_create(&obj_wall1, "wall1", OBJ_DEFAULT, mesh_default,
+                        tex_hello, NULL);
+    if (err) return err;
     object_trans(obj_wall1, 0.0f, 2.5f, -8.0f);
     object_scale(obj_wall1, wall_scale.x, wall_scale.y, wall_scale.z);
 
     // Wall left
-    object_create(&obj_wall2, "wall2", OBJ_DEFAULT, mesh_default, tex_hello,
-                  NULL);
+    err = object_create(&obj_wall2, "wall2", OBJ_DEFAULT, mesh_default,
+                        tex_hello, NULL);
+    if (err) return err;
     object_trans(obj_wall2, -8.0f, 2.5f, 0.0f);
     object_scale(obj_wall2, wall_scale.x, wall_scale.y, wall_scale.z);
 
     // Wall back
-    object_create(&obj_wall3, "wall3", OBJ_DEFAULT, mesh_default, tex_hello,
-                  NULL);
+    err = object_create(&obj_wall3, "wall3", OBJ_DEFAULT, mesh_default,
+                        tex_hello, NULL);
+    if (err) return err;
     object_trans(obj_wall3, 0.0f, 2.5f, 8.0f);
     object_rot_y(obj_wall3, 180.0f);
     object_scale(obj_wall3, wall_scale.x, wall_scale.y, wall_scale.z);
 
     // Wall right
-    object_create(&obj_wall4, "wall4", OBJ_DEFAULT, mesh_default, tex_hello,
-                  NULL);
+    err = object_create(&obj_wall4, "wall4", OBJ_DEFAULT, mesh_default,
+                        tex_hello, NULL);
+    if (err) return err;
     object_trans(obj_wall4, 8.0f, 2.5f, 0.0f);
     object_rot_y(obj_wall4, -90.0f);
     object_scale(obj_wall4, wall_scale.x, wall_scale.y, wall_scale.z);
 
     // Wall five
-    object_create(&obj_wall5, "wall5", OBJ_DEFAULT, mesh_default, tex_hello,
-                  NULL);
+    err = object_create(&obj_wall5, "wall5", OBJ_DEFAULT, mesh_default,
+                        tex_hello, NULL);
+    if (err) return err;
     object_trans(obj_wall5, 4.0f, 2.5f, 0.0f);
     object_rot_y(obj_wall5, -90.0f);
     object_scale(obj_wall5, wall_scale.x, wall_scale.y, wall_scale.z);
@@ -263,9 +282,10 @@ int init_manual_chunk(uint32 *meshes, uint32 mesh_count)
     {
         for (uint32 i = 0; i < mesh_count; i++)
         {
-            object_create(&arr_objects[i], mesh_name(meshes[i]), OBJ_DEFAULT,
-                          meshes[i], RICO_TEXTURE_DEFAULT,
-                          mesh_bbox(meshes[i]));
+            err = object_create(&arr_objects[i], mesh_name(meshes[i]),
+                                OBJ_DEFAULT, meshes[i], RICO_TEXTURE_DEFAULT,
+                                mesh_bbox(meshes[i]));
+            if (err) return err;
 
             // HACK: Don't z-fight ground plane
             object_trans(arr_objects[i], 0.0f, EPSILON, 0.0f);
@@ -349,13 +369,15 @@ void rotate_selected(struct vec4 offset)
     }
 }
 
-void duplicate_selected()
+int duplicate_selected()
 {
+    enum rico_error err;
     struct rico_object *selected = object_fetch(selected_handle);
 
     uint32 newObj;
-    object_create(&newObj, "Duplicate", selected->type, selected->mesh,
-                  selected->texture, mesh_bbox(selected->mesh));
+    err = object_create(&newObj, "Duplicate", selected->type, selected->mesh,
+                        selected->texture, mesh_bbox(selected->mesh));
+    if (err) return err;
 
     struct rico_object *new_obj = object_fetch(newObj);
     if (newObj)
@@ -364,8 +386,9 @@ void duplicate_selected()
         new_obj->rot = selected->rot;
         new_obj->scale = selected->scale;
     }
-
     select_obj(newObj);
+
+    return err;
 }
 
 void delete_selected()

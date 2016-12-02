@@ -12,24 +12,30 @@
     f(RICO_UID_MESH)    \
     f(RICO_UID_CHUNK)   \
     f(RICO_UID_POOL)    \
+    f(RICO_UID_BBOX)    \
     f(RICO_UID_COUNT)
 
 enum rico_uid_type {
     RICO_UID_TYPES(GEN_LIST)
 };
+extern const char *rico_uid_type_string[];
 
 struct rico_pool;
 
-typedef int (*Serializer)(uint32 handle, FILE *fs);
-typedef int (*Deserializer)(uint32 *_handle, struct rico_pool *pool, FILE *fs);
+// TODO: Replace uint32 handle with null pointer directly to pool object
+typedef int (*Serializer)(const void *handle, FILE *fs);
+typedef int (*Deserializer)(void *_handle, FILE *fs);
 
 extern Serializer RicoSerializers[RICO_UID_COUNT];
 extern Deserializer RicoDeserializers[RICO_UID_COUNT];
 
+extern Serializer rico_serializer;
+extern Deserializer rico_deserializer;
+
 struct rico_uid {
     enum rico_uid_type type;
     uint32 uid;
-    char name[30]; //TODO: Should I dynamically allocating name strings?
+    char name[30]; // TODO: Should I dynamically allocating name strings?
 };
 
 extern struct rico_uid UID_NULL;

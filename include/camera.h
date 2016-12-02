@@ -5,8 +5,8 @@
 
 //------------------------------------------------------------------------------
 //TODO: Probably should prefix these?
-#define SCREEN_W 1024
-#define SCREEN_H 768
+#define SCREEN_W 1600
+#define SCREEN_H 900
 #define SCREEN_ASPECT SCREEN_W / SCREEN_H
 
 #define Z_NEAR 1.0f

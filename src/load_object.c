@@ -47,13 +47,13 @@ static char* strsep(char** stringp, const char* delim)
 
 int load_obj_file(const char *filename, uint32 *_meshes, uint32 *_mesh_count)
 {
-    int err = SUCCESS;
+    enum rico_error err = SUCCESS;
     int length;
     char *buffer = file_contents(filename, &length);
     char *buffer_ptr = buffer;
     char *tok = strsep(&buffer_ptr, "\n");
 
-    // TODO: Collossal waste of memory here, hmmm.
+    // TODO: Colossal waste of memory here, hmmm.
     struct vec4 positions[MESH_VERTICES_MAX] = { 0 };
     struct tex2 texcoords[MESH_VERTICES_MAX] = { 0 };
     struct vec4 normals[MESH_VERTICES_MAX] = { 0 };

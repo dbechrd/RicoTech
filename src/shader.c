@@ -12,7 +12,7 @@ int make_shader(const GLenum type, const char *filename, GLuint *_shader)
     GLint status;
 
     source = file_contents(filename, &len);
-    if (!source) return ERR_FILE_READ;
+    if (!source) return RICO_ERROR(ERR_FILE_READ);
 
     shader = glCreateShader(type);
     glShaderSource(shader, 1, (const GLchar**)&source, &len);
@@ -25,7 +25,7 @@ int make_shader(const GLenum type, const char *filename, GLuint *_shader)
         fprintf(stderr, "Failed to compile shader '%s':\n", filename);
         show_info_log(shader, glGetShaderiv, glGetShaderInfoLog);
         glDeleteShader(shader);
-        return ERR_SHADER_COMPILE;
+        return RICO_ERROR(ERR_SHADER_COMPILE);
     }
 
     *_shader = shader;

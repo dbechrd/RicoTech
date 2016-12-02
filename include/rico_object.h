@@ -56,9 +56,8 @@ void object_scale(uint32 handle, float x, float y, float z);
 void object_render(uint32 handle, const struct program_default *prog);
 void object_render_type(enum rico_object_type type,
                         const struct program_default *prog);
-
-int object_serialize(uint32 handle, FILE *fs);
-int object_deserialize(uint32 *_handle, struct rico_pool *pool, FILE *fs);
+int object_serialize(const void *handle, FILE *fs);
+int object_deserialize(void *_handle, FILE *fs);
 
 struct rico_pool *object_pool_get_unsafe();
 void object_pool_set_unsafe(struct rico_pool *pool);

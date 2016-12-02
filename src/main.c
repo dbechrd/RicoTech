@@ -137,7 +137,7 @@ static int rico_init_textures()
 {
     printf("Loading textures\n");
 
-    int err = rico_texture_init(RICO_TEXTURE_POOL_SIZE);
+    enum rico_error err = rico_texture_init(RICO_TEXTURE_POOL_SIZE);
     if (err) return err;
 
     err = texture_load_file("DEFAULT", GL_TEXTURE_2D, "texture/basic.tga",
@@ -149,7 +149,7 @@ static int rico_init_meshes()
 {
     printf("Loading meshes\n");
 
-    int err = rico_mesh_init(RICO_MESH_POOL_SIZE);
+    enum rico_error err = rico_mesh_init(RICO_MESH_POOL_SIZE);
     if (err) return err;
 
     // TODO: Load a default mesh
@@ -161,7 +161,10 @@ static int rico_init_meshes()
 static int rico_init_objects()
 {
     printf("Loading objects\n");
-    int err = chunk_load("chunks/chunky.bin", &first_chunk);
+
+    enum rico_error err = chunk_load("chunks/chunky.bin", &first_chunk);
+    if (err) return err;
+
     object_pool_set_unsafe(&first_chunk.objects);
     return err;
 }
@@ -173,10 +176,13 @@ static int rico_init()
     init_gl3w();
     init_opengl();
 
+    RicoSerializers[RICO_UID_POOL] = &pool_serialize;
+    RicoDeserializers[RICO_UID_POOL] = &pool_deserialize;
+
     RicoSerializers[RICO_UID_OBJECT] = &object_serialize;
     RicoDeserializers[RICO_UID_OBJECT] = &object_deserialize;
 
-    int err = rico_init_textures();
+    enum rico_error err = rico_init_textures();
     if (err) return err;
 
     err = rico_init_meshes();
@@ -185,7 +191,7 @@ static int rico_init()
 
 int mymain()
 {
-    int err = rico_init();
+    enum rico_error err = rico_init();
     if (err) return err;
 
     //TODO: Use Unity test framework (http://www.throwtheswitch.org/unity)
@@ -196,10 +202,10 @@ int mymain()
     if (err) return err;
 
     // Initialize objects
-    err = init_manual_chunk(meshes, mesh_count);
-    if (err) return err;
-    // err = rico_init_objects();
+    // err = init_manual_chunk(meshes, mesh_count);
     // if (err) return err;
+    err = rico_init_objects();
+    if (err) return err;
 
     //Human walk speed empirically found to be 33 steps in 20 seconds. That
     //is approximately 1.65 steps per second. At 60 fps, that is 0.0275 steps
@@ -218,6 +224,8 @@ int mymain()
 
     view_camera.fill_mode = GL_FILL;
 
+    int dx, dy;
+
     bool d_down = false;
     bool s_down = false;
 
@@ -235,6 +243,8 @@ int mymain()
 
     while (!quit)
     {
+        dx = dy = 0;
+
         while (SDL_PollEvent(&windowEvent))
         {
             if (windowEvent.type == SDL_QUIT)
@@ -244,17 +254,8 @@ int mymain()
             }
             else if (windowEvent.type == SDL_MOUSEMOTION)
             {
-                int dx = windowEvent.motion.xrel;
-                int dy = windowEvent.motion.yrel;
-                //fprintf(stderr, "dx: %d dy: %d\n", dx, dy);
-
-                view_camera.rot.x += dy * view_rot_delta;
-                if (view_camera.rot.x < -view_rotx_limit)
-                    view_camera.rot.x = -view_rotx_limit;
-                if (view_camera.rot.x > view_rotx_limit)
-                    view_camera.rot.x = view_rotx_limit;
-
-                view_camera.rot.y += dx * view_rot_delta;
+                dx = windowEvent.motion.xrel;
+                dy = windowEvent.motion.yrel;
             }
             else if (windowEvent.type == SDL_KEYDOWN)
             {
@@ -494,6 +495,17 @@ int mymain()
         GLfloat dt = (float)(newTime - time) / 1000.0f;
         time = newTime;
 
+        if (dx != 0 || dy != 0)
+        {
+            view_camera.rot.y += dx * view_rot_delta;
+            view_camera.rot.x += dy * view_rot_delta;
+
+            if (view_camera.rot.x < -view_rotx_limit)
+                view_camera.rot.x = -view_rotx_limit;
+            if (view_camera.rot.x > view_rotx_limit)
+                view_camera.rot.x = view_rotx_limit;
+        }
+
         //TODO: Refactor all of this crap out into Camera
         //GLfloat cos_head_x = cosf(view_camera.rot.x * (float)M_PI / 180.0f);
         //GLfloat sin_head_x = sinf(view_camera.rot.x * (float)M_PI / 180.0f);
@@ -597,12 +609,8 @@ int main(int argc, char *argv[])
     UNUSED(argc);
     UNUSED(argv);
 
-    int err = mymain();
-    if (err)
-    {
-        printf("[Main] Exit error = %d\n", err);
-        getchar();
-    }
+    enum rico_error err = RICO_ERROR(mymain());
+    if (err) getchar();
 
     return err;
 }
