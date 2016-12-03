@@ -3,26 +3,31 @@
 
 #include "geom.h"
 #include "program.h"
+#include "rico_uid.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 
 struct mesh_vertex;
 
 struct bbox {
+    struct rico_uid uid;
+
     GLuint vao;
     GLuint vbos[2];
     struct program_bbox *prog;
 
-    struct vec4 p0, p1;
+    struct vec4 p0;
+    struct vec4 p1;
     struct col4 color;
 
     bool wireframe;
 };
 
-int bbox_init(struct bbox *bbox, struct vec4 p0, struct vec4 p1,
-              struct col4 color);
-int bbox_init_mesh(struct bbox *bbox, const struct mesh_vertex *verts,
-                   int count, struct col4 color);
+int bbox_init(struct bbox *bbox, const char *name, struct vec4 p0,
+              struct vec4 p1, struct col4 color);
+int bbox_init_mesh(struct bbox *bbox, const char *name,
+                   const struct mesh_vertex *verts, int count,
+                   struct col4 color);
 void bbox_free_mesh(struct bbox *bbox);
 void bbox_render(const struct bbox *box, const struct mat4 *proj_matrix,
                  const struct mat4 *view_matrix,
@@ -31,6 +36,8 @@ void bbox_render_color(const struct bbox *box, const struct mat4 *proj_matrix,
                        const struct mat4 *view_matrix,
                        const struct mat4 *model_matrix,
                        const struct col4 color);
+int bbox_serialize(const void *handle, FILE *fs);
+int bbox_deserialize(void *_handle, FILE *fs);
 
 static inline bool bbox_intersects(const struct bbox *a, const struct bbox *b)
 {

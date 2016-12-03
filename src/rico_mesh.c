@@ -38,13 +38,13 @@ int mesh_load(const char *name, uint32 vertex_count,
     if (err) return err;
 
     struct rico_mesh *mesh = pool_read(&meshes, *_handle);
-    uid_init(&mesh->uid, RICO_UID_MESH, name);
+    uid_init(&mesh->uid, RICO_UID_MESH, 1, name);
 
     err = build_mesh(mesh, vertex_count, vertex_data, element_count,
                      element_data, hint);
     if (err) return err;
 
-    err = bbox_init_mesh(&mesh->bbox, vertex_data, vertex_count,
+    err = bbox_init_mesh(&mesh->bbox, name, vertex_data, vertex_count,
                          COLOR_GRAY_HIGHLIGHT);
     return err;
 }

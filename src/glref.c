@@ -33,6 +33,7 @@ static struct program_bbox *prog_bbox;
 static uint32 tex_grass;
 static uint32 tex_rock;
 static uint32 tex_hello;
+static uint32 tex_yellow;
 static uint32 tex_font_test;
 
 static uint32 mesh_default;
@@ -132,10 +133,13 @@ int init_glref()
                             &tex_grass);
     if (err) return err;
     err = texture_load_file("bricks", GL_TEXTURE_2D, "texture/clean_bricks.tga",
-                      &tex_rock);
+                            &tex_rock);
     if (err) return err;
     err = texture_load_file("hello", GL_TEXTURE_2D, "texture/hello.tga",
                             &tex_hello);
+    if (err) return err;
+    err = texture_load_file("yellow", GL_TEXTURE_2D, "texture/fake_yellow.tga",
+                            &tex_yellow);
     if (err) return err;
 
     // Cleanup: Memory pool free/reuse test
@@ -157,6 +161,7 @@ int init_glref()
     //--------------------------------------------------------------------------
     err = bbox_init(
         &axis_bbox,
+        "Axis BBox",
         (struct vec4) { -0.5f, -0.5f, -0.5f, 1.0f },
         (struct vec4) {  0.5f,  0.5f,  0.5f, 1.0f },
         COLOR_WHITE
@@ -186,7 +191,7 @@ int init_manual_chunk(uint32 *meshes, uint32 mesh_count)
     enum rico_error err;
     uint32 obj_fonttest;
     uint32 obj_ground;
-    uint32 obj_hello;
+    uint32 obj_yellow;
     uint32 obj_ruler;
     uint32 obj_wall1;
     uint32 obj_wall2;
@@ -224,12 +229,12 @@ int init_manual_chunk(uint32 *meshes, uint32 mesh_count)
     object_scale(obj_ground, 64.0f, 64.0f, 1.0f);
 
     // Hello
-    err = object_create(&obj_hello, "Hello", OBJ_DEFAULT, mesh_default,
-                        tex_hello, NULL);
+    err = object_create(&obj_yellow, "Yellow", OBJ_DEFAULT, mesh_default,
+                        tex_yellow, NULL);
     if (err) return err;
-    object_trans(obj_hello, 0.0f, 2.0f, -4.0f);
-    object_rot_y(obj_hello, 40.0f);
-    object_scale(obj_hello, 1.0f, 2.0f, 1.0f);
+    object_trans(obj_yellow, 0.0f, 2.0f, -4.0f);
+    object_rot_y(obj_yellow, 40.0f);
+    object_scale(obj_yellow, 1.0f, 2.0f, 1.0f);
 
     // Ruler
     err = object_create(&obj_ruler, "Ruler", OBJ_DEFAULT, mesh_default,

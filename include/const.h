@@ -13,7 +13,7 @@
 #ifndef RICO_DEBUG_INFO
     #define RICO_DEBUG_INFO
     #define RICO_DEBUG_UID
-    #define RICO_DEBUG_POOL
+    //#define RICO_DEBUG_POOL
     #define RICO_DEBUG_CHUNK
 #endif
 #endif

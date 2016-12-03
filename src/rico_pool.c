@@ -1,7 +1,8 @@
 #include "rico_pool.h"
 #include "rico_object.h"
-#include "stdlib.h"
-#include "stdio.h"
+#include "rico_cereal.h"
+#include <stdlib.h>
+#include <stdio.h>
 
 static void pool_print_handles(struct rico_pool *pool);
 
@@ -12,7 +13,7 @@ int pool_init(const char *name, uint32 count, uint32 stride,
     RICO_ASSERT(count > 0);
 
     struct rico_pool pool;
-    uid_init(&pool.uid, RICO_UID_POOL, name);
+    uid_init(&pool.uid, RICO_UID_POOL, 1, name);
     pool.count = count;
     pool.stride = stride;
     pool.active = 0;
@@ -131,14 +132,13 @@ uint32 pool_prev(struct rico_pool *pool, uint32 handle)
 int pool_serialize(const void *handle, FILE *fs)
 {
     const struct rico_pool *pool = handle;
-    fwrite(&pool->uid,    sizeof(pool->uid),    1, fs);
     fwrite(&pool->count,  sizeof(pool->count),  1, fs);
     fwrite(&pool->stride, sizeof(pool->stride), 1, fs);
     fwrite(&pool->active, sizeof(pool->active), 1, fs);
     fwrite(pool->handles, sizeof(*pool->handles), pool->count, fs);
     for (uint32 i = 0; i < pool->active; ++i)
     {
-        rico_serializer(pool_read(pool, pool->handles[i]), fs);
+        rico_serialize(pool_read(pool, pool->handles[i]), fs);
     }
 
     return SUCCESS;
@@ -147,7 +147,6 @@ int pool_serialize(const void *handle, FILE *fs)
 int pool_deserialize(void *_handle, FILE *fs)
 {
     struct rico_pool *pool = _handle;
-    //fread(&pool->uid,    sizeof(pool->uid),    1, fs);
     fread(&pool->count,  sizeof(pool->count),  1, fs);
     fread(&pool->stride, sizeof(pool->stride), 1, fs);
     fread(&pool->active, sizeof(pool->active), 1, fs);
@@ -163,9 +162,7 @@ int pool_deserialize(void *_handle, FILE *fs)
         fread(pool->handles, sizeof(*pool->handles), pool->count, fs);
         for (uint32 i = 0; i < pool->active; ++i)
         {
-            void *element = pool_read(pool, pool->handles[i]);
-            fread(element, sizeof(struct rico_uid), 1, fs);
-            rico_deserializer(element, fs);
+            rico_deserialize(pool_read(pool, pool->handles[i]), fs);
         }
     }
 

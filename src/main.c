@@ -19,6 +19,7 @@
 #include "rico_object.h"
 #include "load_object.h"
 #include "rico_chunk.h"
+#include "rico_cereal.h"
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -181,6 +182,9 @@ static int rico_init()
 
     RicoSerializers[RICO_UID_OBJECT] = &object_serialize;
     RicoDeserializers[RICO_UID_OBJECT] = &object_deserialize;
+
+    RicoSerializers[RICO_UID_BBOX] = &bbox_serialize;
+    RicoDeserializers[RICO_UID_BBOX] = &bbox_deserialize;
 
     enum rico_error err = rico_init_textures();
     if (err) return err;

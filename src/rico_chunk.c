@@ -1,12 +1,11 @@
 #include "rico_chunk.h"
 #include "const.h"
 #include "util.h"
-#include "stdlib.h"
-#include "stdio.h"
-#include "string.h"
-
 #include "rico_object.h"
 #include "bbox.h"
+#include "rico_cereal.h"
+
+#include <stdio.h>
 
 // TODO: Create resource loaders to handle:
 //       fonts, shaders, textures, meshes, etc.
@@ -55,7 +54,7 @@ int chunk_init(const char *name, uint32 tex_count, uint32 mesh_count,
     UNUSED(meshes);
 
     struct rico_chunk chunk;
-    uid_init(&chunk.uid, RICO_UID_CHUNK, name);
+    uid_init(&chunk.uid, RICO_UID_CHUNK, 1, name);
     chunk.tex_count = 0; //tex_count;
     chunk.mesh_count = 0; //mesh_count;
     chunk.obj_count = obj_count;
@@ -98,11 +97,11 @@ int chunk_save(const char *filename, const struct rico_chunk *chunk)
     fwrite(&chunk->obj_count,  sizeof(chunk->obj_count),  1, fs);
 
     // Pools
-    //err = rico_serializer(&chunk->textures, fs);
+    //err = rico_serialize(&chunk->textures, fs);
     //if (err) goto cleanup;
-    //err = rico_serializer(&chunk->meshes, fs);
+    //err = rico_serialize(&chunk->meshes, fs);
     //if (err) goto cleanup;
-    err = rico_serializer(&chunk->objects, fs);
+    err = rico_serialize(&chunk->objects, fs);
     if (err) goto cleanup;
 
 
@@ -155,13 +154,12 @@ int chunk_load(const char *filename, struct rico_chunk *_chunk)
     fread(&_chunk->obj_count,  sizeof(_chunk->obj_count),  1, fs);
 
     // Pools
-    //err = rico_deserializer(&_chunk->textures, fs);
+    //err = rico_deserialize(&_chunk->textures, fs);
     //if (err) goto cleanup;
-    //err = rico_deserializer(&_chunk->meshes, fs);
+    //err = rico_deserialize(&_chunk->meshes, fs);
     //if (err) goto cleanup;
 
-    fread(&_chunk->objects, sizeof(struct rico_uid), 1, fs);
-    err = rico_deserializer(&_chunk->objects, fs);
+    err = rico_deserialize(&_chunk->objects, fs);
     if (err) goto cleanup;
 
 #ifdef RICO_DEBUG_CHUNK

@@ -31,18 +31,10 @@ int texture_load_file(const char *name, GLenum target, const char *filename,
                       uint32 *_handle)
 {
     enum rico_error err;
-    *_handle = RICO_TEXTURE_DEFAULT;
-
-    err = pool_alloc(&textures, _handle);
-    if (err) return err;
-
-    struct rico_texture *tex = pool_read(&textures, *_handle);
-    uid_init(&tex->uid, RICO_UID_TEXTURE, name);
-    tex->gl_target = target;
+    int width, height, bpp;
 
     // Load raw texture data
-    unsigned char* pixels = stbi_load(filename, &tex->width, &tex->height,
-                                      &tex->bpp, 4);
+    unsigned char* pixels = stbi_load(filename, &width, &height, &bpp, 4);
     if (!pixels)
     {
         fprintf(stderr, "Failed to load texture file: %s", filename);
@@ -52,10 +44,11 @@ int texture_load_file(const char *name, GLenum target, const char *filename,
 
     // Requested bit depth is 32-bit, but stbi_load returns original depth of
     // image file in bytes.
-    tex->bpp = 32;
+    bpp = 32;
 
-    // Build GL texture
-    err = build_texture(tex, pixels);
+    // Load pixels
+    err = texture_load_pixels(name, target, width, height, bpp, pixels,
+                              _handle);
 
 cleanup:
     stbi_image_free(pixels);
@@ -72,7 +65,7 @@ int texture_load_pixels(const char *name, GLenum target, int width, int height,
     if (err) return err;
 
     struct rico_texture *tex = pool_read(&textures, *_handle);
-    uid_init(&tex->uid, RICO_UID_TEXTURE, name);
+    uid_init(&tex->uid, RICO_UID_TEXTURE, 1, name);
     tex->gl_target = target;
     tex->width = width;
     tex->height = height;

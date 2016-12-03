@@ -8,23 +8,21 @@
 
 static int init_gl(struct bbox *bbox);
 
-int bbox_init(struct bbox *bbox, struct vec4 p0, struct vec4 p1,
-              struct col4 color)
+int bbox_init(struct bbox *bbox, const char *name, struct vec4 p0,
+              struct vec4 p1, struct col4 color)
 {
-    enum rico_error err = make_program_bbox(&bbox->prog);
-    if (err) return err;
-
+    uid_init(&bbox->uid, RICO_UID_BBOX, 1, name);
     bbox->p0 = p0;
     bbox->p1 = p1;
     bbox->color = color;
     bbox->wireframe = true;
 
-    err = init_gl(bbox);
-    return err;
+    return init_gl(bbox);
 }
 
-int bbox_init_mesh(struct bbox *bbox, const struct mesh_vertex *verts,
-                    int count, struct col4 color)
+int bbox_init_mesh(struct bbox *bbox, const char *name,
+                   const struct mesh_vertex *verts, int count,
+                   struct col4 color)
 {
     struct vec4 p0 = (struct vec4) { 9999.0f, 9999.0f, 9999.0f, 0.0f };
     struct vec4 p1 = (struct vec4) { -9999.0f, -9999.0f, -9999.0f, 0.0f };
@@ -56,11 +54,14 @@ int bbox_init_mesh(struct bbox *bbox, const struct mesh_vertex *verts,
     p0.z -= EPSILON;
     p1.z += EPSILON;
 
-    return bbox_init(bbox, p0, p1, color);
+    return bbox_init(bbox, name, p0, p1, color);
 }
 
 static int init_gl(struct bbox *bbox)
 {
+    enum rico_error err = make_program_bbox(&bbox->prog);
+    if (err) return err;
+
     // Bbox vertices
     struct vec4 vertices[8] = {
         (struct vec4) { bbox->p0.x, bbox->p0.y, bbox->p0.z, 1.0f },
@@ -161,4 +162,28 @@ void bbox_render_color(const struct bbox *box, const struct mat4 *proj_matrix,
 
     if (box->wireframe && view_camera.fill_mode != GL_LINE)
         glPolygonMode(GL_FRONT_AND_BACK, view_camera.fill_mode);
+}
+
+int bbox_serialize(const void *handle, FILE *fs)
+{
+    const struct bbox *bbox = handle;
+
+    fwrite(&bbox->p0,        sizeof(bbox->p0),        1, fs);
+    fwrite(&bbox->p1,        sizeof(bbox->p1),        1, fs);
+    fwrite(&bbox->color,     sizeof(bbox->color),     1, fs);
+    fwrite(&bbox->wireframe, sizeof(bbox->wireframe), 1, fs);
+    return SUCCESS;
+}
+
+int bbox_deserialize(void *_handle, FILE *fs)
+{
+    enum rico_error err;
+    struct bbox *bbox = _handle;
+
+    fread(&bbox->p0,        sizeof(bbox->p0),        1, fs);
+    fread(&bbox->p1,        sizeof(bbox->p1),        1, fs);
+    fread(&bbox->color,     sizeof(bbox->color),     1, fs);
+    fread(&bbox->wireframe, sizeof(bbox->wireframe), 1, fs);
+    err = init_gl(bbox);
+    return err;
 }
