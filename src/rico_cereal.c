@@ -2,30 +2,30 @@
 #include "rico_uid.h"
 #include "const.h"
 
-Serializer RicoSerializers[RICO_UID_COUNT] = { NULL };
-Deserializer RicoDeserializers[RICO_UID_COUNT] = { NULL };
+struct rico_cereal RicoCereal[RICO_UID_COUNT] = { 0 };
 
-static int rico_serialize_internal(const void *handle, FILE *fs)
+int rico_serialize(const void *handle, const struct rico_file *file)
 {
-    uid_serialize(handle, fs);
+    RICO_ASSERT(file->version < RICO_FILE_VERSION_COUNT);
+
+    uid_serialize(handle, file);
     const enum rico_uid_type *type = handle;
 
-    if (!RicoSerializers[*type])
+    if (!RicoCereal[*type].save[file->version])
         return RICO_ERROR(ERR_SERIALIZER_NULL);
 
-    return RicoSerializers[*type](handle, fs);
+    return RicoCereal[*type].save[file->version](handle, file);
 }
 
-static int rico_deserialize_internal(void *_handle, FILE *fs)
+int rico_deserialize(void *_handle, const struct rico_file *file)
 {
-    uid_deserialize(_handle, fs);
+    RICO_ASSERT(file->version < RICO_FILE_VERSION_COUNT);
+
+    uid_deserialize(_handle, file);
     enum rico_uid_type *type = _handle;
 
-    if (!RicoDeserializers[*type])
+    if (!RicoCereal[*type].load[file->version])
         return RICO_ERROR(ERR_DESERIALIZER_NULL);
 
-    return RicoDeserializers[*type](_handle, fs);
+    return RicoCereal[*type].load[file->version](_handle, file);
 }
-
-Serializer rico_serialize = rico_serialize_internal;
-Deserializer rico_deserialize = rico_deserialize_internal;

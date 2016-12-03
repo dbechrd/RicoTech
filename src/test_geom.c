@@ -2,6 +2,10 @@
 
 void test_geom()
 {
+    //TODO: Use Unity test framework (http://www.throwtheswitch.org/unity)
+    //http://www.drdobbs.com/testing/unit-testing-in-c-tools-and-conventions/240156344
+    //run_tests();
+
     ////////////////////////////////////////////////////////////////////////////
 
     //// Test translate / scale order

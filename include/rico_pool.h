@@ -20,8 +20,8 @@ int pool_alloc(struct rico_pool *pool, uint32 *_handle);
 int pool_free(struct rico_pool *pool, uint32 handle);
 uint32 pool_next(struct rico_pool *pool, uint32 handle);
 uint32 pool_prev(struct rico_pool *pool, uint32 handle);
-int pool_serialize(const void *handle, FILE *fs);
-int pool_deserialize(void *handle, FILE *fs);
+int pool_serialize_0(const void *handle, const struct rico_file *file);
+int pool_deserialize_0(void *handle, const struct rico_file *file);
 
 static inline void *pool_read(const struct rico_pool *pool, uint32 handle)
 {

@@ -29,10 +29,11 @@
 static SDL_Window *window = NULL;
 static SDL_GLContext context = NULL;
 
-// This is really stupid, move it somehwere else
+// This is really stupid, move it somewhere else
 static uint32 meshes[100];
 static uint32 mesh_count;
 
+const bool reset_game_world = false;
 static struct rico_chunk first_chunk;
 
 static inline void init_stb()
@@ -134,6 +135,21 @@ static void init_opengl()
     glEnable(GL_BLEND);
 }
 
+static void rico_init_cereal()
+{
+    RicoCereal[RICO_UID_CHUNK].save[0] = &chunk_serialize_0;
+    RicoCereal[RICO_UID_CHUNK].load[0] = &chunk_deserialize_0;
+
+    RicoCereal[RICO_UID_POOL].save[0] = &pool_serialize_0;
+    RicoCereal[RICO_UID_POOL].load[0] = &pool_deserialize_0;
+
+    RicoCereal[RICO_UID_OBJECT].save[0] = &object_serialize_0;
+    RicoCereal[RICO_UID_OBJECT].load[0] = &object_deserialize_0;
+
+    RicoCereal[RICO_UID_BBOX].save[0] = &bbox_serialize_0;
+    RicoCereal[RICO_UID_BBOX].load[0] = &bbox_deserialize_0;
+}
+
 static int rico_init_textures()
 {
     printf("Loading textures\n");
@@ -159,56 +175,65 @@ static int rico_init_meshes()
     return err;
 }
 
-static int rico_init_objects()
-{
-    printf("Loading objects\n");
-
-    enum rico_error err = chunk_load("chunks/chunky.bin", &first_chunk);
-    if (err) return err;
-
-    object_pool_set_unsafe(&first_chunk.objects);
-    return err;
-}
-
 static int rico_init()
 {
+    enum rico_error err;
+
     init_stb();
     init_sdl();
     init_gl3w();
     init_opengl();
 
-    RicoSerializers[RICO_UID_POOL] = &pool_serialize;
-    RicoDeserializers[RICO_UID_POOL] = &pool_deserialize;
+    rico_init_cereal();
 
-    RicoSerializers[RICO_UID_OBJECT] = &object_serialize;
-    RicoDeserializers[RICO_UID_OBJECT] = &object_deserialize;
-
-    RicoSerializers[RICO_UID_BBOX] = &bbox_serialize;
-    RicoDeserializers[RICO_UID_BBOX] = &bbox_deserialize;
-
-    enum rico_error err = rico_init_textures();
+    err = rico_init_textures();
     if (err) return err;
 
     err = rico_init_meshes();
+    if (err) return err;
+
+    err = init_glref(meshes, mesh_count);
+    if (err) return err;
+
+    if (reset_game_world)
+    {
+        printf("Loading hard-coded test chunk\n");
+        err = init_hardcoded_test_chunk(meshes, mesh_count);
+        if (err) return err;
+    }
+    else
+    {
+        struct rico_file file;
+        err = rico_file_open_read(&file, "chunks/cereal.bin");
+        if (err) return err;
+
+        err = rico_deserialize(&first_chunk, &file);
+        rico_file_close(&file);
+        if (err) return err;
+
+        object_pool_set_unsafe(&first_chunk.objects);
+    }
+
+    return err;
+}
+
+static int save_file()
+{
+    enum rico_error err;
+
+    struct rico_file file;
+    err = rico_file_open_write(&file, "../res/chunks/cereal.bin",
+                               RICO_FILE_VERSION_CURRENT);
+    if (err) return err;
+
+    err = rico_serialize(&first_chunk, &file);
+    rico_file_close(&file);
     return err;
 }
 
 int mymain()
 {
     enum rico_error err = rico_init();
-    if (err) return err;
-
-    //TODO: Use Unity test framework (http://www.throwtheswitch.org/unity)
-    //http://www.drdobbs.com/testing/unit-testing-in-c-tools-and-conventions/240156344
-    //run_tests();
-
-    err = init_glref(meshes, mesh_count);
-    if (err) return err;
-
-    // Initialize objects
-    // err = init_manual_chunk(meshes, mesh_count);
-    // if (err) return err;
-    err = rico_init_objects();
     if (err) return err;
 
     //Human walk speed empirically found to be 33 steps in 20 seconds. That
@@ -401,7 +426,7 @@ int mymain()
                     else if (windowEvent.key.keysym.sym == SDLK_s
                           && windowEvent.key.keysym.mod & KMOD_CTRL)
                     {
-                        chunk_save("../res/chunks/chunky.bin", &first_chunk);
+                        save_file();
                     }
                     else if (windowEvent.key.keysym.sym == SDLK_s)
                     {

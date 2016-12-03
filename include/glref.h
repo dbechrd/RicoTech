@@ -6,7 +6,7 @@
 #include "rico_mesh.h"
 
 int init_glref();
-int init_manual_chunk(uint32 *meshes, uint32 mesh_count);
+int init_hardcoded_test_chunk(uint32 *meshes, uint32 mesh_count);
 void select_next_obj();
 void select_prev_obj();
 void translate_selected(struct vec4 offset);

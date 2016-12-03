@@ -3,6 +3,7 @@
 #include "rico_pool.h"
 #include "camera.h"
 #include "rico_cereal.h"
+#include "program.h"
 #include <malloc.h>
 
 uint32 RICO_OBJECT_DEFAULT = 0;
@@ -33,7 +34,7 @@ int object_create(uint32 *_handle, const char *name, enum rico_object_type type,
 
     struct rico_object *obj = pool_read(objects, *_handle);
 
-    uid_init(&obj->uid, RICO_UID_OBJECT, 1, name);
+    uid_init(&obj->uid, RICO_UID_OBJECT, name);
     obj->type = type;
     obj->scale = VEC4_UNIT;
     obj->mesh = mesh;
@@ -216,29 +217,29 @@ void object_render_type(enum rico_object_type type,
     }
 }
 
-int object_serialize(const void *handle, FILE *fs)
+int object_serialize_0(const void *handle, const struct rico_file *file)
 {
     const struct rico_object *obj = handle;
-    fwrite(&obj->type,    sizeof(obj->type),    1, fs);
-    fwrite(&obj->trans,   sizeof(obj->trans),   1, fs);
-    fwrite(&obj->rot,     sizeof(obj->rot),     1, fs);
-    fwrite(&obj->scale,   sizeof(obj->scale),   1, fs);
-    fwrite(&obj->mesh,    sizeof(obj->mesh),    1, fs);
-    fwrite(&obj->texture, sizeof(obj->texture), 1, fs);
-    rico_serialize(&obj->bbox, fs);
+    fwrite(&obj->type,    sizeof(obj->type),    1, file->fs);
+    fwrite(&obj->trans,   sizeof(obj->trans),   1, file->fs);
+    fwrite(&obj->rot,     sizeof(obj->rot),     1, file->fs);
+    fwrite(&obj->scale,   sizeof(obj->scale),   1, file->fs);
+    fwrite(&obj->mesh,    sizeof(obj->mesh),    1, file->fs);
+    fwrite(&obj->texture, sizeof(obj->texture), 1, file->fs);
+    rico_serialize(&obj->bbox, file);
     return SUCCESS;
 }
 
-int object_deserialize(void *_handle, FILE *fs)
+int object_deserialize_0(void *_handle, const struct rico_file *file)
 {
     struct rico_object *obj = _handle;
-    fread(&obj->type,    sizeof(obj->type),    1, fs);
-    fread(&obj->trans,   sizeof(obj->trans),   1, fs);
-    fread(&obj->rot,     sizeof(obj->rot),     1, fs);
-    fread(&obj->scale,   sizeof(obj->scale),   1, fs);
-    fread(&obj->mesh,    sizeof(obj->mesh),    1, fs);
-    fread(&obj->texture, sizeof(obj->texture), 1, fs);
-    rico_deserialize(&obj->bbox, fs);
+    fread(&obj->type,    sizeof(obj->type),    1, file->fs);
+    fread(&obj->trans,   sizeof(obj->trans),   1, file->fs);
+    fread(&obj->rot,     sizeof(obj->rot),     1, file->fs);
+    fread(&obj->scale,   sizeof(obj->scale),   1, file->fs);
+    fread(&obj->mesh,    sizeof(obj->mesh),    1, file->fs);
+    fread(&obj->texture, sizeof(obj->texture), 1, file->fs);
+    rico_deserialize(&obj->bbox, file);
     return SUCCESS;
 }
 

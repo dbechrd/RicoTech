@@ -2,8 +2,8 @@
 #define BBOX_H
 
 #include "geom.h"
-#include "program.h"
 #include "rico_uid.h"
+#include "rico_cereal.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -36,8 +36,8 @@ void bbox_render_color(const struct bbox *box, const struct mat4 *proj_matrix,
                        const struct mat4 *view_matrix,
                        const struct mat4 *model_matrix,
                        const struct col4 color);
-int bbox_serialize(const void *handle, FILE *fs);
-int bbox_deserialize(void *_handle, FILE *fs);
+int bbox_serialize_0(const void *handle, const struct rico_file *file);
+int bbox_deserialize_0(void *_handle, const struct rico_file *file);
 
 static inline bool bbox_intersects(const struct bbox *a, const struct bbox *b)
 {

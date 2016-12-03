@@ -3,7 +3,7 @@
 
 #include "const.h"
 #include "rico_string.h"
-#include <stdio.h>
+#include "rico_cereal.h"
 
 #define RICO_UID_TYPES(f) \
     f(RICO_UID_NULL)    \
@@ -22,16 +22,14 @@ extern const char *rico_uid_type_string[];
 
 struct rico_uid {
     enum rico_uid_type type;
-    uint32 version;
     uint32 uid;
     char name[30];
 };
 
 extern struct rico_uid UID_NULL;
 
-void uid_init(struct rico_uid *_uid, enum rico_uid_type type, uint32 version,
-              const char *name);
-int uid_serialize(const void *handle, FILE *fs);
-int uid_deserialize(void *_handle, FILE *fs);
+void uid_init(struct rico_uid *_uid, enum rico_uid_type type, const char *name);
+int uid_serialize(const void *handle, const struct rico_file *file);
+int uid_deserialize(void *_handle, const struct rico_file *file);
 
 #endif // UID_H

@@ -65,7 +65,7 @@ int texture_load_pixels(const char *name, GLenum target, int width, int height,
     if (err) return err;
 
     struct rico_texture *tex = pool_read(&textures, *_handle);
-    uid_init(&tex->uid, RICO_UID_TEXTURE, 1, name);
+    uid_init(&tex->uid, RICO_UID_TEXTURE, name);
     tex->gl_target = target;
     tex->width = width;
     tex->height = height;

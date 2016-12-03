@@ -2890,7 +2890,7 @@ typedef stbi_uc *(*resample_row_func)(stbi_uc *out, stbi_uc *in0, stbi_uc *in1,
 
 #define stbi__div4(x) ((stbi_uc) ((x) >> 2))
 
-static stbi_uc *resample_row_1(stbi_uc *out, stbi_uc *in_near, stbi_uc *in_far, int w, int hs)
+static stbi_uc *resample_row_0(stbi_uc *out, stbi_uc *in_near, stbi_uc *in_far, int w, int hs)
 {
     STBI_NOTUSED(out);
     STBI_NOTUSED(in_far);

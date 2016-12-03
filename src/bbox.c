@@ -11,7 +11,7 @@ static int init_gl(struct bbox *bbox);
 int bbox_init(struct bbox *bbox, const char *name, struct vec4 p0,
               struct vec4 p1, struct col4 color)
 {
-    uid_init(&bbox->uid, RICO_UID_BBOX, 1, name);
+    uid_init(&bbox->uid, RICO_UID_BBOX, name);
     bbox->p0 = p0;
     bbox->p1 = p1;
     bbox->color = color;
@@ -164,26 +164,25 @@ void bbox_render_color(const struct bbox *box, const struct mat4 *proj_matrix,
         glPolygonMode(GL_FRONT_AND_BACK, view_camera.fill_mode);
 }
 
-int bbox_serialize(const void *handle, FILE *fs)
+int bbox_serialize_0(const void *handle, const struct rico_file *file)
 {
     const struct bbox *bbox = handle;
-
-    fwrite(&bbox->p0,        sizeof(bbox->p0),        1, fs);
-    fwrite(&bbox->p1,        sizeof(bbox->p1),        1, fs);
-    fwrite(&bbox->color,     sizeof(bbox->color),     1, fs);
-    fwrite(&bbox->wireframe, sizeof(bbox->wireframe), 1, fs);
+    fwrite(&bbox->p0,        sizeof(bbox->p0),        1, file->fs);
+    fwrite(&bbox->p1,        sizeof(bbox->p1),        1, file->fs);
+    fwrite(&bbox->color,     sizeof(bbox->color),     1, file->fs);
+    fwrite(&bbox->wireframe, sizeof(bbox->wireframe), 1, file->fs);
     return SUCCESS;
 }
 
-int bbox_deserialize(void *_handle, FILE *fs)
+int bbox_deserialize_0(void *_handle, const struct rico_file *file)
 {
     enum rico_error err;
     struct bbox *bbox = _handle;
 
-    fread(&bbox->p0,        sizeof(bbox->p0),        1, fs);
-    fread(&bbox->p1,        sizeof(bbox->p1),        1, fs);
-    fread(&bbox->color,     sizeof(bbox->color),     1, fs);
-    fread(&bbox->wireframe, sizeof(bbox->wireframe), 1, fs);
+    fread(&bbox->p0,        sizeof(bbox->p0),        1, file->fs);
+    fread(&bbox->p1,        sizeof(bbox->p1),        1, file->fs);
+    fread(&bbox->color,     sizeof(bbox->color),     1, file->fs);
+    fread(&bbox->wireframe, sizeof(bbox->wireframe), 1, file->fs);
     err = init_gl(bbox);
     return err;
 }

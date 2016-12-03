@@ -186,7 +186,7 @@ int init_glref()
     return err;
 }
 
-int init_manual_chunk(uint32 *meshes, uint32 mesh_count)
+int init_hardcoded_test_chunk(uint32 *meshes, uint32 mesh_count)
 {
     enum rico_error err;
     uint32 obj_fonttest;
@@ -306,12 +306,18 @@ int init_manual_chunk(uint32 *meshes, uint32 mesh_count)
 
     struct rico_chunk chunkA;
 
-    err = chunk_init("my_first_chunk", chunk_tex_pool->count,
+    err = chunk_init(0, "my_first_chunk", chunk_tex_pool->count,
                      chunk_mesh_pool->count, chunk_obj_pool->count,
                      chunk_tex_pool, chunk_mesh_pool, chunk_obj_pool, &chunkA);
     if (err) return err;
 
-    err = chunk_save("../res/chunks/chunky.bin", &chunkA);
+    struct rico_file file;
+    err = rico_file_open_write(&file, "../res/chunks/cereal.bin", 0);
+    if (err) return err;
+
+    err = rico_serialize(&chunkA, &file);
+    rico_file_close(&file);
+
     return err;
 }
 

@@ -13,7 +13,7 @@ int pool_init(const char *name, uint32 count, uint32 stride,
     RICO_ASSERT(count > 0);
 
     struct rico_pool pool;
-    uid_init(&pool.uid, RICO_UID_POOL, 1, name);
+    uid_init(&pool.uid, RICO_UID_POOL, name);
     pool.count = count;
     pool.stride = stride;
     pool.active = 0;
@@ -129,27 +129,27 @@ uint32 pool_prev(struct rico_pool *pool, uint32 handle)
     return 0;
 }
 
-int pool_serialize(const void *handle, FILE *fs)
+int pool_serialize_0(const void *handle, const struct rico_file *file)
 {
     const struct rico_pool *pool = handle;
-    fwrite(&pool->count,  sizeof(pool->count),  1, fs);
-    fwrite(&pool->stride, sizeof(pool->stride), 1, fs);
-    fwrite(&pool->active, sizeof(pool->active), 1, fs);
-    fwrite(pool->handles, sizeof(*pool->handles), pool->count, fs);
+    fwrite(&pool->count,  sizeof(pool->count),  1, file->fs);
+    fwrite(&pool->stride, sizeof(pool->stride), 1, file->fs);
+    fwrite(&pool->active, sizeof(pool->active), 1, file->fs);
+    fwrite(pool->handles, sizeof(*pool->handles), pool->count, file->fs);
     for (uint32 i = 0; i < pool->active; ++i)
     {
-        rico_serialize(pool_read(pool, pool->handles[i]), fs);
+        rico_serialize(pool_read(pool, pool->handles[i]), file);
     }
 
     return SUCCESS;
 }
 
-int pool_deserialize(void *_handle, FILE *fs)
+int pool_deserialize_0(void *_handle, const struct rico_file *file)
 {
     struct rico_pool *pool = _handle;
-    fread(&pool->count,  sizeof(pool->count),  1, fs);
-    fread(&pool->stride, sizeof(pool->stride), 1, fs);
-    fread(&pool->active, sizeof(pool->active), 1, fs);
+    fread(&pool->count,  sizeof(pool->count),  1, file->fs);
+    fread(&pool->stride, sizeof(pool->stride), 1, file->fs);
+    fread(&pool->active, sizeof(pool->active), 1, file->fs);
 
     if(pool->count > 0)
     {
@@ -159,10 +159,10 @@ int pool_deserialize(void *_handle, FILE *fs)
         pool->pool = calloc(pool->count, pool->stride);
         if (!pool->pool) return RICO_ERROR(ERR_BAD_ALLOC);
 
-        fread(pool->handles, sizeof(*pool->handles), pool->count, fs);
+        fread(pool->handles, sizeof(*pool->handles), pool->count, file->fs);
         for (uint32 i = 0; i < pool->active; ++i)
         {
-            rico_deserialize(pool_read(pool, pool->handles[i]), fs);
+            rico_deserialize(pool_read(pool, pool->handles[i]), file);
         }
     }
 
