@@ -7,7 +7,7 @@
 static void pool_print_handles(struct rico_pool *pool);
 
 // TODO: Allocate from heap pool, don't keep calling calloc
-int pool_init(const char *name, uint32 count, uint32 stride,
+int pool_init(const char *name, u32 count, u32 stride,
               struct rico_pool *_pool)
 {
     RICO_ASSERT(count > 0);
@@ -18,14 +18,14 @@ int pool_init(const char *name, uint32 count, uint32 stride,
     pool.stride = stride;
     pool.active = 0;
 
-    pool.handles = calloc(count, sizeof(uint32));
+    pool.handles = calloc(count, sizeof(u32));
     if (!pool.handles) return RICO_ERROR(ERR_BAD_ALLOC);
 
     pool.pool = calloc(count, stride);
     if (!pool.pool) return RICO_ERROR(ERR_BAD_ALLOC);
 
     // Initialize free list
-    for (uint32 i = 0; i < count; i++)
+    for (u32 i = 0; i < count; i++)
     {
         pool.handles[i] = i;
     }
@@ -38,7 +38,7 @@ int pool_init(const char *name, uint32 count, uint32 stride,
     return SUCCESS;
 }
 
-int pool_alloc(struct rico_pool *pool, uint32 *_handle)
+int pool_alloc(struct rico_pool *pool, u32 *_handle)
 {
     RICO_ASSERT(pool);
     if (pool->active == pool->count)
@@ -64,12 +64,12 @@ int pool_alloc(struct rico_pool *pool, uint32 *_handle)
     return SUCCESS;
 }
 
-int pool_free(struct rico_pool *pool, uint32 handle)
+int pool_free(struct rico_pool *pool, u32 handle)
 {
     RICO_ASSERT(pool);
 
     // Find requested handle
-    uint32 i;
+    u32 i;
     for (i = 0; i < pool->active; ++i)
     {
         if (pool->handles[i] == handle)
@@ -97,10 +97,10 @@ int pool_free(struct rico_pool *pool, uint32 handle)
     return SUCCESS;
 }
 
-uint32 pool_next(struct rico_pool *pool, uint32 handle)
+u32 pool_next(struct rico_pool *pool, u32 handle)
 {
     RICO_ASSERT(pool->active);
-    for (uint32 i = 0; i < pool->active; ++i)
+    for (u32 i = 0; i < pool->active; ++i)
     {
         if (pool->handles[i] == handle)
         {
@@ -113,10 +113,10 @@ uint32 pool_next(struct rico_pool *pool, uint32 handle)
     return 0;
 }
 
-uint32 pool_prev(struct rico_pool *pool, uint32 handle)
+u32 pool_prev(struct rico_pool *pool, u32 handle)
 {
     RICO_ASSERT(pool->active);
-    for (uint32 i = 0; i < pool->active; ++i)
+    for (u32 i = 0; i < pool->active; ++i)
     {
         if (pool->handles[i] == handle)
         {
@@ -136,7 +136,7 @@ int pool_serialize_0(const void *handle, const struct rico_file *file)
     fwrite(&pool->stride, sizeof(pool->stride), 1, file->fs);
     fwrite(&pool->active, sizeof(pool->active), 1, file->fs);
     fwrite(pool->handles, sizeof(*pool->handles), pool->count, file->fs);
-    for (uint32 i = 0; i < pool->active; ++i)
+    for (u32 i = 0; i < pool->active; ++i)
     {
         rico_serialize(pool_read(pool, pool->handles[i]), file);
     }
@@ -153,14 +153,14 @@ int pool_deserialize_0(void *_handle, const struct rico_file *file)
 
     if(pool->count > 0)
     {
-        pool->handles = calloc(pool->count, sizeof(uint32));
+        pool->handles = calloc(pool->count, sizeof(u32));
         if (!pool->handles) return RICO_ERROR(ERR_BAD_ALLOC);
 
         pool->pool = calloc(pool->count, pool->stride);
         if (!pool->pool) return RICO_ERROR(ERR_BAD_ALLOC);
 
         fread(pool->handles, sizeof(*pool->handles), pool->count, file->fs);
-        for (uint32 i = 0; i < pool->active; ++i)
+        for (u32 i = 0; i < pool->active; ++i)
         {
             rico_deserialize(pool_read(pool, pool->handles[i]), file);
         }
@@ -186,12 +186,12 @@ static void pool_print_handles(struct rico_pool *pool)
     }
 
     printf("[");
-    for (uint32 i = 0; i < pool->active; i++)
+    for (u32 i = 0; i < pool->active; i++)
     {
         printf("%d ", pool->handles[i]);
     }
     printf("\b][");
-    for (uint32 i = pool->active; i < pool->count; i++)
+    for (u32 i = pool->active; i < pool->count; i++)
     {
         printf("%d ", pool->handles[i]);
     }

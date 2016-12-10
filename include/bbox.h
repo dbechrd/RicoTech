@@ -8,32 +8,31 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 struct mesh_vertex;
+struct camera;
 
 struct bbox {
     struct rico_uid uid;
 
     GLuint vao;
     GLuint vbos[2];
-    struct program_bbox *prog;
+    struct program_primitive *prog;
 
-    struct vec4 p0;
-    struct vec4 p1;
+    struct vec3 p0;
+    struct vec3 p1;
     struct col4 color;
 
     bool wireframe;
 };
 
-int bbox_init(struct bbox *bbox, const char *name, struct vec4 p0,
-              struct vec4 p1, struct col4 color);
+int bbox_init(struct bbox *bbox, const char *name, struct vec3 p0,
+              struct vec3 p1, struct col4 color);
 int bbox_init_mesh(struct bbox *bbox, const char *name,
                    const struct mesh_vertex *verts, int count,
                    struct col4 color);
 void bbox_free_mesh(struct bbox *bbox);
-void bbox_render(const struct bbox *box, const struct mat4 *proj_matrix,
-                 const struct mat4 *view_matrix,
+void bbox_render(const struct bbox *box, const struct camera *camera,
                  const struct mat4 *model_matrix);
-void bbox_render_color(const struct bbox *box, const struct mat4 *proj_matrix,
-                       const struct mat4 *view_matrix,
+void bbox_render_color(const struct bbox *box, const struct camera *camera,
                        const struct mat4 *model_matrix,
                        const struct col4 color);
 int bbox_serialize_0(const void *handle, const struct rico_file *file);

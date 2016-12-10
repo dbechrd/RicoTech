@@ -4,12 +4,13 @@
 #include "camera.h"
 #include "rico_mesh.h"
 #include "program.h"
+#include "primitives.h"
 #include <GL/gl3w.h>
 
 static int init_gl(struct bbox *bbox);
 
-int bbox_init(struct bbox *bbox, const char *name, struct vec4 p0,
-              struct vec4 p1, struct col4 color)
+int bbox_init(struct bbox *bbox, const char *name, struct vec3 p0,
+              struct vec3 p1, struct col4 color)
 {
     uid_init(&bbox->uid, RICO_UID_BBOX, name);
     bbox->p0 = p0;
@@ -24,8 +25,8 @@ int bbox_init_mesh(struct bbox *bbox, const char *name,
                    const struct mesh_vertex *verts, int count,
                    struct col4 color)
 {
-    struct vec4 p0 = (struct vec4) { 9999.0f, 9999.0f, 9999.0f, 0.0f };
-    struct vec4 p1 = (struct vec4) { -9999.0f, -9999.0f, -9999.0f, 0.0f };
+    struct vec3 p0 = (struct vec3) { 9999.0f, 9999.0f, 9999.0f };
+    struct vec3 p1 = (struct vec3) { -9999.0f, -9999.0f, -9999.0f };
 
     // Find bounds of mesh
     for (int i = 0; i < count; ++i)
@@ -59,19 +60,43 @@ int bbox_init_mesh(struct bbox *bbox, const char *name,
 
 static int init_gl(struct bbox *bbox)
 {
-    enum rico_error err = make_program_bbox(&bbox->prog);
+    enum rico_error err = make_program_primitive(&bbox->prog);
     if (err) return err;
 
     // Bbox vertices
-    struct vec4 vertices[8] = {
-        (struct vec4) { bbox->p0.x, bbox->p0.y, bbox->p0.z, 1.0f },
-        (struct vec4) { bbox->p1.x, bbox->p0.y, bbox->p0.z, 1.0f },
-        (struct vec4) { bbox->p1.x, bbox->p1.y, bbox->p0.z, 1.0f },
-        (struct vec4) { bbox->p0.x, bbox->p1.y, bbox->p0.z, 1.0f },
-        (struct vec4) { bbox->p0.x, bbox->p0.y, bbox->p1.z, 1.0f },
-        (struct vec4) { bbox->p1.x, bbox->p0.y, bbox->p1.z, 1.0f },
-        (struct vec4) { bbox->p1.x, bbox->p1.y, bbox->p1.z, 1.0f },
-        (struct vec4) { bbox->p0.x, bbox->p1.y, bbox->p1.z, 1.0f }
+    struct prim_vertex vertices[8] = {
+        (struct prim_vertex) {
+            (struct vec3) { bbox->p0.x, bbox->p0.y, bbox->p0.z },
+            COLOR_BLACK
+        },
+        (struct prim_vertex) {
+            (struct vec3) { bbox->p1.x, bbox->p0.y, bbox->p0.z },
+            COLOR_RED
+        },
+        (struct prim_vertex) {
+            (struct vec3) { bbox->p1.x, bbox->p1.y, bbox->p0.z },
+            COLOR_YELLOW
+        },
+        (struct prim_vertex) {
+            (struct vec3) { bbox->p0.x, bbox->p1.y, bbox->p0.z },
+            COLOR_GREEN
+        },
+        (struct prim_vertex) {
+            (struct vec3) { bbox->p0.x, bbox->p0.y, bbox->p1.z },
+            COLOR_BLUE
+        },
+        (struct prim_vertex) {
+            (struct vec3) { bbox->p1.x, bbox->p0.y, bbox->p1.z },
+            COLOR_MAGENTA
+        },
+        (struct prim_vertex) {
+            (struct vec3) { bbox->p1.x, bbox->p1.y, bbox->p1.z },
+            COLOR_WHITE
+        },
+        (struct prim_vertex) {
+            (struct vec3) { bbox->p0.x, bbox->p1.y, bbox->p1.z },
+            COLOR_CYAN
+        }
     };
 
     // Bbox faces
@@ -89,7 +114,6 @@ static int init_gl(struct bbox *bbox)
     //--------------------------------------------------------------------------
     glGenVertexArrays(1, &bbox->vao);
     glBindVertexArray(bbox->vao);
-
     glGenBuffers(2, bbox->vbos);
 
     //--------------------------------------------------------------------------
@@ -109,12 +133,15 @@ static int init_gl(struct bbox *bbox)
     //--------------------------------------------------------------------------
     // Shader attribute pointers
     //--------------------------------------------------------------------------
-    if (bbox->prog->vert_pos >= 0)
-    {
-        glVertexAttribPointer(bbox->prog->vert_pos, 4, GL_FLOAT, GL_FALSE,
-                              sizeof(struct vec4), (GLvoid *)(0));
-        glEnableVertexAttribArray(bbox->prog->vert_pos);
-    }
+    glVertexAttribPointer(RICO_SHADER_POS_LOC, 4, GL_FLOAT, GL_FALSE,
+                          sizeof(struct prim_vertex),
+                          (GLvoid *)offsetof(struct prim_vertex, pos));
+    glEnableVertexAttribArray(RICO_SHADER_POS_LOC);
+
+    glVertexAttribPointer(RICO_SHADER_COL_LOC, 4, GL_FLOAT, GL_FALSE,
+                          sizeof(struct prim_vertex),
+                          (GLvoid *)offsetof(struct prim_vertex, col));
+    glEnableVertexAttribArray(RICO_SHADER_COL_LOC);
 
     // Clean up
     glBindVertexArray(0);
@@ -129,30 +156,28 @@ void bbox_free_mesh(struct bbox *bbox)
     glDeleteVertexArrays(1, &bbox->vao);
 }
 
-void bbox_render(const struct bbox *box, const struct mat4 *proj_matrix,
-                 const struct mat4 *view_matrix,
+void bbox_render(const struct bbox *box, const struct camera *camera,
                  const struct mat4 *model_matrix)
 {
-    bbox_render_color(box, proj_matrix, view_matrix, model_matrix, box->color);
+    bbox_render_color(box, camera, model_matrix, box->color);
 }
 
-void bbox_render_color(const struct bbox *box, const struct mat4 *proj_matrix,
-                       const struct mat4 *view_matrix,
-                       const struct mat4 *model_matrix, const struct col4 color)
+void bbox_render_color(const struct bbox *box, const struct camera *camera,
+                       const struct mat4 *model_matrix,
+                       const struct col4 color)
 {
-    if (box->wireframe && view_camera.fill_mode != GL_LINE)
+    if (box->wireframe && camera->fill_mode != GL_LINE)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // Set shader program
     glUseProgram(box->prog->prog_id);
 
     // Transform
-    glUniformMatrix4fv(box->prog->u_proj, 1, GL_TRUE, proj_matrix->a);
-    glUniformMatrix4fv(box->prog->u_view, 1, GL_TRUE, view_matrix->a);
+    glUniformMatrix4fv(box->prog->u_proj, 1, GL_TRUE, camera->proj_matrix.a);
+    glUniformMatrix4fv(box->prog->u_view, 1, GL_TRUE, camera->view_matrix.a);
     glUniformMatrix4fv(box->prog->u_model, 1, GL_TRUE, model_matrix->a);
 
-    // Color
-    glUniform4f(box->prog->u_color, color.r, color.g, color.b, color.a);
+    glUniform4f(box->prog->u_col, color.r, color.g, color.b, color.a);
 
     // Draw
     glBindVertexArray(box->vao);
@@ -160,8 +185,8 @@ void bbox_render_color(const struct bbox *box, const struct mat4 *proj_matrix,
     glBindVertexArray(0);
     glUseProgram(0);
 
-    if (box->wireframe && view_camera.fill_mode != GL_LINE)
-        glPolygonMode(GL_FRONT_AND_BACK, view_camera.fill_mode);
+    if (box->wireframe && camera->fill_mode != GL_LINE)
+        glPolygonMode(GL_FRONT_AND_BACK, camera->fill_mode);
 }
 
 int bbox_serialize_0(const void *handle, const struct rico_file *file)

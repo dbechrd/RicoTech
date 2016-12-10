@@ -5,13 +5,13 @@ void notes()
 {
     /*************************************************************************
     | Generate buffers
-    | 
+    |
     | Load vertex data into array
     | Load element array
-    | 
+    |
     **************************************************************************
     | Generate GLSL program
-    | 
+    |
     | Load vertex shader from file, compile, error check
     | Load fragment shader "    "   "   "   "   "   "
     | Create program, attach compiled shaders, link program
@@ -35,28 +35,28 @@ void notes()
     |
     **************************************************************************
     | Update model
-    | 
+    |
     | Use program
     | Update uniforms
     | Update VBO (for animation)
     |
     **************************************************************************
     | Render model
-    | 
+    |
     | Bind program / VAO
     | Update uniforms (texture swapping??)
     | Draw elements
     | Unbind program / VAO
-    | 
+    |
     **************************************************************************
     | Clean up
-    | 
+    |
     | Delete shaders (if not already)
     | Delete program
     | Delete buffers (VBO, EBO)
     | Delete VAO
     | Delete textures
-    | 
+    |
     *************************************************************************/
 
     // VBO = Vertex Buffer Object
@@ -94,7 +94,7 @@ void notes()
     GLuint vao = 0;
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vvv); //needed for attrib pointer calls,
-                                        //not stored in vao  
+                                        //not stored in vao
     glVertexAttribPointer(aaa, ...);
     glVertexAttribPointer(bbb, ...);
     glVertexAttribPointer(ccc, ...);
@@ -103,7 +103,7 @@ void notes()
     glEnableVertexAttribArray(ccc);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eee);
 
-    //Note: Setting vec4 W component to 0.0f makes a mesh ignore the camera
+    //Note: Setting vec3 W component to 0.0f makes a mesh ignore the camera
     //      and be rendered relative to the viewport. This might be useful for
     //      effects like a skybox.
 }

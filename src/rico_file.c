@@ -5,7 +5,7 @@
 static const char SIGNATURE[SIGNATURE_SIZE] = { 'R', '1', 'C', '0' };
 
 int rico_file_open_write(struct rico_file *_file, const char *filename,
-                         uint32 version)
+                         u32 version)
 {
     enum rico_error err = SUCCESS;
 

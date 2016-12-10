@@ -22,7 +22,7 @@ extern const char *rico_uid_type_string[];
 
 struct rico_uid {
     enum rico_uid_type type;
-    uint32 uid;
+    u32 uid;
     char name[30];
 };
 

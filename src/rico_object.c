@@ -6,21 +6,18 @@
 #include "program.h"
 #include <malloc.h>
 
-uint32 RICO_OBJECT_DEFAULT = 0;
+u32 RICO_OBJECT_DEFAULT = 0;
 static struct rico_pool *objects;
 
-static void object_render_direct(const struct rico_object *obj,
-                                 const struct program_default *prog);
-
-int object_init(uint32 pool_size)
+int object_init(u32 pool_size)
 {
     objects = calloc(1, sizeof(*objects));
     return pool_init("Objects", pool_size, sizeof(struct rico_object),
                      objects);
 }
 
-int object_create(uint32 *_handle, const char *name, enum rico_object_type type,
-                  uint32 mesh, uint32 texture, const struct bbox *bbox)
+int object_create(u32 *_handle, const char *name, enum rico_object_type type,
+                  u32 mesh, u32 texture, const struct bbox *bbox)
 {
     enum rico_error err;
     *_handle = RICO_OBJECT_DEFAULT;
@@ -36,7 +33,7 @@ int object_create(uint32 *_handle, const char *name, enum rico_object_type type,
 
     uid_init(&obj->uid, RICO_UID_OBJECT, name);
     obj->type = type;
-    obj->scale = VEC4_UNIT;
+    obj->scale = VEC3_UNIT;
     obj->mesh = mesh;
     obj->texture = texture;
     //HACK: Use mesh bbox if none specified
@@ -45,7 +42,7 @@ int object_create(uint32 *_handle, const char *name, enum rico_object_type type,
     return err;
 }
 
-void object_free(uint32 handle)
+void object_free(u32 handle)
 {
     struct rico_object *obj = pool_read(objects, handle);
     obj->uid = UID_NULL;
@@ -62,79 +59,75 @@ void object_free_all()
 }
 
 //HACK: DANGER WILL ROBINSON!!!
-struct rico_object *object_fetch(uint32 handle)
+struct rico_object *object_fetch(u32 handle)
 {
     return pool_read(objects, handle);
 }
 
-uint32 object_next(uint32 handle)
+u32 object_next(u32 handle)
 {
     return pool_next(objects, handle);
 }
 
-uint32 object_prev(uint32 handle)
+u32 object_prev(u32 handle)
 {
     return pool_prev(objects, handle);
 }
 
-void object_select(uint32 handle)
+void object_select(u32 handle)
 {
     struct rico_object *obj = pool_read(objects, handle);
     obj->bbox.color = COLOR_RED_HIGHLIGHT;
     obj->bbox.wireframe = false;
 }
 
-void object_deselect(uint32 handle)
+void object_deselect(u32 handle)
 {
     struct rico_object *obj = pool_read(objects, handle);
     obj->bbox.color = COLOR_GRAY_HIGHLIGHT;
     obj->bbox.wireframe = true;
 }
 
-void object_trans(uint32 handle, float x, float y, float z)
+void object_trans(u32 handle, float x, float y, float z)
 {
     struct rico_object *obj = pool_read(objects, handle);
-    //mat4_translate(&obj->transform, (struct vec4) { x, y, z, 1.0f });
-    obj->trans = (struct vec4) { x, y, z, 1.0f };
+    //union mat4_translate(&obj->transform, (struct vec3) { x, y, z });
+    obj->trans = (struct vec3) { x, y, z };
 }
 
-void object_rot_x(uint32 handle, float deg)
+void object_rot_x(u32 handle, float deg)
 {
     struct rico_object *obj = pool_read(objects, handle);
     //mat4_rotx(&obj->transform, deg);
     obj->rot.x = deg;
 }
 
-void object_rot_y(uint32 handle, float deg)
+void object_rot_y(u32 handle, float deg)
 {
     struct rico_object *obj = pool_read(objects, handle);
     //mat4_roty(&obj->transform, deg);
     obj->rot.y = deg;
 }
 
-void object_rot_z(uint32 handle, float deg)
+void object_rot_z(u32 handle, float deg)
 {
     struct rico_object *obj = pool_read(objects, handle);
     //mat4_rotz(&obj->transform, deg);
     obj->rot.z = deg;
 }
 
-void object_scale(uint32 handle, float x, float y, float z)
+void object_scale(u32 handle, float x, float y, float z)
 {
     struct rico_object *obj = pool_read(objects, handle);
-    //mat4_scale(&obj->transform, (struct vec4) { x, y, z, 1.0f });
-    obj->scale = (struct vec4) { x, y, z, 1.0f };
-}
-
-void object_render(uint32 handle, const struct program_default *prog)
-{
-    object_render_direct(pool_read(objects, handle), prog);
+    //mat4_scale(&obj->transform, (struct vec3) { x, y, z });
+    obj->scale = (struct vec3) { x, y, z };
 }
 
 static void object_render_direct(const struct rico_object *obj,
-                                 const struct program_default *prog)
+                                 const struct program_default *prog,
+                                 const struct camera *camera)
 {
-    glPolygonMode(GL_FRONT_AND_BACK, view_camera.fill_mode);
+    glPolygonMode(GL_FRONT_AND_BACK, camera->fill_mode);
     glUseProgram(prog->prog_id);
 
     // Model transform
@@ -145,17 +138,17 @@ static void object_render_direct(const struct rico_object *obj,
     //HACK: Order of these operations might not always be the same.. should
     //      probably just store the transformation matrix directly rather than
     //      trying to figure out which order to do what.
-    mat4_ident(&model_matrix);
-    mat4_translate(&model_matrix, obj->trans);
+    model_matrix = MAT4_IDENT;
+    mat4_translate(&model_matrix, &obj->trans);
     mat4_rotx(&model_matrix, obj->rot.x);
     mat4_roty(&model_matrix, obj->rot.y);
     mat4_rotz(&model_matrix, obj->rot.z);
-    mat4_scale(&model_matrix, obj->scale);
+    mat4_scale(&model_matrix, &obj->scale);
 
     if (obj->type == OBJ_DEFAULT)
     {
-        proj_matrix = view_camera.proj_matrix;
-        view_matrix = view_camera.view_matrix;
+        proj_matrix = camera->proj_matrix;
+        view_matrix = camera->view_matrix;
 
         // HACK: This only works when object is uniformly scaled on X/Y plane.
         /* TODO: UV scaling in general only works when object is uniformly
@@ -167,8 +160,8 @@ static void object_render_direct(const struct rico_object *obj,
     }
     else if (obj->type == OBJ_STRING_WORLD)
     {
-        proj_matrix = view_camera.proj_matrix;
-        view_matrix = view_camera.view_matrix;
+        proj_matrix = camera->proj_matrix;
+        view_matrix = camera->view_matrix;
 
         glUniform2f(prog->u_scale_uv, 1.0f, 1.0f);
     }
@@ -200,19 +193,26 @@ static void object_render_direct(const struct rico_object *obj,
     glUseProgram(0);
 
     // Render bbox
-    bbox_render(&(obj->bbox), &proj_matrix, &view_matrix, &model_matrix);
+    bbox_render(&(obj->bbox), camera, &model_matrix);
+}
+
+void object_render(u32 handle, const struct program_default *prog,
+                   const struct camera *camera)
+{
+    object_render_direct(pool_read(objects, handle), prog, camera);
 }
 
 void object_render_type(enum rico_object_type type,
-                        const struct program_default *prog)
+                        const struct program_default *prog,
+                        const struct camera *camera)
 {
     struct rico_object *obj;
-    for (uint32 i = 0; i < objects->active; ++i)
+    for (u32 i = 0; i < objects->active; ++i)
     {
         obj = pool_read(objects, objects->handles[i]);
         if (obj->type == type)
         {
-            object_render_direct(obj, prog);
+            object_render_direct(obj, prog, camera);
         }
     }
 }

@@ -17,9 +17,9 @@ enum OBJ_LINE_TYPE {
 };
 
 struct OBJ_FACE {
-    uint32 idx_pos;
-    uint32 idx_tex;
-    uint32 idx_normal;
+    u32 idx_pos;
+    u32 idx_tex;
+    u32 idx_normal;
 };
 
 enum OBJ_LINE_TYPE line_type(const char *line);
@@ -45,7 +45,7 @@ static char* strsep(char** stringp, const char* delim)
     return start;
 }
 
-int load_obj_file(const char *filename, uint32 *_meshes, uint32 *_mesh_count)
+int load_obj_file(const char *filename, u32 *_meshes, u32 *_mesh_count)
 {
     enum rico_error err = SUCCESS;
     int length;
@@ -54,9 +54,9 @@ int load_obj_file(const char *filename, uint32 *_meshes, uint32 *_mesh_count)
     char *tok = strsep(&buffer_ptr, "\n");
 
     // TODO: Colossal waste of memory here, hmmm.
-    struct vec4 positions[MESH_VERTICES_MAX] = { 0 };
+    struct vec3 positions[MESH_VERTICES_MAX] = { 0 };
     struct tex2 texcoords[MESH_VERTICES_MAX] = { 0 };
-    struct vec4 normals[MESH_VERTICES_MAX] = { 0 };
+    struct vec3 normals[MESH_VERTICES_MAX] = { 0 };
     int idx_pos = 0;
     int idx_tex = 0;
     int idx_normal = 0;
@@ -84,7 +84,6 @@ int load_obj_file(const char *filename, uint32 *_meshes, uint32 *_mesh_count)
             positions[idx_pos].x = strtof(pos, &pos);
             positions[idx_pos].y = strtof(pos, &pos);
             positions[idx_pos].z = strtof(pos, &pos);
-            positions[idx_pos].w = 1.0f;
             idx_pos++;
         }
         else if (str_starts_with(tok, "vt "))
@@ -100,7 +99,6 @@ int load_obj_file(const char *filename, uint32 *_meshes, uint32 *_mesh_count)
             normals[idx_normal].x = strtof(pos, &pos);
             normals[idx_normal].y = strtof(pos, &pos);
             normals[idx_normal].z = strtof(pos, &pos);
-            normals[idx_normal].w = 0.0f;
             idx_normal++;
         }
         else if (str_starts_with(tok, "f "))

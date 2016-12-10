@@ -2,7 +2,7 @@
 
 uniform float timer;
 
-attribute vec4 position;
+attribute vec3 position;
 
 varying vec2 texcoord;
 varying float fade_factor;
@@ -24,7 +24,7 @@ void main()
         vec3(    0.0, 1.0, 0.0),
         vec3(    0.0, 0.0, 1.0)
     );
-    gl_Position = vec4(window_scale * rotation * object_scale * position.xyz, 1.0);
+    gl_Position = vec3(window_scale * rotation * object_scale * position.xyz, 1.0);
     texcoord = position.xy * vec2(0.5) + vec2(0.5);
     fade_factor = sin(timer) * 0.5 + 0.5;
 }

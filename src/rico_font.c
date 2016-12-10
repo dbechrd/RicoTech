@@ -18,7 +18,7 @@
 
 #define RICO_FONT_POOL_SIZE 10
 static struct rico_font rico_font_pool[RICO_FONT_POOL_SIZE];
-static uint32 next_uid = 1;
+static u32 next_uid = 1;
 
 struct bff_header
 {
@@ -51,7 +51,7 @@ struct rico_font *make_font(const char *filename)
 		return NULL;
 
     // Check file signature
-    if ((uchar)buffer[0] != 0xBF || (uchar)buffer[1] != 0xF2)
+    if ((u8)buffer[0] != 0xBF || (u8)buffer[1] != 0xF2)
         goto cleanup;
 
     // Read bff header
@@ -121,7 +121,7 @@ void font_setblend(const struct rico_font *font)
 }
 
 int font_render(const struct rico_font *font, int x, int y, const char *text,
-                struct col4 bg, uint32 *_mesh, uint32 *_texture)
+                struct col4 bg, u32 *_mesh, u32 *_texture)
 {
     enum rico_error err;
     //font_setblend(font);
@@ -171,26 +171,34 @@ int font_render(const struct rico_font *font, int x, int y, const char *text,
 
         // Vertices for this character's quad
         vertices[idx_vertex++] = (struct mesh_vertex) {
-            (struct vec4) { cur_x / 64.0f,
-                            cur_y / 64.0f, 0.0f, 1.0f },
+            (struct vec3) {
+                cur_x / 64.0f,
+                cur_y / 64.0f,
+                0.0f },
             bg,
             (struct tex2) { u0, v1 }
         };
         vertices[idx_vertex++] = (struct mesh_vertex) {
-            (struct vec4) { (cur_x + xOffset) / 64.0f,
-                             cur_y / 64.0f, 0.0f, 1.0f },
+            (struct vec3) {
+                (cur_x + xOffset) / 64.0f,
+                cur_y / 64.0f,
+                0.0f },
             bg,
             (struct tex2) { u1, v1 }
         };
         vertices[idx_vertex++] = (struct mesh_vertex) {
-            (struct vec4) { (cur_x + xOffset) / 64.0f,
-                            (cur_y + font->YOffset) / 64.0f, 0.0f, 1.0f },
+            (struct vec3) {
+                (cur_x + xOffset) / 64.0f,
+                (cur_y + font->YOffset) / 64.0f,
+                0.0f },
             bg,
             (struct tex2) { u1, v0 }
         };
         vertices[idx_vertex++] = (struct mesh_vertex) {
-            (struct vec4) { cur_x / 64.0f,
-                           (cur_y + font->YOffset) / 64.0f, 0.0f, 1.0f },
+            (struct vec3) {
+                cur_x / 64.0f,
+                (cur_y + font->YOffset) / 64.0f,
+                0.0f },
             bg,
             (struct tex2) { u0, v0 }
         };

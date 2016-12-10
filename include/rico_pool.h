@@ -7,23 +7,23 @@
 
 struct rico_pool {
     struct rico_uid uid;
-    uint32 count;        // number of elements
-    uint32 stride;       // size of each element
-    uint32 active;       // number of elements in use
-    uint32 *handles;     // pool handles
+    u32 count;        // number of elements
+    u32 stride;       // size of each element
+    u32 active;       // number of elements in use
+    u32 *handles;     // pool handles
     void *pool;          // element pool
 };
 
-int pool_init(const char *name, uint32 count, uint32 stride,
+int pool_init(const char *name, u32 count, u32 stride,
               struct rico_pool *_pool);
-int pool_alloc(struct rico_pool *pool, uint32 *_handle);
-int pool_free(struct rico_pool *pool, uint32 handle);
-uint32 pool_next(struct rico_pool *pool, uint32 handle);
-uint32 pool_prev(struct rico_pool *pool, uint32 handle);
+int pool_alloc(struct rico_pool *pool, u32 *_handle);
+int pool_free(struct rico_pool *pool, u32 handle);
+u32 pool_next(struct rico_pool *pool, u32 handle);
+u32 pool_prev(struct rico_pool *pool, u32 handle);
 int pool_serialize_0(const void *handle, const struct rico_file *file);
 int pool_deserialize_0(void *handle, const struct rico_file *file);
 
-static inline void *pool_read(const struct rico_pool *pool, uint32 handle)
+static inline void *pool_read(const struct rico_pool *pool, u32 handle)
 {
     RICO_ASSERT(pool);
     RICO_ASSERT(handle < pool->count);

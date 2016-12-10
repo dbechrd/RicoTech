@@ -152,30 +152,30 @@ void program_default_uniform_projection(struct program_default *program,
 }
 
 //==============================================================================
-// BBox program
+// Primitive program
 //==============================================================================
 
-static inline void program_bbox_get_locations(struct program_bbox *p)
+static inline void program_primitive_get_locations(struct program_primitive *p)
 {
     // Vertex shader
     p->u_model = program_get_uniform_location(p->prog_id, "u_model");
     p->u_view = program_get_uniform_location(p->prog_id, "u_view");
     p->u_proj = program_get_uniform_location(p->prog_id, "u_proj");
-    p->u_color = program_get_uniform_location(p->prog_id, "u_color");
 
     p->vert_pos = program_get_attrib_location(p->prog_id, "vert_pos");
+    p->vert_col = program_get_attrib_location(p->prog_id, "vert_col");
 
     // Fragment shader
-    //p->u_ambient = program_get_uniform_location(p->prog_id, "u_ambient");
+    p->u_col = program_get_uniform_location(p->prog_id, "u_col");
 }
 
-int make_program_bbox(struct program_bbox **_program)
+int make_program_primitive(struct program_primitive **_program)
 {
-    static struct program_bbox *prog_bbox = NULL;
+    static struct program_primitive *prog_primitive = NULL;
     enum rico_error err;
 
-    if (prog_bbox != NULL) {
-        *_program = prog_bbox;
+    if (prog_primitive != NULL) {
+        *_program = prog_primitive;
         return SUCCESS;
     }
 
@@ -184,10 +184,10 @@ int make_program_bbox(struct program_bbox **_program)
     GLuint program = 0;
 
     // Compile shaders
-    err = make_shader(GL_VERTEX_SHADER, "shader/bbox.vert.glsl", &vshader);
+    err = make_shader(GL_VERTEX_SHADER, "shader/prim.vert.glsl", &vshader);
     if (err) goto cleanup;
 
-    err = make_shader(GL_FRAGMENT_SHADER, "shader/bbox.frag.glsl", &fshader);
+    err = make_shader(GL_FRAGMENT_SHADER, "shader/prim.frag.glsl", &fshader);
     if (err) goto cleanup;
 
     // Link shader program
@@ -195,34 +195,28 @@ int make_program_bbox(struct program_bbox **_program)
     if (err) goto cleanup;
 
     // Create program object
-    prog_bbox = calloc(1, sizeof(struct program_bbox));
-    prog_bbox->prog_id = program;
+    prog_primitive = calloc(1, sizeof(struct program_primitive));
+    prog_primitive->prog_id = program;
 
     // Query shader locations
-    program_bbox_get_locations(prog_bbox);
+    program_primitive_get_locations(prog_primitive);
 
 cleanup:
     free_shader(fshader);
     free_shader(vshader);
-    *_program = prog_bbox;
+    *_program = prog_primitive;
     return err;
 }
 
-void free_program_bbox(struct program_bbox **program)
+void free_program_primitive(struct program_primitive **program)
 {
-    //TODO: Handle error
-    if ((*program)->ref_count > 0) {
-        printf("Cannot delete a program in use!");
-        RICO_ASSERT(0);
-    }
-
     glDeleteProgram((*program)->prog_id);
     free(*program);
     *program = NULL;
 }
 
-void program_bbox_uniform_projection(struct program_bbox *program,
-                                     struct mat4 *proj)
+void program_primitive_uniform_projection(struct program_primitive *program,
+                                          struct mat4 *proj)
 {
     glUseProgram(program->prog_id);
     glUniformMatrix4fv(program->u_proj, 1, GL_TRUE, proj->a);

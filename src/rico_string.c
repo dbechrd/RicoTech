@@ -4,9 +4,9 @@
 // #define POOL_SIZE 50
 
 // static struct rico_string pool[POOL_SIZE];
-// static uint32 next_handle = 1;
+// static u32 next_handle = 1;
 
-// struct rico_string string_init(const char *str, uint32 length)
+// struct rico_string string_init(const char *str, u32 length)
 // {
 //     //TODO: Handle out-of-memory
 //     //TODO: Implement reuse of pool objects

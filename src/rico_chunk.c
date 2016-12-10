@@ -6,14 +6,14 @@
 
 static void chunk_print(struct rico_chunk *chunk);
 
-static uint32 parse_mesh(const char *mesh)
+static u32 parse_mesh(const char *mesh)
 {
     UNUSED(mesh);
     return 0;
 }
 
-int chunk_init(uint32 version, const char *name, uint32 tex_count,
-               uint32 mesh_count, uint32 obj_count, struct rico_pool *textures,
+int chunk_init(u32 version, const char *name, u32 tex_count,
+               u32 mesh_count, u32 obj_count, struct rico_pool *textures,
                struct rico_pool *meshes, struct rico_pool *objects,
                struct rico_chunk *_chunk)
 {

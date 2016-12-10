@@ -9,12 +9,12 @@
 
 struct rico_file {
     FILE *fs;
-    uint32 version;
+    u32 version;
     const char *filename;
 };
 
 int rico_file_open_write(struct rico_file *_handle, const char *filename,
-                         uint32 version);
+                         u32 version);
 int rico_file_open_read(struct rico_file *_handle, const char *filename);
 void rico_file_close(struct rico_file *handle);
 

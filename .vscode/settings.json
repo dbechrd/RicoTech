@@ -1,5 +1,13 @@
 // Place your settings in this file to overwrite default and user settings.
 {
     // Columns at which to show vertical rulers
-    "editor.rulers": [ 80 ]
+    "editor.rulers": [ 80 ],
+
+    // Configure glob patterns for excluding files and folders.
+    "files.exclude": {
+        "include/GL/**": true,
+        "include/nuklear/**": true,
+        "include/SDL/**": true,
+        "include/stb/**": true
+    }
 }

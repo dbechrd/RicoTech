@@ -16,19 +16,19 @@ struct rico_texture {
     GLsizei bpp;
 };
 
-uint32 RICO_TEXTURE_DEFAULT = 0;
+u32 RICO_TEXTURE_DEFAULT = 0;
 static struct rico_pool textures;
 
 static int build_texture(struct rico_texture *tex, const void *pixels);
 
-int rico_texture_init(uint32 pool_size)
+int rico_texture_init(u32 pool_size)
 {
     return pool_init("Textures", pool_size, sizeof(struct rico_texture),
                      &textures);
 }
 
 int texture_load_file(const char *name, GLenum target, const char *filename,
-                      uint32 *_handle)
+                      u32 *_handle)
 {
     enum rico_error err;
     int width, height, bpp;
@@ -56,7 +56,7 @@ cleanup:
 }
 
 int texture_load_pixels(const char *name, GLenum target, int width, int height,
-                        int bpp, const void *pixels, uint32 *_handle)
+                        int bpp, const void *pixels, u32 *_handle)
 {
     enum rico_error err;
     *_handle = RICO_TEXTURE_DEFAULT;
@@ -184,7 +184,7 @@ static int build_texture(struct rico_texture *tex, const void *pixels)
     return SUCCESS;
 }
 
-void texture_free(uint32 handle)
+void texture_free(u32 handle)
 {
     struct rico_texture *tex = pool_read(&textures, handle);
     glDeleteTextures(1, &tex->gl_id);
@@ -193,13 +193,13 @@ void texture_free(uint32 handle)
     pool_free(&textures, handle);
 }
 
-const char *texture_name(uint32 handle)
+const char *texture_name(u32 handle)
 {
     struct rico_texture *tex = pool_read(&textures, handle);
     return tex->uid.name;
 }
 
-void texture_bind(uint32 handle)
+void texture_bind(u32 handle)
 {
     // TODO: When is this useful in the context of this application?
     //glActiveTexture(GL_TEXTURE0);
@@ -208,7 +208,7 @@ void texture_bind(uint32 handle)
     glBindTexture(tex->gl_target, tex->gl_id);
 }
 
-void texture_unbind(uint32 handle)
+void texture_unbind(u32 handle)
 {
     struct rico_texture *tex = pool_read(&textures, handle);
     glBindTexture(tex->gl_target, 0);

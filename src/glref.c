@@ -20,24 +20,24 @@
 
 //TODO: Implement better camera with position + lookat. Is that necessary?
 //      Maybe it's easy to derive lookat when I need it? Probably not..
-//struct vec4 camera_right = {  }
+//struct vec3 camera_right = {  }
 
 //static GLuint vao;
 //static GLuint vbos[2];
 
-static uint32 selected_handle = 0;
+static u32 selected_handle = 0;
 
 static struct program_default *prog_default;
-static struct program_bbox *prog_bbox;
+static struct program_primitive *prog_primitive;
 
-static uint32 tex_grass;
-static uint32 tex_rock;
-static uint32 tex_hello;
-static uint32 tex_yellow;
-static uint32 tex_font_test;
+static u32 tex_grass;
+static u32 tex_rock;
+static u32 tex_hello;
+static u32 tex_yellow;
+static u32 tex_font_test;
 
-static uint32 mesh_default;
-static uint32 mesh_font_test;
+static u32 mesh_default;
+static u32 mesh_font_test;
 
 static struct bbox axis_bbox;
 
@@ -56,24 +56,12 @@ int init_glref()
     struct rico_font *font = make_font("font/courier_new.bff");
 
     //--------------------------------------------------------------------------
-    // Initialize camera
-    //--------------------------------------------------------------------------
-    //Note: Player's eyes are at 1.7 meters
-    view_camera.scale = VEC4_UNIT;
-    view_camera.rot   = VEC4_ZERO;
-    view_camera.trans = (struct vec4) { 0.0f, -1.7f, -4.0f, 0.0f };
-
-    // Set projection matrix uniform
-    view_camera.proj_matrix = make_mat4_perspective(SCREEN_W, SCREEN_H, Z_NEAR,
-                                                    Z_FAR, Z_FOV_DEG);
-
-    //--------------------------------------------------------------------------
     // Create shader program
     //--------------------------------------------------------------------------
     err = make_program_default(&prog_default);
     if (err) return err;
 
-    err = make_program_bbox(&prog_bbox);
+    err = make_program_primitive(&prog_primitive);
     if (err) return err;
 
     /*************************************************************************
@@ -96,22 +84,22 @@ int init_glref()
     #define VERT_COUNT 4
     const struct mesh_vertex vertices[VERT_COUNT] = {
         {
-            { -1.0f, -1.0f, 0.0f, 1.0f }, //Position
-            { 1.0f, 1.0f, 1.0f, 1.0f },   //Color
-            { 0.0f, 0.0f }                //UV-coords
+            { -1.0f, -1.0f, 0.0f },     //Position
+            { 1.0f, 1.0f, 1.0f, 1.0f }, //Color
+            { 0.0f, 0.0f }              //UV-coords
         },
         {
-            { 1.0f, -1.0f, 0.0f, 1.0f },
+            { 1.0f, -1.0f, 0.0f },
             { 1.0f, 1.0f, 1.0f, 1.0f },
             { 1.0f, 0.0f }
         },
         {
-            { 1.0f, 1.0f, 0.0f, 1.0f },
+            { 1.0f, 1.0f, 0.0f },
             { 1.0f, 1.0f, 1.0f, 1.0f },
             { 1.0f, 1.0f }
         },
         {
-            { -1.0f, 1.0f, 0.0f, 1.0f },
+            { -1.0f, 1.0f, 0.0f },
             { 1.0f, 1.0f, 1.0f, 1.0f },
             { 0.0f, 1.0f }
         }
@@ -162,43 +150,45 @@ int init_glref()
     err = bbox_init(
         &axis_bbox,
         "Axis BBox",
-        (struct vec4) { -0.5f, -0.5f, -0.5f, 1.0f },
-        (struct vec4) {  0.5f,  0.5f,  0.5f, 1.0f },
+        (struct vec3) { -0.5f, -0.5f, -0.5f },
+        (struct vec3) {  0.5f,  0.5f,  0.5f },
         COLOR_WHITE
     );
     if (err) return err;
 
+    //poodles
+
     // X-axis label
-    mat4_ident(&x_axis_transform);
-    mat4_scale(&x_axis_transform, (struct vec4) { 1.0f, 0.01f, 0.01f, 1.0f });
-    mat4_translate(&x_axis_transform, (struct vec4) { 0.5f, 0.0f, 0.0f, 1.0f });
+    x_axis_transform = MAT4_IDENT;
+    mat4_scale(&x_axis_transform, &((struct vec3) { 1.0f, 0.01f, 0.01f }));
+    mat4_translate(&x_axis_transform, &((struct vec3) { 0.5f, 0.0f, 0.0f }));
 
     // Y-axis label
-    mat4_ident(&y_axis_transform);
-    mat4_scale(&y_axis_transform, (struct vec4) { 0.01f, 1.0f, 0.01f, 1.0f });
-    mat4_translate(&y_axis_transform, (struct vec4) { 0.0f, 0.5f, 0.0f, 1.0f });
+    y_axis_transform = MAT4_IDENT;
+    mat4_scale(&y_axis_transform, &((struct vec3) { 0.01f, 1.0f, 0.01f }));
+    mat4_translate(&y_axis_transform, &((struct vec3) { 0.0f, 0.5f, 0.0f }));
 
     // Z-axis label
-    mat4_ident(&z_axis_transform);
-    mat4_scale(&z_axis_transform, (struct vec4) { 0.01f, 0.01f, 1.0f, 1.0f });
-    mat4_translate(&z_axis_transform, (struct vec4) { 0.0f, 0.0f, 0.5f, 1.0f });
+    z_axis_transform = MAT4_IDENT;
+    mat4_scale(&z_axis_transform, &((struct vec3) { 0.01f, 0.01f, 1.0f }));
+    mat4_translate(&z_axis_transform, &((struct vec3) { 0.0f, 0.0f, 0.5f }));
 
     return err;
 }
 
-int init_hardcoded_test_chunk(uint32 *meshes, uint32 mesh_count)
+int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
 {
     enum rico_error err;
-    uint32 obj_fonttest;
-    uint32 obj_ground;
-    uint32 obj_yellow;
-    uint32 obj_ruler;
-    uint32 obj_wall1;
-    uint32 obj_wall2;
-    uint32 obj_wall3;
-    uint32 obj_wall4;
-    uint32 obj_wall5;
-    uint32 arr_objects[50] = { 0 };
+    u32 obj_fonttest;
+    u32 obj_ground;
+    u32 obj_yellow;
+    u32 obj_ruler;
+    u32 obj_wall1;
+    u32 obj_wall2;
+    u32 obj_wall3;
+    u32 obj_wall4;
+    u32 obj_wall5;
+    u32 arr_objects[50] = { 0 };
 
     // Initialize object pool
     err = object_init(RICO_OBJECT_POOL_SIZE);
@@ -218,7 +208,7 @@ int init_hardcoded_test_chunk(uint32 *meshes, uint32 mesh_count)
     err = object_create(&obj_fonttest, "Screen String Test", OBJ_STRING_SCREEN,
                   mesh_font_test, tex_font_test, NULL);
     if (err) return err;
-    object_trans(obj_fonttest, -1.0f, 1.0f, 0.0f);
+    object_trans(obj_fonttest, -1.0f, Z_NEAR, 0.0f);
     object_scale(obj_fonttest, 0.125f, 0.125f * SCREEN_ASPECT, 1.0f);
 
     // Ground
@@ -244,7 +234,7 @@ int init_hardcoded_test_chunk(uint32 *meshes, uint32 mesh_count)
     object_scale(obj_ruler, 1.0f, 1.0f, 1.0f);
 
     // Walls are all the same size for now
-    struct vec4 wall_scale = (struct vec4) { 8.0f, 2.5f, 1.0f, 1.0f };
+    struct vec3 wall_scale = (struct vec3) { 8.0f, 2.5f, 1.0f };
 
     // Wall front
     err = object_create(&obj_wall1, "wall1", OBJ_DEFAULT, mesh_default,
@@ -285,7 +275,7 @@ int init_hardcoded_test_chunk(uint32 *meshes, uint32 mesh_count)
     object_scale(obj_wall5, wall_scale.x, wall_scale.y, wall_scale.z);
 
     {
-        for (uint32 i = 0; i < mesh_count; i++)
+        for (u32 i = 0; i < mesh_count; i++)
         {
             err = object_create(&arr_objects[i], mesh_name(meshes[i]),
                                 OBJ_DEFAULT, meshes[i], RICO_TEXTURE_DEFAULT,
@@ -321,7 +311,7 @@ int init_hardcoded_test_chunk(uint32 *meshes, uint32 mesh_count)
     return err;
 }
 
-void select_obj(uint32 handle)
+void select_obj(u32 handle)
 {
     // Deselect current object
     object_deselect(selected_handle);
@@ -345,38 +335,38 @@ void select_prev_obj()
     select_obj(object_prev(selected_handle));
 }
 
-void translate_selected(struct vec4 offset)
+void translate_selected(struct camera *camera, const struct vec3 *offset)
 {
     struct rico_object *obj = object_fetch(selected_handle);
 
-    if (vec_equals(offset, VEC4_ZERO))
+    if (vec3_equals(offset, &VEC3_ZERO))
     {
-        if (view_camera.locked && obj->type != OBJ_STRING_SCREEN)
+        if (camera->locked && obj->type != OBJ_STRING_SCREEN)
         {
-            view_camera.trans = vec_add(view_camera.trans, obj->trans);
+            vec3_add(&camera->position, &obj->trans);
         }
-        obj->trans = VEC4_ZERO;
+        obj->trans = VEC3_ZERO;
     }
     else
     {
-        if (view_camera.locked && obj->type != OBJ_STRING_SCREEN)
+        if (camera->locked && obj->type != OBJ_STRING_SCREEN)
         {
-            view_camera.trans = vec_sub(view_camera.trans, offset);
+            vec3_sub(&camera->position, offset);
         }
-        obj->trans = vec_add(obj->trans, offset);
+        vec3_add(&obj->trans, offset);
     }
 }
 
-void rotate_selected(struct vec4 offset)
+void rotate_selected(const struct vec3 *offset)
 {
-    if (vec_equals(offset, VEC4_ZERO))
+    if (vec3_equals(offset, &VEC3_ZERO))
     {
-        object_fetch(selected_handle)->rot = VEC4_ZERO;
+        object_fetch(selected_handle)->rot = VEC3_ZERO;
     }
     else
     {
-        struct vec4 *rot = &object_fetch(selected_handle)->rot;
-        *rot = vec_add(*rot, offset);
+        struct vec3 *rot = &object_fetch(selected_handle)->rot;
+        vec3_add(rot, offset);
     }
 }
 
@@ -385,7 +375,7 @@ int duplicate_selected()
     enum rico_error err;
     struct rico_object *selected = object_fetch(selected_handle);
 
-    uint32 newObj;
+    u32 newObj;
     err = object_create(&newObj, "Duplicate", selected->type, selected->mesh,
                         selected->texture, mesh_bbox(selected->mesh));
     if (err) return err;
@@ -404,7 +394,7 @@ int duplicate_selected()
 
 void delete_selected()
 {
-    uint32 handle = selected_handle;
+    u32 handle = selected_handle;
     select_prev_obj();
     object_free(handle);
 }
@@ -423,30 +413,27 @@ void update_glref(GLfloat dt, bool ambient_light)
     if (ambient_light)
         glUniform4fv(prog_default->u_ambient, 1, (const GLfloat *)&ambient);
     else
-        glUniform4fv(prog_default->u_ambient, 1, (const GLfloat *)&VEC4_UNIT);
+        glUniform4fv(prog_default->u_ambient, 1, (const GLfloat *)&VEC3_UNIT);
 
     glUseProgram(0);
 }
 
-void render_glref()
+void render_glref(struct camera *camera)
 {
     //--------------------------------------------------------------------------
     // Render objects
     //--------------------------------------------------------------------------
-    object_render_type(OBJ_DEFAULT, prog_default);
-    object_render_type(OBJ_STRING_WORLD, prog_default);
+    object_render_type(OBJ_DEFAULT, prog_default, camera);
+    object_render_type(OBJ_STRING_WORLD, prog_default, camera);
 
     //--------------------------------------------------------------------------
     // Axes labels (bboxes)
     //--------------------------------------------------------------------------
-    bbox_render_color(&axis_bbox, &view_camera.proj_matrix,
-                      &view_camera.view_matrix, &x_axis_transform, COLOR_RED);
-    bbox_render_color(&axis_bbox, &view_camera.proj_matrix,
-                      &view_camera.view_matrix, &y_axis_transform, COLOR_GREEN);
-    bbox_render_color(&axis_bbox, &view_camera.proj_matrix,
-                      &view_camera.view_matrix, &z_axis_transform, COLOR_BLUE);
+    bbox_render_color(&axis_bbox, camera, &x_axis_transform, COLOR_RED);
+    bbox_render_color(&axis_bbox, camera, &y_axis_transform, COLOR_GREEN);
+    bbox_render_color(&axis_bbox, camera, &z_axis_transform, COLOR_BLUE);
 
-    object_render_type(OBJ_STRING_SCREEN, prog_default);
+    object_render_type(OBJ_STRING_SCREEN, prog_default, camera);
 }
 void free_glref()
 {

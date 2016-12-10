@@ -39,6 +39,9 @@
 #define M_2PI 6.28318530717958647692528676655900576
 #endif
 
+#define DEG_TO_RAD(deg) deg * M_PI / 180.0f
+#define RAD_TO_DEG(rad) rad * 180.0f / M_PI
+
 #define M_SEVENTH_DEG 51.428571428571428571428571428571
 
 #ifndef EPSILON
@@ -46,31 +49,77 @@
 #endif
 
 //------------------------------------------------------------------------------
-// Basic type definitions
+// Basic type redefinitions
 //------------------------------------------------------------------------------
-// Cleanup: This is probably dumb
-typedef signed char int8_t;
-typedef unsigned char uint8_t;
-typedef signed short int16_t;
-typedef unsigned short uint16_t;
-typedef signed int int32_t;
-typedef unsigned int uint32_t;
-typedef signed long long int64_t;
-typedef unsigned long long uint64_t;
+#include <stdint.h>
+// #include <stddef.h>
+// #include <limits.h>
+// #include <float.h>
 
-typedef int8_t  int8;
+typedef int8_t  i8;
+typedef int16_t i16;
+typedef int32_t i32;
+typedef int64_t i64;
+
+typedef uint8_t  u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
+
+typedef i8 s8;
+typedef i16 s16;
+typedef i32 s32;
+typedef i64 s64;
+
+typedef i8 bool8;
+
+/*
+//
+// NOTE(casey): Types
+//
+#include <stdint.h>
+#include <stddef.h>
+#include <limits.h>
+#include <float.h>
+
+typedef int8_t int8;
 typedef int16_t int16;
 typedef int32_t int32;
 typedef int64_t int64;
+typedef int32 bool32;
 
-typedef uint8_t  uint8;
+typedef uint8_t uint8;
 typedef uint16_t uint16;
 typedef uint32_t uint32;
 typedef uint64_t uint64;
 
-// TODO: Platform-specific definitions?
-typedef unsigned char uchar;
-typedef unsigned long ulong;
+typedef intptr_t intptr;
+typedef uintptr_t uintptr;
+
+typedef size_t memory_index;
+
+typedef float real32;
+typedef double real64;
+
+typedef int8 s8;
+typedef int8 s08;
+typedef int16 s16;
+typedef int32 s32;
+typedef int64 s64;
+typedef bool32 b32;
+typedef b32 b32x;
+
+typedef uint8 u8;
+typedef uint8 u08;
+typedef uint16 u16;
+typedef uint32 u32;
+typedef uint64 u64;
+
+typedef real32 r32;
+typedef real64 r64;
+typedef real32 f32;
+typedef real64 f64;
+*/
 
 //------------------------------------------------------------------------------
 // Macros
@@ -92,7 +141,11 @@ typedef unsigned long ulong;
 //------------------------------------------------------------------------------
 // Enums
 //------------------------------------------------------------------------------
-enum { VBO_VERTEX, VBO_ELEMENT };
+enum rico_vbo {
+    VBO_VERTEX,
+    VBO_ELEMENT,
+    VBO_COUNT
+};
 
 #define RICO_ERRORS(f) \
     f(SUCCESS)                      \
@@ -107,6 +160,8 @@ enum { VBO_VERTEX, VBO_ELEMENT };
     f(ERR_TEXTURE_UNSUPPORTED_BPP)  \
     f(ERR_SHADER_COMPILE)           \
     f(ERR_SHADER_LINK)              \
+    f(ERR_SDL_INIT)                 \
+    f(ERR_PRIM_UNSUPPORTED)         \
     f(ERR_COUNT)
 
 enum rico_error {

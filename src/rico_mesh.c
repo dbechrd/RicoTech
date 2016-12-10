@@ -13,23 +13,23 @@ struct rico_mesh {
     struct bbox bbox;
 };
 
-uint32 RICO_MESH_DEFAULT = 0;
+u32 RICO_MESH_DEFAULT = 0;
 static struct rico_pool meshes;
 
-static int build_mesh(struct rico_mesh *mesh, uint32 vertex_count,
+static int build_mesh(struct rico_mesh *mesh, u32 vertex_count,
                       const struct mesh_vertex *vertex_data,
-                      uint32 element_count, const GLuint *element_data,
+                      u32 element_count, const GLuint *element_data,
                       GLenum hint);
 
-int rico_mesh_init(uint32 pool_size)
+int rico_mesh_init(u32 pool_size)
 {
     return pool_init("Meshes", pool_size, sizeof(struct rico_mesh),
                      &meshes);
 }
 
-int mesh_load(const char *name, uint32 vertex_count,
-              const struct mesh_vertex *vertex_data, uint32 element_count,
-              const GLuint *element_data, GLenum hint, uint32 *_handle)
+int mesh_load(const char *name, u32 vertex_count,
+              const struct mesh_vertex *vertex_data, u32 element_count,
+              const GLuint *element_data, GLenum hint, u32 *_handle)
 {
     enum rico_error err;
     *_handle = RICO_MESH_DEFAULT;
@@ -49,30 +49,37 @@ int mesh_load(const char *name, uint32 vertex_count,
     return err;
 }
 
-static int build_mesh(struct rico_mesh *mesh, uint32 vertex_count,
+static int build_mesh(struct rico_mesh *mesh, u32 vertex_count,
                       const struct mesh_vertex *vertex_data,
-                      uint32 element_count, const GLuint *element_data,
+                      u32 element_count, const GLuint *element_data,
                       GLenum hint)
 {
     mesh->element_count = element_count;
 
+    //--------------------------------------------------------------------------
+    // Generate VAO and buffers
+    //--------------------------------------------------------------------------
     glGenVertexArrays(1, &mesh->vao);
     glBindVertexArray(mesh->vao);
-
     glGenBuffers(2, mesh->vbos);
 
+    //--------------------------------------------------------------------------
+    // Vertex buffer
+    //--------------------------------------------------------------------------
     glBindBuffer(GL_ARRAY_BUFFER, mesh->vbos[VBO_VERTEX]);
     glBufferData(GL_ARRAY_BUFFER, vertex_count * sizeof(struct mesh_vertex),
                  vertex_data, hint);
 
+    //--------------------------------------------------------------------------
+    // Element buffer
+    //--------------------------------------------------------------------------
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->vbos[VBO_ELEMENT]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, element_count * sizeof(GLuint),
                  element_data, hint);
 
     //--------------------------------------------------------------------------
-    // Get vertex shader attribute locations and set pointers (size/type/stride)
+    // Shader attribute pointers
     //--------------------------------------------------------------------------
-
     // TODO: How to get size of mesh_vertex.pos dynamically? Why doesn't
     //       sizeof_member work?
     glVertexAttribPointer(RICO_SHADER_POS_LOC, 4, GL_FLOAT, GL_FALSE,
@@ -97,7 +104,7 @@ static int build_mesh(struct rico_mesh *mesh, uint32 vertex_count,
     return SUCCESS;
 }
 
-void mesh_free(uint32 handle)
+void mesh_free(u32 handle)
 {
     struct rico_mesh *mesh = pool_read(&meshes, handle);
 
@@ -107,25 +114,25 @@ void mesh_free(uint32 handle)
     pool_free(&meshes, handle);
 }
 
-const char *mesh_name(uint32 handle)
+const char *mesh_name(u32 handle)
 {
     struct rico_mesh *mesh = pool_read(&meshes, handle);
     return mesh->uid.name;
 }
 
-const struct bbox *mesh_bbox(uint32 handle)
+const struct bbox *mesh_bbox(u32 handle)
 {
     struct rico_mesh *mesh = pool_read(&meshes, handle);
     return &mesh->bbox;
 }
 
-void mesh_update(uint32 handle)
+void mesh_update(u32 handle)
 {
     UNUSED(handle);
     //TODO: Animate the mesh.
 }
 
-void mesh_render(uint32 handle)
+void mesh_render(u32 handle)
 {
     struct rico_mesh *mesh = pool_read(&meshes, handle);
 

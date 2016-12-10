@@ -6,11 +6,11 @@
 #include <assert.h>
 #include <math.h>
 
-static struct program_bbox *regularpoly_program = NULL;
+static struct program_primitive *regularpoly_program = NULL;
 
 int init_regularpoly_program()
 {
-    enum rico_error err = make_program_bbox(&regularpoly_program);
+    enum rico_error err = make_program_primitive(&regularpoly_program);
     if (err) {
         fprintf(stderr, "regularpoly: Failed to make program.\n");
     }
@@ -35,7 +35,6 @@ static void rebuild_vao(struct regularpoly *poly)
         poly->vertices[i].x = (GLfloat)cos(angle) * poly->radius + poly->pos.x;
         poly->vertices[i].y = (GLfloat)sin(angle) * poly->radius + poly->pos.y;
         poly->vertices[i].z = poly->pos.z;
-        poly->vertices[i].w = 1.0f;
         angle += delta_angle;
     }
 
@@ -64,7 +63,7 @@ static void rebuild_vao(struct regularpoly *poly)
     poly->dirty_vao = false;
 }
 
-struct regularpoly *make_regularpoly(struct vec4 center, GLfloat radius,
+struct regularpoly *make_regularpoly(struct vec3 center, GLfloat radius,
                                      unsigned int vertex_count)
 {
     struct regularpoly *poly = calloc(1, sizeof(struct regularpoly));
@@ -74,7 +73,7 @@ struct regularpoly *make_regularpoly(struct vec4 center, GLfloat radius,
     poly->pos = center;
     poly->radius = radius;
 
-    poly->vertices = calloc(1, sizeof(struct vec4) * vertex_count);
+    poly->vertices = calloc(1, sizeof(struct vec3) * vertex_count);
     poly->count = vertex_count;
 
     poly->vao = 0;
