@@ -34,7 +34,7 @@ static SDL_GLContext context = NULL;
 static u32 meshes[100];
 static u32 mesh_count;
 
-const bool reset_game_world = true;
+const bool reset_game_world = false;
 static struct rico_chunk first_chunk;
 
 static struct camera camera;
@@ -560,6 +560,7 @@ int mymain()
                         //TODO: FIX ME
                         // camera_reset(&camera);
                         camera.position.y = 1.7f;
+                        camera.need_update = true;
                     }
                     else if (windowEvent.key.keysym.sym == SDLK_c)
                     {
@@ -617,9 +618,14 @@ int mymain()
                         vec3_print(&fwd);
                         printf("\n");
                     }
-                    else
+                    else if (windowEvent.key.keysym.sym != SDLK_LCTRL &&
+                             windowEvent.key.keysym.sym != SDLK_RCTRL &&
+                             windowEvent.key.keysym.sym != SDLK_LALT &&
+                             windowEvent.key.keysym.sym != SDLK_RALT &&
+                             windowEvent.key.keysym.sym != SDLK_LSHIFT &&
+                             windowEvent.key.keysym.sym != SDLK_RSHIFT)
                     {
-                        printf("Unhandled key: %d", windowEvent.key.keysym.sym);
+                        printf("Unhandled key: %x\n", windowEvent.key.keysym.sym);
                     }
                 }
             }

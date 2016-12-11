@@ -178,6 +178,7 @@ void bbox_render_color(const struct bbox *box, const struct camera *camera,
     glUniformMatrix4fv(box->prog->u_model, 1, GL_TRUE, model_matrix->a);
 
     glUniform4f(box->prog->u_col, color.r, color.g, color.b, color.a);
+    //glUniform4f(box->prog->u_col, 1.0f, 1.0f, 1.0f, 0.5f);
 
     // Draw
     glBindVertexArray(box->vao);

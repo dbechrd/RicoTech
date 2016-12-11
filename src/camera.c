@@ -57,6 +57,12 @@ void camera_translate(struct camera *camera, const struct vec3 *v)
     vec3_mul_quat(&right, &camera->view);
     vec3_mul_quat(&fwd, &camera->view);
 
+    // Don't slow down when looking down (ignore Y component)
+    right.y = EPSILON;
+    fwd.y = EPSILON;
+    vec3_normalize(&right);
+    vec3_normalize(&fwd);
+
     camera->position.x += v->x * right.x + v->z * fwd.x;
     camera->position.y += v->y;
     camera->position.z += v->z * fwd.z + v->x * right.z;
@@ -135,16 +141,11 @@ void camera_render(struct camera *camera)
     prim_draw_line(&x_axis, camera, &MAT4_IDENT, COLOR_WHITE);
     prim_draw_line(&y_axis, camera, &MAT4_IDENT, COLOR_WHITE);
 
-    //struct mat4 view_mat = mat4_from_quat(camera->view);
-    //mat4_translate(&view_mat, camera->position);
-
-    //prim_draw_line(&line, camera, &view_mat, COLOR_MAGENTA);
-
-    struct mat4 camera_trans = mat4_init_translate(&camera->position);
-    struct mat4 camera_view;
-    mat4_from_quat(&camera_view, &camera->view);
-    mat4_mul(&camera_trans, &camera_view);
-    bbox_render_color(&camera->bbox, camera, &camera_trans, COLOR_BLUE);
+    // struct mat4 camera_trans = mat4_init_translate(&camera->position);
+    // struct mat4 camera_view;
+    // mat4_from_quat(&camera_view, &camera->view);
+    // mat4_mul(&camera_trans, &camera_view);
+    // bbox_render_color(&camera->bbox, camera, &camera_trans, COLOR_BLUE);
 }
 
 /*

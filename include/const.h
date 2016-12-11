@@ -8,7 +8,7 @@
 
 #ifdef RICO_DEBUG
 #ifndef RICO_DEBUG_ERROR_ASSERT
-    //#define RICO_DEBUG_ERROR_ASSERT
+    #define RICO_DEBUG_ERROR_ASSERT
 #endif
 #ifndef RICO_DEBUG_INFO
     #define RICO_DEBUG_INFO

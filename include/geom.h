@@ -379,9 +379,9 @@ static inline struct mat4 mat4_init_lookat(struct vec3 *pos, struct vec3 *view,
     struct vec3 right = vec3_cross(vec3_sub(&tmp, pos), up);
     vec3_normalize(&right);
     look = mat4_init(
-         right.x, right.y, right.z, 0.0f,
-           up->x,    up->y,    up->z, 0.0f,
-         view->x,  view->y,  view->z, 0.0f,
+        right.x, right.y, right.z, 0.0f,
+          up->x,   up->y,   up->z, 0.0f,
+        view->x, view->y, view->z, 0.0f,
            0.0f,    0.0f,    0.0f, 1.0f
     );
     struct mat4 trans = mat4_init_translate(vec3_negate(pos));

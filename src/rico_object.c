@@ -77,14 +77,12 @@ u32 object_prev(u32 handle)
 void object_select(u32 handle)
 {
     struct rico_object *obj = pool_read(objects, handle);
-    obj->bbox.color = COLOR_RED_HIGHLIGHT;
     obj->bbox.wireframe = false;
 }
 
 void object_deselect(u32 handle)
 {
     struct rico_object *obj = pool_read(objects, handle);
-    obj->bbox.color = COLOR_GRAY_HIGHLIGHT;
     obj->bbox.wireframe = true;
 }
 

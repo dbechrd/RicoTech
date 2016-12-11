@@ -45,7 +45,7 @@ int mesh_load(const char *name, u32 vertex_count,
     if (err) return err;
 
     err = bbox_init_mesh(&mesh->bbox, name, vertex_data, vertex_count,
-                         COLOR_GRAY_HIGHLIGHT);
+                         COLOR_WHITE_HIGHLIGHT);
     return err;
 }
 
