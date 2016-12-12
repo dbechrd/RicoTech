@@ -13,6 +13,7 @@
     f(RICO_UID_CHUNK)   \
     f(RICO_UID_POOL)    \
     f(RICO_UID_BBOX)    \
+    f(RICO_UID_FONT)    \
     f(RICO_UID_COUNT)
 
 enum rico_uid_type {

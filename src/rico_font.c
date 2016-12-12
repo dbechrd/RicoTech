@@ -16,10 +16,6 @@
 #define WIDTH_DATA_OFFSET  20 // Offset to width data with BFF file
 #define MAP_DATA_OFFSET   276 // Offset to texture image data with BFF file
 
-#define RICO_FONT_POOL_SIZE 10
-static struct rico_font rico_font_pool[RICO_FONT_POOL_SIZE];
-static u32 next_uid = 1;
-
 struct bff_header
 {
     unsigned char ID1, ID2;
@@ -28,27 +24,40 @@ struct bff_header
     unsigned char StartPoint;
 };
 
-struct rico_font *make_font(const char *filename)
-{
-	// TODO: Clean up malloc
-    struct rico_font *font = calloc(1, sizeof(*font));
-    char *buffer = NULL;
-    int length;
+u32 RICO_FONT_DEFAULT = 0;
+static struct rico_pool *fonts;
 
+int rico_font_init(u32 pool_size)
+{
+    fonts = calloc(1, sizeof(*fonts));
+    return pool_init("Fonts", pool_size, sizeof(struct rico_font), fonts);
+}
+
+int font_init(const char *filename, u32 *_handle)
+{
+    enum rico_error err;
+    *_handle = RICO_FONT_DEFAULT;
+
+    #ifdef RICO_DEBUG_INFO
+        printf("[Font] Creating %s\n", filename);
+    #endif
+
+    err = pool_alloc(fonts, _handle);
+    if (err) return err;
+
+    struct rico_font *font = pool_read(fonts, *_handle);
+    uid_init(&font->uid, RICO_UID_FONT, filename);
 	font->InvertYAxis = false;
 
-    // TODO: Handle out-of-memory
-    // TODO: Implement reuse of pool objects
-    if (next_uid >= RICO_FONT_POOL_SIZE)
-        return NULL;
-
-    // Allocate font struct
-    font = &rico_font_pool[next_uid++];
-
     // Read font file
+    char *buffer = NULL;
+    int length;
     buffer = file_contents(filename, &length);
     if (!buffer)
-		return NULL;
+    {
+        err = RICO_ERROR(ERR_FILE_READ);
+        goto cleanup;
+    }
 
     // Check file signature
     if ((u8)buffer[0] != 0xBF || (u8)buffer[1] != 0xF2)
@@ -93,15 +102,24 @@ struct rico_font *make_font(const char *filename)
     // Store character widths
     memcpy(font->Width, &buffer[WIDTH_DATA_OFFSET], 256);
 
-    texture_load_pixels(filename, GL_TEXTURE_2D, width, height, bpp,
-                        &buffer[MAP_DATA_OFFSET], &font->texture);
+    err = texture_load_pixels(filename, GL_TEXTURE_2D, width, height, bpp,
+                              &buffer[MAP_DATA_OFFSET], &font->texture);
+    if (err) goto cleanup;
 
 cleanup:
     free(buffer);
-    return font;
+    return err;
 }
 
-void font_setblend(const struct rico_font *font)
+void font_free(u32 handle)
+{
+    struct rico_font *font = pool_read(fonts, handle);
+    font->uid = UID_NULL;
+    texture_free(font->texture);
+    pool_free(fonts, handle);
+}
+
+static void font_setblend(const struct rico_font *font)
 {
     // TODO: Preserve blend settings before changing
 	switch(font->RenderStyle)
@@ -120,10 +138,13 @@ void font_setblend(const struct rico_font *font)
 	}
 }
 
-int font_render(const struct rico_font *font, int x, int y, const char *text,
-                struct col4 bg, u32 *_mesh, u32 *_texture)
+int font_render(u32 handle, int x, int y, struct col4 bg, const char *text,
+                const char *mesh_name, u32 *_mesh, u32 *_texture)
 {
     enum rico_error err;
+
+    struct rico_font *font = pool_read(fonts, handle);
+
     //font_setblend(font);
 
     int text_len = strlen(text);
@@ -221,22 +242,13 @@ int font_render(const struct rico_font *font, int x, int y, const char *text,
         cur_x += xOffset;
     }
 
-    // for (int i = 0; i < 8; i++)
-    // {
-    //     printf("v %f %f %f %f %f\n", vertices[i].pos.x, vertices[i].pos.y,
-    //     vertices[i].pos.z, vertices[i].uv.u, vertices[i].uv.v);
-    // }
-
-    // for (int i = 0; i < 12; i++)
-    // {
-    //     printf("e %d\n", elements[i]);
-    // }
-
-    err = mesh_load("font", vertex_count, vertices, element_count, elements,
+    err = mesh_load(mesh_name, vertex_count, vertices, element_count, elements,
                     GL_STATIC_DRAW, _mesh);
-    *_texture = font->texture;
+    if (err) goto cleanup;
 
-    // Clean up
+    *_texture = texture_request(font->texture);
+
+cleanup:
     free(vertices);
     free(elements);
     return err;

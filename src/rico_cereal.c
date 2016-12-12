@@ -8,6 +8,15 @@ int rico_serialize(const void *handle, const struct rico_file *file)
 {
     RICO_ASSERT(file->version < RICO_FILE_VERSION_COUNT);
 
+    // Don't serialize debug string objects to save file
+    // TODO: Add "persistent" flag to objects
+    // const struct rico_uid *uid = handle;
+    // if (uid->type == RICO_UID_OBJECT) {
+    //     const struct rico_obj *obj = handle;
+    //     if (obj->type == OBJ_STRING_SCREEN)
+    //         return SUCCESS;
+    // }
+
     uid_serialize(handle, file);
     const enum rico_uid_type *type = handle;
 

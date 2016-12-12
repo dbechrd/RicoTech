@@ -30,20 +30,22 @@ static u32 selected_handle = 0;
 static struct program_default *prog_default;
 static struct program_primitive *prog_primitive;
 
+static u32 font;
+static u32 tex_font_test;
+static u32 mesh_font_test;
+static u32 mesh_default;
 static u32 tex_grass;
 static u32 tex_rock;
 static u32 tex_hello;
 static u32 tex_yellow;
-static u32 tex_font_test;
-
-static u32 mesh_default;
-static u32 mesh_font_test;
 
 static struct bbox axis_bbox;
 
 static struct mat4 x_axis_transform;
 static struct mat4 y_axis_transform;
 static struct mat4 z_axis_transform;
+
+static u32 obj_debuginfostring;
 
 int init_glref()
 {
@@ -53,7 +55,7 @@ int init_glref()
     // Initialize fonts
     //--------------------------------------------------------------------------
     // TODO: Add error handling to make_font()
-    struct rico_font *font = make_font("font/courier_new.bff");
+    font_init("font/courier_new.bff", &font);
 
     //--------------------------------------------------------------------------
     // Create shader program
@@ -81,38 +83,6 @@ int init_glref()
     | COPY    DRAW & READ
     |
     *************************************************************************/
-    #define VERT_COUNT 4
-    const struct mesh_vertex vertices[VERT_COUNT] = {
-        {
-            { -1.0f, -1.0f, 0.0f },     //Position
-            { 1.0f, 1.0f, 1.0f, 1.0f }, //Color
-            { 0.0f, 0.0f }              //UV-coords
-        },
-        {
-            { 1.0f, -1.0f, 0.0f },
-            { 1.0f, 1.0f, 1.0f, 1.0f },
-            { 1.0f, 0.0f }
-        },
-        {
-            { 1.0f, 1.0f, 0.0f },
-            { 1.0f, 1.0f, 1.0f, 1.0f },
-            { 1.0f, 1.0f }
-        },
-        {
-            { -1.0f, 1.0f, 0.0f },
-            { 1.0f, 1.0f, 1.0f, 1.0f },
-            { 0.0f, 1.0f }
-        }
-    };
-    #define ELEMENT_COUNT 6
-    const GLuint elements[ELEMENT_COUNT] = { 0, 1, 3, 1, 2, 3 };
-
-    //--------------------------------------------------------------------------
-    // Create meshes
-    //--------------------------------------------------------------------------
-    err = mesh_load("default", VERT_COUNT, vertices, ELEMENT_COUNT, elements,
-                    GL_STATIC_DRAW, &mesh_default);
-    if (err) return err;
 
     //--------------------------------------------------------------------------
     // Create textures
@@ -130,18 +100,13 @@ int init_glref()
                             &tex_yellow);
     if (err) return err;
 
-    // Cleanup: Memory pool free/reuse test
-    texture_free(tex_grass);
-    err = texture_load_file("grass", GL_TEXTURE_2D, "texture/grass.tga",
-                            &tex_grass);
-    if (err) return err;
-
     //--------------------------------------------------------------------------
     // Create 3D strings
     //--------------------------------------------------------------------------
     // Font Test
-    err = font_render(font, 0, 0, "This is a test.\nYay!", COLOR_DARK_RED,
-                      &mesh_font_test, &tex_font_test);
+    err = font_render(font, 0, 0, COLOR_DARK_RED_HIGHLIGHT,
+                      "This is a test.\nYay!", "Font test", &mesh_font_test,
+                      &tex_font_test);
     if (err) return err;
 
     //--------------------------------------------------------------------------
@@ -155,8 +120,6 @@ int init_glref()
         COLOR_WHITE
     );
     if (err) return err;
-
-    //poodles
 
     // X-axis label
     x_axis_transform = MAT4_IDENT;
@@ -179,6 +142,14 @@ int init_glref()
 int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
 {
     enum rico_error err;
+
+    // Initialize object pool
+    err = rico_object_init(RICO_OBJECT_POOL_SIZE);
+    if (err) return err;
+
+    //--------------------------------------------------------------------------
+    // Create world objects
+    //--------------------------------------------------------------------------
     u32 obj_fonttest;
     u32 obj_ground;
     u32 obj_yellow;
@@ -190,13 +161,6 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
     u32 obj_wall5;
     u32 arr_objects[50] = { 0 };
 
-    // Initialize object pool
-    err = object_init(RICO_OBJECT_POOL_SIZE);
-    if (err) return err;
-
-    //--------------------------------------------------------------------------
-    // Create world objects
-    //--------------------------------------------------------------------------
     // World font object
     err = object_create(&obj_fonttest, "World String Test", OBJ_STRING_WORLD,
                         mesh_font_test, tex_font_test, NULL);
@@ -206,10 +170,9 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
 
     // Screen font object
     err = object_create(&obj_fonttest, "Screen String Test", OBJ_STRING_SCREEN,
-                  mesh_font_test, tex_font_test, NULL);
+                        mesh_font_test, tex_font_test, NULL);
     if (err) return err;
-    object_trans(obj_fonttest, -1.0f, Z_NEAR, 0.0f);
-    object_scale(obj_fonttest, 0.125f, 0.125f * SCREEN_ASPECT, 1.0f);
+    object_trans(obj_fonttest, -1.0f, 0.0f, 0.0f);
 
     // Ground
     err = object_create(&obj_ground, "Ground", OBJ_DEFAULT, mesh_default,
@@ -335,7 +298,7 @@ void select_prev_obj()
     select_obj(object_prev(selected_handle));
 }
 
-void translate_selected(struct camera *camera, const struct vec3 *offset)
+void selected_translate(struct camera *camera, const struct vec3 *offset)
 {
     struct rico_object *obj = object_fetch(selected_handle);
 
@@ -357,7 +320,7 @@ void translate_selected(struct camera *camera, const struct vec3 *offset)
     }
 }
 
-void rotate_selected(const struct vec3 *offset)
+void selected_rotate(const struct vec3 *offset)
 {
     if (vec3_equals(offset, &VEC3_ZERO))
     {
@@ -370,7 +333,7 @@ void rotate_selected(const struct vec3 *offset)
     }
 }
 
-int duplicate_selected()
+int selected_duplicate()
 {
     enum rico_error err;
     struct rico_object *selected = object_fetch(selected_handle);
@@ -392,7 +355,7 @@ int duplicate_selected()
     return err;
 }
 
-void delete_selected()
+void selected_delete()
 {
     u32 handle = selected_handle;
     select_prev_obj();
@@ -402,7 +365,7 @@ void delete_selected()
 //TODO: Put this somewhere reasonable (e.g. lighting module)
 static struct col4 ambient = { 0.7f, 0.6f, 0.4f, 1.0f };
 
-void update_glref(GLfloat dt, bool ambient_light)
+void glref_update(GLfloat dt, bool ambient_light)
 {
     //--------------------------------------------------------------------------
     // Update uniforms
@@ -418,7 +381,29 @@ void update_glref(GLfloat dt, bool ambient_light)
     glUseProgram(0);
 }
 
-void render_glref(struct camera *camera)
+int glref_debuginfo(const char *str, struct col4 color)
+{
+    enum rico_error err;
+
+    if (obj_debuginfostring)
+        object_free(obj_debuginfostring);
+
+    u32 text_mesh;
+    u32 text_tex;
+    err = font_render(font, 0, 0, color, str, "debug_info_string", &text_mesh,
+                      &text_tex);
+    if (err) return err;
+
+    err = object_create(&obj_debuginfostring, "DEBUG_INFO", OBJ_STRING_SCREEN,
+                        text_mesh, text_tex, NULL);
+    if (err) return err;
+
+    object_trans(obj_debuginfostring, -1.0f, 1.0f, 0.0f);
+
+    return err;
+}
+
+void glref_render(struct camera *camera)
 {
     //--------------------------------------------------------------------------
     // Render objects

@@ -39,7 +39,7 @@ struct rico_object {
 //extern struct rico_object object_pool[];
 //extern u32 next_uid;
 
-int object_init(u32 pool_size);
+int rico_object_init(u32 pool_size);
 int object_create(u32 *_handle, const char *name, enum rico_object_type type,
                   u32 mesh, u32 texture, const struct bbox *bbox);
 void object_free(u32 handle);

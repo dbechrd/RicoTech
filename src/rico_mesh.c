@@ -5,6 +5,7 @@
 
 struct rico_mesh {
     struct rico_uid uid;
+    u32 ref_count;
 
     GLuint vao;
     GLuint vbos[2];
@@ -27,10 +28,21 @@ int rico_mesh_init(u32 pool_size)
                      &meshes);
 }
 
+int mesh_request(u32 handle)
+{
+    struct rico_mesh *mesh = pool_read(&meshes, handle);
+    mesh->ref_count++;
+    return handle;
+}
+
 int mesh_load(const char *name, u32 vertex_count,
               const struct mesh_vertex *vertex_data, u32 element_count,
               const GLuint *element_data, GLenum hint, u32 *_handle)
 {
+#ifdef RICO_DEBUG_MESH
+    printf("[Mesh] Init %s\n", name);
+#endif
+
     enum rico_error err;
     *_handle = RICO_MESH_DEFAULT;
 
@@ -107,6 +119,14 @@ static int build_mesh(struct rico_mesh *mesh, u32 vertex_count,
 void mesh_free(u32 handle)
 {
     struct rico_mesh *mesh = pool_read(&meshes, handle);
+
+#ifdef RICO_DEBUG_MESH
+    printf("[Mesh] Free %s\n", mesh->uid.name);
+#endif
+
+    mesh->ref_count--;
+    if (mesh->ref_count > 0)
+        return;
 
     glDeleteBuffers(2, mesh->vbos);
     glDeleteVertexArrays(1, &mesh->vao);

@@ -46,6 +46,14 @@ extern const struct col4 COLOR_DARK_CYAN;
 extern const struct col4 COLOR_DARK_MAGENTA;
 extern const struct col4 COLOR_DARK_GRAY;
 
+extern const struct col4 COLOR_DARK_RED_HIGHLIGHT;
+extern const struct col4 COLOR_DARK_GREEN_HIGHLIGHT;
+extern const struct col4 COLOR_DARK_BLUE_HIGHLIGHT;
+extern const struct col4 COLOR_DARK_YELLOW_HIGHLIGHT;
+extern const struct col4 COLOR_DARK_CYAN_HIGHLIGHT;
+extern const struct col4 COLOR_DARK_MAGENTA_HIGHLIGHT;
+extern const struct col4 COLOR_DARK_GRAY_HIGHLIGHT;
+
 //------------------------------------------------------------------------------
 // 2D Texture coordinates
 //------------------------------------------------------------------------------
@@ -76,6 +84,7 @@ extern const struct vec3 VEC3_UP;
 extern const struct vec3 VEC3_FWD;
 extern const struct vec3 VEC3_RIGHT;
 extern const struct vec3 VEC3_SMALL;
+extern const struct vec3 VEC3_SCALE_ASPECT;
 
 static inline struct vec3 *vec3_add(struct vec3 *a, const struct vec3 *b)
 {
@@ -100,7 +109,7 @@ static inline struct vec3 *vec3_scale(struct vec3 *v, float scale)
 }
 static inline float vec3_dot(const struct vec3 *a, const struct vec3 *b)
 {
-    return a->x*b->x + a->y*b->y + a->z*b->z;// + a.w*b.w;
+    return a->x*b->x + a->y*b->y + a->z*b->z;
 }
 static inline struct vec3 vec3_cross(const struct vec3 *a, const struct vec3 *b)
 {
@@ -160,6 +169,7 @@ struct mat4 {
 };
 
 extern const struct mat4 MAT4_IDENT;
+extern const struct mat4 MAT4_PROJ_SCREEN;
 
 //Store as row-major, one-dimensional array of floats
 static inline struct mat4 mat4_init(
@@ -351,22 +361,18 @@ static inline struct mat4 mat4_init_perspective(float width, float height,
                                                 float z_near, float z_far,
                                                 float fov_deg)
 {
+    ///////////////////////////////////////////////////////
+
     float aspect = width / height;
-    float dz = (z_far > z_near)
-                  ? (z_far - z_near)
-                  : (z_near - z_far);
-    //float dz = z_far - z_near;
+    float dz = z_far - z_near;
     float fov_calc = 1.0f / tanf(DEG_TO_RAD(fov_deg) / 2.0f);
 
-    // Flip Z-axis so that +Z is toward the player
-    //dz *= -1.0f;
-
     struct mat4 mat = MAT4_IDENT;
-    mat.m[0][0] = -fov_calc / aspect;
+    mat.m[0][0] = fov_calc / aspect;
     mat.m[1][1] = fov_calc;
-    mat.m[2][2] = (z_far + z_near) / dz;
-    mat.m[2][3] = -2.0f * (z_far * z_near) / dz;
-    mat.m[3][2] = 1.0f;
+    mat.m[2][2] = -(z_far + z_near) / dz;
+    mat.m[2][3] = 2.0f * (z_far * z_near) / dz;
+    mat.m[3][2] = -1.0f;
     return mat;
 }
 
@@ -502,16 +508,15 @@ static inline struct quat *quat_inverse(struct quat *q)
 }
 
 //static inline struct quat *quat_mul(struct quat *a, const struct quat *b)
-static inline struct quat quat_mul(struct quat *a, const struct quat *b)
+static inline struct quat *quat_mul(struct quat *a, const struct quat *b)
 {
     struct quat c;
     c.w = a->w*b->w - a->x*b->x - a->y*b->y - a->z*b->z;
     c.x = a->w*b->x + a->x*b->w + a->y*b->z - a->z*b->y;
     c.y = a->w*b->y - a->x*b->z + a->y*b->w + a->z*b->x;
     c.z = a->w*b->z + a->x*b->y - a->y*b->x + a->z*b->w;
-    //*a = c;
-    //return a;
-    return c;
+    *a = c;
+    return a;
 }
 
 static inline float quat_dot(const struct quat *a, const struct quat *b)
@@ -549,8 +554,7 @@ static inline struct vec3 *vec3_mul_quat(struct vec3 *v, const struct quat *q)
     qv.z = v->z;
 
     // Rotate v by q
-    struct quat aaa = quat_mul(quat_conjugate(&qq), &qv);
-    qq = quat_mul(&aaa, q);
+    quat_mul(quat_mul(quat_conjugate(&qq), &qv), q);
     /* USE THIS INSTEAD !!
     quat_mul(quat_conjugate(&qq), &qv);
     quat_mul(&qq, q);
@@ -562,7 +566,7 @@ static inline struct vec3 *vec3_mul_quat(struct vec3 *v, const struct quat *q)
     if (fabs(qq.z) < QUAT_EPSILON) qq.z = 0.0f;
 
     // Quaternion must be pure to properly convert back into vec3
-    //RICO_ASSERT(qq.w == 0.0f);
+    RICO_ASSERT(qq.w == 0.0f);
     v->x = qq.x;
     v->y = qq.y;
     v->z = qq.z;

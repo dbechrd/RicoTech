@@ -9,7 +9,7 @@
 u32 RICO_OBJECT_DEFAULT = 0;
 static struct rico_pool *objects;
 
-int object_init(u32 pool_size)
+int rico_object_init(u32 pool_size)
 {
     objects = calloc(1, sizeof(*objects));
     return pool_init("Objects", pool_size, sizeof(struct rico_object),
@@ -19,12 +19,12 @@ int object_init(u32 pool_size)
 int object_create(u32 *_handle, const char *name, enum rico_object_type type,
                   u32 mesh, u32 texture, const struct bbox *bbox)
 {
+#ifdef RICO_DEBUG_OBJECT
+    printf("[Object] Init %s\n", name);
+#endif
+
     enum rico_error err;
     *_handle = RICO_OBJECT_DEFAULT;
-
-#ifdef RICO_DEBUG_INFO
-    printf("[Object] Creating %s\n", name);
-#endif
 
     err = pool_alloc(objects, _handle);
     if (err) return err;
@@ -34,10 +34,14 @@ int object_create(u32 *_handle, const char *name, enum rico_object_type type,
     uid_init(&obj->uid, RICO_UID_OBJECT, name);
     obj->type = type;
     obj->scale = VEC3_UNIT;
-    obj->mesh = mesh;
-    obj->texture = texture;
+    obj->mesh = mesh_request(mesh);
+    obj->texture = texture_request(texture);
+
     //HACK: Use mesh bbox if none specified
     obj->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(mesh);
+
+    if (type == OBJ_STRING_SCREEN)
+        obj->scale = VEC3_SCALE_ASPECT;
 
     return err;
 }
@@ -45,14 +49,20 @@ int object_create(u32 *_handle, const char *name, enum rico_object_type type,
 void object_free(u32 handle)
 {
     struct rico_object *obj = pool_read(objects, handle);
+
+#ifdef RICO_DEBUG_INFO
+    printf("[Object] Free %s\n", obj->uid.name);
+#endif
+
     obj->uid = UID_NULL;
+    mesh_free(obj->mesh);
+    texture_free(obj->texture);
     pool_free(objects, handle);
-    handle = RICO_OBJECT_DEFAULT;
 }
 
 void object_free_all()
 {
-    for (int i = objects->active; i < 0; --i)
+    for (int i = objects->active; i > 0; --i)
     {
         object_free(objects->handles[i]);
     }

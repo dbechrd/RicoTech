@@ -131,6 +131,8 @@ u32 pool_prev(struct rico_pool *pool, u32 handle)
 
 int pool_serialize_0(const void *handle, const struct rico_file *file)
 {
+    enum rico_error err;
+
     const struct rico_pool *pool = handle;
     fwrite(&pool->count,  sizeof(pool->count),  1, file->fs);
     fwrite(&pool->stride, sizeof(pool->stride), 1, file->fs);
@@ -138,7 +140,8 @@ int pool_serialize_0(const void *handle, const struct rico_file *file)
     fwrite(pool->handles, sizeof(*pool->handles), pool->count, file->fs);
     for (u32 i = 0; i < pool->active; ++i)
     {
-        rico_serialize(pool_read(pool, pool->handles[i]), file);
+        err = rico_serialize(pool_read(pool, pool->handles[i]), file);
+        if (err) return err;
     }
 
     return SUCCESS;
@@ -146,6 +149,8 @@ int pool_serialize_0(const void *handle, const struct rico_file *file)
 
 int pool_deserialize_0(void *_handle, const struct rico_file *file)
 {
+    enum rico_error err;
+
     struct rico_pool *pool = _handle;
     fread(&pool->count,  sizeof(pool->count),  1, file->fs);
     fread(&pool->stride, sizeof(pool->stride), 1, file->fs);
@@ -162,7 +167,8 @@ int pool_deserialize_0(void *_handle, const struct rico_file *file)
         fread(pool->handles, sizeof(*pool->handles), pool->count, file->fs);
         for (u32 i = 0; i < pool->active; ++i)
         {
-            rico_deserialize(pool_read(pool, pool->handles[i]), file);
+            err = rico_deserialize(pool_read(pool, pool->handles[i]), file);
+            if (err) return err;
         }
     }
 

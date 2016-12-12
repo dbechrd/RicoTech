@@ -7,6 +7,8 @@
 
 struct rico_texture {
     struct rico_uid uid;
+    u32 ref_count;
+
     GLuint gl_id;
     GLenum gl_target;
 
@@ -27,9 +29,20 @@ int rico_texture_init(u32 pool_size)
                      &textures);
 }
 
+int texture_request(u32 handle)
+{
+    struct rico_texture *tex = pool_read(&textures, handle);
+    tex->ref_count++;
+    return handle;
+}
+
 int texture_load_file(const char *name, GLenum target, const char *filename,
                       u32 *_handle)
 {
+#ifdef RICO_DEBUG_TEXTURE
+    printf("[Texture] Init %s\n", name);
+#endif
+
     enum rico_error err;
     int width, height, bpp;
 
@@ -58,6 +71,10 @@ cleanup:
 int texture_load_pixels(const char *name, GLenum target, int width, int height,
                         int bpp, const void *pixels, u32 *_handle)
 {
+#ifdef RICO_DEBUG_TEXTURE
+    printf("[Texture] Init %s\n", name);
+#endif
+
     enum rico_error err;
     *_handle = RICO_TEXTURE_DEFAULT;
 
@@ -187,6 +204,15 @@ static int build_texture(struct rico_texture *tex, const void *pixels)
 void texture_free(u32 handle)
 {
     struct rico_texture *tex = pool_read(&textures, handle);
+
+#ifdef RICO_DEBUG_TEXTURE
+    printf("[Texture] Free %s\n", tex->uid.name);
+#endif
+
+    tex->ref_count--;
+    if (tex->ref_count > 0)
+        return;
+
     glDeleteTextures(1, &tex->gl_id);
     tex->uid = UID_NULL;
 

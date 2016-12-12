@@ -6,10 +6,10 @@
 
 //------------------------------------------------------------------------------
 //TODO: Probably should prefix these?
-//#define SCREEN_W 1600
-//#define SCREEN_H 900
-#define SCREEN_W 800
-#define SCREEN_H 600
+#define SCREEN_W 1600.0f
+#define SCREEN_H 900.0f
+// #define SCREEN_W 800.0f
+// #define SCREEN_H 600.0f
 #define SCREEN_ASPECT SCREEN_W / SCREEN_H
 
 #define Z_NEAR 0.1f
@@ -31,8 +31,6 @@ struct camera {
 
 extern const struct vec3 CAMERA_POS_INITIAL;
 
-// void camera_init(struct camera *_camera, struct vec3 position,
-//                  struct quat view, struct vec3 up, float fov);
 void camera_init(struct camera *_camera, struct vec3 position,
                  struct quat view, float fov);
 void camera_reset(struct camera *camera);

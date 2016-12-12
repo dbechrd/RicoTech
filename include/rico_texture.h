@@ -8,6 +8,7 @@
 extern u32 RICO_TEXTURE_DEFAULT;
 
 int rico_texture_init(u32 pool_size);
+int texture_request(u32 handle);
 int texture_load_file(const char *name, GLenum target, const char *filename,
                       u32 *_handle);
 int texture_load_pixels(const char *name, GLenum target, int width, int height,

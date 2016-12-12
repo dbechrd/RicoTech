@@ -8,14 +8,11 @@ const struct vec3 CAMERA_POS_INITIAL = (struct vec3) {
     0.0f, CAMERA_POS_Y_MIN, 4.0f
 };
 
-// void camera_init(struct camera *_camera, struct vec3 position,
-//                  struct quat view, struct vec3 up, float fov_deg)
 void camera_init(struct camera *_camera, struct vec3 position,
                  struct quat view, float fov_deg)
 {
     _camera->position = position;
     _camera->view = view;
-    //_camera->up = up;
     _camera->fov_deg = fov_deg;
 
     _camera->fill_mode = GL_FILL;
@@ -27,8 +24,6 @@ void camera_init(struct camera *_camera, struct vec3 position,
               (struct vec3) {  0.5f,  0.5f,  0.5f },
               COLOR_WHITE);
 
-    //struct vec3 view_vec = (struct vec3) { view.x, view.y, view.z, view.w };
-    //_camera->view_matrix = mat4_init_lookat(position, view_vec, up);
     _camera->proj_matrix = mat4_init_perspective(SCREEN_W, SCREEN_H, Z_NEAR,
                                                  Z_FAR, fov_deg);
 }
@@ -36,7 +31,6 @@ void camera_init(struct camera *_camera, struct vec3 position,
 void camera_reset(struct camera *camera)
 {
     struct quat q_view = QUAT_IDENT;
-    quat_from_axis_angle(&q_view, &VEC3_UP, 180.0f);
 
     camera_init(camera,
                 CAMERA_POS_INITIAL,
@@ -50,8 +44,6 @@ void camera_translate(struct camera *camera, const struct vec3 *v)
 {
     struct vec3 right = VEC3_RIGHT;
     struct vec3 fwd = VEC3_FWD;
-    vec3_negate(&right);
-    vec3_negate(&fwd);
 
     quat_normalize(&camera->view);
     vec3_mul_quat(&right, &camera->view);
@@ -77,7 +69,7 @@ void camera_translate(struct camera *camera, const struct vec3 *v)
 void camera_rotate(struct camera *camera, float mouse_dx, float mouse_dy)
 {
     struct quat pitch;
-    quat_from_axis_angle(&pitch, &VEC3_X, -mouse_dy * 0.1f);
+    quat_from_axis_angle(&pitch, &VEC3_X, mouse_dy * 0.1f);
     struct quat yaw;
     quat_from_axis_angle(&yaw, &VEC3_Y, mouse_dx * 0.1f);
 
@@ -85,14 +77,15 @@ void camera_rotate(struct camera *camera, float mouse_dx, float mouse_dy)
     quat_normalize(&yaw);
 
     //"FPS" camera = pitch * view * yaw
-    camera->view = quat_mul(&pitch, &camera->view);
-    camera->view = quat_mul(&camera->view, &yaw);
-    quat_normalize(&camera->view);
+    quat_mul(&pitch, &camera->view);
+    quat_mul(&pitch, &yaw);
+    quat_normalize(&pitch);
+    camera->view = pitch;
 
-    //"Arcball(ish)"" camera = view * pitch * yaw
-    // camera->view = quat_multiply(pitch, camera->view);
-    // camera->view = quat_multiply(yaw, camera->view);
-    // camera->view = quat_normalize(camera->view);
+    //"Arcball(ish)" camera = yaw * pitch * view
+    // quat_mul(&yaw, quat_mul(&pitch, &camera->view));
+    // quat_normalize(&yaw);
+    // camera->view = yaw;
 
     camera->need_update = true;
 }
@@ -118,7 +111,6 @@ void camera_render(struct camera *camera)
 {
     struct vec3 x = VEC3_RIGHT;
     struct vec3 y = VEC3_UP;
-    vec3_negate(&x);
     vec3_mul_quat(vec3_scale(&x, 0.1f), &camera->view);
     vec3_mul_quat(vec3_scale(&y, 0.1f), &camera->view);
 

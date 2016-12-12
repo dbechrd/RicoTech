@@ -70,10 +70,9 @@ void prim_draw_line(const struct line *line, const struct camera *camera,
     glUseProgram(program->prog_id);
 
     // Transform
-    UNUSED(model_matrix);
     glUniformMatrix4fv(program->u_proj, 1, GL_TRUE, camera->proj_matrix.a);
     glUniformMatrix4fv(program->u_view, 1, GL_TRUE, camera->view_matrix.a);
-    glUniformMatrix4fv(program->u_model, 1, GL_TRUE, MAT4_IDENT.a);
+    glUniformMatrix4fv(program->u_model, 1, GL_TRUE, model_matrix->a);
 
     glUniform4f(program->u_col, color.r, color.g, color.b, color.a);
 

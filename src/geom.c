@@ -1,4 +1,5 @@
 #include "geom.h"
+#include "camera.h"
 
 const struct col4 COLOR_TRANSPARENT = { 0.0f, 0.0f, 0.0f, 0.0f };
 const struct col4 COLOR_BLACK   = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -29,6 +30,14 @@ const struct col4 COLOR_DARK_CYAN    = { 0.0f, 0.5f, 0.5f, 1.0f };
 const struct col4 COLOR_DARK_MAGENTA = { 0.5f, 0.0f, 0.5f, 1.0f };
 const struct col4 COLOR_DARK_GRAY    = { 0.25f, 0.25f, 0.25f, 1.0f };
 
+const struct col4 COLOR_DARK_RED_HIGHLIGHT     = { 0.5f, 0.0f, 0.0f, 0.5f };
+const struct col4 COLOR_DARK_GREEN_HIGHLIGHT   = { 0.0f, 0.5f, 0.0f, 0.5f };
+const struct col4 COLOR_DARK_BLUE_HIGHLIGHT    = { 0.0f, 0.0f, 0.5f, 0.5f };
+const struct col4 COLOR_DARK_YELLOW_HIGHLIGHT  = { 0.5f, 0.5f, 0.0f, 0.5f };
+const struct col4 COLOR_DARK_CYAN_HIGHLIGHT    = { 0.0f, 0.5f, 0.5f, 0.5f };
+const struct col4 COLOR_DARK_MAGENTA_HIGHLIGHT = { 0.5f, 0.0f, 0.5f, 0.5f };
+const struct col4 COLOR_DARK_GRAY_HIGHLIGHT    = { 0.25f, 0.25f, 0.25f, 0.5f };
+
 const struct vec3 VEC3_ZERO  = { 0.0f, 0.0f, 0.0f };
 const struct vec3 VEC3_UNIT  = { 1.0f, 1.0f, 1.0f };
 const struct vec3 VEC3_X     = { 1.0f, 0.0f, 0.0f };
@@ -38,6 +47,7 @@ const struct vec3 VEC3_RIGHT = { 1.0f, 0.0f, 0.0f };
 const struct vec3 VEC3_UP    = { 0.0f, 1.0f, 0.0f };
 const struct vec3 VEC3_FWD   = { 0.0f, 0.0f,-1.0f };
 const struct vec3 VEC3_SMALL = { 0.01f, 0.01f, 0.01f };
+const struct vec3 VEC3_SCALE_ASPECT = { 0.125, 0.125 * SCREEN_ASPECT, 1.0f };
 
 const struct mat4 MAT4_IDENT = {{{
     1.0f, 0.0f, 0.0f, 0.0f,
@@ -45,5 +55,14 @@ const struct mat4 MAT4_IDENT = {{{
     0.0f, 0.0f, 1.0f, 0.0f,
     0.0f, 0.0f, 0.0f, 1.0f
 }}};
+
+/* Messes up screen space coordinates
+const struct mat4 MAT4_PROJ_SCREEN = {{{
+    SCREEN_ASPECT, 0.0f, 0.0f, 0.0f,
+    0.0f, 1.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, 1.0f, 0.0f,
+    0.0f, 0.0f, 0.0f, 1.0f
+}}};
+*/
 
 const struct quat QUAT_IDENT = { 1.0f, {{ 0.0f, 0.0f, 0.0f }} };

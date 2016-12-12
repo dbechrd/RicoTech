@@ -18,6 +18,7 @@ struct mesh_vertex {
 extern u32 RICO_MESH_DEFAULT;
 
 int rico_mesh_init(u32 pool_size);
+int mesh_request(u32 handle);
 int mesh_load(const char *name, u32 vertex_count,
               const struct mesh_vertex *vertex_data, u32 element_count,
               const GLuint *element_data, GLenum hint, u32 *_handle);

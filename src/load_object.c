@@ -51,7 +51,7 @@ int load_obj_file(const char *filename, u32 *_meshes, u32 *_mesh_count)
     int length;
     char *buffer = file_contents(filename, &length);
     char *buffer_ptr = buffer;
-    char *tok = strsep(&buffer_ptr, "\n");
+    char *tok;
 
     // TODO: Colossal waste of memory here, hmmm.
     struct vec3 positions[MESH_VERTICES_MAX] = { 0 };
@@ -72,10 +72,27 @@ int load_obj_file(const char *filename, u32 *_meshes, u32 *_mesh_count)
         elements[i] = i;
     }
 
-    while (tok != NULL)
+    do
     {
+        tok = strsep(&buffer_ptr, "\n");
+
+        // Create mesh when we reach next object or end of file
+        if ((tok == NULL || str_starts_with(tok, "o ")) && idx_vertex > 0)
+        {
+            UNUSED(normals);
+
+            err = mesh_load(name, idx_vertex, vertices, idx_vertex, elements,
+                            GL_STATIC_DRAW, &_meshes[idx_mesh]);
+            if (err) goto cleanup;
+
+            if (tok == NULL)
+                break;
+        }
+
+        // New object
         if (str_starts_with(tok, "o "))
         {
+            idx_vertex = 0;
             name = tok + 2;
         }
         else if (str_starts_with(tok, "v "))
@@ -120,21 +137,7 @@ int load_obj_file(const char *filename, u32 *_meshes, u32 *_mesh_count)
                 vert = strsep(&tok_ptr, " ");
             }
         }
-        else if (str_starts_with(tok, "oe"))
-        {
-            UNUSED(normals);
-
-            // TODO: Get program and texture from somewhere
-            err = mesh_load(name, idx_vertex, vertices, idx_vertex, elements,
-                            GL_STATIC_DRAW, &_meshes[idx_mesh]);
-            if (err) goto cleanup;
-
-            name = NULL;
-            idx_vertex = 0;
-            idx_mesh++;
-        }
-        tok = strsep(&buffer_ptr, "\n");
-    }
+    } while (tok != NULL);
 
     *_mesh_count = idx_mesh;
     printf("Loaded %s\n", filename);

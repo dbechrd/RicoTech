@@ -13,6 +13,7 @@
 #include "load_object.h"
 #include "rico_chunk.h"
 #include "rico_cereal.h"
+#include "rico_font.h"
 #include "primitives.h"
 #include "test_geom.h"
 
@@ -272,27 +273,77 @@ static void rico_init_cereal()
     RicoCereal[RICO_UID_BBOX].load[0] = &bbox_deserialize_0;
 }
 
-static int rico_init_textures()
+static int rico_init_pools()
 {
-    printf("Loading textures\n");
+    enum rico_error err;
 
-    enum rico_error err = rico_texture_init(RICO_TEXTURE_POOL_SIZE);
+    err = rico_font_init(RICO_TEXTURE_POOL_SIZE);
     if (err) return err;
 
-    err = texture_load_file("DEFAULT", GL_TEXTURE_2D, "texture/basic.tga",
-                            &RICO_TEXTURE_DEFAULT);
+    err = rico_texture_init(RICO_TEXTURE_POOL_SIZE);
+    if (err) return err;
+
+    err = rico_mesh_init(RICO_MESH_POOL_SIZE);
+    return err;
+}
+
+static int rico_init_fonts()
+{
+    enum rico_error err;
+    printf("Loading fonts\n");
+
+    err = font_init("font/courier_new.bff", &RICO_TEXTURE_DEFAULT);
+    return err;
+}
+
+static int rico_init_textures()
+{
+    enum rico_error err;
+    printf("Loading textures\n");
+
+    err = texture_load_file("TEXTURE_DEFAULT", GL_TEXTURE_2D,
+                            "texture/basic.tga", &RICO_TEXTURE_DEFAULT);
     return err;
 }
 
 static int rico_init_meshes()
 {
+    enum rico_error err;
     printf("Loading meshes\n");
 
-    enum rico_error err = rico_mesh_init(RICO_MESH_POOL_SIZE);
+    //--------------------------------------------------------------------------
+    // Create default mesh (white rect)
+    //--------------------------------------------------------------------------
+    #define VERT_COUNT 4
+    const struct mesh_vertex vertices[VERT_COUNT] = {
+        {
+            { -1.0f, -1.0f, 0.0f },     //Position
+            { 1.0f, 1.0f, 1.0f, 1.0f }, //Color
+            { 0.0f, 0.0f }              //UV-coords
+        },
+        {
+            { 1.0f, -1.0f, 0.0f },
+            { 1.0f, 1.0f, 1.0f, 1.0f },
+            { 1.0f, 0.0f }
+        },
+        {
+            { 1.0f, 1.0f, 0.0f },
+            { 1.0f, 1.0f, 1.0f, 1.0f },
+            { 1.0f, 1.0f }
+        },
+        {
+            { -1.0f, 1.0f, 0.0f },
+            { 1.0f, 1.0f, 1.0f, 1.0f },
+            { 0.0f, 1.0f }
+        }
+    };
+    #define ELEMENT_COUNT 6
+    const GLuint elements[ELEMENT_COUNT] = { 0, 1, 3, 1, 2, 3 };
+
+    err = mesh_load("MESH_DEFAULT", VERT_COUNT, vertices, ELEMENT_COUNT, elements,
+                    GL_STATIC_DRAW, &RICO_MESH_DEFAULT);
     if (err) return err;
 
-    // TODO: Load a default mesh
-    //err = mesh_load(...);
     err = load_obj_file("model/spawn.obj", meshes, &mesh_count);
     return err;
 }
@@ -307,13 +358,20 @@ static int rico_init()
     init_opengl();
 
     rico_init_cereal();
-    prim_init(PRIM_LINE);
+
+    err = rico_init_pools();
+    if (err) return err;
+
+    err = rico_init_fonts();
+    if (err) return err;
 
     err = rico_init_textures();
     if (err) return err;
 
     err = rico_init_meshes();
     if (err) return err;
+
+    prim_init(PRIM_LINE);
 
     err = init_glref(meshes, mesh_count);
     if (err) return err;
@@ -360,7 +418,7 @@ int mymain()
     enum rico_error err = rico_init();
     if (err) return err;
 
-    test_geom();
+    //test_geom();
 
     //Human walk speed empirically found to be 33 steps in 20 seconds. That
     //is approximately 1.65 steps per second. At 60 fps, that is 0.0275 steps
@@ -373,8 +431,12 @@ int mymain()
 
     struct vec3 view_trans_vel = VEC3_ZERO;
 
-    const float DEFAULT_ROT_DELTA = 5.0f;
-    float selected_rot_delta = DEFAULT_ROT_DELTA;
+    const float TRANS_DELTA_MIN = 0.01f;
+    const float TRANS_DELTA_MAX = 10.0f;
+    const float TRANS_DELTA_DEFAULT = 1.0f;
+    const float ROT_DELTA_DEFAULT = 5.0f;
+    float selected_trans_delta = TRANS_DELTA_DEFAULT;
+    float selected_rot_delta = ROT_DELTA_DEFAULT;
 
     int mouse_dx, mouse_dy;
 
@@ -428,11 +490,11 @@ int mymain()
                 {
                     if (windowEvent.key.keysym.mod & KMOD_CTRL)
                     {
-                        rotate_selected(&VEC3_ZERO);
+                        selected_rotate(&VEC3_ZERO);
                     }
                     else
                     {
-                        translate_selected(&camera, &VEC3_ZERO);
+                        selected_translate(&camera, &VEC3_ZERO);
                     }
                 }
                 else if (windowEvent.key.keysym.sym == SDLK_UP)
@@ -440,12 +502,12 @@ int mymain()
                     if (windowEvent.key.keysym.mod & KMOD_CTRL)
                     {
                         delta.x = -selected_rot_delta;
-                        rotate_selected(&delta);
+                        selected_rotate(&delta);
                     }
                     else
                     {
-                        delta.y = 1.0f;
-                        translate_selected(&camera, &delta);
+                        delta.y = selected_trans_delta;
+                        selected_translate(&camera, &delta);
                     }
                 }
                 else if (windowEvent.key.keysym.sym == SDLK_DOWN)
@@ -453,12 +515,12 @@ int mymain()
                     if (windowEvent.key.keysym.mod & KMOD_CTRL)
                     {
                         delta.x = selected_rot_delta;
-                        rotate_selected(&delta);
+                        selected_rotate(&delta);
                     }
                     else
                     {
-                        delta.y = -1.0f;
-                        translate_selected(&camera, &delta);
+                        delta.y = -selected_trans_delta;
+                        selected_translate(&camera, &delta);
                     }
                 }
                 else if (windowEvent.key.keysym.sym == SDLK_LEFT)
@@ -466,12 +528,12 @@ int mymain()
                     if (windowEvent.key.keysym.mod & KMOD_CTRL)
                     {
                         delta.y = -selected_rot_delta;
-                        rotate_selected(&delta);
+                        selected_rotate(&delta);
                     }
                     else
                     {
-                        delta.x = -1.0f;
-                        translate_selected(&camera, &delta);
+                        delta.x = -selected_trans_delta;
+                        selected_translate(&camera, &delta);
                     }
                 }
                 else if (windowEvent.key.keysym.sym == SDLK_RIGHT)
@@ -479,12 +541,12 @@ int mymain()
                     if (windowEvent.key.keysym.mod & KMOD_CTRL)
                     {
                         delta.y = selected_rot_delta;
-                        rotate_selected(&delta);
+                        selected_rotate(&delta);
                     }
                     else
                     {
-                        delta.x = 1.0f;
-                        translate_selected(&camera, &delta);
+                        delta.x = selected_trans_delta;
+                        selected_translate(&camera, &delta);
                     }
                 }
                 else if (windowEvent.key.keysym.sym == SDLK_PAGEUP)
@@ -492,12 +554,12 @@ int mymain()
                     if (windowEvent.key.keysym.mod & KMOD_CTRL)
                     {
                         delta.z = -selected_rot_delta;
-                        rotate_selected(&delta);
+                        selected_rotate(&delta);
                     }
                     else
                     {
-                        delta.z = -1.0f;
-                        translate_selected(&camera, &delta);
+                        delta.z = -selected_trans_delta;
+                        selected_translate(&camera, &delta);
                     }
                 }
                 else if (windowEvent.key.keysym.sym == SDLK_PAGEDOWN)
@@ -505,12 +567,12 @@ int mymain()
                     if (windowEvent.key.keysym.mod & KMOD_CTRL)
                     {
                         delta.z = selected_rot_delta;
-                        rotate_selected(&delta);
+                        selected_rotate(&delta);
                     }
                     else
                     {
-                        delta.z = 1.0f;
-                        translate_selected(&camera, &delta);
+                        delta.z = selected_trans_delta;
+                        selected_translate(&camera, &delta);
                     }
                 }
                 else if (!windowEvent.key.repeat)
@@ -534,7 +596,7 @@ int mymain()
                     else if (windowEvent.key.keysym.sym == SDLK_d
                           && windowEvent.key.keysym.mod & KMOD_CTRL)
                     {
-                        duplicate_selected();
+                        selected_duplicate();
                     }
                     else if (windowEvent.key.keysym.sym == SDLK_d)
                     {
@@ -587,36 +649,49 @@ int mymain()
                     }
                     else if (windowEvent.key.keysym.sym == SDLK_7)
                     {
-                        if (selected_rot_delta == DEFAULT_ROT_DELTA)
+                        if (selected_rot_delta == ROT_DELTA_DEFAULT)
                             selected_rot_delta = (float)M_SEVENTH_DEG;
                         else
-                            selected_rot_delta = DEFAULT_ROT_DELTA;
+                            selected_rot_delta = ROT_DELTA_DEFAULT;
                     }
                     else if (windowEvent.key.keysym.sym == SDLK_DELETE)
                     {
-                        delete_selected();
+                        selected_delete();
                     }
                     else if (windowEvent.key.keysym.sym == SDLK_BACKQUOTE)
                     {
-                        // quat_print(&camera.view);
-                        // struct mat4 view_mat;
-                        // mat4_from_quat(&view_mat, &camera.view);
-                        // mat4_print(&view_mat);
+                        glref_debuginfo("Blah blah testing some stuff.\n3333",
+                                        COLOR_GREEN);
+                    }
+                    else if (windowEvent.key.keysym.sym == SDLK_PLUS ||
+                             windowEvent.key.keysym.sym == SDLK_KP_PLUS)
+                    {
+                        if (selected_trans_delta < TRANS_DELTA_MAX)
+                        {
+                            selected_trans_delta *= 10.0f;
+                            if (selected_trans_delta > TRANS_DELTA_MAX)
+                                selected_trans_delta = TRANS_DELTA_MAX;
 
-                        struct vec3 right = VEC3_RIGHT;
-                        struct vec3 fwd = VEC3_FWD;
-                        vec3_negate(&right);
-                        vec3_negate(&fwd);
+                            char buf[50] = {0};
+                            sprintf(buf, "Translate Multiplier: %f",
+                                    selected_trans_delta);
+                            glref_debuginfo(buf, COLOR_DARK_BLUE);
+                        }
+                    }
+                    else if (windowEvent.key.keysym.sym == SDLK_MINUS ||
+                             windowEvent.key.keysym.sym == SDLK_KP_MINUS)
+                    {
+                        if (selected_trans_delta > TRANS_DELTA_MIN)
+                        {
+                            selected_trans_delta /= 10.0f;
+                            if (selected_trans_delta < TRANS_DELTA_MIN)
+                                selected_trans_delta = TRANS_DELTA_MIN;
 
-                        // quat_normalize(&camera.view);
-                        vec3_mul_quat(&right, &camera.view);
-                        vec3_mul_quat(&fwd, &camera.view);
-
-                        printf("Right: ");
-                        vec3_print(&right);
-                        printf("Fwd  : ");
-                        vec3_print(&fwd);
-                        printf("\n");
+                            char buf[50] = {0};
+                            sprintf(buf, "Translate Multiplier: %f",
+                                    selected_trans_delta);
+                            glref_debuginfo(buf, COLOR_DARK_BLUE);
+                        }
                     }
                     else if (windowEvent.key.keysym.sym != SDLK_LCTRL &&
                              windowEvent.key.keysym.sym != SDLK_RCTRL &&
@@ -716,8 +791,8 @@ int mymain()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glPolygonMode(GL_FRONT_AND_BACK, camera.fill_mode);
 
-        update_glref(dt, ambient_light);
-        render_glref(&camera);
+        glref_update(dt, ambient_light);
+        glref_render(&camera);
         camera_render(&camera);
 
         SDL_GL_SwapWindow(window);
