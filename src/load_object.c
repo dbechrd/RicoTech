@@ -72,8 +72,7 @@ int load_obj_file(const char *filename, u32 *_meshes, u32 *_mesh_count)
         elements[i] = i;
     }
 
-    do
-    {
+    do {
         tok = strsep(&buffer_ptr, "\n");
 
         // Create mesh when we reach next object or end of file
@@ -84,6 +83,8 @@ int load_obj_file(const char *filename, u32 *_meshes, u32 *_mesh_count)
             err = mesh_load(name, idx_vertex, vertices, idx_vertex, elements,
                             GL_STATIC_DRAW, &_meshes[idx_mesh]);
             if (err) goto cleanup;
+
+            idx_mesh++;
 
             if (tok == NULL)
                 break;

@@ -333,6 +333,19 @@ void selected_rotate(const struct vec3 *offset)
     }
 }
 
+void selected_scale(const struct vec3 *offset)
+{
+    if (vec3_equals(offset, &VEC3_ZERO))
+    {
+        object_fetch(selected_handle)->scale = VEC3_UNIT;
+    }
+    else
+    {
+        struct vec3 *scale = &object_fetch(selected_handle)->scale;
+        vec3_add(scale, offset);
+    }
+}
+
 int selected_duplicate()
 {
     enum rico_error err;

@@ -150,8 +150,8 @@ enum rico_vbo {
     VBO_ELEMENT,
     VBO_COUNT
 };
-
-#define RICO_ERRORS(f) \
+//------------------------------------------------------------------------------
+#define RICO_ERRORS(f)              \
     f(SUCCESS)                      \
     f(ERR_BAD_ALLOC)                \
     f(ERR_POOL_OUT_OF_MEMORY)       \
@@ -180,5 +180,18 @@ extern const char *rico_error_string[];
 #else
     #define RICO_ERROR(err) err
 #endif
+//------------------------------------------------------------------------------
+#define RICO_EDIT_MODES(f)  \
+    f(EDIT_TRANSLATE)       \
+    f(EDIT_ROTATE)          \
+    f(EDIT_SCALE)           \
+    f(EDIT_TEXTURE)         \
+    f(EDIT_COUNT)
+
+enum rico_edit_mode {
+    RICO_EDIT_MODES(GEN_LIST)
+};
+extern const char *rico_edit_mode_string[];
+//------------------------------------------------------------------------------
 
 #endif // CONST_H

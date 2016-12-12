@@ -30,15 +30,14 @@
 
 static SDL_Window *window = NULL;
 static SDL_GLContext context = NULL;
+static struct camera camera;
+static const bool reset_game_world = false;
+static struct rico_chunk first_chunk;
+static enum rico_edit_mode edit_mode = EDIT_TRANSLATE;
 
 // This is really stupid, move it somewhere else
 static u32 meshes[100];
 static u32 mesh_count;
-
-const bool reset_game_world = false;
-static struct rico_chunk first_chunk;
-
-static struct camera camera;
 
 static inline void init_stb()
 {
@@ -413,6 +412,15 @@ static int save_file()
     return err;
 }
 
+void set_edit_mode(enum rico_edit_mode mode)
+{
+    edit_mode = mode;
+    char buf[50] = {0};
+    sprintf(buf, "Edit mode: %s",
+            rico_edit_mode_string[edit_mode]);
+    glref_debuginfo(buf, COLOR_DARK_RED_HIGHLIGHT);
+}
+
 int mymain()
 {
     enum rico_error err = rico_init();
@@ -434,19 +442,22 @@ int mymain()
     const float TRANS_DELTA_MIN = 0.01f;
     const float TRANS_DELTA_MAX = 10.0f;
     const float TRANS_DELTA_DEFAULT = 1.0f;
+    const float ROT_DELTA_MIN = 1.0f;
+    const float ROT_DELTA_MAX = 90.0f;
     const float ROT_DELTA_DEFAULT = 5.0f;
-    float selected_trans_delta = TRANS_DELTA_DEFAULT;
-    float selected_rot_delta = ROT_DELTA_DEFAULT;
+    const float SCALE_DELTA_MIN = 0.1f;
+    const float SCALE_DELTA_MAX = 5.0f;
+    const float SCALE_DELTA_DEFAULT = 1.0f;
+    float trans_delta = TRANS_DELTA_DEFAULT;
+    float rot_delta = ROT_DELTA_DEFAULT;
+    float scale_delta = SCALE_DELTA_DEFAULT;
 
     int mouse_dx, mouse_dy;
 
     bool d_down = false;
     bool s_down = false;
-
     bool sprint = true;
-
     bool ambient_light = true;
-
     bool mouse_lock = true;
     bool quit = false;
 
@@ -475,7 +486,14 @@ int mymain()
             {
                 struct vec3 delta = { 0 };
 
-                if (windowEvent.key.keysym.sym == SDLK_TAB)
+                if (windowEvent.key.keysym.sym == SDLK_KP_0)
+                {
+                    edit_mode++;
+                    if (edit_mode == EDIT_COUNT)
+                        edit_mode = 0;
+                    set_edit_mode(edit_mode);
+                }
+                else if (windowEvent.key.keysym.sym == SDLK_TAB)
                 {
                     if (windowEvent.key.keysym.mod & KMOD_SHIFT)
                     {
@@ -488,91 +506,217 @@ int mymain()
                 }
                 else if (windowEvent.key.keysym.sym == SDLK_0)
                 {
-                    if (windowEvent.key.keysym.mod & KMOD_CTRL)
-                    {
-                        selected_rotate(&VEC3_ZERO);
-                    }
-                    else
-                    {
+                    switch (edit_mode) {
+                    case EDIT_TRANSLATE:
                         selected_translate(&camera, &VEC3_ZERO);
+                        break;
+                    case EDIT_ROTATE:
+                        selected_rotate(&VEC3_ZERO);
+                        break;
+                    case EDIT_SCALE:
+                        selected_scale(&VEC3_ZERO);
+                        break;
+                    default: break;
                     }
                 }
                 else if (windowEvent.key.keysym.sym == SDLK_UP)
                 {
-                    if (windowEvent.key.keysym.mod & KMOD_CTRL)
-                    {
-                        delta.x = -selected_rot_delta;
-                        selected_rotate(&delta);
-                    }
-                    else
-                    {
-                        delta.y = selected_trans_delta;
+                    switch (edit_mode) {
+                    case EDIT_TRANSLATE:
+                        delta.y = trans_delta;
                         selected_translate(&camera, &delta);
+                        break;
+                    case EDIT_ROTATE:
+                        delta.x = -rot_delta;
+                        selected_rotate(&delta);
+                        break;
+                    case EDIT_SCALE:
+                        delta.y = scale_delta;
+                        selected_scale(&delta);
+                        break;
+                    default: break;
                     }
                 }
                 else if (windowEvent.key.keysym.sym == SDLK_DOWN)
                 {
-                    if (windowEvent.key.keysym.mod & KMOD_CTRL)
-                    {
-                        delta.x = selected_rot_delta;
-                        selected_rotate(&delta);
-                    }
-                    else
-                    {
-                        delta.y = -selected_trans_delta;
+                    switch (edit_mode) {
+                    case EDIT_TRANSLATE:
+                        delta.y = -trans_delta;
                         selected_translate(&camera, &delta);
+                        break;
+                    case EDIT_ROTATE:
+                        delta.x = rot_delta;
+                        selected_rotate(&delta);
+                        break;
+                    case EDIT_SCALE:
+                        delta.y = -scale_delta;
+                        selected_scale(&delta);
+                        break;
+                    default: break;
                     }
                 }
                 else if (windowEvent.key.keysym.sym == SDLK_LEFT)
                 {
-                    if (windowEvent.key.keysym.mod & KMOD_CTRL)
-                    {
-                        delta.y = -selected_rot_delta;
-                        selected_rotate(&delta);
-                    }
-                    else
-                    {
-                        delta.x = -selected_trans_delta;
+                    switch (edit_mode) {
+                    case EDIT_TRANSLATE:
+                        delta.x = -trans_delta;
                         selected_translate(&camera, &delta);
+                        break;
+                    case EDIT_ROTATE:
+                        delta.y = -rot_delta;
+                        selected_rotate(&delta);
+                        break;
+                    case EDIT_SCALE:
+                        delta.x = -scale_delta;
+                        selected_scale(&delta);
+                        break;
+                    default: break;
                     }
                 }
                 else if (windowEvent.key.keysym.sym == SDLK_RIGHT)
                 {
-                    if (windowEvent.key.keysym.mod & KMOD_CTRL)
-                    {
-                        delta.y = selected_rot_delta;
-                        selected_rotate(&delta);
-                    }
-                    else
-                    {
-                        delta.x = selected_trans_delta;
+                    switch (edit_mode) {
+                    case EDIT_TRANSLATE:
+                        delta.x = trans_delta;
                         selected_translate(&camera, &delta);
+                        break;
+                    case EDIT_ROTATE:
+                        delta.y = rot_delta;
+                        selected_rotate(&delta);
+                        break;
+                    case EDIT_SCALE:
+                        delta.x = scale_delta;
+                        selected_scale(&delta);
+                        break;
+                    default: break;
                     }
                 }
                 else if (windowEvent.key.keysym.sym == SDLK_PAGEUP)
                 {
-                    if (windowEvent.key.keysym.mod & KMOD_CTRL)
-                    {
-                        delta.z = -selected_rot_delta;
-                        selected_rotate(&delta);
-                    }
-                    else
-                    {
-                        delta.z = -selected_trans_delta;
+                    switch (edit_mode) {
+                    case EDIT_TRANSLATE:
+                        delta.z = -trans_delta;
                         selected_translate(&camera, &delta);
+                        break;
+                    case EDIT_ROTATE:
+                        delta.z = -rot_delta;
+                        selected_rotate(&delta);
+                        break;
+                    case EDIT_SCALE:
+                        delta.z = scale_delta;
+                        selected_scale(&delta);
+                        break;
+                    default: break;
                     }
                 }
                 else if (windowEvent.key.keysym.sym == SDLK_PAGEDOWN)
                 {
-                    if (windowEvent.key.keysym.mod & KMOD_CTRL)
-                    {
-                        delta.z = selected_rot_delta;
-                        selected_rotate(&delta);
-                    }
-                    else
-                    {
-                        delta.z = selected_trans_delta;
+                    switch (edit_mode) {
+                    case EDIT_TRANSLATE:
+                        delta.z = trans_delta;
                         selected_translate(&camera, &delta);
+                        break;
+                    case EDIT_ROTATE:
+                        delta.z = rot_delta;
+                        selected_rotate(&delta);
+                        break;
+                    case EDIT_SCALE:
+                        delta.z = -scale_delta;
+                        selected_scale(&delta);
+                        break;
+                    default: break;
+                    }
+                }
+                else if (windowEvent.key.keysym.sym == SDLK_PLUS ||
+                         windowEvent.key.keysym.sym == SDLK_KP_PLUS)
+                {
+                    switch (edit_mode) {
+                    case EDIT_TRANSLATE:
+                        if (trans_delta < TRANS_DELTA_MAX)
+                        {
+                            trans_delta *= 10.0f;
+                            if (trans_delta > TRANS_DELTA_MAX)
+                                trans_delta = TRANS_DELTA_MAX;
+
+                            char buf[50] = {0};
+                            sprintf(buf, "Trans Delta: %f",
+                                    trans_delta);
+                            glref_debuginfo(buf, COLOR_DARK_BLUE_HIGHLIGHT);
+                        }
+                        break;
+                    case EDIT_ROTATE:
+                        if (rot_delta < ROT_DELTA_MAX)
+                        {
+                            rot_delta += (rot_delta < 5.0f) ? 1.0f : 5.0f;
+                            if (rot_delta > ROT_DELTA_MAX)
+                                rot_delta = ROT_DELTA_MAX;
+
+                            char buf[50] = {0};
+                            sprintf(buf, "Rot Delta: %f",
+                                    rot_delta);
+                            glref_debuginfo(buf, COLOR_DARK_BLUE_HIGHLIGHT);
+                        }
+                        break;
+                    case EDIT_SCALE:
+                        if (scale_delta < SCALE_DELTA_MAX)
+                        {
+                            scale_delta += (scale_delta < 1.0f) ? 0.1f : 1.0f;
+                            if (scale_delta > SCALE_DELTA_MAX)
+                                scale_delta = SCALE_DELTA_MAX;
+
+                            char buf[50] = {0};
+                            sprintf(buf, "Scale Delta: %f",
+                                    scale_delta);
+                            glref_debuginfo(buf, COLOR_DARK_BLUE_HIGHLIGHT);
+                        }
+                        break;
+                    default: break;
+                    }
+                }
+                else if (windowEvent.key.keysym.sym == SDLK_MINUS ||
+                         windowEvent.key.keysym.sym == SDLK_KP_MINUS)
+                {
+                    switch (edit_mode) {
+                    case EDIT_TRANSLATE:
+                        if (trans_delta > TRANS_DELTA_MIN)
+                        {
+                            trans_delta /= 10.0f;
+                            if (trans_delta < TRANS_DELTA_MIN)
+                                trans_delta = TRANS_DELTA_MIN;
+
+                            char buf[50] = {0};
+                            sprintf(buf, "Trans Delta: %f",
+                                    trans_delta);
+                            glref_debuginfo(buf, COLOR_DARK_BLUE_HIGHLIGHT);
+                        }
+                        break;
+                    case EDIT_ROTATE:
+                        if (rot_delta > ROT_DELTA_MIN)
+                        {
+                            rot_delta -= (rot_delta > 5.0f) ? 5.0f : 1.0f;
+                            if (rot_delta < ROT_DELTA_MIN)
+                                rot_delta = ROT_DELTA_MIN;
+
+                            char buf[50] = {0};
+                            sprintf(buf, "Rot Delta: %f",
+                                    rot_delta);
+                            glref_debuginfo(buf, COLOR_DARK_BLUE_HIGHLIGHT);
+                        }
+                        break;
+                    case EDIT_SCALE:
+                        if (scale_delta > SCALE_DELTA_MIN)
+                        {
+                            scale_delta -= (scale_delta > 1.0f) ? 1.0f : 0.1f;
+                            if (scale_delta < SCALE_DELTA_MIN)
+                                scale_delta = SCALE_DELTA_MIN;
+
+                            char buf[50] = {0};
+                            sprintf(buf, "Scale Delta: %f",
+                                    scale_delta);
+                            glref_debuginfo(buf, COLOR_DARK_BLUE_HIGHLIGHT);
+                        }
+                        break;
+                    default: break;
                     }
                 }
                 else if (!windowEvent.key.repeat)
@@ -649,10 +793,10 @@ int mymain()
                     }
                     else if (windowEvent.key.keysym.sym == SDLK_7)
                     {
-                        if (selected_rot_delta == ROT_DELTA_DEFAULT)
-                            selected_rot_delta = (float)M_SEVENTH_DEG;
+                        if (rot_delta == ROT_DELTA_DEFAULT)
+                            rot_delta = (float)M_SEVENTH_DEG;
                         else
-                            selected_rot_delta = ROT_DELTA_DEFAULT;
+                            rot_delta = ROT_DELTA_DEFAULT;
                     }
                     else if (windowEvent.key.keysym.sym == SDLK_DELETE)
                     {
@@ -662,36 +806,6 @@ int mymain()
                     {
                         glref_debuginfo("Blah blah testing some stuff.\n3333",
                                         COLOR_GREEN);
-                    }
-                    else if (windowEvent.key.keysym.sym == SDLK_PLUS ||
-                             windowEvent.key.keysym.sym == SDLK_KP_PLUS)
-                    {
-                        if (selected_trans_delta < TRANS_DELTA_MAX)
-                        {
-                            selected_trans_delta *= 10.0f;
-                            if (selected_trans_delta > TRANS_DELTA_MAX)
-                                selected_trans_delta = TRANS_DELTA_MAX;
-
-                            char buf[50] = {0};
-                            sprintf(buf, "Translate Multiplier: %f",
-                                    selected_trans_delta);
-                            glref_debuginfo(buf, COLOR_DARK_BLUE);
-                        }
-                    }
-                    else if (windowEvent.key.keysym.sym == SDLK_MINUS ||
-                             windowEvent.key.keysym.sym == SDLK_KP_MINUS)
-                    {
-                        if (selected_trans_delta > TRANS_DELTA_MIN)
-                        {
-                            selected_trans_delta /= 10.0f;
-                            if (selected_trans_delta < TRANS_DELTA_MIN)
-                                selected_trans_delta = TRANS_DELTA_MIN;
-
-                            char buf[50] = {0};
-                            sprintf(buf, "Translate Multiplier: %f",
-                                    selected_trans_delta);
-                            glref_debuginfo(buf, COLOR_DARK_BLUE);
-                        }
                     }
                     else if (windowEvent.key.keysym.sym != SDLK_LCTRL &&
                              windowEvent.key.keysym.sym != SDLK_RCTRL &&
