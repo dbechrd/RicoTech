@@ -201,7 +201,7 @@ static void object_render_direct(const struct rico_object *obj,
     glUseProgram(0);
 
     // Render bbox
-    bbox_render(&(obj->bbox), camera, &model_matrix);
+    //bbox_render(&(obj->bbox), camera, &model_matrix);
 }
 
 void object_render(u32 handle, const struct program_default *prog,

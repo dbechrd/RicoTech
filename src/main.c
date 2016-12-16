@@ -31,12 +31,12 @@
 static SDL_Window *window = NULL;
 static SDL_GLContext context = NULL;
 static struct camera camera;
-static const bool reset_game_world = false;
+static const bool reset_game_world = true;
 static struct rico_chunk first_chunk;
 static enum rico_edit_mode edit_mode = EDIT_TRANSLATE;
 
 // This is really stupid, move it somewhere else
-static u32 meshes[100];
+static u32 meshes[RICO_MESH_POOL_SIZE];
 static u32 mesh_count;
 
 static inline void init_stb()
@@ -291,7 +291,7 @@ static int rico_init_fonts()
     enum rico_error err;
     printf("Loading fonts\n");
 
-    err = font_init("font/courier_new.bff", &RICO_TEXTURE_DEFAULT);
+    err = font_init("font/courier_new.bff", &RICO_FONT_DEFAULT);
     return err;
 }
 
@@ -343,7 +343,17 @@ static int rico_init_meshes()
                     GL_STATIC_DRAW, &RICO_MESH_DEFAULT);
     if (err) return err;
 
+    u32 ticks = SDL_GetTicks();
+
+    err = load_obj_file("model/conference.obj", meshes, &mesh_count);
+    if (err) return err;
+
+    u32 ticks2 = SDL_GetTicks();
+    printf("Model loaded in: %d\n", ticks2 - ticks);
+
     err = load_obj_file("model/spawn.obj", meshes, &mesh_count);
+    if (err) return err;
+
     return err;
 }
 
@@ -435,7 +445,8 @@ int mymain()
 
     //TODO: This assumes 1/60th second (60fps), this should be 1.65 * dt.
     //GLfloat view_trans_delta = 0.001f;
-    GLfloat view_trans_delta = 1.65f;
+    //GLfloat view_trans_delta = 1.65f;
+    GLfloat view_trans_delta = 5.0f;
 
     struct vec3 view_trans_vel = VEC3_ZERO;
 

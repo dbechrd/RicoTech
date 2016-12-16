@@ -1,5 +1,5 @@
 #include "util.h"
-
+#include "const.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -7,26 +7,34 @@
 * Boring, non-OpenGL-related utility functions
 */
 
-void *file_contents(const char *filename, int *_length)
+int file_contents(const char *filename, int *_length, char **_buffer)
 {
     FILE *fs = fopen(filename, "rb");
-    void *buffer;
 
     if (!fs) {
         fprintf(stderr, "Unable to open %s for reading\n", filename);
-        return NULL;
+        return RICO_ERROR(ERR_FILE_READ);
     }
 
     fseek(fs, 0, SEEK_END);
     *_length = ftell(fs);
     fseek(fs, 0, SEEK_SET);
 
-    buffer = malloc(*_length + 1);
-    *_length = fread(buffer, 1, *_length, fs);
-    fclose(fs);
-    ((char*)buffer)[*_length] = '\0';
+    if (!*_length) {
+        fprintf(stderr, "Unable to determine length of %s\n", filename);
+        return RICO_ERROR(ERR_FILE_READ);
+    }
 
-    return buffer;
+    *_buffer = malloc(*_length + 1);
+    if (!*_buffer) {
+        return RICO_ERROR(ERR_BAD_ALLOC);
+    }
+
+    *_length = fread(*_buffer, 1, *_length, fs);
+    fclose(fs);
+    (*_buffer)[*_length] = '\0';
+
+    return SUCCESS;
 }
 
 void APIENTRY openglCallbackFunction(GLenum source, GLenum type, GLuint id,

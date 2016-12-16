@@ -6,13 +6,14 @@
 
 int make_shader(const GLenum type, const char *filename, GLuint *_shader)
 {
+    enum rico_error err;
     GLint len;
     GLchar *source;
     GLuint shader;
     GLint status;
 
-    source = file_contents(filename, &len);
-    if (!source) return RICO_ERROR(ERR_FILE_READ);
+    err = file_contents(filename, &len, &source);
+    if (err) return err;
 
     shader = glCreateShader(type);
     glShaderSource(shader, 1, (const GLchar**)&source, &len);

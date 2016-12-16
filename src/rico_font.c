@@ -52,12 +52,8 @@ int font_init(const char *filename, u32 *_handle)
     // Read font file
     char *buffer = NULL;
     int length;
-    buffer = file_contents(filename, &length);
-    if (!buffer)
-    {
-        err = RICO_ERROR(ERR_FILE_READ);
-        goto cleanup;
-    }
+    err = file_contents(filename, &length, &buffer);
+    if (err) goto cleanup;
 
     // Check file signature
     if ((u8)buffer[0] != 0xBF || (u8)buffer[1] != 0xF2)

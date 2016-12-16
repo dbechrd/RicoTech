@@ -150,29 +150,29 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
     //--------------------------------------------------------------------------
     // Create world objects
     //--------------------------------------------------------------------------
-    u32 obj_fonttest;
+    // u32 obj_fonttest;
     u32 obj_ground;
-    u32 obj_yellow;
-    u32 obj_ruler;
-    u32 obj_wall1;
-    u32 obj_wall2;
-    u32 obj_wall3;
-    u32 obj_wall4;
-    u32 obj_wall5;
-    u32 arr_objects[50] = { 0 };
+    // u32 obj_yellow;
+    // u32 obj_ruler;
+    // u32 obj_wall1;
+    // u32 obj_wall2;
+    // u32 obj_wall3;
+    // u32 obj_wall4;
+    // u32 obj_wall5;
+    u32 arr_objects[RICO_MESH_POOL_SIZE] = {0};
 
-    // World font object
-    err = object_create(&obj_fonttest, "World String Test", OBJ_STRING_WORLD,
-                        mesh_font_test, tex_font_test, NULL);
-    if (err) return err;
-    object_trans(obj_fonttest, 0.0f, 2.0f, 0.0f);
-    object_scale(obj_fonttest, 1.0f, 1.0f, 1.0f);
+    // // World font object
+    // err = object_create(&obj_fonttest, "World String Test", OBJ_STRING_WORLD,
+    //                     mesh_font_test, tex_font_test, NULL);
+    // if (err) return err;
+    // object_trans(obj_fonttest, 0.0f, 2.0f, 0.0f);
+    // object_scale(obj_fonttest, 1.0f, 1.0f, 1.0f);
 
-    // Screen font object
-    err = object_create(&obj_fonttest, "Screen String Test", OBJ_STRING_SCREEN,
-                        mesh_font_test, tex_font_test, NULL);
-    if (err) return err;
-    object_trans(obj_fonttest, -1.0f, 0.0f, 0.0f);
+    // // Screen font object
+    // err = object_create(&obj_fonttest, "Screen String Test", OBJ_STRING_SCREEN,
+    //                     mesh_font_test, tex_font_test, NULL);
+    // if (err) return err;
+    // object_trans(obj_fonttest, -1.0f, 0.0f, 0.0f);
 
     // Ground
     err = object_create(&obj_ground, "Ground", OBJ_DEFAULT, mesh_default,
@@ -181,61 +181,61 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
     object_rot_x(obj_ground, -90.0f);
     object_scale(obj_ground, 64.0f, 64.0f, 1.0f);
 
-    // Hello
-    err = object_create(&obj_yellow, "Yellow", OBJ_DEFAULT, mesh_default,
-                        tex_yellow, NULL);
-    if (err) return err;
-    object_trans(obj_yellow, 0.0f, 2.0f, -4.0f);
-    object_rot_y(obj_yellow, 40.0f);
-    object_scale(obj_yellow, 1.0f, 2.0f, 1.0f);
+    // // Hello
+    // err = object_create(&obj_yellow, "Yellow", OBJ_DEFAULT, mesh_default,
+    //                     tex_yellow, NULL);
+    // if (err) return err;
+    // object_trans(obj_yellow, 0.0f, 2.0f, -4.0f);
+    // object_rot_y(obj_yellow, 40.0f);
+    // object_scale(obj_yellow, 1.0f, 2.0f, 1.0f);
 
-    // Ruler
-    err = object_create(&obj_ruler, "Ruler", OBJ_DEFAULT, mesh_default,
-                        RICO_TEXTURE_DEFAULT, NULL);
-    if (err) return err;
-    object_trans(obj_ruler, 0.0f, 1.0f, -3.0f);
-    object_scale(obj_ruler, 1.0f, 1.0f, 1.0f);
+    // // Ruler
+    // err = object_create(&obj_ruler, "Ruler", OBJ_DEFAULT, mesh_default,
+    //                     RICO_TEXTURE_DEFAULT, NULL);
+    // if (err) return err;
+    // object_trans(obj_ruler, 0.0f, 1.0f, -3.0f);
+    // object_scale(obj_ruler, 1.0f, 1.0f, 1.0f);
 
-    // Walls are all the same size for now
-    struct vec3 wall_scale = (struct vec3) { 8.0f, 2.5f, 1.0f };
+    // // Walls are all the same size for now
+    // struct vec3 wall_scale = (struct vec3) { 8.0f, 2.5f, 1.0f };
 
-    // Wall front
-    err = object_create(&obj_wall1, "wall1", OBJ_DEFAULT, mesh_default,
-                        tex_hello, NULL);
-    if (err) return err;
-    object_trans(obj_wall1, 0.0f, 2.5f, -8.0f);
-    object_scale(obj_wall1, wall_scale.x, wall_scale.y, wall_scale.z);
+    // // Wall front
+    // err = object_create(&obj_wall1, "wall1", OBJ_DEFAULT, mesh_default,
+    //                     tex_hello, NULL);
+    // if (err) return err;
+    // object_trans(obj_wall1, 0.0f, 2.5f, -8.0f);
+    // object_scale(obj_wall1, wall_scale.x, wall_scale.y, wall_scale.z);
 
-    // Wall left
-    err = object_create(&obj_wall2, "wall2", OBJ_DEFAULT, mesh_default,
-                        tex_hello, NULL);
-    if (err) return err;
-    object_trans(obj_wall2, -8.0f, 2.5f, 0.0f);
-    object_scale(obj_wall2, wall_scale.x, wall_scale.y, wall_scale.z);
+    // // Wall left
+    // err = object_create(&obj_wall2, "wall2", OBJ_DEFAULT, mesh_default,
+    //                     tex_hello, NULL);
+    // if (err) return err;
+    // object_trans(obj_wall2, -8.0f, 2.5f, 0.0f);
+    // object_scale(obj_wall2, wall_scale.x, wall_scale.y, wall_scale.z);
 
-    // Wall back
-    err = object_create(&obj_wall3, "wall3", OBJ_DEFAULT, mesh_default,
-                        tex_hello, NULL);
-    if (err) return err;
-    object_trans(obj_wall3, 0.0f, 2.5f, 8.0f);
-    object_rot_y(obj_wall3, 180.0f);
-    object_scale(obj_wall3, wall_scale.x, wall_scale.y, wall_scale.z);
+    // // Wall back
+    // err = object_create(&obj_wall3, "wall3", OBJ_DEFAULT, mesh_default,
+    //                     tex_hello, NULL);
+    // if (err) return err;
+    // object_trans(obj_wall3, 0.0f, 2.5f, 8.0f);
+    // object_rot_y(obj_wall3, 180.0f);
+    // object_scale(obj_wall3, wall_scale.x, wall_scale.y, wall_scale.z);
 
-    // Wall right
-    err = object_create(&obj_wall4, "wall4", OBJ_DEFAULT, mesh_default,
-                        tex_hello, NULL);
-    if (err) return err;
-    object_trans(obj_wall4, 8.0f, 2.5f, 0.0f);
-    object_rot_y(obj_wall4, -90.0f);
-    object_scale(obj_wall4, wall_scale.x, wall_scale.y, wall_scale.z);
+    // // Wall right
+    // err = object_create(&obj_wall4, "wall4", OBJ_DEFAULT, mesh_default,
+    //                     tex_hello, NULL);
+    // if (err) return err;
+    // object_trans(obj_wall4, 8.0f, 2.5f, 0.0f);
+    // object_rot_y(obj_wall4, -90.0f);
+    // object_scale(obj_wall4, wall_scale.x, wall_scale.y, wall_scale.z);
 
-    // Wall five
-    err = object_create(&obj_wall5, "wall5", OBJ_DEFAULT, mesh_default,
-                        tex_hello, NULL);
-    if (err) return err;
-    object_trans(obj_wall5, 4.0f, 2.5f, 0.0f);
-    object_rot_y(obj_wall5, -90.0f);
-    object_scale(obj_wall5, wall_scale.x, wall_scale.y, wall_scale.z);
+    // // Wall five
+    // err = object_create(&obj_wall5, "wall5", OBJ_DEFAULT, mesh_default,
+    //                     tex_hello, NULL);
+    // if (err) return err;
+    // object_trans(obj_wall5, 4.0f, 2.5f, 0.0f);
+    // object_rot_y(obj_wall5, -90.0f);
+    // object_scale(obj_wall5, wall_scale.x, wall_scale.y, wall_scale.z);
 
     {
         for (u32 i = 0; i < mesh_count; i++)
@@ -247,6 +247,7 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
 
             // HACK: Don't z-fight ground plane
             object_trans(arr_objects[i], 0.0f, EPSILON, 0.0f);
+            object_scale(arr_objects[i], 0.1f, 0.1f, 0.1f);
         }
     }
 

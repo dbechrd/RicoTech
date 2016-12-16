@@ -40,7 +40,7 @@ int mesh_load(const char *name, u32 vertex_count,
               const GLuint *element_data, GLenum hint, u32 *_handle)
 {
 #ifdef RICO_DEBUG_MESH
-    printf("[Mesh] Init %s\n", name);
+    printf("[Mesh] %s\nVertices: %d\n", name, vertex_count);
 #endif
 
     enum rico_error err;

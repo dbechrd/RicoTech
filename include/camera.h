@@ -13,7 +13,7 @@
 #define SCREEN_ASPECT SCREEN_W / SCREEN_H
 
 #define Z_NEAR 0.1f
-#define Z_FAR 50.0f
+#define Z_FAR 100.0f
 
 struct camera {
     struct vec3 position;
