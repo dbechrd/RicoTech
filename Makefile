@@ -26,7 +26,7 @@ BIN_DLLS := $(patsubst $(DLL_DIR)/%,$(BIN_DIR)/%,$(DLLS))
 RESOURCES := $(wildcard $(RES_DIR)/chunks/*.bin)
 RESOURCES += $(wildcard $(RES_DIR)/font/*.bff)
 RESOURCES += $(wildcard $(RES_DIR)/shader/*.glsl)
-RESOURCES += $(wildcard $(RES_DIR)/model/*.obj)
+RESOURCES += $(wildcard $(RES_DIR)/model/*.ric)
 RESOURCES += $(wildcard $(RES_DIR)/texture/*.tga)
 BIN_RESOURCES := $(patsubst $(RES_DIR)/%,$(BIN_DIR)/%,$(RESOURCES))
 

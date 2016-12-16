@@ -33,6 +33,7 @@ static inline char *strsep(char **stringp, const char *delim)
     char *start = *stringp;
     char *p;
 
+    // Returns pointer to first instance of any char in delim list
     p = (start != NULL) ? strpbrk(start, delim) : NULL;
 
     if (p == NULL)
@@ -127,7 +128,6 @@ int load_obj_file(const char *filename, u32 *_meshes, u32 *_mesh_count)
         }
         else if (str_starts_with(tok, "v "))
         {
-            //char *pos = tok + 2;
             tok += 2;
             positions[idx_pos].x = strtof(tok, &tok);
             positions[idx_pos].y = strtof(tok, &tok);
@@ -140,7 +140,6 @@ int load_obj_file(const char *filename, u32 *_meshes, u32 *_mesh_count)
         }
         else if (str_starts_with(tok, "vt "))
         {
-            //char *pos = tok + 3;
             tok += 3;
             texcoords[idx_tex].u = strtof(tok, &tok);
             texcoords[idx_tex].v = strtof(tok, &tok);
@@ -152,7 +151,6 @@ int load_obj_file(const char *filename, u32 *_meshes, u32 *_mesh_count)
         }
         else if (str_starts_with(tok, "vn "))
         {
-            //char *pos = tok + 3;
             tok += 3;
             normals[idx_normal].x = strtof(tok, &tok);
             normals[idx_normal].y = strtof(tok, &tok);

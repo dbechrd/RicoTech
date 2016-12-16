@@ -17,13 +17,15 @@ void main()
 {
     gl_Position = u_proj * u_view * u_model * vec4(vert_pos.xyz, 1.0f);
     //gl_Position = vec4(vert_pos.xyz, 1.0f) * u_model * u_view * u_proj;
-    //vtx_col = vert_col;
+    vtx_col = vert_col;
+    /*
     vtx_col = vec4(
         0.5 + (30.0f / vert_pos.x),
         0.5 + (30.0f / vert_pos.y),
         0.5 + (30.0f / vert_pos.z),
         1.0f
     );
+    */
     vtx_uv = u_scale_uv * vert_uv;
     /*
     vtx_uv = vec2(
