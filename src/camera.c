@@ -66,6 +66,12 @@ void camera_translate(struct camera *camera, const struct vec3 *v)
     camera->need_update = true;
 }
 
+void camera_translate_set(struct camera *camera, const struct vec3 *v)
+{
+    camera->position = VEC3_ZERO;
+    camera_translate(camera, v);
+}
+
 void camera_rotate(struct camera *camera, float mouse_dx, float mouse_dy)
 {
     struct quat pitch;
@@ -111,8 +117,8 @@ void camera_render(struct camera *camera)
 {
     struct vec3 x = VEC3_RIGHT;
     struct vec3 y = VEC3_UP;
-    vec3_mul_quat(vec3_scale(&x, 0.1f), &camera->view);
-    vec3_mul_quat(vec3_scale(&y, 0.1f), &camera->view);
+    vec3_mul_quat(vec3_scalef(&x, 0.1f), &camera->view);
+    vec3_mul_quat(vec3_scalef(&y, 0.1f), &camera->view);
 
     struct vec3 x0 = camera->position;
     struct vec3 x1 = camera->position;

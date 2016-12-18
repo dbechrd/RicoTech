@@ -5,12 +5,16 @@
 #include "bbox.h"
 
 //------------------------------------------------------------------------------
-//TODO: Probably should prefix these?
+//TODO: Probably should prefix these? Possibly move to const.h?
 #define SCREEN_W 1600.0f
 #define SCREEN_H 900.0f
 // #define SCREEN_W 800.0f
 // #define SCREEN_H 600.0f
 #define SCREEN_ASPECT SCREEN_W / SCREEN_H
+
+// Convert pixel coordinates to normalized device coordinates
+#define SCREEN_X(x) x / (SCREEN_W / 2.0f) - 1.0f
+#define SCREEN_Y(y) -y / (SCREEN_H / 2.0f) + 1.0f
 
 #define Z_NEAR 0.1f
 #define Z_FAR 100.0f
@@ -35,6 +39,7 @@ void camera_init(struct camera *_camera, struct vec3 position,
                  struct quat view, float fov);
 void camera_reset(struct camera *camera);
 void camera_translate(struct camera *camera, const struct vec3 *v);
+void camera_translate_set(struct camera *camera, const struct vec3 *v);
 void camera_rotate(struct camera *camera, float mouse_x, float mouse_y);
 void camera_rotate_angle(struct camera *camera, struct vec3 axis,
                          float angle_deg);

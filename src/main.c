@@ -276,6 +276,9 @@ static int rico_init_pools()
 {
     enum rico_error err;
 
+    err = rico_string_init(RICO_STRING_POOL_SIZE);
+    if (err) return err;
+
     err = rico_font_init(RICO_TEXTURE_POOL_SIZE);
     if (err) return err;
 
@@ -339,8 +342,8 @@ static int rico_init_meshes()
     #define ELEMENT_COUNT 6
     const GLuint elements[ELEMENT_COUNT] = { 0, 1, 3, 1, 2, 3 };
 
-    err = mesh_load("MESH_DEFAULT", VERT_COUNT, vertices, ELEMENT_COUNT, elements,
-                    GL_STATIC_DRAW, &RICO_MESH_DEFAULT);
+    err = mesh_load("MESH_DEFAULT", VERT_COUNT, vertices, ELEMENT_COUNT,
+                    elements, GL_STATIC_DRAW, &RICO_MESH_DEFAULT);
     if (err) return err;
 
     u32 ticks = SDL_GetTicks();
@@ -422,13 +425,16 @@ static int save_file()
     return err;
 }
 
-void set_edit_mode(enum rico_edit_mode mode)
+int set_edit_mode(enum rico_edit_mode mode)
 {
+    enum rico_error err;
+
     edit_mode = mode;
-    char buf[50] = {0};
-    sprintf(buf, "Edit mode: %s",
-            rico_edit_mode_string[edit_mode]);
-    glref_debuginfo(buf, COLOR_DARK_RED_HIGHLIGHT);
+    char buf[50] = { 0 };
+    sprintf(buf, "Edit mode: %s", rico_edit_mode_string[edit_mode]);
+    err = string_init("STR_EDIT_MODE", STR_SLOT_EDIT_INFO, 0, 0,
+                      COLOR_DARK_RED_HIGHLIGHT, 3000, RICO_FONT_DEFAULT, buf);
+    return err;
 }
 
 int mymain()
@@ -468,13 +474,13 @@ int mymain()
     bool d_down = false;
     bool s_down = false;
     bool sprint = true;
-    bool ambient_light = true;
+    bool ambient_light = false;
     bool mouse_lock = true;
     bool quit = false;
 
     SDL_SetRelativeMouseMode(mouse_lock);
 
-    GLuint time = SDL_GetTicks();
+    u32 time = SDL_GetTicks();
     SDL_Event windowEvent;
 
     while (!quit)
@@ -490,8 +496,11 @@ int mymain()
             }
             else if (windowEvent.type == SDL_MOUSEMOTION)
             {
-                mouse_dx = windowEvent.motion.xrel;
-                mouse_dy = windowEvent.motion.yrel;
+                if (mouse_lock)
+                {
+                    mouse_dx = windowEvent.motion.xrel;
+                    mouse_dy = windowEvent.motion.yrel;
+                }
             }
             else if (windowEvent.type == SDL_KEYDOWN)
             {
@@ -502,7 +511,8 @@ int mymain()
                     edit_mode++;
                     if (edit_mode == EDIT_COUNT)
                         edit_mode = 0;
-                    set_edit_mode(edit_mode);
+                    err = set_edit_mode(edit_mode);
+                    if (err) goto cleanup;
                 }
                 else if (windowEvent.key.keysym.sym == SDLK_TAB)
                 {
@@ -649,10 +659,13 @@ int mymain()
                             if (trans_delta > TRANS_DELTA_MAX)
                                 trans_delta = TRANS_DELTA_MAX;
 
-                            char buf[50] = {0};
-                            sprintf(buf, "Trans Delta: %f",
-                                    trans_delta);
-                            glref_debuginfo(buf, COLOR_DARK_BLUE_HIGHLIGHT);
+                            char buf[50] = { 0 };
+                            sprintf(buf, "Trans Delta: %f", trans_delta);
+                            enum rico_error err = string_init(
+                                "STR_EDIT_TRANS_DELTA", STR_SLOT_EDIT_INFO, 0,
+                                0, COLOR_DARK_BLUE_HIGHLIGHT, 1000,
+                                RICO_FONT_DEFAULT, buf);
+                            if (err) goto cleanup;
                         }
                         break;
                     case EDIT_ROTATE:
@@ -663,9 +676,12 @@ int mymain()
                                 rot_delta = ROT_DELTA_MAX;
 
                             char buf[50] = {0};
-                            sprintf(buf, "Rot Delta: %f",
-                                    rot_delta);
-                            glref_debuginfo(buf, COLOR_DARK_BLUE_HIGHLIGHT);
+                            sprintf(buf, "Rot Delta: %f", rot_delta);
+                            enum rico_error err = string_init(
+                                "STR_EDIT_ROT_DELTA", STR_SLOT_EDIT_INFO, 0, 0,
+                                COLOR_DARK_BLUE_HIGHLIGHT, 1000,
+                                RICO_FONT_DEFAULT, buf);
+                            if (err) goto cleanup;
                         }
                         break;
                     case EDIT_SCALE:
@@ -676,9 +692,12 @@ int mymain()
                                 scale_delta = SCALE_DELTA_MAX;
 
                             char buf[50] = {0};
-                            sprintf(buf, "Scale Delta: %f",
-                                    scale_delta);
-                            glref_debuginfo(buf, COLOR_DARK_BLUE_HIGHLIGHT);
+                            sprintf(buf, "Scale Delta: %f", scale_delta);
+                            enum rico_error err = string_init(
+                                "STR_EDIT_SCALE_DELTA", STR_SLOT_EDIT_INFO, 0,
+                                0, COLOR_DARK_BLUE_HIGHLIGHT, 1000,
+                                RICO_FONT_DEFAULT, buf);
+                            if (err) goto cleanup;
                         }
                         break;
                     default: break;
@@ -698,7 +717,11 @@ int mymain()
                             char buf[50] = {0};
                             sprintf(buf, "Trans Delta: %f",
                                     trans_delta);
-                            glref_debuginfo(buf, COLOR_DARK_BLUE_HIGHLIGHT);
+                            enum rico_error err = string_init(
+                                "STR_EDIT_TRANS_DELTA", STR_SLOT_EDIT_INFO, 0,
+                                0, COLOR_DARK_BLUE_HIGHLIGHT, 1000,
+                                RICO_FONT_DEFAULT, buf);
+                            if (err) goto cleanup;
                         }
                         break;
                     case EDIT_ROTATE:
@@ -711,7 +734,11 @@ int mymain()
                             char buf[50] = {0};
                             sprintf(buf, "Rot Delta: %f",
                                     rot_delta);
-                            glref_debuginfo(buf, COLOR_DARK_BLUE_HIGHLIGHT);
+                            enum rico_error err = string_init(
+                                "STR_EDIT_ROT_DELTA", STR_SLOT_EDIT_INFO, 0, 0,
+                                COLOR_DARK_BLUE_HIGHLIGHT, 1000,
+                                RICO_FONT_DEFAULT, buf);
+                            if (err) goto cleanup;
                         }
                         break;
                     case EDIT_SCALE:
@@ -724,7 +751,11 @@ int mymain()
                             char buf[50] = {0};
                             sprintf(buf, "Scale Delta: %f",
                                     scale_delta);
-                            glref_debuginfo(buf, COLOR_DARK_BLUE_HIGHLIGHT);
+                            enum rico_error err = string_init(
+                                "STR_EDIT_SCALE_DELTA", STR_SLOT_EDIT_INFO, 0,
+                                0, COLOR_DARK_BLUE_HIGHLIGHT, 1000,
+                                RICO_FONT_DEFAULT, buf);
+                            if (err) goto cleanup;
                         }
                         break;
                     default: break;
@@ -815,8 +846,11 @@ int mymain()
                     }
                     else if (windowEvent.key.keysym.sym == SDLK_BACKQUOTE)
                     {
-                        glref_debuginfo("Blah blah testing some stuff.\n3333",
-                                        COLOR_GREEN);
+                        enum rico_error err = string_init(
+                            "STR_EDIT_MODE", STR_SLOT_DYNAMIC, 0, 0,
+                            COLOR_GREEN, 3000, RICO_FONT_DEFAULT,
+                            "Blah blah testing some stuff.\n3333");
+                        if (err) goto cleanup;
                     }
                     else if (windowEvent.key.keysym.sym != SDLK_LCTRL &&
                              windowEvent.key.keysym.sym != SDLK_RCTRL &&
@@ -877,8 +911,8 @@ int mymain()
         ////////////////////////////////////////////////////////////////////////
         // Update time
         ////////////////////////////////////////////////////////////////////////
-        GLuint newTime = SDL_GetTicks();
-        GLfloat dt = (float)(newTime - time) / 1000.0f;
+        u32 newTime = SDL_GetTicks();
+        u32 dt = newTime - time;
         time = newTime;
 
         ////////////////////////////////////////////////////////////////////////
@@ -887,11 +921,11 @@ int mymain()
         if (!vec3_equals(&view_trans_vel, &VEC3_ZERO))
         {
             struct vec3 view_delta = view_trans_vel;
-            vec3_scale(&view_delta, dt);
+            vec3_scalef(&view_delta, dt / 1000.0f);
 
             if (sprint) {
                 //Debug: Sprint vertically.. yeah.. what?
-                vec3_scale(&view_delta, 5.0f);
+                vec3_scalef(&view_delta, 5.0f);
 
                 //TODO: Only allow sprinting on the ground during normal play
                 //view_delta.x *= 5.0f;
@@ -926,12 +960,13 @@ int mymain()
     //====================================================================
     // Cleanup
     //====================================================================
+cleanup:
     free_glref();
 
     SDL_GL_DeleteContext(context);
     SDL_DestroyWindow(window);
     SDL_Quit();
-    return 0;
+    return err;
 }
 
 int main(int argc, char *argv[])

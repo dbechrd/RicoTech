@@ -33,7 +33,6 @@ static struct program_primitive *prog_primitive;
 static u32 font;
 static u32 tex_font_test;
 static u32 mesh_font_test;
-static u32 mesh_default;
 static u32 tex_grass;
 static u32 tex_rock;
 static u32 tex_hello;
@@ -44,8 +43,6 @@ static struct bbox axis_bbox;
 static struct mat4 x_axis_transform;
 static struct mat4 y_axis_transform;
 static struct mat4 z_axis_transform;
-
-static u32 obj_debuginfostring;
 
 int init_glref()
 {
@@ -175,14 +172,14 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
     // object_trans(obj_fonttest, -1.0f, 0.0f, 0.0f);
 
     // Ground
-    err = object_create(&obj_ground, "Ground", OBJ_DEFAULT, mesh_default,
+    err = object_create(&obj_ground, "Ground", OBJ_DEFAULT, RICO_MESH_DEFAULT,
                         tex_rock, NULL);
     if (err) return err;
     object_rot_x(obj_ground, -90.0f);
-    object_scale(obj_ground, 64.0f, 64.0f, 1.0f);
+    object_scale(obj_ground, &(struct vec3) { 64.0f, 64.0f, 1.0f });
 
     // // Hello
-    // err = object_create(&obj_yellow, "Yellow", OBJ_DEFAULT, mesh_default,
+    // err = object_create(&obj_yellow, "Yellow", OBJ_DEFAULT, RICO_MESH_DEFAULT,
     //                     tex_yellow, NULL);
     // if (err) return err;
     // object_trans(obj_yellow, 0.0f, 2.0f, -4.0f);
@@ -190,7 +187,7 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
     // object_scale(obj_yellow, 1.0f, 2.0f, 1.0f);
 
     // // Ruler
-    // err = object_create(&obj_ruler, "Ruler", OBJ_DEFAULT, mesh_default,
+    // err = object_create(&obj_ruler, "Ruler", OBJ_DEFAULT, RICO_MESH_DEFAULT,
     //                     RICO_TEXTURE_DEFAULT, NULL);
     // if (err) return err;
     // object_trans(obj_ruler, 0.0f, 1.0f, -3.0f);
@@ -200,21 +197,21 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
     // struct vec3 wall_scale = (struct vec3) { 8.0f, 2.5f, 1.0f };
 
     // // Wall front
-    // err = object_create(&obj_wall1, "wall1", OBJ_DEFAULT, mesh_default,
+    // err = object_create(&obj_wall1, "wall1", OBJ_DEFAULT, RICO_MESH_DEFAULT,
     //                     tex_hello, NULL);
     // if (err) return err;
     // object_trans(obj_wall1, 0.0f, 2.5f, -8.0f);
     // object_scale(obj_wall1, wall_scale.x, wall_scale.y, wall_scale.z);
 
     // // Wall left
-    // err = object_create(&obj_wall2, "wall2", OBJ_DEFAULT, mesh_default,
+    // err = object_create(&obj_wall2, "wall2", OBJ_DEFAULT, RICO_MESH_DEFAULT,
     //                     tex_hello, NULL);
     // if (err) return err;
     // object_trans(obj_wall2, -8.0f, 2.5f, 0.0f);
     // object_scale(obj_wall2, wall_scale.x, wall_scale.y, wall_scale.z);
 
     // // Wall back
-    // err = object_create(&obj_wall3, "wall3", OBJ_DEFAULT, mesh_default,
+    // err = object_create(&obj_wall3, "wall3", OBJ_DEFAULT, RICO_MESH_DEFAULT,
     //                     tex_hello, NULL);
     // if (err) return err;
     // object_trans(obj_wall3, 0.0f, 2.5f, 8.0f);
@@ -222,7 +219,7 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
     // object_scale(obj_wall3, wall_scale.x, wall_scale.y, wall_scale.z);
 
     // // Wall right
-    // err = object_create(&obj_wall4, "wall4", OBJ_DEFAULT, mesh_default,
+    // err = object_create(&obj_wall4, "wall4", OBJ_DEFAULT, RICO_MESH_DEFAULT,
     //                     tex_hello, NULL);
     // if (err) return err;
     // object_trans(obj_wall4, 8.0f, 2.5f, 0.0f);
@@ -230,7 +227,7 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
     // object_scale(obj_wall4, wall_scale.x, wall_scale.y, wall_scale.z);
 
     // // Wall five
-    // err = object_create(&obj_wall5, "wall5", OBJ_DEFAULT, mesh_default,
+    // err = object_create(&obj_wall5, "wall5", OBJ_DEFAULT, RICO_MESH_DEFAULT,
     //                     tex_hello, NULL);
     // if (err) return err;
     // object_trans(obj_wall5, 4.0f, 2.5f, 0.0f);
@@ -246,8 +243,8 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
             if (err) return err;
 
             // HACK: Don't z-fight ground plane
-            object_trans(arr_objects[i], 0.0f, EPSILON, 0.0f);
-            object_scale(arr_objects[i], 0.1f, 0.1f, 0.1f);
+            object_trans(arr_objects[i], &(struct vec3) { 0.0f, EPSILON, 0.0f });
+            object_scale(arr_objects[i], &(struct vec3) { 0.1f, 0.1f, 0.1f });
         }
     }
 
@@ -278,15 +275,16 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
 void select_obj(u32 handle)
 {
     // Deselect current object
-    object_deselect(selected_handle);
+    if (selected_handle)
+        object_deselect(selected_handle);
 
-    // Select requested object
-    object_select(handle);
     selected_handle = handle;
 
-    struct rico_object *obj = object_fetch(selected_handle);
-    printf("[Obj %d][%d %s] Selected\n", selected_handle, obj->uid.uid,
-           obj->uid.name);
+    // Select requested object
+    if (selected_handle)
+        object_select(selected_handle);
+
+    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
 }
 
 void select_next_obj()
@@ -301,91 +299,85 @@ void select_prev_obj()
 
 void selected_translate(struct camera *camera, const struct vec3 *offset)
 {
-    struct rico_object *obj = object_fetch(selected_handle);
+    enum rico_obj_type selected_type = object_type_get(selected_handle);
 
     if (vec3_equals(offset, &VEC3_ZERO))
     {
-        if (camera->locked && obj->type != OBJ_STRING_SCREEN)
+        if (camera->locked && selected_type != OBJ_STRING_SCREEN)
         {
-            vec3_add(&camera->position, &obj->trans);
+            camera->position = VEC3_ZERO;
         }
-        obj->trans = VEC3_ZERO;
+        object_trans_set(selected_handle, &VEC3_ZERO);
     }
     else
     {
-        if (camera->locked && obj->type != OBJ_STRING_SCREEN)
+        if (camera->locked && selected_type != OBJ_STRING_SCREEN)
         {
-            vec3_sub(&camera->position, offset);
+            struct vec3 offset_tmp = *offset;
+            camera_translate(camera, vec3_negate(&offset_tmp));
         }
-        vec3_add(&obj->trans, offset);
+        object_trans(selected_handle, offset);
     }
+
+    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
 }
 
 void selected_rotate(const struct vec3 *offset)
 {
     if (vec3_equals(offset, &VEC3_ZERO))
     {
-        object_fetch(selected_handle)->rot = VEC3_ZERO;
+        object_rot_set(selected_handle, &VEC3_ZERO);
     }
     else
     {
-        struct vec3 *rot = &object_fetch(selected_handle)->rot;
-        vec3_add(rot, offset);
+        object_rot(selected_handle, offset);
     }
+
+    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
 }
 
 void selected_scale(const struct vec3 *offset)
 {
     if (vec3_equals(offset, &VEC3_ZERO))
     {
-        object_fetch(selected_handle)->scale = VEC3_UNIT;
+        object_scale_set(selected_handle, &VEC3_UNIT);
     }
     else
     {
-        struct vec3 *scale = &object_fetch(selected_handle)->scale;
-        vec3_add(scale, offset);
+        object_scale(selected_handle, offset);
     }
+
+    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
 }
 
 int selected_duplicate()
 {
     enum rico_error err;
-    struct rico_object *selected = object_fetch(selected_handle);
 
     u32 newObj;
-    err = object_create(&newObj, "Duplicate", selected->type, selected->mesh,
-                        selected->texture, mesh_bbox(selected->mesh));
+    err = object_copy(&newObj, selected_handle, "Duplicate");
     if (err) return err;
 
-    struct rico_object *new_obj = object_fetch(newObj);
-    if (newObj)
-    {
-        new_obj->trans = selected->trans;
-        new_obj->rot = selected->rot;
-        new_obj->scale = selected->scale;
-    }
     select_obj(newObj);
-
     return err;
 }
 
 void selected_delete()
 {
-    u32 handle = selected_handle;
     select_prev_obj();
-    object_free(handle);
+    object_free(selected_handle);
 }
 
 //TODO: Put this somewhere reasonable (e.g. lighting module)
 static struct col4 ambient = { 0.7f, 0.6f, 0.4f, 1.0f };
 
-void glref_update(GLfloat dt, bool ambient_light)
+void glref_update(u32 dt, bool ambient_light)
 {
     //--------------------------------------------------------------------------
     // Update uniforms
     //--------------------------------------------------------------------------
     glUseProgram(prog_default->prog_id);
-    glUniform1f(prog_default->u_time, dt);
+    glUniform1f(prog_default->u_time, dt / 1000.0f);
 
     if (ambient_light)
         glUniform4fv(prog_default->u_ambient, 1, (const GLfloat *)&ambient);
@@ -393,28 +385,11 @@ void glref_update(GLfloat dt, bool ambient_light)
         glUniform4fv(prog_default->u_ambient, 1, (const GLfloat *)&VEC3_UNIT);
 
     glUseProgram(0);
-}
 
-int glref_debuginfo(const char *str, struct col4 color)
-{
-    enum rico_error err;
-
-    if (obj_debuginfostring)
-        object_free(obj_debuginfostring);
-
-    u32 text_mesh;
-    u32 text_tex;
-    err = font_render(font, 0, 0, color, str, "debug_info_string", &text_mesh,
-                      &text_tex);
-    if (err) return err;
-
-    err = object_create(&obj_debuginfostring, "DEBUG_INFO", OBJ_STRING_SCREEN,
-                        text_mesh, text_tex, NULL);
-    if (err) return err;
-
-    object_trans(obj_debuginfostring, -1.0f, 1.0f, 0.0f);
-
-    return err;
+    //--------------------------------------------------------------------------
+    // Update debug text
+    //--------------------------------------------------------------------------
+    string_update(dt);
 }
 
 void glref_render(struct camera *camera)

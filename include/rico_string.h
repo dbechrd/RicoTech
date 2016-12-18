@@ -1,13 +1,25 @@
-// #ifndef UID_H
-// #define UID_H
+#ifndef RICO_STRING_H
+#define RICO_STRING_H
 
-// struct rico_string {
-//     u32 length;
-//     char *name;
-// };
+#include "const.h"
+struct col4;
+struct rico_font;
 
-// extern char *STRING_NULL;
+#define RICO_STRING_SLOTS(f)    \
+    f(STR_SLOT_DYNAMIC)         \
+    f(STR_SLOT_SELECTED_OBJ)    \
+    f(STR_SLOT_EDIT_INFO)       \
+    f(STR_SLOT_COUNT)
 
-// u32 string_init(const char *str, u32 length);
+enum rico_string_slot {
+    RICO_STRING_SLOTS(GEN_LIST)
+};
+extern const char *rico_string_slot_string[];
 
-// #endif // UID_H
+int rico_string_init(u32 pool_size);
+int string_init(const char *name, enum rico_string_slot slot, u32 x, u32 y,
+                struct col4 color, u32 lifespan, u32 font, const char *text);
+int string_free(u32 handle);
+int string_update(u32 dt);
+
+#endif // RICO_STRING_H

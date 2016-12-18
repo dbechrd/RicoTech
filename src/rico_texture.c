@@ -25,10 +25,12 @@ static int build_texture(struct rico_texture *tex, const void *pixels);
 
 int rico_texture_init(u32 pool_size)
 {
-    return pool_init("Textures", pool_size, sizeof(struct rico_texture),
+    return pool_init("Textures", pool_size, sizeof(struct rico_texture), 0,
                      &textures);
 }
 
+// TODO: Do proper reference counting, this function is stupid. Need to save
+//       filename for that to work (how to track load_pixels calls?)
 int texture_request(u32 handle)
 {
     struct rico_texture *tex = pool_read(&textures, handle);
@@ -214,8 +216,8 @@ void texture_free(u32 handle)
         return;
 
     glDeleteTextures(1, &tex->gl_id);
-    tex->uid = UID_NULL;
 
+    tex->uid.uid = UID_NULL;
     pool_free(&textures, handle);
 }
 

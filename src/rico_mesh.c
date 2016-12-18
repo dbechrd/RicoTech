@@ -24,8 +24,7 @@ static int build_mesh(struct rico_mesh *mesh, u32 vertex_count,
 
 int rico_mesh_init(u32 pool_size)
 {
-    return pool_init("Meshes", pool_size, sizeof(struct rico_mesh),
-                     &meshes);
+    return pool_init("Meshes", pool_size, sizeof(struct rico_mesh), 0, &meshes);
 }
 
 int mesh_request(u32 handle)
@@ -120,6 +119,7 @@ void mesh_free(u32 handle)
 {
     struct rico_mesh *mesh = pool_read(&meshes, handle);
 
+
 #ifdef RICO_DEBUG_MESH
     printf("[Mesh] Free %s\n", mesh->uid.name);
 #endif
@@ -131,6 +131,7 @@ void mesh_free(u32 handle)
     glDeleteBuffers(2, mesh->vbos);
     glDeleteVertexArrays(1, &mesh->vao);
 
+    mesh->uid.uid = UID_NULL;
     pool_free(&meshes, handle);
 }
 

@@ -11,8 +11,8 @@ out vec4 col;
 
 void main()
 {
-    //vec4 texCol = texture(u_tex, vtx_uv);
-    vec4 texCol = vec4(0.0f);
+    vec4 texCol = texture(u_tex, vtx_uv);
+    //vec4 texCol = vec4(0.0f);
     if (texCol.a == 0.0f) {
         col = vtx_col;
         col.a = 0.7f;

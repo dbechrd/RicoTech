@@ -2,7 +2,6 @@
 #include <string.h>
 #include <stdio.h>
 
-struct rico_uid UID_NULL = { RICO_UID_NULL, 0, "NULL", NULL, NULL };
 static u32 next_uid = 1;
 
 const char *rico_uid_type_string[] = {

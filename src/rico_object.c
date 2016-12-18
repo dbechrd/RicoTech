@@ -4,7 +4,32 @@
 #include "camera.h"
 #include "rico_cereal.h"
 #include "program.h"
+#include "rico_font.h"
 #include <malloc.h>
+
+struct rico_object {
+    struct rico_uid uid;
+    enum rico_obj_type type;
+
+    //TODO: Refactor into rico_transform
+    //TODO: Animation
+    struct vec3 trans;
+    struct vec3 rot;
+    struct vec3 scale;
+    //struct mat4 transform;
+
+    //TODO: Support multiple meshes
+    u32 mesh;
+
+    //TODO: Support multiple textures (per mesh?)
+    u32 texture;
+
+    struct bbox bbox;
+};
+
+const char *rico_obj_type_string[] = {
+    RICO_OBJ_TYPES(GEN_STRING)
+};
 
 u32 RICO_OBJECT_DEFAULT = 0;
 static struct rico_pool *objects;
@@ -12,11 +37,11 @@ static struct rico_pool *objects;
 int rico_object_init(u32 pool_size)
 {
     objects = calloc(1, sizeof(*objects));
-    return pool_init("Objects", pool_size, sizeof(struct rico_object),
+    return pool_init("Objects", pool_size, sizeof(struct rico_object), 0,
                      objects);
 }
 
-int object_create(u32 *_handle, const char *name, enum rico_object_type type,
+int object_create(u32 *_handle, const char *name, enum rico_obj_type type,
                   u32 mesh, u32 texture, const struct bbox *bbox)
 {
 #ifdef RICO_DEBUG_OBJECT
@@ -46,6 +71,24 @@ int object_create(u32 *_handle, const char *name, enum rico_object_type type,
     return err;
 }
 
+int object_copy(u32 *_handle, u32 handle, const char *name)
+{
+    enum rico_error err;
+    struct rico_object *obj = pool_read(objects, handle);
+
+    // Create new object with same mesh / texture
+    err = object_create(_handle, name, obj->type, obj->mesh, obj->texture,
+                        NULL);
+    if (err) return err;
+
+    // Copy transform
+    object_trans_set(*_handle, &obj->trans);
+    object_rot_set(*_handle, &obj->rot);
+    object_scale_set(*_handle, &obj->scale);
+
+    return err;
+}
+
 void object_free(u32 handle)
 {
     struct rico_object *obj = pool_read(objects, handle);
@@ -54,24 +97,19 @@ void object_free(u32 handle)
     printf("[Object] Free %s\n", obj->uid.name);
 #endif
 
-    obj->uid = UID_NULL;
     mesh_free(obj->mesh);
     texture_free(obj->texture);
+
+    obj->uid.uid = UID_NULL;
     pool_free(objects, handle);
 }
 
 void object_free_all()
 {
-    for (int i = objects->active; i > 0; --i)
+    for (int i = objects->active - 1; i >= 0; --i)
     {
         object_free(objects->handles[i]);
     }
-}
-
-//HACK: DANGER WILL ROBINSON!!!
-struct rico_object *object_fetch(u32 handle)
-{
-    return pool_read(objects, handle);
 }
 
 u32 object_next(u32 handle)
@@ -82,6 +120,12 @@ u32 object_next(u32 handle)
 u32 object_prev(u32 handle)
 {
     return pool_prev(objects, handle);
+}
+
+enum rico_obj_type object_type_get(u32 handle)
+{
+    struct rico_object *obj = pool_read(objects, handle);
+    return obj->type;
 }
 
 void object_select(u32 handle)
@@ -96,39 +140,94 @@ void object_deselect(u32 handle)
     obj->bbox.wireframe = true;
 }
 
-void object_trans(u32 handle, float x, float y, float z)
+void object_trans(u32 handle, const struct vec3 *v)
 {
     struct rico_object *obj = pool_read(objects, handle);
-    //union mat4_translate(&obj->transform, (struct vec3) { x, y, z });
-    obj->trans = (struct vec3) { x, y, z };
+    vec3_add(&obj->trans, v);
+}
+
+const struct vec3 *object_trans_get(u32 handle)
+{
+    struct rico_object *obj = pool_read(objects, handle);
+    return &obj->trans;
+}
+
+void object_trans_set(u32 handle, const struct vec3 *v)
+{
+    struct rico_object *obj = pool_read(objects, handle);
+    obj->trans = *v;
+}
+
+void object_rot(u32 handle, const struct vec3 *v)
+{
+    struct rico_object *obj = pool_read(objects, handle);
+    vec3_add(&obj->rot, v);
+}
+
+void object_rot_set(u32 handle, const struct vec3 *v)
+{
+    struct rico_object *obj = pool_read(objects, handle);
+    obj->rot = *v;
+}
+
+const struct vec3 *object_rot_get(u32 handle)
+{
+    struct rico_object *obj = pool_read(objects, handle);
+    return &obj->rot;
 }
 
 void object_rot_x(u32 handle, float deg)
 {
     struct rico_object *obj = pool_read(objects, handle);
-    //mat4_rotx(&obj->transform, deg);
+    obj->rot.x += deg;
+}
+
+void object_rot_x_set(u32 handle, float deg)
+{
+    struct rico_object *obj = pool_read(objects, handle);
     obj->rot.x = deg;
 }
 
 void object_rot_y(u32 handle, float deg)
 {
     struct rico_object *obj = pool_read(objects, handle);
-    //mat4_roty(&obj->transform, deg);
+    obj->rot.y += deg;
+}
+
+void object_rot_y_set(u32 handle, float deg)
+{
+    struct rico_object *obj = pool_read(objects, handle);
     obj->rot.y = deg;
 }
 
 void object_rot_z(u32 handle, float deg)
 {
     struct rico_object *obj = pool_read(objects, handle);
-    //mat4_rotz(&obj->transform, deg);
+    obj->rot.z += deg;
+}
+
+void object_rot_z_set(u32 handle, float deg)
+{
+    struct rico_object *obj = pool_read(objects, handle);
     obj->rot.z = deg;
 }
 
-void object_scale(u32 handle, float x, float y, float z)
+void object_scale(u32 handle, const struct vec3 *v)
 {
     struct rico_object *obj = pool_read(objects, handle);
-    //mat4_scale(&obj->transform, (struct vec3) { x, y, z });
-    obj->scale = (struct vec3) { x, y, z };
+    vec3_scale(&obj->scale, v);
+}
+
+void object_scale_set(u32 handle, const struct vec3 *v)
+{
+    struct rico_object *obj = pool_read(objects, handle);
+    obj->scale = *v;
+}
+
+const struct vec3 *object_scale_get(u32 handle)
+{
+    struct rico_object *obj = pool_read(objects, handle);
+    return &obj->scale;
 }
 
 static void object_render_direct(const struct rico_object *obj,
@@ -210,7 +309,7 @@ void object_render(u32 handle, const struct program_default *prog,
     object_render_direct(pool_read(objects, handle), prog, camera);
 }
 
-void object_render_type(enum rico_object_type type,
+void object_render_type(enum rico_obj_type type,
                         const struct program_default *prog,
                         const struct camera *camera)
 {
@@ -223,6 +322,77 @@ void object_render_type(enum rico_object_type type,
             object_render_direct(obj, prog, camera);
         }
     }
+}
+
+int object_print(u32 handle, enum rico_string_slot slot)
+{
+    enum rico_error err;
+
+    // Print to screen
+    char *buf = object_serialize_str(handle);
+    err = string_init(rico_string_slot_string[slot], slot, 0, 0,
+                      COLOR_GRAY_HIGHLIGHT, 0, RICO_FONT_DEFAULT, buf);
+    if (err) goto cleanup;
+
+    // Print to stdout
+#ifdef RICO_DEBUG_OBJECT
+    if (!handle) {
+        printf("[Object 0] NULL\n");
+        return;
+    }
+
+    struct rico_object *obj = pool_read(objects, handle);
+    if (obj)
+        printf("[Object %d][uid %d] %s\n", handle, obj->uid.uid, obj->uid.name);
+#else
+    UNUSED(handle);
+#endif
+
+cleanup:
+    free(buf);
+    return err;
+}
+
+char *object_serialize_str(u32 handle)
+{
+    char *buf = calloc(1, 256);
+
+    if (!handle)
+    {
+        sprintf(buf,
+            "    UID: %d\n" \
+            "   Name: --\n" \
+            "   Type: --\n" \
+            "  Trans: --\n" \
+            "    Rot: --\n" \
+            "  Scale: --\n" \
+            "   Mesh: --\n" \
+            "Texture: --\n",
+            UID_NULL);
+    }
+    else
+    {
+        struct rico_object *obj = pool_read(objects, handle);
+        sprintf(buf,
+            "    UID: %d\n"       \
+            "   Name: %s\n"       \
+            "   Type: %s\n"       \
+            "  Trans: %f %f %f\n" \
+            "    Rot: %f %f %f\n" \
+            "  Scale: %f %f %f\n" \
+            "   Mesh: %d\n"       \
+            "Texture: %d\n",
+            obj->uid.uid,
+            obj->uid.name,
+            rico_obj_type_string[obj->type],
+            obj->trans.x, obj->trans.y, obj->trans.z,
+            obj->rot.x,   obj->rot.y,   obj->rot.z,
+            obj->scale.x, obj->scale.y, obj->scale.z,
+            obj->mesh,
+            obj->texture);
+
+    }
+    return buf;
 }
 
 int object_serialize_0(const void *handle, const struct rico_file *file)

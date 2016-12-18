@@ -13,11 +13,12 @@
 #ifndef RICO_DEBUG_INFO
     #define RICO_DEBUG_INFO
     // #define RICO_DEBUG_UID
-    // #define RICO_DEBUG_POOL
+    #define RICO_DEBUG_POOL
     // #define RICO_DEBUG_CHUNK
     // #define RICO_DEBUG_TEXTURE
-    #define RICO_DEBUG_MESH
+    // #define RICO_DEBUG_MESH
     // #define RICO_DEBUG_OBJECT
+    // #define RICO_DEBUG_STRING
 #endif
 #endif
 
@@ -29,6 +30,7 @@
 #define RICO_MESH_POOL_SIZE 100
 #define RICO_OBJECT_POOL_SIZE 100
 #define RICO_FONT_POOL_SIZE 10
+#define RICO_STRING_POOL_SIZE 16
 
 #define RICO_SHADER_POS_LOC 0
 #define RICO_SHADER_COL_LOC 1

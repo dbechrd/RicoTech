@@ -30,7 +30,7 @@ static struct rico_pool *fonts;
 int rico_font_init(u32 pool_size)
 {
     fonts = calloc(1, sizeof(*fonts));
-    return pool_init("Fonts", pool_size, sizeof(struct rico_font), fonts);
+    return pool_init("Fonts", pool_size, sizeof(struct rico_font), 0, fonts);
 }
 
 int font_init(const char *filename, u32 *_handle)
@@ -110,8 +110,9 @@ cleanup:
 void font_free(u32 handle)
 {
     struct rico_font *font = pool_read(fonts, handle);
-    font->uid = UID_NULL;
     texture_free(font->texture);
+
+    font->uid.uid = UID_NULL;
     pool_free(fonts, handle);
 }
 

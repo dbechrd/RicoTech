@@ -100,11 +100,18 @@ static inline struct vec3 *vec3_sub(struct vec3 *a, const struct vec3 *b)
     a->z -= b->z;
     return a;
 }
-static inline struct vec3 *vec3_scale(struct vec3 *v, float scale)
+static inline struct vec3 *vec3_scale(struct vec3 *v, const struct vec3 *s)
 {
-    v->x *= scale;
-    v->y *= scale;
-    v->z *= scale;
+    v->x *= s->x;
+    v->y *= s->y;
+    v->z *= s->z;
+    return v;
+}
+static inline struct vec3 *vec3_scalef(struct vec3 *v, float s)
+{
+    v->x *= s;
+    v->y *= s;
+    v->z *= s;
     return v;
 }
 static inline float vec3_dot(const struct vec3 *a, const struct vec3 *b)

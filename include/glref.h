@@ -14,8 +14,7 @@ void selected_rotate(const struct vec3 *offset);
 void selected_scale(const struct vec3 *offset);
 int selected_duplicate();
 void selected_delete();
-void glref_update(GLfloat dt, bool ambient_light);
-int glref_debuginfo(const char *str, struct col4 color);
+void glref_update(u32 dt, bool ambient_light);
 void glref_render(struct camera *camera);
 void free_glref();
 
