@@ -237,9 +237,9 @@ static inline struct mat4 mat4_init_scale(const struct vec3 *s)
 
 static inline struct mat4 mat4_init_rotx(float deg)
 {
-    float r = deg * M_PI / 180;
-    float s = sinf(r);
-    float c = cosf(r);
+    float rad = deg * M_PI / 180;
+    float s = sinf(rad);
+    float c = cosf(rad);
     return mat4_init(
         1, 0, 0, 0,
         0, c,-s, 0,
@@ -250,9 +250,9 @@ static inline struct mat4 mat4_init_rotx(float deg)
 
 static inline struct mat4 mat4_init_roty(float deg)
 {
-    float r = deg * M_PI / 180;
-    float s = sinf(r);
-    float c = cosf(r);
+    float rad = deg * M_PI / 180;
+    float s = sinf(rad);
+    float c = cosf(rad);
     return mat4_init(
         c, 0, s, 0,
         0, 1, 0, 0,
@@ -263,9 +263,9 @@ static inline struct mat4 mat4_init_roty(float deg)
 
 static inline struct mat4 mat4_init_rotz(float deg)
 {
-    float r = deg * M_PI / 180;
-    float s = sinf(r);
-    float c = cosf(r);
+    float rad = deg * M_PI / 180;
+    float s = sinf(rad);
+    float c = cosf(rad);
     return mat4_init(
         c,-s, 0, 0,
         s, c, 0, 0,
