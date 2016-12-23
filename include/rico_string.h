@@ -9,6 +9,7 @@ struct rico_font;
     f(STR_SLOT_DYNAMIC)         \
     f(STR_SLOT_SELECTED_OBJ)    \
     f(STR_SLOT_EDIT_INFO)       \
+    f(STR_SLOT_FPS)             \
     f(STR_SLOT_COUNT)
 
 enum rico_string_slot {

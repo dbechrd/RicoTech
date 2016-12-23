@@ -481,6 +481,7 @@ int mymain()
     SDL_SetRelativeMouseMode(mouse_lock);
 
     u32 time = SDL_GetTicks();
+    float fps = 0.0f;
     SDL_Event windowEvent;
 
     while (!quit)
@@ -911,9 +912,34 @@ int mymain()
         ////////////////////////////////////////////////////////////////////////
         // Update time
         ////////////////////////////////////////////////////////////////////////
-        u32 newTime = SDL_GetTicks();
-        u32 dt = newTime - time;
-        time = newTime;
+        u32 new_time = SDL_GetTicks();
+        u32 dt = new_time - time;
+        time = new_time;
+
+        double smoothing = 0.99; // larger=more smoothing
+        fps = 1000.0 / (fps * smoothing) + ((double)dt * (1.0 - smoothing));
+
+        char buf[30] = { 0 };
+        sprintf(buf, "FPS: %.f", fps);
+        enum rico_error err = string_init(
+            "STR_FPS", STR_SLOT_FPS, 0, 0, COLOR_DARK_RED_HIGHLIGHT, 0,
+            RICO_FONT_DEFAULT, buf);
+        if (err) goto cleanup;
+
+        // if (time - fps_time >= 1000)
+        // {
+        //     float fps = frame_count;
+        //     float frame_time = 1000.0 / fps;
+        //     fps_time = new_time;
+        //     frame_count = 0;
+
+        //     char buf[30] = { 0 };
+        //     sprintf(buf, "FPS: %f (%f)", fps, frame_time);
+        //     enum rico_error err = string_init(
+        //         "STR_FPS", STR_SLOT_FPS, 0, 0, COLOR_DARK_RED_HIGHLIGHT, 0,
+        //         RICO_FONT_DEFAULT, buf);
+        //     if (err) goto cleanup;
+        // }
 
         ////////////////////////////////////////////////////////////////////////
         // Update camera
