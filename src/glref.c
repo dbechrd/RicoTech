@@ -244,7 +244,7 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
 
             // HACK: Don't z-fight ground plane
             object_trans(arr_objects[i], &(struct vec3) { 0.0f, EPSILON, 0.0f });
-            object_scale(arr_objects[i], &(struct vec3) { 0.1f, 0.1f, 0.1f });
+            //object_scale(arr_objects[i], &(struct vec3) { 0.1f, 0.1f, 0.1f });
         }
     }
 
