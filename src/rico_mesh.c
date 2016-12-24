@@ -128,6 +128,8 @@ void mesh_free(u32 handle)
     if (mesh->ref_count > 0)
         return;
 
+    bbox_free_mesh(&mesh->bbox);
+
     glDeleteBuffers(2, mesh->vbos);
     glDeleteVertexArrays(1, &mesh->vao);
 
