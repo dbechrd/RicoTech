@@ -5,6 +5,7 @@
 #include "rico_cereal.h"
 #include "program.h"
 #include "rico_font.h"
+#include "rico_collision.h"
 #include <malloc.h>
 
 struct rico_object {
@@ -16,7 +17,8 @@ struct rico_object {
     struct vec3 trans;
     struct vec3 rot;
     struct vec3 scale;
-    //struct mat4 transform;
+    struct mat4 transform;
+    struct mat4 transform_inverse;
 
     //TODO: Support multiple meshes
     u32 mesh;
@@ -34,6 +36,8 @@ const char *rico_obj_type_string[] = {
 u32 RICO_OBJECT_DEFAULT = 0;
 static struct rico_pool *objects;
 
+static void update_transform(struct rico_object *obj);
+
 int rico_object_init(u32 pool_size)
 {
     objects = calloc(1, sizeof(*objects));
@@ -42,7 +46,8 @@ int rico_object_init(u32 pool_size)
 }
 
 int object_create(u32 *_handle, const char *name, enum rico_obj_type type,
-                  u32 mesh, u32 texture, const struct bbox *bbox)
+                  u32 mesh, u32 texture, const struct bbox *bbox,
+                  bool serialize)
 {
 #ifdef RICO_DEBUG_OBJECT
     printf("[Object] Init %s\n", name);
@@ -56,17 +61,16 @@ int object_create(u32 *_handle, const char *name, enum rico_obj_type type,
 
     struct rico_object *obj = pool_read(objects, *_handle);
 
-    uid_init(&obj->uid, RICO_UID_OBJECT, name);
+    uid_init(&obj->uid, RICO_UID_OBJECT, name, serialize);
     obj->type = type;
-    obj->scale = VEC3_UNIT;
-    obj->mesh = mesh_request(mesh);
-    obj->texture = texture_request(texture);
-
-    //HACK: Use mesh bbox if none specified
-    obj->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(mesh);
-
     if (type == OBJ_STRING_SCREEN)
         obj->scale = VEC3_SCALE_ASPECT;
+    else
+        obj->scale = VEC3_UNIT;
+    obj->mesh = mesh_request(mesh);
+    obj->texture = texture_request(texture);
+    obj->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(mesh);
+    update_transform(obj);
 
     return err;
 }
@@ -78,7 +82,7 @@ int object_copy(u32 *_handle, u32 handle, const char *name)
 
     // Create new object with same mesh / texture
     err = object_create(_handle, name, obj->type, obj->mesh, obj->texture,
-                        NULL);
+                        NULL, true);
     if (err) return err;
 
     // Copy transform
@@ -87,6 +91,21 @@ int object_copy(u32 *_handle, u32 handle, const char *name)
     object_scale_set(*_handle, &obj->scale);
 
     return err;
+}
+
+void object_mesh_set(u32 handle, u32 mesh, const struct bbox *bbox)
+{
+    struct rico_object *obj = pool_read(objects, handle);
+    mesh_free(obj->mesh);
+    obj->mesh = mesh_request(mesh);
+    obj->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(mesh);
+}
+
+void object_texture_set(u32 handle, u32 texture)
+{
+    struct rico_object *obj = pool_read(objects, handle);
+    texture_free(obj->texture);
+    obj->texture = texture_request(texture);
 }
 
 void object_free(u32 handle)
@@ -144,6 +163,7 @@ void object_trans(u32 handle, const struct vec3 *v)
 {
     struct rico_object *obj = pool_read(objects, handle);
     vec3_add(&obj->trans, v);
+    update_transform(obj);
 }
 
 const struct vec3 *object_trans_get(u32 handle)
@@ -156,18 +176,21 @@ void object_trans_set(u32 handle, const struct vec3 *v)
 {
     struct rico_object *obj = pool_read(objects, handle);
     obj->trans = *v;
+    update_transform(obj);
 }
 
 void object_rot(u32 handle, const struct vec3 *v)
 {
     struct rico_object *obj = pool_read(objects, handle);
     vec3_add(&obj->rot, v);
+    update_transform(obj);
 }
 
 void object_rot_set(u32 handle, const struct vec3 *v)
 {
     struct rico_object *obj = pool_read(objects, handle);
     obj->rot = *v;
+    update_transform(obj);
 }
 
 const struct vec3 *object_rot_get(u32 handle)
@@ -180,48 +203,56 @@ void object_rot_x(u32 handle, float deg)
 {
     struct rico_object *obj = pool_read(objects, handle);
     obj->rot.x += deg;
+    update_transform(obj);
 }
 
 void object_rot_x_set(u32 handle, float deg)
 {
     struct rico_object *obj = pool_read(objects, handle);
     obj->rot.x = deg;
+    update_transform(obj);
 }
 
 void object_rot_y(u32 handle, float deg)
 {
     struct rico_object *obj = pool_read(objects, handle);
     obj->rot.y += deg;
+    update_transform(obj);
 }
 
 void object_rot_y_set(u32 handle, float deg)
 {
     struct rico_object *obj = pool_read(objects, handle);
     obj->rot.y = deg;
+    update_transform(obj);
 }
 
 void object_rot_z(u32 handle, float deg)
 {
     struct rico_object *obj = pool_read(objects, handle);
     obj->rot.z += deg;
+    update_transform(obj);
 }
 
 void object_rot_z_set(u32 handle, float deg)
 {
     struct rico_object *obj = pool_read(objects, handle);
     obj->rot.z = deg;
+    update_transform(obj);
 }
 
 void object_scale(u32 handle, const struct vec3 *v)
 {
     struct rico_object *obj = pool_read(objects, handle);
-    vec3_scale(&obj->scale, v);
+    vec3_add(&obj->scale, v);
+    update_transform(obj);
 }
 
 void object_scale_set(u32 handle, const struct vec3 *v)
 {
     struct rico_object *obj = pool_read(objects, handle);
     obj->scale = *v;
+    update_transform(obj);
 }
 
 const struct vec3 *object_scale_get(u32 handle)
@@ -230,27 +261,93 @@ const struct vec3 *object_scale_get(u32 handle)
     return &obj->scale;
 }
 
-static void object_render_direct(const struct rico_object *obj,
-                                 const struct program_default *prog,
-                                 const struct camera *camera)
+static void update_transform(struct rico_object *obj)
 {
-    glPolygonMode(GL_FRONT_AND_BACK, camera->fill_mode);
+    //HACK: Order of these operations might not always be the same.. should
+    //      probably just store the transformation matrix directly rather than
+    //      trying to figure out which order to do what. Unfortunately, doing
+    //      this makes relative transformations very difficult. Maybe objects
+    //      should have "edit mode" where the matrix is decomposed, then
+    //      recomposed again when edit mode is ended?
+    obj->transform = MAT4_IDENT;
+    mat4_translate(&obj->transform, &obj->trans);
+    mat4_rotx(&obj->transform, obj->rot.x);
+    mat4_roty(&obj->transform, obj->rot.y);
+    mat4_rotz(&obj->transform, obj->rot.z);
+    mat4_scale(&obj->transform, &obj->scale);
+
+    struct vec3 scale_inv;
+    scale_inv.x = 1.0f / obj->scale.x;
+    scale_inv.y = 1.0f / obj->scale.y;
+    scale_inv.z = 1.0f / obj->scale.z;
+
+    struct vec3 trans_inv = obj->trans;
+    vec3_negate(&trans_inv);
+
+    obj->transform_inverse = MAT4_IDENT;
+    mat4_scale(&obj->transform_inverse, &scale_inv);
+    mat4_rotz(&obj->transform_inverse, -obj->rot.z);
+    mat4_roty(&obj->transform_inverse, -obj->rot.y);
+    mat4_rotx(&obj->transform_inverse, -obj->rot.x);
+    mat4_translate(&obj->transform_inverse, &trans_inv);
+
+    struct mat4 mm = obj->transform;
+    mat4_mul(&mm, &obj->transform_inverse);
+    RICO_ASSERT(mat4_equals(&mm, &MAT4_IDENT));
+}
+
+const struct mat4 *object_transform_get(u32 handle)
+{
+    struct rico_object *obj = pool_read(objects, handle);
+    return &obj->transform;
+}
+
+bool object_collide_ray(u32 handle, const struct ray *ray, float *_dist)
+{
+    struct rico_object *obj = pool_read(objects, handle);
+    return collide_ray_obb(ray, &obj->bbox, &obj->transform,
+                           &obj->transform_inverse, _dist);
+}
+
+u32 object_collide_ray_type(u32 *_handle, u32 count, enum rico_obj_type type,
+                             const struct ray *ray, float *_dist)
+{
+    u32 idx_collide = 0;
+
+    struct rico_object *obj;
+    for (u32 i = 0; i < objects->active; ++i)
+    {
+        obj = pool_read(objects, objects->handles[i]);
+        if (obj->type == type &&
+            obj->uid.name[17] == '3' && // HACK: Only test wall
+            collide_ray_obb(ray, &obj->bbox, &obj->transform,
+                            &obj->transform_inverse, _dist))
+        {
+            _handle[idx_collide++] = objects->handles[i];
+            if (idx_collide == count) break;
+        }
+    }
+
+    return idx_collide;
+}
+
+static void render(const struct rico_object *obj,
+                   const struct program_default *prog,
+                   const struct camera *camera)
+{
+    if (obj->type == OBJ_DEFAULT)
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, cam_player.fill_mode);
+    }
+    else
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
     glUseProgram(prog->prog_id);
 
     // Model transform
     struct mat4 proj_matrix;
     struct mat4 view_matrix;
-    struct mat4 model_matrix;
-
-    //HACK: Order of these operations might not always be the same.. should
-    //      probably just store the transformation matrix directly rather than
-    //      trying to figure out which order to do what.
-    model_matrix = MAT4_IDENT;
-    mat4_translate(&model_matrix, &obj->trans);
-    mat4_rotx(&model_matrix, obj->rot.x);
-    mat4_roty(&model_matrix, obj->rot.y);
-    mat4_rotz(&model_matrix, obj->rot.z);
-    mat4_scale(&model_matrix, &obj->scale);
 
     if (obj->type == OBJ_DEFAULT)
     {
@@ -282,7 +379,7 @@ static void object_render_direct(const struct rico_object *obj,
 
     glUniformMatrix4fv(prog->u_proj, 1, GL_TRUE, proj_matrix.a);
     glUniformMatrix4fv(prog->u_view, 1, GL_TRUE, view_matrix.a);
-    glUniformMatrix4fv(prog->u_model, 1, GL_TRUE, model_matrix.a);
+    glUniformMatrix4fv(prog->u_model, 1, GL_TRUE, obj->transform.a);
 
     // Model texture
     // Note: We don't have to do this every time as long as we make sure
@@ -300,13 +397,13 @@ static void object_render_direct(const struct rico_object *obj,
     glUseProgram(0);
 
     // Render bbox
-    bbox_render(&(obj->bbox), camera, &model_matrix);
+    bbox_render(&(obj->bbox), &obj->transform);
 }
 
 void object_render(u32 handle, const struct program_default *prog,
                    const struct camera *camera)
 {
-    object_render_direct(pool_read(objects, handle), prog, camera);
+    render(pool_read(objects, handle), prog, camera);
 }
 
 void object_render_type(enum rico_obj_type type,
@@ -319,7 +416,7 @@ void object_render_type(enum rico_obj_type type,
         obj = pool_read(objects, objects->handles[i]);
         if (obj->type == type)
         {
-            object_render_direct(obj, prog, camera);
+            render(obj, prog, camera);
         }
     }
 }
@@ -330,7 +427,7 @@ int object_print(u32 handle, enum rico_string_slot slot)
 
     // Print to screen
     char *buf = object_serialize_str(handle);
-    err = string_init(rico_string_slot_string[slot], slot, 0, 0,
+    err = string_init(rico_string_slot_string[slot], slot, 0, 26,
                       COLOR_GRAY_HIGHLIGHT, 0, RICO_FONT_DEFAULT, buf);
     if (err) goto cleanup;
 
@@ -404,21 +501,32 @@ int object_serialize_0(const void *handle, const struct rico_file *file)
     fwrite(&obj->scale,   sizeof(obj->scale),   1, file->fs);
     fwrite(&obj->mesh,    sizeof(obj->mesh),    1, file->fs);
     fwrite(&obj->texture, sizeof(obj->texture), 1, file->fs);
-    rico_serialize(&obj->bbox, file);
-    return SUCCESS;
+    return rico_serialize(&obj->bbox, file);
 }
 
 int object_deserialize_0(void *_handle, const struct rico_file *file)
 {
+    enum rico_error err;
+
     struct rico_object *obj = _handle;
     fread(&obj->type,    sizeof(obj->type),    1, file->fs);
     fread(&obj->trans,   sizeof(obj->trans),   1, file->fs);
     fread(&obj->rot,     sizeof(obj->rot),     1, file->fs);
     fread(&obj->scale,   sizeof(obj->scale),   1, file->fs);
-    fread(&obj->mesh,    sizeof(obj->mesh),    1, file->fs);
-    fread(&obj->texture, sizeof(obj->texture), 1, file->fs);
-    rico_deserialize(&obj->bbox, file);
-    return SUCCESS;
+    update_transform(obj);
+
+    u32 mesh, texture;
+    fread(&mesh,    sizeof(obj->mesh),    1, file->fs);
+    fread(&texture, sizeof(obj->texture), 1, file->fs);
+    obj->mesh = mesh_request(mesh);
+    obj->texture = texture_request(texture);
+
+    err = rico_deserialize(&obj->bbox, file);
+    if (err == ERR_SERIALIZE_DISABLED)
+    {
+        obj->bbox = *mesh_bbox(obj->mesh);
+    }
+    return err;
 }
 
 struct rico_pool *object_pool_get_unsafe()

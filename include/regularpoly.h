@@ -2,7 +2,6 @@
 #define REGULARPOLY_H
 
 #include "geom.h"
-#include <stdbool.h>
 
 struct regularpoly {
     struct vec3 pos;

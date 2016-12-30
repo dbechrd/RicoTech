@@ -46,7 +46,7 @@ int font_init(const char *filename, u32 *_handle)
     if (err) return err;
 
     struct rico_font *font = pool_read(fonts, *_handle);
-    uid_init(&font->uid, RICO_UID_FONT, filename);
+    uid_init(&font->uid, RICO_UID_FONT, filename, false);
 	font->InvertYAxis = false;
 
     // Read font file

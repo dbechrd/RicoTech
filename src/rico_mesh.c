@@ -27,6 +27,7 @@ int rico_mesh_init(u32 pool_size)
     return pool_init("Meshes", pool_size, sizeof(struct rico_mesh), 0, &meshes);
 }
 
+//TODO: Should be requesting const char* filename or u32 filename (string hash)
 int mesh_request(u32 handle)
 {
     struct rico_mesh *mesh = pool_read(&meshes, handle);
@@ -49,7 +50,10 @@ int mesh_load(const char *name, u32 vertex_count,
     if (err) return err;
 
     struct rico_mesh *mesh = pool_read(&meshes, *_handle);
-    uid_init(&mesh->uid, RICO_UID_MESH, name);
+
+    // Note: If we want to serialize mesh data we have to store the vertex data
+    //       and element array in the struct.
+    uid_init(&mesh->uid, RICO_UID_MESH, name, false);
 
     err = build_mesh(mesh, vertex_count, vertex_data, element_count,
                      element_data, hint);

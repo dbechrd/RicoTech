@@ -13,7 +13,7 @@ int pool_init(const char *name, u32 count, u32 size, u32 static_count,
     RICO_ASSERT(count > 0);
 
     struct rico_pool pool;
-    uid_init(&pool.uid, RICO_UID_POOL, name);
+    uid_init(&pool.uid, RICO_UID_POOL, name, true);
     pool.count = count;
     pool.size = size;
     pool.static_count = static_count;
@@ -160,7 +160,10 @@ int pool_serialize_0(const void *handle, const struct rico_file *file)
     for (u32 i = 0; i < pool->active; ++i)
     {
         err = rico_serialize(pool_read(pool, pool->handles[i]), file);
-        if (err) return err;
+        if (err == ERR_SERIALIZE_DISABLED)
+            continue;
+        if (err)
+            return err;
     }
 
     return SUCCESS;
@@ -188,12 +191,39 @@ int pool_deserialize_0(void *_handle, const struct rico_file *file)
         for (u32 i = 0; i < pool->active; ++i)
         {
             err = rico_deserialize(pool_read(pool, pool->handles[i]), file);
-            if (err) return err;
+            if (err == ERR_SERIALIZE_DISABLED)
+                continue;
+            if (err)
+                return err;
+        }
+
+        pool_print_handles(pool);
+
+        if (pool->active > 0)
+        {
+            struct rico_uid *uid;
+            u32 handle;
+            for (u32 i = pool->active - 1; i > pool->static_count; --i)
+            {
+                uid = pool_read(pool, pool->handles[i]);
+                if (uid->uid == UID_NULL)
+                {
+                    pool->active--;
+                    if (pool->active > 0)
+                    {
+                        handle = pool->handles[i];
+                        pool->handles[i] = pool->handles[pool->active];
+                        pool->handles[pool->active] = handle;
+                    }
+                }
+
+                pool_print_handles(pool);
+            }
         }
     }
 
 #ifdef RICO_DEBUG_POOL
-    printf("[Pool %d][%s] Loaded from file.", pool->uid.uid, pool->uid.name);
+    printf("[Pool %d][%s] Loaded from file.\n", pool->uid.uid, pool->uid.name);
     pool_print_handles(pool);
 #endif
 
@@ -203,10 +233,10 @@ int pool_deserialize_0(void *_handle, const struct rico_file *file)
 #ifdef RICO_DEBUG_POOL
 static void pool_print_handles(struct rico_pool *pool)
 {
-    if (pool->uid.uid > 1) {
-        printf("\n");
-        return;
-    }
+    // if (pool->uid.uid > 1) {
+    //     printf("\n");
+    //     return;
+    // }
 
     printf(" Handles: ");
 

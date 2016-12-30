@@ -11,7 +11,7 @@
     #define RICO_DEBUG_ERROR_ASSERT
 #endif
 #ifndef RICO_DEBUG_INFO
-    #define RICO_DEBUG_INFO
+    // #define RICO_DEBUG_INFO
     // #define RICO_DEBUG_UID
     #define RICO_DEBUG_POOL
     // #define RICO_DEBUG_CHUNK
@@ -28,7 +28,7 @@
 // Memory constants
 #define RICO_TEXTURE_POOL_SIZE 50
 #define RICO_MESH_POOL_SIZE 100
-#define RICO_OBJECT_POOL_SIZE 100
+#define RICO_OBJECT_POOL_SIZE 20
 #define RICO_FONT_POOL_SIZE 10
 #define RICO_STRING_POOL_SIZE 16
 
@@ -62,22 +62,19 @@
 // #include <limits.h>
 // #include <float.h>
 
-typedef int8_t  i8;
-typedef int16_t i16;
-typedef int32_t i32;
-typedef int64_t i64;
+typedef int8_t  s8;
+typedef int16_t s16;
+typedef int32_t s32;
+typedef int64_t s64;
 
 typedef uint8_t  u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
 
-typedef i8 s8;
-typedef i16 s16;
-typedef i32 s32;
-typedef i64 s64;
-
-typedef i8 bool8;
+typedef u32 bool;
+#define true 1
+#define false 0
 
 /*
 //
@@ -160,6 +157,7 @@ enum rico_vbo {
     f(ERR_FILE_WRITE)               \
     f(ERR_FILE_READ)                \
     f(ERR_FILE_SIGNATURE)           \
+    f(ERR_SERIALIZE_DISABLED)       \
     f(ERR_SERIALIZER_NULL)          \
     f(ERR_DESERIALIZER_NULL)        \
     f(ERR_TEXTURE_LOAD)             \
@@ -169,6 +167,7 @@ enum rico_vbo {
     f(ERR_SDL_INIT)                 \
     f(ERR_PRIM_UNSUPPORTED)         \
     f(ERR_OBJ_TOO_MANY_VERTS)       \
+    f(ERR_CHUNK_NULL)               \
     f(ERR_COUNT)
 
 enum rico_error {

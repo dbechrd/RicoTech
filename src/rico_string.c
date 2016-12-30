@@ -33,6 +33,14 @@ int string_init(const char *name, enum rico_string_slot slot, u32 x, u32 y,
 
     enum rico_error err;
 
+    // Generate font mesh and get texture handle
+    u32 text_mesh;
+    u32 text_tex;
+    err = font_render(font, 0, 0, color, text, "debug_info_string", &text_mesh,
+                      &text_tex);
+    if (err) return err;
+
+    // Generate dynamic string object or update existing static string
     struct rico_string *str;
     if (slot == STR_SLOT_DYNAMIC)
     {
@@ -44,33 +52,37 @@ int string_init(const char *name, enum rico_string_slot slot, u32 x, u32 y,
     else
     {
         str = pool_read(&strings, slot);
-        if (str->uid.uid != UID_NULL)
-            string_free(slot);
     }
 
-    uid_init(&str->uid, RICO_UID_STRING, name);
+    // Reuse existing static string objects
+    if (str->uid.uid == UID_NULL)
+    {
+        uid_init(&str->uid, RICO_UID_STRING, name, false);
+
+        // Create string object
+        err = object_create(&str->obj_handle, name, OBJ_STRING_SCREEN,
+                            text_mesh, text_tex, NULL, str->uid.serialize);
+        if (err) return err;
+    }
+    else
+    {
+        object_mesh_set(str->obj_handle, text_mesh, NULL);
+        object_texture_set(str->obj_handle, text_tex);
+    }
+
     str->lifespan = lifespan;
-
-    // Generate font mesh and get texture handle
-    u32 text_mesh;
-    u32 text_tex;
-    err = font_render(font, 0, 0, color, text, "debug_info_string", &text_mesh,
-                      &text_tex);
-    if (err) return err;
-
-    // Create string object
-    err = object_create(&str->obj_handle, name, OBJ_STRING_SCREEN, text_mesh,
-                        text_tex, NULL);
-    if (err) return err;
-
     object_trans_set(str->obj_handle,
-                     &(struct vec3) { SCREEN_X(x), SCREEN_Y(y), 0.0f });
+                     &(struct vec3) { SCREEN_X(x), SCREEN_Y(y), -1.0f });
 
     return err;
 }
 
 int string_free(u32 handle)
 {
+    // Preserve static string slots
+    if (handle < STR_SLOT_COUNT)
+        return SUCCESS;
+
     enum rico_error err;
 
 #ifdef RICO_DEBUG_STRING

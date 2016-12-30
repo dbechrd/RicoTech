@@ -17,7 +17,6 @@
 #include "primitives.h"
 #include "test_geom.h"
 
-#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -30,8 +29,7 @@
 
 static SDL_Window *window = NULL;
 static SDL_GLContext context = NULL;
-static struct camera camera;
-static const bool reset_game_world = true;
+static const bool reset_game_world = false;
 static struct rico_chunk first_chunk;
 static enum rico_edit_mode edit_mode = EDIT_TRANSLATE;
 
@@ -348,14 +346,19 @@ static int rico_init_meshes()
 
     u32 ticks = SDL_GetTicks();
 
-    // err = load_obj_file("model/conference.ric", meshes, &mesh_count);
+    u32 sphere_mesh_count = 0;
+    err = load_obj_file("mesh/sphere.ric", &PRIM_SPHERE_MESH, &sphere_mesh_count);
+    mesh_request(PRIM_SPHERE_MESH);
+    if (err) return err;
+
+    // err = load_obj_file("mesh/conference.ric", meshes, &mesh_count);
     // if (err) return err;
 
-    u32 ticks2 = SDL_GetTicks();
-    printf("Model loaded in: %d\n", ticks2 - ticks);
-
-    err = load_obj_file("model/spawn.ric", meshes, &mesh_count);
+    err = load_obj_file("mesh/spawn.ric", meshes, &mesh_count);
     if (err) return err;
+
+    u32 ticks2 = SDL_GetTicks();
+    printf("Meshes loaded in: %d\n", ticks2 - ticks);
 
     return err;
 }
@@ -383,7 +386,8 @@ static int rico_init()
     err = rico_init_meshes();
     if (err) return err;
 
-    prim_init(PRIM_LINE);
+    prim_init(PRIM_SEGMENT);
+    prim_init(PRIM_RAY);
 
     err = init_glref(meshes, mesh_count);
     if (err) return err;
@@ -407,7 +411,7 @@ static int rico_init()
         object_pool_set_unsafe(&first_chunk.objects);
     }
 
-    camera_reset(&camera);
+    camera_reset(&cam_player);
     return err;
 }
 
@@ -420,7 +424,15 @@ static int save_file()
                                RICO_FILE_VERSION_CURRENT);
     if (err) return err;
 
+    if (first_chunk.uid.uid == UID_NULL)
+    {
+        err = RICO_ERROR(ERR_CHUNK_NULL);
+        goto cleanup;
+    }
+
     err = rico_serialize(&first_chunk, &file);
+
+cleanup:
     rico_file_close(&file);
     return err;
 }
@@ -459,29 +471,36 @@ int mymain()
     const float TRANS_DELTA_MIN = 0.01f;
     const float TRANS_DELTA_MAX = 10.0f;
     const float TRANS_DELTA_DEFAULT = 1.0f;
+
     const float ROT_DELTA_MIN = 1.0f;
     const float ROT_DELTA_MAX = 90.0f;
     const float ROT_DELTA_DEFAULT = 5.0f;
+
     const float SCALE_DELTA_MIN = 0.1f;
     const float SCALE_DELTA_MAX = 5.0f;
     const float SCALE_DELTA_DEFAULT = 1.0f;
+
     float trans_delta = TRANS_DELTA_DEFAULT;
     float rot_delta = ROT_DELTA_DEFAULT;
     float scale_delta = SCALE_DELTA_DEFAULT;
 
     int mouse_dx, mouse_dy;
 
+    bool lmb_down = false;
     bool d_down = false;
     bool s_down = false;
-    bool sprint = true;
-    bool ambient_light = false;
+    bool sprint = false;
+    bool ambient_light = true;
     bool mouse_lock = true;
     bool quit = false;
 
-    SDL_SetRelativeMouseMode(mouse_lock);
-
     u32 time = SDL_GetTicks();
-    float fps = 0.0f;
+    double frame_time = 0.0;
+    u32 fps_render_delta = 200;
+    u32 fps_last_render = time;
+    bool fps_render = false;
+
+    SDL_SetRelativeMouseMode(mouse_lock);
     SDL_Event windowEvent;
 
     while (!quit)
@@ -503,9 +522,23 @@ int mymain()
                     mouse_dy = windowEvent.motion.yrel;
                 }
             }
+            else if (windowEvent.type == SDL_MOUSEBUTTONDOWN)
+            {
+                if (windowEvent.button.button == SDL_BUTTON_LEFT)
+                {
+                    lmb_down = true;
+                }
+            }
+            else if (windowEvent.type == SDL_MOUSEBUTTONUP)
+            {
+                if (windowEvent.button.button == SDL_BUTTON_LEFT)
+                {
+                    lmb_down = false;
+                }
+            }
             else if (windowEvent.type == SDL_KEYDOWN)
             {
-                struct vec3 delta = { 0 };
+                struct vec3 delta = VEC3_ZERO;
 
                 if (windowEvent.key.keysym.sym == SDLK_KP_0)
                 {
@@ -530,7 +563,7 @@ int mymain()
                 {
                     switch (edit_mode) {
                     case EDIT_TRANSLATE:
-                        selected_translate(&camera, &VEC3_ZERO);
+                        selected_translate(&cam_player, &VEC3_ZERO);
                         break;
                     case EDIT_ROTATE:
                         selected_rotate(&VEC3_ZERO);
@@ -546,14 +579,14 @@ int mymain()
                     switch (edit_mode) {
                     case EDIT_TRANSLATE:
                         delta.y = trans_delta;
-                        selected_translate(&camera, &delta);
+                        selected_translate(&cam_player, &delta);
                         break;
                     case EDIT_ROTATE:
                         delta.x = -rot_delta;
                         selected_rotate(&delta);
                         break;
                     case EDIT_SCALE:
-                        delta.y = scale_delta;
+                        delta.y += scale_delta;
                         selected_scale(&delta);
                         break;
                     default: break;
@@ -564,14 +597,14 @@ int mymain()
                     switch (edit_mode) {
                     case EDIT_TRANSLATE:
                         delta.y = -trans_delta;
-                        selected_translate(&camera, &delta);
+                        selected_translate(&cam_player, &delta);
                         break;
                     case EDIT_ROTATE:
                         delta.x = rot_delta;
                         selected_rotate(&delta);
                         break;
                     case EDIT_SCALE:
-                        delta.y = -scale_delta;
+                        delta.y += -scale_delta;
                         selected_scale(&delta);
                         break;
                     default: break;
@@ -582,14 +615,14 @@ int mymain()
                     switch (edit_mode) {
                     case EDIT_TRANSLATE:
                         delta.x = -trans_delta;
-                        selected_translate(&camera, &delta);
+                        selected_translate(&cam_player, &delta);
                         break;
                     case EDIT_ROTATE:
                         delta.y = -rot_delta;
                         selected_rotate(&delta);
                         break;
                     case EDIT_SCALE:
-                        delta.x = -scale_delta;
+                        delta.x += -scale_delta;
                         selected_scale(&delta);
                         break;
                     default: break;
@@ -600,14 +633,14 @@ int mymain()
                     switch (edit_mode) {
                     case EDIT_TRANSLATE:
                         delta.x = trans_delta;
-                        selected_translate(&camera, &delta);
+                        selected_translate(&cam_player, &delta);
                         break;
                     case EDIT_ROTATE:
                         delta.y = rot_delta;
                         selected_rotate(&delta);
                         break;
                     case EDIT_SCALE:
-                        delta.x = scale_delta;
+                        delta.x += scale_delta;
                         selected_scale(&delta);
                         break;
                     default: break;
@@ -618,14 +651,14 @@ int mymain()
                     switch (edit_mode) {
                     case EDIT_TRANSLATE:
                         delta.z = -trans_delta;
-                        selected_translate(&camera, &delta);
+                        selected_translate(&cam_player, &delta);
                         break;
                     case EDIT_ROTATE:
                         delta.z = -rot_delta;
                         selected_rotate(&delta);
                         break;
                     case EDIT_SCALE:
-                        delta.z = scale_delta;
+                        delta.z += scale_delta;
                         selected_scale(&delta);
                         break;
                     default: break;
@@ -636,14 +669,14 @@ int mymain()
                     switch (edit_mode) {
                     case EDIT_TRANSLATE:
                         delta.z = trans_delta;
-                        selected_translate(&camera, &delta);
+                        selected_translate(&cam_player, &delta);
                         break;
                     case EDIT_ROTATE:
                         delta.z = rot_delta;
                         selected_rotate(&delta);
                         break;
                     case EDIT_SCALE:
-                        delta.z = -scale_delta;
+                        delta.z += -scale_delta;
                         selected_scale(&delta);
                         break;
                     default: break;
@@ -808,12 +841,12 @@ int mymain()
                     {
                         //TODO: FIX ME
                         // camera_reset(&camera);
-                        camera.position.y = 1.7f;
-                        camera.need_update = true;
+                        cam_player.position.y = 1.7f;
+                        cam_player.need_update = true;
                     }
                     else if (windowEvent.key.keysym.sym == SDLK_c)
                     {
-                        camera.locked = !camera.locked;
+                        cam_player.locked = !cam_player.locked;
                     }
                     else if (windowEvent.key.keysym.sym == SDLK_l)
                     {
@@ -830,9 +863,13 @@ int mymain()
                     }
                     else if (windowEvent.key.keysym.sym == SDLK_1)
                     {
-                        camera.fill_mode = (camera.fill_mode == GL_FILL)
+                        cam_player.fill_mode = (cam_player.fill_mode == GL_FILL)
                             ? GL_LINE
                             : GL_FILL;
+                    }
+                    else if (windowEvent.key.keysym.sym == SDLK_2)
+                    {
+                        fps_render = !fps_render;
                     }
                     else if (windowEvent.key.keysym.sym == SDLK_7)
                     {
@@ -916,30 +953,33 @@ int mymain()
         u32 dt = new_time - time;
         time = new_time;
 
-        double smoothing = 0.99; // larger=more smoothing
-        fps = 1000.0 / (fps * smoothing) + ((double)dt * (1.0 - smoothing));
+        ////////////////////////////////////////////////////////////////////////
+        // Update FPS counter
+        ////////////////////////////////////////////////////////////////////////
+        double smooth = 0.99; // larger=more smoothing
+        frame_time = (frame_time * smooth) + (double)dt * (1.0 - smooth);
 
-        char buf[30] = { 0 };
-        sprintf(buf, "FPS: %.f", fps);
-        enum rico_error err = string_init(
-            "STR_FPS", STR_SLOT_FPS, 0, 0, COLOR_DARK_RED_HIGHLIGHT, 0,
-            RICO_FONT_DEFAULT, buf);
-        if (err) goto cleanup;
+        if (fps_render && time - fps_last_render > fps_render_delta)
+        {
+            char buf[30] = { 0 };
+            sprintf(buf, "FPS: %.lf [%.2lf ms]", 1000.0 / frame_time,
+                    frame_time);
+            enum rico_error err = string_init("STR_FPS", STR_SLOT_FPS,
+                                              SCREEN_W - 240, 0,
+                                              COLOR_DARK_RED_HIGHLIGHT,
+                                              fps_render_delta + 50,
+                                              RICO_FONT_DEFAULT, buf);
+            if (err) goto cleanup;
 
-        // if (time - fps_time >= 1000)
-        // {
-        //     float fps = frame_count;
-        //     float frame_time = 1000.0 / fps;
-        //     fps_time = new_time;
-        //     frame_count = 0;
+            fps_last_render = time;
+        }
 
-        //     char buf[30] = { 0 };
-        //     sprintf(buf, "FPS: %f (%f)", fps, frame_time);
-        //     enum rico_error err = string_init(
-        //         "STR_FPS", STR_SLOT_FPS, 0, 0, COLOR_DARK_RED_HIGHLIGHT, 0,
-        //         RICO_FONT_DEFAULT, buf);
-        //     if (err) goto cleanup;
-        // }
+        ////////////////////////////////////////////////////////////////////////
+        // Clear screen
+        ////////////////////////////////////////////////////////////////////////
+        //glClearColor(0.1f, 0.1f, 0.3f, 1.0f);
+        //glClearDepth(0.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         ////////////////////////////////////////////////////////////////////////
         // Update camera
@@ -958,27 +998,59 @@ int mymain()
                 //view_delta.z *= 5.0f;
             }
 
-            camera_translate(&camera, &view_delta);
+            camera_translate(&cam_player, &view_delta);
         }
 
         if (mouse_dx != 0 || mouse_dy != 0)
         {
-            camera_rotate(&camera, mouse_dx, mouse_dy);
+            camera_rotate(&cam_player, mouse_dx, mouse_dy);
         }
 
-        camera_update(&camera);
+        camera_update(&cam_player);
+
+        ////////////////////////////////////////////////////////////////////////
+        // Collision test
+        ////////////////////////////////////////////////////////////////////////
+        #define COLLIDE_COUNT 10
+        u32 obj_collided[COLLIDE_COUNT] = { 0 };
+        struct ray cam_fwd;
+        float dist;
+
+        camera_fwd(&cam_fwd, &cam_player);
+        u32 collided = object_collide_ray_type(obj_collided, COLLIDE_COUNT,
+                                               OBJ_DEFAULT, &cam_fwd, &dist);
+        if (cam_player.locked || lmb_down)
+        {
+            select_obj(obj_collided[0]);
+        }
+
+        if (collided > 0)
+        {
+            printf("Colliding: ");
+            for (int i = 0; i < COLLIDE_COUNT; ++i)
+            {
+                if (obj_collided[i] == 0) break;
+                printf(" %d", obj_collided[i]);
+            }
+            printf("\n");
+        }
 
         ////////////////////////////////////////////////////////////////////////
         // Render
         ////////////////////////////////////////////////////////////////////////
-        glClearColor(0.1f, 0.1f, 0.3f, 1.0f);
-        //glClearDepth(0.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glPolygonMode(GL_FRONT_AND_BACK, camera.fill_mode);
+        glPolygonMode(GL_FRONT_AND_BACK, cam_player.fill_mode);
 
         glref_update(dt, ambient_light);
-        glref_render(&camera);
-        camera_render(&camera);
+        glref_render(&cam_player);
+        camera_render(&cam_player);
+
+        {
+            struct ray ray_cam = cam_fwd;
+            //const struct mat4 *transform = object_transform_get(5);
+            // vec3_mul_mat4(&ray_cam.orig, transform);
+            // vec3_mul_mat4(&ray_cam.dir, transform);
+            prim_draw_ray(&ray_cam, &MAT4_IDENT, COLOR_MAGENTA);
+        }
 
         SDL_GL_SwapWindow(window);
     }

@@ -7,6 +7,7 @@ struct rico_cereal RicoCereal[RICO_UID_COUNT] = { 0 };
 int rico_serialize(const void *handle, const struct rico_file *file)
 {
     RICO_ASSERT(file->version < RICO_FILE_VERSION_COUNT);
+    enum rico_error err;
 
     // Don't serialize debug string objects to save file
     // TODO: Add "persistent" flag to objects
@@ -17,7 +18,9 @@ int rico_serialize(const void *handle, const struct rico_file *file)
     //         return SUCCESS;
     // }
 
-    uid_serialize(handle, file);
+    err = uid_serialize(handle, file);
+    if (err) return err;
+
     const enum rico_uid_type *type = handle;
 
     if (!RicoCereal[*type].save[file->version])
@@ -29,12 +32,16 @@ int rico_serialize(const void *handle, const struct rico_file *file)
 int rico_deserialize(void *_handle, const struct rico_file *file)
 {
     RICO_ASSERT(file->version < RICO_FILE_VERSION_COUNT);
+    enum rico_error err;
 
-    uid_deserialize(_handle, file);
+    err = uid_deserialize(_handle, file);
+    if (err) return err;
+
     enum rico_uid_type *type = _handle;
 
     if (!RicoCereal[*type].load[file->version])
         return RICO_ERROR(ERR_DESERIALIZER_NULL);
 
-    return RicoCereal[*type].load[file->version](_handle, file);
+    err = RicoCereal[*type].load[file->version](_handle, file);
+    return err;
 }

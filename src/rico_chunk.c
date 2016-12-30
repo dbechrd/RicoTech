@@ -23,7 +23,7 @@ int chunk_init(u32 version, const char *name, u32 tex_count,
     UNUSED(meshes);
 
     struct rico_chunk chunk;
-    uid_init(&chunk.uid, RICO_UID_CHUNK, name);
+    uid_init(&chunk.uid, RICO_UID_CHUNK, name, true);
     chunk.version = version;
     chunk.tex_count = 0; //tex_count;
     chunk.mesh_count = 0; //mesh_count;

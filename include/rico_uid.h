@@ -27,10 +27,12 @@ extern const char *rico_uid_type_string[];
 struct rico_uid {
     enum rico_uid_type type;
     u32 uid;
-    char name[30];
+    char name[32];
+    bool serialize;
 };
 
-void uid_init(struct rico_uid *_uid, enum rico_uid_type type, const char *name);
+void uid_init(struct rico_uid *_uid, enum rico_uid_type type, const char *name,
+              bool serialize);
 int uid_serialize(const void *handle, const struct rico_file *file);
 int uid_deserialize(void *_handle, const struct rico_file *file);
 

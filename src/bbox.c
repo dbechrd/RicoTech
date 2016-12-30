@@ -12,9 +12,9 @@ static int init_gl(struct bbox *bbox);
 int bbox_init(struct bbox *bbox, const char *name, struct vec3 p0,
               struct vec3 p1, struct col4 color)
 {
-    uid_init(&bbox->uid, RICO_UID_BBOX, name);
-    bbox->p0 = p0;
-    bbox->p1 = p1;
+    uid_init(&bbox->uid, RICO_UID_BBOX, name, true);
+    bbox->p[0] = p0;
+    bbox->p[1] = p1;
     bbox->color = color;
     bbox->wireframe = true;
 
@@ -66,35 +66,35 @@ static int init_gl(struct bbox *bbox)
     // Bbox vertices
     struct prim_vertex vertices[8] = {
         (struct prim_vertex) {
-            (struct vec3) { bbox->p0.x, bbox->p0.y, bbox->p0.z },
+            (struct vec3) { bbox->p[0].x, bbox->p[0].y, bbox->p[0].z },
             COLOR_BLACK
         },
         (struct prim_vertex) {
-            (struct vec3) { bbox->p1.x, bbox->p0.y, bbox->p0.z },
+            (struct vec3) { bbox->p[1].x, bbox->p[0].y, bbox->p[0].z },
             COLOR_RED
         },
         (struct prim_vertex) {
-            (struct vec3) { bbox->p1.x, bbox->p1.y, bbox->p0.z },
+            (struct vec3) { bbox->p[1].x, bbox->p[1].y, bbox->p[0].z },
             COLOR_YELLOW
         },
         (struct prim_vertex) {
-            (struct vec3) { bbox->p0.x, bbox->p1.y, bbox->p0.z },
+            (struct vec3) { bbox->p[0].x, bbox->p[1].y, bbox->p[0].z },
             COLOR_GREEN
         },
         (struct prim_vertex) {
-            (struct vec3) { bbox->p0.x, bbox->p0.y, bbox->p1.z },
+            (struct vec3) { bbox->p[0].x, bbox->p[0].y, bbox->p[1].z },
             COLOR_BLUE
         },
         (struct prim_vertex) {
-            (struct vec3) { bbox->p1.x, bbox->p0.y, bbox->p1.z },
+            (struct vec3) { bbox->p[1].x, bbox->p[0].y, bbox->p[1].z },
             COLOR_MAGENTA
         },
         (struct prim_vertex) {
-            (struct vec3) { bbox->p1.x, bbox->p1.y, bbox->p1.z },
+            (struct vec3) { bbox->p[1].x, bbox->p[1].y, bbox->p[1].z },
             COLOR_WHITE
         },
         (struct prim_vertex) {
-            (struct vec3) { bbox->p0.x, bbox->p1.y, bbox->p1.z },
+            (struct vec3) { bbox->p[0].x, bbox->p[1].y, bbox->p[1].z },
             COLOR_CYAN
         }
     };
@@ -156,25 +156,23 @@ void bbox_free_mesh(struct bbox *bbox)
     glDeleteVertexArrays(1, &bbox->vao);
 }
 
-void bbox_render(const struct bbox *box, const struct camera *camera,
-                 const struct mat4 *model_matrix)
+void bbox_render(const struct bbox *box, const struct mat4 *model_matrix)
 {
-    bbox_render_color(box, camera, model_matrix, box->color);
+    bbox_render_color(box, model_matrix, box->color);
 }
 
-void bbox_render_color(const struct bbox *box, const struct camera *camera,
-                       const struct mat4 *model_matrix,
+void bbox_render_color(const struct bbox *box, const struct mat4 *model_matrix,
                        const struct col4 color)
 {
-    if (box->wireframe && camera->fill_mode != GL_LINE)
+    if (box->wireframe && cam_player.fill_mode != GL_LINE)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // Set shader program
     glUseProgram(box->prog->prog_id);
 
     // Transform
-    glUniformMatrix4fv(box->prog->u_proj, 1, GL_TRUE, camera->proj_matrix.a);
-    glUniformMatrix4fv(box->prog->u_view, 1, GL_TRUE, camera->view_matrix.a);
+    glUniformMatrix4fv(box->prog->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
+    glUniformMatrix4fv(box->prog->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
     glUniformMatrix4fv(box->prog->u_model, 1, GL_TRUE, model_matrix->a);
 
     glUniform4f(box->prog->u_col, color.r, color.g, color.b, color.a);
@@ -186,15 +184,15 @@ void bbox_render_color(const struct bbox *box, const struct camera *camera,
     glBindVertexArray(0);
     glUseProgram(0);
 
-    if (box->wireframe && camera->fill_mode != GL_LINE)
-        glPolygonMode(GL_FRONT_AND_BACK, camera->fill_mode);
+    if (box->wireframe && cam_player.fill_mode != GL_LINE)
+        glPolygonMode(GL_FRONT_AND_BACK, cam_player.fill_mode);
 }
 
 int bbox_serialize_0(const void *handle, const struct rico_file *file)
 {
     const struct bbox *bbox = handle;
-    fwrite(&bbox->p0,        sizeof(bbox->p0),        1, file->fs);
-    fwrite(&bbox->p1,        sizeof(bbox->p1),        1, file->fs);
+    fwrite(&bbox->p[0],      sizeof(bbox->p[0]),      1, file->fs);
+    fwrite(&bbox->p[1],      sizeof(bbox->p[1]),      1, file->fs);
     fwrite(&bbox->color,     sizeof(bbox->color),     1, file->fs);
     fwrite(&bbox->wireframe, sizeof(bbox->wireframe), 1, file->fs);
     return SUCCESS;
@@ -205,8 +203,8 @@ int bbox_deserialize_0(void *_handle, const struct rico_file *file)
     enum rico_error err;
     struct bbox *bbox = _handle;
 
-    fread(&bbox->p0,        sizeof(bbox->p0),        1, file->fs);
-    fread(&bbox->p1,        sizeof(bbox->p1),        1, file->fs);
+    fread(&bbox->p[0],      sizeof(bbox->p[0]),      1, file->fs);
+    fread(&bbox->p[1],      sizeof(bbox->p[1]),      1, file->fs);
     fread(&bbox->color,     sizeof(bbox->color),     1, file->fs);
     fread(&bbox->wireframe, sizeof(bbox->wireframe), 1, file->fs);
     err = init_gl(bbox);

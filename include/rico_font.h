@@ -5,7 +5,6 @@
 #include "rico_mesh.h"
 #include "rico_texture.h"
 #include <GL/gl3w.h>
-#include <stdbool.h>
 
 extern u32 RICO_FONT_DEFAULT;
 

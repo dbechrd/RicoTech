@@ -1,11 +1,14 @@
 #include "primitives.h"
 #include "camera.h"
 #include "program.h"
+#include "rico_mesh.h"
 #include <GL/gl3w.h>
 
 const char *rico_prim_string[] = {
     RICO_PRIMITIVES(GEN_STRING)
 };
+
+u32 PRIM_SPHERE_MESH;
 
 static GLuint vaos[PRIM_COUNT];
 static GLuint vbos[PRIM_COUNT][VBO_COUNT];
@@ -30,10 +33,11 @@ static int prim_init_gl(enum rico_prim prim)
     glGenVertexArrays(1, &vaos[prim]);
     glBindVertexArray(vaos[prim]);
 
-    int buffers = 99;
+    int buffers;
     switch (prim)
     {
-    case PRIM_LINE:
+    case PRIM_SEGMENT:
+    case PRIM_RAY:
         buffers = 1;
         break;
     default:
@@ -60,26 +64,27 @@ static int prim_init_gl(enum rico_prim prim)
     return SUCCESS;
 }
 
-void prim_draw_line(const struct line *line, const struct camera *camera,
-                    const struct mat4 *model_matrix, struct col4 color)
+// Render line segment
+void prim_draw_segment(const struct segment *seg,
+                       const struct mat4 *model_matrix, struct col4 color)
 {
-    if (camera->fill_mode != GL_LINE)
+    if (cam_player.fill_mode != GL_LINE)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // Set shader program
     glUseProgram(program->prog_id);
 
     // Transform
-    glUniformMatrix4fv(program->u_proj, 1, GL_TRUE, camera->proj_matrix.a);
-    glUniformMatrix4fv(program->u_view, 1, GL_TRUE, camera->view_matrix.a);
+    glUniformMatrix4fv(program->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
+    glUniformMatrix4fv(program->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
     glUniformMatrix4fv(program->u_model, 1, GL_TRUE, model_matrix->a);
 
     glUniform4f(program->u_col, color.r, color.g, color.b, color.a);
 
     // Draw
-    glBindVertexArray(vaos[PRIM_LINE]);
-    glBindBuffer(GL_ARRAY_BUFFER, vbos[PRIM_LINE][VBO_VERTEX]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(line->vertices), line->vertices,
+    glBindVertexArray(vaos[PRIM_SEGMENT]);
+    glBindBuffer(GL_ARRAY_BUFFER, vbos[PRIM_SEGMENT][VBO_VERTEX]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(seg->vertices), seg->vertices,
                  GL_DYNAMIC_DRAW);
 
     glDrawArrays(GL_LINES, 0, 2);
@@ -88,12 +93,52 @@ void prim_draw_line(const struct line *line, const struct camera *camera,
     glBindVertexArray(0);
     glUseProgram(0);
 
-    if (camera->fill_mode != GL_LINE)
-        glPolygonMode(GL_FRONT_AND_BACK, camera->fill_mode);
+    if (cam_player.fill_mode != GL_LINE)
+        glPolygonMode(GL_FRONT_AND_BACK, cam_player.fill_mode);
 }
 
-void prim_free()
+// Render ray as line segment
+void prim_draw_ray(const struct ray *ray, const struct mat4 *model_matrix,
+                   struct col4 color)
+{
+    struct vec3 ray_end = ray->orig;
+    vec3_add(&ray_end, &ray->dir);
+
+    struct segment ray_seg;
+    ray_seg.vertices[0] = (struct prim_vertex) { ray->orig, COLOR_GRAY };
+    ray_seg.vertices[1] = (struct prim_vertex) { ray_end, COLOR_WHITE };
+
+    prim_draw_segment(&ray_seg, model_matrix, color);
+}
+
+void prim_draw_sphere(const struct sphere *sphere, const struct col4 *color)
+{
+    if (cam_player.fill_mode != GL_LINE)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    struct mat4 model_matrix = MAT4_IDENT;
+    mat4_translate(&model_matrix, &sphere->orig);
+    mat4_scalef(&model_matrix, sphere->radius);
+
+    glUseProgram(program->prog_id);
+
+    glUniformMatrix4fv(program->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
+    glUniformMatrix4fv(program->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
+    glUniformMatrix4fv(program->u_model, 1, GL_TRUE, model_matrix.a);
+    glUniform4f(program->u_col, color->r, color->g, color->b, color->a);
+
+    mesh_render(PRIM_SPHERE_MESH);
+
+    // Clean up
+    glUseProgram(0);
+
+    if (cam_player.fill_mode != GL_LINE)
+        glPolygonMode(GL_FRONT_AND_BACK, cam_player.fill_mode);
+}
+
+void prim_free(enum rico_prim prim)
 {
     // TODO: Clean-up prim VAO / VBO? Will probably just keep them for life
     //       of the application for now.
+    UNUSED(prim);
 }

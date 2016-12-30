@@ -2,6 +2,8 @@
 #include "bbox.h"
 #include "primitives.h"
 
+struct camera cam_player;
+
 //Note: Player's eyes are at 1.7 meters
 #define CAMERA_POS_Y_MIN 1.7f
 const struct vec3 CAMERA_POS_INITIAL = (struct vec3) {
@@ -129,21 +131,44 @@ void camera_render(struct camera *camera)
     vec3_sub(&y0, &y);
     vec3_add(&y1, &y);
 
-    struct line x_axis;
+    struct segment x_axis;
     x_axis.vertices[0] = (struct prim_vertex) { x0, COLOR_TRANSPARENT };
     x_axis.vertices[1] = (struct prim_vertex) { x1, COLOR_RED };
-    struct line y_axis;
+    struct segment y_axis;
     y_axis.vertices[0] = (struct prim_vertex) { y0, COLOR_TRANSPARENT };
     y_axis.vertices[1] = (struct prim_vertex) { y1, COLOR_GREEN };
 
-    prim_draw_line(&x_axis, camera, &MAT4_IDENT, COLOR_WHITE);
-    prim_draw_line(&y_axis, camera, &MAT4_IDENT, COLOR_WHITE);
+    prim_draw_segment(&x_axis, &MAT4_IDENT, COLOR_WHITE);
+    prim_draw_segment(&y_axis, &MAT4_IDENT, COLOR_WHITE);
+
+    ////////////////////////////////////////////////
+    // Cleanup: Test code
 
     // struct mat4 camera_trans = mat4_init_translate(&camera->position);
     // struct mat4 camera_view;
     // mat4_from_quat(&camera_view, &camera->view);
     // mat4_mul(&camera_trans, &camera_view);
     // bbox_render_color(&camera->bbox, camera, &camera_trans, COLOR_BLUE);
+
+    // struct segment s;
+    // s.vertices[0].pos = (struct vec3) { 0.0f, 2.0f, 0.0f };
+    // s.vertices[0].col = COLOR_WHITE;
+    // s.vertices[1].pos = (struct vec3) { 0.0f, 30.0f, 0.0f };
+    // s.vertices[1].col = COLOR_MAGENTA;
+    // prim_draw_segment(&s, camera, &MAT4_IDENT, COLOR_WHITE);
+
+    // struct ray r;
+    // r.pos = (struct vec3) { 0.0f, 30.0f, 0.0f };
+    // r.dir = (struct vec3) { 1.0f, 0.0f, 0.0f };
+    // prim_draw_ray(&r, camera, &MAT4_IDENT, COLOR_WHITE);
+}
+
+void camera_fwd(struct ray *_ray, struct camera *camera)
+{
+    struct vec3 z = VEC3_FWD;
+    vec3_mul_quat(&z, &camera->view);
+    _ray->orig = camera->position;
+    _ray->dir = z;
 }
 
 /*

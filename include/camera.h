@@ -13,8 +13,8 @@
 #define SCREEN_ASPECT SCREEN_W / SCREEN_H
 
 // Convert pixel coordinates to normalized device coordinates
-#define SCREEN_X(x) x / (SCREEN_W / 2.0f) - 1.0f
-#define SCREEN_Y(y) -y / (SCREEN_H / 2.0f) + 1.0f
+#define SCREEN_X(x)  (float)x / (SCREEN_W / 2.0f) - 1.0f
+#define SCREEN_Y(y) -(float)y / (SCREEN_H / 2.0f) + 1.0f
 
 #define Z_NEAR 0.1f
 #define Z_FAR 100.0f
@@ -33,6 +33,7 @@ struct camera {
     struct mat4 proj_matrix;
 };
 
+extern struct camera cam_player;
 extern const struct vec3 CAMERA_POS_INITIAL;
 
 void camera_init(struct camera *_camera, struct vec3 position,
@@ -45,5 +46,6 @@ void camera_rotate_angle(struct camera *camera, struct vec3 axis,
                          float angle_deg);
 void camera_update(struct camera *camera);
 void camera_render(struct camera *camera);
+void camera_fwd(struct ray *_ray, struct camera *camera);
 
 #endif // CAMERA_H

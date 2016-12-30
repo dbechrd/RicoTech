@@ -173,7 +173,7 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
 
     // Ground
     err = object_create(&obj_ground, "Ground", OBJ_DEFAULT, RICO_MESH_DEFAULT,
-                        tex_rock, NULL);
+                        tex_rock, NULL, true);
     if (err) return err;
     object_rot_x(obj_ground, -90.0f);
     object_scale(obj_ground, &(struct vec3) { 64.0f, 64.0f, 1.0f });
@@ -239,12 +239,12 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
         {
             err = object_create(&arr_objects[i], mesh_name(meshes[i]),
                                 OBJ_DEFAULT, meshes[i], RICO_TEXTURE_DEFAULT,
-                                mesh_bbox(meshes[i]));
+                                mesh_bbox(meshes[i]), true);
             if (err) return err;
 
             // HACK: Don't z-fight ground plane
-            object_trans(arr_objects[i], &(struct vec3) { 0.0f, EPSILON, 0.0f });
-            //object_scale(arr_objects[i], &(struct vec3) { 0.1f, 0.1f, 0.1f });
+            object_trans_set(arr_objects[i], &(struct vec3) { 0.0f, EPSILON, 0.0f });
+            // object_scale_set(arr_objects[i], &(struct vec3) { 0.1f, 0.1f, 0.1f });
         }
     }
 
@@ -274,6 +274,9 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
 
 void select_obj(u32 handle)
 {
+    if (selected_handle == handle)
+        return;
+
     // Deselect current object
     if (selected_handle)
         object_deselect(selected_handle);
@@ -299,6 +302,9 @@ void select_prev_obj()
 
 void selected_translate(struct camera *camera, const struct vec3 *offset)
 {
+    if (!selected_handle)
+        return;
+
     enum rico_obj_type selected_type = object_type_get(selected_handle);
 
     if (vec3_equals(offset, &VEC3_ZERO))
@@ -324,6 +330,9 @@ void selected_translate(struct camera *camera, const struct vec3 *offset)
 
 void selected_rotate(const struct vec3 *offset)
 {
+    if (!selected_handle)
+        return;
+
     if (vec3_equals(offset, &VEC3_ZERO))
     {
         object_rot_set(selected_handle, &VEC3_ZERO);
@@ -338,6 +347,9 @@ void selected_rotate(const struct vec3 *offset)
 
 void selected_scale(const struct vec3 *offset)
 {
+    if (!selected_handle)
+        return;
+
     if (vec3_equals(offset, &VEC3_ZERO))
     {
         object_scale_set(selected_handle, &VEC3_UNIT);
@@ -352,6 +364,9 @@ void selected_scale(const struct vec3 *offset)
 
 int selected_duplicate()
 {
+    if (!selected_handle)
+        return SUCCESS;
+
     enum rico_error err;
 
     u32 newObj;
@@ -364,12 +379,20 @@ int selected_duplicate()
 
 void selected_delete()
 {
+    if (!selected_handle)
+        return;
+
+    enum rico_obj_type selected_type = object_type_get(selected_handle);
+    if (selected_type == OBJ_NULL || selected_type == OBJ_STRING_SCREEN)
+        return;
+
+    u32 handle = selected_handle;
     select_prev_obj();
-    object_free(selected_handle);
+    object_free(handle);
 }
 
 //TODO: Put this somewhere reasonable (e.g. lighting module)
-static struct col4 ambient = { 0.7f, 0.6f, 0.4f, 1.0f };
+static struct col4 ambient = { 0.9f, 0.8f, 0.6f, 1.0f };
 
 void glref_update(u32 dt, bool ambient_light)
 {
@@ -403,9 +426,9 @@ void glref_render(struct camera *camera)
     //--------------------------------------------------------------------------
     // Axes labels (bboxes)
     //--------------------------------------------------------------------------
-    bbox_render_color(&axis_bbox, camera, &x_axis_transform, COLOR_RED);
-    bbox_render_color(&axis_bbox, camera, &y_axis_transform, COLOR_GREEN);
-    bbox_render_color(&axis_bbox, camera, &z_axis_transform, COLOR_BLUE);
+    bbox_render_color(&axis_bbox, &x_axis_transform, COLOR_RED);
+    bbox_render_color(&axis_bbox, &y_axis_transform, COLOR_GREEN);
+    bbox_render_color(&axis_bbox, &z_axis_transform, COLOR_BLUE);
 
     object_render_type(OBJ_STRING_SCREEN, prog_default, camera);
 }

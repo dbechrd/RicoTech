@@ -5,8 +5,8 @@
 #include <GL/gl3w.h>
 #include <math.h>
 #include <stdio.h>
-#include <stdbool.h>
 
+#define MAT4_EPSILON 0.00001f
 #define QUAT_EPSILON 0.00001f
 
 //------------------------------------------------------------------------------
@@ -235,6 +235,16 @@ static inline struct mat4 mat4_init_scale(const struct vec3 *s)
     );
 }
 
+static inline struct mat4 mat4_init_scalef(float s)
+{
+    return mat4_init(
+        s, 0, 0, 0,
+        0, s, 0, 0,
+        0, 0, s, 0,
+        0, 0, 0, 1
+    );
+}
+
 static inline struct mat4 mat4_init_rotx(float deg)
 {
     float rad = deg * M_PI / 180;
@@ -280,7 +290,7 @@ static inline int mat4_equals(const struct mat4 *a, const struct mat4 *b)
     {
         for (int j = 0; j < 4; ++j)
         {
-            if (a->m[i][j] != b->m[i][j])
+            if (fabsf(a->m[i][j] - b->m[i][j]) >= MAT4_EPSILON)
                 return 0;
         }
     }
@@ -313,6 +323,12 @@ static inline void mat4_translate(struct mat4 *m, const struct vec3 *v)
 static inline void mat4_scale(struct mat4 *m, const struct vec3 *s)
 {
     struct mat4 scale = mat4_init_scale(s);
+    mat4_mul(m, &scale);
+}
+
+static inline void mat4_scalef(struct mat4 *m, float s)
+{
+    struct mat4 scale = mat4_init_scalef(s);
     mat4_mul(m, &scale);
 }
 
@@ -361,6 +377,27 @@ static inline void mat4_transpose(struct mat4 *m)
     tmp = m->m[2][3];
     m->m[2][3] = m->m[3][2];
     m->m[3][2] = tmp;
+}
+
+static inline struct vec3 *vec3_mul_mat4(struct vec3 *v, const struct mat4 *m)
+{
+    // Copy v
+    struct vec3 vv = *v;
+
+    // Multiply m * v
+    v->x = m->m[0][0] * vv.x +
+           m->m[0][1] * vv.y +
+           m->m[0][2] * vv.z +
+           m->m[0][3] * 1.f;
+    v->y = m->m[1][0] * vv.x +
+           m->m[1][1] * vv.y +
+           m->m[1][2] * vv.z +
+           m->m[1][3] * 1.f;
+    v->z = m->m[2][0] * vv.x +
+           m->m[2][1] * vv.y +
+           m->m[2][2] * vv.z +
+           m->m[2][3] * 1.f;
+    return v;
 }
 
 //Calculate PERSPECTIVE projection
@@ -706,5 +743,21 @@ quat quat_ln(q) // "Natural logarithm"
 quat quat_between_vec(vec3 a, vec3 b, vec3 fallback) // ????
 
 */
+
+//------------------------------------------------------------------------------
+// Ray
+//------------------------------------------------------------------------------
+struct ray {
+    struct vec3 orig;
+    struct vec3 dir;
+};
+
+//------------------------------------------------------------------------------
+// Sphere
+//------------------------------------------------------------------------------
+struct sphere {
+    struct vec3 orig;
+    float radius;
+};
 
 #endif // GEOM_H

@@ -84,7 +84,10 @@ int texture_load_pixels(const char *name, GLenum target, int width, int height,
     if (err) return err;
 
     struct rico_texture *tex = pool_read(&textures, *_handle);
-    uid_init(&tex->uid, RICO_UID_TEXTURE, name);
+
+    // Note: If we want to serialize texture data we have to store the filename
+    //       or the pixel data in the struct.
+    uid_init(&tex->uid, RICO_UID_TEXTURE, name, false);
     tex->gl_target = target;
     tex->width = width;
     tex->height = height;
