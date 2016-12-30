@@ -309,22 +309,34 @@ bool object_collide_ray(u32 handle, const struct ray *ray, float *_dist)
                            &obj->transform_inverse, _dist);
 }
 
-u32 object_collide_ray_type(u32 *_handle, u32 count, enum rico_obj_type type,
-                             const struct ray *ray, float *_dist)
+u32 object_collide_ray_type(enum rico_obj_type type, const struct ray *ray,
+                            u32 count, u32 *_handle, float *_dist, u32 *_first)
 {
     u32 idx_collide = 0;
+    float distance;
+    float min_distance = Z_FAR; // Track closest object
 
     struct rico_object *obj;
     for (u32 i = 0; i < objects->active; ++i)
     {
         obj = pool_read(objects, objects->handles[i]);
         if (obj->type == type &&
-            obj->uid.name[17] == '3' && // HACK: Only test wall
             collide_ray_obb(ray, &obj->bbox, &obj->transform,
-                            &obj->transform_inverse, _dist))
+                            &obj->transform_inverse, &distance))
         {
-            _handle[idx_collide++] = objects->handles[i];
-            if (idx_collide == count) break;
+            // Record object handle and distance
+            _handle[idx_collide] = objects->handles[i];
+            _dist[idx_collide] = distance;
+
+            // If closest so far, update "first" index
+            if (distance < min_distance)
+            {
+                min_distance = distance;
+                *_first = idx_collide;
+            }
+
+            if (idx_collide++ == count)
+                break;
         }
     }
 

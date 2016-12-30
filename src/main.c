@@ -29,7 +29,7 @@
 
 static SDL_Window *window = NULL;
 static SDL_GLContext context = NULL;
-static const bool reset_game_world = false;
+static const bool reset_game_world = true;
 static struct rico_chunk first_chunk;
 static enum rico_edit_mode edit_mode = EDIT_TRANSLATE;
 
@@ -977,7 +977,7 @@ int mymain()
         ////////////////////////////////////////////////////////////////////////
         // Clear screen
         ////////////////////////////////////////////////////////////////////////
-        //glClearColor(0.1f, 0.1f, 0.3f, 1.0f);
+        glClearColor(0.1f, 0.1f, 0.3f, 1.0f);
         //glClearDepth(0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -1013,27 +1013,30 @@ int mymain()
         ////////////////////////////////////////////////////////////////////////
         #define COLLIDE_COUNT 10
         u32 obj_collided[COLLIDE_COUNT] = { 0 };
+        float dist[COLLIDE_COUNT] = { 0 };
+        u32 idx_first = 0;
         struct ray cam_fwd;
-        float dist;
 
         camera_fwd(&cam_fwd, &cam_player);
-        u32 collided = object_collide_ray_type(obj_collided, COLLIDE_COUNT,
-                                               OBJ_DEFAULT, &cam_fwd, &dist);
-        if (cam_player.locked || lmb_down)
+        u32 collided = object_collide_ray_type(OBJ_DEFAULT, &cam_fwd,
+                                               COLLIDE_COUNT, obj_collided,
+                                               dist, &idx_first);
+        if (lmb_down)
         {
-            select_obj(obj_collided[0]);
+            select_obj(obj_collided[idx_first]);
         }
 
-        if (collided > 0)
-        {
-            printf("Colliding: ");
-            for (int i = 0; i < COLLIDE_COUNT; ++i)
-            {
-                if (obj_collided[i] == 0) break;
-                printf(" %d", obj_collided[i]);
-            }
-            printf("\n");
-        }
+        UNUSED(collided);
+        // if (collided > 0)
+        // {
+        //     printf("Colliding: ");
+        //     for (int i = 0; i < COLLIDE_COUNT; ++i)
+        //     {
+        //         if (obj_collided[i] == 0) break;
+        //         printf(" %d", obj_collided[i]);
+        //     }
+        //     printf("\n");
+        // }
 
         ////////////////////////////////////////////////////////////////////////
         // Render

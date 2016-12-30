@@ -51,8 +51,8 @@ void object_scale_set(u32 handle, const struct vec3 *v);
 const struct vec3 *object_scale_get(u32 handle);
 const struct mat4 *object_transform_get(u32 handle);
 bool object_collide_ray(u32 handle, const struct ray *ray, float *_dist);
-u32 object_collide_ray_type(u32 *_handle, u32 count, enum rico_obj_type type,
-                            const struct ray *ray, float *_dist);
+u32 object_collide_ray_type(enum rico_obj_type type, const struct ray *ray,
+                            u32 count, u32 *_handle, float *_dist, u32 *_first);
 void object_render(u32 handle, const struct program_default *prog,
                    const struct camera *camera);
 void object_render_type(enum rico_obj_type type,
