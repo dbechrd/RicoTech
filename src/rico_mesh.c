@@ -102,6 +102,11 @@ static int build_mesh(struct rico_mesh *mesh, u32 vertex_count,
                           (GLvoid *)offsetof(struct mesh_vertex, pos));
     glEnableVertexAttribArray(RICO_SHADER_POS_LOC);
 
+    glVertexAttribPointer(RICO_SHADER_NORMAL_LOC, 4, GL_FLOAT, GL_FALSE,
+                          sizeof(struct mesh_vertex),
+                          (GLvoid *)offsetof(struct mesh_vertex, normal));
+    glEnableVertexAttribArray(RICO_SHADER_NORMAL_LOC);
+
     glVertexAttribPointer(RICO_SHADER_COL_LOC, 4, GL_FLOAT, GL_FALSE,
                           sizeof(struct mesh_vertex),
                           (GLvoid *)offsetof(struct mesh_vertex, col));

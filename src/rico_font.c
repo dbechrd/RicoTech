@@ -192,32 +192,40 @@ int font_render(u32 handle, int x, int y, struct col4 bg, const char *text,
             (struct vec3) {
                 cur_x / 64.0f,
                 cur_y / 64.0f,
-                0.0f },
+                0.0f
+            },
             bg,
+            (struct vec3) { 1.0f, 1.0f, 1.0f },
             (struct tex2) { u0, v1 }
         };
         vertices[idx_vertex++] = (struct mesh_vertex) {
             (struct vec3) {
                 (cur_x + xOffset) / 64.0f,
                 cur_y / 64.0f,
-                0.0f },
+                0.0f
+            },
             bg,
+            (struct vec3) { 1.0f, 1.0f, 1.0f },
             (struct tex2) { u1, v1 }
         };
         vertices[idx_vertex++] = (struct mesh_vertex) {
             (struct vec3) {
                 (cur_x + xOffset) / 64.0f,
                 (cur_y + font->YOffset) / 64.0f,
-                0.0f },
+                0.0f
+            },
             bg,
+            (struct vec3) { 1.0f, 1.0f, 1.0f },
             (struct tex2) { u1, v0 }
         };
         vertices[idx_vertex++] = (struct mesh_vertex) {
             (struct vec3) {
                 cur_x / 64.0f,
                 (cur_y + font->YOffset) / 64.0f,
-                0.0f },
+                0.0f
+            },
             bg,
+            (struct vec3) { 1.0f, 1.0f, 1.0f },
             (struct tex2) { u0, v0 }
         };
 

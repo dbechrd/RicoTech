@@ -99,6 +99,13 @@ static int init_gl(struct bbox *bbox)
         }
     };
 
+    // HACK: Use white bounding boxes instead of rainbows so I can debug normals
+    // for (int i = 0; i < 8; ++i)
+    // {
+    //     vertices[i].col = COLOR_WHITE;
+    //     vertices[i].col.a = 0.2f;
+    // }
+
     // Bbox faces
     static GLuint elements[36] = {
         0, 1, 2, 2, 3, 0,
@@ -176,7 +183,7 @@ void bbox_render_color(const struct bbox *box, const struct mat4 *model_matrix,
     glUniformMatrix4fv(box->prog->u_model, 1, GL_TRUE, model_matrix->a);
 
     glUniform4f(box->prog->u_col, color.r, color.g, color.b, color.a);
-    //glUniform4f(box->prog->u_col, 1.0f, 1.0f, 1.0f, 0.5f);
+    glUniform4f(box->prog->u_col, 1.0f, 1.0f, 1.0f, 0.5f);
 
     // Draw
     glBindVertexArray(box->vao);

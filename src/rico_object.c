@@ -393,6 +393,8 @@ static void render(const struct rico_object *obj,
     glUniformMatrix4fv(prog->u_view, 1, GL_TRUE, view_matrix.a);
     glUniformMatrix4fv(prog->u_model, 1, GL_TRUE, obj->transform.a);
 
+    glUniform3fv(prog->u_view_pos, 1, (const GLfloat *)&camera->position);
+
     // Model texture
     // Note: We don't have to do this every time as long as we make sure
     //       the correct textures are bound before each draw to the texture

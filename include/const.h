@@ -34,7 +34,8 @@
 
 #define RICO_SHADER_POS_LOC 0
 #define RICO_SHADER_COL_LOC 1
-#define RICO_SHADER_UV_LOC 2
+#define RICO_SHADER_NORMAL_LOC 2
+#define RICO_SHADER_UV_LOC 3
 
 // Math / Physics
 #ifndef M_PI

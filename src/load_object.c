@@ -76,7 +76,6 @@ int load_obj_file(const char *filename, u32 *_meshes, u32 *_mesh_count)
     struct vec3 *positions = calloc(MESH_VERTICES_MAX, sizeof(*positions));
     struct tex2 *texcoords = calloc(MESH_VERTICES_MAX, sizeof(*texcoords));
     struct vec3 *normals = calloc(MESH_VERTICES_MAX, sizeof(*normals));
-    UNUSED(normals);
 
     //struct vec3 positions[MESH_VERTICES_MAX] = { 0 };
     //struct tex2 texcoords[MESH_VERTICES_MAX] = { 0 };
@@ -104,7 +103,7 @@ int load_obj_file(const char *filename, u32 *_meshes, u32 *_mesh_count)
 
     long vert_pos = 0;
     long vert_tex = 0;
-    long vert_normal = 0;
+    long vert_norm = 0;
 
     char *buffer_ptr = buffer;
     for(;;)
@@ -171,16 +170,15 @@ int load_obj_file(const char *filename, u32 *_meshes, u32 *_mesh_count)
             {
                 vert_pos = fast_atol(strsep(&vert, "/"));
                 vert_tex = fast_atol(strsep(&vert, "/"));
-                vert_normal = fast_atol(strsep(&vert, "/"));
+                vert_norm = fast_atol(strsep(&vert, "/"));
 
                 vertices[idx_vertex].col = COLOR_WHITE;
                 if (vert_pos > 0)
                     vertices[idx_vertex].pos = positions[vert_pos - 1];
                 if (vert_tex > 0)
                     vertices[idx_vertex].uv = texcoords[vert_tex - 1];
-                UNUSED(vert_normal);
-                //if (vert_norm > 0)
-                //    vertices[idx_vertex].normal = normals[vert_normal - 1];
+                if (vert_norm > 0)
+                    vertices[idx_vertex].normal = normals[vert_norm - 1];
                 if (++idx_vertex >= MESH_VERTICES_MAX)
                 {
                     err = RICO_ERROR(ERR_OBJ_TOO_MANY_VERTS);

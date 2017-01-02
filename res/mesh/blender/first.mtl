@@ -8,12 +8,12 @@ Kd 0.8 0.8 0.8
 Ks 0.8 0.8 0.8
 d 1
 illum 2
-map_Kd textures\basic.tga
 
-newmtl None_NONE
+newmtl None_basic.tga.001
 Ns 0
 Ka 0.000000 0.000000 0.000000
 Kd 0.8 0.8 0.8
 Ks 0.8 0.8 0.8
 d 1
 illum 2
+map_Kd C:\Users\User\Documents\Visual Studio 2015\Projects\RicoTech\res\texture\basic.tga

@@ -403,9 +403,9 @@ void glref_update(u32 dt, bool ambient_light)
     glUniform1f(prog_default->u_time, dt / 1000.0f);
 
     if (ambient_light)
-        glUniform4fv(prog_default->u_ambient, 1, (const GLfloat *)&ambient);
+        glUniform3fv(prog_default->u_ambient, 1, (const GLfloat *)&ambient);
     else
-        glUniform4fv(prog_default->u_ambient, 1, (const GLfloat *)&VEC3_UNIT);
+        glUniform3fv(prog_default->u_ambient, 1, (const GLfloat *)&VEC3_UNIT);
 
     glUseProgram(0);
 

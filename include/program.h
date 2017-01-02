@@ -22,10 +22,12 @@ struct program_default {
     GLint u_proj;     //mat4
 
     GLint vert_pos;   //vec3
+    GLint vert_normal;//vec3
     GLint vert_col;   //vec3
     GLint vert_uv;    //vec2
 
     // Fragment shader
+    GLint u_view_pos; //vec3
     GLint u_ambient;  //vec3
     GLint u_tex;      //sampler2D
 };

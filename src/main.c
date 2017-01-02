@@ -245,6 +245,10 @@ static void init_opengl()
     glDepthFunc(GL_LEQUAL);  // Default GL_LESS.
     glEnable(GL_DEPTH_TEST); // Default off.
 
+    // Backface culling
+    // glEnable(GL_CULL_FACE);
+    // glCullFace(GL_BACK);
+
     // Multi-sampling
     glEnable(GL_MULTISAMPLE);
 
@@ -319,21 +323,25 @@ static int rico_init_meshes()
         {
             { -1.0f, -1.0f, 0.0f },     //Position
             { 1.0f, 1.0f, 1.0f, 1.0f }, //Color
+            { 0.0f, 0.0f, 1.0f },       //Normal
             { 0.0f, 0.0f }              //UV-coords
         },
         {
             { 1.0f, -1.0f, 0.0f },
             { 1.0f, 1.0f, 1.0f, 1.0f },
+            { 0.0f, 0.0f, 1.0f },
             { 1.0f, 0.0f }
         },
         {
             { 1.0f, 1.0f, 0.0f },
             { 1.0f, 1.0f, 1.0f, 1.0f },
+            { 0.0f, 0.0f, 1.0f },
             { 1.0f, 1.0f }
         },
         {
             { -1.0f, 1.0f, 0.0f },
             { 1.0f, 1.0f, 1.0f, 1.0f },
+            { 0.0f, 0.0f, 1.0f },
             { 0.0f, 1.0f }
         }
     };
@@ -1041,7 +1049,8 @@ int mymain()
         ////////////////////////////////////////////////////////////////////////
         // Render
         ////////////////////////////////////////////////////////////////////////
-        glPolygonMode(GL_FRONT_AND_BACK, cam_player.fill_mode);
+        // glPolygonMode(GL_FRONT_AND_BACK, cam_player.fill_mode);
+        glPolygonMode(GL_FRONT, cam_player.fill_mode);
 
         glref_update(dt, ambient_light);
         glref_render(&cam_player);

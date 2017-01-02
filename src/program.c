@@ -76,18 +76,25 @@ static inline GLint program_get_uniform_location(GLuint program,
 static inline void program_default_get_locations(struct program_default *p)
 {
     // Vertex shader
-    //p->u_time = program_get_uniform_location(p->prog_id, "u_time");
+    p->u_time = program_get_uniform_location(p->prog_id, "u_time");
     p->u_scale_uv = program_get_uniform_location(p->prog_id, "u_scale_uv");
     p->u_model = program_get_uniform_location(p->prog_id, "u_model");
     p->u_view = program_get_uniform_location(p->prog_id, "u_view");
     p->u_proj = program_get_uniform_location(p->prog_id, "u_proj");
 
     p->vert_pos = program_get_attrib_location(p->prog_id, "vert_pos");
-    //p->vert_col = program_get_attrib_location(p->prog_id, "vert_col");
+    p->vert_col = program_get_attrib_location(p->prog_id, "vert_col");
+    p->vert_normal = program_get_attrib_location(p->prog_id, "vert_normal");
     p->vert_uv = program_get_attrib_location(p->prog_id, "vert_uv");
 
+    RICO_ASSERT(p->vert_pos == RICO_SHADER_POS_LOC);
+    // RICO_ASSERT(p->vert_col == RICO_SHADER_COL_LOC);
+    RICO_ASSERT(p->vert_normal == RICO_SHADER_NORMAL_LOC);
+    RICO_ASSERT(p->vert_uv == RICO_SHADER_UV_LOC);
+
     // Fragment shader
-    //p->u_ambient = program_get_uniform_location(p->prog_id, "u_ambient");
+    p->u_view_pos = program_get_uniform_location(p->prog_id, "u_view_pos");
+    p->u_ambient = program_get_uniform_location(p->prog_id, "u_ambient");
     p->u_tex = program_get_uniform_location(p->prog_id, "u_tex");
 }
 
@@ -164,6 +171,9 @@ static inline void program_primitive_get_locations(struct program_primitive *p)
 
     p->vert_pos = program_get_attrib_location(p->prog_id, "vert_pos");
     p->vert_col = program_get_attrib_location(p->prog_id, "vert_col");
+
+    RICO_ASSERT(p->vert_pos == RICO_SHADER_POS_LOC);
+    RICO_ASSERT(p->vert_col == RICO_SHADER_COL_LOC);
 
     // Fragment shader
     p->u_col = program_get_uniform_location(p->prog_id, "u_col");

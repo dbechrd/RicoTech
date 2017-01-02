@@ -11,6 +11,6 @@ out vec4 frag_col;
 
 void main()
 {
-    gl_Position = u_proj * u_view * u_model * vec4(vert_pos.xyz, 1.0f);
+    gl_Position = u_proj * u_view * u_model * vec4(vert_pos, 1.0f);
     frag_col = vert_col;
 }
