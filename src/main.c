@@ -498,7 +498,7 @@ int mymain()
     bool d_down = false;
     bool s_down = false;
     bool sprint = false;
-    bool ambient_light = true;
+    bool enable_lighting = true;
     bool mouse_lock = true;
     bool quit = false;
 
@@ -858,7 +858,8 @@ int mymain()
                     }
                     else if (windowEvent.key.keysym.sym == SDLK_l)
                     {
-                        ambient_light = !ambient_light;
+                        //TODO: Use this to change shader program on render
+                        enable_lighting = !enable_lighting;
                     }
                     else if (windowEvent.key.keysym.sym == SDLK_p)
                     {
@@ -1006,7 +1007,7 @@ int mymain()
                 //view_delta.z *= 5.0f;
             }
 
-            camera_translate(&cam_player, &view_delta);
+            camera_translate_local(&cam_player, &view_delta);
         }
 
         if (mouse_dx != 0 || mouse_dy != 0)
@@ -1052,7 +1053,7 @@ int mymain()
         // glPolygonMode(GL_FRONT_AND_BACK, cam_player.fill_mode);
         glPolygonMode(GL_FRONT, cam_player.fill_mode);
 
-        glref_update(dt, ambient_light);
+        glref_update(dt);
         glref_render(&cam_player);
         camera_render(&cam_player);
 

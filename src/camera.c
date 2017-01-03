@@ -42,7 +42,18 @@ void camera_reset(struct camera *camera)
     camera->need_update = true;
 }
 
-void camera_translate(struct camera *camera, const struct vec3 *v)
+void camera_translate_world(struct camera *camera, const struct vec3 *v)
+{
+    vec3_add(&camera->position, v);
+
+    // Prevent camera from going below the floor
+    if (camera->position.y < CAMERA_POS_Y_MIN)
+        camera->position.y = CAMERA_POS_Y_MIN;
+
+    camera->need_update = true;
+}
+
+void camera_translate_local(struct camera *camera, const struct vec3 *v)
 {
     struct vec3 right = VEC3_RIGHT;
     struct vec3 fwd = VEC3_FWD;
@@ -66,12 +77,6 @@ void camera_translate(struct camera *camera, const struct vec3 *v)
         camera->position.y = CAMERA_POS_Y_MIN;
 
     camera->need_update = true;
-}
-
-void camera_translate_set(struct camera *camera, const struct vec3 *v)
-{
-    camera->position = VEC3_ZERO;
-    camera_translate(camera, v);
 }
 
 void camera_rotate(struct camera *camera, float mouse_dx, float mouse_dy)

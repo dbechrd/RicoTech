@@ -28,7 +28,6 @@ struct program_default {
 
     // Fragment shader
     GLint u_view_pos; //vec3
-    GLint u_ambient;  //vec3
     GLint u_tex;      //sampler2D
 };
 

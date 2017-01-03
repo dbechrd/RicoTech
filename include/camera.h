@@ -39,8 +39,8 @@ extern const struct vec3 CAMERA_POS_INITIAL;
 void camera_init(struct camera *_camera, struct vec3 position,
                  struct quat view, float fov);
 void camera_reset(struct camera *camera);
-void camera_translate(struct camera *camera, const struct vec3 *v);
-void camera_translate_set(struct camera *camera, const struct vec3 *v);
+void camera_translate_world(struct camera *camera, const struct vec3 *v);
+void camera_translate_local(struct camera *camera, const struct vec3 *v);
 void camera_rotate(struct camera *camera, float mouse_x, float mouse_y);
 void camera_rotate_angle(struct camera *camera, struct vec3 axis,
                          float angle_deg);

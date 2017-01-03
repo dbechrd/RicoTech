@@ -12,6 +12,7 @@
 #include "rico_font.h"
 #include "rico_chunk.h"
 #include "rico_pool.h"
+#include "primitives.h"
 
 #include <GL/gl3w.h>
 #include <SDL/SDL_assert.h>
@@ -235,7 +236,9 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
     // object_scale(obj_wall5, wall_scale.x, wall_scale.y, wall_scale.z);
 
     {
-        for (u32 i = 0; i < mesh_count; i++)
+        // Create test object for each loaded mesh
+        u32 i = 0;
+        for (; i < mesh_count; i++)
         {
             err = object_create(&arr_objects[i], mesh_name(meshes[i]),
                                 OBJ_DEFAULT, meshes[i], RICO_TEXTURE_DEFAULT,
@@ -246,6 +249,16 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
             object_trans_set(arr_objects[i], &(struct vec3) { 0.0f, EPSILON, 0.0f });
             // object_scale_set(arr_objects[i], &(struct vec3) { 0.1f, 0.1f, 0.1f });
         }
+
+        // Create test object for each primitive
+        i++;
+        err = object_create(&arr_objects[i], mesh_name(PRIM_SPHERE_MESH),
+                            OBJ_DEFAULT, PRIM_SPHERE_MESH, RICO_TEXTURE_DEFAULT,
+                            mesh_bbox(PRIM_SPHERE_MESH), true);
+        if (err) return err;
+
+        // HACK: Don't z-fight ground plane
+        object_trans_set(arr_objects[i], &(struct vec3) { 0.0f, EPSILON, 0.0f });
     }
 
     //--------------------------------------------------------------------------
@@ -320,7 +333,7 @@ void selected_translate(struct camera *camera, const struct vec3 *offset)
         if (camera->locked && selected_type != OBJ_STRING_SCREEN)
         {
             struct vec3 offset_tmp = *offset;
-            camera_translate(camera, vec3_negate(&offset_tmp));
+            camera_translate_world(camera, &offset_tmp);
         }
         object_trans(selected_handle, offset);
     }
@@ -391,22 +404,13 @@ void selected_delete()
     object_free(handle);
 }
 
-//TODO: Put this somewhere reasonable (e.g. lighting module)
-static struct col4 ambient = { 0.9f, 0.8f, 0.6f, 1.0f };
-
-void glref_update(u32 dt, bool ambient_light)
+void glref_update(u32 dt)
 {
     //--------------------------------------------------------------------------
     // Update uniforms
     //--------------------------------------------------------------------------
     glUseProgram(prog_default->prog_id);
     glUniform1f(prog_default->u_time, dt / 1000.0f);
-
-    if (ambient_light)
-        glUniform3fv(prog_default->u_ambient, 1, (const GLfloat *)&ambient);
-    else
-        glUniform3fv(prog_default->u_ambient, 1, (const GLfloat *)&VEC3_UNIT);
-
     glUseProgram(0);
 
     //--------------------------------------------------------------------------
