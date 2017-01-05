@@ -66,35 +66,35 @@ static int init_gl(struct bbox *bbox)
     // Bbox vertices
     struct prim_vertex vertices[8] = {
         (struct prim_vertex) {
-            (struct vec3) { bbox->p[0].x, bbox->p[0].y, bbox->p[0].z },
+            (struct vec3) { bbox->p[0].x, bbox->p[0].y, bbox->p[1].z },
             COLOR_BLACK
         },
         (struct prim_vertex) {
-            (struct vec3) { bbox->p[1].x, bbox->p[0].y, bbox->p[0].z },
+            (struct vec3) { bbox->p[1].x, bbox->p[0].y, bbox->p[1].z },
             COLOR_RED
         },
         (struct prim_vertex) {
-            (struct vec3) { bbox->p[1].x, bbox->p[1].y, bbox->p[0].z },
+            (struct vec3) { bbox->p[1].x, bbox->p[1].y, bbox->p[1].z },
             COLOR_YELLOW
         },
         (struct prim_vertex) {
-            (struct vec3) { bbox->p[0].x, bbox->p[1].y, bbox->p[0].z },
+            (struct vec3) { bbox->p[0].x, bbox->p[1].y, bbox->p[1].z },
             COLOR_GREEN
         },
         (struct prim_vertex) {
-            (struct vec3) { bbox->p[0].x, bbox->p[0].y, bbox->p[1].z },
+            (struct vec3) { bbox->p[0].x, bbox->p[0].y, bbox->p[0].z },
             COLOR_BLUE
         },
         (struct prim_vertex) {
-            (struct vec3) { bbox->p[1].x, bbox->p[0].y, bbox->p[1].z },
+            (struct vec3) { bbox->p[1].x, bbox->p[0].y, bbox->p[0].z },
             COLOR_MAGENTA
         },
         (struct prim_vertex) {
-            (struct vec3) { bbox->p[1].x, bbox->p[1].y, bbox->p[1].z },
+            (struct vec3) { bbox->p[1].x, bbox->p[1].y, bbox->p[0].z },
             COLOR_WHITE
         },
         (struct prim_vertex) {
-            (struct vec3) { bbox->p[0].x, bbox->p[1].y, bbox->p[1].z },
+            (struct vec3) { bbox->p[0].x, bbox->p[1].y, bbox->p[0].z },
             COLOR_CYAN
         }
     };

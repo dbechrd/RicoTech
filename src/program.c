@@ -94,7 +94,12 @@ static inline void program_default_get_locations(struct program_default *p)
 
     // Fragment shader
     p->u_view_pos = program_get_uniform_location(p->prog_id, "u_view_pos");
-    p->u_tex = program_get_uniform_location(p->prog_id, "u_tex");
+    p->u_material_diff = program_get_uniform_location(p->prog_id,
+                                                      "u_material.diff");
+    p->u_material_spec = program_get_uniform_location(p->prog_id,
+                                                      "u_material.spec");
+    p->u_material_shiny = program_get_uniform_location(p->prog_id,
+                                                       "u_material.shiny");
 }
 
 int make_program_default(struct program_default **_program)

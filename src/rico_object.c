@@ -6,6 +6,7 @@
 #include "program.h"
 #include "rico_font.h"
 #include "rico_collision.h"
+#include "rico_material.h"
 #include <malloc.h>
 
 struct rico_object {
@@ -24,7 +25,7 @@ struct rico_object {
     u32 mesh;
 
     //TODO: Support multiple textures (per mesh?)
-    u32 texture;
+    u32 material;
 
     struct bbox bbox;
 };
@@ -46,7 +47,7 @@ int rico_object_init(u32 pool_size)
 }
 
 int object_create(u32 *_handle, const char *name, enum rico_obj_type type,
-                  u32 mesh, u32 texture, const struct bbox *bbox,
+                  u32 mesh, u32 material, const struct bbox *bbox,
                   bool serialize)
 {
 #ifdef RICO_DEBUG_OBJECT
@@ -68,7 +69,7 @@ int object_create(u32 *_handle, const char *name, enum rico_obj_type type,
     else
         obj->scale = VEC3_UNIT;
     obj->mesh = mesh_request(mesh);
-    obj->texture = texture_request(texture);
+    obj->material = material_request(material);
     obj->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(mesh);
     update_transform(obj);
 
@@ -81,7 +82,7 @@ int object_copy(u32 *_handle, u32 handle, const char *name)
     struct rico_object *obj = pool_read(objects, handle);
 
     // Create new object with same mesh / texture
-    err = object_create(_handle, name, obj->type, obj->mesh, obj->texture,
+    err = object_create(_handle, name, obj->type, obj->mesh, obj->material,
                         NULL, true);
     if (err) return err;
 
@@ -101,11 +102,11 @@ void object_mesh_set(u32 handle, u32 mesh, const struct bbox *bbox)
     obj->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(mesh);
 }
 
-void object_texture_set(u32 handle, u32 texture)
+void object_material_set(u32 handle, u32 material)
 {
     struct rico_object *obj = pool_read(objects, handle);
-    texture_free(obj->texture);
-    obj->texture = texture_request(texture);
+    material_free(obj->material);
+    obj->material = material_request(material);
 }
 
 void object_free(u32 handle)
@@ -117,7 +118,7 @@ void object_free(u32 handle)
 #endif
 
     mesh_free(obj->mesh);
-    texture_free(obj->texture);
+    material_free(obj->material);
 
     obj->uid.uid = UID_NULL;
     pool_free(objects, handle);
@@ -395,19 +396,20 @@ static void render(const struct rico_object *obj,
 
     glUniform3fv(prog->u_view_pos, 1, (const GLfloat *)&camera->position);
 
-    // Model texture
+    // Model material
     // Note: We don't have to do this every time as long as we make sure
     //       the correct textures are bound before each draw to the texture
     //       index assumed when the program was initialized.
-    glUniform1i(prog->u_tex, 0);
+    glUniform1i(prog->u_material_diff, 0);
+    glUniform1i(prog->u_material_spec, 1);
+    glUniform1f(prog->u_material_shiny, material_shiny_get(obj->material));
 
-    // Bind texture and render mesh
-    //
-    texture_bind(obj->texture);
+    // Bind material and render mesh
+    material_bind(obj->material);
     mesh_render(obj->mesh);
 
     // Clean up
-    texture_unbind(obj->texture);
+    material_unbind(obj->material);
     glUseProgram(0);
 
     // Render bbox
@@ -485,14 +487,14 @@ char *object_serialize_str(u32 handle)
     {
         struct rico_object *obj = pool_read(objects, handle);
         sprintf(buf,
-            "    UID: %d\n"       \
-            "   Name: %s\n"       \
-            "   Type: %s\n"       \
-            "  Trans: %f %f %f\n" \
-            "    Rot: %f %f %f\n" \
-            "  Scale: %f %f %f\n" \
-            "   Mesh: %d\n"       \
-            "Texture: %d\n",
+            "     UID: %d\n"       \
+            "    Name: %s\n"       \
+            "    Type: %s\n"       \
+            "   Trans: %f %f %f\n" \
+            "     Rot: %f %f %f\n" \
+            "   Scale: %f %f %f\n" \
+            "    Mesh: %d\n"       \
+            "Material: %d\n",
             obj->uid.uid,
             obj->uid.name,
             rico_obj_type_string[obj->type],
@@ -500,7 +502,7 @@ char *object_serialize_str(u32 handle)
             obj->rot.x,   obj->rot.y,   obj->rot.z,
             obj->scale.x, obj->scale.y, obj->scale.z,
             obj->mesh,
-            obj->texture);
+            obj->material);
 
     }
     return buf;
@@ -509,12 +511,12 @@ char *object_serialize_str(u32 handle)
 int object_serialize_0(const void *handle, const struct rico_file *file)
 {
     const struct rico_object *obj = handle;
-    fwrite(&obj->type,    sizeof(obj->type),    1, file->fs);
-    fwrite(&obj->trans,   sizeof(obj->trans),   1, file->fs);
-    fwrite(&obj->rot,     sizeof(obj->rot),     1, file->fs);
-    fwrite(&obj->scale,   sizeof(obj->scale),   1, file->fs);
-    fwrite(&obj->mesh,    sizeof(obj->mesh),    1, file->fs);
-    fwrite(&obj->texture, sizeof(obj->texture), 1, file->fs);
+    fwrite(&obj->type,     sizeof(obj->type),    1, file->fs);
+    fwrite(&obj->trans,    sizeof(obj->trans),   1, file->fs);
+    fwrite(&obj->rot,      sizeof(obj->rot),     1, file->fs);
+    fwrite(&obj->scale,    sizeof(obj->scale),   1, file->fs);
+    fwrite(&obj->mesh,     sizeof(obj->mesh),    1, file->fs);
+    fwrite(&obj->material, sizeof(obj->material), 1, file->fs);
     return rico_serialize(&obj->bbox, file);
 }
 
@@ -529,11 +531,11 @@ int object_deserialize_0(void *_handle, const struct rico_file *file)
     fread(&obj->scale,   sizeof(obj->scale),   1, file->fs);
     update_transform(obj);
 
-    u32 mesh, texture;
-    fread(&mesh,    sizeof(obj->mesh),    1, file->fs);
-    fread(&texture, sizeof(obj->texture), 1, file->fs);
+    u32 mesh, material;
+    fread(&mesh,     sizeof(obj->mesh),    1, file->fs);
+    fread(&material, sizeof(obj->material), 1, file->fs);
     obj->mesh = mesh_request(mesh);
-    obj->texture = texture_request(texture);
+    obj->material = texture_request(material);
 
     err = rico_deserialize(&obj->bbox, file);
     if (err == ERR_SERIALIZE_DISABLED)

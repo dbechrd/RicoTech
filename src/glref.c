@@ -7,6 +7,7 @@
 #include "bbox.h"
 #include "camera.h"
 #include "rico_texture.h"
+#include "rico_material.h"
 #include "rico_mesh.h"
 #include "rico_object.h"
 #include "rico_font.h"
@@ -172,9 +173,14 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
     // if (err) return err;
     // object_trans(obj_fonttest, -1.0f, 0.0f, 0.0f);
 
+    u32 material_rock;
+    err = material_init("Rock", tex_rock, RICO_TEXTURE_DEFAULT_SPEC, 0.5f,
+                        &material_rock);
+    if (err) return err;
+
     // Ground
     err = object_create(&obj_ground, "Ground", OBJ_DEFAULT, RICO_MESH_DEFAULT,
-                        tex_rock, NULL, true);
+                        material_rock, NULL, true);
     if (err) return err;
     object_rot_x(obj_ground, -90.0f);
     object_scale(obj_ground, &(struct vec3) { 64.0f, 64.0f, 1.0f });
@@ -241,7 +247,7 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
         for (; i < mesh_count; i++)
         {
             err = object_create(&arr_objects[i], mesh_name(meshes[i]),
-                                OBJ_DEFAULT, meshes[i], RICO_TEXTURE_DEFAULT,
+                                OBJ_DEFAULT, meshes[i], RICO_MATERIAL_DEFAULT,
                                 mesh_bbox(meshes[i]), true);
             if (err) return err;
 
@@ -253,8 +259,9 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
         // Create test object for each primitive
         i++;
         err = object_create(&arr_objects[i], mesh_name(PRIM_SPHERE_MESH),
-                            OBJ_DEFAULT, PRIM_SPHERE_MESH, RICO_TEXTURE_DEFAULT,
-                            mesh_bbox(PRIM_SPHERE_MESH), true);
+                            OBJ_DEFAULT, PRIM_SPHERE_MESH,
+                            RICO_MATERIAL_DEFAULT, mesh_bbox(PRIM_SPHERE_MESH),
+                            true);
         if (err) return err;
 
         // HACK: Don't z-fight ground plane

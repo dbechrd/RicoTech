@@ -8,6 +8,7 @@
 #include "util.h"
 #include "glref.h"
 #include "rico_texture.h"
+#include "rico_material.h"
 #include "rico_mesh.h"
 #include "rico_object.h"
 #include "load_object.h"
@@ -246,8 +247,8 @@ static void init_opengl()
     glEnable(GL_DEPTH_TEST); // Default off.
 
     // Backface culling
-    // glEnable(GL_CULL_FACE);
-    // glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
 
     // Multi-sampling
     glEnable(GL_MULTISAMPLE);
@@ -281,10 +282,13 @@ static int rico_init_pools()
     err = rico_string_init(RICO_STRING_POOL_SIZE);
     if (err) return err;
 
-    err = rico_font_init(RICO_TEXTURE_POOL_SIZE);
+    err = rico_font_init(RICO_FONT_POOL_SIZE);
     if (err) return err;
 
     err = rico_texture_init(RICO_TEXTURE_POOL_SIZE);
+    if (err) return err;
+
+    err = rico_material_init(RICO_MATERIAL_POOL_SIZE);
     if (err) return err;
 
     err = rico_mesh_init(RICO_MESH_POOL_SIZE);
@@ -296,6 +300,7 @@ static int rico_init_fonts()
     enum rico_error err;
     printf("Loading fonts\n");
 
+    // TODO: Use static slots to allocate default resources
     err = font_init("font/courier_new.bff", &RICO_FONT_DEFAULT);
     return err;
 }
@@ -305,8 +310,27 @@ static int rico_init_textures()
     enum rico_error err;
     printf("Loading textures\n");
 
-    err = texture_load_file("TEXTURE_DEFAULT", GL_TEXTURE_2D,
-                            "texture/basic.tga", &RICO_TEXTURE_DEFAULT);
+    // TODO: Use static slots to allocate default resources
+    err = texture_load_file("TEXTURE_DEFAULT_DIFF", GL_TEXTURE_2D,
+                            "texture/basic_diff.tga",
+                            &RICO_TEXTURE_DEFAULT_DIFF);
+    if (err) return err;
+
+    err = texture_load_file("TEXTURE_DEFAULT_SPEC", GL_TEXTURE_2D,
+                            "texture/basic_spec.tga",
+                            &RICO_TEXTURE_DEFAULT_SPEC);
+    return err;
+}
+
+static int rico_init_materials()
+{
+    enum rico_error err;
+    printf("Loading materials\n");
+
+    // TODO: Use static slots to allocate default resources
+    err = material_init("MATERIAL_DEFAULT", RICO_TEXTURE_DEFAULT_DIFF,
+                        RICO_TEXTURE_DEFAULT_SPEC, 0.5f,
+                        &RICO_MATERIAL_DEFAULT);
     return err;
 }
 
@@ -389,6 +413,9 @@ static int rico_init()
     if (err) return err;
 
     err = rico_init_textures();
+    if (err) return err;
+
+    err = rico_init_materials();
     if (err) return err;
 
     err = rico_init_meshes();

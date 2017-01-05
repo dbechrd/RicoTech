@@ -18,9 +18,10 @@ out vec3 vtx_frag_pos;
 
 void main()
 {
-    gl_Position = u_proj * u_view * u_model * vec4(vert_pos, 1.0);
     vtx_col = vert_col;
     vtx_normal = (mat3(transpose(inverse(u_model))) * vert_normal).xyz;
     vtx_uv = u_scale_uv * vert_uv;
-    vtx_frag_pos = vec3(u_model * vec4(vert_pos, 1.0));
+    gl_Position = u_model * vec4(vert_pos, 1.0);
+    vtx_frag_pos = gl_Position.xyz;
+    gl_Position = u_proj * u_view * gl_Position;
 }

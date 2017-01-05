@@ -18,7 +18,8 @@ struct rico_texture {
     GLsizei bpp;
 };
 
-u32 RICO_TEXTURE_DEFAULT = 0;
+u32 RICO_TEXTURE_DEFAULT_DIFF = 0;
+u32 RICO_TEXTURE_DEFAULT_SPEC = 0;
 static struct rico_pool textures;
 
 static int build_texture(struct rico_texture *tex, const void *pixels);
@@ -78,7 +79,6 @@ int texture_load_pixels(const char *name, GLenum target, int width, int height,
 #endif
 
     enum rico_error err;
-    *_handle = RICO_TEXTURE_DEFAULT;
 
     err = pool_alloc(&textures, _handle);
     if (err) return err;
@@ -121,6 +121,7 @@ static int build_texture(struct rico_texture *tex, const void *pixels)
     |
     *************************************************************************/
     glCreateTextures(tex->gl_target, 1, &tex->gl_id);
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(tex->gl_target, tex->gl_id);
 
     //--------------------------------------------------------------------------
@@ -230,18 +231,18 @@ const char *texture_name(u32 handle)
     return tex->uid.name;
 }
 
-void texture_bind(u32 handle)
+void texture_bind(u32 handle, GLenum texture_unit)
 {
     // TODO: When is this useful in the context of this application?
-    //glActiveTexture(GL_TEXTURE0);
-
     struct rico_texture *tex = pool_read(&textures, handle);
+    glActiveTexture(texture_unit);
     glBindTexture(tex->gl_target, tex->gl_id);
 }
 
-void texture_unbind(u32 handle)
+void texture_unbind(u32 handle, GLenum texture_unit)
 {
     struct rico_texture *tex = pool_read(&textures, handle);
+    glActiveTexture(texture_unit);
     glBindTexture(tex->gl_target, 0);
 }
 

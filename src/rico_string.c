@@ -5,6 +5,7 @@
 #include "rico_font.h"
 #include "rico_object.h"
 #include "camera.h"
+#include "rico_material.h"
 
 struct rico_string {
     struct rico_uid uid;
@@ -40,6 +41,11 @@ int string_init(const char *name, enum rico_string_slot slot, u32 x, u32 y,
                       &text_tex);
     if (err) return err;
 
+    u32 text_material;
+    err = material_init(name, text_tex, RICO_TEXTURE_DEFAULT_SPEC, 0.5f,
+                        &text_material);
+    if (err) return err;
+
     // Generate dynamic string object or update existing static string
     struct rico_string *str;
     if (slot == STR_SLOT_DYNAMIC)
@@ -61,13 +67,13 @@ int string_init(const char *name, enum rico_string_slot slot, u32 x, u32 y,
 
         // Create string object
         err = object_create(&str->obj_handle, name, OBJ_STRING_SCREEN,
-                            text_mesh, text_tex, NULL, str->uid.serialize);
+                            text_mesh, text_material, NULL, str->uid.serialize);
         if (err) return err;
     }
     else
     {
         object_mesh_set(str->obj_handle, text_mesh, NULL);
-        object_texture_set(str->obj_handle, text_tex);
+        object_material_set(str->obj_handle, text_material);
     }
 
     str->lifespan = lifespan;

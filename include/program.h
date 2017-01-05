@@ -27,8 +27,10 @@ struct program_default {
     GLint vert_uv;    //vec2
 
     // Fragment shader
-    GLint u_view_pos; //vec3
-    GLint u_tex;      //sampler2D
+    GLint u_view_pos;       //vec3
+    GLint u_material_diff;  //sampler2D
+    GLint u_material_spec;  //sampler2D
+    GLint u_material_shiny; //float
 };
 
 int make_program_default(struct program_default **_program);

@@ -17,6 +17,7 @@
     f(RICO_UID_BBOX)        \
     f(RICO_UID_FONT)        \
     f(RICO_UID_STRING)      \
+    f(RICO_UID_MATERIAL)    \
     f(RICO_UID_COUNT)
 
 enum rico_uid_type {
