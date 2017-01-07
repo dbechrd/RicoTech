@@ -20,7 +20,7 @@ void main()
 {
     ////////////////////////////////////////////////////////////////////////////
     // HACK: Make proper uniforms
-    vec3 light_pos = vec3(1, 8, 0);
+    vec3 light_pos = vec3(1, 6, 0);
     vec3 light_color = vec3(0.9, 0.8, 0.6);  // Orig ambient
     // vec3 light_color = vec3(0.5, 0.4, 0.3);  // Nice color
     // vec3 light_color = vec3(0.5, 1.0, 1.0);  // Test cyan
@@ -30,9 +30,9 @@ void main()
     vec3 mat_ambient = mat_diffuse.xyz;
     vec3 mat_specular = texture(u_material.spec, vtx_uv).rgb;
 
-    float k_ambient = 0.2;
-    float k_diffuse = 1.0;
-    float k_specular = 0.5;
+    float k_ambient = 0.1;
+    float k_diffuse = 0.7;
+    float k_specular = 0.7;
 
     vec3 light_ambient = k_ambient * light_color;
     vec3 light_diffuse = k_diffuse * light_color;
@@ -42,13 +42,13 @@ void main()
 
     vec3 norm = normalize(vtx_normal);
     vec3 light_dir = normalize(light_pos - vtx_frag_pos);
-    float angle = max(dot(norm, light_dir), 0.0);
-    vec3 diffuse = light_diffuse * mat_diffuse.xyz * angle;
+    float diff = max(dot(norm, light_dir), 0.0);
+    vec3 diffuse = light_diffuse * mat_diffuse.xyz * diff;
 
     vec3 specular;
-    if (angle > 0.0)
+    if (diff > 0.0)
     {
-        vec3 eye_dir = u_view_pos - vtx_frag_pos;
+        vec3 eye_dir = normalize(u_view_pos - vtx_frag_pos);
 
         // Phong specular
         // vec3 reflect_dir = reflect(-light_dir, norm);
@@ -57,7 +57,7 @@ void main()
 
         // Blinn-Phong specular
         vec3 halfway = normalize(light_dir + eye_dir);
-        float spec = pow(max(dot(norm, halfway), 0.0), u_material.shiny * 64);
+        float spec = pow(max(dot(norm, halfway), 0.0), u_material.shiny * 128);
 
         specular = light_specular * mat_specular * spec;
     }

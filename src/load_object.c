@@ -62,49 +62,35 @@ static inline long fast_atol(const char *str)
 
 int load_obj_file(const char *filename, u32 *_meshes, u32 *_mesh_count)
 {
-    enum rico_error err = SUCCESS;
-    int length;
-    char *buffer;
-    char *tok;
-
-    printf("Loading %s\n", filename);
-
-    err = file_contents(filename, &length, &buffer);
-    if (err) goto cleanup;
+    enum rico_error err;
 
     // TODO: Colossal waste of memory here, hmmm.
     struct vec3 *positions = calloc(MESH_VERTICES_MAX, sizeof(*positions));
     struct tex2 *texcoords = calloc(MESH_VERTICES_MAX, sizeof(*texcoords));
     struct vec3 *normals = calloc(MESH_VERTICES_MAX, sizeof(*normals));
-
-    //struct vec3 positions[MESH_VERTICES_MAX] = { 0 };
-    //struct tex2 texcoords[MESH_VERTICES_MAX] = { 0 };
-    //struct vec3 normals[MESH_VERTICES_MAX] = { 0 };
-    int idx_pos = 0;
-    int idx_tex = 0;
-    int idx_normal = 0;
-
-    char *name = NULL;
-
     struct mesh_vertex *vertices = calloc(MESH_VERTICES_MAX, sizeof(*vertices));
     GLuint *elements = calloc(MESH_VERTICES_MAX, sizeof(*elements));
 
-    //struct mesh_vertex vertices[MESH_VERTICES_MAX] = { 0 };
-    //GLuint elements[MESH_VERTICES_MAX];
-
+    int idx_pos = 0;
+    int idx_tex = 0;
+    int idx_normal = 0;
     int idx_vertex = 0;
     int idx_element = 0;
     int idx_mesh = 0;
-
-    // for (int i = 0; i < MESH_VERTICES_MAX; i++)
-    // {
-    //     elements[i] = i;
-    // }
 
     long vert_pos = 0;
     long vert_tex = 0;
     long vert_norm = 0;
 
+    int length;
+    char *buffer;
+    char *tok;
+
+    printf("Loading %s\n", filename);
+    err = file_contents(filename, &length, &buffer);
+    if (err) goto cleanup;
+
+    char *name = NULL;
     char *buffer_ptr = buffer;
     for(;;)
     {
@@ -208,12 +194,12 @@ int load_obj_file(const char *filename, u32 *_meshes, u32 *_mesh_count)
     *_mesh_count += idx_mesh;
 
 cleanup:
-    free(buffer);
-    free(positions);
-    free(texcoords);
-    free(normals);
-    free(vertices);
-    free(elements);
+    if (buffer)     free(buffer);
+    if (positions)  free(positions);
+    if (texcoords)  free(texcoords);
+    if (normals)    free(normals);
+    if (vertices)   free(vertices);
+    if (elements)   free(elements);
     return err;
 }
 

@@ -41,7 +41,7 @@ LIBS  := -L$(LIB_DIR) $(_LIBS)
 
 # Compiler & flags
 CC = gcc
-CFLAGS = -Wall -Wextra -Werror -Wno-unused-function # -Og
+CFLAGS = -Wall -Wextra -Werror -Wno-unused-function -Og
 LDFLAGS = # None
 
 default: prebuild build postbuild

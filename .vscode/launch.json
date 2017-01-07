@@ -36,7 +36,8 @@
                 "MIMode": "lldb"
             },
             "windows": {
-                "MIMode": "gdb"
+                "MIMode": "gdb",
+                "miDebuggerPath": "c:/MinGW/bin/gdb.exe"
             }
         }
     ]
