@@ -13,13 +13,13 @@
 #ifndef RICO_DEBUG_INFO
     // #define RICO_DEBUG_INFO
     // #define RICO_DEBUG_UID
-    #define RICO_DEBUG_POOL
+    // #define RICO_DEBUG_POOL
     // #define RICO_DEBUG_CHUNK
     // #define RICO_DEBUG_TEXTURE
     // #define RICO_DEBUG_MESH
     // #define RICO_DEBUG_OBJECT
     // #define RICO_DEBUG_STRING
-    // #define RICO_DEBUG_MATERIAL
+    #define RICO_DEBUG_MATERIAL
 #endif
 #endif
 

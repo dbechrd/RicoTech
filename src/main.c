@@ -30,7 +30,7 @@
 
 static SDL_Window *window = NULL;
 static SDL_GLContext context = NULL;
-static const bool reset_game_world = true;
+static const bool reset_game_world = false;
 static struct rico_chunk first_chunk;
 static enum rico_edit_mode edit_mode = EDIT_TRANSLATE;
 
@@ -271,6 +271,9 @@ static void rico_init_cereal()
     RicoCereal[RICO_UID_OBJECT].save[0] = &object_serialize_0;
     RicoCereal[RICO_UID_OBJECT].load[0] = &object_deserialize_0;
 
+    RicoCereal[RICO_UID_MATERIAL].save[0] = &material_serialize_0;
+    RicoCereal[RICO_UID_MATERIAL].load[0] = &material_deserialize_0;
+
     RicoCereal[RICO_UID_BBOX].save[0] = &bbox_serialize_0;
     RicoCereal[RICO_UID_BBOX].load[0] = &bbox_deserialize_0;
 }
@@ -286,9 +289,6 @@ static int rico_init_pools()
     if (err) return err;
 
     err = rico_texture_init(RICO_TEXTURE_POOL_SIZE);
-    if (err) return err;
-
-    err = rico_material_init(RICO_MATERIAL_POOL_SIZE);
     if (err) return err;
 
     err = rico_mesh_init(RICO_MESH_POOL_SIZE);
@@ -319,18 +319,6 @@ static int rico_init_textures()
     err = texture_load_file("TEXTURE_DEFAULT_SPEC", GL_TEXTURE_2D,
                             "texture/basic_spec.tga",
                             &RICO_TEXTURE_DEFAULT_SPEC);
-    return err;
-}
-
-static int rico_init_materials()
-{
-    enum rico_error err;
-    printf("Loading materials\n");
-
-    // TODO: Use static slots to allocate default resources
-    err = material_init("MATERIAL_DEFAULT", RICO_TEXTURE_DEFAULT_DIFF,
-                        RICO_TEXTURE_DEFAULT_SPEC, 0.5f,
-                        &RICO_MATERIAL_DEFAULT);
     return err;
 }
 
@@ -415,9 +403,6 @@ static int rico_init()
     err = rico_init_textures();
     if (err) return err;
 
-    err = rico_init_materials();
-    if (err) return err;
-
     err = rico_init_meshes();
     if (err) return err;
 
@@ -442,8 +427,6 @@ static int rico_init()
         err = rico_deserialize(&first_chunk, &file);
         rico_file_close(&file);
         if (err) return err;
-
-        object_pool_set_unsafe(&first_chunk.objects);
     }
 
     camera_reset(&cam_player);

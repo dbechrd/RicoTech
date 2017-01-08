@@ -230,9 +230,9 @@ int pool_deserialize_0(void *_handle, const struct rico_file *file)
     return SUCCESS;
 }
 
-#ifdef RICO_DEBUG_POOL
 static void pool_print_handles(struct rico_pool *pool)
 {
+#ifdef RICO_DEBUG_POOL
     // if (pool->uid.uid > 1) {
     //     printf("\n");
     //     return;
@@ -269,5 +269,7 @@ static void pool_print_handles(struct rico_pool *pool)
         printf("%d ", pool->handles[i]);
     }
     printf("]\n");
-}
+#else
+    UNUSED(pool);
 #endif
+}

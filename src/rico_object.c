@@ -442,7 +442,7 @@ int object_print(u32 handle, enum rico_string_slot slot)
     enum rico_error err;
 
     // Print to screen
-    char *buf = object_serialize_str(handle);
+    char *buf = object_to_string(handle);
     err = string_init(rico_string_slot_string[slot], slot, 0, 26,
                       COLOR_GRAY_HIGHLIGHT, 0, RICO_FONT_DEFAULT, buf);
     if (err) goto cleanup;
@@ -466,7 +466,7 @@ cleanup:
     return err;
 }
 
-char *object_serialize_str(u32 handle)
+char *object_to_string(u32 handle)
 {
     char *buf = calloc(1, 256);
 
@@ -523,19 +523,19 @@ int object_serialize_0(const void *handle, const struct rico_file *file)
 int object_deserialize_0(void *_handle, const struct rico_file *file)
 {
     enum rico_error err;
+    u32 mesh, material;
 
     struct rico_object *obj = _handle;
-    fread(&obj->type,    sizeof(obj->type),    1, file->fs);
-    fread(&obj->trans,   sizeof(obj->trans),   1, file->fs);
-    fread(&obj->rot,     sizeof(obj->rot),     1, file->fs);
-    fread(&obj->scale,   sizeof(obj->scale),   1, file->fs);
-    update_transform(obj);
+    fread(&obj->type,    sizeof(obj->type),     1, file->fs);
+    fread(&obj->trans,   sizeof(obj->trans),    1, file->fs);
+    fread(&obj->rot,     sizeof(obj->rot),      1, file->fs);
+    fread(&obj->scale,   sizeof(obj->scale),    1, file->fs);
+    fread(&mesh,         sizeof(obj->mesh),     1, file->fs);
+    fread(&material,     sizeof(obj->material), 1, file->fs);
 
-    u32 mesh, material;
-    fread(&mesh,     sizeof(obj->mesh),    1, file->fs);
-    fread(&material, sizeof(obj->material), 1, file->fs);
-    obj->mesh = mesh_request(mesh);
-    obj->material = texture_request(material);
+    update_transform(obj);
+    obj->mesh     = mesh_request(mesh);
+    obj->material = material_request(material);
 
     err = rico_deserialize(&obj->bbox, file);
     if (err == ERR_SERIALIZE_DISABLED)

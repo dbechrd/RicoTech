@@ -146,6 +146,24 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
     err = rico_object_init(RICO_OBJECT_POOL_SIZE);
     if (err) return err;
 
+    // Initialize material pool
+    err = rico_material_init(RICO_MATERIAL_POOL_SIZE);
+    if (err) return err;
+
+    //--------------------------------------------------------------------------
+    // Create materials
+    //--------------------------------------------------------------------------
+    // TODO: Use static slots to allocate default resources
+    err = material_init("MATERIAL_DEFAULT", RICO_TEXTURE_DEFAULT_DIFF,
+                        RICO_TEXTURE_DEFAULT_SPEC, 0.5f,
+                        &RICO_MATERIAL_DEFAULT);
+    if (err) return err;
+
+    u32 material_rock;
+    err = material_init("Rock", tex_rock, RICO_TEXTURE_DEFAULT_SPEC, 0.5f,
+                        &material_rock);
+    if (err) return err;
+
     //--------------------------------------------------------------------------
     // Create world objects
     //--------------------------------------------------------------------------
@@ -172,11 +190,6 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
     //                     mesh_font_test, tex_font_test, NULL);
     // if (err) return err;
     // object_trans(obj_fonttest, -1.0f, 0.0f, 0.0f);
-
-    u32 material_rock;
-    err = material_init("Rock", tex_rock, RICO_TEXTURE_DEFAULT_SPEC, 0.5f,
-                        &material_rock);
-    if (err) return err;
 
     // Ground
     err = object_create(&obj_ground, "Ground", OBJ_DEFAULT, RICO_MESH_DEFAULT,
@@ -272,14 +285,16 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
     // Save manual chunk
     //--------------------------------------------------------------------------
     struct rico_pool *chunk_tex_pool = texture_pool_unsafe();
+    struct rico_pool *chunk_mat_pool = material_pool_get_unsafe();
     struct rico_pool *chunk_mesh_pool = mesh_pool_unsafe();
     struct rico_pool *chunk_obj_pool = object_pool_get_unsafe();
 
     struct rico_chunk chunkA;
 
     err = chunk_init(0, "my_first_chunk", chunk_tex_pool->count,
-                     chunk_mesh_pool->count, chunk_obj_pool->count,
-                     chunk_tex_pool, chunk_mesh_pool, chunk_obj_pool, &chunkA);
+                     chunk_mat_pool->count, chunk_mesh_pool->count,
+                     chunk_obj_pool->count, chunk_tex_pool, chunk_mat_pool,
+                     chunk_mesh_pool, chunk_obj_pool, &chunkA);
     if (err) return err;
 
     struct rico_file file;

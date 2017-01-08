@@ -59,7 +59,7 @@ void object_render_type(enum rico_obj_type type,
                         const struct program_default *prog,
                         const struct camera *camera);
 int object_print(u32 handle, enum rico_string_slot slot);
-char *object_serialize_str(u32 handle);
+char *object_to_string(u32 handle);
 int object_serialize_0(const void *handle, const struct rico_file *file);
 int object_deserialize_0(void *_handle, const struct rico_file *file);
 
