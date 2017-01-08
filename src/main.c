@@ -312,12 +312,12 @@ static int rico_init_textures()
 
     // TODO: Use static slots to allocate default resources
     err = texture_load_file("TEXTURE_DEFAULT_DIFF", GL_TEXTURE_2D,
-                            "texture/basic_diff.tga",
+                            "texture/basic_diff.tga", 32,
                             &RICO_TEXTURE_DEFAULT_DIFF);
     if (err) return err;
 
     err = texture_load_file("TEXTURE_DEFAULT_SPEC", GL_TEXTURE_2D,
-                            "texture/basic_spec.tga",
+                            "texture/basic_spec.tga", 32,
                             &RICO_TEXTURE_DEFAULT_SPEC);
     return err;
 }

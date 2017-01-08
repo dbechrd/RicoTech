@@ -40,27 +40,23 @@ int texture_request(u32 handle)
 }
 
 int texture_load_file(const char *name, GLenum target, const char *filename,
-                      u32 *_handle)
+                      u32 bpp, u32 *_handle)
 {
 #ifdef RICO_DEBUG_TEXTURE
     printf("[Texture] Init %s\n", name);
 #endif
 
     enum rico_error err;
-    int width, height, bpp;
+    int width, height, depth;
 
     // Load raw texture data
-    unsigned char* pixels = stbi_load(filename, &width, &height, &bpp, 4);
+    unsigned char* pixels = stbi_load(filename, &width, &height, &depth, 4);
     if (!pixels)
     {
         fprintf(stderr, "Failed to load texture file: %s", filename);
         err = RICO_ERROR(ERR_TEXTURE_LOAD);
         goto cleanup;
     }
-
-    // Requested bit depth is 32-bit, but stbi_load returns original depth of
-    // image file in bytes.
-    bpp = 32;
 
     // Load pixels
     err = texture_load_pixels(name, target, width, height, bpp, pixels,
@@ -71,8 +67,8 @@ cleanup:
     return err;
 }
 
-int texture_load_pixels(const char *name, GLenum target, int width, int height,
-                        int bpp, const void *pixels, u32 *_handle)
+int texture_load_pixels(const char *name, GLenum target, u32 width, u32 height,
+                        u32 bpp, const void *pixels, u32 *_handle)
 {
 #ifdef RICO_DEBUG_TEXTURE
     printf("[Texture] Init %s\n", name);

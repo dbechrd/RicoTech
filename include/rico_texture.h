@@ -11,9 +11,9 @@ extern u32 RICO_TEXTURE_DEFAULT_SPEC;
 int rico_texture_init(u32 pool_size);
 int texture_request(u32 handle);
 int texture_load_file(const char *name, GLenum target, const char *filename,
-                      u32 *_handle);
-int texture_load_pixels(const char *name, GLenum target, int width, int height,
-                        int bpp, const void *pixels, u32 *_handle);
+                      u32 bpp, u32 *_handle);
+int texture_load_pixels(const char *name, GLenum target, u32 width, u32 height,
+                        u32 bpp, const void *pixels, u32 *_handle);
 void texture_free(u32 handle);
 const char *texture_name(u32 handle);
 void texture_bind(u32 handle, GLenum texture_unit);

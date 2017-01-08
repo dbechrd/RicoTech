@@ -11,17 +11,19 @@ layout(location = 1) in vec4 vert_col;
 layout(location = 2) in vec3 vert_normal;
 layout(location = 3) in vec2 vert_uv;
 
-out vec4 vtx_col;
-out vec3 vtx_normal;
-out vec2 vtx_uv;
-out vec3 vtx_frag_pos;
+out vtx_out {
+    vec4 col;
+    vec3 normal;
+    vec2 uv;
+    vec3 frag_pos;
+} vtx;
 
 void main()
 {
-    vtx_col = vert_col;
-    vtx_normal = (mat3(transpose(inverse(u_model))) * vert_normal).xyz;
-    vtx_uv = u_scale_uv * vert_uv;
+    vtx.col = vert_col;
+    vtx.normal = (mat3(transpose(inverse(u_model))) * vert_normal).xyz;
+    vtx.uv = u_scale_uv * vert_uv;
     gl_Position = u_model * vec4(vert_pos, 1.0);
-    vtx_frag_pos = gl_Position.xyz;
+    vtx.frag_pos = gl_Position.xyz;
     gl_Position = u_proj * u_view * gl_Position;
 }

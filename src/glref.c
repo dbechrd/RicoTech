@@ -86,17 +86,17 @@ int init_glref()
     //--------------------------------------------------------------------------
     // Create textures
     //--------------------------------------------------------------------------
-    err = texture_load_file("grass", GL_TEXTURE_2D, "texture/grass.tga",
+    err = texture_load_file("grass", GL_TEXTURE_2D, "texture/grass.tga", 32,
                             &tex_grass);
     if (err) return err;
     err = texture_load_file("bricks", GL_TEXTURE_2D, "texture/clean_bricks.tga",
-                            &tex_rock);
+                            32, &tex_rock);
     if (err) return err;
-    err = texture_load_file("hello", GL_TEXTURE_2D, "texture/hello.tga",
+    err = texture_load_file("hello", GL_TEXTURE_2D, "texture/hello.tga", 32,
                             &tex_hello);
     if (err) return err;
     err = texture_load_file("yellow", GL_TEXTURE_2D, "texture/fake_yellow.tga",
-                            &tex_yellow);
+                            32, &tex_yellow);
     if (err) return err;
 
     //--------------------------------------------------------------------------

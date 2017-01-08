@@ -15,22 +15,31 @@ struct program_default {
 
     //TODO: Don't set from outside, create wrapper methods to enforce type
     // Vertex shader
-    GLint u_time;     //float
-    GLint u_scale_uv; //vec3
-    GLint u_model;    //mat4
-    GLint u_view;     //mat4
-    GLint u_proj;     //mat4
+    GLint u_time;     // float
+    GLint u_scale_uv; // vec3
+    GLint u_model;    // mat4
+    GLint u_view;     // mat4
+    GLint u_proj;     // mat4
 
-    GLint vert_pos;   //vec3
-    GLint vert_normal;//vec3
-    GLint vert_col;   //vec3
-    GLint vert_uv;    //vec2
+    GLint vert_pos;    // vec3
+    GLint vert_normal; // vec3
+    GLint vert_col;    // vec3
+    GLint vert_uv;     // vec2
 
     // Fragment shader
-    GLint u_view_pos;       //vec3
-    GLint u_material_diff;  //sampler2D
-    GLint u_material_spec;  //sampler2D
-    GLint u_material_shiny; //float
+    GLint u_view_pos; // vec3
+
+    GLint u_material_diff;  // sampler2D
+    GLint u_material_spec;  // sampler2D
+    GLint u_material_shiny; // float
+
+    GLint u_light_position; // vec3
+    GLint u_light_ambient;  // vec3
+    GLint u_light_diffuse;  // vec3
+    GLint u_light_specular; // vec3
+    GLint u_light_kc;       // float
+    GLint u_light_kl;       // float
+    GLint u_light_kq;       // float
 };
 
 int make_program_default(struct program_default **_program);

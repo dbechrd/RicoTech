@@ -94,12 +94,27 @@ static inline void program_default_get_locations(struct program_default *p)
 
     // Fragment shader
     p->u_view_pos = program_get_uniform_location(p->prog_id, "u_view_pos");
-    p->u_material_diff = program_get_uniform_location(p->prog_id,
-                                                      "u_material.diff");
-    p->u_material_spec = program_get_uniform_location(p->prog_id,
-                                                      "u_material.spec");
-    p->u_material_shiny = program_get_uniform_location(p->prog_id,
-                                                       "u_material.shiny");
+    p->u_material_diff =
+        program_get_uniform_location(p->prog_id, "u_material.diff");
+    p->u_material_spec =
+        program_get_uniform_location(p->prog_id, "u_material.spec");
+    p->u_material_shiny =
+        program_get_uniform_location(p->prog_id, "u_material.shiny");
+
+    p->u_light_position =
+        program_get_uniform_location(p->prog_id, "u_light.position");
+    p->u_light_ambient =
+        program_get_uniform_location(p->prog_id, "u_light.ambient");
+    p->u_light_diffuse =
+        program_get_uniform_location(p->prog_id, "u_light.diffuse");
+    p->u_light_specular =
+        program_get_uniform_location(p->prog_id, "u_light.specular");
+    p->u_light_kc =
+        program_get_uniform_location(p->prog_id, "u_light.kc");
+    p->u_light_kl =
+        program_get_uniform_location(p->prog_id, "u_light.kl");
+    p->u_light_kq =
+        program_get_uniform_location(p->prog_id, "u_light.kq");
 }
 
 int make_program_default(struct program_default **_program)
