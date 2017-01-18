@@ -192,14 +192,14 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
     // object_trans(obj_fonttest, -1.0f, 0.0f, 0.0f);
 
     // Ground
-    err = object_create(&obj_ground, "Ground", OBJ_DEFAULT, RICO_MESH_DEFAULT,
+    err = object_create(&obj_ground, "Ground", OBJ_STATIC, RICO_MESH_DEFAULT,
                         material_rock, NULL, true);
     if (err) return err;
     object_rot_x(obj_ground, -90.0f);
     object_scale(obj_ground, &(struct vec3) { 64.0f, 64.0f, 1.0f });
 
     // // Hello
-    // err = object_create(&obj_yellow, "Yellow", OBJ_DEFAULT, RICO_MESH_DEFAULT,
+    // err = object_create(&obj_yellow, "Yellow", OBJ_STATIC, RICO_MESH_DEFAULT,
     //                     tex_yellow, NULL);
     // if (err) return err;
     // object_trans(obj_yellow, 0.0f, 2.0f, -4.0f);
@@ -207,7 +207,7 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
     // object_scale(obj_yellow, 1.0f, 2.0f, 1.0f);
 
     // // Ruler
-    // err = object_create(&obj_ruler, "Ruler", OBJ_DEFAULT, RICO_MESH_DEFAULT,
+    // err = object_create(&obj_ruler, "Ruler", OBJ_STATIC, RICO_MESH_DEFAULT,
     //                     RICO_TEXTURE_DEFAULT, NULL);
     // if (err) return err;
     // object_trans(obj_ruler, 0.0f, 1.0f, -3.0f);
@@ -217,21 +217,21 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
     // struct vec3 wall_scale = (struct vec3) { 8.0f, 2.5f, 1.0f };
 
     // // Wall front
-    // err = object_create(&obj_wall1, "wall1", OBJ_DEFAULT, RICO_MESH_DEFAULT,
+    // err = object_create(&obj_wall1, "wall1", OBJ_STATIC, RICO_MESH_DEFAULT,
     //                     tex_hello, NULL);
     // if (err) return err;
     // object_trans(obj_wall1, 0.0f, 2.5f, -8.0f);
     // object_scale(obj_wall1, wall_scale.x, wall_scale.y, wall_scale.z);
 
     // // Wall left
-    // err = object_create(&obj_wall2, "wall2", OBJ_DEFAULT, RICO_MESH_DEFAULT,
+    // err = object_create(&obj_wall2, "wall2", OBJ_STATIC, RICO_MESH_DEFAULT,
     //                     tex_hello, NULL);
     // if (err) return err;
     // object_trans(obj_wall2, -8.0f, 2.5f, 0.0f);
     // object_scale(obj_wall2, wall_scale.x, wall_scale.y, wall_scale.z);
 
     // // Wall back
-    // err = object_create(&obj_wall3, "wall3", OBJ_DEFAULT, RICO_MESH_DEFAULT,
+    // err = object_create(&obj_wall3, "wall3", OBJ_STATIC, RICO_MESH_DEFAULT,
     //                     tex_hello, NULL);
     // if (err) return err;
     // object_trans(obj_wall3, 0.0f, 2.5f, 8.0f);
@@ -239,7 +239,7 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
     // object_scale(obj_wall3, wall_scale.x, wall_scale.y, wall_scale.z);
 
     // // Wall right
-    // err = object_create(&obj_wall4, "wall4", OBJ_DEFAULT, RICO_MESH_DEFAULT,
+    // err = object_create(&obj_wall4, "wall4", OBJ_STATIC, RICO_MESH_DEFAULT,
     //                     tex_hello, NULL);
     // if (err) return err;
     // object_trans(obj_wall4, 8.0f, 2.5f, 0.0f);
@@ -247,7 +247,7 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
     // object_scale(obj_wall4, wall_scale.x, wall_scale.y, wall_scale.z);
 
     // // Wall five
-    // err = object_create(&obj_wall5, "wall5", OBJ_DEFAULT, RICO_MESH_DEFAULT,
+    // err = object_create(&obj_wall5, "wall5", OBJ_STATIC, RICO_MESH_DEFAULT,
     //                     tex_hello, NULL);
     // if (err) return err;
     // object_trans(obj_wall5, 4.0f, 2.5f, 0.0f);
@@ -260,7 +260,7 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
         for (; i < mesh_count; i++)
         {
             err = object_create(&arr_objects[i], mesh_name(meshes[i]),
-                                OBJ_DEFAULT, meshes[i], RICO_MATERIAL_DEFAULT,
+                                OBJ_STATIC, meshes[i], RICO_MATERIAL_DEFAULT,
                                 mesh_bbox(meshes[i]), true);
             if (err) return err;
 
@@ -272,7 +272,7 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
         // Create test object for each primitive
         i++;
         err = object_create(&arr_objects[i], mesh_name(PRIM_SPHERE_MESH),
-                            OBJ_DEFAULT, PRIM_SPHERE_MESH,
+                            OBJ_STATIC, PRIM_SPHERE_MESH,
                             RICO_MATERIAL_DEFAULT, mesh_bbox(PRIM_SPHERE_MESH),
                             true);
         if (err) return err;
@@ -446,7 +446,7 @@ void glref_render(struct camera *camera)
     //--------------------------------------------------------------------------
     // Render objects
     //--------------------------------------------------------------------------
-    object_render_type(OBJ_DEFAULT, prog_default, camera);
+    object_render_type(OBJ_STATIC, prog_default, camera);
     object_render_type(OBJ_STRING_WORLD, prog_default, camera);
 
     //--------------------------------------------------------------------------

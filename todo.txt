@@ -1,17 +1,190 @@
-2016-11-08
-Custom file format for objects
+================================================================================
+// Logs
+================================================================================
+[ ] Fix "Object" [ obj][init]
+[ ] Fix "String" [strg][init]
 
-rico_uid
-    name    [handle]    (string hash, internationalization)
+================================================================================
+// Editor
+================================================================================
 
-object
-    uid
-    mesh        [handle]    (multiple?)
-    texture     [handle]    (multiple?)
-    pos, rot, scale
+Objects
+-------
+[ ] Place lights
+[ ] Render light boundaries (position spheres; direction rays/cones)
+[ ] Better translation / object placement
+[ ] Snap to grid
+[ ] Snap to object (per-object type, relative "snap points")
+[ ] Directly edit properties (textbox)
+[ ] Set texture
+[ ] Set mesh
+[-] Rotate around arbitrary point
 
-rico_texture
-    uid
+================================================================================
+// Engine
+================================================================================
 
-rico_mesh
-    uid
+Collision
+---------
+[ ] Ray
+[ ] OBB
+[ ] Sphere
+[-] Ellipsoid
+[-] BVH
+[-] Mesh
+
+Shaders
+-------
+[ ] Refactor program_bind() / program_uniform_set() out of object_render()
+
+Lighting
+--------
+[ ] Light objects (OBJ_LIGHT)
+[ ] Multiple lights (how to differentiate types in shader?)
+[ ] Shadows
+
+Animation
+---------
+[ ] Global translate, rotate
+[ ] Change texture (instant, fade?)
+[ ] Change mesh
+[ ] Change type-specific "properties" (e.g. toggle light on/off)
+[-] Global scale?
+[-] Deform mesh
+
+Foliage
+-------
+[ ] Billboard ground foliage (e.g. 2-plane grass) normal should point straight
+    up for proper lighting calculations. /watch?v=BJDQNjlEO0I
+
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+| SPOILER ALERT - SPOILER ALERT - SPOILER ALERT - SPOILER ALERT - SPOILER ALERT
+|
+|             S P O I L E R S   B E L O W   T H I S   S E C T I O N
+|
+| SPOILER ALERT - SPOILER ALERT - SPOILER ALERT - SPOILER ALERT - SPOILER ALERT
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+| SPOILER ALERT - SPOILER ALERT - SPOILER ALERT - SPOILER ALERT - SPOILER ALERT
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+================================================================================
+// Gameplay
+================================================================================
+
+Animation
+---------
+[ ] Global translate, rotate
+[ ] Change texture (instant, fade?)
+[ ] Change mesh
+[ ] Change type-specific "properties" (e.g. toggle light on/off)
+[-] Global scale?
+[-] Deform mesh
+
+================================================================================
+
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+| SPOILER ALERT - SPOILER ALERT - SPOILER ALERT - SPOILER ALERT - SPOILER ALERT
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+| SPOILER ALERT - SPOILER ALERT - SPOILER ALERT - SPOILER ALERT - SPOILER ALERT
+|
+|             S P O I L E R S   A B O V E   T H I S   S E C T I O N
+|
+| SPOILER ALERT - SPOILER ALERT - SPOILER ALERT - SPOILER ALERT - SPOILER ALERT
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

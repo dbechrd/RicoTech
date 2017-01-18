@@ -32,7 +32,7 @@ int pool_init(const char *name, u32 count, u32 size, u32 static_count,
     }
 
 #ifdef RICO_DEBUG_POOL
-    printf("[Pool %d][%s] Initialized\n", pool.uid.uid, pool.uid.name);
+    printf("[pool][init] %s\n", pool.uid.name);
 #endif
 
     *_pool = pool;
@@ -45,8 +45,8 @@ int pool_alloc(struct rico_pool *pool, u32 *_handle)
     if (pool->active == pool->count)
     {
 #ifdef RICO_DEBUG_POOL
-        printf("[Pool %d][%s] Out of memory. Exceeded max elements [%d].",
-                pool->uid.uid, pool->uid.name, pool->count);
+        printf("[pool][ ERR] %s out of memory. Exceeded pool size [%d].\n",
+               pool->uid.name, pool->count);
         pool_print_handles(pool);
 #endif
 
@@ -57,8 +57,8 @@ int pool_alloc(struct rico_pool *pool, u32 *_handle)
     pool->active++;
 
 #ifdef RICO_DEBUG_POOL
-    printf("[Pool %d][%s] Alloc handle: %d", pool->uid.uid, pool->uid.name,
-           *_handle);
+    printf("[pool][aloc] %s\n", pool->uid.name);
+    printf("             // handle: %d\n", *_handle);
     pool_print_handles(pool);
 #endif
 
@@ -97,8 +97,8 @@ int pool_free(struct rico_pool *pool, u32 handle)
     }
 
 #ifdef RICO_DEBUG_POOL
-    printf("[Pool %d][%s] Free handle: %d", pool->uid.uid, pool->uid.name,
-           handle);
+    printf("[pool][free] %s\n", pool->uid.name);
+    printf("             // handle: %d\n", handle);
     pool_print_handles(pool);
 #endif
 
@@ -223,7 +223,7 @@ int pool_deserialize_0(void *_handle, const struct rico_file *file)
     }
 
 #ifdef RICO_DEBUG_POOL
-    printf("[Pool %d][%s] Loaded from file.\n", pool->uid.uid, pool->uid.name);
+    printf("[pool][load] '%s' loaded from file.\n", pool->uid.name);
     pool_print_handles(pool);
 #endif
 
@@ -238,7 +238,7 @@ static void pool_print_handles(struct rico_pool *pool)
     //     return;
     // }
 
-    printf(" Handles: ");
+    printf("             // status: ");
 
     if (pool->active == 0)
     {

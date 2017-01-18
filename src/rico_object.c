@@ -7,6 +7,7 @@
 #include "rico_font.h"
 #include "rico_collision.h"
 #include "rico_material.h"
+#include "rico_light.h"
 #include <malloc.h>
 
 struct rico_object {
@@ -292,9 +293,9 @@ static void update_transform(struct rico_object *obj)
     mat4_rotx(&obj->transform_inverse, -obj->rot.x);
     mat4_translate(&obj->transform_inverse, &trans_inv);
 
-    struct mat4 mm = obj->transform;
-    mat4_mul(&mm, &obj->transform_inverse);
-    RICO_ASSERT(mat4_equals(&mm, &MAT4_IDENT));
+    //struct mat4 mm = obj->transform;
+    //mat4_mul(&mm, &obj->transform_inverse);
+    //RICO_ASSERT(mat4_equals(&mm, &MAT4_IDENT));
 }
 
 const struct mat4 *object_transform_get(u32 handle)
@@ -345,89 +346,17 @@ u32 object_collide_ray_type(enum rico_obj_type type, const struct ray *ray,
 }
 
 static void render(const struct rico_object *obj,
-                   const struct program_default *prog,
                    const struct camera *camera)
 {
-    if (obj->type == OBJ_DEFAULT)
+    if (obj->type == OBJ_STATIC)
     {
-        glPolygonMode(GL_FRONT_AND_BACK, cam_player.fill_mode);
+        glPolygonMode(GL_FRONT_AND_BACK, camera->fill_mode);
     }
     else
     {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
-    glUseProgram(prog->prog_id);
 
-    // Model transform
-    struct mat4 proj_matrix = camera->proj_matrix;
-    struct mat4 view_matrix = camera->view_matrix;
-
-    // HACK: This only works when object is uniformly scaled on X/Y plane.
-    /* TODO: UV scaling in general only works when object is uniformly
-             scaled. Maybe I should only allow textured objects to be
-             uniformly scaled? */
-    // UV-coord scale
-    float scale_u = obj->scale.x;
-    float scale_v = obj->scale.y;
-
-    // TODO: Get Lighting info from somewhere. This isn't part of the object.
-    struct vec3 light_position = (struct vec3){ 0.0f, 3.0f, 0.0f };
-    struct vec3 light_ambient  = (struct vec3){ 0.09f, 0.08f, 0.06f };
-    struct vec3 light_diffuse  = (struct vec3){ 0.9f, 0.8f, 0.6f };
-    struct vec3 light_specular = (struct vec3){ 0.7f, 0.7f, 0.2f };
-
-    float light_kc = 1.0f;
-    float light_kl = 0.05f;
-    float light_kq = 0.001f;
-
-    if (obj->type == OBJ_STRING_WORLD)
-    {
-        scale_u = 1.0f;
-        scale_v = 1.0f;
-    }
-    else if (obj->type == OBJ_STRING_SCREEN)
-    {
-        // TODO: Create dedicated shader for OBJ_STRING_SCREEN instead of using
-        //       all of these hacks to disable scaling, projection, lighting...
-        proj_matrix = MAT4_IDENT;
-        view_matrix = MAT4_IDENT;
-
-        scale_u = 1.0f;
-        scale_v = 1.0f;
-
-        light_position = VEC3_ZERO;
-        light_ambient  = VEC3_UNIT;
-        light_diffuse  = VEC3_UNIT;
-        light_specular = VEC3_UNIT;
-
-        light_kc = 1.0f;
-        light_kl = 0.0f;
-        light_kq = 0.0f;
-    }
-
-    glUniformMatrix4fv(prog->u_proj, 1, GL_TRUE, proj_matrix.a);
-    glUniformMatrix4fv(prog->u_view, 1, GL_TRUE, view_matrix.a);
-    glUniformMatrix4fv(prog->u_model, 1, GL_TRUE, obj->transform.a);
-
-    glUniform2f(prog->u_scale_uv, scale_u, scale_v);
-    glUniform3fv(prog->u_view_pos, 1, (const GLfloat *)&camera->position);
-
-    // Model material
-    // Note: We don't have to do this every time as long as we make sure
-    //       the correct textures are bound before each draw to the texture
-    //       index assumed when the program was initialized.
-    glUniform1i(prog->u_material_diff, 0);
-    glUniform1i(prog->u_material_spec, 1);
-    glUniform1f(prog->u_material_shiny, material_shiny_get(obj->material));
-
-    // Lighting
-    glUniform3fv(prog->u_light_position, 1, (const GLfloat *)&light_position);
-    glUniform3fv(prog->u_light_ambient,  1, (const GLfloat *)&light_ambient);
-    glUniform3fv(prog->u_light_diffuse,  1, (const GLfloat *)&light_diffuse);
-    glUniform3fv(prog->u_light_specular, 1, (const GLfloat *)&light_specular);
-    glUniform1f(prog->u_light_kc, light_kc);
-    glUniform1f(prog->u_light_kl, light_kl);
-    glUniform1f(prog->u_light_kq, light_kq);
 
     // Bind material and render mesh
     material_bind(obj->material);
@@ -435,31 +364,108 @@ static void render(const struct rico_object *obj,
 
     // Clean up
     material_unbind(obj->material);
-    glUseProgram(0);
-
-    // Render bbox
-    bbox_render(&(obj->bbox), &obj->transform);
-}
-
-void object_render(u32 handle, const struct program_default *prog,
-                   const struct camera *camera)
-{
-    render(pool_read(objects, handle), prog, camera);
 }
 
 void object_render_type(enum rico_obj_type type,
                         const struct program_default *prog,
                         const struct camera *camera)
 {
+    glUseProgram(prog->prog_id);
+
+    // Model transform
+    struct mat4 proj_matrix = camera->proj_matrix;
+    struct mat4 view_matrix = camera->view_matrix;
+
+    struct light_point light;
+    light.color    = (struct vec3){ 1.0f, 0.9f, 0.6f };
+    light.position = (struct vec3){ 0.0f, 3.0f, 0.0f };
+    light.ambient  = (struct vec3){ 0.07f, 0.07f, 0.09f };
+    light.kc = 1.0f;
+    light.kl = 0.05f;
+    light.kq = 0.001f;
+
+    if (type == OBJ_STRING_SCREEN)
+    {
+        // TODO: Create dedicated shader for OBJ_STRING_SCREEN instead of using
+        //       all of these hacks to disable scaling, projection, lighting...
+        proj_matrix = MAT4_IDENT;
+        view_matrix = MAT4_IDENT;
+
+        light.color   = VEC3_UNIT;
+        light.ambient = VEC3_UNIT;
+
+        light.kc = 1.0f;
+        light.kl = 0.0f;
+        light.kq = 0.0f;
+    }
+
+    glUniformMatrix4fv(prog->u_proj, 1, GL_TRUE, proj_matrix.a);
+    glUniformMatrix4fv(prog->u_view, 1, GL_TRUE, view_matrix.a);
+    glUniform3fv(prog->u_view_pos, 1, (const GLfloat *)&camera->position);
+
+    // Material textures
+    // Note: We don't have to do this every time as long as we make sure
+    //       the correct textures are bound before each draw to the texture
+    //       index assumed when the program was initialized.
+    glUniform1i(prog->u_material_diff, 0);
+    glUniform1i(prog->u_material_spec, 1);
+
+    // Lighting
+    glUniform3fv(prog->u_light_position, 1, (const GLfloat *)&light.position);
+    glUniform3fv(prog->u_light_ambient,  1, (const GLfloat *)&light.ambient);
+    glUniform3fv(prog->u_light_color,    1, (const GLfloat *)&light.color);
+    glUniform1f(prog->u_light_kc, light.kc);
+    glUniform1f(prog->u_light_kl, light.kl);
+    glUniform1f(prog->u_light_kq, light.kq);
+
+    bool scale_is_one = false;
+
     struct rico_object *obj;
     for (u32 i = 0; i < objects->active; ++i)
     {
         obj = pool_read(objects, objects->handles[i]);
         if (obj->type == type)
         {
-            render(obj, prog, camera);
+            glUseProgram(prog->prog_id);
+
+            ////////////////////////////////////////////////////////////////////
+            // Set object-specific uniform values
+            ////////////////////////////////////////////////////////////////////
+
+            // UV-coord scale
+            /* HACK: This only works when object is uniformly scaled on X/Y
+                     plane. */
+            /* TODO: UV scaling in general only works when object is uniformly
+                     scaled. Maybe I should only allow textured objects to be
+                     uniformly scaled? */
+            if (!scale_is_one &&
+                (type == OBJ_STRING_WORLD || type == OBJ_STRING_SCREEN))
+            {
+                glUniform2f(prog->u_scale_uv, 1.0f, 1.0f);
+                scale_is_one = true;
+            }
+            else
+            {
+                glUniform2f(prog->u_scale_uv, obj->scale.x, obj->scale.y);
+                scale_is_one = false;
+            }
+
+            // Model matrix
+            glUniformMatrix4fv(prog->u_model, 1, GL_TRUE, obj->transform.a);
+
+            // Model material shiny
+            glUniform1f(prog->u_material_shiny,
+                        material_shiny_get(obj->material));
+
+            // Render object
+            render(obj, camera);
+
+            // Render bbox
+            bbox_render(&obj->bbox, &obj->transform);
         }
     }
+
+    glUseProgram(0);
 }
 
 int object_print(u32 handle, enum rico_string_slot slot)
@@ -476,7 +482,7 @@ int object_print(u32 handle, enum rico_string_slot slot)
 #ifdef RICO_DEBUG_OBJECT
     if (!handle) {
         printf("[Object 0] NULL\n");
-        return;
+        return err;
     }
 
     struct rico_object *obj = pool_read(objects, handle);

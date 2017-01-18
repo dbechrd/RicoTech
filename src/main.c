@@ -298,7 +298,7 @@ static int rico_init_pools()
 static int rico_init_fonts()
 {
     enum rico_error err;
-    printf("Loading fonts\n");
+    printf("\n[MAIN][load] Loading fonts\n");
 
     // TODO: Use static slots to allocate default resources
     err = font_init("font/courier_new.bff", &RICO_FONT_DEFAULT);
@@ -308,7 +308,7 @@ static int rico_init_fonts()
 static int rico_init_textures()
 {
     enum rico_error err;
-    printf("Loading textures\n");
+    printf("\n[MAIN][load] Loading textures\n");
 
     // TODO: Use static slots to allocate default resources
     err = texture_load_file("TEXTURE_DEFAULT_DIFF", GL_TEXTURE_2D,
@@ -325,7 +325,7 @@ static int rico_init_textures()
 static int rico_init_meshes()
 {
     enum rico_error err;
-    printf("Loading meshes\n");
+    printf("\n[MAIN][load] Loading meshes\n");
 
     //--------------------------------------------------------------------------
     // Create default mesh (white rect)
@@ -378,7 +378,7 @@ static int rico_init_meshes()
     if (err) return err;
 
     u32 ticks2 = SDL_GetTicks();
-    printf("Meshes loaded in: %d\n", ticks2 - ticks);
+    printf("[perf][mesh] Meshes loaded in: %d ticks\n", ticks2 - ticks);
 
     return err;
 }
@@ -889,6 +889,8 @@ int mymain()
                     else if (windowEvent.key.keysym.sym == SDLK_2)
                     {
                         fps_render = !fps_render;
+                        if (!fps_render)
+                            string_free(STR_SLOT_FPS);
                     }
                     else if (windowEvent.key.keysym.sym == SDLK_7)
                     {
@@ -975,7 +977,7 @@ int mymain()
         ////////////////////////////////////////////////////////////////////////
         // Update FPS counter
         ////////////////////////////////////////////////////////////////////////
-        double smooth = 0.99; // larger=more smoothing
+        static const double smooth = 0.99; // larger=more smoothing
         frame_time = (frame_time * smooth) + (double)dt * (1.0 - smooth);
 
         if (fps_render && time - fps_last_render > fps_render_delta)
@@ -984,12 +986,10 @@ int mymain()
             sprintf(buf, "FPS: %.lf [%.2lf ms]", 1000.0 / frame_time,
                     frame_time);
             enum rico_error err = string_init("STR_FPS", STR_SLOT_FPS,
-                                              SCREEN_W - 240, 0,
-                                              COLOR_DARK_RED_HIGHLIGHT,
-                                              fps_render_delta + 50,
-                                              RICO_FONT_DEFAULT, buf);
+                                                SCREEN_W - 240, 0,
+                                                COLOR_DARK_RED_HIGHLIGHT, 0,
+                                                RICO_FONT_DEFAULT, buf);
             if (err) goto cleanup;
-
             fps_last_render = time;
         }
 
@@ -1037,7 +1037,7 @@ int mymain()
         struct ray cam_fwd;
 
         camera_fwd(&cam_fwd, &cam_player);
-        u32 collided = object_collide_ray_type(OBJ_DEFAULT, &cam_fwd,
+        u32 collided = object_collide_ray_type(OBJ_STATIC, &cam_fwd,
                                                COLLIDE_COUNT, obj_collided,
                                                dist, &idx_first);
         if (lmb_down)
@@ -1082,6 +1082,7 @@ int mymain()
     // Cleanup
     //====================================================================
 cleanup:
+    printf("\n[MAIN][term] Cleaning up\n");
     free_glref();
 
     SDL_GL_DeleteContext(context);

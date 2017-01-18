@@ -31,11 +31,12 @@ void uid_init(struct rico_uid *_uid, enum rico_uid_type type, const char *name,
     _uid->serialize = serialize;
 
 #ifdef RICO_DEBUG_UID
-    printf("[UID %s %d][%s] Init", rico_uid_type_string[_uid->type],
-           _uid->uid, _uid->name);
+    printf("[ uid][init] %s\n", rico_uid_type_string[_uid->type]);
+    printf("             //  uid: %d\n", _uid->uid);
+    printf("             // name: %s", _uid->name);
     if (strlen(name) > sizeof(_uid->name))
     {
-        printf(" (Truncated)\n");
+        printf(" (truncated)\n");
     }
     else
     {

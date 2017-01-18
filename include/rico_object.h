@@ -9,7 +9,7 @@ struct program_default;
 
 #define RICO_OBJ_TYPES(f)   \
     f(OBJ_NULL)             \
-    f(OBJ_DEFAULT)          \
+    f(OBJ_STATIC)          \
     f(OBJ_STRING_WORLD)     \
     f(OBJ_STRING_SCREEN)    \
     f(OBJ_ALL)
@@ -53,8 +53,6 @@ const struct mat4 *object_transform_get(u32 handle);
 bool object_collide_ray(u32 handle, const struct ray *ray, float *_dist);
 u32 object_collide_ray_type(enum rico_obj_type type, const struct ray *ray,
                             u32 count, u32 *_handle, float *_dist, u32 *_first);
-void object_render(u32 handle, const struct program_default *prog,
-                   const struct camera *camera);
 void object_render_type(enum rico_obj_type type,
                         const struct program_default *prog,
                         const struct camera *camera);

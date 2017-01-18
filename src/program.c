@@ -100,15 +100,12 @@ static inline void program_default_get_locations(struct program_default *p)
         program_get_uniform_location(p->prog_id, "u_material.spec");
     p->u_material_shiny =
         program_get_uniform_location(p->prog_id, "u_material.shiny");
-
     p->u_light_position =
         program_get_uniform_location(p->prog_id, "u_light.position");
     p->u_light_ambient =
         program_get_uniform_location(p->prog_id, "u_light.ambient");
-    p->u_light_diffuse =
-        program_get_uniform_location(p->prog_id, "u_light.diffuse");
-    p->u_light_specular =
-        program_get_uniform_location(p->prog_id, "u_light.specular");
+    p->u_light_color =
+        program_get_uniform_location(p->prog_id, "u_light.color");
     p->u_light_kc =
         program_get_uniform_location(p->prog_id, "u_light.kc");
     p->u_light_kl =

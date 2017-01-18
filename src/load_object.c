@@ -86,7 +86,7 @@ int load_obj_file(const char *filename, u32 *_meshes, u32 *_mesh_count)
     char *buffer;
     char *tok;
 
-    printf("Loading %s\n", filename);
+    printf("\n[ obj][load] %s\n", filename);
     err = file_contents(filename, &length, &buffer);
     if (err) goto cleanup;
 

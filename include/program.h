@@ -35,8 +35,7 @@ struct program_default {
 
     GLint u_light_position; // vec3
     GLint u_light_ambient;  // vec3
-    GLint u_light_diffuse;  // vec3
-    GLint u_light_specular; // vec3
+    GLint u_light_color;    // vec3
     GLint u_light_kc;       // float
     GLint u_light_kl;       // float
     GLint u_light_kq;       // float

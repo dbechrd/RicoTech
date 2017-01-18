@@ -6,15 +6,15 @@
 #include <GL/gl3w.h>
 #include <stdlib.h>
 
-#define BFG_RS_NONE  0x0      // Blend flags
+#define BFG_RS_NONE  0x0  // Blend flags
 #define BFG_RS_ALPHA 0x1
 #define BFG_RS_RGB   0x2
 #define BFG_RS_RGBA  0x4
 
-#define BFG_MAXSTRING 255     // Maximum string length
+#define BFG_MAXSTRING 255  // Maximum string length
 
-#define WIDTH_DATA_OFFSET  20 // Offset to width data with BFF file
-#define MAP_DATA_OFFSET   276 // Offset to texture image data with BFF file
+#define WIDTH_DATA_OFFSET  20  // Offset to width data with BFF file
+#define MAP_DATA_OFFSET   276  // Offset to texture image data with BFF file
 
 struct bff_header
 {
@@ -39,7 +39,7 @@ int font_init(const char *filename, u32 *_handle)
     *_handle = RICO_FONT_DEFAULT;
 
     #ifdef RICO_DEBUG_INFO
-        printf("[Font] Creating %s\n", filename);
+        printf("[font][init] %s\n", filename);
     #endif
 
     err = pool_alloc(fonts, _handle);

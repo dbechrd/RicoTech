@@ -12,8 +12,7 @@ struct light {
 
     // Color
     vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
+    vec3 color;
 
     // Attenuation
     float kc;  // Constant
@@ -51,7 +50,7 @@ void main()
     float light_dist = length(light_vec);
     vec3 light_dir = normalize(light_vec);
     float diff = max(dot(norm, light_dir), 0.0);
-    vec3 diffuse = u_light.diffuse * mat_diffuse * diff;
+    vec3 diffuse = u_light.color * mat_diffuse * diff;
 
     vec3 specular;
     if (diff > 0.0)
@@ -67,7 +66,9 @@ void main()
         vec3 halfway = normalize(light_dir + eye_dir);
         float spec = pow(max(dot(norm, halfway), 0.0), u_material.shiny * 128);
 
-        specular = u_light.specular * mat_specular * spec;
+        // Light decides specular color? How to handle metallic reflections?
+        specular = u_light.color * mat_specular * spec;
+        // specular = mat_specular * spec;
     }
     else
     {
@@ -78,6 +79,10 @@ void main()
                                u_light.kl * light_dist +
                                u_light.kq * (light_dist * light_dist));
 
+    // Ambient based on distance from light?
     color.xyz = (ambient + diffuse + specular) * attenuation;
-    color.a = 1.0; //texel_diffuse.a;
+    // Ambient constant
+    //color.xyz = ambient + (diffuse + specular) * attenuation;
+
+    color.a = 1.0 + (vtx.normal.x * 0.0000001); //texel_diffuse.a;
 }

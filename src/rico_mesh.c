@@ -32,6 +32,11 @@ int mesh_request(u32 handle)
 {
     struct rico_mesh *mesh = pool_read(&meshes, handle);
     mesh->ref_count++;
+
+#ifdef RICO_DEBUG_MESH
+    printf("[mesh][++ %d] %s\n", mesh->ref_count, mesh->uid.name);
+#endif
+
     return handle;
 }
 
@@ -40,7 +45,8 @@ int mesh_load(const char *name, u32 vertex_count,
               const GLuint *element_data, GLenum hint, u32 *_handle)
 {
 #ifdef RICO_DEBUG_MESH
-    printf("[Mesh] %s\nVertices: %d\n", name, vertex_count);
+    printf("[mesh][init] %s\n", name);
+    printf("             // vertices: %d\n", vertex_count);
 #endif
 
     enum rico_error err;
@@ -127,15 +133,18 @@ static int build_mesh(struct rico_mesh *mesh, u32 vertex_count,
 void mesh_free(u32 handle)
 {
     struct rico_mesh *mesh = pool_read(&meshes, handle);
-
+    mesh->ref_count--;
 
 #ifdef RICO_DEBUG_MESH
-    printf("[Mesh] Free %s\n", mesh->uid.name);
+    printf("[mesh][-- %d] %s\n", mesh->ref_count, mesh->uid.name);
 #endif
 
-    mesh->ref_count--;
     if (mesh->ref_count > 0)
         return;
+
+#ifdef RICO_DEBUG_MESH
+    printf("[mesh][free] %s\n", mesh->uid.name);
+#endif
 
     bbox_free_mesh(&mesh->bbox);
 

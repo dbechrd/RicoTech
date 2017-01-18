@@ -85,9 +85,9 @@ int string_init(const char *name, enum rico_string_slot slot, u32 x, u32 y,
 
 int string_free(u32 handle)
 {
-    // Preserve static string slots
-    if (handle < STR_SLOT_COUNT)
-        return SUCCESS;
+    // // Preserve static string slots
+    // if (handle < STR_SLOT_COUNT)
+    //     return SUCCESS;
 
     enum rico_error err;
 
@@ -109,25 +109,25 @@ int string_update(u32 dt)
     enum rico_error err;
 
     struct rico_string *str;
-    for (u32 i = strings.active - 1;; --i)
+    for (u32 i = 0; i < strings.active; ++i)
     {
         str = pool_read(&strings, strings.handles[i]);
-
-        if (str->uid.uid != UID_NULL && str->lifespan > 0)
+        if (str->uid.uid == UID_NULL || strings.handles[i] < STR_SLOT_COUNT ||
+            str->lifespan == 0)
         {
-            if (str->lifespan <= dt)
-            {
-                // Free strings with expired lifespans
-                err = string_free(strings.handles[i]);
-                if (err) return err;
-            }
-            else
-            {
-                str->lifespan -= dt;
-            }
+            continue;
         }
 
-        if (!i) break;
+        // Free strings with expired lifespans
+        if (str->lifespan <= dt)
+        {
+            err = string_free(strings.handles[i]);
+            if (err) return err;
+        }
+        else
+        {
+            str->lifespan -= dt;
+        }
     }
 
     return SUCCESS;
