@@ -39,7 +39,7 @@ int font_init(const char *filename, u32 *_handle)
     *_handle = RICO_FONT_DEFAULT;
 
     #ifdef RICO_DEBUG_INFO
-        printf("[font][init] %s\n", filename);
+        printf("[font][init] filename=%s\n", filename);
     #endif
 
     err = pool_alloc(fonts, _handle);

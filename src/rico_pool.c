@@ -32,7 +32,7 @@ int pool_init(const char *name, u32 count, u32 size, u32 static_count,
     }
 
 #ifdef RICO_DEBUG_POOL
-    printf("[pool][init] %s\n", pool.uid.name);
+    printf("[pool][init] name=%s\n", pool.uid.name);
 #endif
 
     *_pool = pool;
@@ -57,8 +57,7 @@ int pool_alloc(struct rico_pool *pool, u32 *_handle)
     pool->active++;
 
 #ifdef RICO_DEBUG_POOL
-    printf("[pool][aloc] %s\n", pool->uid.name);
-    printf("             // handle: %d\n", *_handle);
+    printf("[pool][aloc] name=%s handle=%d\n", pool->uid.name, *_handle);
     pool_print_handles(pool);
 #endif
 
@@ -97,8 +96,7 @@ int pool_free(struct rico_pool *pool, u32 handle)
     }
 
 #ifdef RICO_DEBUG_POOL
-    printf("[pool][free] %s\n", pool->uid.name);
-    printf("             // handle: %d\n", handle);
+    printf("[pool][free] name=%s handle=%d\n", pool->uid.name, handle);
     pool_print_handles(pool);
 #endif
 
@@ -223,7 +221,8 @@ int pool_deserialize_0(void *_handle, const struct rico_file *file)
     }
 
 #ifdef RICO_DEBUG_POOL
-    printf("[pool][load] '%s' loaded from file.\n", pool->uid.name);
+    printf("[pool][load] name=%s filename=%s\n", pool->uid.name,
+           file->filename);
     pool_print_handles(pool);
 #endif
 
@@ -238,7 +237,7 @@ static void pool_print_handles(struct rico_pool *pool)
     //     return;
     // }
 
-    printf("             // status: ");
+    printf(" status=");
 
     if (pool->active == 0)
     {

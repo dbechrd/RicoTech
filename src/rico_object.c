@@ -52,7 +52,7 @@ int object_create(u32 *_handle, const char *name, enum rico_obj_type type,
                   bool serialize)
 {
 #ifdef RICO_DEBUG_OBJECT
-    printf("[Object] Init %s\n", name);
+    printf("[ obj][init] name=%s\n", name);
 #endif
 
     enum rico_error err;
@@ -115,7 +115,7 @@ void object_free(u32 handle)
     struct rico_object *obj = pool_read(objects, handle);
 
 #ifdef RICO_DEBUG_INFO
-    printf("[Object] Free %s\n", obj->uid.name);
+    printf("[ obj][free] name=%s\n", obj->uid.name);
 #endif
 
     mesh_free(obj->mesh);
@@ -477,20 +477,6 @@ int object_print(u32 handle, enum rico_string_slot slot)
     err = string_init(rico_string_slot_string[slot], slot, 0, 26,
                       COLOR_GRAY_HIGHLIGHT, 0, RICO_FONT_DEFAULT, buf);
     if (err) goto cleanup;
-
-    // Print to stdout
-#ifdef RICO_DEBUG_OBJECT
-    if (!handle) {
-        printf("[Object 0] NULL\n");
-        return err;
-    }
-
-    struct rico_object *obj = pool_read(objects, handle);
-    if (obj)
-        printf("[Object %d][uid %d] %s\n", handle, obj->uid.uid, obj->uid.name);
-#else
-    UNUSED(handle);
-#endif
 
 cleanup:
     free(buf);

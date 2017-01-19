@@ -32,7 +32,7 @@ int material_request(u32 handle)
     material->ref_count++;
 
 #ifdef RICO_DEBUG_MATERIAL
-    printf("[ mtl][++ %d] %s\n", material->ref_count, material->uid.name);
+    printf("[ mtl][++ %d] name=%s\n", material->ref_count, material->uid.name);
 #endif
 
     return handle;
@@ -42,7 +42,7 @@ int material_init(const char *name, u32 tex_diffuse, u32 tex_specular,
                   float shiny, u32 *_handle)
 {
 #ifdef RICO_DEBUG_MATERIAL
-    printf("[ mtl][init] %s\n", name);
+    printf("[ mtl][init] name=%s\n", name);
 #endif
 
     enum rico_error err;
@@ -67,14 +67,14 @@ void material_free(u32 handle)
     material->ref_count--;
 
 #ifdef RICO_DEBUG_MATERIAL
-    printf("[ mtl][-- %d] %s\n", material->ref_count, material->uid.name);
+    printf("[ mtl][-- %d] name=%s\n", material->ref_count, material->uid.name);
 #endif
 
     if (material->ref_count > 0)
         return;
 
 #ifdef RICO_DEBUG_MATERIAL
-    printf("[ mtl][free] %s\n", material->uid.name);
+    printf("[ mtl][free] name=%s\n", material->uid.name);
 #endif
 
     texture_free(material->tex_diffuse);

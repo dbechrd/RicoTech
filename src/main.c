@@ -298,7 +298,6 @@ static int rico_init_pools()
 static int rico_init_fonts()
 {
     enum rico_error err;
-    printf("\n[MAIN][load] Loading fonts\n");
 
     // TODO: Use static slots to allocate default resources
     err = font_init("font/courier_new.bff", &RICO_FONT_DEFAULT);
@@ -308,7 +307,6 @@ static int rico_init_fonts()
 static int rico_init_textures()
 {
     enum rico_error err;
-    printf("\n[MAIN][load] Loading textures\n");
 
     // TODO: Use static slots to allocate default resources
     err = texture_load_file("TEXTURE_DEFAULT_DIFF", GL_TEXTURE_2D,
@@ -325,7 +323,6 @@ static int rico_init_textures()
 static int rico_init_meshes()
 {
     enum rico_error err;
-    printf("\n[MAIN][load] Loading meshes\n");
 
     //--------------------------------------------------------------------------
     // Create default mesh (white rect)
@@ -387,6 +384,16 @@ static int rico_init()
 {
     enum rico_error err;
 
+    printf("------------------------------------------------------------\n");
+    printf("#         ______            _______        _               #\n");
+    printf("#         |  __ \\ O        |__   __|      | |              #\n");
+    printf("#         | |__| |_  ___ ___  | | ___  ___| |__            #\n");
+    printf("#         |  _  /| |/ __/ _ \\ | |/ _ \\/ __| '_ \\           #\n");
+    printf("#         | | \\ \\| | |_| (_) || |  __/ |__| | | |          #\n");
+    printf("#         |_|  \\_\\_|\\___\\___/ |_|\\___|\\___|_| |_|          #\n");
+    printf("#                                                          #\n");
+    printf("#               Copyright 2017 Dan Bechard                 #\n");
+    printf("------------------------------------------------------------\n");
     init_stb();
     init_sdl();
     init_gl3w();
@@ -394,21 +401,39 @@ static int rico_init()
 
     rico_init_cereal();
 
+    printf("------------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing pools\n");
+    printf("------------------------------------------------------------\n");
     err = rico_init_pools();
     if (err) return err;
 
+    printf("------------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing fonts\n");
+    printf("------------------------------------------------------------\n");
     err = rico_init_fonts();
     if (err) return err;
 
+    printf("------------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing textures\n");
+    printf("------------------------------------------------------------\n");
     err = rico_init_textures();
     if (err) return err;
 
+    printf("------------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing meshes\n");
+    printf("------------------------------------------------------------\n");
     err = rico_init_meshes();
     if (err) return err;
 
+    printf("------------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing primitives\n");
+    printf("------------------------------------------------------------\n");
     prim_init(PRIM_SEGMENT);
     prim_init(PRIM_RAY);
 
+    printf("------------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing game world\n");
+    printf("------------------------------------------------------------\n");
     err = init_glref(meshes, mesh_count);
     if (err) return err;
 
@@ -429,6 +454,9 @@ static int rico_init()
         if (err) return err;
     }
 
+    printf("------------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing camera\n");
+    printf("------------------------------------------------------------\n");
     camera_reset(&cam_player);
     return err;
 }
@@ -471,6 +499,10 @@ int mymain()
 {
     enum rico_error err = rico_init();
     if (err) return err;
+
+    printf("------------------------------------------------------------\n");
+    printf("[MAIN][  GO] Initialization complete. Starting game.\n");
+    printf("------------------------------------------------------------\n");
 
     //test_geom();
 
@@ -1078,11 +1110,13 @@ int mymain()
         SDL_GL_SwapWindow(window);
     }
 
-    //====================================================================
+    //==========================================================================
     // Cleanup
-    //====================================================================
+    //==========================================================================
 cleanup:
-    printf("\n[MAIN][term] Cleaning up\n");
+    printf("------------------------------------------------------------\n");
+    printf("[MAIN][term] Clean up\n");
+    printf("------------------------------------------------------------\n");
     free_glref();
 
     SDL_GL_DeleteContext(context);

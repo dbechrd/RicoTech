@@ -36,7 +36,7 @@ int chunk_init(u32 version, const char *name, u32 tex_count, u32 mat_count,
     chunk.objects = *objects;
 
 #ifdef RICO_DEBUG_CHUNK
-    printf("[chnk][init] %s\n", chunk.uid.name);
+    printf("[chnk][init] name=%s\n", chunk.uid.name);
     chunk_print(&chunk);
 #endif
 
@@ -66,7 +66,7 @@ int chunk_serialize_0(const void *handle, const struct rico_file *file)
     if (err) return err;
 
     #ifdef RICO_DEBUG_CHUNK
-        printf("[chnk][save] %s chunk saved to %s\n", chunk->uid.name,
+        printf("[chnk][save] name=%s filename=%s\n", chunk->uid.name,
                file->filename);
     #endif
 
@@ -100,7 +100,7 @@ int chunk_deserialize_0(void *_handle, const struct rico_file *file)
     object_pool_set_unsafe(&_chunk->objects);
 
 #ifdef RICO_DEBUG_CHUNK
-    printf("[chnk][load] %s loaded from %s\n", _chunk->uid.name,
+    printf("[chnk][load] name=%s filename=%s\n", _chunk->uid.name,
            file->filename);
 #endif
 
@@ -110,10 +110,8 @@ int chunk_deserialize_0(void *_handle, const struct rico_file *file)
 #ifdef RICO_DEBUG_CHUNK
 static void chunk_print(struct rico_chunk *chunk)
 {
-    printf("[chnk][show] %s\n", chunk->uid.name);
-    printf("             // Tex: %d\n", chunk->tex_count);
-    printf("             // Mat: %d\n", chunk->mat_count);
-    printf("             // Mesh: %d\n", chunk->mesh_count);
-    printf("             // Obj: %d\n", chunk->obj_count);
+    printf("[chnk][show] name=%s tex=%d mat=%d mesh=%d obj=%d\n",
+           chunk->uid.name, chunk->tex_count, chunk->mat_count,
+           chunk->mesh_count, chunk->obj_count);
 }
 #endif

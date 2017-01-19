@@ -29,7 +29,7 @@ int string_init(const char *name, enum rico_string_slot slot, u32 x, u32 y,
                 struct col4 color, u32 lifespan, u32 font, const char *text)
 {
 #ifdef RICO_DEBUG_STRING
-    printf("[String] Init %s\n", name);
+    printf("[strg][init] name=%s\n", name);
 #endif
 
     enum rico_error err;
@@ -90,12 +90,12 @@ int string_free(u32 handle)
     //     return SUCCESS;
 
     enum rico_error err;
+    struct rico_string *str = pool_read(&strings, handle);
 
 #ifdef RICO_DEBUG_STRING
-    printf("[String] Free %d\n", handle);
+    printf("[strg][free] name=%s\n", str->uid.name);
 #endif
 
-    struct rico_string *str = pool_read(&strings, handle);
     object_free(str->obj_handle);
     str->obj_handle = 0;
 
