@@ -6,22 +6,7 @@
 #include "const.h"
 #include "camera.h"
 #include "util.h"
-#include "glref.h"
-#include "rico_texture.h"
-#include "rico_material.h"
-#include "rico_mesh.h"
-#include "rico_object.h"
-#include "load_object.h"
-#include "rico_chunk.h"
-#include "rico_cereal.h"
-#include "rico_font.h"
-#include "primitives.h"
 #include "rico_state.h"
-#include "test_geom.h"
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_ONLY_TGA
@@ -59,77 +44,6 @@ static int init_sdl()
         fprintf(stderr, "SDL_Init error: %s\n", SDL_GetError());
         return RICO_ERROR(ERR_SDL_INIT);
     }
-
-/*
-SDL_GL_RED_SIZE  (defaults to 3)
-the minimum number of bits for the red channel of the color buffer;
-
-SDL_GL_GREEN_SIZE  (defaults to 3)
-the minimum number of bits for the green channel of the color buffer;
-
-SDL_GL_BLUE_SIZE  (defaults to 2)
-the minimum number of bits for the blue channel of the color buffer;
-
-SDL_GL_ALPHA_SIZE  (defaults to 0)
-the minimum number of bits for the alpha channel of the color buffer;
-
-SDL_GL_BUFFER_SIZE  (defaults to 0)
-the minimum number of bits for frame buffer size;
-
-SDL_GL_DOUBLEBUFFER  (defaults to on)
-whether the output is single or double buffered;
-
-SDL_GL_DEPTH_SIZE  (defaults to 16)
-the minimum number of bits in the depth buffer;
-
-SDL_GL_STENCIL_SIZE  (defaults to 0)
-the minimum number of bits in the stencil buffer;
-
-SDL_GL_ACCUM_RED_SIZE  (defaults to 0)
-the minimum number of bits for the red channel of the accumulation buffer;
-
-SDL_GL_ACCUM_GREEN_SIZE  (defaults to 0)
-the minimum number of bits for the green channel of the accumulation buffer;
-
-SDL_GL_ACCUM_BLUE_SIZE  (defaults to 0)
-the minimum number of bits for the blue channel of the accumulation buffer;
-
-SDL_GL_ACCUM_ALPHA_SIZE  (defaults to 0)
-the minimum number of bits for the alpha channel of the accumulation buffer;
-
-SDL_GL_STEREO  (defaults to off)
-whether the output is stereo 3D;
-
-SDL_GL_MULTISAMPLEBUFFERS  (defaults to 0)
-the number of buffers used for multisample anti-aliasing;
-
-SDL_GL_MULTISAMPLESAMPLES  (defaults to 0)
-the number of samples used around the pixel used for multisample anti-aliasing;
-
-SDL_GL_ACCELERATED_VISUAL  (defaults to allow either)
-set to 1 to require hardware acceleration, set to 0 to force software rendering;
-
-SDL_GL_CONTEXT_MAJOR_VERSION
-OpenGL context major version
-
-SDL_GL_CONTEXT_MINOR_VERSION
-OpenGL context minor version
-
-SDL_GL_CONTEXT_FLAGS  (defaults to 0)
-some combination of 0 or more of elements of the SDL_GLcontextFlag enumeration;
-
-SDL_GL_CONTEXT_PROFILE_MASK default is platform specific
-type of GL context (Core, Compatibility, ES). See SDL_GLprofile;
-
-SDL_GL_SHARE_WITH_CURRENT_CONTEXT  (defaults to 0)
-OpenGL context sharing;
-
-SDL_GL_FRAMEBUFFER_SRGB_CAPABLE  (defaults to 0 (>= SDL 2.0.1))
-requests sRGB capable visual;
-
-SDL_GL_CONTEXT_RELEASE_BEHAVIOR  (defaults to 1 (>= SDL 2.0.4))
-sets context the release behavior;
-*/
 
 #if _DEBUG
     err = sdl_gl_attrib(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
@@ -283,8 +197,6 @@ int mymain()
     printf("------------------------------------------------------------\n");
     printf("[MAIN][term] Clean up\n");
     printf("------------------------------------------------------------\n");
-    free_glref();
-
     SDL_GL_DeleteContext(context);
     SDL_DestroyWindow(window);
     SDL_Quit();
@@ -301,16 +213,3 @@ int main(int argc, char *argv[])
 
     return err;
 }
-
-///////////////////////////////////////////////////////////////////
-
-//TODO: Make buffer somewhere else.. idk where yet
-// static GLuint orig_make_buffer(const GLenum target, const void *buffer_data,
-//                                const GLsizei buffer_size)
-// {
-//     GLuint buffer = 0;
-//     glGenBuffers(1, &buffer);
-//     glBindBuffer(target, buffer);
-//     glBufferData(target, buffer_size, buffer_data, GL_STATIC_DRAW);
-//     return buffer;
-// }

@@ -102,6 +102,10 @@ int state_update(enum rico_state *_state)
 
         state_changed = true;
     }
+    *_state = state;
+
+    if (state == STATE_ENGINE_SHUTDOWN)
+        return SUCCESS;
 
     if (state_changed)
     {
@@ -221,7 +225,6 @@ int state_update(enum rico_state *_state)
         prim_draw_ray(&ray_cam, &MAT4_IDENT, COLOR_MAGENTA);
     }
 
-    *_state = state;
     return err;
 }
 
@@ -1177,11 +1180,6 @@ static int state_text_input()
     return SUCCESS;
 }
 
-static int state_engine_shutdown()
-{
-    return SUCCESS;
-}
-
 static void rico_init_cereal()
 {
     // Custom serialiers
@@ -1399,6 +1397,12 @@ static int state_engine_init()
 
     state = STATE_PLAY_EXPLORE;
     return err;
+}
+
+static int state_engine_shutdown()
+{
+    free_glref();
+    return SUCCESS;
 }
 
 void init_rico_engine()
