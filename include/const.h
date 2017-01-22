@@ -48,8 +48,8 @@
 #define M_2PI 6.28318530717958647692528676655900576
 #endif
 
-#define DEG_TO_RAD(deg) deg * M_PI / 180.0f
-#define RAD_TO_DEG(rad) rad * 180.0f / M_PI
+#define DEG_TO_RAD(deg) deg * M_PI / 180.0
+#define RAD_TO_DEG(rad) rad * 180.0 / M_PI
 
 #define M_SEVENTH_DEG 51.428571428571428571428571428571
 
@@ -152,6 +152,7 @@ enum rico_vbo {
     VBO_ELEMENT,
     VBO_COUNT
 };
+
 //------------------------------------------------------------------------------
 #define RICO_ERRORS(f)              \
     f(SUCCESS)                      \
@@ -185,18 +186,7 @@ extern const char *rico_error_string[];
 #else
     #define RICO_ERROR(err) err
 #endif
-//------------------------------------------------------------------------------
-#define RICO_EDIT_MODES(f)  \
-    f(EDIT_TRANSLATE)       \
-    f(EDIT_ROTATE)          \
-    f(EDIT_SCALE)           \
-    f(EDIT_TEXTURE)         \
-    f(EDIT_COUNT)
 
-enum rico_edit_mode {
-    RICO_EDIT_MODES(GEN_LIST)
-};
-extern const char *rico_edit_mode_string[];
 //------------------------------------------------------------------------------
 
 #endif // CONST_H

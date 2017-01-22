@@ -6,11 +6,12 @@ struct col4;
 struct rico_font;
 
 #define RICO_STRING_SLOTS(f)    \
-    f(STR_SLOT_DYNAMIC)         \
+    f(STR_SLOT_NULL)            \
     f(STR_SLOT_SELECTED_OBJ)    \
     f(STR_SLOT_EDIT_INFO)       \
     f(STR_SLOT_FPS)             \
-    f(STR_SLOT_COUNT)
+    f(STR_SLOT_COUNT)           \
+    f(STR_SLOT_DYNAMIC)
 
 enum rico_string_slot {
     RICO_STRING_SLOTS(GEN_LIST)

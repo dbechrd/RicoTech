@@ -187,7 +187,7 @@ void bbox_render_color(const struct bbox *box, const struct mat4 *model_matrix,
 
     // Draw
     glBindVertexArray(box->vao);
-    //glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
     glUseProgram(0);
 

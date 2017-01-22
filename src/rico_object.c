@@ -8,6 +8,7 @@
 #include "rico_collision.h"
 #include "rico_material.h"
 #include "rico_light.h"
+#include "rico_state.h"
 #include <malloc.h>
 
 struct rico_object {
@@ -418,8 +419,6 @@ void object_render_type(enum rico_obj_type type,
     glUniform1f(prog->u_light_kl, light.kl);
     glUniform1f(prog->u_light_kq, light.kq);
 
-    bool scale_is_one = false;
-
     struct rico_object *obj;
     for (u32 i = 0; i < objects->active; ++i)
     {
@@ -438,16 +437,13 @@ void object_render_type(enum rico_obj_type type,
             /* TODO: UV scaling in general only works when object is uniformly
                      scaled. Maybe I should only allow textured objects to be
                      uniformly scaled? */
-            if (!scale_is_one &&
-                (type == OBJ_STRING_WORLD || type == OBJ_STRING_SCREEN))
+            if (type == OBJ_STRING_WORLD || type == OBJ_STRING_SCREEN)
             {
                 glUniform2f(prog->u_scale_uv, 1.0f, 1.0f);
-                scale_is_one = true;
             }
             else
             {
                 glUniform2f(prog->u_scale_uv, obj->scale.x, obj->scale.y);
-                scale_is_one = false;
             }
 
             // Model matrix
@@ -460,8 +456,10 @@ void object_render_type(enum rico_obj_type type,
             // Render object
             render(obj, camera);
 
+            // TODO: Batch bounding boxes
             // Render bbox
-            bbox_render(&obj->bbox, &obj->transform);
+            if (state_is_edit())
+                bbox_render(&obj->bbox, &obj->transform);
         }
     }
 

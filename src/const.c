@@ -5,10 +5,6 @@ const char *rico_error_string[] = {
     RICO_ERRORS(GEN_STRING)
 };
 
-const char *rico_edit_mode_string[] = {
-    RICO_EDIT_MODES(GEN_STRING)
-};
-
 enum rico_error rico_error_print(enum rico_error err, const char *file,
                                  int line)
 {

@@ -22,12 +22,14 @@ static struct rico_pool strings;
 int rico_string_init(u32 pool_size)
 {
     return pool_init("Strings", pool_size, sizeof(struct rico_string),
-                     STR_SLOT_COUNT - 1, &strings);
+                     STR_SLOT_DYNAMIC, &strings);
 }
 
 int string_init(const char *name, enum rico_string_slot slot, u32 x, u32 y,
                 struct col4 color, u32 lifespan, u32 font, const char *text)
 {
+    RICO_ASSERT(slot < STR_SLOT_COUNT || lifespan > 0);
+
 #ifdef RICO_DEBUG_STRING
     printf("[strg][init] name=%s\n", name);
 #endif
@@ -61,7 +63,12 @@ int string_init(const char *name, enum rico_string_slot slot, u32 x, u32 y,
     }
 
     // Reuse existing static string objects
-    if (str->uid.uid == UID_NULL)
+    if (str->uid.uid != UID_NULL)
+    {
+        object_mesh_set(str->obj_handle, text_mesh, NULL);
+        object_material_set(str->obj_handle, text_material);
+    }
+    else
     {
         uid_init(&str->uid, RICO_UID_STRING, name, false);
 
@@ -69,11 +76,6 @@ int string_init(const char *name, enum rico_string_slot slot, u32 x, u32 y,
         err = object_create(&str->obj_handle, name, OBJ_STRING_SCREEN,
                             text_mesh, text_material, NULL, str->uid.serialize);
         if (err) return err;
-    }
-    else
-    {
-        object_mesh_set(str->obj_handle, text_mesh, NULL);
-        object_material_set(str->obj_handle, text_material);
     }
 
     str->lifespan = lifespan;
@@ -112,8 +114,7 @@ int string_update(u32 dt)
     for (u32 i = 0; i < strings.active; ++i)
     {
         str = pool_read(&strings, strings.handles[i]);
-        if (str->uid.uid == UID_NULL || strings.handles[i] < STR_SLOT_COUNT ||
-            str->lifespan == 0)
+        if (str->uid.uid == UID_NULL || str->lifespan == 0)
         {
             continue;
         }

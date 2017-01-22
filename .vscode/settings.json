@@ -7,7 +7,7 @@
     "files.exclude": {
         "include/GL/**": true,
         "include/nuklear/**": true,
-        "include/SDL/**": true,
+        //"include/SDL/**": true,
         "include/stb/**": true
     }
 }
