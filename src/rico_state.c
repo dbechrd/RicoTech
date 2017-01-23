@@ -70,7 +70,6 @@ static double frame_time = 0.0;
 static u32 fps_render_delta = 200;
 static bool fps_render = false;
 
-////////////////////////////////////////////////////////////////////////////////
 // Current state
 static enum rico_state state;
 
@@ -78,17 +77,42 @@ static enum rico_state state;
 typedef int (*state_handler)();
 state_handler state_handlers[STATE_COUNT] = { 0 };
 
-////////////////////////////////////////////////////////////////////////////////
-
 int state_update(enum rico_state *_state)
 {
     enum rico_error err;
 
-    enum rico_state start_state;
-    bool state_changed = false;
-
+    ////////////////////////////////////////////////////////////////////////
+    // Reset frame state
+    ////////////////////////////////////////////////////////////////////////
     mouse_dx = 0;
     mouse_dy = 0;
+
+    ////////////////////////////////////////////////////////////////////////
+    // Update time
+    ////////////////////////////////////////////////////////////////////////
+    u32 new_time = SDL_GetTicks();
+    u32 dt = new_time - time;
+    time = new_time;
+
+    // Update FPS counter
+    static const double smooth = 0.99; // larger=more smoothing
+    frame_time = (frame_time * smooth) + (double)dt * (1.0 - smooth);
+
+    if (fps_render && time - fps_last_render > fps_render_delta)
+    {
+        char buf[30] = { 0 };
+        sprintf(buf, "FPS: %.lf [%.2lf ms]", 1000.0 / frame_time, frame_time);
+        err = string_init("STR_FPS", STR_SLOT_FPS, SCREEN_W - 240, 0,
+                          COLOR_DARK_RED_HIGHLIGHT, 0, RICO_FONT_DEFAULT, buf);
+        if (err) return err;
+        fps_last_render = time;
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // Handle input & state changes
+    ////////////////////////////////////////////////////////////////////////
+    enum rico_state start_state;
+    bool state_changed = false;
 
     while (1)
     {
@@ -117,29 +141,6 @@ int state_update(enum rico_state *_state)
     }
 
     ////////////////////////////////////////////////////////////////////////
-    // Update time
-    ////////////////////////////////////////////////////////////////////////
-    u32 new_time = SDL_GetTicks();
-    u32 dt = new_time - time;
-    time = new_time;
-
-    ////////////////////////////////////////////////////////////////////////
-    // Update FPS counter
-    ////////////////////////////////////////////////////////////////////////
-    static const double smooth = 0.99; // larger=more smoothing
-    frame_time = (frame_time * smooth) + (double)dt * (1.0 - smooth);
-
-    if (fps_render && time - fps_last_render > fps_render_delta)
-    {
-        char buf[30] = { 0 };
-        sprintf(buf, "FPS: %.lf [%.2lf ms]", 1000.0 / frame_time, frame_time);
-        err = string_init("STR_FPS", STR_SLOT_FPS, SCREEN_W - 240, 0,
-                          COLOR_DARK_RED_HIGHLIGHT, 0, RICO_FONT_DEFAULT, buf);
-        if (err) return err;
-        fps_last_render = time;
-    }
-
-    ////////////////////////////////////////////////////////////////////////
     // Clear screen
     ////////////////////////////////////////////////////////////////////////
     glClearColor(0.1f, 0.1f, 0.3f, 1.0f);
@@ -152,6 +153,7 @@ int state_update(enum rico_state *_state)
     if (!vec3_equals(&view_trans_vel, &VEC3_ZERO))
     {
         struct vec3 view_delta = view_trans_vel;
+        vec3_normalize(&view_delta);
         vec3_scalef(&view_delta, dt / 1000.0f);
         vec3_scalef(&view_delta, view_trans_delta);
 
@@ -175,36 +177,6 @@ int state_update(enum rico_state *_state)
     camera_update(&cam_player);
 
     ////////////////////////////////////////////////////////////////////////
-    // Collision test
-    ////////////////////////////////////////////////////////////////////////
-    // #define COLLIDE_COUNT 10
-    // u32 obj_collided[COLLIDE_COUNT] = { 0 };
-    // float dist[COLLIDE_COUNT] = { 0 };
-    // u32 idx_first = 0;
-    // struct ray cam_fwd;
-
-    // camera_fwd(&cam_fwd, &cam_player);
-    // u32 collided = object_collide_ray_type(OBJ_STATIC, &cam_fwd,
-    //                                        COLLIDE_COUNT, obj_collided,
-    //                                        dist, &idx_first);
-    // if (lmb_down)
-    // {
-    //     select_obj(obj_collided[idx_first]);
-    // }
-
-    // UNUSED(collided);
-    // if (collided > 0)
-    // {
-    //     printf("Colliding: ");
-    //     for (int i = 0; i < COLLIDE_COUNT; ++i)
-    //     {
-    //         if (obj_collided[i] == 0) break;
-    //         printf(" %d", obj_collided[i]);
-    //     }
-    //     printf("\n");
-    // }
-
-    ////////////////////////////////////////////////////////////////////////
     // Render
     ////////////////////////////////////////////////////////////////////////
     // glPolygonMode(GL_FRONT_AND_BACK, cam_player.fill_mode);
@@ -213,17 +185,6 @@ int state_update(enum rico_state *_state)
     glref_update(dt);
     glref_render(&cam_player);
     camera_render(&cam_player);
-
-    // Cleanup: Shitty debug code
-    {
-        struct ray ray_cam;
-        camera_fwd(&ray_cam, &cam_player);
-
-        //const struct mat4 *transform = object_transform_get(5);
-        // vec3_mul_mat4(&ray_cam.orig, transform);
-        // vec3_mul_mat4(&ray_cam.dir, transform);
-        prim_draw_ray(&ray_cam, &MAT4_IDENT, COLOR_MAGENTA);
-    }
 
     return err;
 }
@@ -263,6 +224,9 @@ cleanup:
     return err;
 }
 
+////////////////////////////////////////////////////////////////////////
+// Camera forward ray v. scene
+////////////////////////////////////////////////////////////////////////
 static void select_first_obj()
 {
     #define COLLIDE_COUNT 10
@@ -278,6 +242,16 @@ static void select_first_obj()
     select_obj(obj_collided[idx_first]);
 
     UNUSED(collided);
+    // if (collided > 0)
+    // {
+    //     printf("Colliding: ");
+    //     for (int i = 0; i < COLLIDE_COUNT; ++i)
+    //     {
+    //         if (obj_collided[i] == 0) break;
+    //         printf(" %d", obj_collided[i]);
+    //     }
+    //     printf("\n");
+    // }
 }
 
 static int handle_engine_events(SDL_Event event, bool *handled)
@@ -314,19 +288,10 @@ static int handle_engine_events(SDL_Event event, bool *handled)
     }
     else if (event.type == SDL_KEYDOWN)
     {
-        ////////////////////////////////////////////////////////////////////////
-        // Key pressed (first press)
-        //
-        // Note: Prevent repeat with (... && !event.key.repeat)
-        ////////////////////////////////////////////////////////////////////////
         if (event.key.keysym.mod & KMOD_CTRL &&
-            event.key.keysym.mod & KMOD_SHIFT)
-        {
-        }
+            event.key.keysym.mod & KMOD_SHIFT) {}
         else if (event.key.keysym.mod & KMOD_CTRL &&
-                 event.key.keysym.mod & KMOD_ALT)
-        {
-        }
+                 event.key.keysym.mod & KMOD_ALT) {}
         else if (event.key.keysym.mod & KMOD_SHIFT)
         {
             // [`]: DEBUG: Show a test string for 3 seconds
@@ -349,8 +314,7 @@ static int handle_engine_events(SDL_Event event, bool *handled)
             }
         }
         else if (event.key.keysym.mod & KMOD_ALT)
-        {
-        }
+        {}
         // [2]: Toggle FPS counter
         else if (event.key.keysym.sym == SDLK_2)
         {
@@ -377,15 +341,9 @@ static int handle_engine_events(SDL_Event event, bool *handled)
         // [P]: DEBUG: Force breakpoint
         else if (event.key.keysym.sym == SDLK_p)
         {
-            SDL_TriggerBreakpoint();
-            *handled = true;
+            // SDL_TriggerBreakpoint();
+            // *handled = true;
         }
-    }
-    else if (event.type == SDL_KEYUP)
-    {
-        ////////////////////////////////////////////////////////////////////////
-        // Key released
-        ////////////////////////////////////////////////////////////////////////
     }
 
     return err;
@@ -402,28 +360,14 @@ static int handle_camera_events(SDL_Event event, bool *handled)
 
     if (event.type == SDL_KEYDOWN)
     {
-        ////////////////////////////////////////////////////////////////////////
-        // Key pressed (first press)
-        //
-        // Note: Prevent repeat with (... && !event.key.repeat)
-        ////////////////////////////////////////////////////////////////////////
         if (event.key.keysym.mod & KMOD_CTRL &&
-            event.key.keysym.mod & KMOD_SHIFT)
-        {
-        }
+            event.key.keysym.mod & KMOD_SHIFT) {}
         else if (event.key.keysym.mod & KMOD_CTRL &&
-                 event.key.keysym.mod & KMOD_ALT)
-        {
-        }
-        else if (event.key.keysym.mod & KMOD_SHIFT)
-        {
-        }
-        else if (event.key.keysym.mod & KMOD_CTRL)
-        {
-        }
-        else if (event.key.keysym.mod & KMOD_ALT)
-        {
-        }
+                 event.key.keysym.mod & KMOD_ALT) {}
+        else if (event.key.keysym.mod & KMOD_SHIFT) {}
+        else if (event.key.keysym.mod & KMOD_CTRL) {}
+        else if (event.key.keysym.mod & KMOD_ALT) {}
+
         // [1]: Toggle wireframe mode
         else if (event.key.keysym.sym == SDLK_1)
         {
@@ -498,9 +442,6 @@ static int handle_camera_events(SDL_Event event, bool *handled)
     }
     else if (event.type == SDL_KEYUP)
     {
-        ////////////////////////////////////////////////////////////////////////
-        // Key released
-        ////////////////////////////////////////////////////////////////////////
         if (q_down && event.key.keysym.sym == SDLK_q)
         {
             q_down = false;
@@ -565,24 +506,12 @@ static int handle_edit_events(SDL_Event event, bool *handled)
             *handled = true;
         }
     }
-    else if (event.type == SDL_MOUSEBUTTONUP)
-    {
-    }
     else if (event.type == SDL_KEYDOWN)
     {
-        ////////////////////////////////////////////////////////////////////
-        // Key pressed (first press)
-        //
-        // Note: Prevent repeat with (... && !event.key.repeat)
-        ////////////////////////////////////////////////////////////////////
         if (event.key.keysym.mod & KMOD_CTRL &&
-            event.key.keysym.mod & KMOD_SHIFT)
-        {
-        }
+            event.key.keysym.mod & KMOD_SHIFT) {}
         else if (event.key.keysym.mod & KMOD_CTRL &&
-                 event.key.keysym.mod & KMOD_ALT)
-        {
-        }
+                 event.key.keysym.mod & KMOD_ALT) {}
         else if (event.key.keysym.mod & KMOD_SHIFT)
         {
             // [Shift-Tab]: Cycle select through objects (in reverse)
@@ -601,9 +530,8 @@ static int handle_edit_events(SDL_Event event, bool *handled)
                 *handled = true;
             }
         }
-        else if (event.key.keysym.mod & KMOD_ALT)
-        {
-        }
+        else if (event.key.keysym.mod & KMOD_ALT) {}
+
         // [Esc]: Exit edit mode
         else if (event.key.keysym.sym == SDLK_ESCAPE)
         {
@@ -641,12 +569,6 @@ static int handle_edit_events(SDL_Event event, bool *handled)
             *handled = true;
         }
     }
-    else if (event.type == SDL_KEYUP)
-    {
-        ////////////////////////////////////////////////////////////////////
-        // Key released
-        ////////////////////////////////////////////////////////////////////
-    }
 
     return SUCCESS;
 }
@@ -670,28 +592,14 @@ static int state_play_explore()
 
         if (event.type == SDL_KEYDOWN)
         {
-            ////////////////////////////////////////////////////////////////////
-            // Key pressed (first press)
-            //
-            // Note: Prevent repeat with (... && !event.key.repeat)
-            ////////////////////////////////////////////////////////////////////
             if (event.key.keysym.mod & KMOD_CTRL &&
-                event.key.keysym.mod & KMOD_SHIFT)
-            {
-            }
+                event.key.keysym.mod & KMOD_SHIFT) {}
             else if (event.key.keysym.mod & KMOD_CTRL &&
-                     event.key.keysym.mod & KMOD_ALT)
-            {
-            }
-            else if (event.key.keysym.mod & KMOD_SHIFT)
-            {
-            }
-            else if (event.key.keysym.mod & KMOD_CTRL)
-            {
-            }
-            else if (event.key.keysym.mod & KMOD_ALT)
-            {
-            }
+                     event.key.keysym.mod & KMOD_ALT) {}
+            else if (event.key.keysym.mod & KMOD_SHIFT) {}
+            else if (event.key.keysym.mod & KMOD_CTRL) {}
+            else if (event.key.keysym.mod & KMOD_ALT) {}
+
             // [Esc]: Exit application
             else if (event.key.keysym.sym == SDLK_ESCAPE)
             {
@@ -702,12 +610,6 @@ static int state_play_explore()
             {
                 state = STATE_EDIT_TRANSLATE;
             }
-        }
-        else if (event.type == SDL_KEYUP)
-        {
-            ////////////////////////////////////////////////////////////////////
-            // Key released
-            ////////////////////////////////////////////////////////////////////
         }
     }
 
@@ -733,63 +635,34 @@ static int state_edit_translate()
 
         if (event.type == SDL_KEYDOWN)
         {
-            ////////////////////////////////////////////////////////////////////
-            // Key pressed (first press)
-            //
-            // Note: Prevent repeat with (... && !event.key.repeat)
-            ////////////////////////////////////////////////////////////////////
             if (event.key.keysym.mod & KMOD_CTRL &&
-                event.key.keysym.mod & KMOD_SHIFT)
-            {
-            }
+                event.key.keysym.mod & KMOD_SHIFT) {}
             else if (event.key.keysym.mod & KMOD_CTRL &&
-                     event.key.keysym.mod & KMOD_ALT)
-            {
-            }
-            else if (event.key.keysym.mod & KMOD_SHIFT)
-            {
-            }
-            else if (event.key.keysym.mod & KMOD_CTRL)
-            {
-            }
-            else if (event.key.keysym.mod & KMOD_ALT)
-            {
-            }
+                     event.key.keysym.mod & KMOD_ALT) {}
+            else if (event.key.keysym.mod & KMOD_SHIFT) {}
+            else if (event.key.keysym.mod & KMOD_CTRL) {}
+            else if (event.key.keysym.mod & KMOD_ALT) {}
             // [0]: Reset selected object's translation
             else if (event.key.keysym.sym == SDLK_0)
-            {
                 translate_reset = true;
-            }
             // [Up Arrow]: Translate selected object up
             else if (event.key.keysym.sym == SDLK_UP)
-            {
                 translate.y += trans_delta;
-            }
             // [Down Arrow]: Translate selected object down
             else if (event.key.keysym.sym == SDLK_DOWN)
-            {
                 translate.y -= trans_delta;
-            }
             // [Left Arrow]: Translate selected object west
             else if (event.key.keysym.sym == SDLK_LEFT)
-            {
                 translate.x -= trans_delta;
-            }
             // [Right Arrow]: Translate selected object east
             else if (event.key.keysym.sym == SDLK_RIGHT)
-            {
                 translate.x += trans_delta;
-            }
             // [Page Up]: Translate selected object north
             else if (event.key.keysym.sym == SDLK_PAGEUP)
-            {
                 translate.z -= trans_delta;
-            }
             // [Page Down]: Translate selected object south
             else if (event.key.keysym.sym == SDLK_PAGEDOWN)
-            {
                 translate.z += trans_delta;
-            }
             // [+ / Numpad +]: Increase translation delta
             else if (event.key.keysym.sym == SDLK_PLUS ||
                      event.key.keysym.sym == SDLK_KP_PLUS)
@@ -816,12 +689,6 @@ static int state_edit_translate()
                     trans_delta_changed = true;
                 }
             }
-        }
-        else if (event.type == SDL_KEYUP)
-        {
-            ////////////////////////////////////////////////////////////////////
-            // Key released
-            ////////////////////////////////////////////////////////////////////
         }
     }
 
@@ -866,28 +733,13 @@ static int state_edit_rotate()
 
         if (event.type == SDL_KEYDOWN)
         {
-            ////////////////////////////////////////////////////////////////////
-            // Key pressed (first press)
-            //
-            // Note: Prevent repeat with (... && !event.key.repeat)
-            ////////////////////////////////////////////////////////////////////
             if (event.key.keysym.mod & KMOD_CTRL &&
-                event.key.keysym.mod & KMOD_SHIFT)
-            {
-            }
+                event.key.keysym.mod & KMOD_SHIFT) {}
             else if (event.key.keysym.mod & KMOD_CTRL &&
-                     event.key.keysym.mod & KMOD_ALT)
-            {
-            }
-            else if (event.key.keysym.mod & KMOD_SHIFT)
-            {
-            }
-            else if (event.key.keysym.mod & KMOD_CTRL)
-            {
-            }
-            else if (event.key.keysym.mod & KMOD_ALT)
-            {
-            }
+                     event.key.keysym.mod & KMOD_ALT) {}
+            else if (event.key.keysym.mod & KMOD_SHIFT) {}
+            else if (event.key.keysym.mod & KMOD_CTRL) {}
+            else if (event.key.keysym.mod & KMOD_ALT) {}
             // [7]: Toggle heptagonal rotations
             else if (event.key.keysym.sym == SDLK_7)
             {
@@ -898,39 +750,25 @@ static int state_edit_rotate()
             }
             // [0]: Reset selected object's rotation
             else if (event.key.keysym.sym == SDLK_0)
-            {
                 rotate_reset = true;
-            }
             // [Up Arrow]: Rotate selected object up
             else if (event.key.keysym.sym == SDLK_UP)
-            {
                 rotate.x -= rot_delta;
-            }
             // [Down Arrow]: Rotate selected object down
             else if (event.key.keysym.sym == SDLK_DOWN)
-            {
                 rotate.x += rot_delta;
-            }
             // [Left Arrow]: Rotate selected object west
             else if (event.key.keysym.sym == SDLK_LEFT)
-            {
                 rotate.y -= rot_delta;
-            }
             // [Right Arrow]: Rotate selected object east
             else if (event.key.keysym.sym == SDLK_RIGHT)
-            {
                 rotate.y += rot_delta;
-            }
             // [Page Up]: Rotate selected object north
             else if (event.key.keysym.sym == SDLK_PAGEUP)
-            {
                 rotate.z -= rot_delta;
-            }
             // [Page Down]: Rotate selected object south
             else if (event.key.keysym.sym == SDLK_PAGEDOWN)
-            {
                 rotate.z += rot_delta;
-            }
             // [+ / Numpad +]: Increase rotation delta
             else if (event.key.keysym.sym == SDLK_PLUS ||
                      event.key.keysym.sym == SDLK_KP_PLUS)
@@ -957,12 +795,6 @@ static int state_edit_rotate()
                     rot_delta_changed = true;
                 }
             }
-        }
-        else if (event.type == SDL_KEYUP)
-        {
-            ////////////////////////////////////////////////////////////////////
-            // Key released
-            ////////////////////////////////////////////////////////////////////
         }
     }
 
@@ -1007,63 +839,34 @@ static int state_edit_scale()
 
         if (event.type == SDL_KEYDOWN)
         {
-            ////////////////////////////////////////////////////////////////////
-            // Key pressed (first press)
-            //
-            // Note: Prevent repeat with (... && !event.key.repeat)
-            ////////////////////////////////////////////////////////////////////
             if (event.key.keysym.mod & KMOD_CTRL &&
-                event.key.keysym.mod & KMOD_SHIFT)
-            {
-            }
+                event.key.keysym.mod & KMOD_SHIFT) {}
             else if (event.key.keysym.mod & KMOD_CTRL &&
-                     event.key.keysym.mod & KMOD_ALT)
-            {
-            }
-            else if (event.key.keysym.mod & KMOD_SHIFT)
-            {
-            }
-            else if (event.key.keysym.mod & KMOD_CTRL)
-            {
-            }
-            else if (event.key.keysym.mod & KMOD_ALT)
-            {
-            }
+                     event.key.keysym.mod & KMOD_ALT) {}
+            else if (event.key.keysym.mod & KMOD_SHIFT) {}
+            else if (event.key.keysym.mod & KMOD_CTRL) {}
+            else if (event.key.keysym.mod & KMOD_ALT) {}
             // [0]: Reset selected object's scale
             else if (event.key.keysym.sym == SDLK_0)
-            {
                 scale_reset = true;
-            }
             // [Up Arrow]: Scale selected object up
             else if (event.key.keysym.sym == SDLK_UP)
-            {
                 scale.y += scale_delta;
-            }
             // [Down Arrow]: Scale selected object down
             else if (event.key.keysym.sym == SDLK_DOWN)
-            {
                 scale.y -= scale_delta;
-            }
             // [Left Arrow]: Scale selected object west
             else if (event.key.keysym.sym == SDLK_LEFT)
-            {
                 scale.x -= scale_delta;
-            }
             // [Right Arrow]: Scale selected object east
             else if (event.key.keysym.sym == SDLK_RIGHT)
-            {
                 scale.x += scale_delta;
-            }
             // [Page Up]: Scale selected object north
             else if (event.key.keysym.sym == SDLK_PAGEUP)
-            {
                 scale.z += scale_delta;
-            }
             // [Page Down]: Scale selected object south
             else if (event.key.keysym.sym == SDLK_PAGEDOWN)
-            {
                 scale.z -= scale_delta;
-            }
             // [+ / Numpad +]: Increase scale delta
             else if (event.key.keysym.sym == SDLK_PLUS ||
                      event.key.keysym.sym == SDLK_KP_PLUS)
@@ -1090,12 +893,6 @@ static int state_edit_scale()
                     scale_delta_changed = true;
                 }
             }
-        }
-        else if (event.type == SDL_KEYUP)
-        {
-            ////////////////////////////////////////////////////////////////////
-            // Key released
-            ////////////////////////////////////////////////////////////////////
         }
     }
 
@@ -1136,39 +933,19 @@ static int state_edit_texture()
 
         if (event.type == SDL_KEYDOWN)
         {
-            ////////////////////////////////////////////////////////////////////
-            // Key pressed (first press)
-            //
-            // Note: Prevent repeat with (... && !event.key.repeat)
-            ////////////////////////////////////////////////////////////////////
             if (event.key.keysym.mod & KMOD_CTRL &&
-                event.key.keysym.mod & KMOD_SHIFT)
-            {
-            }
+                event.key.keysym.mod & KMOD_SHIFT) {}
             else if (event.key.keysym.mod & KMOD_CTRL &&
-                     event.key.keysym.mod & KMOD_ALT)
-            {
-            }
-            else if (event.key.keysym.mod & KMOD_SHIFT)
-            {
-            }
-            else if (event.key.keysym.mod & KMOD_CTRL)
-            {
-            }
-            else if (event.key.keysym.mod & KMOD_ALT)
-            {
-            }
+                     event.key.keysym.mod & KMOD_ALT) {}
+            else if (event.key.keysym.mod & KMOD_SHIFT) {}
+            else if (event.key.keysym.mod & KMOD_CTRL) {}
+            else if (event.key.keysym.mod & KMOD_ALT) {}
+
             // [Esc]: Exit application
             else if (event.key.keysym.sym == SDLK_ESCAPE)
             {
                 state = STATE_PLAY_EXPLORE;
             }
-        }
-        else if (event.type == SDL_KEYUP)
-        {
-            ////////////////////////////////////////////////////////////////////
-            // Key released
-            ////////////////////////////////////////////////////////////////////
         }
     }
 
