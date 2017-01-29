@@ -87,7 +87,7 @@ static int init_sdl()
     }
 
     // Disable V-sync
-    sdl_err = SDL_GL_SetSwapInterval(0); //Default on
+    sdl_err = SDL_GL_SetSwapInterval(1); //Default on
     if (sdl_err < 0) {
         fprintf(stderr, "SDL_GL_SetSwapInterval error: %s\n", SDL_GetError());
         return RICO_ERROR(ERR_SDL_INIT);

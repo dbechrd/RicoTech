@@ -7,20 +7,23 @@
 #endif
 
 #ifdef RICO_DEBUG
-#ifndef RICO_DEBUG_ERROR_ASSERT
-    #define RICO_DEBUG_ERROR_ASSERT
-#endif
-#ifndef RICO_DEBUG_INFO
-    #define RICO_DEBUG_INFO
-    #define RICO_DEBUG_UID
-    // #define RICO_DEBUG_POOL
-    #define RICO_DEBUG_CHUNK
-    #define RICO_DEBUG_TEXTURE
-    #define RICO_DEBUG_MESH
-    #define RICO_DEBUG_OBJECT
-    #define RICO_DEBUG_STRING
-    #define RICO_DEBUG_MATERIAL
-#endif
+    #ifndef RICO_DEBUG_ERROR_ASSERT
+        #define RICO_DEBUG_ERROR_ASSERT
+    #endif
+    #ifndef RICO_DEBUG_WARN
+        #define RICO_DEBUG_WARN
+    #endif
+    #ifndef RICO_DEBUG_INFO
+        #define RICO_DEBUG_INFO
+        #define RICO_DEBUG_UID
+        // #define RICO_DEBUG_POOL
+        #define RICO_DEBUG_CHUNK
+        #define RICO_DEBUG_TEXTURE
+        #define RICO_DEBUG_MESH
+        #define RICO_DEBUG_OBJECT
+        #define RICO_DEBUG_STRING
+        #define RICO_DEBUG_MATERIAL
+    #endif
 #endif
 
 //------------------------------------------------------------------------------

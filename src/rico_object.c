@@ -69,7 +69,7 @@ int object_create(u32 *_handle, const char *name, enum rico_obj_type type,
     if (type == OBJ_STRING_SCREEN)
         obj->scale = VEC3_SCALE_ASPECT;
     else
-        obj->scale = VEC3_UNIT;
+        obj->scale = VEC3_ONE;
     obj->mesh = mesh_request(mesh);
     obj->material = material_request(material);
     obj->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(mesh);
@@ -392,8 +392,8 @@ void object_render_type(enum rico_obj_type type,
         proj_matrix = MAT4_IDENT;
         view_matrix = MAT4_IDENT;
 
-        light.color   = VEC3_UNIT;
-        light.ambient = VEC3_UNIT;
+        light.color   = VEC3_ONE;
+        light.ambient = VEC3_ONE;
 
         light.kc = 1.0f;
         light.kl = 0.0f;

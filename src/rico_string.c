@@ -98,6 +98,14 @@ int string_free(u32 handle)
     printf("[strg][free] name=%s\n", str->uid.name);
 #endif
 
+    if (handle < STR_SLOT_COUNT && str->uid.uid == UID_NULL)
+    {
+#ifdef RICO_DEBUG_WARN
+        printf("[strg][WARN] handle=%d Static string already freed\n", handle);
+#endif
+        return SUCCESS;
+    }
+
     object_free(str->obj_handle);
     str->obj_handle = 0;
 
@@ -106,9 +114,11 @@ int string_free(u32 handle)
     return err;
 }
 
-int string_update(u32 dt)
+int string_update(float dt)
 {
     enum rico_error err;
+
+    u32 delta_ms = dt * 1000;
 
     struct rico_string *str;
     for (u32 i = 0; i < strings.active; ++i)
@@ -120,14 +130,14 @@ int string_update(u32 dt)
         }
 
         // Free strings with expired lifespans
-        if (str->lifespan <= dt)
+        if (str->lifespan <= delta_ms)
         {
             err = string_free(strings.handles[i]);
             if (err) return err;
         }
         else
         {
-            str->lifespan -= dt;
+            str->lifespan -= delta_ms;
         }
     }
 

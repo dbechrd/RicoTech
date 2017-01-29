@@ -22,6 +22,6 @@ int rico_string_init(u32 pool_size);
 int string_init(const char *name, enum rico_string_slot slot, u32 x, u32 y,
                 struct col4 color, u32 lifespan, u32 font, const char *text);
 int string_free(u32 handle);
-int string_update(u32 dt);
+int string_update(float dt);
 
 #endif // RICO_STRING_H

@@ -6,6 +6,7 @@
 #include <math.h>
 #include <stdio.h>
 
+#define VEC3_EPSILON 0.00001f
 #define MAT4_EPSILON 0.00001f
 #define QUAT_EPSILON 0.00001f
 
@@ -76,6 +77,7 @@ struct vec4 {
 };
 
 extern const struct vec3 VEC3_ZERO;
+extern const struct vec3 VEC3_ONE;
 extern const struct vec3 VEC3_UNIT;
 extern const struct vec3 VEC3_X;
 extern const struct vec3 VEC3_Y;

@@ -387,7 +387,7 @@ void selected_scale(const struct vec3 *offset)
 
     if (vec3_equals(offset, &VEC3_ZERO))
     {
-        object_scale_set(selected_handle, &VEC3_UNIT);
+        object_scale_set(selected_handle, &VEC3_ONE);
     }
     else
     {
@@ -432,7 +432,7 @@ void glref_update(u32 dt)
     // Update uniforms
     //--------------------------------------------------------------------------
     glUseProgram(prog_default->prog_id);
-    glUniform1f(prog_default->u_time, dt / 1000.0f);
+    glUniform1f(prog_default->u_time, dt);
     glUseProgram(0);
 
     //--------------------------------------------------------------------------

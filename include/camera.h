@@ -41,7 +41,7 @@ void camera_init(struct camera *_camera, struct vec3 position,
 void camera_reset(struct camera *camera);
 void camera_translate_world(struct camera *camera, const struct vec3 *v);
 void camera_translate_local(struct camera *camera, const struct vec3 *v);
-void camera_rotate(struct camera *camera, float mouse_x, float mouse_y);
+void camera_rotate(struct camera *camera, float dx, float dy);
 void camera_rotate_angle(struct camera *camera, struct vec3 axis,
                          float angle_deg);
 void camera_update(struct camera *camera);

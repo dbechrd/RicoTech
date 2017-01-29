@@ -39,7 +39,8 @@ const struct col4 COLOR_DARK_MAGENTA_HIGHLIGHT = { 0.5f, 0.0f, 0.5f, 0.5f };
 const struct col4 COLOR_DARK_GRAY_HIGHLIGHT    = { 0.25f, 0.25f, 0.25f, 0.5f };
 
 const struct vec3 VEC3_ZERO  = { 0.0f, 0.0f, 0.0f };
-const struct vec3 VEC3_UNIT  = { 1.0f, 1.0f, 1.0f };
+const struct vec3 VEC3_ONE   = { 1.0f, 1.0f, 1.0f };
+const struct vec3 VEC3_UNIT  = { 0.577350259f, 0.577350259f, 0.577350259f };
 const struct vec3 VEC3_X     = { 1.0f, 0.0f, 0.0f };
 const struct vec3 VEC3_Y     = { 0.0f, 1.0f, 0.0f };
 const struct vec3 VEC3_Z     = { 0.0f, 0.0f, 1.0f };

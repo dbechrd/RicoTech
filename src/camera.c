@@ -4,8 +4,8 @@
 
 struct camera cam_player;
 
-//Note: Player's eyes are at 1.7 meters
-#define CAMERA_POS_Y_MIN 1.7f
+//Note: Height of player's eyes in meters
+#define CAMERA_POS_Y_MIN 1.5f
 const struct vec3 CAMERA_POS_INITIAL = (struct vec3) {
     0.0f, CAMERA_POS_Y_MIN, 4.0f
 };
@@ -79,12 +79,12 @@ void camera_translate_local(struct camera *camera, const struct vec3 *v)
     camera->need_update = true;
 }
 
-void camera_rotate(struct camera *camera, float mouse_dx, float mouse_dy)
+void camera_rotate(struct camera *camera, float dx, float dy)
 {
     struct quat pitch;
-    quat_from_axis_angle(&pitch, &VEC3_X, mouse_dy * 0.1f);
+    quat_from_axis_angle(&pitch, &VEC3_X, dy);
     struct quat yaw;
-    quat_from_axis_angle(&yaw, &VEC3_Y, mouse_dx * 0.1f);
+    quat_from_axis_angle(&yaw, &VEC3_Y, dx);
 
     quat_normalize(&pitch);
     quat_normalize(&yaw);

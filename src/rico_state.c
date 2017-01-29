@@ -32,11 +32,29 @@ static u32 mesh_count;
 //travelled per frame (60hz) is 0.762 * 0.0275 = 0.020955 ~= 0.021
 
 //TODO: This assumes 1/60th second (60fps), this should be 1.65 * dt.
-//GLfloat view_trans_delta = 0.001f;
-//GLfloat view_trans_delta = 1.65f;
-static GLfloat view_trans_delta = 5.0f;
+//GLfloat view_acc_delta = 0.001f;
+//GLfloat view_acc_delta = 1.65f;
 
-static struct vec3 view_trans_vel;
+////////////////////////////////////////////////
+// Before delta change
+////////////////////////////////////////////////
+// static struct vec3 view_vel;
+// static GLfloat view_vel_max = 8.0f;
+// static GLfloat view_vel_max_sprint = 16.0f;
+
+// static struct vec3 view_acc;
+// static GLfloat view_acc_delta = 0.05f;
+// static GLfloat sprint_factor = 2.0f;
+////////////////////////////////////////////////
+static float look_sensitivity = 10.0f;
+
+static struct vec3 view_vel;
+static GLfloat view_vel_max = 1.5f;
+static GLfloat view_vel_max_sprint = 4.0f;
+
+static struct vec3 view_acc;
+static GLfloat sprint_factor = 2.0f;
+////////////////////////////////////////////////
 
 #define TRANS_DELTA_MIN 0.01f
 #define TRANS_DELTA_MAX 10.0f
@@ -66,7 +84,7 @@ static bool enable_lighting = true;
 
 static u32 time;
 static u32 fps_last_render;
-static double frame_time = 0.0;
+static double frame_time;
 static u32 fps_render_delta = 200;
 static bool fps_render = false;
 
@@ -91,12 +109,17 @@ int state_update(enum rico_state *_state)
     // Update time
     ////////////////////////////////////////////////////////////////////////
     u32 new_time = SDL_GetTicks();
-    u32 dt = new_time - time;
+    double delta_ms = (new_time - time);
     time = new_time;
 
-    // Update FPS counter
+    // Smoothing function (weighted running average)
     static const double smooth = 0.99; // larger=more smoothing
-    frame_time = (frame_time * smooth) + (double)dt * (1.0 - smooth);
+    frame_time *= smooth;
+    frame_time += (1.0 - smooth) * delta_ms;
+
+    // Smooth delta time (should I apply to *just* FPS counter, or entire game?)
+    //double dt = frame_time / 1000.0;
+    double dt = delta_ms / 1000.0;
 
     if (fps_render && time - fps_last_render > fps_render_delta)
     {
@@ -150,28 +173,61 @@ int state_update(enum rico_state *_state)
     ////////////////////////////////////////////////////////////////////////
     // Update camera
     ////////////////////////////////////////////////////////////////////////
-    if (!vec3_equals(&view_trans_vel, &VEC3_ZERO))
+    float mag_acc = vec3_length(&view_acc);
+    if (mag_acc < VEC3_EPSILON)
     {
-        struct vec3 view_delta = view_trans_vel;
-        vec3_normalize(&view_delta);
-        vec3_scalef(&view_delta, dt / 1000.0f);
-        vec3_scalef(&view_delta, view_trans_delta);
-
-        if (sprint) {
-            //Debug: Sprint vertically.. yeah.. what?
-            vec3_scalef(&view_delta, 5.0f);
-
-            //TODO: Only allow sprinting on the ground during normal play
-            //view_delta.x *= 5.0f;
-            //view_delta.z *= 5.0f;
+        mag_acc = 0;
+        view_acc = VEC3_ZERO;
+    }
+    else
+    {
+        struct vec3 delta = view_acc;
+        if (sprint)
+        {
+            //TODO: Only allow sprinting on the ground during normal play (X/Z)
+            vec3_scalef(&delta, sprint_factor);
         }
+        // vec3_scalef(&delta, dt);
 
-        camera_translate_local(&cam_player, &view_delta);
+        printf(" View acc: %f %f %f\n", view_acc.x, view_acc.y, view_acc.z);
+        printf("Delta acc: %f %f %f\n", delta.x, delta.y, delta.z);
+        vec3_add(&view_vel, &delta);
     }
 
+    float mag_vel = vec3_length(&view_vel);
+    if (mag_vel < VEC3_EPSILON)
+    {
+        mag_vel = 0;
+        view_vel = VEC3_ZERO;
+    }
+    else
+    {
+        float vel_max = (sprint) ? view_vel_max_sprint : view_vel_max;
+
+        if (mag_vel > vel_max)
+        {
+            vec3_normalize(&view_vel);
+            vec3_scalef(&view_vel, vel_max);
+        }
+
+        if (mag_acc == 0)
+        {
+            vec3_scalef(&view_vel, 0.8f);
+        }
+
+        struct vec3 delta = view_vel;
+        vec3_scalef(&delta, dt);
+
+        printf("Delta vel: %f %f %f\n\n", delta.x, delta.y, delta.z);
+        camera_translate_local(&cam_player, &delta);
+    }
+
+    // TODO: Smooth mouse look somehow
     if (mouse_dx != 0 || mouse_dy != 0)
     {
-        camera_rotate(&cam_player, mouse_dx, mouse_dy);
+        float rot_dx = mouse_dx * look_sensitivity * dt;
+        float rot_dy = mouse_dy * look_sensitivity * dt;
+        camera_rotate(&cam_player, rot_dx, rot_dy);
     }
 
     camera_update(&cam_player);
@@ -358,16 +414,24 @@ static int handle_camera_events(SDL_Event event, bool *handled)
     static bool s_down = false;
     static bool d_down = false;
 
+    struct vec3 delta = VEC3_ZERO;
+
     if (event.type == SDL_KEYDOWN)
     {
         if (event.key.keysym.mod & KMOD_CTRL &&
             event.key.keysym.mod & KMOD_SHIFT) {}
         else if (event.key.keysym.mod & KMOD_CTRL &&
                  event.key.keysym.mod & KMOD_ALT) {}
-        else if (event.key.keysym.mod & KMOD_SHIFT) {}
+        //else if (event.key.keysym.mod & KMOD_SHIFT) {}
         else if (event.key.keysym.mod & KMOD_CTRL) {}
         else if (event.key.keysym.mod & KMOD_ALT) {}
 
+        // [Shift]: Sprint
+        else if (event.key.keysym.sym == SDLK_LSHIFT)
+        {
+            sprint = true;
+            *handled = true;
+        }
         // [1]: Toggle wireframe mode
         else if (event.key.keysym.sym == SDLK_1)
         {
@@ -386,42 +450,42 @@ static int handle_camera_events(SDL_Event event, bool *handled)
         else if (event.key.keysym.sym == SDLK_q && !event.key.repeat)
         {
             q_down = true;
-            view_trans_vel.y -= 1.0f;
+            delta.y -= 1.0f;
             *handled = true;
         }
         // [E]: Move camera up
         else if (event.key.keysym.sym == SDLK_e && !event.key.repeat)
         {
             e_down = true;
-            view_trans_vel.y += 1.0f;
+            delta.y += 1.0f;
             *handled = true;
         }
         // [A]: Move camera west
         else if (event.key.keysym.sym == SDLK_a && !event.key.repeat)
         {
             a_down = true;
-            view_trans_vel.x -= 1.0f;
+            delta.x -= 1.0f;
             *handled = true;
         }
         // [D]: Move camera east
         else if (event.key.keysym.sym == SDLK_d && !event.key.repeat)
         {
             d_down = true;
-            view_trans_vel.x += 1.0f;
+            delta.x += 1.0f;
             *handled = true;
         }
         // [W]: Move camera north
         else if (event.key.keysym.sym == SDLK_w && !event.key.repeat)
         {
             w_down = true;
-            view_trans_vel.z += 1.0f;
+            delta.z += 1.0f;
             *handled = true;
         }
         // [S]: Move camera south
         else if (event.key.keysym.sym == SDLK_s && !event.key.repeat)
         {
             s_down = true;
-            view_trans_vel.z -= 1.0f;
+            delta.z -= 1.0f;
             *handled = true;
         }
         // [F]: Reset camera to starting position
@@ -442,41 +506,56 @@ static int handle_camera_events(SDL_Event event, bool *handled)
     }
     else if (event.type == SDL_KEYUP)
     {
-        if (q_down && event.key.keysym.sym == SDLK_q)
+        // [Shift]: Sprint
+        if (event.key.keysym.sym == SDLK_LSHIFT)
+        {
+            sprint = false;
+            *handled = true;
+        }
+        else if (q_down && event.key.keysym.sym == SDLK_q)
         {
             q_down = false;
-            view_trans_vel.y += 1.0f;
+            delta.y += 1.0f;
             *handled = true;
         }
         else if (e_down && event.key.keysym.sym == SDLK_e)
         {
             e_down = false;
-            view_trans_vel.y -= 1.0f;
+            delta.y -= 1.0f;
             *handled = true;
         }
         else if (a_down && event.key.keysym.sym == SDLK_a)
         {
             a_down = false;
-            view_trans_vel.x += 1.0f;
+            delta.x += 1.0f;
             *handled = true;
         }
         else if (d_down && event.key.keysym.sym == SDLK_d)
         {
             d_down = false;
-            view_trans_vel.x -= 1.0f;
+            delta.x -= 1.0f;
             *handled = true;
         }
         else if (w_down && event.key.keysym.sym == SDLK_w)
         {
             w_down = false;
-            view_trans_vel.z -= 1.0f;
+            delta.z -= 1.0f;
             *handled = true;
         }
         else if (s_down && event.key.keysym.sym == SDLK_s)
         {
             s_down = false;
-            view_trans_vel.z += 1.0f;
+            delta.z += 1.0f;
             *handled = true;
+        }
+    }
+
+    if (*handled)
+    {
+        if (!vec3_equals(&delta, &VEC3_ZERO))
+        {
+            vec3_normalize(&delta);
+            vec3_add(&view_acc, &delta);
         }
     }
 
@@ -535,6 +614,7 @@ static int handle_edit_events(SDL_Event event, bool *handled)
         // [Esc]: Exit edit mode
         else if (event.key.keysym.sym == SDLK_ESCAPE)
         {
+            string_free(STR_SLOT_SELECTED_OBJ);
             state = STATE_PLAY_EXPLORE;
             *handled = true;
         }
@@ -1163,7 +1243,9 @@ static int state_engine_init()
     SDL_SetRelativeMouseMode(mouse_lock);
     time = SDL_GetTicks();
     fps_last_render = time;
-    view_trans_vel = VEC3_ZERO;
+    frame_time = 1000 / 60;
+    view_vel = VEC3_ZERO;
+    view_acc = VEC3_ZERO;
 
     err = rico_init();
     if (err) return err;

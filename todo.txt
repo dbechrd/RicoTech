@@ -32,6 +32,8 @@ Collision
 [-] Ellipsoid
 [-] BVH
 [-] Mesh
+[ ] Scene graph (kd-tree, BSP?)
+[ ] Frustum culling
 
 Shaders
 -------
