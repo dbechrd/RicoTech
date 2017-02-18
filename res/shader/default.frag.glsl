@@ -66,6 +66,14 @@ void main()
         vec3 halfway = normalize(light_dir + eye_dir);
         float spec = pow(max(dot(norm, halfway), 0.0), u_material.shiny * 128);
 
+        // TODO: Make this a material property
+        //       Fresnel zero = Fresnel effect at dead center (direct ray)
+        float fresZero = 0.018;
+        float base = 1 - dot(eye_dir, halfway);
+        float exponential = pow(base, 5.0);
+        float fresnel = fresZero + exponential * (1.0 - fresZero);
+        spec *= fresnel;
+
         // Light decides specular color? How to handle metallic reflections?
         specular = u_light.color * mat_specular * spec;
         // specular = mat_specular * spec;
@@ -80,9 +88,10 @@ void main()
                                u_light.kq * (light_dist * light_dist));
 
     // Ambient based on distance from light?
-    color.xyz = (ambient + diffuse + specular) * attenuation;
+    //color.xyz = (ambient + diffuse + specular) * attenuation;
     // Ambient constant
-    //color.xyz = ambient + (diffuse + specular) * attenuation;
+    color.xyz = ambient + (diffuse + specular) * attenuation;
 
+    // What is the point of this??
     color.a = 1.0 + (vtx.normal.x * 0.0000001); //texel_diffuse.a;
 }

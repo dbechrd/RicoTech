@@ -17,6 +17,16 @@ const char *rico_state_string[] = {
     RICO_STATES(GEN_STRING)
 };
 
+enum rico_key {
+    RICOKEY_RIGHT,
+    RICOKEY_LEFT,
+    RICOKEY_UP,
+    RICOKEY_DOWN,
+    RICOKEY_FORWARD,
+    RICOKEY_BACKWARD,
+    RICOKEY_COUNT
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 static const bool reset_game_world = false;
 static struct rico_chunk first_chunk;
@@ -46,14 +56,22 @@ static u32 mesh_count;
 // static GLfloat view_acc_delta = 0.05f;
 // static GLfloat sprint_factor = 2.0f;
 ////////////////////////////////////////////////
-static float look_sensitivity = 10.0f;
+static float look_sensitivity_x = 0.5f;
+static float look_sensitivity_y = 0.5f;
+static struct vec3 mouse_acc;
 
 static struct vec3 view_vel;
-static GLfloat view_vel_max = 1.5f;
-static GLfloat view_vel_max_sprint = 4.0f;
+static float view_vel_max = 5.0f;
+static float view_vel_max_sprint = 10.0f;
 
 static struct vec3 view_acc;
-static GLfloat sprint_factor = 2.0f;
+static float sprint_factor = 2.0f;
+
+// static struct vec3 view_rot_vel;
+// static float view_rot_vel_max = 300.0f;
+
+// static struct vec3 view_rot_acc;
+// static float view_rot_acc_max = 50.0f;
 ////////////////////////////////////////////////
 
 #define TRANS_DELTA_MIN 0.01f
@@ -73,12 +91,6 @@ static float rot_delta = ROT_DELTA_DEFAULT;
 static float scale_delta = SCALE_DELTA_DEFAULT;
 
 static bool mouse_lock = true;
-static int mouse_dx;
-static int mouse_dy;
-
-// static bool lmb_down = false;
-// static bool d_down = false;
-// static bool s_down = false;
 static bool sprint = false;
 static bool enable_lighting = true;
 
@@ -87,6 +99,10 @@ static u32 fps_last_render;
 static double frame_time;
 static u32 fps_render_delta = 200;
 static bool fps_render = false;
+
+// Key map and state
+static s32 sdlk[RICOKEY_COUNT];
+static bool pressed[RICOKEY_COUNT] = { false };
 
 // Current state
 static enum rico_state state;
@@ -102,8 +118,7 @@ int state_update(enum rico_state *_state)
     ////////////////////////////////////////////////////////////////////////
     // Reset frame state
     ////////////////////////////////////////////////////////////////////////
-    mouse_dx = 0;
-    mouse_dy = 0;
+    mouse_acc = VEC3_ZERO;
 
     ////////////////////////////////////////////////////////////////////////
     // Update time
@@ -189,8 +204,6 @@ int state_update(enum rico_state *_state)
         }
         // vec3_scalef(&delta, dt);
 
-        printf(" View acc: %f %f %f\n", view_acc.x, view_acc.y, view_acc.z);
-        printf("Delta acc: %f %f %f\n", delta.x, delta.y, delta.z);
         vec3_add(&view_vel, &delta);
     }
 
@@ -202,32 +215,31 @@ int state_update(enum rico_state *_state)
     }
     else
     {
-        float vel_max = (sprint) ? view_vel_max_sprint : view_vel_max;
+        if (mag_acc == 0)
+        {
+            vec3_scalef(&view_vel, 0.75f);
+        }
 
+        float vel_max = (sprint) ? view_vel_max_sprint : view_vel_max;
         if (mag_vel > vel_max)
         {
             vec3_normalize(&view_vel);
             vec3_scalef(&view_vel, vel_max);
         }
 
-        if (mag_acc == 0)
-        {
-            vec3_scalef(&view_vel, 0.8f);
-        }
-
         struct vec3 delta = view_vel;
         vec3_scalef(&delta, dt);
 
-        printf("Delta vel: %f %f %f\n\n", delta.x, delta.y, delta.z);
         camera_translate_local(&cam_player, &delta);
     }
 
     // TODO: Smooth mouse look somehow
-    if (mouse_dx != 0 || mouse_dy != 0)
+    if (mouse_acc.x != 0 || mouse_acc.y != 0)
     {
-        float rot_dx = mouse_dx * look_sensitivity * dt;
-        float rot_dy = mouse_dy * look_sensitivity * dt;
-        camera_rotate(&cam_player, rot_dx, rot_dy);
+        struct vec3 delta = mouse_acc;
+        delta.x *= look_sensitivity_x;
+        delta.y *= look_sensitivity_y;
+        camera_rotate(&cam_player, delta.x, delta.y);
     }
 
     camera_update(&cam_player);
@@ -337,8 +349,13 @@ static int handle_engine_events(SDL_Event event, bool *handled)
     {
         if (mouse_lock)
         {
-            mouse_dx = event.motion.xrel;
-            mouse_dy = event.motion.yrel;
+            mouse_acc.x = event.motion.xrel;
+            // if (mouse_acc.x >  1) mouse_acc.x =  1;
+            // if (mouse_acc.x < -1) mouse_acc.x = -1;
+
+            mouse_acc.y = event.motion.yrel;
+            // if (mouse_acc.y >  1) mouse_acc.y =  1;
+            // if (mouse_acc.y < -1) mouse_acc.y = -1;
         }
         *handled = true;
     }
@@ -407,13 +424,6 @@ static int handle_engine_events(SDL_Event event, bool *handled)
 
 static int handle_camera_events(SDL_Event event, bool *handled)
 {
-    static bool q_down = false;
-    static bool w_down = false;
-    static bool e_down = false;
-    static bool a_down = false;
-    static bool s_down = false;
-    static bool d_down = false;
-
     struct vec3 delta = VEC3_ZERO;
 
     if (event.type == SDL_KEYDOWN)
@@ -447,44 +457,50 @@ static int handle_camera_events(SDL_Event event, bool *handled)
             *handled = true;
         }
         // [Q]: Move camera down
-        else if (event.key.keysym.sym == SDLK_q && !event.key.repeat)
+        else if (event.key.keysym.sym == sdlk[RICOKEY_DOWN] &&
+                 !event.key.repeat)
         {
-            q_down = true;
+            pressed[RICOKEY_DOWN] = true;
             delta.y -= 1.0f;
             *handled = true;
         }
         // [E]: Move camera up
-        else if (event.key.keysym.sym == SDLK_e && !event.key.repeat)
+        else if (event.key.keysym.sym == sdlk[RICOKEY_UP] &&
+                 !event.key.repeat)
         {
-            e_down = true;
+            pressed[RICOKEY_UP] = true;
             delta.y += 1.0f;
             *handled = true;
         }
-        // [A]: Move camera west
-        else if (event.key.keysym.sym == SDLK_a && !event.key.repeat)
+        // [A]: Move camera left
+        else if (event.key.keysym.sym == sdlk[RICOKEY_LEFT] &&
+                 !event.key.repeat)
         {
-            a_down = true;
+            pressed[RICOKEY_LEFT] = true;
             delta.x -= 1.0f;
             *handled = true;
         }
-        // [D]: Move camera east
-        else if (event.key.keysym.sym == SDLK_d && !event.key.repeat)
+        // [D]: Move camera right
+        else if (event.key.keysym.sym == sdlk[RICOKEY_RIGHT] &&
+                 !event.key.repeat)
         {
-            d_down = true;
+            pressed[RICOKEY_RIGHT] = true;
             delta.x += 1.0f;
             *handled = true;
         }
-        // [W]: Move camera north
-        else if (event.key.keysym.sym == SDLK_w && !event.key.repeat)
+        // [W]: Move camera forward
+        else if (event.key.keysym.sym == sdlk[RICOKEY_FORWARD] &&
+                 !event.key.repeat)
         {
-            w_down = true;
+            pressed[RICOKEY_FORWARD] = true;
             delta.z += 1.0f;
             *handled = true;
         }
-        // [S]: Move camera south
-        else if (event.key.keysym.sym == SDLK_s && !event.key.repeat)
+        // [S]: Move camera backward
+        else if (event.key.keysym.sym == sdlk[RICOKEY_BACKWARD] &&
+                 !event.key.repeat)
         {
-            s_down = true;
+            pressed[RICOKEY_BACKWARD] = true;
             delta.z -= 1.0f;
             *handled = true;
         }
@@ -512,39 +528,45 @@ static int handle_camera_events(SDL_Event event, bool *handled)
             sprint = false;
             *handled = true;
         }
-        else if (q_down && event.key.keysym.sym == SDLK_q)
+        else if (pressed[RICOKEY_DOWN] &&
+                 event.key.keysym.sym == sdlk[RICOKEY_DOWN])
         {
-            q_down = false;
+            pressed[RICOKEY_DOWN] = false;
             delta.y += 1.0f;
             *handled = true;
         }
-        else if (e_down && event.key.keysym.sym == SDLK_e)
+        else if (pressed[RICOKEY_UP] &&
+                 event.key.keysym.sym == sdlk[RICOKEY_UP])
         {
-            e_down = false;
+            pressed[RICOKEY_UP] = false;
             delta.y -= 1.0f;
             *handled = true;
         }
-        else if (a_down && event.key.keysym.sym == SDLK_a)
+        else if (pressed[RICOKEY_LEFT] &&
+                 event.key.keysym.sym == sdlk[RICOKEY_LEFT])
         {
-            a_down = false;
+            pressed[RICOKEY_LEFT] = false;
             delta.x += 1.0f;
             *handled = true;
         }
-        else if (d_down && event.key.keysym.sym == SDLK_d)
+        else if (pressed[RICOKEY_RIGHT] &&
+                 event.key.keysym.sym == sdlk[RICOKEY_RIGHT])
         {
-            d_down = false;
+            pressed[RICOKEY_RIGHT] = false;
             delta.x -= 1.0f;
             *handled = true;
         }
-        else if (w_down && event.key.keysym.sym == SDLK_w)
+        else if (pressed[RICOKEY_FORWARD] &&
+                 event.key.keysym.sym == sdlk[RICOKEY_FORWARD])
         {
-            w_down = false;
+            pressed[RICOKEY_FORWARD] = false;
             delta.z -= 1.0f;
             *handled = true;
         }
-        else if (s_down && event.key.keysym.sym == SDLK_s)
+        else if (pressed[RICOKEY_BACKWARD] &&
+                 event.key.keysym.sym == sdlk[RICOKEY_BACKWARD])
         {
-            s_down = false;
+            pressed[RICOKEY_BACKWARD] = false;
             delta.z += 1.0f;
             *handled = true;
         }
@@ -1142,7 +1164,8 @@ static int rico_init_meshes()
     u32 ticks = SDL_GetTicks();
 
     u32 sphere_mesh_count = 0;
-    err = load_obj_file("mesh/sphere.ric", &PRIM_SPHERE_MESH, &sphere_mesh_count);
+    err = load_obj_file("mesh/sphere.ric", &PRIM_SPHERE_MESH,
+                        &sphere_mesh_count);
     mesh_request(PRIM_SPHERE_MESH);
     if (err) return err;
 
@@ -1150,6 +1173,9 @@ static int rico_init_meshes()
     // if (err) return err;
 
     err = load_obj_file("mesh/spawn.ric", meshes, &mesh_count);
+    if (err) return err;
+
+    err = load_obj_file("mesh/door.ric", meshes, &mesh_count);
     if (err) return err;
 
     u32 ticks2 = SDL_GetTicks();
@@ -1246,6 +1272,14 @@ static int state_engine_init()
     frame_time = 1000 / 60;
     view_vel = VEC3_ZERO;
     view_acc = VEC3_ZERO;
+
+    // Initialize key map
+    sdlk[RICOKEY_RIGHT]     = SDLK_d;
+    sdlk[RICOKEY_LEFT]      = SDLK_a;
+    sdlk[RICOKEY_UP]        = SDLK_e;
+    sdlk[RICOKEY_DOWN]      = SDLK_q;
+    sdlk[RICOKEY_FORWARD]   = SDLK_w;
+    sdlk[RICOKEY_BACKWARD]  = SDLK_s;
 
     err = rico_init();
     if (err) return err;

@@ -151,6 +151,13 @@ static inline struct vec3 *vec3_normalize(struct vec3 *v)
     v->z *= len;
     return v;
 }
+static inline struct vec3 *vec3_positive(struct vec3 *v)
+{
+    if (v->x < 0) v->x *= -1;
+    if (v->y < 0) v->y *= -1;
+    if (v->z < 0) v->z *= -1;
+    return v;
+}
 static inline int vec3_equals(const struct vec3 *a, const struct vec3 *b)
 {
     return (a->x == b->x && a->y == b->y && a->z == b->z);
