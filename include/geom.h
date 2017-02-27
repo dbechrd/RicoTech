@@ -2,7 +2,7 @@
 #define GEOM_H
 
 #include "const.h"
-#include <GL/gl3w.h>
+#include "GL/gl3w.h"
 #include <math.h>
 #include <stdio.h>
 
@@ -256,7 +256,7 @@ static inline struct mat4 mat4_init_scalef(float s)
 
 static inline struct mat4 mat4_init_rotx(float deg)
 {
-    float rad = deg * M_PI / 180;
+    float rad = DEG_TO_RADF(deg);
     float s = sinf(rad);
     float c = cosf(rad);
     return mat4_init(
@@ -269,7 +269,7 @@ static inline struct mat4 mat4_init_rotx(float deg)
 
 static inline struct mat4 mat4_init_roty(float deg)
 {
-    float rad = deg * M_PI / 180;
+    float rad = DEG_TO_RADF(deg);
     float s = sinf(rad);
     float c = cosf(rad);
     return mat4_init(
@@ -282,7 +282,7 @@ static inline struct mat4 mat4_init_roty(float deg)
 
 static inline struct mat4 mat4_init_rotz(float deg)
 {
-    float rad = deg * M_PI / 180;
+    float rad = DEG_TO_RADF(deg);
     float s = sinf(rad);
     float c = cosf(rad);
     return mat4_init(
@@ -418,7 +418,7 @@ static inline struct mat4 mat4_init_perspective(float width, float height,
 
     float aspect = width / height;
     float dz = z_far - z_near;
-    float fov_calc = 1.0f / tanf(DEG_TO_RAD(fov_deg) / 2.0f);
+    float fov_calc = 1.0f / tanf(DEG_TO_RADF(fov_deg) / 2.0f);
 
     struct mat4 mat = MAT4_IDENT;
     mat.m[0][0] = fov_calc / aspect;
@@ -584,8 +584,8 @@ static inline struct quat *quat_from_axis_angle(struct quat *q,
                                                 const struct vec3 *axis,
                                                 float angle_deg)
 {
-    float s = sinf(DEG_TO_RAD(angle_deg) / 2.0f);
-    q->w = cosf(DEG_TO_RAD(angle_deg) / 2.0f);
+    float s = sinf(DEG_TO_RADF(angle_deg) / 2.0f);
+    q->w = cosf(DEG_TO_RADF(angle_deg) / 2.0f);
     q->x = axis->x * s;
     q->y = axis->y * s;
     q->z = axis->z * s;

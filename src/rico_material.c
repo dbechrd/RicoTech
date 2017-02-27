@@ -48,7 +48,7 @@ int material_init(const char *name, u32 tex_diffuse, u32 tex_specular,
     enum rico_error err;
     *_handle = RICO_MATERIAL_DEFAULT;
 
-    err = pool_alloc(materials, _handle);
+    err = pool_handle_alloc(materials, _handle);
     if (err) return err;
 
     struct rico_material *material = pool_read(materials, *_handle);
@@ -63,8 +63,13 @@ int material_init(const char *name, u32 tex_diffuse, u32 tex_specular,
 
 void material_free(u32 handle)
 {
+    // TODO: Use static pool slots
+    if (handle == RICO_MATERIAL_DEFAULT)
+        return;
+
     struct rico_material *material = pool_read(materials, handle);
-    material->ref_count--;
+    if (material->ref_count > 0)
+        material->ref_count--;
 
 #ifdef RICO_DEBUG_MATERIAL
     printf("[ mtl][-- %d] name=%s\n", material->ref_count, material->uid.name);
@@ -81,7 +86,7 @@ void material_free(u32 handle)
     texture_free(material->tex_specular);
 
     material->uid.uid = UID_NULL;
-    pool_free(materials, handle);
+    pool_handle_free(materials, handle);
 }
 
 const char *material_name(u32 handle)
@@ -113,9 +118,10 @@ void material_unbind(u32 handle)
 int material_serialize_0(const void *handle, const struct rico_file *file)
 {
     const struct rico_material *mat = handle;
+    fwrite(&mat->ref_count,    sizeof(mat->ref_count),    1, file->fs);
     fwrite(&mat->tex_diffuse,  sizeof(mat->tex_diffuse),  1, file->fs);
     fwrite(&mat->tex_specular, sizeof(mat->tex_specular), 1, file->fs);
-    fwrite(&mat->shiny,    sizeof(mat->shiny),    1, file->fs);
+    fwrite(&mat->shiny,        sizeof(mat->shiny),        1, file->fs);
     return SUCCESS;
 }
 
@@ -124,9 +130,10 @@ int material_deserialize_0(void *_handle, const struct rico_file *file)
     u32 diffuse, specular;
 
     struct rico_material *mat = _handle;
-    fread(&diffuse,    sizeof(mat->tex_diffuse),  1, file->fs);
-    fread(&specular,   sizeof(mat->tex_specular), 1, file->fs);
-    fread(&mat->shiny, sizeof(mat->shiny),        1, file->fs);
+    fread(&mat->ref_count, sizeof(mat->ref_count),    1, file->fs);
+    fread(&diffuse,        sizeof(mat->tex_diffuse),  1, file->fs);
+    fread(&specular,       sizeof(mat->tex_specular), 1, file->fs);
+    fread(&mat->shiny,     sizeof(mat->shiny),        1, file->fs);
 
     mat->tex_diffuse  = texture_request(diffuse);
     mat->tex_specular = texture_request(specular);
@@ -140,6 +147,5 @@ struct rico_pool *material_pool_get_unsafe()
 
 void material_pool_set_unsafe(struct rico_pool *pool)
 {
-    RICO_ASSERT(!materials);
     materials = pool;
 }

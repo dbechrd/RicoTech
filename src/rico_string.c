@@ -53,7 +53,7 @@ int string_init(const char *name, enum rico_string_slot slot, u32 x, u32 y,
     if (slot == STR_SLOT_DYNAMIC)
     {
         u32 handle;
-        err = pool_alloc(&strings, &handle);
+        err = pool_handle_alloc(&strings, &handle);
         if (err) return err;
         str = pool_read(&strings, handle);
     }
@@ -110,7 +110,7 @@ int string_free(u32 handle)
     str->obj_handle = 0;
 
     str->uid.uid = UID_NULL;
-    err = pool_free(&strings, handle);
+    err = pool_handle_free(&strings, handle);
     return err;
 }
 
@@ -118,7 +118,7 @@ int string_update(float dt)
 {
     enum rico_error err;
 
-    u32 delta_ms = dt * 1000;
+    u32 delta_ms = (u32)(dt * 1000);
 
     struct rico_string *str;
     for (u32 i = 0; i < strings.active; ++i)

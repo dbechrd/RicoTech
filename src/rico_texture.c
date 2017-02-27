@@ -1,7 +1,7 @@
 #include "rico_texture.h"
 #include "rico_uid.h"
 #include "rico_pool.h"
-#include "stb_image.h"
+#include "stb/stb_image.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -81,7 +81,7 @@ int texture_load_pixels(const char *name, GLenum target, u32 width, u32 height,
 
     enum rico_error err;
 
-    err = pool_alloc(&textures, _handle);
+    err = pool_handle_alloc(&textures, _handle);
     if (err) return err;
 
     struct rico_texture *tex = pool_read(&textures, *_handle);
@@ -210,8 +210,15 @@ static int build_texture(struct rico_texture *tex, const void *pixels)
 
 void texture_free(u32 handle)
 {
+    // TODO: Use static pool slots
+    if (handle == RICO_TEXTURE_DEFAULT_DIFF)
+        return;
+    if (handle == RICO_TEXTURE_DEFAULT_SPEC)
+        return;
+
     struct rico_texture *tex = pool_read(&textures, handle);
-    tex->ref_count--;
+    if (tex->ref_count > 0)
+        tex->ref_count--;
 
 #ifdef RICO_DEBUG_TEXTURE
     printf("[ tex][-- %d] name=%s\n", tex->ref_count, tex->uid.name);
@@ -227,7 +234,7 @@ void texture_free(u32 handle)
     glDeleteTextures(1, &tex->gl_id);
 
     tex->uid.uid = UID_NULL;
-    pool_free(&textures, handle);
+    pool_handle_free(&textures, handle);
 }
 
 const char *texture_name(u32 handle)

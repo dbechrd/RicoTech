@@ -42,7 +42,7 @@ int font_init(const char *filename, u32 *_handle)
         printf("[font][init] filename=%s\n", filename);
     #endif
 
-    err = pool_alloc(fonts, _handle);
+    err = pool_handle_alloc(fonts, _handle);
     if (err) return err;
 
     struct rico_font *font = pool_read(fonts, *_handle);
@@ -113,7 +113,7 @@ void font_free(u32 handle)
     texture_free(font->texture);
 
     font->uid.uid = UID_NULL;
-    pool_free(fonts, handle);
+    pool_handle_free(fonts, handle);
 }
 
 static void font_setblend(const struct rico_font *font)

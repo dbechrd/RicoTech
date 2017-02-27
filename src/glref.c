@@ -142,23 +142,9 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
 {
     enum rico_error err;
 
-    // Initialize object pool
-    err = rico_object_init(RICO_OBJECT_POOL_SIZE);
-    if (err) return err;
-
-    // Initialize material pool
-    err = rico_material_init(RICO_MATERIAL_POOL_SIZE);
-    if (err) return err;
-
     //--------------------------------------------------------------------------
     // Create materials
     //--------------------------------------------------------------------------
-    // TODO: Use static slots to allocate default resources
-    err = material_init("MATERIAL_DEFAULT", RICO_TEXTURE_DEFAULT_DIFF,
-                        RICO_TEXTURE_DEFAULT_SPEC, 0.5f,
-                        &RICO_MATERIAL_DEFAULT);
-    if (err) return err;
-
     u32 material_rock;
     err = material_init("Rock", tex_rock, RICO_TEXTURE_DEFAULT_SPEC, 0.5f,
                         &material_rock);
@@ -167,94 +153,19 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
     //--------------------------------------------------------------------------
     // Create world objects
     //--------------------------------------------------------------------------
-    // u32 obj_fonttest;
-    u32 obj_ground;
-    // u32 obj_yellow;
-    // u32 obj_ruler;
-    // u32 obj_wall1;
-    // u32 obj_wall2;
-    // u32 obj_wall3;
-    // u32 obj_wall4;
-    // u32 obj_wall5;
-    u32 arr_objects[RICO_MESH_POOL_SIZE] = {0};
-
-    // // World font object
-    // err = object_create(&obj_fonttest, "World String Test", OBJ_STRING_WORLD,
-    //                     mesh_font_test, tex_font_test, NULL);
-    // if (err) return err;
-    // object_trans(obj_fonttest, 0.0f, 2.0f, 0.0f);
-    // object_scale(obj_fonttest, 1.0f, 1.0f, 1.0f);
-
-    // // Screen font object
-    // err = object_create(&obj_fonttest, "Screen String Test", OBJ_STRING_SCREEN,
-    //                     mesh_font_test, tex_font_test, NULL);
-    // if (err) return err;
-    // object_trans(obj_fonttest, -1.0f, 0.0f, 0.0f);
-
+    
     // Ground
+    u32 obj_ground;
     err = object_create(&obj_ground, "Ground", OBJ_STATIC, RICO_MESH_DEFAULT,
                         material_rock, NULL, true);
     if (err) return err;
     object_rot_x(obj_ground, -90.0f);
     object_scale(obj_ground, &(struct vec3) { 64.0f, 64.0f, 1.0f });
 
-    // // Hello
-    // err = object_create(&obj_yellow, "Yellow", OBJ_STATIC, RICO_MESH_DEFAULT,
-    //                     tex_yellow, NULL);
-    // if (err) return err;
-    // object_trans(obj_yellow, 0.0f, 2.0f, -4.0f);
-    // object_rot_y(obj_yellow, 40.0f);
-    // object_scale(obj_yellow, 1.0f, 2.0f, 1.0f);
-
-    // // Ruler
-    // err = object_create(&obj_ruler, "Ruler", OBJ_STATIC, RICO_MESH_DEFAULT,
-    //                     RICO_TEXTURE_DEFAULT, NULL);
-    // if (err) return err;
-    // object_trans(obj_ruler, 0.0f, 1.0f, -3.0f);
-    // object_scale(obj_ruler, 1.0f, 1.0f, 1.0f);
-
-    // // Walls are all the same size for now
-    // struct vec3 wall_scale = (struct vec3) { 8.0f, 2.5f, 1.0f };
-
-    // // Wall front
-    // err = object_create(&obj_wall1, "wall1", OBJ_STATIC, RICO_MESH_DEFAULT,
-    //                     tex_hello, NULL);
-    // if (err) return err;
-    // object_trans(obj_wall1, 0.0f, 2.5f, -8.0f);
-    // object_scale(obj_wall1, wall_scale.x, wall_scale.y, wall_scale.z);
-
-    // // Wall left
-    // err = object_create(&obj_wall2, "wall2", OBJ_STATIC, RICO_MESH_DEFAULT,
-    //                     tex_hello, NULL);
-    // if (err) return err;
-    // object_trans(obj_wall2, -8.0f, 2.5f, 0.0f);
-    // object_scale(obj_wall2, wall_scale.x, wall_scale.y, wall_scale.z);
-
-    // // Wall back
-    // err = object_create(&obj_wall3, "wall3", OBJ_STATIC, RICO_MESH_DEFAULT,
-    //                     tex_hello, NULL);
-    // if (err) return err;
-    // object_trans(obj_wall3, 0.0f, 2.5f, 8.0f);
-    // object_rot_y(obj_wall3, 180.0f);
-    // object_scale(obj_wall3, wall_scale.x, wall_scale.y, wall_scale.z);
-
-    // // Wall right
-    // err = object_create(&obj_wall4, "wall4", OBJ_STATIC, RICO_MESH_DEFAULT,
-    //                     tex_hello, NULL);
-    // if (err) return err;
-    // object_trans(obj_wall4, 8.0f, 2.5f, 0.0f);
-    // object_rot_y(obj_wall4, -90.0f);
-    // object_scale(obj_wall4, wall_scale.x, wall_scale.y, wall_scale.z);
-
-    // // Wall five
-    // err = object_create(&obj_wall5, "wall5", OBJ_STATIC, RICO_MESH_DEFAULT,
-    //                     tex_hello, NULL);
-    // if (err) return err;
-    // object_trans(obj_wall5, 4.0f, 2.5f, 0.0f);
-    // object_rot_y(obj_wall5, -90.0f);
-    // object_scale(obj_wall5, wall_scale.x, wall_scale.y, wall_scale.z);
-
+    // TEST: Create test object for each mesh / primitive
     {
+        u32 arr_objects[RICO_MESH_POOL_SIZE] = { 0 };
+
         // Create test object for each loaded mesh
         u32 i = 0;
         for (; i < mesh_count; i++)
@@ -265,8 +176,12 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
             if (err) return err;
 
             // HACK: Don't z-fight ground plane
-            object_trans_set(arr_objects[i], &(struct vec3) { 0.0f, EPSILON, 0.0f });
-            // object_scale_set(arr_objects[i], &(struct vec3) { 0.1f, 0.1f, 0.1f });
+            object_trans_set(arr_objects[i],
+                             &(struct vec3) { 0.0f, EPSILON, 0.0f });
+
+            // HACK: Scale scene 1/10 (for conference room test)
+            // object_scale_set(arr_objects[i],
+            //                  &(struct vec3) { 0.1f, 0.1f, 0.1f });
         }
 
         // Create test object for each primitive
@@ -307,6 +222,24 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
     return err;
 }
 
+int create_obj()
+{
+    enum rico_error err;
+
+    // TODO: Prompt user for object name
+    const char *name = "new_obj";
+    u32 new_obj;
+
+    // Create new object with default properties
+    err = object_create(&new_obj, name, OBJ_STATIC, RICO_MESH_DEFAULT,
+                        RICO_MATERIAL_DEFAULT, NULL, true);
+    if (err) return err;
+
+    // Select new object
+    select_obj(new_obj);
+    return err;
+}
+
 void select_obj(u32 handle)
 {
     if (selected_handle == handle)
@@ -316,13 +249,12 @@ void select_obj(u32 handle)
     if (selected_handle)
         object_deselect(selected_handle);
 
-    selected_handle = handle;
-
     // Select requested object
+    selected_handle = handle;
     if (selected_handle)
         object_select(selected_handle);
 
-    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
+    selected_print();
 }
 
 void select_next_obj()
@@ -333,6 +265,12 @@ void select_next_obj()
 void select_prev_obj()
 {
     select_obj(object_prev(selected_handle));
+}
+
+void selected_print()
+{
+    // Print select object's properties
+    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
 }
 
 void selected_translate(struct camera *camera, const struct vec3 *offset)
@@ -404,11 +342,11 @@ int selected_duplicate()
 
     enum rico_error err;
 
-    u32 newObj;
-    err = object_copy(&newObj, selected_handle, "Duplicate");
+    u32 new_obj;
+    err = object_copy(&new_obj, selected_handle, "Duplicate");
     if (err) return err;
 
-    select_obj(newObj);
+    select_obj(new_obj);
     return err;
 }
 
@@ -421,12 +359,15 @@ void selected_delete()
     if (selected_type == OBJ_NULL || selected_type == OBJ_STRING_SCREEN)
         return;
 
-    u32 handle = selected_handle;
-    select_prev_obj();
-    object_free(handle);
+    u32 prev = object_prev(selected_handle);
+    if (prev == selected_handle)
+        prev = 0;
+
+    object_free(selected_handle);
+    select_obj(prev);
 }
 
-void glref_update(u32 dt)
+void glref_update(float dt)
 {
     //--------------------------------------------------------------------------
     // Update uniforms

@@ -37,6 +37,8 @@ const char *rico_obj_type_string[] = {
     RICO_OBJ_TYPES(GEN_STRING)
 };
 
+// TODO: Don't store pools in individual files, query via e.g.
+//       chunk_active().objects
 u32 RICO_OBJECT_DEFAULT = 0;
 static struct rico_pool *objects;
 
@@ -60,20 +62,25 @@ int object_create(u32 *_handle, const char *name, enum rico_obj_type type,
     enum rico_error err;
     *_handle = RICO_OBJECT_DEFAULT;
 
-    err = pool_alloc(objects, _handle);
+    err = pool_handle_alloc(objects, _handle);
     if (err) return err;
 
     struct rico_object *obj = pool_read(objects, *_handle);
 
     uid_init(&obj->uid, RICO_UID_OBJECT, name, serialize);
     obj->type = type;
+    obj->trans = VEC3_ZERO;
+    obj->rot = VEC3_ZERO;
     if (type == OBJ_STRING_SCREEN)
         obj->scale = VEC3_SCALE_ASPECT;
     else
         obj->scale = VEC3_ONE;
+    obj->transform = MAT4_IDENT;
+    obj->transform_inverse = MAT4_IDENT;
     obj->mesh = mesh_request(mesh);
     obj->material = material_request(material);
     obj->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(mesh);
+
     update_transform(obj);
 
     return err;
@@ -114,9 +121,13 @@ void object_material_set(u32 handle, u32 material)
 
 void object_free(u32 handle)
 {
+    // TODO: Use static pool slots
+    if (handle == RICO_OBJECT_DEFAULT)
+        return;
+
     struct rico_object *obj = pool_read(objects, handle);
 
-#ifdef RICO_DEBUG_INFO
+#ifdef RICO_DEBUG_OBJECT
     printf("[ obj][free] name=%s\n", obj->uid.name);
 #endif
 
@@ -124,7 +135,7 @@ void object_free(u32 handle)
     material_free(obj->material);
 
     obj->uid.uid = UID_NULL;
-    pool_free(objects, handle);
+    pool_handle_free(objects, handle);
 }
 
 void object_free_all()
@@ -137,18 +148,50 @@ void object_free_all()
 
 u32 object_next(u32 handle)
 {
-    return pool_next(objects, handle);
+    u32 start = pool_handle_next(objects, handle);
+    u32 next = start;
+    
+    do
+    {
+        if (object_selectable(next))
+            return next;
+
+        next = pool_handle_next(objects, next);
+    } while (next != start);
+
+    return 0;
 }
 
 u32 object_prev(u32 handle)
 {
-    return pool_prev(objects, handle);
+    u32 start = pool_handle_prev(objects, handle);
+    u32 prev = start;
+
+    do
+    {
+        if (object_selectable(prev))
+            return prev;
+
+        prev = pool_handle_prev(objects, prev);
+    } while (prev != start);
+
+    return 0;
 }
 
 enum rico_obj_type object_type_get(u32 handle)
 {
+    if (!handle)
+        return OBJ_NULL;
+
     struct rico_object *obj = pool_read(objects, handle);
     return obj->type;
+}
+
+bool object_selectable(u32 handle)
+{
+    enum rico_obj_type type = object_type_get(handle);
+    return (type != OBJ_NULL &&
+            type != OBJ_STRING_SCREEN);
 }
 
 void object_select(u32 handle)
@@ -571,6 +614,5 @@ struct rico_pool *object_pool_get_unsafe()
 
 void object_pool_set_unsafe(struct rico_pool *pool)
 {
-    RICO_ASSERT(!objects);
     objects = pool;
 }

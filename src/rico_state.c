@@ -124,17 +124,18 @@ int state_update(enum rico_state *_state)
     // Update time
     ////////////////////////////////////////////////////////////////////////
     u32 new_time = SDL_GetTicks();
-    double delta_ms = (new_time - time);
+    u32 delta_ms = (new_time - time);
     time = new_time;
 
     // Smoothing function (weighted running average)
-    static const double smooth = 0.99; // larger=more smoothing
+    static const float smooth = 0.99f; // larger=more smoothing
     frame_time *= smooth;
     frame_time += (1.0 - smooth) * delta_ms;
 
-    // Smooth delta time (should I apply to *just* FPS counter, or entire game?)
-    //double dt = frame_time / 1000.0;
-    double dt = delta_ms / 1000.0;
+    // TODO: should I smooth *just* FPS counter dt, or dt for entire game?
+    // Smooth delta time
+    //double dt = frame_time / 1000.0f;
+    float dt = delta_ms / 1000.0f;
 
     if (fps_render && time - fps_last_render > fps_render_delta)
     {
@@ -172,7 +173,7 @@ int state_update(enum rico_state *_state)
     if (state_changed)
     {
         char buf[50] = { 0 };
-        sprintf(buf, "State: %s", rico_state_string[state]);
+        sprintf(buf, "State: %d %s", state, rico_state_string[state]);
         err = string_init("STR_STATE", STR_SLOT_EDIT_INFO, 0, 0,
                           COLOR_DARK_RED_HIGHLIGHT, 0, RICO_FONT_DEFAULT, buf);
         if (err) return err;
@@ -275,7 +276,7 @@ static int save_file()
     enum rico_error err;
 
     struct rico_file file;
-    err = rico_file_open_write(&file, "../res/chunks/cereal.bin",
+    err = rico_file_open_write(&file, "chunks/cereal.bin",
                                RICO_FILE_VERSION_CURRENT);
     if (err) return err;
 
@@ -349,11 +350,11 @@ static int handle_engine_events(SDL_Event event, bool *handled)
     {
         if (mouse_lock)
         {
-            mouse_acc.x = event.motion.xrel;
+            mouse_acc.x = (float)event.motion.xrel;
             // if (mouse_acc.x >  1) mouse_acc.x =  1;
             // if (mouse_acc.x < -1) mouse_acc.x = -1;
 
-            mouse_acc.y = event.motion.yrel;
+            mouse_acc.y = (float)event.motion.yrel;
             // if (mouse_acc.y >  1) mouse_acc.y =  1;
             // if (mouse_acc.y < -1) mouse_acc.y = -1;
         }
@@ -658,10 +659,34 @@ static int handle_edit_events(SDL_Event event, bool *handled)
             }
             *handled = true;
         }
+        // [Numpad .]: Select previous edit mode
+        else if (event.key.keysym.sym == SDLK_KP_PERIOD)
+        {
+            switch (state)
+            {
+            case STATE_EDIT_ROTATE:
+            case STATE_EDIT_SCALE:
+            case STATE_EDIT_TEXTURE:
+                state--;
+                break;
+            case STATE_EDIT_TRANSLATE:
+                state = STATE_EDIT_TEXTURE;
+                break;
+            default:
+                RICO_ASSERT("WTF");
+            }
+            *handled = true;
+        }
         // [Tab]: Cycle select through objects
         else if (event.key.keysym.sym == SDLK_TAB)
         {
             select_next_obj();
+            *handled = true;
+        }
+        // [Ins]: Create new object
+        else if (event.key.keysym.sym == SDLK_INSERT)
+        {
+            create_obj();
             *handled = true;
         }
         // [Del]: Delete selected object
@@ -707,10 +732,11 @@ static int state_play_explore()
             {
                 state = STATE_ENGINE_SHUTDOWN;
             }
-            // [~]: Enter edit mode
-            else if (event.key.keysym.sym == SDLK_BACKQUOTE)
+            // [`]: Enter edit mode
+            else if (event.key.keysym.sym == SDLK_BACKQUOTE) // backtick
             {
                 state = STATE_EDIT_TRANSLATE;
+                selected_print();
             }
         }
     }
@@ -1082,6 +1108,11 @@ static int rico_init_pools()
 {
     enum rico_error err;
 
+    // TODO: Don't initialize these manually this way if they're going to be
+    //       deserialized from chunks. Instead, create a hard-coded test chunk
+    //       that gets loaded if the real chunk can't be loaded from the save
+    //       file.
+
     err = rico_string_init(RICO_STRING_POOL_SIZE);
     if (err) return err;
 
@@ -1091,7 +1122,15 @@ static int rico_init_pools()
     err = rico_texture_init(RICO_TEXTURE_POOL_SIZE);
     if (err) return err;
 
+    err = rico_material_init(RICO_MATERIAL_POOL_SIZE);
+    if (err) return err;
+
     err = rico_mesh_init(RICO_MESH_POOL_SIZE);
+    if (err) return err;
+
+    err = rico_object_init(RICO_OBJECT_POOL_SIZE);
+    if (err) return err;
+
     return err;
 }
 
@@ -1117,6 +1156,17 @@ static int rico_init_textures()
     err = texture_load_file("TEXTURE_DEFAULT_SPEC", GL_TEXTURE_2D,
                             "texture/basic_spec.tga", 32,
                             &RICO_TEXTURE_DEFAULT_SPEC);
+    return err;
+}
+
+static int rico_init_materials()
+{
+    enum rico_error err;
+
+    // TODO: Use static slots to allocate default resources
+    err = material_init("MATERIAL_DEFAULT", RICO_TEXTURE_DEFAULT_DIFF,
+                        RICO_TEXTURE_DEFAULT_SPEC, 0.5f,
+                        &RICO_MATERIAL_DEFAULT);
     return err;
 }
 
@@ -1206,6 +1256,12 @@ static int rico_init()
     printf("[MAIN][init] Initializing textures\n");
     printf("------------------------------------------------------------\n");
     err = rico_init_textures();
+    if (err) return err;
+
+    printf("------------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing materials\n");
+    printf("------------------------------------------------------------\n");
+    err = rico_init_materials();
     if (err) return err;
 
     printf("------------------------------------------------------------\n");

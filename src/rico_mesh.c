@@ -51,7 +51,7 @@ int mesh_load(const char *name, u32 vertex_count,
     enum rico_error err;
     *_handle = RICO_MESH_DEFAULT;
 
-    err = pool_alloc(&meshes, _handle);
+    err = pool_handle_alloc(&meshes, _handle);
     if (err) return err;
 
     struct rico_mesh *mesh = pool_read(&meshes, *_handle);
@@ -131,8 +131,13 @@ static int build_mesh(struct rico_mesh *mesh, u32 vertex_count,
 
 void mesh_free(u32 handle)
 {
+    // TODO: Use static pool slots
+    if (handle == RICO_MESH_DEFAULT)
+        return;
+
     struct rico_mesh *mesh = pool_read(&meshes, handle);
-    mesh->ref_count--;
+    if (mesh->ref_count > 0)
+        mesh->ref_count--;
 
 #ifdef RICO_DEBUG_MESH
     printf("[mesh][-- %d] name=%s\n", mesh->ref_count, mesh->uid.name);
@@ -151,7 +156,7 @@ void mesh_free(u32 handle)
     glDeleteVertexArrays(1, &mesh->vao);
 
     mesh->uid.uid = UID_NULL;
-    pool_free(&meshes, handle);
+    pool_handle_free(&meshes, handle);
 }
 
 const char *mesh_name(u32 handle)

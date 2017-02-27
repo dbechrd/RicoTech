@@ -25,6 +25,8 @@ int pool_init(const char *name, u32 count, u32 size, u32 static_count,
     pool.pool = calloc(count, size);
     if (!pool.pool) return RICO_ERROR(ERR_BAD_ALLOC);
 
+    // TODO: Should I use UIDs for handles instead of e.g. 1-100?
+    //       'u32 uid' or 'struct rico_uid *uid'?
     // Initialize free list
     for (u32 i = 0; i < count; i++)
     {
@@ -39,7 +41,34 @@ int pool_init(const char *name, u32 count, u32 size, u32 static_count,
     return SUCCESS;
 }
 
-int pool_alloc(struct rico_pool *pool, u32 *_handle)
+void pool_free(struct rico_pool *pool, destructor *destruct)
+{
+    RICO_ASSERT(pool);
+    RICO_ASSERT(pool->uid.uid != UID_NULL);
+
+#ifdef RICO_DEBUG_POOL
+    printf("[pool][free] name=%s\n", pool->uid.name);
+#endif
+
+    // DEBUG: Make sure contents of pool have been properly freed
+    for (u32 i = 0; i < pool->active; ++i)
+    {
+        u32 handle = pool->handles[i];
+        struct rico_uid *uid = pool_read(pool, handle);
+
+        if (uid->uid != UID_NULL)
+        {
+            destruct(handle);
+        }
+    }
+
+    free(pool->handles);
+    free(pool->pool);
+
+    pool->uid.uid = UID_NULL;
+}
+
+int pool_handle_alloc(struct rico_pool *pool, u32 *_handle)
 {
     RICO_ASSERT(pool);
     if (pool->active == pool->count)
@@ -64,7 +93,7 @@ int pool_alloc(struct rico_pool *pool, u32 *_handle)
     return SUCCESS;
 }
 
-int pool_free(struct rico_pool *pool, u32 handle)
+int pool_handle_free(struct rico_pool *pool, u32 handle)
 {
     RICO_ASSERT(pool);
 
@@ -103,7 +132,7 @@ int pool_free(struct rico_pool *pool, u32 handle)
     return SUCCESS;
 }
 
-u32 pool_next(struct rico_pool *pool, u32 handle)
+u32 pool_handle_next(struct rico_pool *pool, u32 handle)
 {
     if (!handle)
     {
@@ -124,7 +153,7 @@ u32 pool_next(struct rico_pool *pool, u32 handle)
     return 0;
 }
 
-u32 pool_prev(struct rico_pool *pool, u32 handle)
+u32 pool_handle_prev(struct rico_pool *pool, u32 handle)
 {
     if (!handle)
     {

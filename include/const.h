@@ -54,6 +54,9 @@
 #define DEG_TO_RAD(deg) deg * M_PI / 180.0
 #define RAD_TO_DEG(rad) rad * 180.0 / M_PI
 
+#define DEG_TO_RADF(deg) deg * (float)M_PI / 180.0f
+#define RAD_TO_DEGF(rad) rad * 180.0f / (float)M_PI
+
 #define M_SEVENTH_DEG 51.428571428571428571428571428571
 
 #ifndef EPSILON

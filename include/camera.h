@@ -6,8 +6,8 @@
 
 //------------------------------------------------------------------------------
 //TODO: Probably should prefix these? Possibly move to const.h?
-#define SCREEN_W 1600.0f
-#define SCREEN_H 900.0f
+#define SCREEN_W 1600
+#define SCREEN_H 900
 // #define SCREEN_W 800.0f
 // #define SCREEN_H 600.0f
 #define SCREEN_ASPECT SCREEN_W / SCREEN_H

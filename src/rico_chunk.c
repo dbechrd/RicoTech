@@ -75,16 +75,24 @@ int chunk_serialize_0(const void *handle, const struct rico_file *file)
 
 int chunk_deserialize_0(void *_handle, const struct rico_file *file)
 {
-    enum rico_error err;
+    enum rico_error err = SUCCESS;
     struct rico_chunk *_chunk = _handle;
 
+    // TODO: What's the point of tracking pool sizes independently?
     fread(&_chunk->version,    sizeof(_chunk->version),    1, file->fs);
     fread(&_chunk->tex_count,  sizeof(_chunk->tex_count),  1, file->fs);
     fread(&_chunk->mat_count,  sizeof(_chunk->mat_count),  1, file->fs);
     fread(&_chunk->mesh_count, sizeof(_chunk->mesh_count), 1, file->fs);
     fread(&_chunk->obj_count,  sizeof(_chunk->obj_count),  1, file->fs);
 
-    // Pools
+    // HACK: Free default pools.
+    // TODO: Implement default chunk instead.
+    struct rico_pool *pool_objects = object_pool_get_unsafe();
+    struct rico_pool *pool_materials = material_pool_get_unsafe();
+    pool_free(pool_objects,   &object_free);
+    pool_free(pool_materials, &material_free);
+
+    // Create (deserialize) pools
     //err = rico_deserialize(&_chunk->textures, file);
     //if (err) return err;
 

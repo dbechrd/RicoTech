@@ -9,10 +9,9 @@ struct program_default;
 
 #define RICO_OBJ_TYPES(f)   \
     f(OBJ_NULL)             \
-    f(OBJ_STATIC)          \
+    f(OBJ_STATIC)           \
     f(OBJ_STRING_WORLD)     \
-    f(OBJ_STRING_SCREEN)    \
-    f(OBJ_ALL)
+    f(OBJ_STRING_SCREEN)
 
 enum rico_obj_type {
     RICO_OBJ_TYPES(GEN_LIST)
@@ -32,6 +31,7 @@ struct rico_object *object_fetch(u32 handle);
 u32 object_next(u32 handle);
 u32 object_prev(u32 handle);
 enum rico_obj_type object_type_get(u32 handle);
+bool object_selectable(u32 handle);
 void object_select(u32 handle);
 void object_deselect(u32 handle);
 void object_trans(u32 handle, const struct vec3 *v);
