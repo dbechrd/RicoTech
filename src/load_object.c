@@ -60,7 +60,7 @@ static inline long fast_atol(const char *str)
     return val;
 }
 
-int load_obj_file(const char *filename, u32 *_meshes, u32 *_mesh_count)
+int load_obj_file(const char *filename)
 {
     enum rico_error err;
 
@@ -102,9 +102,10 @@ int load_obj_file(const char *filename, u32 *_meshes, u32 *_mesh_count)
         {
             if (idx_vertex > 0)
             {
-                err = mesh_load(name, idx_vertex, vertices, idx_element,
-                                elements, GL_STATIC_DRAW,
-                                &_meshes[*_mesh_count + idx_mesh]);
+                u32 handle;
+                err = mesh_load(&handle, name, MESH_OBJ_WORLD, idx_vertex,
+                                vertices, idx_element, elements,
+                                GL_STATIC_DRAW);
                 if (err) goto cleanup;
                 idx_mesh++;
             }
@@ -185,13 +186,12 @@ int load_obj_file(const char *filename, u32 *_meshes, u32 *_mesh_count)
 
     if (idx_vertex > 0)
     {
-        err = mesh_load(name, idx_vertex, vertices, idx_element, elements,
-                        GL_STATIC_DRAW, &_meshes[*_mesh_count + idx_mesh]);
+        u32 handle;
+        err = mesh_load(&handle, name, MESH_OBJ_WORLD, idx_vertex, vertices,
+                        idx_element, elements, GL_STATIC_DRAW);
         if (err) goto cleanup;
         idx_mesh++;
     }
-
-    *_mesh_count += idx_mesh;
 
 cleanup:
     if (buffer)     free(buffer);

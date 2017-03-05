@@ -39,8 +39,8 @@ int string_init(const char *name, enum rico_string_slot slot, u32 x, u32 y,
     // Generate font mesh and get texture handle
     u32 text_mesh;
     u32 text_tex;
-    err = font_render(font, 0, 0, color, text, "debug_info_string", &text_mesh,
-                      &text_tex);
+    err = font_render(font, 0, 0, color, text, "debug_info_string",
+                      MESH_STRING_SCREEN, &text_mesh, &text_tex);
     if (err) return err;
 
     u32 text_material;

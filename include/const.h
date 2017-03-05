@@ -178,6 +178,7 @@ enum rico_vbo {
     f(ERR_PRIM_UNSUPPORTED)         \
     f(ERR_OBJ_TOO_MANY_VERTS)       \
     f(ERR_CHUNK_NULL)               \
+    f(ERR_MESH_INVALID_NAME)        \
     f(ERR_COUNT)
 
 enum rico_error {

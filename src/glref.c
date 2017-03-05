@@ -104,8 +104,8 @@ int init_glref()
     //--------------------------------------------------------------------------
     // Font Test
     err = font_render(font, 0, 0, COLOR_DARK_RED_HIGHLIGHT,
-                      "This is a test.\nYay!", "Font test", &mesh_font_test,
-                      &tex_font_test);
+                      "This is a test.\nYay!", "Font test", MESH_OBJ_WORLD,
+                      &mesh_font_test, &tex_font_test);
     if (err) return err;
 
     //--------------------------------------------------------------------------
@@ -138,7 +138,7 @@ int init_glref()
     return err;
 }
 
-int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
+int init_hardcoded_test_chunk()
 {
     enum rico_error err;
 
@@ -153,7 +153,7 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
     //--------------------------------------------------------------------------
     // Create world objects
     //--------------------------------------------------------------------------
-    
+
     // Ground
     u32 obj_ground;
     err = object_create(&obj_ground, "Ground", OBJ_STATIC, RICO_MESH_DEFAULT,
@@ -165,9 +165,12 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
     // TEST: Create test object for each mesh / primitive
     {
         u32 arr_objects[RICO_MESH_POOL_SIZE] = { 0 };
-
-        // Create test object for each loaded mesh
         u32 i = 0;
+
+        /*
+        // Cleanup: Could use mesh_pool_get_unsafe(), but what's really the
+        //          the point of this code?
+        // Create test object for each loaded mesh
         for (; i < mesh_count; i++)
         {
             err = object_create(&arr_objects[i], mesh_name(meshes[i]),
@@ -183,13 +186,14 @@ int init_hardcoded_test_chunk(u32 *meshes, u32 mesh_count)
             // object_scale_set(arr_objects[i],
             //                  &(struct vec3) { 0.1f, 0.1f, 0.1f });
         }
+        */
 
         // Create test object for each primitive
-        i++;
         err = object_create(&arr_objects[i], mesh_name(PRIM_SPHERE_MESH),
                             OBJ_STATIC, PRIM_SPHERE_MESH,
                             RICO_MATERIAL_DEFAULT, mesh_bbox(PRIM_SPHERE_MESH),
                             true);
+        i++;
         if (err) return err;
 
         // HACK: Don't z-fight ground plane
@@ -332,6 +336,26 @@ void selected_scale(const struct vec3 *offset)
         object_scale(selected_handle, offset);
     }
 
+    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
+}
+
+void selected_mesh_next()
+{
+    if (!selected_handle)
+        return;
+
+    object_mesh_next(selected_handle);
+    object_select(selected_handle);
+    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
+}
+
+void selected_mesh_prev()
+{
+    if (!selected_handle)
+        return;
+
+    object_mesh_prev(selected_handle);
+    object_select(selected_handle);
     object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
 }
 

@@ -16,22 +16,24 @@ struct program_default;
 enum rico_obj_type {
     RICO_OBJ_TYPES(GEN_LIST)
 };
-extern const char *rico_uid_type_string[];
+extern const char *rico_obj_type_string[];
 
 int rico_object_init(u32 pool_size);
 int object_create(u32 *_handle, const char *name, enum rico_obj_type type,
                   u32 mesh, u32 material, const struct bbox *bbox,
                   bool serialize);
 int object_copy(u32 *_handle, u32 handle, const char *name);
-void object_mesh_set(u32 handle, u32 mesh, const struct bbox *bbox);
-void object_material_set(u32 handle, u32 material);
+
 void object_free(u32 handle);
 void object_free_all();
-struct rico_object *object_fetch(u32 handle);
-u32 object_next(u32 handle);
-u32 object_prev(u32 handle);
+void object_mesh_set(u32 handle, u32 mesh, const struct bbox *bbox);
+void object_mesh_next(u32 handle);
+void object_mesh_prev(u32 handle);
+void object_material_set(u32 handle, u32 material);
 enum rico_obj_type object_type_get(u32 handle);
 bool object_selectable(u32 handle);
+u32 object_next(u32 handle);
+u32 object_prev(u32 handle);
 void object_select(u32 handle);
 void object_deselect(u32 handle);
 void object_trans(u32 handle, const struct vec3 *v);

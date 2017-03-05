@@ -9,6 +9,7 @@
 #include "rico_material.h"
 #include "rico_light.h"
 #include "rico_state.h"
+#include "rico_mesh.h"
 #include "SDL/SDL.h"
 #include <malloc.h>
 
@@ -104,21 +105,6 @@ int object_copy(u32 *_handle, u32 handle, const char *name)
     return err;
 }
 
-void object_mesh_set(u32 handle, u32 mesh, const struct bbox *bbox)
-{
-    struct rico_object *obj = pool_read(objects, handle);
-    mesh_free(obj->mesh);
-    obj->mesh = mesh_request(mesh);
-    obj->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(mesh);
-}
-
-void object_material_set(u32 handle, u32 material)
-{
-    struct rico_object *obj = pool_read(objects, handle);
-    material_free(obj->material);
-    obj->material = material_request(material);
-}
-
 void object_free(u32 handle)
 {
     // TODO: Use static pool slots
@@ -146,11 +132,68 @@ void object_free_all()
     }
 }
 
+void object_mesh_set(u32 handle, u32 mesh, const struct bbox *bbox)
+{
+    struct rico_object *obj = pool_read(objects, handle);
+    mesh_free(obj->mesh);
+    obj->mesh = mesh_request(mesh);
+    obj->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(mesh);
+}
+
+void object_mesh_next(u32 handle)
+{
+    struct rico_object *obj = pool_read(objects, handle);
+
+    u32 next_mesh = mesh_next(obj->mesh);
+    if (next_mesh == obj->mesh)
+        return;
+
+    mesh_free(obj->mesh);
+    obj->mesh = mesh_request(next_mesh);
+    obj->bbox = *mesh_bbox(next_mesh);
+}
+
+void object_mesh_prev(u32 handle)
+{
+    struct rico_object *obj = pool_read(objects, handle);
+
+    u32 prev_mesh = mesh_prev(obj->mesh);
+    if (prev_mesh == obj->mesh)
+        return;
+
+    mesh_free(obj->mesh);
+    obj->mesh = mesh_request(prev_mesh);
+    obj->bbox = *mesh_bbox(prev_mesh);
+}
+
+void object_material_set(u32 handle, u32 material)
+{
+    struct rico_object *obj = pool_read(objects, handle);
+    material_free(obj->material);
+    obj->material = material_request(material);
+}
+
+enum rico_obj_type object_type_get(u32 handle)
+{
+    if (!handle)
+        return OBJ_NULL;
+
+    struct rico_object *obj = pool_read(objects, handle);
+    return obj->type;
+}
+
+bool object_selectable(u32 handle)
+{
+    enum rico_obj_type type = object_type_get(handle);
+    return (type != OBJ_NULL &&
+            type != OBJ_STRING_SCREEN);
+}
+
 u32 object_next(u32 handle)
 {
     u32 start = pool_handle_next(objects, handle);
     u32 next = start;
-    
+
     do
     {
         if (object_selectable(next))
@@ -176,22 +219,6 @@ u32 object_prev(u32 handle)
     } while (prev != start);
 
     return 0;
-}
-
-enum rico_obj_type object_type_get(u32 handle)
-{
-    if (!handle)
-        return OBJ_NULL;
-
-    struct rico_object *obj = pool_read(objects, handle);
-    return obj->type;
-}
-
-bool object_selectable(u32 handle)
-{
-    enum rico_obj_type type = object_type_get(handle);
-    return (type != OBJ_NULL &&
-            type != OBJ_STRING_SCREEN);
 }
 
 void object_select(u32 handle)

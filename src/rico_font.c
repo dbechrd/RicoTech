@@ -136,7 +136,8 @@ static void font_setblend(const struct rico_font *font)
 }
 
 int font_render(u32 handle, int x, int y, struct col4 bg, const char *text,
-                const char *mesh_name, u32 *_mesh, u32 *_texture)
+                const char *mesh_name, enum rico_mesh_type type, u32 *_mesh,
+                u32 *_texture)
 {
     enum rico_error err;
 
@@ -247,8 +248,8 @@ int font_render(u32 handle, int x, int y, struct col4 bg, const char *text,
         cur_x += xOffset;
     }
 
-    err = mesh_load(mesh_name, vertex_count, vertices, element_count, elements,
-                    GL_STATIC_DRAW, _mesh);
+    err = mesh_load(_mesh, mesh_name, type, vertex_count, vertices,
+                    element_count, elements, GL_STATIC_DRAW);
     if (err) goto cleanup;
 
     *_texture = texture_request(font->texture);

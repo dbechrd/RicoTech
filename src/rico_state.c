@@ -31,10 +31,6 @@ enum rico_key {
 static const bool reset_game_world = false;
 static struct rico_chunk first_chunk;
 
-// This is really stupid, move it somewhere else
-static u32 meshes[RICO_MESH_POOL_SIZE];
-static u32 mesh_count;
-
 ////////////////////////////////////////////////////////////////////////////////
 //Human walk speed empirically found to be 33 steps in 20 seconds. That
 //is approximately 1.65 steps per second. At 60 fps, that is 0.0275 steps
@@ -268,7 +264,8 @@ inline bool state_is_edit()
     return (state == STATE_EDIT_TRANSLATE ||
             state == STATE_EDIT_ROTATE    ||
             state == STATE_EDIT_SCALE     ||
-            state == STATE_EDIT_TEXTURE);
+            state == STATE_EDIT_TEXTURE   ||
+            state == STATE_EDIT_MESH);
 }
 
 static int save_file()
@@ -649,9 +646,10 @@ static int handle_edit_events(SDL_Event event, bool *handled)
             case STATE_EDIT_TRANSLATE:
             case STATE_EDIT_ROTATE:
             case STATE_EDIT_SCALE:
+            case STATE_EDIT_TEXTURE:
                 state++;
                 break;
-            case STATE_EDIT_TEXTURE:
+            case STATE_EDIT_MESH:
                 state = STATE_EDIT_TRANSLATE;
                 break;
             default:
@@ -667,10 +665,11 @@ static int handle_edit_events(SDL_Event event, bool *handled)
             case STATE_EDIT_ROTATE:
             case STATE_EDIT_SCALE:
             case STATE_EDIT_TEXTURE:
+            case STATE_EDIT_MESH:
                 state--;
                 break;
             case STATE_EDIT_TRANSLATE:
-                state = STATE_EDIT_TEXTURE;
+                state = STATE_EDIT_MESH;
                 break;
             default:
                 RICO_ASSERT("WTF");
@@ -1068,12 +1067,41 @@ static int state_edit_texture()
             else if (event.key.keysym.mod & KMOD_SHIFT) {}
             else if (event.key.keysym.mod & KMOD_CTRL) {}
             else if (event.key.keysym.mod & KMOD_ALT) {}
+        }
+    }
 
-            // [Esc]: Exit application
-            else if (event.key.keysym.sym == SDLK_ESCAPE)
-            {
-                state = STATE_PLAY_EXPLORE;
-            }
+    return err;
+}
+
+static int state_edit_mesh()
+{
+    enum rico_error err = SUCCESS;
+
+    SDL_Event event;
+    while (state == STATE_EDIT_MESH && SDL_PollEvent(&event))
+    {
+        bool handled = 0;
+
+        err = handle_edit_events(event, &handled);
+        if (err)     return err;
+        if (handled) continue;
+
+        if (event.type == SDL_KEYDOWN)
+        {
+            if (event.key.keysym.mod & KMOD_CTRL &&
+                event.key.keysym.mod & KMOD_SHIFT) {}
+            else if (event.key.keysym.mod & KMOD_CTRL &&
+                     event.key.keysym.mod & KMOD_ALT) {}
+            else if (event.key.keysym.mod & KMOD_SHIFT) {}
+            else if (event.key.keysym.mod & KMOD_CTRL) {}
+            else if (event.key.keysym.mod & KMOD_ALT) {}
+
+            // [Left Arrow]: Cycle selected object's mesh (in reverse)
+            else if (event.key.keysym.sym == SDLK_LEFT)
+                selected_mesh_prev();
+            // [Right Arrow]: Cycle selected object's mesh
+            else if (event.key.keysym.sym == SDLK_RIGHT)
+                selected_mesh_next();
         }
     }
 
@@ -1177,8 +1205,9 @@ static int rico_init_meshes()
     //--------------------------------------------------------------------------
     // Create default mesh (white rect)
     //--------------------------------------------------------------------------
-    #define VERT_COUNT 4
-    const struct mesh_vertex vertices[VERT_COUNT] = {
+    #define vert_count 4
+    #define element_count 6
+    const struct mesh_vertex vertices[vert_count] = {
         {
             { -1.0f, -1.0f, 0.0f },     //Position
             { 1.0f, 1.0f, 1.0f, 1.0f }, //Color
@@ -1204,28 +1233,29 @@ static int rico_init_meshes()
             { 0.0f, 1.0f }
         }
     };
-    #define ELEMENT_COUNT 6
-    const GLuint elements[ELEMENT_COUNT] = { 0, 1, 3, 1, 2, 3 };
+    const GLuint elements[element_count] = { 0, 1, 3, 1, 2, 3 };
 
-    err = mesh_load("MESH_DEFAULT", VERT_COUNT, vertices, ELEMENT_COUNT,
-                    elements, GL_STATIC_DRAW, &RICO_MESH_DEFAULT);
+    err = mesh_load(&RICO_MESH_DEFAULT, "MESH_DEFAULT", MESH_OBJ_WORLD,
+                    vert_count, vertices, element_count, elements,
+                    GL_STATIC_DRAW);
     if (err) return err;
 
     u32 ticks = SDL_GetTicks();
 
-    u32 sphere_mesh_count = 0;
-    err = load_obj_file("mesh/sphere.ric", &PRIM_SPHERE_MESH,
-                        &sphere_mesh_count);
-    mesh_request(PRIM_SPHERE_MESH);
+    err = load_obj_file("mesh/sphere.ric");
     if (err) return err;
 
-    // err = load_obj_file("mesh/conference.ric", meshes, &mesh_count);
+    PRIM_SPHERE_MESH = mesh_request_by_name("Sphere");
+    if (!PRIM_SPHERE_MESH)
+        return RICO_ERROR(ERR_MESH_INVALID_NAME);
+
+    // err = load_obj_file("mesh/conference.ric");
     // if (err) return err;
 
-    err = load_obj_file("mesh/spawn.ric", meshes, &mesh_count);
+    err = load_obj_file("mesh/spawn.ric");
     if (err) return err;
 
-    err = load_obj_file("mesh/door.ric", meshes, &mesh_count);
+    err = load_obj_file("mesh/door.ric");
     if (err) return err;
 
     u32 ticks2 = SDL_GetTicks();
@@ -1279,13 +1309,13 @@ static int rico_init()
     printf("------------------------------------------------------------\n");
     printf("[MAIN][init] Initializing game world\n");
     printf("------------------------------------------------------------\n");
-    err = init_glref(meshes, mesh_count);
+    err = init_glref();
     if (err) return err;
 
     if (reset_game_world)
     {
         printf("Loading hard-coded test chunk\n");
-        err = init_hardcoded_test_chunk(meshes, mesh_count);
+        err = init_hardcoded_test_chunk();
         if (err) return err;
     }
     else
@@ -1362,6 +1392,7 @@ void init_rico_engine()
     state_handlers[STATE_EDIT_ROTATE]     = &state_edit_rotate;
     state_handlers[STATE_EDIT_SCALE]      = &state_edit_scale;
     state_handlers[STATE_EDIT_TEXTURE]    = &state_edit_texture;
+    state_handlers[STATE_EDIT_MESH]       = &state_edit_mesh;
     state_handlers[STATE_TEXT_INPUT]      = &state_text_input;
     state_handlers[STATE_ENGINE_SHUTDOWN] = &state_engine_shutdown;
     state = STATE_ENGINE_INIT;

@@ -5,7 +5,7 @@
 struct camera cam_player;
 
 //Note: Height of player's eyes in meters
-#define CAMERA_POS_Y_MIN 1.5f
+#define CAMERA_POS_Y_MIN 1.68f
 const struct vec3 CAMERA_POS_INITIAL = {
     0.0f, CAMERA_POS_Y_MIN, 4.0f
 };

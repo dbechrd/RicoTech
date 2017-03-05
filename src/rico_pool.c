@@ -132,6 +132,14 @@ int pool_handle_free(struct rico_pool *pool, u32 handle)
     return SUCCESS;
 }
 
+u32 pool_handle_first(struct rico_pool *pool)
+{
+    if (pool->active > 0)
+        return pool->handles[0];
+    else
+        return 0;
+}
+
 u32 pool_handle_next(struct rico_pool *pool, u32 handle)
 {
     if (!handle)
