@@ -16,7 +16,7 @@
 #define SCREEN_X(x)  (float)x / (SCREEN_W / 2.0f) - 1.0f
 #define SCREEN_Y(y) -(float)y / (SCREEN_H / 2.0f) + 1.0f
 
-#define Z_NEAR 0.1f
+#define Z_NEAR 0.01f
 #define Z_FAR 100.0f
 
 struct camera {

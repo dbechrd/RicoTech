@@ -4,11 +4,13 @@
 
 struct camera cam_player;
 
-//Note: Height of player's eyes in meters
+// Note: Height of player's eyes in meters
 #define CAMERA_POS_Y_MIN 1.68f
 const struct vec3 CAMERA_POS_INITIAL = {
-    0.0f, CAMERA_POS_Y_MIN, 4.0f
+    0.0f, CAMERA_POS_Y_MIN, 1.0f
 };
+
+#define CAMERA_FOV_DEG 60.0f
 
 void camera_init(struct camera *_camera, struct vec3 position,
                  struct quat view, float fov_deg)
@@ -32,14 +34,7 @@ void camera_init(struct camera *_camera, struct vec3 position,
 
 void camera_reset(struct camera *camera)
 {
-    struct quat q_view = QUAT_IDENT;
-
-    camera_init(camera,
-                CAMERA_POS_INITIAL,
-                q_view,
-                45.0f);
-
-    camera->need_update = true;
+    camera_init(camera, CAMERA_POS_INITIAL, QUAT_IDENT, CAMERA_FOV_DEG);
 }
 
 void camera_translate_world(struct camera *camera, const struct vec3 *v)
@@ -92,7 +87,7 @@ void camera_rotate(struct camera *camera, float dx, float dy)
     //"FPS" camera = pitch * view * yaw
     quat_mul(&pitch, &camera->view);
     quat_mul(&pitch, &yaw);
-    quat_normalize(&pitch);
+    quat_normalize(&pitch);  // Note: This call might not be necessary?
     camera->view = pitch;
 
     //"Arcball(ish)" camera = yaw * pitch * view
@@ -113,6 +108,10 @@ void camera_update(struct camera *camera)
     struct mat4 rot;
     mat4_from_quat(&rot, &camera->view);
     mat4_mul(&camera->view_matrix, &rot);
+
+    // HACK: Scale view matrix to decrease quaternion rotation radius. I don't
+    //       really understand what this is doing.
+    mat4_scalef(&camera->view_matrix, 100.0f);
 
     struct vec3 pos = camera->position;
     mat4_translate(&camera->view_matrix, vec3_negate(&pos));

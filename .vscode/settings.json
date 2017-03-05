@@ -13,6 +13,7 @@
 ,
 "files.associations": {
     "*.h": "c",
-    "*.glsl": "shaderlab"
+    "*.glsl": "shaderlab",
+    "*.H": "cpp"
 }
 }
