@@ -1258,6 +1258,9 @@ static int rico_init_meshes()
     err = load_obj_file("mesh/door.ric");
     if (err) return err;
 
+    err = load_obj_file("mesh/welcome_floor.ric");
+    if (err) return err;
+
     u32 ticks2 = SDL_GetTicks();
     printf("[perf][mesh] Meshes loaded in: %d ticks\n", ticks2 - ticks);
 

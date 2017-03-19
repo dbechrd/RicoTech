@@ -231,6 +231,12 @@ void mesh_free(u32 handle)
     if (mesh->ref_count > 0)
         return;
 
+    // HACK: For now, don't ever delete meshes loaded from *.ric files.
+    //       Eventually, there should be an unload_obj_file method or some
+    //       other mesh cleanup process.
+    if (mesh->type == MESH_OBJ_WORLD)
+        return;
+
 #ifdef RICO_DEBUG_MESH
     printf("[mesh][free] name=%s\n", mesh->uid.name);
 #endif

@@ -582,16 +582,16 @@ char *object_to_string(u32 handle)
             "   Trans: %f %f %f\n" \
             "     Rot: %f %f %f\n" \
             "   Scale: %f %f %f\n" \
-            "    Mesh: %d\n"       \
-            "Material: %d\n",
+            "    Mesh: %d %s\n"       \
+            "Material: %d %s\n",
             obj->uid.uid,
             obj->uid.name,
             rico_obj_type_string[obj->type],
             obj->trans.x, obj->trans.y, obj->trans.z,
             obj->rot.x,   obj->rot.y,   obj->rot.z,
             obj->scale.x, obj->scale.y, obj->scale.z,
-            obj->mesh,
-            obj->material);
+            obj->mesh,     mesh_name(obj->mesh),
+            obj->material, material_name(obj->material));
 
     }
     return buf;
