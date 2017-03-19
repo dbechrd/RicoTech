@@ -359,6 +359,16 @@ void selected_mesh_prev()
     object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
 }
 
+void selected_bbox_reset()
+{
+    if (!selected_handle)
+        return;
+
+    object_bbox_set(selected_handle, NULL);
+    object_select(selected_handle);
+    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
+}
+
 int selected_duplicate()
 {
     if (!selected_handle)

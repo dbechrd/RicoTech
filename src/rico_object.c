@@ -132,6 +132,12 @@ void object_free_all()
     }
 }
 
+void object_bbox_set(u32 handle, const struct bbox *bbox)
+{
+    struct rico_object *obj = pool_read(objects, handle);
+    obj->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(obj->mesh);
+}
+
 void object_mesh_set(u32 handle, u32 mesh, const struct bbox *bbox)
 {
     struct rico_object *obj = pool_read(objects, handle);
@@ -631,6 +637,7 @@ int object_deserialize_0(void *_handle, const struct rico_file *file)
     {
         obj->bbox = *mesh_bbox(obj->mesh);
     }
+    obj->bbox.wireframe = true;
     return err;
 }
 

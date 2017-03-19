@@ -48,12 +48,12 @@ int bbox_init_mesh(struct bbox *bbox, const char *name,
     }
 
     // Prevent infinitesimally small bounds
-    p0.x -= EPSILON;
-    p1.x += EPSILON;
-    p0.y -= EPSILON;
-    p1.y += EPSILON;
-    p0.z -= EPSILON;
-    p1.z += EPSILON;
+    p0.x -= EPSILON * 10.0f;
+    p1.x += EPSILON * 10.0f;
+    p0.y -= EPSILON * 10.0f;
+    p1.y += EPSILON * 10.0f;
+    p0.z -= EPSILON * 10.0f;
+    p1.z += EPSILON * 10.0f;
 
     return bbox_init(bbox, name, p0, p1, color);
 }

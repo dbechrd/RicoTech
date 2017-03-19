@@ -1102,6 +1102,9 @@ static int state_edit_mesh()
             // [Right Arrow]: Cycle selected object's mesh
             else if (event.key.keysym.sym == SDLK_RIGHT)
                 selected_mesh_next();
+            // [B]: Recalculate bounding box based on current mesh
+            else if (event.key.keysym.sym == SDLK_b)
+                selected_bbox_reset();
         }
     }
 

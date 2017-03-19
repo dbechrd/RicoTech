@@ -23,9 +23,9 @@ int object_create(u32 *_handle, const char *name, enum rico_obj_type type,
                   u32 mesh, u32 material, const struct bbox *bbox,
                   bool serialize);
 int object_copy(u32 *_handle, u32 handle, const char *name);
-
 void object_free(u32 handle);
 void object_free_all();
+void object_bbox_set(u32 handle, const struct bbox *bbox);
 void object_mesh_set(u32 handle, u32 mesh, const struct bbox *bbox);
 void object_mesh_next(u32 handle);
 void object_mesh_prev(u32 handle);
