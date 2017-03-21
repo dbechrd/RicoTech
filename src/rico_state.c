@@ -178,7 +178,8 @@ int state_update(enum rico_state *_state)
     ////////////////////////////////////////////////////////////////////////
     // Clear screen
     ////////////////////////////////////////////////////////////////////////
-    glClearColor(0.1f, 0.1f, 0.3f, 1.0f);
+    //glClearColor(0.1f, 0.1f, 0.3f, 1.0f);
+    glClearColor(0.46f, 0.70f, 1.0f, 1.0f);
     //glClearDepth(0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -1262,6 +1263,9 @@ static int rico_init_meshes()
     if (err) return err;
 
     err = load_obj_file("mesh/welcome_floor.ric");
+    if (err) return err;
+
+    err = load_obj_file("mesh/wall_cornertest.ric");
     if (err) return err;
 
     u32 ticks2 = SDL_GetTicks();

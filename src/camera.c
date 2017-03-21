@@ -11,6 +11,7 @@ const struct vec3 CAMERA_POS_INITIAL = {
 };
 
 #define CAMERA_FOV_DEG 60.0f
+#define QUAT_SCALE_HACK 100.0f
 
 void camera_init(struct camera *_camera, struct vec3 position,
                  struct quat view, float fov_deg)
@@ -111,7 +112,7 @@ void camera_update(struct camera *camera)
 
     // HACK: Scale view matrix to decrease quaternion rotation radius. I don't
     //       really understand what this is doing.
-    mat4_scalef(&camera->view_matrix, 100.0f);
+    mat4_scalef(&camera->view_matrix, QUAT_SCALE_HACK);
 
     struct vec3 pos = camera->position;
     mat4_translate(&camera->view_matrix, vec3_negate(&pos));
@@ -123,8 +124,8 @@ void camera_render(struct camera *camera)
 {
     struct vec3 x = VEC3_RIGHT;
     struct vec3 y = VEC3_UP;
-    vec3_mul_quat(vec3_scalef(&x, 0.1f), &camera->view);
-    vec3_mul_quat(vec3_scalef(&y, 0.1f), &camera->view);
+    vec3_mul_quat(vec3_scalef(&x, 0.1f / QUAT_SCALE_HACK), &camera->view);
+    vec3_mul_quat(vec3_scalef(&y, 0.1f / QUAT_SCALE_HACK), &camera->view);
 
     struct vec3 x0 = camera->position;
     struct vec3 x1 = camera->position;
