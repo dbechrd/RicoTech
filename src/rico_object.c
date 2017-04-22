@@ -132,6 +132,14 @@ void object_free_all()
     }
 }
 
+void object_bbox_recalculate_all()
+{
+    for (int i = objects->active - 1; i >= 0; --i)
+    {
+        object_bbox_set(objects->handles[i], NULL);
+    }
+}
+
 void object_bbox_set(u32 handle, const struct bbox *bbox)
 {
     struct rico_object *obj = pool_read(objects, handle);

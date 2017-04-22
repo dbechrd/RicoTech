@@ -10,7 +10,7 @@
 #define SCREEN_H 900
 // #define SCREEN_W 800.0f
 // #define SCREEN_H 600.0f
-#define SCREEN_ASPECT SCREEN_W / SCREEN_H
+#define SCREEN_ASPECT (float)SCREEN_W / SCREEN_H
 
 // Convert pixel coordinates to normalized device coordinates
 #define SCREEN_X(x)  (float)x / (SCREEN_W / 2.0f) - 1.0f

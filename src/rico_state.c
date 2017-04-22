@@ -57,7 +57,7 @@ static float look_sensitivity_y = 0.5f;
 static struct vec3 mouse_acc;
 
 static struct vec3 view_vel;
-static float view_vel_max = 5.0f;
+static float view_vel_max = 2.5f; //5.0f;
 static float view_vel_max_sprint = 10.0f;
 
 static struct vec3 view_acc;
@@ -618,6 +618,12 @@ static int handle_edit_events(SDL_Event event, bool *handled)
             if (event.key.keysym.sym == SDLK_TAB)
             {
                 select_prev_obj();
+                *handled = true;
+            }
+            // [Shift-B]: Recalculate bounding boxes of all objects
+            else if (event.key.keysym.sym == SDLK_b)
+            {
+                recalculate_all_bbox();
                 *handled = true;
             }
         }
@@ -1209,35 +1215,66 @@ static int rico_init_meshes()
     //--------------------------------------------------------------------------
     // Create default mesh (white rect)
     //--------------------------------------------------------------------------
-    #define vert_count 4
-    #define element_count 6
+    #define vert_count 8
+    #define element_count 36
     const struct mesh_vertex vertices[vert_count] = {
         {
-            { -1.0f, -1.0f, 0.0f },     //Position
+            { -1.0f, -1.0f, 0.01f },   //Position
             { 1.0f, 1.0f, 1.0f, 1.0f }, //Color
             { 0.0f, 0.0f, 1.0f },       //Normal
             { 0.0f, 0.0f }              //UV-coords
         },
         {
-            { 1.0f, -1.0f, 0.0f },
+            { 1.0f, -1.0f, 0.01f },
             { 1.0f, 1.0f, 1.0f, 1.0f },
             { 0.0f, 0.0f, 1.0f },
             { 1.0f, 0.0f }
         },
         {
-            { 1.0f, 1.0f, 0.0f },
+            { 1.0f, 1.0f, 0.01f },
             { 1.0f, 1.0f, 1.0f, 1.0f },
             { 0.0f, 0.0f, 1.0f },
             { 1.0f, 1.0f }
         },
         {
-            { -1.0f, 1.0f, 0.0f },
+            { -1.0f, 1.0f, 0.01f },
+            { 1.0f, 1.0f, 1.0f, 1.0f },
+            { 0.0f, 0.0f, 1.0f },
+            { 0.0f, 1.0f }
+        },
+        {
+            { -1.0f, -1.0f, -0.01f },
+            { 1.0f, 1.0f, 1.0f, 1.0f },
+            { 0.0f, 0.0f, 1.0f },
+            { 0.0f, 0.0f }
+        },
+        {
+            { 1.0f, -1.0f, -0.01f },
+            { 1.0f, 1.0f, 1.0f, 1.0f },
+            { 0.0f, 0.0f, 1.0f },
+            { 1.0f, 0.0f }
+        },
+        {
+            { 1.0f, 1.0f, -0.01f },
+            { 1.0f, 1.0f, 1.0f, 1.0f },
+            { 0.0f, 0.0f, 1.0f },
+            { 1.0f, 1.0f }
+        },
+        {
+            { -1.0f, 1.0f, -0.01f },
             { 1.0f, 1.0f, 1.0f, 1.0f },
             { 0.0f, 0.0f, 1.0f },
             { 0.0f, 1.0f }
         }
     };
-    const GLuint elements[element_count] = { 0, 1, 3, 1, 2, 3 };
+    const GLuint elements[element_count] = {
+        0, 1, 2, 2, 3, 0,
+        4, 0, 3, 3, 7, 4,
+        5, 4, 7, 7, 6, 5,
+        1, 5, 6, 6, 2, 1,
+        3, 2, 6, 6, 7, 3,
+        4, 5, 1, 1, 0, 4
+    };
 
     err = mesh_load(&RICO_MESH_DEFAULT, "MESH_DEFAULT", MESH_OBJ_WORLD,
                     vert_count, vertices, element_count, elements,

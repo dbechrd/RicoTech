@@ -244,6 +244,15 @@ int create_obj()
     return err;
 }
 
+void recalculate_all_bbox()
+{
+    object_bbox_recalculate_all();
+
+    // Reselect current object
+    if (selected_handle)
+        object_select(selected_handle);
+}
+
 void select_obj(u32 handle)
 {
     if (selected_handle == handle)

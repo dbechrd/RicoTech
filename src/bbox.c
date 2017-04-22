@@ -7,6 +7,8 @@
 #include "primitives.h"
 #include <GL/gl3w.h>
 
+#define BBOX_EPSILON 0.01f
+
 static int init_gl(struct bbox *bbox);
 
 int bbox_init(struct bbox *bbox, const char *name, struct vec3 p0,
@@ -48,12 +50,12 @@ int bbox_init_mesh(struct bbox *bbox, const char *name,
     }
 
     // Prevent infinitesimally small bounds
-    p0.x -= EPSILON * 10.0f;
-    p1.x += EPSILON * 10.0f;
-    p0.y -= EPSILON * 10.0f;
-    p1.y += EPSILON * 10.0f;
-    p0.z -= EPSILON * 10.0f;
-    p1.z += EPSILON * 10.0f;
+    p0.x -= BBOX_EPSILON;
+    p1.x += BBOX_EPSILON;
+    p0.y -= BBOX_EPSILON;
+    p1.y += BBOX_EPSILON;
+    p0.z -= BBOX_EPSILON;
+    p1.z += BBOX_EPSILON;
 
     return bbox_init(bbox, name, p0, p1, color);
 }

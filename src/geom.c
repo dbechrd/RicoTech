@@ -48,7 +48,7 @@ const struct vec3 VEC3_RIGHT = { 1.0f, 0.0f, 0.0f };
 const struct vec3 VEC3_UP    = { 0.0f, 1.0f, 0.0f };
 const struct vec3 VEC3_FWD   = { 0.0f, 0.0f,-1.0f };
 const struct vec3 VEC3_SMALL = { 0.01f, 0.01f, 0.01f };
-const struct vec3 VEC3_SCALE_ASPECT = { 0.125, 0.125 * SCREEN_ASPECT, 1.0f };
+const struct vec3 VEC3_SCALE_ASPECT = { 0.125f, 0.125f * SCREEN_ASPECT, 1.0f };
 
 const struct mat4 MAT4_IDENT = {{{
     1.0f, 0.0f, 0.0f, 0.0f,
