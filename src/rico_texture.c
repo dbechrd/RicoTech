@@ -1,7 +1,7 @@
 #include "rico_texture.h"
 #include "rico_uid.h"
 #include "rico_pool.h"
-#include "stb/stb_image.h"
+#include "stb_image.h"
 #include <stdlib.h>
 #include <stdio.h>
 

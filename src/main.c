@@ -10,9 +10,10 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_ONLY_TGA
-#include "stb/stb_image.h"
-#include "GL/gl3w.h"
+#include "stb_image.h"
+#include "MurmurHash3.h"
 #include "SDL/SDL.h"
+#include "GL/gl3w.h"
 
 static SDL_Window *window = NULL;
 static SDL_GLContext context = NULL;
@@ -20,6 +21,17 @@ static SDL_GLContext context = NULL;
 static inline void init_stb()
 {
     stbi_set_flip_vertically_on_load(1);
+}
+
+static inline void init_murmurhash3()
+{
+    MurmurHash3_seed = 3533902173;
+
+    const char key[] = "This is a MurmurHash3 test key";
+    uint32_t hash;
+    MurmurHash3_x86_32(key, sizeof(key), &hash);
+    printf("Key: %s\n", key);
+    printf("Hash: %u\n", hash);
 }
 
 static int sdl_gl_attrib(SDL_GLattr attr, int value)
@@ -175,6 +187,7 @@ int mymain()
     printf("[MAIN][init] Initializing third party\n");
     printf("------------------------------------------------------------\n");
     init_stb();
+    init_murmurhash3();
     init_sdl();
     init_gl3w();
     init_opengl();
@@ -186,7 +199,7 @@ int mymain()
     while (1)
     {
         err = state_update(&state);
-        if (err) return err;
+        if (err) break;
 
         if (state == STATE_ENGINE_SHUTDOWN)
             break;
@@ -197,8 +210,8 @@ int mymain()
     printf("------------------------------------------------------------\n");
     printf("[MAIN][term] Clean up\n");
     printf("------------------------------------------------------------\n");
-    SDL_GL_DeleteContext(context);
-    SDL_DestroyWindow(window);
+    if (context) SDL_GL_DeleteContext(context);
+    if (window) SDL_DestroyWindow(window);
     SDL_Quit();
     return err;
 }
@@ -208,8 +221,14 @@ int main(int argc, char *argv[])
     UNUSED(argc);
     UNUSED(argv);
 
-    enum rico_error err = RICO_ERROR(mymain());
-    if (err) getchar();
+    // Don't report fatal errors again when ALL_ERRORS_FATAL flag is set
+#ifdef RICO_DEBUG_ALL_ERRORS_FATAL
+    enum rico_error err = mymain();
+#else
+    enum rico_error err = RICO_FATAL(mymain());
+#endif
 
-    return err;
+    // Hack: SDL_main is stupid and ignores my return value, force exit code
+    if (err) exit(err);
+    return 0;
 }

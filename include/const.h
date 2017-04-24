@@ -1,29 +1,22 @@
 #ifndef CONST_H
 #define CONST_H
 
+
 // Debug
-#ifndef RICO_DEBUG
-    #define RICO_DEBUG
-#endif
+#define RICO_DEBUG
 
 #ifdef RICO_DEBUG
-    #ifndef RICO_DEBUG_ERROR_ASSERT
-        #define RICO_DEBUG_ERROR_ASSERT
-    #endif
-    #ifndef RICO_DEBUG_WARN
-        #define RICO_DEBUG_WARN
-    #endif
-    #ifndef RICO_DEBUG_INFO
-        #define RICO_DEBUG_INFO
-        #define RICO_DEBUG_UID
-        // #define RICO_DEBUG_POOL
-        #define RICO_DEBUG_CHUNK
-        #define RICO_DEBUG_TEXTURE
-        #define RICO_DEBUG_MESH
-        #define RICO_DEBUG_OBJECT
-        #define RICO_DEBUG_STRING
-        #define RICO_DEBUG_MATERIAL
-    #endif
+    #define RICO_DEBUG_ALL_ERRORS_FATAL
+    #define RICO_DEBUG_WARN
+    #define RICO_DEBUG_INFO
+    #define RICO_DEBUG_UID
+    //#define RICO_DEBUG_POOL
+    #define RICO_DEBUG_CHUNK
+    #define RICO_DEBUG_TEXTURE
+    #define RICO_DEBUG_MESH
+    #define RICO_DEBUG_OBJECT
+    #define RICO_DEBUG_STRING
+    #define RICO_DEBUG_MATERIAL
 #endif
 
 //------------------------------------------------------------------------------
@@ -186,13 +179,22 @@ enum rico_error {
 };
 extern const char *rico_error_string[];
 
+enum rico_error rico_error_print(enum rico_error err, const char *desc,
+                                 const char *file, int line);
+enum rico_error rico_fatal_print(enum rico_error err, const char *desc,
+                                 const char *file, int line);
+
 #ifdef RICO_DEBUG
-    enum rico_error rico_error_print(enum rico_error err, const char *file,
-                                     int line);
-    #define RICO_ERROR(err) rico_error_print(err, __FILE__, __LINE__)
+    #ifdef RICO_DEBUG_ALL_ERRORS_FATAL
+        #define RICO_ERROR(err) rico_fatal_print(err, "abc", __FILE__, __LINE__)
+    #else
+        #define RICO_ERROR(err) rico_error_print(err, "abc", __FILE__, __LINE__)
+    #endif
 #else
     #define RICO_ERROR(err) err
 #endif
+
+#define RICO_FATAL(err) rico_fatal_print(err, "abc", __FILE__, __LINE__)
 
 //------------------------------------------------------------------------------
 

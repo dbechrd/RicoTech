@@ -69,7 +69,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)include;</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)include;$(ProjectDir)include\3rdparty;</IncludePath>
     <SourcePath>$(ProjectDir)src</SourcePath>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(ProjectDir)lib;</LibraryPath>
   </PropertyGroup>
@@ -130,6 +130,7 @@
     <ClInclude Include="include\geom.h" />
     <ClInclude Include="include\glref.h" />
     <ClInclude Include="include\load_object.h" />
+    <ClInclude Include="include\MurmurHash3.h" />
     <ClInclude Include="include\primitives.h" />
     <ClInclude Include="include\program.h" />
     <ClInclude Include="include\regularpoly.h" />
@@ -151,11 +152,12 @@
     <ClInclude Include="include\rico_uid.h" />
     <ClInclude Include="include\shader.h" />
     <ClInclude Include="include\test_geom.h" />
-    <ClInclude Include="include\tinyobjloader.h" />
     <ClInclude Include="include\util.h" />
     <ClInclude Include="include\vec3.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\3rdparty\main_nuke.c" />
+    <ClCompile Include="src\3rdparty\MurmurHash3.c" />
     <ClCompile Include="src\bbox.c" />
     <ClCompile Include="src\camera.c" />
     <ClCompile Include="src\const.c" />
@@ -164,7 +166,6 @@
     <ClCompile Include="src\glref.c" />
     <ClCompile Include="src\load_object.c" />
     <ClCompile Include="src\main.c" />
-    <ClCompile Include="src\main_nuke.c" />
     <ClCompile Include="src\notes.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
