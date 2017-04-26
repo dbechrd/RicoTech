@@ -50,11 +50,11 @@
 #define DEG_TO_RADF(deg) deg * (float)M_PI / 180.0f
 #define RAD_TO_DEGF(rad) rad * 180.0f / (float)M_PI
 
+#define LERP(v0, v1, t) (1 - t) * v0 + t * v1
+
 #define M_SEVENTH_DEG 51.428571428571428571428571428571
 
-#ifndef EPSILON
 #define EPSILON 0.001f
-#endif
 
 //------------------------------------------------------------------------------
 // Basic type redefinitions
@@ -73,6 +73,9 @@ typedef uint8_t  u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
+
+typedef float r32;
+typedef double r64;
 
 typedef u32 bool;
 #define true 1

@@ -41,7 +41,8 @@ void uid_init(struct rico_uid *_uid, enum rico_uid_type type, const char *name,
 #endif
 }
 
-int uid_serialize(const void *handle, const struct rico_file *file)
+//int uid_serialize(const void *handle, const struct rico_file *file)
+SERIAL(uid_serialize)
 {
     const struct rico_uid *uid = handle;
     if (!uid->serialize) {
@@ -51,14 +52,15 @@ int uid_serialize(const void *handle, const struct rico_file *file)
     }
 
     u32 name_length = strlen(uid->name);
-    fwrite(&uid->type,    sizeof(uid->type),    1, file->fs);
-    fwrite(&uid->uid,     sizeof(uid->uid),     1, file->fs);
-    fwrite(&name_length,  sizeof(name_length),  1, file->fs);
-    fwrite(&uid->name,    name_length,          1, file->fs);
+    fwrite(&uid->type,   sizeof(uid->type),   1, file->fs);
+    fwrite(&uid->uid,    sizeof(uid->uid),    1, file->fs);
+    fwrite(&name_length, sizeof(name_length), 1, file->fs);
+    fwrite(&uid->name,   name_length,         1, file->fs);
     return SUCCESS;
 }
 
-int uid_deserialize(void *_handle, const struct rico_file *file)
+//int uid_deserialize(void *_handle, const struct rico_file *file)
+DESERIAL(uid_deserialize)
 {
     struct rico_uid *uid = _handle;
     fread(&uid->type, sizeof(uid->type), 1, file->fs);
@@ -68,9 +70,9 @@ int uid_deserialize(void *_handle, const struct rico_file *file)
     }
 
     u32 name_length;
-    fread(&uid->uid,     sizeof(uid->uid),     1, file->fs);
-    fread(&name_length,  sizeof(name_length),  1, file->fs);
-    fread(&uid->name,    name_length,          1, file->fs);
+    fread(&uid->uid,    sizeof(uid->uid),    1, file->fs);
+    fread(&name_length, sizeof(name_length), 1, file->fs);
+    fread(&uid->name,   name_length,         1, file->fs);
     uid->serialize = true;
     return SUCCESS;
 }

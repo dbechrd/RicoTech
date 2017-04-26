@@ -33,8 +33,8 @@ void bbox_free_mesh(struct bbox *bbox);
 void bbox_render(const struct bbox *box, const struct mat4 *model_matrix);
 void bbox_render_color(const struct bbox *box, const struct mat4 *model_matrix,
                        const struct col4 color);
-int bbox_serialize_0(const void *handle, const struct rico_file *file);
-int bbox_deserialize_0(void *_handle, const struct rico_file *file);
+SERIAL(bbox_serialize_0);
+DESERIAL(bbox_deserialize_0);
 
 static inline bool bbox_intersects(const struct bbox *a, const struct bbox *b)
 {

@@ -72,28 +72,29 @@ static float sprint_factor = 2.0f;
 
 #define TRANS_DELTA_MIN 0.01f
 #define TRANS_DELTA_MAX 10.0f
-#define TRANS_DELTA_DEFAULT 1.0f
+static float trans_delta = 1.0f;
 
 #define ROT_DELTA_MIN 1.0f
 #define ROT_DELTA_MAX 90.0f
 #define ROT_DELTA_DEFAULT 5.0f
+static float rot_delta = ROT_DELTA_DEFAULT;
 
 #define SCALE_DELTA_MIN 0.1f
 #define SCALE_DELTA_MAX 5.0f
-#define SCALE_DELTA_DEFAULT 1.0f
-
-static float trans_delta = TRANS_DELTA_DEFAULT;
-static float rot_delta = ROT_DELTA_DEFAULT;
-static float scale_delta = SCALE_DELTA_DEFAULT;
+static float scale_delta = 1.0f;
 
 static bool mouse_lock = true;
 static bool sprint = false;
 static bool enable_lighting = true;
 
-static u32 time;
-static u32 fps_last_render;
-static double frame_time;
-static u32 fps_render_delta = 200;
+// Performance timing
+static u64 perfs_frequency;
+static u64 last_perfs;
+static u64 last_cycles;
+
+// FPS UI
+static u64 fps_last_render;
+static u64 fps_render_delta = 200000;  // 200 ms
 static bool fps_render = false;
 
 // Key map and state
@@ -119,28 +120,35 @@ int state_update(enum rico_state *_state)
     ////////////////////////////////////////////////////////////////////////
     // Update time
     ////////////////////////////////////////////////////////////////////////
-    u32 new_time = SDL_GetTicks();
-    u32 delta_ms = (new_time - time);
-    time = new_time;
-
+    u64 perfs = SDL_GetPerformanceCounter();
+    u64 delta_perfs = (perfs - last_perfs);
     // Smoothing function (weighted running average)
-    static const float smooth = 0.99f; // larger=more smoothing
-    frame_time *= smooth;
-    frame_time += (1.0 - smooth) * delta_ms;
+    //frame_ticks = LERP(frame_ticks, new_time - time, 0.01);
+    last_perfs = perfs;
 
-    // TODO: should I smooth *just* FPS counter dt, or dt for entire game?
-    // Smooth delta time
-    //double dt = frame_time / 1000.0f;
-    float dt = delta_ms / 1000.0f;
+    u64 cycles = __rdtsc();
+    u64 delta_cycles = (cycles - last_cycles);
+    last_cycles = cycles;
 
-    if (fps_render && time - fps_last_render > fps_render_delta)
+    r64 dt = (r64)delta_perfs / perfs_frequency;
+
+    // Update FPS counter string if enabled and overdue
+    if (fps_render && last_perfs - fps_last_render > fps_render_delta)
     {
-        char buf[30] = { 0 };
-        sprintf(buf, "FPS: %.lf [%.2lf ms]", 1000.0 / frame_time, frame_time);
-        err = string_init("STR_FPS", STR_SLOT_FPS, SCREEN_W - 240, 0,
-                          COLOR_DARK_RED_HIGHLIGHT, 0, RICO_FONT_DEFAULT, buf);
+        r64 fps = (r64)perfs_frequency / delta_perfs;
+        r64 ms = dt * 1000.0;
+        r64 mcyc = (r64)delta_cycles / (1000.0 * 1000.0); // MegaCycles/Frame
+
+        // TODO: string_init() negative x/y coords = backwards from SCREEN_W.
+        //       Allow x/y coords to be given in characters instead of pixels
+        //       based on FONT_WIDTH / FONT_HEIGHT.
+        char buf[128] = { 0 };
+        int len = sprintf(buf, "%.f fps %.2f ms %.2f mcyc", fps, ms, mcyc);
+        err = string_init("STR_FPS", STR_SLOT_FPS, SCREEN_W - (u32)(12.5 * len),
+                          0, COLOR_DARK_RED_HIGHLIGHT, 0, RICO_FONT_DEFAULT,
+                          buf);
         if (err) return err;
-        fps_last_render = time;
+        fps_last_render = last_perfs;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -226,7 +234,7 @@ int state_update(enum rico_state *_state)
         }
 
         struct vec3 delta = view_vel;
-        vec3_scalef(&delta, dt);
+        vec3_scalef(&delta, (r32)dt);
 
         camera_translate_local(&cam_player, &delta);
     }
@@ -1403,9 +1411,11 @@ static int state_engine_init()
 
     // TODO: Where does this belong? Needs access to "mouse_lock".
     SDL_SetRelativeMouseMode(mouse_lock);
-    time = SDL_GetTicks();
-    fps_last_render = time;
-    frame_time = 1000 / 60;
+
+    perfs_frequency = SDL_GetPerformanceFrequency();
+    last_perfs = SDL_GetPerformanceCounter();
+    last_cycles = __rdtsc();
+    fps_last_render = last_perfs;
     view_vel = VEC3_ZERO;
     view_acc = VEC3_ZERO;
 

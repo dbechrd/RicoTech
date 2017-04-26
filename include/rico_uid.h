@@ -34,7 +34,7 @@ struct rico_uid {
 
 void uid_init(struct rico_uid *_uid, enum rico_uid_type type, const char *name,
               bool serialize);
-int uid_serialize(const void *handle, const struct rico_file *file);
-int uid_deserialize(void *_handle, const struct rico_file *file);
+SERIAL(uid_serialize);
+DESERIAL(uid_deserialize);
 
 #endif // UID_H

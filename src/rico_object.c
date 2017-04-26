@@ -612,30 +612,32 @@ char *object_to_string(u32 handle)
     return buf;
 }
 
-int object_serialize_0(const void *handle, const struct rico_file *file)
+//int object_serialize_0(const void *handle, const struct rico_file *file)
+SERIAL(object_serialize_0)
 {
     const struct rico_object *obj = handle;
-    fwrite(&obj->type,     sizeof(obj->type),    1, file->fs);
-    fwrite(&obj->trans,    sizeof(obj->trans),   1, file->fs);
-    fwrite(&obj->rot,      sizeof(obj->rot),     1, file->fs);
-    fwrite(&obj->scale,    sizeof(obj->scale),   1, file->fs);
-    fwrite(&obj->mesh,     sizeof(obj->mesh),    1, file->fs);
+    fwrite(&obj->type,     sizeof(obj->type),     1, file->fs);
+    fwrite(&obj->trans,    sizeof(obj->trans),    1, file->fs);
+    fwrite(&obj->rot,      sizeof(obj->rot),      1, file->fs);
+    fwrite(&obj->scale,    sizeof(obj->scale),    1, file->fs);
+    fwrite(&obj->mesh,     sizeof(obj->mesh),     1, file->fs);
     fwrite(&obj->material, sizeof(obj->material), 1, file->fs);
     return rico_serialize(&obj->bbox, file);
 }
 
-int object_deserialize_0(void *_handle, const struct rico_file *file)
+//int object_deserialize_0(void *_handle, const struct rico_file *file)
+DESERIAL(object_deserialize_0)
 {
     enum rico_error err;
     u32 mesh, material;
 
     struct rico_object *obj = _handle;
-    fread(&obj->type,    sizeof(obj->type),     1, file->fs);
-    fread(&obj->trans,   sizeof(obj->trans),    1, file->fs);
-    fread(&obj->rot,     sizeof(obj->rot),      1, file->fs);
-    fread(&obj->scale,   sizeof(obj->scale),    1, file->fs);
-    fread(&mesh,         sizeof(obj->mesh),     1, file->fs);
-    fread(&material,     sizeof(obj->material), 1, file->fs);
+    fread(&obj->type,  sizeof(obj->type),     1, file->fs);
+    fread(&obj->trans, sizeof(obj->trans),    1, file->fs);
+    fread(&obj->rot,   sizeof(obj->rot),      1, file->fs);
+    fread(&obj->scale, sizeof(obj->scale),    1, file->fs);
+    fread(&mesh,       sizeof(obj->mesh),     1, file->fs);
+    fread(&material,   sizeof(obj->material), 1, file->fs);
 
     update_transform(obj);
     obj->mesh     = mesh_request(mesh);

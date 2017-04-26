@@ -4,8 +4,10 @@
 #include "const.h"
 #include "rico_file.h"
 
-typedef int (serializer)(const void *handle, const struct rico_file *file);
-typedef int (deserializer)(void *_handle, const struct rico_file *file);
+#define SERIAL(name) int name(const void *handle, const struct rico_file *file)
+#define DESERIAL(name) int name(void *_handle, const struct rico_file *file)
+typedef SERIAL(serializer);
+typedef DESERIAL(deserializer);
 
 struct rico_cereal {
     serializer *save[RICO_FILE_VERSION_COUNT];
@@ -14,8 +16,8 @@ struct rico_cereal {
 
 extern struct rico_cereal rico_cereals[];
 
-int rico_serialize(const void *handle, const struct rico_file *file);
-int rico_deserialize(void *_handle, const struct rico_file *file);
+SERIAL(rico_serialize);
+DESERIAL(rico_deserialize);
 
 //extern Serializer rico_serialize;
 //extern Deserializer rico_deserialize;

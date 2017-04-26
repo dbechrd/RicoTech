@@ -115,7 +115,8 @@ void material_unbind(u32 handle)
     texture_unbind(material->tex_specular, GL_TEXTURE1);
 }
 
-int material_serialize_0(const void *handle, const struct rico_file *file)
+//int material_serialize_0(const void *handle, const struct rico_file *file)
+SERIAL(material_serialize_0)
 {
     const struct rico_material *mat = handle;
     fwrite(&mat->ref_count,    sizeof(mat->ref_count),    1, file->fs);
@@ -125,7 +126,8 @@ int material_serialize_0(const void *handle, const struct rico_file *file)
     return SUCCESS;
 }
 
-int material_deserialize_0(void *_handle, const struct rico_file *file)
+//int material_deserialize_0(void *_handle, const struct rico_file *file)
+DESERIAL(material_deserialize_0)
 {
     u32 diffuse, specular;
 

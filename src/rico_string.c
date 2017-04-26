@@ -114,7 +114,7 @@ int string_free(u32 handle)
     return err;
 }
 
-int string_update(float dt)
+int string_update(r64 dt)
 {
     enum rico_error err;
 

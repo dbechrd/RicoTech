@@ -1,7 +1,26 @@
 #include <GL/gl3w.h>
 
-//Don't actually call this, it's just notes (w/ syntax highlighting)
-void notes()
+//Don't actually call these, it's just notes (w/ syntax highlighting)
+
+void notes_casey()
+{
+    // TODO: Clarify static?
+    #define internal static
+    #define local_persist static
+    #define global_variable static  //Only true if single translation unit
+
+    // TODO: Better memory allocation (than malloc)
+    // Windows:
+    //   void *Block;
+    //   Block = VirtualAlloc(0, Size, MEM_COMMIT, PAGE_READWRITE)
+    //   VirtualFree(Block, 0, MEM_RELEASE);
+
+    // TODO: Refactor collections of global variables into global structs
+
+    // NOTE: Casey function pointers
+}
+
+void notes_gl()
 {
     /*************************************************************************
     | Generate buffers

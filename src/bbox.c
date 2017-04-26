@@ -197,7 +197,8 @@ void bbox_render_color(const struct bbox *box, const struct mat4 *model_matrix,
         glPolygonMode(GL_FRONT_AND_BACK, cam_player.fill_mode);
 }
 
-int bbox_serialize_0(const void *handle, const struct rico_file *file)
+//int bbox_serialize_0(const void *handle, const struct rico_file *file)
+SERIAL(bbox_serialize_0)
 {
     const struct bbox *bbox = handle;
     fwrite(&bbox->p[0],      sizeof(bbox->p[0]),      1, file->fs);
@@ -207,7 +208,8 @@ int bbox_serialize_0(const void *handle, const struct rico_file *file)
     return SUCCESS;
 }
 
-int bbox_deserialize_0(void *_handle, const struct rico_file *file)
+//int bbox_deserialize_0(void *_handle, const struct rico_file *file)
+DESERIAL(bbox_deserialize_0)
 {
     enum rico_error err;
     struct bbox *bbox = _handle;

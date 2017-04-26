@@ -44,7 +44,8 @@ int chunk_init(u32 version, const char *name, u32 tex_count, u32 mat_count,
     return SUCCESS;
 }
 
-int chunk_serialize_0(const void *handle, const struct rico_file *file)
+//int chunk_serialize_0(const void *handle, const struct rico_file *file)
+SERIAL(chunk_serialize_0)
 {
     enum rico_error err;
     const struct rico_chunk *chunk = handle;
@@ -73,7 +74,8 @@ int chunk_serialize_0(const void *handle, const struct rico_file *file)
     return err;
 }
 
-int chunk_deserialize_0(void *_handle, const struct rico_file *file)
+//int chunk_deserialize_0(void *_handle, const struct rico_file *file)
+DESERIAL(chunk_deserialize_0)
 {
     enum rico_error err = SUCCESS;
     struct rico_chunk *_chunk = _handle;

@@ -410,13 +410,13 @@ void selected_delete()
     select_obj(prev);
 }
 
-void glref_update(float dt)
+void glref_update(r64 dt)
 {
     //--------------------------------------------------------------------------
     // Update uniforms
     //--------------------------------------------------------------------------
     glUseProgram(prog_default->prog_id);
-    glUniform1f(prog_default->u_time, dt);
+    glUniform1f(prog_default->u_time, (r32)dt);
     glUseProgram(0);
 
     //--------------------------------------------------------------------------

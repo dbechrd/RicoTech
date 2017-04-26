@@ -61,8 +61,8 @@ void object_render_type(enum rico_obj_type type,
                         const struct camera *camera);
 int object_print(u32 handle, enum rico_string_slot slot);
 char *object_to_string(u32 handle);
-int object_serialize_0(const void *handle, const struct rico_file *file);
-int object_deserialize_0(void *_handle, const struct rico_file *file);
+SERIAL(object_serialize_0);
+DESERIAL(object_deserialize_0);
 
 struct rico_pool *object_pool_get_unsafe();
 void object_pool_set_unsafe(struct rico_pool *pool);
