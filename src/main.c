@@ -15,6 +15,9 @@
 #include "SDL/SDL.h"
 #include "GL/gl3w.h"
 
+#define GL_VERSION_MAJOR 3
+#define GL_VERSION_MINOR 2
+
 static SDL_Window *window = NULL;
 static SDL_GLContext context = NULL;
 
@@ -25,6 +28,7 @@ static inline void init_stb()
 
 static inline void init_murmurhash3()
 {
+    // key=RicoTech, seed=0
     MurmurHash3_seed = 3533902173;
 
     const char key[] = "This is a MurmurHash3 test key";
@@ -39,9 +43,8 @@ static int sdl_gl_attrib(SDL_GLattr attr, int value)
     int sdl_err = SDL_GL_SetAttribute(attr, value);
     if (sdl_err < 0)
     {
-        fprintf(stderr, "SDL_GL_SetAttribute %d error: %s\n", attr,
-                SDL_GetError());
-        return RICO_ERROR(ERR_SDL_INIT);
+        return RICO_ERROR(ERR_SDL_INIT, "SDL_GL_SetAttribute %d error: %s",
+                          attr, SDL_GetError());
     }
     return SUCCESS;
 }
@@ -53,8 +56,7 @@ static int init_sdl()
 
     sdl_err = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
     if (sdl_err < 0) {
-        fprintf(stderr, "SDL_Init error: %s\n", SDL_GetError());
-        return RICO_ERROR(ERR_SDL_INIT);
+        return RICO_ERROR(ERR_SDL_INIT, "SDL_Init error: %s", SDL_GetError());
     }
 
 #if _DEBUG
@@ -87,22 +89,22 @@ static int init_sdl()
                               SDL_WINDOWPOS_CENTERED, SCREEN_W, SCREEN_H,
                               SDL_WINDOW_OPENGL);
     if (window == NULL) {
-        fprintf(stderr, "SDL_CreateWindow error: %s\n", SDL_GetError());
-        return RICO_ERROR(ERR_SDL_INIT);
+        return RICO_FATAL(ERR_SDL_INIT, "SDL_CreateWindow error: %s",
+                          SDL_GetError());
     }
 
     // Create GL context
     context = SDL_GL_CreateContext(window);
     if (context == NULL) {
-        fprintf(stderr, "SDL_GL_CreateContext error: %s\n", SDL_GetError());
-        return RICO_ERROR(ERR_SDL_INIT);
+        return RICO_FATAL(ERR_SDL_INIT, "SDL_GL_CreateContext error: %s",
+                          SDL_GetError());
     }
 
     // Disable V-sync
     sdl_err = SDL_GL_SetSwapInterval(1); //Default on
     if (sdl_err < 0) {
-        fprintf(stderr, "SDL_GL_SetSwapInterval error: %s\n", SDL_GetError());
-        return RICO_ERROR(ERR_SDL_INIT);
+        return RICO_ERROR(ERR_SDL_INIT, "SDL_GL_SetSwapInterval error: %s",
+                          SDL_GetError());
     }
     else
     {
@@ -113,26 +115,19 @@ static int init_sdl()
     return SUCCESS;
 }
 
-static int init_gl3w()
+static int init_gl3w(int major, int minor)
 {
-    if (gl3wInit())
-    {
-        fprintf(stderr, "gl3wInit failed.\n");
-        getchar();
-        return 1;
-    }
+    int init = gl3wInit();
+    if (init)
+        return RICO_FATAL(ERR_GL3W_INIT, "gl3wInit failed with code %d", init);
 
     fprintf(stdout, "OpenGL = \"%s\"\nGLSL = \"%s\"\n", glGetString(GL_VERSION),
             glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-    if (!gl3wIsSupported(3, 2))
-    {
-        fprintf(stderr, "OpenGL 3.2 not supported.\n");
-        getchar();
-        return 1;
-    }
+    if (!gl3wIsSupported(major, minor))
+        return RICO_FATAL(ERR_GL3W_INIT, "OpenGL 3.2 not supported");
 
-    return 0;
+    return SUCCESS;
 }
 
 static void init_opengl()
@@ -147,6 +142,9 @@ static void init_opengl()
     if (glDebugMessageCallback != NULL)
     {
         fprintf(stdout, "Registered glDebugMessageCallback.\n");
+        
+        // TODO: OpenGL DebugMessageCallback format header, useful? Where should
+        //       this be written?
         fprintf(stderr, "[TYPE][SEVERITY][ID] MESSAGE\n");
 
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
@@ -188,8 +186,10 @@ int mymain()
     printf("------------------------------------------------------------\n");
     init_stb();
     init_murmurhash3();
-    init_sdl();
-    init_gl3w();
+    err = init_sdl();
+    if (err) goto cleanup;
+    err = init_gl3w(GL_VERSION_MAJOR, GL_VERSION_MINOR);
+    if (err) goto cleanup;
     init_opengl();
     init_rico_engine();
 
@@ -207,6 +207,7 @@ int mymain()
         SDL_GL_SwapWindow(window);
     }
 
+cleanup:
     printf("------------------------------------------------------------\n");
     printf("[MAIN][term] Clean up\n");
     printf("------------------------------------------------------------\n");

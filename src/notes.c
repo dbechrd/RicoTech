@@ -18,6 +18,45 @@ void notes_casey()
     // TODO: Refactor collections of global variables into global structs
 
     // NOTE: Casey function pointers
+    //
+    //       #define GAME_UPDATE_AND_REDNER(name) void name(blah blah blah)
+    //       typedef GAME_UPDATE_AND_RENDER(game_update_and_render)
+    //       {
+    //       }
+
+    // TODO: Static vs. dynamic chunk data
+    //       Streaming chunks
+
+    // Note: Don't waste time writing efficient code that is only used in the
+    //       internal (debug) build unless it actually offers value.
+
+    // TODO: MSVC compiler switches
+    //
+    //       -MT (instead of -MD)
+    //       Use static linking for MSVC (C runtime) instead of dynamic linking
+    //      (i.e. get rid of "missing dll MSVCR120.dll" errors)
+    //
+    //       -Fm
+    //       Produce map file for executable
+    //
+    //       /link opt:ref
+    //       Only link necessary things (slightly smaller exe)
+
+    // TODO: Don't use __rtdsc() intrinsic for game time, only for performance
+    //       profiling. Use QueryPerformanceTimer() for game time on users' PCs.
+
+    // Day 021: Dynamically loading game code, live edits
+    // Day 022: PDB locked, rename it using timestamp?
+    //          47:18 String for loop Path.GetPathWithoutFilename()
+    //
+    char *buffer = 0;
+    char *onePastLastSlash = buffer;
+    for (char *scan = buffer; *scan; ++scan) {
+        if (*scan == '\\') {
+            onePastLastSlash = scan + 1;
+            break;
+        }
+    }
 }
 
 void notes_gl()

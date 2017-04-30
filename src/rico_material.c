@@ -119,6 +119,7 @@ void material_unbind(u32 handle)
 SERIAL(material_serialize_0)
 {
     const struct rico_material *mat = handle;
+
     fwrite(&mat->ref_count,    sizeof(mat->ref_count),    1, file->fs);
     fwrite(&mat->tex_diffuse,  sizeof(mat->tex_diffuse),  1, file->fs);
     fwrite(&mat->tex_specular, sizeof(mat->tex_specular), 1, file->fs);

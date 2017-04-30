@@ -15,7 +15,8 @@ int rico_file_open_write(struct rico_file *_file, const char *filename,
     {
         rico_file_close(_file);
         fprintf(stderr, "Unable to open %s for writing\n", filename);
-        return RICO_ERROR(ERR_FILE_WRITE);
+        return RICO_ERROR(ERR_FILE_WRITE, "Failed to open file %s for write",
+                          filename);
     }
 
     _file->version = version;
@@ -43,7 +44,8 @@ int rico_file_open_read(struct rico_file *_file, const char *filename)
     {
         rico_file_close(_file);
         fprintf(stderr, "Unable to open %s for reading\n", filename);
-        return RICO_ERROR(ERR_FILE_READ);
+        return RICO_ERROR(ERR_FILE_READ, "Failed to open %s for read",
+                          filename);
     }
 
     // TODO: Wrap fread() calls in something that checks if fread() return
@@ -57,7 +59,9 @@ int rico_file_open_read(struct rico_file *_file, const char *filename)
     {
         rico_file_close(_file);
         fprintf(stderr, "Invalid file signature: %s\n", SIGNATURE_BUFFER);
-        return RICO_ERROR(ERR_FILE_SIGNATURE);
+        return RICO_ERROR(ERR_FILE_SIGNATURE,
+                          "Invalid file signature %s in file %s",
+                          SIGNATURE_BUFFER, filename);
     }
 
     // File version
@@ -66,7 +70,9 @@ int rico_file_open_read(struct rico_file *_file, const char *filename)
     {
         rico_file_close(_file);
         fprintf(stderr, "Invalid file version: %d\n", _file->version);
-        return RICO_ERROR(ERR_FILE_SIGNATURE);
+        return RICO_ERROR(ERR_FILE_SIGNATURE,
+                          "Invalid file version %d in files %s",
+                          _file->version, filename);
     }
 
     _file->filename = filename;

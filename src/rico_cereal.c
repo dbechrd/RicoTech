@@ -16,7 +16,8 @@ SERIAL(rico_serialize)
     const enum rico_uid_type *type = handle;
 
     if (!rico_cereals[*type].save[file->version])
-        return RICO_ERROR(ERR_SERIALIZER_NULL);
+        return RICO_ERROR(ERR_SERIALIZER_NULL, "Serializer null for type %s",
+                          rico_uid_type_string[*type]);
 
     return rico_cereals[*type].save[file->version](handle, file);
 }
@@ -33,7 +34,9 @@ DESERIAL(rico_deserialize)
     enum rico_uid_type *type = _handle;
 
     if (!rico_cereals[*type].load[file->version])
-        return RICO_ERROR(ERR_DESERIALIZER_NULL);
+        return RICO_ERROR(ERR_DESERIALIZER_NULL,
+                          "Deserializer null for type %s",
+                          rico_uid_type_string[*type]);
 
     err = rico_cereals[*type].load[file->version](_handle, file);
     return err;

@@ -102,6 +102,8 @@ int font_init(const char *filename, u32 *_handle)
                               &buffer[MAP_DATA_OFFSET], &font->texture);
     if (err) goto cleanup;
 
+    texture_request(font->texture);
+
 cleanup:
     free(buffer);
     return err;
@@ -252,7 +254,7 @@ int font_render(u32 handle, int x, int y, struct col4 bg, const char *text,
                     element_count, elements, GL_STATIC_DRAW);
     if (err) goto cleanup;
 
-    *_texture = texture_request(font->texture);
+    *_texture = font->texture;
 
 cleanup:
     free(vertices);

@@ -117,7 +117,6 @@ int string_free(u32 handle)
 int string_update(r64 dt)
 {
     enum rico_error err;
-
     u32 delta_ms = (u32)(dt * 1000);
 
     struct rico_string *str;

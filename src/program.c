@@ -31,7 +31,8 @@ static int make_program(GLuint vertex_shader, GLuint fragment_shader,
 
         //Clean up
         glDeleteProgram(program);
-        return RICO_ERROR(ERR_SHADER_LINK);
+        return RICO_ERROR(ERR_SHADER_LINK, "Failed to link shader %s",
+                          "UNKNOWN");
     }
 
     *_program = program;

@@ -463,12 +463,13 @@ void object_render_type(enum rico_obj_type type,
     struct mat4 view_matrix = camera->view_matrix;
 
     u32 ticks = SDL_GetTicks();
-    float light_y_pos = (sinf((float)ticks / 500.0f) + 1.0f) * 5.0f + 1.0f;
+    float light_pos_x = cosf((float)ticks / 2000.0f) * 16.0f;
+    float light_pos_z = sinf((float)ticks / 2000.0f) * 16.0f;
 
     struct light_point light;
-    light.color    = (struct vec3){ 1.0f, 0.9f, 0.6f };
-    light.position = (struct vec3){ 0.0f, light_y_pos, 0.0f }; // y = 3.0f
-    light.ambient  = (struct vec3){ 0.17f, 0.17f, 0.19f };
+    light.color    = (struct vec3) { 1.0f, 0.9f, 0.6f };
+    light.position = (struct vec3) { light_pos_x, 3.0f, light_pos_z};
+    light.ambient  = (struct vec3) { 0.17f, 0.17f, 0.19f };
     //light.ambient  = (struct vec3){ 0.07f, 0.07f, 0.09f };
     light.kc = 1.0f;
     light.kl = 0.05f;

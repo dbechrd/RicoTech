@@ -58,8 +58,8 @@ int texture_load_file(const char *name, GLenum target, const char *filename,
     unsigned char* pixels = stbi_load(filename, &width, &height, &depth, 4);
     if (!pixels)
     {
-        fprintf(stderr, "Failed to load texture file: %s", filename);
-        err = RICO_ERROR(ERR_TEXTURE_LOAD);
+        err = RICO_ERROR(ERR_TEXTURE_LOAD, "Failed to load texture file: %s",
+                          filename);
         goto cleanup;
     }
 
@@ -189,7 +189,7 @@ static int build_texture(struct rico_texture *tex, const void *pixels)
         format = GL_RGBA;
         break;
     default: // Unsupported BPP
-        return RICO_ERROR(ERR_TEXTURE_UNSUPPORTED_BPP);
+        return RICO_ERROR(ERR_TEXTURE_UNSUPPORTED_BPP, NULL);
     }
 
     glTexImage2D(tex->gl_target, 0, format, tex->width, tex->height, 0, format,

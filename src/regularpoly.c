@@ -112,7 +112,7 @@ void render_regularpoly(struct regularpoly *poly)
 
     if (poly->dirty_vao)
     {
-        fprintf(stderr, "regularpoly: Rebuilding dirty VAO at render time.");
+        fprintf(stderr, "regularpoly: Rebuilding dirty VAO at render time");
         rebuild_vao(poly);
     }
 

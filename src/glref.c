@@ -111,13 +111,9 @@ int init_glref()
     //--------------------------------------------------------------------------
     // Create axis label bboxes
     //--------------------------------------------------------------------------
-    err = bbox_init(
-        &axis_bbox,
-        "Axis BBox",
-        (struct vec3) { -0.5f, -0.5f, -0.5f },
-        (struct vec3) {  0.5f,  0.5f,  0.5f },
-        COLOR_WHITE
-    );
+    err = bbox_init(&axis_bbox, "Axis BBox",
+                    (struct vec3) { -0.5f, -0.5f, -0.5f },
+                    (struct vec3) {  0.5f,  0.5f,  0.5f }, COLOR_WHITE);
     if (err) return err;
 
     // X-axis label

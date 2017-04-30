@@ -130,32 +130,18 @@ typedef real64 f64;
 */
 
 //------------------------------------------------------------------------------
-// Macros
+// Enums
 //------------------------------------------------------------------------------
-#define sizeof_member(type, member) sizeof(((type *)0)->member)
-
 // Used to generate enums
 #define GEN_LIST(val) val,
 #define GEN_STRING(val) #val,
 
-#define UNUSED(x) (void)(x)
-
-#ifdef RICO_DEBUG
-    #define RICO_ASSERT(exp) if(!(exp)) {*(int*)0=0;}
-#else
-    #define RICO_ASSERT(exp)
-#endif
-
-//------------------------------------------------------------------------------
-// Enums
-//------------------------------------------------------------------------------
 enum rico_vbo {
     VBO_VERTEX,
     VBO_ELEMENT,
     VBO_COUNT
 };
 
-//------------------------------------------------------------------------------
 #define RICO_ERRORS(f)              \
     f(SUCCESS)                      \
     f(ERR_BAD_ALLOC)                \
@@ -171,6 +157,7 @@ enum rico_vbo {
     f(ERR_SHADER_COMPILE)           \
     f(ERR_SHADER_LINK)              \
     f(ERR_SDL_INIT)                 \
+    f(ERR_GL3W_INIT)                \
     f(ERR_PRIM_UNSUPPORTED)         \
     f(ERR_OBJ_TOO_MANY_VERTS)       \
     f(ERR_CHUNK_NULL)               \
@@ -182,22 +169,46 @@ enum rico_error {
 };
 extern const char *rico_error_string[];
 
-enum rico_error rico_error_print(enum rico_error err, const char *desc,
-                                 const char *file, int line);
-enum rico_error rico_fatal_print(enum rico_error err, const char *desc,
-                                 const char *file, int line);
+//------------------------------------------------------------------------------
+// Global functions
+//------------------------------------------------------------------------------
+// TODO: Move this to rico_error.h?
+//enum rico_error rico_error_print(enum rico_error err, const char *desc,
+//                                 const char *file, int line);
+//enum rico_error rico_fatal_print(enum rico_error err, const char *desc,
+//                                 const char *file, int line);
+enum rico_error rico_error_print(const char *file, int line,
+                                 enum rico_error err, const char *fmt, ...);
+enum rico_error rico_fatal_print(const char *file, int line,
+                                 enum rico_error err, const char *fmt, ...);
 
-#ifdef RICO_DEBUG
-    #ifdef RICO_DEBUG_ALL_ERRORS_FATAL
-        #define RICO_ERROR(err) rico_fatal_print(err, "abc", __FILE__, __LINE__)
-    #else
-        #define RICO_ERROR(err) rico_error_print(err, "abc", __FILE__, __LINE__)
-    #endif
+//------------------------------------------------------------------------------
+// Macros
+//------------------------------------------------------------------------------
+#define UNUSED(x) (void)(x)
+#define sizeof_member(type, member) sizeof(((type *)0)->member)
+
+/****************/ #ifdef RICO_DEBUG /*****************************************/
+
+#define RICO_ASSERT(exp) if(!(exp)) {*(int*)0=0;}
+
+#define FILE_LOC __FILE__, __LINE__
+
+#define RICO_FATAL(err, desc, ...) rico_fatal_print(FILE_LOC, err, desc, __VA_ARGS__)
+
+#ifdef RICO_DEBUG_ALL_ERRORS_FATAL
+    #define RICO_ERROR(err, desc, ...) RICO_FATAL(err, desc, __VA_ARGS__)
 #else
-    #define RICO_ERROR(err) err
+    #define RICO_ERROR(err, desc) rico_error_print(FILE_LOC, err, desc)
 #endif
 
-#define RICO_FATAL(err) rico_fatal_print(err, "abc", __FILE__, __LINE__)
+/****************/ #else /*****************************************************/
+
+#define RICO_ASSERT(exp)
+#define RICO_FATAL(err, desc) err
+#define RICO_ERROR(err, desc) err
+
+/****************/ #endif /****************************************************/
 
 //------------------------------------------------------------------------------
 

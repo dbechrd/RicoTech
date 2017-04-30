@@ -12,6 +12,7 @@
 #include "load_object.h"
 #include "GL/gl3w.h"
 #include "SDL/SDL.h"
+#include <time.h>
 
 const char *rico_state_string[] = {
     RICO_STATES(GEN_STRING)
@@ -281,21 +282,34 @@ static int save_file()
 {
     enum rico_error err;
 
+    if (first_chunk.uid.uid == UID_NULL)
+        return RICO_ERROR(ERR_CHUNK_NULL, "Failed to save NULL chunk");
+
     struct rico_file file;
     err = rico_file_open_write(&file, "chunks/cereal.bin",
                                RICO_FILE_VERSION_CURRENT);
     if (err) return err;
 
-    if (first_chunk.uid.uid == UID_NULL)
-    {
-        err = RICO_ERROR(ERR_CHUNK_NULL);
-        goto cleanup;
-    }
-
     err = rico_serialize(&first_chunk, &file);
-
-cleanup:
     rico_file_close(&file);
+
+    // Save backup copy
+    time_t rawtime = time(NULL);
+    struct tm *tm = localtime(&rawtime);
+
+    char backupFilename[128] = { 0 };
+    snprintf(backupFilename, sizeof(backupFilename),
+             "chunks/cereal_%04d%02d%02dT%02d%02d%02d.bin", 1900 + tm->tm_year,
+             1 + tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
+
+    struct rico_file backupFile;
+    err = rico_file_open_write(&backupFile, backupFilename,
+                               RICO_FILE_VERSION_CURRENT);
+    if (err) return err;
+
+    err = rico_serialize(&first_chunk, &backupFile);
+    rico_file_close(&backupFile);
+
     return err;
 }
 
@@ -1294,9 +1308,11 @@ static int rico_init_meshes()
     err = load_obj_file("mesh/sphere.ric");
     if (err) return err;
 
-    PRIM_SPHERE_MESH = mesh_request_by_name("Sphere");
+    const char *sphere_mesh_name = "Sphere";
+    PRIM_SPHERE_MESH = mesh_request_by_name(sphere_mesh_name);
     if (!PRIM_SPHERE_MESH)
-        return RICO_ERROR(ERR_MESH_INVALID_NAME);
+        return RICO_ERROR(ERR_MESH_INVALID_NAME, "Invalid mesh name: %s",
+                          sphere_mesh_name);
 
     // err = load_obj_file("mesh/conference.ric");
     // if (err) return err;

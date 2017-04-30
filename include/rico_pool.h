@@ -14,7 +14,7 @@ struct rico_pool {
     u32 static_count;   // number of static elements
     u32 active;         // number of elements in use
     u32 *handles;       // pool handles
-    void *pool;         // element pool
+    void *data;         // element pool
 };
 
 int pool_init(const char *name, u32 count, u32 size, u32 static_count,
@@ -35,7 +35,7 @@ static inline void *pool_read(const struct rico_pool *pool, u32 handle)
     RICO_ASSERT(handle <= pool->count);
 
     // Note: Handles are index + 1, 0 is reserved
-    return (void *)&(((char *)pool->pool)[pool->size * (handle - 1)]);
+    return (void *)&(((char *)pool->data)[pool->size * (handle - 1)]);
 }
 
 #endif // RICO_POOL_H

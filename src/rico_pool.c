@@ -20,10 +20,14 @@ int pool_init(const char *name, u32 count, u32 size, u32 static_count,
     pool.active = static_count;
 
     pool.handles = calloc(count, sizeof(u32));
-    if (!pool.handles) return RICO_ERROR(ERR_BAD_ALLOC);
+    if (!pool.handles)
+        return RICO_ERROR(ERR_BAD_ALLOC,
+                          "Failed to alloc handles for pool %s", pool.uid.name);
 
-    pool.pool = calloc(count, size);
-    if (!pool.pool) return RICO_ERROR(ERR_BAD_ALLOC);
+    pool.data = calloc(count, size);
+    if (!pool.data)
+        return RICO_ERROR(ERR_BAD_ALLOC,
+                          "Failed to alloc data for pool %s", pool.uid.name);
 
     // TODO: Should I use UIDs for handles instead of e.g. 1-100?
     //       'u32 uid' or 'struct rico_uid *uid'?
@@ -63,7 +67,7 @@ void pool_free(struct rico_pool *pool, destructor *destruct)
     }
 
     free(pool->handles);
-    free(pool->pool);
+    free(pool->data);
 
     pool->uid.uid = UID_NULL;
 }
@@ -79,7 +83,8 @@ int pool_handle_alloc(struct rico_pool *pool, u32 *_handle)
         pool_print_handles(pool);
 #endif
 
-        return RICO_ERROR(ERR_POOL_OUT_OF_MEMORY);
+        return RICO_ERROR(ERR_POOL_OUT_OF_MEMORY, "%s pool is full",
+                          pool->uid.name);
     }
 
     *_handle = pool->handles[pool->active];
@@ -219,10 +224,15 @@ DESERIAL(pool_deserialize_0)
     if(pool->count > 0)
     {
         pool->handles = calloc(pool->count, sizeof(u32));
-        if (!pool->handles) return RICO_ERROR(ERR_BAD_ALLOC);
+        if (!pool->handles)
+            return RICO_ERROR(ERR_BAD_ALLOC,
+                              "Failed to alloc handles for pool %s",
+                              pool->uid.name);
 
-        pool->pool = calloc(pool->count, pool->size);
-        if (!pool->pool) return RICO_ERROR(ERR_BAD_ALLOC);
+        pool->data = calloc(pool->count, pool->size);
+        if (!pool->data)
+            return RICO_ERROR(ERR_BAD_ALLOC, "Failed to alloc data for pool %s",
+                              pool->uid.name);
 
         fread(pool->handles, sizeof(*pool->handles), pool->count, file->fs);
         for (u32 i = 0; i < pool->active; ++i)
