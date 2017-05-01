@@ -18,9 +18,9 @@ struct rico_pool {
 };
 
 int pool_init(const char *name, u32 count, u32 size, u32 static_count,
-              struct rico_pool *_pool);
+              struct rico_pool **_pool_ptr);
 void pool_free(struct rico_pool *pool, destructor *destruct);
-int pool_handle_alloc(struct rico_pool *pool, u32 *_handle);
+int pool_handle_alloc(struct rico_pool **pool_ptr, u32 *_handle);
 int pool_handle_free(struct rico_pool *pool, u32 handle);
 u32 pool_handle_first(struct rico_pool *pool);
 u32 pool_handle_next(struct rico_pool *pool, u32 handle);

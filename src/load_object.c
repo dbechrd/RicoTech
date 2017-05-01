@@ -122,7 +122,9 @@ int load_obj_file(const char *filename)
             positions[idx_pos].z = strtof(tok, &tok);
             if (++idx_pos >= MESH_VERTICES_MAX)
             {
-                err = RICO_ERROR(ERR_OBJ_TOO_MANY_VERTS);
+                err = RICO_ERROR(ERR_OBJ_TOO_MANY_VERTS,
+                                 "Too many vertices in mesh %s",
+                                 filename);
                 goto cleanup;
             }
         }
@@ -133,7 +135,9 @@ int load_obj_file(const char *filename)
             texcoords[idx_tex].v = strtof(tok, &tok);
             if (++idx_tex >= MESH_VERTICES_MAX)
             {
-                err = RICO_ERROR(ERR_OBJ_TOO_MANY_VERTS);
+                err = RICO_ERROR(ERR_OBJ_TOO_MANY_VERTS,
+                                 "Too many tex coords in mesh %s",
+                                 filename);
                 goto cleanup;
             }
         }
@@ -145,7 +149,9 @@ int load_obj_file(const char *filename)
             normals[idx_normal].z = strtof(tok, &tok);
             if (++idx_normal >= MESH_VERTICES_MAX)
             {
-                err = RICO_ERROR(ERR_OBJ_TOO_MANY_VERTS);
+                err = RICO_ERROR(ERR_OBJ_TOO_MANY_VERTS,
+                                 "Too many normals in mesh %s",
+                                 filename);
                 goto cleanup;
             }
         }
@@ -168,14 +174,18 @@ int load_obj_file(const char *filename)
                     vertices[idx_vertex].normal = normals[vert_norm - 1];
                 if (++idx_vertex >= MESH_VERTICES_MAX)
                 {
-                    err = RICO_ERROR(ERR_OBJ_TOO_MANY_VERTS);
+                    err = RICO_ERROR(ERR_OBJ_TOO_MANY_VERTS,
+                                     "Too many vertices in mesh %s",
+                                     filename);
                     goto cleanup;
                 }
 
                 elements[idx_element] = idx_vertex - 1;
                 if (++idx_element >= MESH_VERTICES_MAX)
                 {
-                    err = RICO_ERROR(ERR_OBJ_TOO_MANY_VERTS);
+                    err = RICO_ERROR(ERR_OBJ_TOO_MANY_VERTS,
+                                     "Too many indicies in mesh %s",
+                                     filename);
                     goto cleanup;
                 }
 

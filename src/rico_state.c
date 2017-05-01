@@ -60,6 +60,7 @@ static struct vec3 mouse_acc;
 static struct vec3 view_vel;
 static float view_vel_max = 2.5f; //5.0f;
 static float view_vel_max_sprint = 10.0f;
+static float view_vel_max_snail = 0.05f;
 
 static struct vec3 view_acc;
 static float sprint_factor = 2.0f;
@@ -86,6 +87,7 @@ static float scale_delta = 1.0f;
 
 static bool mouse_lock = true;
 static bool sprint = false;
+static bool snail = false;
 static bool enable_lighting = true;
 
 // Performance timing
@@ -228,6 +230,7 @@ int state_update(enum rico_state *_state)
         }
 
         float vel_max = (sprint) ? view_vel_max_sprint : view_vel_max;
+        vel_max = (snail) ? view_vel_max_snail : vel_max;
         if (mag_vel > vel_max)
         {
             vec3_normalize(&view_vel);
@@ -330,6 +333,7 @@ static void select_first_obj()
                                            dist, &idx_first);
     select_obj(obj_collided[idx_first]);
 
+    // TODO: Loop through collided objects?
     UNUSED(collided);
     // if (collided > 0)
     // {
@@ -417,6 +421,18 @@ static int handle_engine_events(SDL_Event event, bool *handled)
                 string_free(STR_SLOT_FPS);
             *handled = true;
         }
+        // [Esc]: Save and exit
+        else if (event.key.keysym.sym == SDLK_ESCAPE)
+        {
+            err = string_init("STR_CONFIRM_QUIT", STR_SLOT_MENU_QUIT, 600,
+                              400, COLOR_GREEN, 0, RICO_FONT_DEFAULT,
+                              "Are you sure you want to quit?\n" \
+                              "                              \n" \
+                              "      Yes (Y) or No (N)       ");
+            if (err) return err;
+            state = STATE_MENU_QUIT;
+            *handled = true;
+        }
         // [L]: Toggle scene lighting
         else if (event.key.keysym.sym == SDLK_l)
         {
@@ -474,7 +490,7 @@ static int handle_camera_events(SDL_Event event, bool *handled)
         // [R]: Toggle sprint (fast camera)
         else if (event.key.keysym.sym == SDLK_r)
         {
-            sprint = !sprint;
+            snail = !snail;
             *handled = true;
         }
         // [Q]: Move camera down
@@ -660,8 +676,8 @@ static int handle_edit_events(SDL_Event event, bool *handled)
         }
         else if (event.key.keysym.mod & KMOD_ALT) {}
 
-        // [Esc]: Exit edit mode
-        else if (event.key.keysym.sym == SDLK_ESCAPE)
+        // [`]: Exit edit mode
+        else if (event.key.keysym.sym == SDLK_BACKQUOTE)
         {
             string_free(STR_SLOT_SELECTED_OBJ);
             state = STATE_PLAY_EXPLORE;
@@ -755,11 +771,6 @@ static int state_play_explore()
             else if (event.key.keysym.mod & KMOD_CTRL) {}
             else if (event.key.keysym.mod & KMOD_ALT) {}
 
-            // [Esc]: Exit application
-            else if (event.key.keysym.sym == SDLK_ESCAPE)
-            {
-                state = STATE_ENGINE_SHUTDOWN;
-            }
             // [`]: Enter edit mode
             else if (event.key.keysym.sym == SDLK_BACKQUOTE) // backtick
             {
@@ -1140,6 +1151,46 @@ static int state_edit_mesh()
     return err;
 }
 
+static int state_menu_quit()
+{
+    enum rico_error err = SUCCESS;
+
+    SDL_Event event;
+    while (state == STATE_MENU_QUIT && SDL_PollEvent(&event))
+    {
+        if (event.type == SDL_KEYDOWN)
+        {
+            if (event.key.keysym.mod & KMOD_CTRL &&
+                event.key.keysym.mod & KMOD_SHIFT) {
+            }
+            else if (event.key.keysym.mod & KMOD_CTRL &&
+                     event.key.keysym.mod & KMOD_ALT) {
+            }
+            else if (event.key.keysym.mod & KMOD_SHIFT) {}
+            else if (event.key.keysym.mod & KMOD_CTRL) {}
+            else if (event.key.keysym.mod & KMOD_ALT) {}
+
+            // [Y]: Confirm: Save and exit
+            else if (event.key.keysym.sym == SDLK_y)
+            {
+                string_free(STR_SLOT_MENU_QUIT);
+                save_file();
+                state = STATE_ENGINE_SHUTDOWN;
+            }
+            // [N] / [Escape]: Abort: Return to play mode
+            else if (event.key.keysym.sym == SDLK_n ||
+                     event.key.keysym.sym == SDLK_ESCAPE)
+            {
+                string_free(STR_SLOT_MENU_QUIT);
+                state = STATE_PLAY_EXPLORE;
+                selected_print();
+            }
+        }
+    }
+
+    return err;
+}
+
 static int state_text_input()
 {
     return SUCCESS;
@@ -1469,6 +1520,7 @@ void init_rico_engine()
     state_handlers[STATE_EDIT_SCALE]      = &state_edit_scale;
     state_handlers[STATE_EDIT_TEXTURE]    = &state_edit_texture;
     state_handlers[STATE_EDIT_MESH]       = &state_edit_mesh;
+    state_handlers[STATE_MENU_QUIT]       = &state_menu_quit;
     state_handlers[STATE_TEXT_INPUT]      = &state_text_input;
     state_handlers[STATE_ENGINE_SHUTDOWN] = &state_engine_shutdown;
     state = STATE_ENGINE_INIT;

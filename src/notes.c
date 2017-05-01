@@ -57,6 +57,8 @@ void notes_casey()
             break;
         }
     }
+
+    //          Casey uses C++ like C with oper/func overloading
 }
 
 void notes_gl()

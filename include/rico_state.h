@@ -11,6 +11,7 @@
     f(STATE_EDIT_SCALE)         \
     f(STATE_EDIT_TEXTURE)       \
     f(STATE_EDIT_MESH)          \
+    f(STATE_MENU_QUIT)          \
     f(STATE_TEXT_INPUT)         \
     f(STATE_ENGINE_SHUTDOWN)    \
     f(STATE_COUNT)

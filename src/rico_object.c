@@ -49,7 +49,7 @@ int rico_object_init(u32 pool_size)
 {
     objects = calloc(1, sizeof(*objects));
     return pool_init("Objects", pool_size, sizeof(struct rico_object), 0,
-                     objects);
+                     &objects);
 }
 
 int object_create(u32 *_handle, const char *name, enum rico_obj_type type,
@@ -63,7 +63,7 @@ int object_create(u32 *_handle, const char *name, enum rico_obj_type type,
     enum rico_error err;
     *_handle = RICO_OBJECT_DEFAULT;
 
-    err = pool_handle_alloc(objects, _handle);
+    err = pool_handle_alloc(&objects, _handle);
     if (err) return err;
 
     struct rico_object *obj = pool_read(objects, *_handle);

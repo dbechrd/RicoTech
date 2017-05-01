@@ -30,7 +30,7 @@ static struct rico_pool *fonts;
 int rico_font_init(u32 pool_size)
 {
     fonts = calloc(1, sizeof(*fonts));
-    return pool_init("Fonts", pool_size, sizeof(struct rico_font), 0, fonts);
+    return pool_init("Fonts", pool_size, sizeof(struct rico_font), 0, &fonts);
 }
 
 int font_init(const char *filename, u32 *_handle)
@@ -42,7 +42,7 @@ int font_init(const char *filename, u32 *_handle)
         printf("[font][init] filename=%s\n", filename);
     #endif
 
-    err = pool_handle_alloc(fonts, _handle);
+    err = pool_handle_alloc(&fonts, _handle);
     if (err) return err;
 
     struct rico_font *font = pool_read(fonts, *_handle);

@@ -12,8 +12,8 @@ int file_contents(const char *filename, int *_length, char **_buffer)
     FILE *fs = fopen(filename, "rb");
 
     if (!fs) {
-        fprintf(stderr, "Unable to open %s for reading\n", filename);
-        return RICO_ERROR(ERR_FILE_READ);
+        return RICO_ERROR(ERR_FILE_READ, "Unable to open %s for reading",
+                          filename);
     }
 
     fseek(fs, 0, SEEK_END);
@@ -21,13 +21,14 @@ int file_contents(const char *filename, int *_length, char **_buffer)
     fseek(fs, 0, SEEK_SET);
 
     if (!*_length) {
-        fprintf(stderr, "Unable to determine length of %s\n", filename);
-        return RICO_ERROR(ERR_FILE_READ);
+        return RICO_ERROR(ERR_FILE_READ, "Unable to determine length of %s",
+                          filename);
     }
 
-    *_buffer = malloc(*_length + 1);
+    *_buffer = calloc(*_length + 1, sizeof(char));
     if (!*_buffer) {
-        return RICO_ERROR(ERR_BAD_ALLOC);
+        return RICO_ERROR(ERR_BAD_ALLOC,
+                          "Failed to allocate file buffer for %s", filename);
     }
 
     *_length = fread(*_buffer, 1, *_length, fs);

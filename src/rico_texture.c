@@ -20,7 +20,7 @@ struct rico_texture {
 
 u32 RICO_TEXTURE_DEFAULT_DIFF = 0;
 u32 RICO_TEXTURE_DEFAULT_SPEC = 0;
-static struct rico_pool textures;
+static struct rico_pool *textures;
 
 static int build_texture(struct rico_texture *tex, const void *pixels);
 
@@ -34,7 +34,7 @@ int rico_texture_init(u32 pool_size)
 //       filename for that to work (how to track load_pixels calls?)
 int texture_request(u32 handle)
 {
-    struct rico_texture *tex = pool_read(&textures, handle);
+    struct rico_texture *tex = pool_read(textures, handle);
     tex->ref_count++;
 
 #ifdef RICO_DEBUG_TEXTURE
@@ -84,7 +84,7 @@ int texture_load_pixels(const char *name, GLenum target, u32 width, u32 height,
     err = pool_handle_alloc(&textures, _handle);
     if (err) return err;
 
-    struct rico_texture *tex = pool_read(&textures, *_handle);
+    struct rico_texture *tex = pool_read(textures, *_handle);
 
     // Note: If we want to serialize texture data we have to store the filename
     //       or the pixel data in the struct.
@@ -216,7 +216,7 @@ void texture_free(u32 handle)
     if (handle == RICO_TEXTURE_DEFAULT_SPEC)
         return;
 
-    struct rico_texture *tex = pool_read(&textures, handle);
+    struct rico_texture *tex = pool_read(textures, handle);
     if (tex->ref_count > 0)
         tex->ref_count--;
 
@@ -234,31 +234,31 @@ void texture_free(u32 handle)
     glDeleteTextures(1, &tex->gl_id);
 
     tex->uid.uid = UID_NULL;
-    pool_handle_free(&textures, handle);
+    pool_handle_free(textures, handle);
 }
 
 const char *texture_name(u32 handle)
 {
-    struct rico_texture *tex = pool_read(&textures, handle);
+    struct rico_texture *tex = pool_read(textures, handle);
     return tex->uid.name;
 }
 
 void texture_bind(u32 handle, GLenum texture_unit)
 {
     // TODO: When is this useful in the context of this application?
-    struct rico_texture *tex = pool_read(&textures, handle);
+    struct rico_texture *tex = pool_read(textures, handle);
     glActiveTexture(texture_unit);
     glBindTexture(tex->gl_target, tex->gl_id);
 }
 
 void texture_unbind(u32 handle, GLenum texture_unit)
 {
-    struct rico_texture *tex = pool_read(&textures, handle);
+    struct rico_texture *tex = pool_read(textures, handle);
     glActiveTexture(texture_unit);
     glBindTexture(tex->gl_target, 0);
 }
 
 struct rico_pool *texture_pool_unsafe()
 {
-    return &textures;
+    return textures;
 }

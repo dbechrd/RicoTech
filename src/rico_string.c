@@ -17,7 +17,7 @@ const char *rico_string_slot_string[] = {
     RICO_STRING_SLOTS(GEN_STRING)
 };
 
-static struct rico_pool strings;
+static struct rico_pool *strings;
 
 int rico_string_init(u32 pool_size)
 {
@@ -28,7 +28,7 @@ int rico_string_init(u32 pool_size)
 int string_init(const char *name, enum rico_string_slot slot, u32 x, u32 y,
                 struct col4 color, u32 lifespan, u32 font, const char *text)
 {
-    RICO_ASSERT(slot < STR_SLOT_COUNT || lifespan > 0);
+    //RICO_ASSERT(slot <= STR_SLOT_COUNT || lifespan > 0);
 
 #ifdef RICO_DEBUG_STRING
     printf("[strg][init] name=%s\n", name);
@@ -55,11 +55,11 @@ int string_init(const char *name, enum rico_string_slot slot, u32 x, u32 y,
         u32 handle;
         err = pool_handle_alloc(&strings, &handle);
         if (err) return err;
-        str = pool_read(&strings, handle);
+        str = pool_read(strings, handle);
     }
     else
     {
-        str = pool_read(&strings, slot);
+        str = pool_read(strings, slot);
     }
 
     // Reuse existing static string objects
@@ -92,7 +92,7 @@ int string_free(u32 handle)
     //     return SUCCESS;
 
     enum rico_error err;
-    struct rico_string *str = pool_read(&strings, handle);
+    struct rico_string *str = pool_read(strings, handle);
 
 #ifdef RICO_DEBUG_STRING
     printf("[strg][free] name=%s\n", str->uid.name);
@@ -110,7 +110,7 @@ int string_free(u32 handle)
     str->obj_handle = 0;
 
     str->uid.uid = UID_NULL;
-    err = pool_handle_free(&strings, handle);
+    err = pool_handle_free(strings, handle);
     return err;
 }
 
@@ -120,9 +120,9 @@ int string_update(r64 dt)
     u32 delta_ms = (u32)(dt * 1000);
 
     struct rico_string *str;
-    for (u32 i = 0; i < strings.active; ++i)
+    for (u32 i = 0; i < strings->active; ++i)
     {
-        str = pool_read(&strings, strings.handles[i]);
+        str = pool_read(strings, strings->handles[i]);
         if (str->uid.uid == UID_NULL || str->lifespan == 0)
         {
             continue;
@@ -131,7 +131,7 @@ int string_update(r64 dt)
         // Free strings with expired lifespans
         if (str->lifespan <= delta_ms)
         {
-            err = string_free(strings.handles[i]);
+            err = string_free(strings->handles[i]);
             if (err) return err;
         }
         else

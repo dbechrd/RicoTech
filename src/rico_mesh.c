@@ -32,7 +32,7 @@ int rico_mesh_init(u32 pool_size)
 {
     meshes = calloc(1, sizeof(*meshes));
     return pool_init("Meshes", pool_size, sizeof(struct rico_mesh), 0,
-                     meshes);
+                     &meshes);
 }
 
 //TODO: Should be requesting const char* filename or u32 filename (string hash)
@@ -135,7 +135,7 @@ int mesh_load(u32 *_handle, const char *name, enum rico_mesh_type type,
     enum rico_error err;
     *_handle = RICO_MESH_DEFAULT;
 
-    err = pool_handle_alloc(meshes, _handle);
+    err = pool_handle_alloc(&meshes, _handle);
     if (err) return err;
 
     struct rico_mesh *mesh = pool_read(meshes, *_handle);

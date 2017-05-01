@@ -22,7 +22,7 @@ int rico_material_init(u32 pool_size)
 {
     materials = calloc(1, sizeof(*materials));
     return pool_init("Materials", pool_size, sizeof(struct rico_material), 0,
-                     materials);
+                     &materials);
 }
 
 // TODO: Do proper reference counting, this function is stupid.
@@ -48,7 +48,7 @@ int material_init(const char *name, u32 tex_diffuse, u32 tex_specular,
     enum rico_error err;
     *_handle = RICO_MATERIAL_DEFAULT;
 
-    err = pool_handle_alloc(materials, _handle);
+    err = pool_handle_alloc(&materials, _handle);
     if (err) return err;
 
     struct rico_material *material = pool_read(materials, *_handle);

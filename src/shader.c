@@ -23,12 +23,12 @@ int make_shader(const GLenum type, const char *filename, GLuint *_shader)
     glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
     if (!status)
     {
-        fprintf(stderr, "Failed to compile shader '%s':\n", filename);
+        err = RICO_ERROR(ERR_SHADER_COMPILE, "Failed to compile shader '%s'",
+                         filename);
         show_info_log(shader, glGetShaderiv, glGetShaderInfoLog);
         glDeleteShader(shader);
-        return RICO_ERROR(ERR_SHADER_COMPILE);
     }
 
     *_shader = shader;
-    return SUCCESS;
+    return err;
 }
