@@ -59,6 +59,8 @@ void notes_casey()
     }
 
     //          Casey uses C++ like C with oper/func overloading
+
+    // Day 024: sizeof("blah") == 5; sizeof() counts null terminator!!!
 }
 
 void notes_gl()

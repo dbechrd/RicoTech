@@ -33,7 +33,7 @@ static inline void init_murmurhash3()
 
     const char key[] = "This is a MurmurHash3 test key";
     uint32_t hash;
-    MurmurHash3_x86_32(key, sizeof(key), &hash);
+    MurmurHash3_x86_32(key, sizeof(key) - 1, &hash);
     printf("Key: %s\n", key);
     printf("Hash: %u\n", hash);
 }
