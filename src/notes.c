@@ -61,6 +61,28 @@ void notes_casey()
     //          Casey uses C++ like C with oper/func overloading
 
     // Day 024: sizeof("blah") == 5; sizeof() counts null terminator!!!
+    //          1:03:00 Translation Lookaside Buffer (TLB) VRAM -> RAM map
+
+    // Day 025: 12:10 struct thread_context; info about current thread passed
+    //          to any OS-specific calls. Essentially Thread.Current.
+    #define ArrayCount(Array) (sizeof(Array) / sizeof((Array)[0]))
+
+    //          58:00 Memory-mapped file
+
+    // Day 027: 1:04:00 round float to nearest int: (int)(f + 0.5f);
+
+    // Stream 0008: "Compatible camera controls"; allow camera to moved around
+    //              while in edit mode the same way the camera is moved in e.g.
+    //              Blender, Maya, 3DS Max, etc. to help artists work fast.
+    // https://mollyrocket.com/casey/stream_0008.html
+
+    // Stream 0017: CaseyTown. It is a land where the birds sing in emergent
+    //              counterpoint, where children laugh and play and know nothing
+    //              of war, where humans live in harmony with nature, where
+    //              newcomers are greeted with their own personal roasted pig
+    //              and a crown of rare orchids before being ceremonially
+    //              plunged into a restorative bath of chocolate milk and rock
+    //              salt (it exfoliates — look it up).
 }
 
 void notes_gl()

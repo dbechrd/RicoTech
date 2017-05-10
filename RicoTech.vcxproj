@@ -169,6 +169,8 @@
     <ClCompile Include="src\main.c" />
     <ClCompile Include="src\notes.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\primitives.c" />
     <ClCompile Include="src\program.c" />
@@ -192,6 +194,12 @@
     <ClCompile Include="src\shader.c" />
     <ClCompile Include="src\test_geom.c" />
     <ClCompile Include="src\util.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="todo.txt">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </Text>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

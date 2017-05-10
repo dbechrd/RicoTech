@@ -9,10 +9,6 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
     <Filter Include="Source Files\rico">
       <UniqueIdentifier>{5e53a95f-f769-4351-a672-7ce7bf3cf241}</UniqueIdentifier>
     </Filter>
@@ -24,6 +20,9 @@
     </Filter>
     <Filter Include="Header Files\3rdparty">
       <UniqueIdentifier>{d2741dc5-44f5-4dd5-95d2-434d74947920}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_Misc">
+      <UniqueIdentifier>{f14e08dd-76b1-4d61-baa9-03b05329a2d4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -140,9 +139,6 @@
     <ClCompile Include="src\main.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
-    <ClCompile Include="src\notes.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
     <ClCompile Include="src\primitives.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
@@ -218,5 +214,13 @@
     <ClCompile Include="src\gl3w.c">
       <Filter>Source Files\3rdparty</Filter>
     </ClCompile>
+    <ClCompile Include="src\notes.c">
+      <Filter>_Misc</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="todo.txt">
+      <Filter>_Misc</Filter>
+    </Text>
   </ItemGroup>
 </Project>

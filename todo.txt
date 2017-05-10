@@ -24,6 +24,15 @@ Objects
 // Engine
 ================================================================================
 
+Animation
+---------
+[ ] Global translate, rotate
+[ ] Change texture (instant, fade?)
+[ ] Change mesh
+[ ] Change type-specific "properties" (e.g. toggle light on/off)
+[-] Global scale?
+[-] Deform mesh
+
 Collision
 ---------
 [ ] Ray
@@ -35,9 +44,16 @@ Collision
 [ ] Scene graph (kd-tree, BSP?)
 [ ] Frustum culling
 
-Shaders
+Foliage
 -------
-[ ] Refactor program_bind() / program_uniform_set() out of object_render()
+[ ] Billboard ground foliage (e.g. 2-plane grass) normal should point straight
+    up for proper lighting calculations. /watch?v=BJDQNjlEO0I
+
+Input
+-----
+[ ] Better mouse smoothing / accuracy?
+    "The Witness needs Raw Input to get good low-level relative mouse movements"
+    https://mollyrocket.com/casey/stream_0007.html
 
 Lighting
 --------
@@ -45,148 +61,73 @@ Lighting
 [ ] Multiple lights (how to differentiate types in shader?)
 [ ] Shadows
 
-Animation
----------
-[ ] Global translate, rotate
-[ ] Change texture (instant, fade?)
-[ ] Change mesh
-[ ] Change type-specific "properties" (e.g. toggle light on/off)
-[-] Global scale?
-[-] Deform mesh
-
-Foliage
+Shaders
 -------
-[ ] Billboard ground foliage (e.g. 2-plane grass) normal should point straight
-    up for proper lighting calculations. /watch?v=BJDQNjlEO0I
+[ ] Refactor program_bind() / program_uniform_set() out of object_render()
 
-||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-| SPOILER ALERT - SPOILER ALERT - SPOILER ALERT - SPOILER ALERT - SPOILER ALERT
-|
-|             S P O I L E R S   B E L O W   T H I S   S E C T I O N
-|
-| SPOILER ALERT - SPOILER ALERT - SPOILER ALERT - SPOILER ALERT - SPOILER ALERT
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-| SPOILER ALERT - SPOILER ALERT - SPOILER ALERT - SPOILER ALERT - SPOILER ALERT
-||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+================================================================================
+//
+//                         SPOILERS BELOW THIS SECTION
+//
+================================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ================================================================================
 // Gameplay
 ================================================================================
 
-Animation
----------
-[ ] Global translate, rotate
-[ ] Change texture (instant, fade?)
-[ ] Change mesh
-[ ] Change type-specific "properties" (e.g. toggle light on/off)
-[-] Global scale?
-[-] Deform mesh
-
-================================================================================
-
-||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-| SPOILER ALERT - SPOILER ALERT - SPOILER ALERT - SPOILER ALERT - SPOILER ALERT
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-|
-||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-| SPOILER ALERT - SPOILER ALERT - SPOILER ALERT - SPOILER ALERT - SPOILER ALERT
-|
-|             S P O I L E R S   A B O V E   T H I S   S E C T I O N
-|
-| SPOILER ALERT - SPOILER ALERT - SPOILER ALERT - SPOILER ALERT - SPOILER ALERT
-||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+Level Design
+------------
+[ ] Design levels
