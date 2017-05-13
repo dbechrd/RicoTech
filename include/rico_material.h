@@ -3,6 +3,8 @@
 
 #include "rico_pool.h"
 
+extern const u32 RICO_MATERIAL_SIZE;
+
 extern u32 RICO_MATERIAL_DEFAULT;
 
 int rico_material_init(u32 pool_size);

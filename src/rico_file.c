@@ -66,12 +66,24 @@ int rico_file_open_read(struct rico_file *_file, const char *filename)
 
     // File version
     fread(&_file->version, sizeof(_file->version), 1, _file->fs);
-    if (_file->version >= RICO_FILE_VERSION_COUNT)
+    if (_file->version < RICO_FILE_VERSION_MINIMUM_SUPPORTED)
     {
         rico_file_close(_file);
-        fprintf(stderr, "Invalid file version: %d\n", _file->version);
-        return RICO_ERROR(ERR_FILE_SIGNATURE,
-                          "Invalid file version %d in files %s",
+        fprintf(stderr, "Unsupported file version [%d]. The minimum supported" \
+                "version for this build is [%d].\n", _file->version,
+                RICO_FILE_VERSION_MAXIMUM_SUPPORTED);
+        return RICO_ERROR(ERR_FILE_VERSION,
+                          "Unsupported file version %d in file %s",
+                          _file->version, filename);
+    }
+    else if (_file->version > RICO_FILE_VERSION_MAXIMUM_SUPPORTED)
+    {
+        rico_file_close(_file);
+        fprintf(stderr, "Unsupported file version [%d]. The maximum supported" \
+                "version for this build is [%d].\n", _file->version,
+                RICO_FILE_VERSION_MAXIMUM_SUPPORTED);
+        return RICO_ERROR(ERR_FILE_VERSION,
+                          "Unsupported file version %d in file %s",
                           _file->version, filename);
     }
 

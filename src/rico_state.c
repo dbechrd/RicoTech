@@ -30,7 +30,7 @@ enum rico_key {
 
 ////////////////////////////////////////////////////////////////////////////////
 static const bool reset_game_world = false;
-static struct rico_chunk first_chunk;
+static struct rico_chunk RICO_CHUNK_DEFAULT;
 
 ////////////////////////////////////////////////////////////////////////////////
 //Human walk speed empirically found to be 33 steps in 20 seconds. That
@@ -285,7 +285,7 @@ static int save_file()
 {
     enum rico_error err;
 
-    if (first_chunk.uid.uid == UID_NULL)
+    if (RICO_CHUNK_DEFAULT.uid.uid == UID_NULL)
         return RICO_ERROR(ERR_CHUNK_NULL, "Failed to save NULL chunk");
 
     struct rico_file file;
@@ -293,7 +293,7 @@ static int save_file()
                                RICO_FILE_VERSION_CURRENT);
     if (err) return err;
 
-    err = rico_serialize(&first_chunk, &file);
+    err = rico_serialize(&RICO_CHUNK_DEFAULT, &file);
     rico_file_close(&file);
 
     // Save backup copy
@@ -310,7 +310,7 @@ static int save_file()
                                RICO_FILE_VERSION_CURRENT);
     if (err) return err;
 
-    err = rico_serialize(&first_chunk, &backupFile);
+    err = rico_serialize(&RICO_CHUNK_DEFAULT, &backupFile);
     rico_file_close(&backupFile);
 
     return err;
@@ -1224,6 +1224,20 @@ static int rico_init_pools()
     //       that gets loaded if the real chunk can't be loaded from the save
     //       file.
 
+    err = chunk_init("RICO_CHUNK_DEFAULT", 0,
+                     RICO_STRING_POOL_SIZE,
+                     RICO_FONT_POOL_SIZE,
+                     RICO_TEXTURE_POOL_SIZE,
+                     RICO_MATERIAL_POOL_SIZE,
+                     RICO_MESH_POOL_SIZE,
+                     RICO_OBJECT_POOL_SIZE,
+                     &RICO_CHUNK_DEFAULT);
+    if (err) return err;
+
+    // TODO: Remove the self-hosted pool points from all of the classes below
+    //       and send them chunk pointers instead.
+
+    /*
     err = rico_string_init(RICO_STRING_POOL_SIZE);
     if (err) return err;
 
@@ -1241,6 +1255,7 @@ static int rico_init_pools()
 
     err = rico_object_init(RICO_OBJECT_POOL_SIZE);
     if (err) return err;
+    */
 
     return err;
 }
@@ -1449,7 +1464,7 @@ static int rico_init()
         err = rico_file_open_read(&file, "chunks/cereal.bin");
         if (err) return err;
 
-        err = rico_deserialize(&first_chunk, &file);
+        err = rico_deserialize(&RICO_CHUNK_DEFAULT, &file);
         rico_file_close(&file);
         if (err) return err;
     }

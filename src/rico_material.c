@@ -14,16 +14,10 @@ struct rico_material {
     u32 tex_specular;
     float shiny;
 };
+const u32 RICO_MATERIAL_SIZE = sizeof(struct rico_material);
 
 u32 RICO_MATERIAL_DEFAULT = 0;
 static struct rico_pool *materials;
-
-int rico_material_init(u32 pool_size)
-{
-    materials = calloc(1, sizeof(*materials));
-    return pool_init("Materials", pool_size, sizeof(struct rico_material), 0,
-                     &materials);
-}
 
 // TODO: Do proper reference counting, this function is stupid.
 int material_request(u32 handle)

@@ -5,6 +5,8 @@
 struct col4;
 struct rico_font;
 
+extern const u32 RICO_STRING_SIZE;
+
 #define RICO_STRING_SLOTS(f)    \
     f(STR_SLOT_NULL)            \
     f(STR_SLOT_SELECTED_OBJ)    \

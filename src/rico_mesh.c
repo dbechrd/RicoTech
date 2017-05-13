@@ -15,6 +15,7 @@ struct rico_mesh {
 
     struct bbox bbox;
 };
+const u32 RICO_MESH_SIZE = sizeof(struct rico_mesh);
 
 const char *rico_mesh_type_string[] = {
     RICO_MESH_TYPES(GEN_STRING)
@@ -27,13 +28,6 @@ static int build_mesh(struct rico_mesh *mesh, u32 vertex_count,
                       const struct mesh_vertex *vertex_data,
                       u32 element_count, const GLuint *element_data,
                       GLenum hint);
-
-int rico_mesh_init(u32 pool_size)
-{
-    meshes = calloc(1, sizeof(*meshes));
-    return pool_init("Meshes", pool_size, sizeof(struct rico_mesh), 0,
-                     &meshes);
-}
 
 //TODO: Should be requesting const char* filename or u32 filename (string hash)
 u32 mesh_request(u32 handle)

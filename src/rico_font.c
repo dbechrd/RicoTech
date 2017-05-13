@@ -6,6 +6,20 @@
 #include <GL/gl3w.h>
 #include <stdlib.h>
 
+struct rico_font {
+    struct rico_uid uid;
+    int CellX, CellY, YOffset, RowPitch;
+    char Base;
+    char Width[256];
+
+    // TODO: Use rico_texture??
+    u32 texture;
+    float RowFactor, ColFactor;
+    int RenderStyle;
+    bool InvertYAxis;
+};
+const u32 RICO_FONT_SIZE = sizeof(struct rico_font);
+
 #define BFG_RS_NONE  0x0  // Blend flags
 #define BFG_RS_ALPHA 0x1
 #define BFG_RS_RGB   0x2
@@ -26,12 +40,6 @@ struct bff_header
 
 u32 RICO_FONT_DEFAULT = 0;
 static struct rico_pool *fonts;
-
-int rico_font_init(u32 pool_size)
-{
-    fonts = calloc(1, sizeof(*fonts));
-    return pool_init("Fonts", pool_size, sizeof(struct rico_font), 0, &fonts);
-}
 
 int font_init(const char *filename, u32 *_handle)
 {

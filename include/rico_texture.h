@@ -5,6 +5,8 @@
 #include "rico_pool.h"
 #include <GL/gl3w.h>
 
+extern const u32 RICO_TEXTURE_SIZE;
+
 extern u32 RICO_TEXTURE_DEFAULT_DIFF;
 extern u32 RICO_TEXTURE_DEFAULT_SPEC;
 

@@ -48,7 +48,6 @@ void notes_casey()
     // Day 021: Dynamically loading game code, live edits
     // Day 022: PDB locked, rename it using timestamp?
     //          47:18 String for loop Path.GetPathWithoutFilename()
-    //
     char *buffer = 0;
     char *onePastLastSlash = buffer;
     for (char *scan = buffer; *scan; ++scan) {
@@ -83,6 +82,115 @@ void notes_casey()
     //              and a crown of rare orchids before being ceremonially
     //              plunged into a restorative bath of chocolate milk and rock
     //              salt (it exfoliates — look it up).
+
+    // Stream 0023: Scope braces in switch statements.
+    // https://mollyrocket.com/casey/stream_0023.html
+    switch (filter_mode)
+    {
+        case LISTER_FILTER_MODE_OFF:
+        {
+            // NOTE(casey): Ignored
+        } break;
+
+        case LISTER_FILTER_MODE_POSITIVE:
+        {
+            int handler_result = NOT_APPLICABLE;
+            special.handler(e, &handler_result);
+            if (handler_result != NOT_APPLICABLE)
+            {
+                passes_special = (handler_result != 0);
+            }
+        } break;
+
+        case LISTER_FILTER_MODE_NEGATIVE:
+        {
+            int handler_result = NOT_APPLICABLE;
+            special.handler(e, &handler_result);
+            if (handler_result != NOT_APPLICABLE)
+            {
+                passes_special = (handler_result == 0);
+            }
+        } break;
+
+        default:
+            assert(!"Unrecognized special filter mode");
+        } break;
+    }
+
+    // Stream 0028: Reusable Components (API)
+    // https://www.youtube.com/watch?v=ZQ5_u8Lgvyk
+    //
+    // 31:00
+    // API-provided services
+    
+    // A: ChunkLoad(filename) tightly couples file I/O and interpretation
+    //    of the actual raw chunk data.
+    chunk = ChunkLoad(filename);
+    
+    // B: Callbacks are bad for flow control. ChunkLoad(filename) tightly
+    //    couples file I/O and interpretation of the data.
+    SetFileCallbacks(MyOpen, MyRead, MyClose);
+    chunk = ChunkLoad(filename); // Calls MyRead for I/O
+    
+    // C: Chunk is initialized from data, but where is its memory? Unless it's
+    //    being returned by value, it doesn't let us manage allocation.
+    chunk = ChunkInit(filedata); // Take raw data from user
+    
+    // D: API is still allocating memory for the uncompressed data.
+    filedata = DecompressData(raw_filedata);
+    chunk = ChunkInit(filedata);
+    FreeFileData(filedata);
+
+    // E: More callbacks... flow control problems.
+    SetMemoryCallbacks(MyAlloc, MyFree);
+    filedata = DecompressData(raw_filedata); // Calls MyAlloc for memory.
+    chunk = ChunkInit(filedata);
+
+    // F: Totally decoupled, but still requires API to interpret data.
+    size = GetProcessedSize(raw_filedata);
+    filedata = MyAlloc(size);
+    DecompressData(raw_filedata, &filedata);
+    chunk = ChunkInit(filedata);
+
+    // G: Get rid of ChunkInit and just give me a chunk.
+    chunk = NewChunk();
+    MyRead(file, sizeof(chunk), &chunk);
+
+    // H: Let me define my own Chunks, just tell me what the structure is.
+    chunk = MyAlloc(sizeof(chunk));
+    MyRead(file, sizeof(chunk), &chunk);
+
+    // 40:40: Retained mode vs. immediate mode API state
+    //        Instead of CreateJoint() / DeleteJoint() and constantly keeping
+    //        state sync'd, have DoJoint() which is called only on relevant
+    //        frames to perform the check e.g. while X is down.
+
+    // 45:00: Write the usage code for the API first. Define all of the ways
+    //        the API might be used, then design or choose the API.
+
+    // 46:25: All retained mode constructs should have immediate mode
+    //        equivalents. E.g. Update(big_struct) ->
+    //        Update(a), Update(b), Update(a, b, c), etc.
+
+    // 47:00: All callback / inheritance-based constructs should have
+    //        equivalents that do neither. Forfeiting flow control must be
+    //        kept optional.
+
+    // 47:24: API should never require API-specific data types for things which
+    //        are commonly already present in game code (e.g. Vector, Matrix)
+
+    // 47:50: Any API function that might not be considered atomic should be
+    //        replacable with a few, more granular, calls.
+
+    // 48:35: Any data which doesn't have a clear reason for being opaque should
+    //        be fully transparent (init, update, I/O, etc.)
+
+    // 49:32: API resource management routines (e.g. memory, file, string, etc.)
+    //        must always be optional.
+
+    // 49:42: API file formats must always be optional.
+
+    // 49:44: Full run-time source code must be available.
 }
 
 void notes_gl()

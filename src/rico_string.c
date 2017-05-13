@@ -12,18 +12,13 @@ struct rico_string {
     u32 obj_handle;
     u32 lifespan;
 };
+const u32 RICO_STRING_SIZE = sizeof(struct rico_string);
 
 const char *rico_string_slot_string[] = {
     RICO_STRING_SLOTS(GEN_STRING)
 };
 
 static struct rico_pool *strings;
-
-int rico_string_init(u32 pool_size)
-{
-    return pool_init("Strings", pool_size, sizeof(struct rico_string),
-                     STR_SLOT_DYNAMIC, &strings);
-}
 
 int string_init(const char *name, enum rico_string_slot slot, u32 x, u32 y,
                 struct col4 color, u32 lifespan, u32 font, const char *text)

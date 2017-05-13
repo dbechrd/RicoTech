@@ -149,6 +149,7 @@ enum rico_vbo {
     f(ERR_FILE_WRITE)               \
     f(ERR_FILE_READ)                \
     f(ERR_FILE_SIGNATURE)           \
+    f(ERR_FILE_VERSION)             \
     f(ERR_SERIALIZE_DISABLED)       \
     f(ERR_SERIALIZER_NULL)          \
     f(ERR_DESERIALIZER_NULL)        \

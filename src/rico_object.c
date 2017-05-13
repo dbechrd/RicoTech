@@ -33,6 +33,7 @@ struct rico_object {
 
     struct bbox bbox;
 };
+const u32 RICO_OBJECT_SIZE = sizeof(struct rico_object);
 
 const char *rico_obj_type_string[] = {
     RICO_OBJ_TYPES(GEN_STRING)
@@ -44,13 +45,6 @@ u32 RICO_OBJECT_DEFAULT = 0;
 static struct rico_pool *objects;
 
 static void update_transform(struct rico_object *obj);
-
-int rico_object_init(u32 pool_size)
-{
-    objects = calloc(1, sizeof(*objects));
-    return pool_init("Objects", pool_size, sizeof(struct rico_object), 0,
-                     &objects);
-}
 
 int object_create(u32 *_handle, const char *name, enum rico_obj_type type,
                   u32 mesh, u32 material, const struct bbox *bbox,

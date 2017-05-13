@@ -6,20 +6,9 @@
 #include "rico_texture.h"
 #include <GL/gl3w.h>
 
+extern const u32 RICO_FONT_SIZE;
+
 extern u32 RICO_FONT_DEFAULT;
-
-struct rico_font {
-    struct rico_uid uid;
-    int CellX, CellY, YOffset, RowPitch;
-    char Base;
-    char Width[256];
-
-    // TODO: Use rico_texture??
-    u32 texture;
-    float RowFactor, ColFactor;
-    int RenderStyle;
-    bool InvertYAxis;
-};
 
 int rico_font_init(u32 pool_size);
 int font_init(const char *filename, u32 *_handle);

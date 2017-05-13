@@ -6,6 +6,8 @@
 #include "rico_texture.h"
 #include <GL/gl3w.h>
 
+extern const u32 RICO_MESH_SIZE;
+
 /*
 // Cleanup: Do I need static slots here? Anywhere?
 #define RICO_MESH_SLOTS(f)    \

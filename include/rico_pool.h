@@ -1,9 +1,7 @@
 #ifndef RICO_POOL_H
 #define RICO_POOL_H
 
-#include "const.h"
 #include "rico_uid.h"
-#include <stdio.h>
 
 typedef void(destructor)(u32 handle);
 
@@ -17,8 +15,15 @@ struct rico_pool {
     void *data;         // element pool
 };
 
-int pool_init(const char *name, u32 count, u32 size, u32 static_count,
-              struct rico_pool **_pool_ptr);
+#define POOL_SIZE_HANDLES(count) (count * sizeof(u32))
+#define POOL_SIZE_DATA(count, size) (count * size)
+#define POOL_SIZE(count, size) (POOL_SIZE_HANDLES(count) + POOL_SIZE_DATA(count, size))
+
+#define POOL_OFFSET_HANDLES() (sizeof(struct rico_pool))
+#define POOL_OFFSET_DATA(count) (POOL_OFFSET_HANDLES() + POOL_SIZE_HANDLES(count))
+
+int pool_init(void *mem_block, const char *name, u32 count, u32 size,
+              u32 static_count);
 void pool_free(struct rico_pool *pool, destructor *destruct);
 int pool_handle_alloc(struct rico_pool **pool_ptr, u32 *_handle);
 int pool_handle_free(struct rico_pool *pool, u32 handle);

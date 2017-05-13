@@ -17,18 +17,13 @@ struct rico_texture {
     GLsizei height;
     GLsizei bpp;
 };
+const u32 RICO_TEXTURE_SIZE = sizeof(struct rico_texture);
 
 u32 RICO_TEXTURE_DEFAULT_DIFF = 0;
 u32 RICO_TEXTURE_DEFAULT_SPEC = 0;
 static struct rico_pool *textures;
 
 static int build_texture(struct rico_texture *tex, const void *pixels);
-
-int rico_texture_init(u32 pool_size)
-{
-    return pool_init("Textures", pool_size, sizeof(struct rico_texture), 0,
-                     &textures);
-}
 
 // TODO: Do proper reference counting, this function is stupid. Need to save
 //       filename for that to work (how to track load_pixels calls?)

@@ -4,8 +4,9 @@
 #include "geom.h"
 #include "rico_mesh.h"
 #include "rico_uid.h"
-
 struct program_default;
+
+extern const u32 RICO_OBJECT_SIZE;
 
 #define RICO_OBJ_TYPES(f)   \
     f(OBJ_NULL)             \

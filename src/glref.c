@@ -199,17 +199,16 @@ int init_hardcoded_test_chunk()
     //--------------------------------------------------------------------------
     // Save manual chunk
     //--------------------------------------------------------------------------
-    struct rico_pool *chunk_tex_pool = texture_pool_unsafe();
-    struct rico_pool *chunk_mat_pool = material_pool_get_unsafe();
-    struct rico_pool *chunk_mesh_pool = mesh_pool_unsafe();
-    struct rico_pool *chunk_obj_pool = object_pool_get_unsafe();
-
     struct rico_chunk chunkA;
 
-    err = chunk_init(0, "my_first_chunk", chunk_tex_pool->count,
-                     chunk_mat_pool->count, chunk_mesh_pool->count,
-                     chunk_obj_pool->count, chunk_tex_pool, chunk_mat_pool,
-                     chunk_mesh_pool, chunk_obj_pool, &chunkA);
+    err = chunk_init("my_first_chunk", 0,
+                     RICO_STRING_POOL_SIZE,
+                     RICO_FONT_POOL_SIZE,
+                     RICO_TEXTURE_POOL_SIZE,
+                     RICO_MATERIAL_POOL_SIZE,
+                     RICO_MESH_POOL_SIZE,
+                     RICO_OBJECT_POOL_SIZE,
+                     &chunkA);
     if (err) return err;
 
     struct rico_file file;

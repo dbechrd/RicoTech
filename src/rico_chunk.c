@@ -3,7 +3,9 @@
 #include "rico_cereal.h"
 #include "rico_object.h"
 #include "rico_material.h"
+#include "rico_font.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 static void chunk_print(struct rico_chunk *chunk);
 
@@ -13,62 +15,70 @@ static u32 parse_mesh(const char *mesh)
     return 0;
 }
 
-int chunk_init(u32 version, const char *name, u32 tex_count, u32 mat_count,
-               u32 mesh_count, u32 obj_count, struct rico_pool *textures,
-               struct rico_pool *materials, struct rico_pool *meshes,
-               struct rico_pool *objects, struct rico_chunk *_chunk)
+int chunk_init(const char *name, u32 version, u32 strings, u32 fonts,
+               u32 textures, u32 materials, u32 meshes, u32 objects,
+               struct rico_chunk *_chunk)
 {
-    UNUSED(tex_count);
-    UNUSED(mesh_count);
-    UNUSED(textures);
-    UNUSED(meshes);
+    u32 size1 = sizeof(struct rico_chunk);
+    u32 size2 = POOL_SIZE(strings,   RICO_STRING_SIZE);
+    u32 size3 = POOL_SIZE(fonts,     RICO_FONT_SIZE);
+    u32 size4 = POOL_SIZE(textures,  RICO_TEXTURE_SIZE);
+    u32 size5 = POOL_SIZE(materials, RICO_MATERIAL_SIZE);
+    u32 size6 = POOL_SIZE(meshes,    RICO_MESH_SIZE);
+    u32 size7 = POOL_SIZE(objects,   RICO_OBJECT_SIZE);
+    u32 total_size = size1 + size2 + size3 + size4 + size5 + size6 + size7;
 
-    struct rico_chunk chunk;
-    uid_init(&chunk.uid, RICO_UID_CHUNK, name, true);
-    chunk.version = version;
-    chunk.tex_count = 0; //tex_count;
-    chunk.mat_count = mat_count;
-    chunk.mesh_count = 0; //mesh_count;
-    chunk.obj_count = obj_count;
-    chunk.textures = (struct rico_pool) { 0 }; //*textures;
-    chunk.materials = *materials;
-    chunk.meshes = (struct rico_pool) { 0 }; //*meshes;
-    chunk.objects = *objects;
+    // TODO: Clean up how getting these addresses works; possibly refactor
+    //       the alloc farther up than this.
+    void *mem_block = calloc(1, total_size);
+    if (!mem_block)
+    {
+        return RICO_ERROR(ERR_BAD_ALLOC, "Failed to alloc memory for chunk %s",
+                          name);
+    }
+
+    struct rico_chunk *chunk = mem_block;
+    uid_init(&chunk->uid, RICO_UID_CHUNK, name, true);
+    chunk->version = version;
+    chunk->size = total_size;
+
+    // Calculate pool offsets
+    chunk->strings   = (struct rico_pool *)((u8 *)mem_block + size1);
+    chunk->fonts     = (struct rico_pool *)((u8 *)mem_block + size2);
+    chunk->textures  = (struct rico_pool *)((u8 *)mem_block + size3);
+    chunk->materials = (struct rico_pool *)((u8 *)mem_block + size4);
+    chunk->meshes    = (struct rico_pool *)((u8 *)mem_block + size5);
+    chunk->objects   = (struct rico_pool *)((u8 *)mem_block + size6);
+
+    pool_init(chunk->strings,   "Strings",   strings,   RICO_STRING_SIZE,   STR_SLOT_DYNAMIC);
+    pool_init(chunk->fonts,     "Fonts",     fonts,     RICO_FONT_SIZE,     0);
+    pool_init(chunk->textures,  "Textures",  textures,  RICO_TEXTURE_SIZE,  0);
+    pool_init(chunk->materials, "Materials", materials, RICO_MATERIAL_SIZE, 0);
+    pool_init(chunk->meshes,    "Meshes",    meshes,    RICO_MESH_SIZE,     0);
+    pool_init(chunk->objects,   "Objects",   objects,   RICO_OBJECT_SIZE,   0);
 
 #ifdef RICO_DEBUG_CHUNK
-    printf("[chnk][init] name=%s\n", chunk.uid.name);
-    chunk_print(&chunk);
+    printf("[chnk][init] name=%s\n", chunk->uid.name);
+    chunk_print(chunk);
 #endif
 
-    *_chunk = chunk;
+    _chunk = chunk;
     return SUCCESS;
 }
 
 //int chunk_serialize_0(const void *handle, const struct rico_file *file)
 SERIAL(chunk_serialize_0)
 {
-    enum rico_error err;
+    enum rico_error err = SUCCESS;
     const struct rico_chunk *chunk = handle;
 
-    fwrite(&chunk->version,    sizeof(chunk->version),    1, file->fs);
-    fwrite(&chunk->tex_count,  sizeof(chunk->tex_count),  1, file->fs);
-    fwrite(&chunk->mat_count,  sizeof(chunk->mat_count),  1, file->fs);
-    fwrite(&chunk->mesh_count, sizeof(chunk->mesh_count), 1, file->fs);
-    fwrite(&chunk->obj_count,  sizeof(chunk->obj_count),  1, file->fs);
-
-    // Pools
-    //err = rico_serialize(&chunk->textures, file);
-    //if (err) return err;
-    err = rico_serialize(&chunk->materials, file);
-    if (err) return err;
-    //err = rico_serialize(&chunk->meshes, file);
-    //if (err) return err;
-    err = rico_serialize(&chunk->objects, file);
-    if (err) return err;
+    // TODO: Check fwrite success
+    // Write chunk to file
+    fwrite(&chunk, chunk->size, 1, file->fs);
 
     #ifdef RICO_DEBUG_CHUNK
-        printf("[chnk][save] name=%s filename=%s\n", chunk->uid.name,
-               file->filename);
+        printf("[chnk][save] name=%s filename=%s size=%d\n", chunk->uid.name,
+               file->filename, chunk->size);
     #endif
 
     return err;
@@ -80,38 +90,17 @@ DESERIAL(chunk_deserialize_0)
     enum rico_error err = SUCCESS;
     struct rico_chunk *_chunk = _handle;
 
-    // TODO: What's the point of tracking pool sizes independently?
-    fread(&_chunk->version,    sizeof(_chunk->version),    1, file->fs);
-    fread(&_chunk->tex_count,  sizeof(_chunk->tex_count),  1, file->fs);
-    fread(&_chunk->mat_count,  sizeof(_chunk->mat_count),  1, file->fs);
-    fread(&_chunk->mesh_count, sizeof(_chunk->mesh_count), 1, file->fs);
-    fread(&_chunk->obj_count,  sizeof(_chunk->obj_count),  1, file->fs);
+    // TODO: Read chunk size from file so we know how much to allocate, then
+    //       initialize the chunk properly before calling fread().
+    RICO_ASSERT(0);
 
-    // HACK: Free default pools.
-    // TODO: Implement default chunk instead.
-    struct rico_pool *pool_objects = object_pool_get_unsafe();
-    struct rico_pool *pool_materials = material_pool_get_unsafe();
-    pool_free(pool_objects,   &object_free);
-    pool_free(pool_materials, &material_free);
-
-    // Create (deserialize) pools
-    //err = rico_deserialize(&_chunk->textures, file);
-    //if (err) return err;
-
-    err = rico_deserialize(&_chunk->materials, file);
-    if (err) return err;
-    material_pool_set_unsafe(&_chunk->materials);
-
-    //err = rico_deserialize(&_chunk->meshes, file);
-    //if (err) return err;
-
-    err = rico_deserialize(&_chunk->objects, file);
-    if (err) return err;
-    object_pool_set_unsafe(&_chunk->objects);
+    // TODO: Check fread success
+    // Read chunk from file
+    fread(&_chunk, _chunk->size, 1, file->fs);
 
 #ifdef RICO_DEBUG_CHUNK
-    printf("[chnk][load] name=%s filename=%s\n", _chunk->uid.name,
-           file->filename);
+    printf("[chnk][load] name=%s filename=%s size=%d\n", _chunk->uid.name,
+           file->filename, _chunk->size);
 #endif
 
     return err;
@@ -120,8 +109,7 @@ DESERIAL(chunk_deserialize_0)
 #ifdef RICO_DEBUG_CHUNK
 static void chunk_print(struct rico_chunk *chunk)
 {
-    printf("[chnk][show] name=%s tex=%d mat=%d mesh=%d obj=%d\n",
-           chunk->uid.name, chunk->tex_count, chunk->mat_count,
-           chunk->mesh_count, chunk->obj_count);
+    // TODO: Print more information about the pool sizes
+    printf("[chnk][show] name=%s size=%d\n", chunk->uid.name, chunk->size);
 }
 #endif

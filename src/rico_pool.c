@@ -7,28 +7,21 @@
 static void pool_print_handles(struct rico_pool *pool);
 
 // TODO: Allocate from heap pool, don't keep calling calloc
-int pool_init(const char *name, u32 count, u32 size, u32 static_count,
-              struct rico_pool **_pool_ptr)
+int pool_init(void *mem_block, const char *name, u32 count, u32 size,
+              u32 static_count)
 {
     RICO_ASSERT(count > 0);
 
-    struct rico_pool *pool = calloc(count, sizeof(struct rico_pool));
+    struct rico_pool *pool = mem_block;
     uid_init(&pool->uid, RICO_UID_POOL, name, true);
     pool->count = count;
     pool->size = size;
     pool->static_count = static_count;
     pool->active = static_count;
 
-    pool->handles = calloc(count, sizeof(u32));
-    if (!pool->handles)
-        return RICO_ERROR(ERR_BAD_ALLOC,
-                          "Failed to alloc handles for pool %s",
-                          pool->uid.name);
-
-    pool->data = calloc(count, size);
-    if (!pool->data)
-        return RICO_ERROR(ERR_BAD_ALLOC,
-                          "Failed to alloc data for pool %s", pool->uid.name);
+    // TODO: Do these work..?
+    pool->handles = (u32 *)((u8 *)mem_block + POOL_OFFSET_HANDLES());
+    pool->data = (u8 *)mem_block + POOL_OFFSET_DATA(count);
 
     // TODO: Should I use UIDs for handles instead of e.g. 1-100?
     //       'u32 uid' or 'struct rico_uid *uid'?
@@ -42,7 +35,6 @@ int pool_init(const char *name, u32 count, u32 size, u32 static_count,
     printf("[pool][init] name=%s\n", pool.uid.name);
 #endif
 
-    *_pool_ptr = pool;
     return SUCCESS;
 }
 
@@ -75,11 +67,13 @@ void pool_free(struct rico_pool *pool, destructor *destruct)
 
 int pool_handle_alloc(struct rico_pool **pool_ptr, u32 *_handle)
 {
-    enum rico_error err;
+    enum rico_error err = SUCCESS;
 
     struct rico_pool *pool = *pool_ptr;
-
     RICO_ASSERT(pool);
+
+    ////////////////////////////////////////////////////////////////////////////
+    /*
     if (pool->active == pool->count)
     {
         // Resize pool
@@ -112,6 +106,20 @@ int pool_handle_alloc(struct rico_pool **pool_ptr, u32 *_handle)
         pool_print_handles(pool);
         pool_print_handles(new_pool);
     }
+    */
+    ////////////////////////////////////////////////////////////////////////////
+    if (pool->active == pool->count)
+    {
+#ifdef RICO_DEBUG_POOL
+        printf("[pool][ ERR] %s out of memory. Exceeded pool size [%d].\n",
+               pool->uid.name, pool->count);
+        pool_print_handles(pool);
+#endif
+
+        return RICO_FATAL(ERR_POOL_OUT_OF_MEMORY, "%s pool is full",
+                          pool->uid.name);
+    }
+    ////////////////////////////////////////////////////////////////////////////
 
     *_handle = pool->handles[pool->active];
     pool->active++;
@@ -121,7 +129,7 @@ int pool_handle_alloc(struct rico_pool **pool_ptr, u32 *_handle)
     pool_print_handles(pool);
 #endif
 
-    return SUCCESS;
+    return err;
 }
 
 int pool_handle_free(struct rico_pool *pool, u32 handle)
