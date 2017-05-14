@@ -173,7 +173,7 @@ Registered glDebugMessageCallback.
  status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 | 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
 [ uid][init] type=RICO_UID_MESH uid=41 name=GrassA
 [ uid][init] type=RICO_UID_BBOX uid=42 name=GrassA
-[perf][mesh] Meshes loaded in: 1686 ticks
+[perf][mesh] Meshes loaded in: 1677 ticks
 ------------------------------------------------------------
 [MAIN][init] Initializing game world
 ------------------------------------------------------------
@@ -310,7 +310,7 @@ Loading hard-coded test chunk
 [pool][free] name=Strings handle=4
  status=STC[ 1 2 3 4 5 6 ] DYN[ | 7 8 9 10 11 12 13 14 15 16 ]
 [chnk][save] name=RICO_CHUNK_DEFAULT filename=chunks/cereal.bin total_size=68432
-[chnk][save] name=RICO_CHUNK_DEFAULT filename=chunks/cereal_20170513T233931.bin total_size=68432
+[chnk][save] name=RICO_CHUNK_DEFAULT filename=chunks/cereal_20170514T000906.bin total_size=68432
 [ obj][free] name=STR_STATE
 [mesh][-- 0] name=debug_info_string
 [mesh][free] name=debug_info_string

@@ -193,14 +193,14 @@ enum rico_error rico_fatal_print(const char *file, int line,
 #if RICO_DEBUG_ALL_ERRORS_FATAL
     #define RICO_ERROR(err, desc, ...) RICO_FATAL(err, desc, __VA_ARGS__)
 #else
-    #define RICO_ERROR(err, desc) rico_error_print(FILE_LOC, err, desc)
+    #define RICO_ERROR(err, desc, ...) rico_error_print(FILE_LOC, err, desc)
 #endif
 
 /****************/ #else /*****************************************************/
 
 #define RICO_ASSERT(exp)
-#define RICO_FATAL(err, desc) err
-#define RICO_ERROR(err, desc) err
+#define RICO_FATAL(err, desc, ...) err
+#define RICO_ERROR(err, desc, ...) err
 
 /****************/ #endif /****************************************************/
 

@@ -1,5 +1,3 @@
-//#include "geom.h"
-
 void test_geom()
 {
     //TODO: Use Unity test framework (http://www.throwtheswitch.org/unity)

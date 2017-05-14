@@ -1,12 +1,3 @@
-//#include "rico_chunk.h"
-//#include "const.h"
-//#include "rico_cereal.h"
-//#include "rico_object.h"
-//#include "rico_material.h"
-//#include "rico_font.h"
-//#include <stdio.h>
-//#include <stdlib.h>
-
 #define ADD_BYTES(ptr, offset) ((u8 *)ptr += offset)
 #define PTR_SUBTRACT(a, b) ((u8 *)a - (u8 *)b)
 
@@ -28,13 +19,11 @@ int chunk_init(const char *name, u32 strings, u32 fonts, u32 textures,
     u32 pool6 = POOL_SIZE(objects,   RICO_OBJECT_SIZE);
     u32 total_size = chunkSize + pool1 + pool2 + pool3 + pool4 + pool5 + pool6;
 
-    // TODO: Clean up how getting these addresses works somehow?
+    // TODO: Memory management
     void *mem_block = calloc(1, total_size);
-    if (!mem_block)
-    {
-        return RICO_ERROR(ERR_BAD_ALLOC, "Failed to alloc memory for chunk %s",
-                          name);
-    }
+    if (!mem_block) return RICO_ERROR(ERR_BAD_ALLOC,
+                                      "Failed to alloc memory for chunk %s",
+                                      name);
 
     struct rico_chunk *chunk = (struct rico_chunk *)mem_block;
     uid_init(&chunk->uid, RICO_UID_CHUNK, name, true);
@@ -87,13 +76,12 @@ SERIAL(chunk_serialize_0)
     enum rico_error err = SUCCESS;
     const struct rico_chunk *chunk = handle;
 
-    // TODO: Check fwrite success
     // Write chunk to file
     u32 skip = sizeof(chunk->uid);
     u32 bytes = chunk->total_size - skip;
+    u8 *seek = (u8 *)chunk; ADD_BYTES(seek, skip);
 
-    u8 *seek = (u8 *)chunk;
-    ADD_BYTES(seek, skip);
+    // TODO: Check fwrite success
     fwrite(seek, bytes, 1, file->fs);
 
     #if RICO_DEBUG_CHUNK
@@ -114,26 +102,24 @@ DESERIAL(chunk_deserialize_0)
     // initialize the chunk properly before calling fread().
     fread(&tmp_chunk->total_size, sizeof(tmp_chunk->total_size), 1, file->fs);
 
-    // TODO: Clean up how getting these addresses works somehow?
+    // TODO: Memory management
     void *mem_block = calloc(1, tmp_chunk->total_size);
-    if (!mem_block)
-    {
-        return RICO_ERROR(ERR_BAD_ALLOC, "Failed to alloc memory for chunk %s",
-                          tmp_chunk->uid.name);
-    }
+    if (!mem_block) return RICO_ERROR(ERR_BAD_ALLOC,
+                                      "Failed to alloc memory for chunk %s",
+                                      tmp_chunk->uid.name);
+
     struct rico_chunk *chunk = mem_block;
     memcpy(chunk, tmp_chunk, sizeof(struct rico_chunk));
 
-    // TODO: Check fread success
     // Read chunk from file
     u32 skip = sizeof(chunk->uid) + sizeof(chunk->total_size);
     u32 bytes = chunk->total_size - skip;
-    
-    u8 *seek = (u8 *)chunk;
-    ADD_BYTES(seek, skip);
+    u8 *seek = (u8 *)chunk; ADD_BYTES(seek, skip);
+
+    // TODO: Check fread success
     fread(seek, bytes, 1, file->fs);
 
-    // TODO: Fix pool pointers
+    // Fix pool pointers
     u32 chunkSize = sizeof(struct rico_chunk);
     u32 pool1 = POOL_SIZE(chunk->count_strings,   RICO_STRING_SIZE);
     u32 pool2 = POOL_SIZE(chunk->count_fonts,     RICO_FONT_SIZE);

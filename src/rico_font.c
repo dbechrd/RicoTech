@@ -1,12 +1,3 @@
-//#include "rico_font.h"
-//#include "const.h"
-//#include "util.h"
-//#include "rico_mesh.h"
-//#include "rico_texture.h"
-//#include "rico_chunk.h"
-//#include <GL/gl3w.h>
-//#include <stdlib.h>
-
 const u32 RICO_FONT_SIZE = sizeof(struct rico_font);
 
 #define BFG_RS_NONE  0x0  // Blend flags

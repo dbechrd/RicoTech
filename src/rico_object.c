@@ -1,19 +1,3 @@
-//#include "rico_object.h"
-//#include "rico_uid.h"
-//#include "rico_pool.h"
-//#include "camera.h"
-//#include "rico_cereal.h"
-//#include "program.h"
-//#include "rico_font.h"
-//#include "rico_collision.h"
-//#include "rico_material.h"
-//#include "rico_light.h"
-//#include "rico_state.h"
-//#include "rico_mesh.h"
-//#include "rico_chunk.h"
-//#include "SDL/SDL.h"
-//#include <malloc.h>
-
 const u32 RICO_OBJECT_SIZE = sizeof(struct rico_object);
 
 const char *rico_obj_type_string[] = {

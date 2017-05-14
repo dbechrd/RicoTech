@@ -1,6 +1,3 @@
-//#include "rico_file.h"
-//#include <string.h>
-
 #define SIGNATURE_SIZE 4
 static const char SIGNATURE[SIGNATURE_SIZE] = { 'R', '1', 'C', '0' };
 

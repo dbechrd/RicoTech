@@ -1,25 +1,3 @@
-//#include "glref.h"
-//#include "const.h"
-//#include "geom.h"
-//#include "util.h"
-//#include "shader.h"
-//#include "program.h"
-//#include "bbox.h"
-//#include "camera.h"
-//#include "rico_texture.h"
-//#include "rico_material.h"
-//#include "rico_mesh.h"
-//#include "rico_object.h"
-//#include "rico_font.h"
-//#include "rico_chunk.h"
-//#include "rico_pool.h"
-//#include "primitives.h"
-//
-//#include <GL/gl3w.h>
-//#include <SDL/SDL_assert.h>
-//#include <stdio.h>
-//#include <malloc.h>
-
 //TODO: Implement better camera with position + lookat. Is that necessary?
 //      Maybe it's easy to derive lookat when I need it? Probably not..
 //struct vec3 camera_right = {  }

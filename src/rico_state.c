@@ -1,19 +1,3 @@
-//#include "rico_state.h"
-//#include "const.h"
-//#include "geom.h"
-//#include "rico_string.h"
-//#include "rico_font.h"
-//#include "camera.h"
-//#include "glref.h"
-//#include "primitives.h"
-//#include "rico_object.h"
-//#include "rico_chunk.h"
-//#include "rico_material.h"
-//#include "load_object.h"
-//#include "GL/gl3w.h"
-//#include "SDL/SDL.h"
-//#include <time.h>
-
 const char *rico_state_string[] = {
     RICO_STATES(GEN_STRING)
 };

@@ -166,13 +166,7 @@
     <ClCompile Include="src\rico_font.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
-    <ClCompile Include="src\rico_light.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
     <ClCompile Include="src\rico_material.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico_mem.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
     <ClCompile Include="src\rico_mesh.c">

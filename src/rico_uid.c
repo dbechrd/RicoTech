@@ -1,7 +1,3 @@
-//#include "rico_uid.h"
-//#include <string.h>
-//#include <stdio.h>
-
 static u32 next_uid = 1;
 
 const char *rico_uid_type_string[] = {

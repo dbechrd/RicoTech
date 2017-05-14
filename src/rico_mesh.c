@@ -1,12 +1,3 @@
-//#include "rico_mesh.h"
-//#include "rico_uid.h"
-//#include "bbox.h"
-//#include "rico_texture.h"
-//#include "rico_pool.h"
-//#include "rico_chunk.h"
-//#include <stdlib.h>
-//#include <string.h>
-
 const u32 RICO_MESH_SIZE = sizeof(struct rico_mesh);
 
 const char *rico_mesh_type_string[] = {

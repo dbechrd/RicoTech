@@ -1,11 +1,3 @@
-//#include "rico_texture.h"
-//#include "rico_uid.h"
-//#include "rico_pool.h"
-//#include "rico_chunk.h"
-//#include "stb_image.h"
-//#include <stdlib.h>
-//#include <stdio.h>
-
 const u32 RICO_TEXTURE_SIZE = sizeof(struct rico_texture);
 
 u32 RICO_DEFAULT_TEXTURE_DIFF = 0;

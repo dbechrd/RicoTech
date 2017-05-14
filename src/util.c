@@ -1,11 +1,4 @@
-//#include "util.h"
-//#include "const.h"
-//#include <stdio.h>
-//#include <stdlib.h>
-
-/*
-* Boring, non-OpenGL-related utility functions
-*/
+// Boring, non-OpenGL-related utility functions
 
 int file_contents(const char *filename, int *_length, char **_buffer)
 {

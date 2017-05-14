@@ -1,8 +1,3 @@
-//#include "const.h"
-//#include "SDL/SDL.h"
-//#include <stdio.h>
-//#include <string.h>
-
 const char *rico_error_string[] = {
     RICO_ERRORS(GEN_STRING)
 };

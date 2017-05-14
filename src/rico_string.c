@@ -1,13 +1,3 @@
-//#include "rico_string.h"
-//#include "rico_uid.h"
-//#include "geom.h"
-//#include "rico_pool.h"
-//#include "rico_font.h"
-//#include "rico_object.h"
-//#include "camera.h"
-//#include "rico_material.h"
-//#include "rico_chunk.h"
-
 const u32 RICO_STRING_SIZE = sizeof(struct rico_string);
 
 const char *rico_string_slot_string[] = {

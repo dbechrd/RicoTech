@@ -1,7 +1,3 @@
-//#include "camera.h"
-//#include "bbox.h"
-//#include "primitives.h"
-
 struct camera cam_player;
 
 // Note: Height of player's eyes in meters

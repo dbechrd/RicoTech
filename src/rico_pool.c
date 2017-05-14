@@ -1,9 +1,3 @@
-//#include "rico_pool.h"
-//#include "rico_object.h"
-//#include "rico_cereal.h"
-//#include <stdlib.h>
-//#include <stdio.h>
-
 static void pool_print_handles(struct rico_pool *pool);
 
 // TODO: Allocate from heap pool, don't keep calling calloc

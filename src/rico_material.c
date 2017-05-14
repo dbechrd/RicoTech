@@ -1,12 +1,3 @@
-//#include "rico_material.h"
-//#include "rico_texture.h"
-//#include "rico_uid.h"
-//#include "rico_pool.h"
-//#include "rico_chunk.h"
-//#include <malloc.h>
-//#include <stdlib.h>
-//#include <stdio.h>
-
 const u32 RICO_MATERIAL_SIZE = sizeof(struct rico_material);
 
 u32 RICO_DEFAULT_MATERIAL = 0;

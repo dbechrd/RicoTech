@@ -1,13 +1,3 @@
-//#include "util.h"
-//#include "geom.h"
-//#include "rico_mesh.h"
-//#include "rico_object.h"
-//#include <stdio.h>
-//#include <stdlib.h>
-//
-//#define TINYOBJ_LOADER_C_IMPLEMENTATION
-//#include "tinyobjloader.h"
-
 #define MESH_VERTICES_MAX 5000000
 
 enum OBJ_LINE_TYPE {

@@ -1,12 +1,3 @@
-//#include "bbox.h"
-//#include "const.h"
-//#include "geom.h"
-//#include "camera.h"
-//#include "rico_mesh.h"
-//#include "program.h"
-//#include "primitives.h"
-//#include <GL/gl3w.h>
-
 #define BBOX_EPSILON 0.01f
 
 static int init_gl(struct bbox *bbox);

@@ -1,11 +1,3 @@
-//#include "regularpoly.h"
-//#include "util.h"
-//#include "program.h"
-//#include <stdlib.h>
-//#include <stdio.h>
-//#include <assert.h>
-//#include <math.h>
-//
 static struct program_primitive *regularpoly_program = NULL;
 
 int init_regularpoly_program()

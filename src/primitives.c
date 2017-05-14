@@ -1,9 +1,3 @@
-//#include "primitives.h"
-//#include "camera.h"
-//#include "program.h"
-//#include "rico_mesh.h"
-//#include <GL/gl3w.h>
-
 const char *rico_prim_string[] = {
     RICO_PRIMITIVES(GEN_STRING)
 };

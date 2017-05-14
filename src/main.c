@@ -216,7 +216,7 @@ int main(int argc, char *argv[])
 #if RICO_DEBUG_ALL_ERRORS_FATAL
     enum rico_error err = mymain();
 #else
-    enum rico_error err = RICO_FATAL(mymain());
+    enum rico_error err = RICO_FATAL(mymain(), "Top-level generic error");
 #endif
 
     // Hack: SDL_main is stupid and ignores my return value, force exit code

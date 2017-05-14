@@ -1,7 +1,3 @@
-//#include "rico_cereal.h"
-//#include "rico_uid.h"
-//#include "const.h"
-
 struct rico_cereal rico_cereals[RICO_UID_COUNT] = { 0 };
 
 //int rico_serialize(const void *handle, const struct rico_file *file)
