@@ -166,14 +166,13 @@ static void init_opengl()
 
 int mymain()
 {
-    size_t cacheSize = CacheLineSize();
-    printf("Cache line size: %d bytes", cacheSize);
-
     enum rico_error err;
 
     printf("------------------------------------------------------------\n");
     printf("[MAIN][init] Initializing third party\n");
     printf("------------------------------------------------------------\n");
+    size_t cacheSize = CacheLineSize();
+    printf("Cache line size: %d bytes\n", cacheSize);
     init_stb();
     init_murmurhash3();
     err = init_sdl();

@@ -83,14 +83,14 @@ int object_copy(u32 *_handle, u32 handle, const char *name)
 
 void object_free(u32 handle)
 {
+    struct rico_object *obj = object_find(handle);
+
     // TODO: Use static pool slots
     if (handle == RICO_DEFAULT_OBJECT)
         return;
 
-    struct rico_object *obj = object_find(handle);
-
 #if RICO_DEBUG_OBJECT
-    printf("[ obj][free] name=%s\n", obj->uid.name);
+    printf("[ obj][free] uid=%d name=%s\n", obj->uid.uid, obj->uid.name);
 #endif
 
     mesh_free(obj->mesh);

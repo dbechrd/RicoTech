@@ -45,9 +45,9 @@ int font_init(const char *filename, u32 *_handle)
     enum rico_error err;
     *_handle = RICO_DEFAULT_FONT;
 
-    #if RICO_DEBUG_INFO
-        printf("[font][init] filename=%s\n", filename);
-    #endif
+#if RICO_DEBUG_FONT
+    printf("[font][init] filename=%s\n", filename);
+#endif
 
     err = pool_handle_alloc(font_pool_ptr(), _handle);
     if (err) return err;
@@ -119,6 +119,15 @@ cleanup:
 void font_free(u32 handle)
 {
     struct rico_font *font = font_find(handle);
+
+    // TODO: Use static pool slots
+    if (handle == RICO_DEFAULT_FONT)
+        return;
+
+#if RICO_DEBUG_FONT
+    printf("[font][free] uid=%d name=%s\n", font->uid.uid, font->uid.name);
+#endif
+
     texture_free(font->texture);
 
     font->uid.uid = UID_NULL;

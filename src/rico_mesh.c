@@ -38,7 +38,8 @@ u32 mesh_request(u32 handle)
     mesh->ref_count++;
 
 #if RICO_DEBUG_MESH
-    printf("[mesh][++ %d] name=%s\n", mesh->ref_count, mesh->uid.name);
+    printf("[mesh][rqst] uid=%d ref=%d name=%s\n", mesh->uid.uid,
+           mesh->ref_count, mesh->uid.name);
 #endif
 
     return handle;
@@ -62,14 +63,7 @@ u32 mesh_request_by_name(const char *name)
             return 0;
     }
 
-    struct rico_mesh *mesh = mesh_find(handle);
-    mesh->ref_count++;
-
-#if RICO_DEBUG_MESH
-    printf("[mesh][++ %d] name=%s\n", mesh->ref_count, mesh->uid.name);
-#endif
-
-    return handle;
+    return mesh_request(handle);
 }
 
 enum rico_mesh_type mesh_type_get(u32 handle)
@@ -212,29 +206,36 @@ static int build_mesh(struct rico_mesh *mesh, u32 vertex_count,
 
 void mesh_free(u32 handle)
 {
-    // TODO: Use static pool slots
-    if (handle == RICO_DEFAULT_MESH)
-        return;
-
     struct rico_mesh *mesh = mesh_find(handle);
     if (mesh->ref_count > 0)
         mesh->ref_count--;
 
 #if RICO_DEBUG_MESH
-    printf("[mesh][-- %d] name=%s\n", mesh->ref_count, mesh->uid.name);
+    printf("[mesh][ rls] uid=%d ref=%d name=%s\n", mesh->uid.uid,
+           mesh->ref_count, mesh->uid.name);
 #endif
 
     if (mesh->ref_count > 0)
+        return;
+
+    // TODO: Use static pool slots
+    if (handle == RICO_DEFAULT_MESH)
         return;
 
     // HACK: For now, don't ever delete meshes loaded from *.ric files.
     //       Eventually, there should be an unload_obj_file method or some
     //       other mesh cleanup process.
     if (mesh->type == MESH_OBJ_WORLD)
+    {
+#if RICO_DEBUG_MESH
+        printf("[mesh][WARN] uid=%d name=%s Disabled .RIC mesh free.\n",
+               mesh->uid.uid, mesh->uid.name);
+#endif
         return;
+    }
 
 #if RICO_DEBUG_MESH
-    printf("[mesh][free] name=%s\n", mesh->uid.name);
+    printf("[mesh][free] uid=%d name=%s\n", mesh->uid.uid, mesh->uid.name);
 #endif
 
     bbox_free_mesh(&mesh->bbox);

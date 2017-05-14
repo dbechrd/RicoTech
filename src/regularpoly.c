@@ -84,8 +84,8 @@ void free_regularpoly(struct regularpoly *poly)
     poly = NULL;
 }
 
-void set_regularpoly_pos(struct regularpoly *poly, GLfloat x, GLfloat y, GLfloat z,
-                         bool rebuild)
+void set_regularpoly_pos(struct regularpoly *poly, GLfloat x, GLfloat y,
+                         GLfloat z, bool rebuild)
 {
     poly->pos.x = x;
     poly->pos.y = y;

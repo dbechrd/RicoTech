@@ -10,6 +10,10 @@ int chunk_init(const char *name, u32 strings, u32 fonts, u32 textures,
                u32 materials, u32 meshes, u32 objects,
                struct rico_chunk **_chunk)
 {
+#if RICO_DEBUG_CHUNK
+    printf("[chnk][init] name=%s\n", name);
+#endif
+
     u32 chunkSize = sizeof(struct rico_chunk);
     u32 pool1 = POOL_SIZE(strings,   RICO_STRING_SIZE);
     u32 pool2 = POOL_SIZE(fonts,     RICO_FONT_SIZE);
@@ -52,7 +56,6 @@ int chunk_init(const char *name, u32 strings, u32 fonts, u32 textures,
     pool_init(chunk->objects,   "Objects",   objects,   RICO_OBJECT_SIZE,   0);
 
 #if RICO_DEBUG_CHUNK
-    printf("[chnk][init] name=%s\n", chunk->uid.name);
     chunk_print(chunk);
 #endif
 
@@ -85,8 +88,9 @@ SERIAL(chunk_serialize_0)
     fwrite(seek, bytes, 1, file->fs);
 
     #if RICO_DEBUG_CHUNK
-        printf("[chnk][save] name=%s filename=%s total_size=%d\n",
-               chunk->uid.name, file->filename, chunk->total_size);
+        printf("[chnk][save] uid=%d name=%s filename=%s total_size=%d\n",
+               chunk->uid.uid, chunk->uid.name, file->filename,
+               chunk->total_size);
     #endif
 
     return err;
@@ -97,6 +101,10 @@ DESERIAL(chunk_deserialize_0)
 {
     enum rico_error err = SUCCESS;
     struct rico_chunk *tmp_chunk = *_handle;
+
+#if RICO_DEBUG_CHUNK
+    printf("[chnk][load] filename=%s\n", file->filename);
+#endif
 
     // Read chunk size from file so we know how much to allocate, then
     // initialize the chunk properly before calling fread().
@@ -145,8 +153,7 @@ DESERIAL(chunk_deserialize_0)
     pool_fixup(chunk->objects);
 
 #if RICO_DEBUG_CHUNK
-    printf("[chnk][load] name=%s filename=%s size=%d\n", chunk->uid.name,
-           file->filename, chunk->total_size);
+    chunk_print(chunk);
 #endif
 
     *_handle = chunk;
@@ -156,8 +163,20 @@ DESERIAL(chunk_deserialize_0)
 #if RICO_DEBUG_CHUNK
 static void chunk_print(struct rico_chunk *chunk)
 {
-    // TODO: Print more information about the pool sizes
-    printf("[chnk][show] name=%s total_size=%d\n", chunk->uid.name,
-           chunk->total_size);
+    // Print information about chunk and pool sizes
+    printf("[chnk][show] uid=%d name=%s total_size=%d\n" \
+           "     Strings = %d\n" \
+           "       Fonts = %d\n" \
+           "    Textures = %d\n" \
+           "   Materials = %d\n" \
+           "      Meshes = %d\n" \
+           "     Objects = %d\n",
+           chunk->uid.uid, chunk->uid.name, chunk->total_size,
+           chunk->count_strings,
+           chunk->count_fonts,
+           chunk->count_textures,
+           chunk->count_materials,
+           chunk->count_meshes,
+           chunk->count_objects);
 }
 #endif

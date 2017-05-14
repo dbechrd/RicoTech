@@ -94,13 +94,14 @@ int string_free(u32 handle)
     struct rico_string *str = string_find(handle);
 
 #if RICO_DEBUG_STRING
-    printf("[strg][free] name=%s\n", str->uid.name);
+    printf("[strg][free] uid=%d name=%s\n", str->uid.uid, str->uid.name);
 #endif
 
     if (handle < STR_SLOT_COUNT && str->uid.uid == UID_NULL)
     {
 #if RICO_DEBUG_WARN
-        printf("[strg][WARN] handle=%d Static string already freed\n", handle);
+        printf("[strg][WARN] uid=%d handle=%d Static string already freed\n",
+               str->uid.uid, handle);
 #endif
         return SUCCESS;
     }

@@ -76,7 +76,7 @@ int load_obj_file(const char *filename)
     char *buffer;
     char *tok;
 
-    printf("\n[ obj][load] filename=%s\n", filename);
+    printf("[ obj][load] filename=%s\n", filename);
     err = file_contents(filename, &length, &buffer);
     if (err) goto cleanup;
 

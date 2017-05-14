@@ -1,6 +1,7 @@
-Cache line size: 64 bytes------------------------------------------------------------
+------------------------------------------------------------
 [MAIN][init] Initializing third party
 ------------------------------------------------------------
+Cache line size: 64 bytes
 Key: This is a MurmurHash3 test key
 Hash: 2537168746
 VSync = Enabled
@@ -28,328 +29,769 @@ Registered glDebugMessageCallback.
 [MAIN][init] Initializing primitives
 ------------------------------------------------------------
 ------------------------------------------------------------
-[MAIN][init] Initializing pools
+[MAIN][init] Initializing chunks
 ------------------------------------------------------------
-[ uid][init] type=RICO_UID_CHUNK uid=1 name=RICO_CHUNK_DEFAULT
-[ uid][init] type=RICO_UID_POOL uid=2 name=Strings
-[pool][init] name=Strings
-[ uid][init] type=RICO_UID_POOL uid=3 name=Fonts
-[pool][init] name=Fonts
-[ uid][init] type=RICO_UID_POOL uid=4 name=Textures
-[pool][init] name=Textures
-[ uid][init] type=RICO_UID_POOL uid=5 name=Materials
-[pool][init] name=Materials
-[ uid][init] type=RICO_UID_POOL uid=6 name=Meshes
-[pool][init] name=Meshes
-[ uid][init] type=RICO_UID_POOL uid=7 name=Objects
-[pool][init] name=Objects
 [chnk][init] name=RICO_CHUNK_DEFAULT
-[chnk][show] name=RICO_CHUNK_DEFAULT total_size=68432
+[ uid][init] uid=1 type=RICO_UID_CHUNK name=RICO_CHUNK_DEFAULT
+[ uid][init] uid=2 type=RICO_UID_POOL name=Strings
+[pool][init] name=Strings
+[ uid][init] uid=3 type=RICO_UID_POOL name=Fonts
+[pool][init] name=Fonts
+[ uid][init] uid=4 type=RICO_UID_POOL name=Textures
+[pool][init] name=Textures
+[ uid][init] uid=5 type=RICO_UID_POOL name=Materials
+[pool][init] name=Materials
+[ uid][init] uid=6 type=RICO_UID_POOL name=Meshes
+[pool][init] name=Meshes
+[ uid][init] uid=7 type=RICO_UID_POOL name=Objects
+[pool][init] name=Objects
+[chnk][show] uid=1 name=RICO_CHUNK_DEFAULT total_size=68432
+     Strings = 16
+       Fonts = 10
+    Textures = 100
+   Materials = 100
+      Meshes = 100
+     Objects = 100
 ------------------------------------------------------------
 [MAIN][init] Initializing fonts
 ------------------------------------------------------------
 [font][init] filename=font/courier_new.bff
-[pool][aloc] name=Fonts handle=1
- status=DYN[ 1 | 2 3 4 5 6 7 8 9 10 ]
-[ uid][init] type=RICO_UID_FONT uid=8 name=font/courier_new.bff
+[pool][aloc] uid=3 name=Fonts handle=1 status=DYN[ 1 | 2 3 4 5 6 7 8 9 10 ]
+[ uid][init] uid=8 type=RICO_UID_FONT name=font/courier_new.bff
 [ tex][init] name=font/courier_new.bff
-[pool][aloc] name=Textures handle=1
- status=DYN[ 1 | 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_TEXTURE uid=9 name=font/courier_new.bff
-[ tex][++ 1] name=font/courier_new.bff
+[pool][aloc] uid=4 name=Textures handle=1 status=DYN[ 1 | 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=9 type=RICO_UID_TEXTURE name=font/courier_new.bff
+[ tex][rqst] uid=9 ref=1 name=font/courier_new.bff
 ------------------------------------------------------------
 [MAIN][init] Initializing textures
 ------------------------------------------------------------
 [ tex][load] filename=texture/basic_diff.tga
 [ tex][init] name=TEXTURE_DEFAULT_DIFF
-[pool][aloc] name=Textures handle=2
- status=DYN[ 1 2 | 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_TEXTURE uid=10 name=TEXTURE_DEFAULT_DIFF
+[pool][aloc] uid=4 name=Textures handle=2 status=DYN[ 1 2 | 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=10 type=RICO_UID_TEXTURE name=TEXTURE_DEFAULT_DIFF
 [ tex][load] filename=texture/basic_spec.tga
 [ tex][init] name=TEXTURE_DEFAULT_SPEC
-[pool][aloc] name=Textures handle=3
- status=DYN[ 1 2 3 | 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_TEXTURE uid=11 name=TEXTURE_DEFAULT_SPEC
+[pool][aloc] uid=4 name=Textures handle=3 status=DYN[ 1 2 3 | 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=11 type=RICO_UID_TEXTURE name=TEXTURE_DEFAULT_SPEC
 ------------------------------------------------------------
 [MAIN][init] Initializing materials
 ------------------------------------------------------------
 [ mtl][init] name=MATERIAL_DEFAULT
-[pool][aloc] name=Materials handle=1
- status=DYN[ 1 | 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_MATERIAL uid=12 name=MATERIAL_DEFAULT
-[ tex][++ 1] name=TEXTURE_DEFAULT_DIFF
-[ tex][++ 1] name=TEXTURE_DEFAULT_SPEC
+[pool][aloc] uid=5 name=Materials handle=1 status=DYN[ 1 | 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=12 type=RICO_UID_MATERIAL name=MATERIAL_DEFAULT
+[ tex][rqst] uid=10 ref=1 name=TEXTURE_DEFAULT_DIFF
+[ tex][rqst] uid=11 ref=1 name=TEXTURE_DEFAULT_SPEC
 ------------------------------------------------------------
 [MAIN][init] Initializing meshes
 ------------------------------------------------------------
 [mesh][init] name=MESH_DEFAULT vertices=8
-[pool][aloc] name=Meshes handle=1
- status=DYN[ 1 | 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_MESH uid=13 name=MESH_DEFAULT
-[ uid][init] type=RICO_UID_BBOX uid=14 name=MESH_DEFAULT
+[pool][aloc] uid=6 name=Meshes handle=1 status=DYN[ 1 | 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=13 type=RICO_UID_MESH name=MESH_DEFAULT
+[ uid][init] uid=14 type=RICO_UID_BBOX name=MESH_DEFAULT
 ------------------------------------------------------------
-[MAIN][init] Initializing meshes from resource files
+[MAIN][init] Loading meshes from resource files
 ------------------------------------------------------------
-
 [ obj][load] filename=mesh/sphere.ric
 [mesh][init] name=Sphere vertices=2880
-[pool][aloc] name=Meshes handle=2
- status=DYN[ 1 2 | 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_MESH uid=15 name=Sphere
-[ uid][init] type=RICO_UID_BBOX uid=16 name=Sphere
-[mesh][++ 1] name=Sphere
-
+[pool][aloc] uid=6 name=Meshes handle=2 status=DYN[ 1 2 | 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=15 type=RICO_UID_MESH name=Sphere
+[ uid][init] uid=16 type=RICO_UID_BBOX name=Sphere
+[mesh][rqst] uid=15 ref=1 name=Sphere
 [ obj][load] filename=mesh/spawn.ric
 [mesh][init] name=Spawn_Pillar vertices=24
-[pool][aloc] name=Meshes handle=3
- status=DYN[ 1 2 3 | 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_MESH uid=17 name=Spawn_Pillar
-[ uid][init] type=RICO_UID_BBOX uid=18 name=Spawn_Pillar
+[pool][aloc] uid=6 name=Meshes handle=3 status=DYN[ 1 2 3 | 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=17 type=RICO_UID_MESH name=Spawn_Pillar
+[ uid][init] uid=18 type=RICO_UID_BBOX name=Spawn_Pillar
 [mesh][init] name=TwoByFour_Cube vertices=36
-[pool][aloc] name=Meshes handle=4
- status=DYN[ 1 2 3 4 | 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_MESH uid=19 name=TwoByFour_Cube
-[ uid][init] type=RICO_UID_BBOX uid=20 name=TwoByFour_Cube
+[pool][aloc] uid=6 name=Meshes handle=4 status=DYN[ 1 2 3 4 | 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=19 type=RICO_UID_MESH name=TwoByFour_Cube
+[ uid][init] uid=20 type=RICO_UID_BBOX name=TwoByFour_Cube
 [mesh][init] name=Spawn_Floor vertices=24
-[pool][aloc] name=Meshes handle=5
- status=DYN[ 1 2 3 4 5 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_MESH uid=21 name=Spawn_Floor
-[ uid][init] type=RICO_UID_BBOX uid=22 name=Spawn_Floor
+[pool][aloc] uid=6 name=Meshes handle=5 status=DYN[ 1 2 3 4 5 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=21 type=RICO_UID_MESH name=Spawn_Floor
+[ uid][init] uid=22 type=RICO_UID_BBOX name=Spawn_Floor
 [mesh][init] name=Spawn_Wall vertices=36
-[pool][aloc] name=Meshes handle=6
- status=DYN[ 1 2 3 4 5 6 | 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_MESH uid=23 name=Spawn_Wall
-[ uid][init] type=RICO_UID_BBOX uid=24 name=Spawn_Wall
-
+[pool][aloc] uid=6 name=Meshes handle=6 status=DYN[ 1 2 3 4 5 6 | 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=23 type=RICO_UID_MESH name=Spawn_Wall
+[ uid][init] uid=24 type=RICO_UID_BBOX name=Spawn_Wall
 [ obj][load] filename=mesh/door.ric
 [mesh][init] name=StaircaseA vertices=312
-[pool][aloc] name=Meshes handle=7
- status=DYN[ 1 2 3 4 5 6 7 | 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_MESH uid=25 name=StaircaseA
-[ uid][init] type=RICO_UID_BBOX uid=26 name=StaircaseA
+[pool][aloc] uid=6 name=Meshes handle=7 status=DYN[ 1 2 3 4 5 6 7 | 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=25 type=RICO_UID_MESH name=StaircaseA
+[ uid][init] uid=26 type=RICO_UID_BBOX name=StaircaseA
 [mesh][init] name=StaircaseA.Bolts vertices=128400
-[pool][aloc] name=Meshes handle=8
- status=DYN[ 1 2 3 4 5 6 7 8 | 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_MESH uid=27 name=StaircaseA.Bolts
-[ uid][init] type=RICO_UID_BBOX uid=28 name=StaircaseA.Bolts
+[pool][aloc] uid=6 name=Meshes handle=8 status=DYN[ 1 2 3 4 5 6 7 8 | 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=27 type=RICO_UID_MESH name=StaircaseA.Bolts
+[ uid][init] uid=28 type=RICO_UID_BBOX name=StaircaseA.Bolts
 [mesh][init] name=StaircaseA.Steps vertices=1680
-[pool][aloc] name=Meshes handle=9
- status=DYN[ 1 2 3 4 5 6 7 8 9 | 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_MESH uid=29 name=StaircaseA.Steps
-[ uid][init] type=RICO_UID_BBOX uid=30 name=StaircaseA.Steps
+[pool][aloc] uid=6 name=Meshes handle=9 status=DYN[ 1 2 3 4 5 6 7 8 9 | 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=29 type=RICO_UID_MESH name=StaircaseA.Steps
+[ uid][init] uid=30 type=RICO_UID_BBOX name=StaircaseA.Steps
 [mesh][init] name=FloorPlane_Plane.001 vertices=6
-[pool][aloc] name=Meshes handle=10
- status=DYN[ 1 2 3 4 5 6 7 8 9 10 | 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_MESH uid=31 name=FloorPlane_Plane.001
-[ uid][init] type=RICO_UID_BBOX uid=32 name=FloorPlane_Plane.001
+[pool][aloc] uid=6 name=Meshes handle=10 status=DYN[ 1 2 3 4 5 6 7 8 9 10 | 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=31 type=RICO_UID_MESH name=FloorPlane_Plane.001
+[ uid][init] uid=32 type=RICO_UID_BBOX name=FloorPlane_Plane.001
 [mesh][init] name=BlenderLightPlane_Plane vertices=6
-[pool][aloc] name=Meshes handle=11
- status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 | 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_MESH uid=33 name=BlenderLightPlane_Plane
-[ uid][init] type=RICO_UID_BBOX uid=34 name=BlenderLightPlane_Plane
+[pool][aloc] uid=6 name=Meshes handle=11 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 | 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=33 type=RICO_UID_MESH name=BlenderLightPlane_Plane
+[ uid][init] uid=34 type=RICO_UID_BBOX name=BlenderLightPlane_Plane
 [mesh][init] name=DoorA vertices=1836
-[pool][aloc] name=Meshes handle=12
- status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 | 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_MESH uid=35 name=DoorA
-[ uid][init] type=RICO_UID_BBOX uid=36 name=DoorA
-
+[pool][aloc] uid=6 name=Meshes handle=12 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 | 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=35 type=RICO_UID_MESH name=DoorA
+[ uid][init] uid=36 type=RICO_UID_BBOX name=DoorA
 [ obj][load] filename=mesh/welcome_floor.ric
 [mesh][init] name=home.floor_base vertices=156
-[pool][aloc] name=Meshes handle=13
- status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 | 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_MESH uid=37 name=home.floor_base
-[ uid][init] type=RICO_UID_BBOX uid=38 name=home.floor_base
-
+[pool][aloc] uid=6 name=Meshes handle=13 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 | 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=37 type=RICO_UID_MESH name=home.floor_base
+[ uid][init] uid=38 type=RICO_UID_BBOX name=home.floor_base
 [ obj][load] filename=mesh/wall_cornertest.ric
 [mesh][init] name=wall_cornettest vertices=36
-[pool][aloc] name=Meshes handle=14
- status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 | 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_MESH uid=39 name=wall_cornettest
-[ uid][init] type=RICO_UID_BBOX uid=40 name=wall_cornettest
-
+[pool][aloc] uid=6 name=Meshes handle=14 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 | 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=39 type=RICO_UID_MESH name=wall_cornettest
+[ uid][init] uid=40 type=RICO_UID_BBOX name=wall_cornettest
 [ obj][load] filename=mesh/grass.ric
 [mesh][init] name=GrassA vertices=780
-[pool][aloc] name=Meshes handle=15
- status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 | 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_MESH uid=41 name=GrassA
-[ uid][init] type=RICO_UID_BBOX uid=42 name=GrassA
-[perf][mesh] Meshes loaded in: 1677 ticks
+[pool][aloc] uid=6 name=Meshes handle=15 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 | 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=41 type=RICO_UID_MESH name=GrassA
+[ uid][init] uid=42 type=RICO_UID_BBOX name=GrassA
+[PERF][mesh] Meshes loaded in: 1636 ticks
 ------------------------------------------------------------
 [MAIN][init] Initializing game world
 ------------------------------------------------------------
 [font][init] filename=font/courier_new.bff
-[pool][aloc] name=Fonts handle=2
- status=DYN[ 1 2 | 3 4 5 6 7 8 9 10 ]
-[ uid][init] type=RICO_UID_FONT uid=43 name=font/courier_new.bff
+[pool][aloc] uid=3 name=Fonts handle=2 status=DYN[ 1 2 | 3 4 5 6 7 8 9 10 ]
+[ uid][init] uid=43 type=RICO_UID_FONT name=font/courier_new.bff
 [ tex][init] name=font/courier_new.bff
-[pool][aloc] name=Textures handle=4
- status=DYN[ 1 2 3 4 | 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_TEXTURE uid=44 name=font/courier_new.bff
-[ tex][++ 1] name=font/courier_new.bff
+[pool][aloc] uid=4 name=Textures handle=4 status=DYN[ 1 2 3 4 | 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=44 type=RICO_UID_TEXTURE name=font/courier_new.bff
+[ tex][rqst] uid=44 ref=1 name=font/courier_new.bff
 [ tex][load] filename=texture/grass.tga
 [ tex][init] name=grass
-[pool][aloc] name=Textures handle=5
- status=DYN[ 1 2 3 4 5 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_TEXTURE uid=45 name=grass
+[pool][aloc] uid=4 name=Textures handle=5 status=DYN[ 1 2 3 4 5 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=45 type=RICO_UID_TEXTURE name=grass
 [ tex][load] filename=texture/clean_bricks.tga
 [ tex][init] name=bricks
-[pool][aloc] name=Textures handle=6
- status=DYN[ 1 2 3 4 5 6 | 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_TEXTURE uid=46 name=bricks
+[pool][aloc] uid=4 name=Textures handle=6 status=DYN[ 1 2 3 4 5 6 | 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=46 type=RICO_UID_TEXTURE name=bricks
 [ tex][load] filename=texture/hello.tga
 [ tex][init] name=hello
-[pool][aloc] name=Textures handle=7
- status=DYN[ 1 2 3 4 5 6 7 | 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_TEXTURE uid=47 name=hello
+[pool][aloc] uid=4 name=Textures handle=7 status=DYN[ 1 2 3 4 5 6 7 | 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=47 type=RICO_UID_TEXTURE name=hello
 [ tex][load] filename=texture/fake_yellow.tga
 [ tex][init] name=yellow
-[pool][aloc] name=Textures handle=8
- status=DYN[ 1 2 3 4 5 6 7 8 | 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_TEXTURE uid=48 name=yellow
-[ uid][init] type=RICO_UID_BBOX uid=49 name=Axis BBox
+[pool][aloc] uid=4 name=Textures handle=8 status=DYN[ 1 2 3 4 5 6 7 8 | 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=48 type=RICO_UID_TEXTURE name=yellow
+[ uid][init] uid=49 type=RICO_UID_BBOX name=Axis BBox
 Loading hard-coded test chunk
 [ mtl][init] name=Rock
-[pool][aloc] name=Materials handle=2
- status=DYN[ 1 2 | 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_MATERIAL uid=50 name=Rock
-[ tex][++ 1] name=bricks
-[ tex][++ 2] name=TEXTURE_DEFAULT_SPEC
+[pool][aloc] uid=5 name=Materials handle=2 status=DYN[ 1 2 | 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=50 type=RICO_UID_MATERIAL name=Rock
+[ tex][rqst] uid=46 ref=1 name=bricks
+[ tex][rqst] uid=11 ref=2 name=TEXTURE_DEFAULT_SPEC
 [ obj][init] name=Ground
-[pool][aloc] name=Objects handle=1
- status=DYN[ 1 | 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_OBJECT uid=51 name=Ground
-[mesh][++ 1] name=MESH_DEFAULT
-[ mtl][++ 1] name=Rock
+[pool][aloc] uid=7 name=Objects handle=1 status=DYN[ 1 | 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=51 type=RICO_UID_OBJECT name=Ground
+[mesh][rqst] uid=13 ref=1 name=MESH_DEFAULT
+[ mtl][rqst] uid=50 ref=1 name=Rock
 [ obj][init] name=Sphere
-[pool][aloc] name=Objects handle=2
- status=DYN[ 1 2 | 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_OBJECT uid=52 name=Sphere
-[mesh][++ 2] name=Sphere
-[ mtl][++ 1] name=MATERIAL_DEFAULT
+[pool][aloc] uid=7 name=Objects handle=2 status=DYN[ 1 2 | 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=52 type=RICO_UID_OBJECT name=Sphere
+[mesh][rqst] uid=15 ref=2 name=Sphere
+[ mtl][rqst] uid=12 ref=1 name=MATERIAL_DEFAULT
 ------------------------------------------------------------
 [MAIN][init] Initializing camera
 ------------------------------------------------------------
-[ uid][init] type=RICO_UID_BBOX uid=53 name=camera_bbox
+[ uid][init] uid=53 type=RICO_UID_BBOX name=camera_bbox
 ------------------------------------------------------------
 [MAIN][  GO] Initialization complete. Starting game.
 ------------------------------------------------------------
 [strg][init] name=STR_STATE
 [mesh][init] name=debug_info_string vertices=108
-[pool][aloc] name=Meshes handle=16
- status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 | 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_MESH uid=54 name=debug_info_string
-[ uid][init] type=RICO_UID_BBOX uid=55 name=debug_info_string
+[pool][aloc] uid=6 name=Meshes handle=16 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 | 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=54 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=55 type=RICO_UID_BBOX name=debug_info_string
 [ mtl][init] name=STR_STATE
-[pool][aloc] name=Materials handle=3
- status=DYN[ 1 2 3 | 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_MATERIAL uid=56 name=STR_STATE
-[ tex][++ 2] name=font/courier_new.bff
-[ tex][++ 3] name=TEXTURE_DEFAULT_SPEC
-[ uid][init] type=RICO_UID_STRING uid=57 name=STR_STATE
+[pool][aloc] uid=5 name=Materials handle=3 status=DYN[ 1 2 3 | 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=56 type=RICO_UID_MATERIAL name=STR_STATE
+[ tex][rqst] uid=9 ref=2 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=3 name=TEXTURE_DEFAULT_SPEC
+[ uid][init] uid=57 type=RICO_UID_STRING name=STR_STATE
 [ obj][init] name=STR_STATE
-[pool][aloc] name=Objects handle=3
- status=DYN[ 1 2 3 | 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_OBJECT uid=58 name=STR_STATE
-[mesh][++ 1] name=debug_info_string
-[ mtl][++ 1] name=STR_STATE
+[pool][aloc] uid=7 name=Objects handle=3 status=DYN[ 1 2 3 | 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=58 type=RICO_UID_OBJECT name=STR_STATE
+[mesh][rqst] uid=54 ref=1 name=debug_info_string
+[ mtl][rqst] uid=56 ref=1 name=STR_STATE
+[strg][init] name=STR_FPS
+[mesh][init] name=debug_info_string vertices=104
+[pool][aloc] uid=6 name=Meshes handle=17 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 | 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=59 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=60 type=RICO_UID_BBOX name=debug_info_string
+[ mtl][init] name=STR_FPS
+[pool][aloc] uid=5 name=Materials handle=4 status=DYN[ 1 2 3 4 | 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=61 type=RICO_UID_MATERIAL name=STR_FPS
+[ tex][rqst] uid=9 ref=3 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=4 name=TEXTURE_DEFAULT_SPEC
+[ uid][init] uid=62 type=RICO_UID_STRING name=STR_FPS
+[ obj][init] name=STR_FPS
+[pool][aloc] uid=7 name=Objects handle=4 status=DYN[ 1 2 3 4 | 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=63 type=RICO_UID_OBJECT name=STR_FPS
+[mesh][rqst] uid=59 ref=1 name=debug_info_string
+[ mtl][rqst] uid=61 ref=1 name=STR_FPS
+[strg][init] name=STR_FPS
+[mesh][init] name=debug_info_string vertices=104
+[pool][aloc] uid=6 name=Meshes handle=18 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 | 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=64 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=65 type=RICO_UID_BBOX name=debug_info_string
+[ mtl][init] name=STR_FPS
+[pool][aloc] uid=5 name=Materials handle=5 status=DYN[ 1 2 3 4 5 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=66 type=RICO_UID_MATERIAL name=STR_FPS
+[ tex][rqst] uid=9 ref=4 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=5 name=TEXTURE_DEFAULT_SPEC
+[mesh][ rls] uid=59 ref=0 name=debug_info_string
+[mesh][free] uid=59 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=17 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 | 17 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[mesh][rqst] uid=64 ref=1 name=debug_info_string
+[ mtl][ rls] uid=61 ref=0 name=STR_FPS
+[ mtl][free] uid=61 name=STR_FPS
+[ tex][ rls] uid=9 ref=3 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=4 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=4 status=DYN[ 1 2 3 5 | 4 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][rqst] uid=66 ref=1 name=STR_FPS
+[strg][init] name=STR_FPS
+[mesh][init] name=debug_info_string vertices=104
+[pool][aloc] uid=6 name=Meshes handle=17 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 17 | 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=67 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=68 type=RICO_UID_BBOX name=debug_info_string
+[ mtl][init] name=STR_FPS
+[pool][aloc] uid=5 name=Materials handle=4 status=DYN[ 1 2 3 5 4 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=69 type=RICO_UID_MATERIAL name=STR_FPS
+[ tex][rqst] uid=9 ref=4 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=5 name=TEXTURE_DEFAULT_SPEC
+[mesh][ rls] uid=64 ref=0 name=debug_info_string
+[mesh][free] uid=64 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=18 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 | 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[mesh][rqst] uid=67 ref=1 name=debug_info_string
+[ mtl][ rls] uid=66 ref=0 name=STR_FPS
+[ mtl][free] uid=66 name=STR_FPS
+[ tex][ rls] uid=9 ref=3 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=4 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=5 status=DYN[ 1 2 3 4 | 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][rqst] uid=69 ref=1 name=STR_FPS
+[strg][init] name=STR_FPS
+[mesh][init] name=debug_info_string vertices=104
+[pool][aloc] uid=6 name=Meshes handle=18 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 | 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=70 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=71 type=RICO_UID_BBOX name=debug_info_string
+[ mtl][init] name=STR_FPS
+[pool][aloc] uid=5 name=Materials handle=5 status=DYN[ 1 2 3 4 5 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=72 type=RICO_UID_MATERIAL name=STR_FPS
+[ tex][rqst] uid=9 ref=4 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=5 name=TEXTURE_DEFAULT_SPEC
+[mesh][ rls] uid=67 ref=0 name=debug_info_string
+[mesh][free] uid=67 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=17 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 | 17 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[mesh][rqst] uid=70 ref=1 name=debug_info_string
+[ mtl][ rls] uid=69 ref=0 name=STR_FPS
+[ mtl][free] uid=69 name=STR_FPS
+[ tex][ rls] uid=9 ref=3 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=4 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=4 status=DYN[ 1 2 3 5 | 4 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][rqst] uid=72 ref=1 name=STR_FPS
+[strg][init] name=STR_FPS
+[mesh][init] name=debug_info_string vertices=104
+[pool][aloc] uid=6 name=Meshes handle=17 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 17 | 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=73 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=74 type=RICO_UID_BBOX name=debug_info_string
+[ mtl][init] name=STR_FPS
+[pool][aloc] uid=5 name=Materials handle=4 status=DYN[ 1 2 3 5 4 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=75 type=RICO_UID_MATERIAL name=STR_FPS
+[ tex][rqst] uid=9 ref=4 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=5 name=TEXTURE_DEFAULT_SPEC
+[mesh][ rls] uid=70 ref=0 name=debug_info_string
+[mesh][free] uid=70 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=18 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 | 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[mesh][rqst] uid=73 ref=1 name=debug_info_string
+[ mtl][ rls] uid=72 ref=0 name=STR_FPS
+[ mtl][free] uid=72 name=STR_FPS
+[ tex][ rls] uid=9 ref=3 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=4 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=5 status=DYN[ 1 2 3 4 | 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][rqst] uid=75 ref=1 name=STR_FPS
+[strg][init] name=STR_FPS
+[mesh][init] name=debug_info_string vertices=104
+[pool][aloc] uid=6 name=Meshes handle=18 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 | 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=76 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=77 type=RICO_UID_BBOX name=debug_info_string
+[ mtl][init] name=STR_FPS
+[pool][aloc] uid=5 name=Materials handle=5 status=DYN[ 1 2 3 4 5 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=78 type=RICO_UID_MATERIAL name=STR_FPS
+[ tex][rqst] uid=9 ref=4 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=5 name=TEXTURE_DEFAULT_SPEC
+[mesh][ rls] uid=73 ref=0 name=debug_info_string
+[mesh][free] uid=73 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=17 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 | 17 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[mesh][rqst] uid=76 ref=1 name=debug_info_string
+[ mtl][ rls] uid=75 ref=0 name=STR_FPS
+[ mtl][free] uid=75 name=STR_FPS
+[ tex][ rls] uid=9 ref=3 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=4 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=4 status=DYN[ 1 2 3 5 | 4 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][rqst] uid=78 ref=1 name=STR_FPS
+[strg][init] name=STR_FPS
+[mesh][init] name=debug_info_string vertices=104
+[pool][aloc] uid=6 name=Meshes handle=17 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 17 | 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=79 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=80 type=RICO_UID_BBOX name=debug_info_string
+[ mtl][init] name=STR_FPS
+[pool][aloc] uid=5 name=Materials handle=4 status=DYN[ 1 2 3 5 4 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=81 type=RICO_UID_MATERIAL name=STR_FPS
+[ tex][rqst] uid=9 ref=4 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=5 name=TEXTURE_DEFAULT_SPEC
+[mesh][ rls] uid=76 ref=0 name=debug_info_string
+[mesh][free] uid=76 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=18 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 | 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[mesh][rqst] uid=79 ref=1 name=debug_info_string
+[ mtl][ rls] uid=78 ref=0 name=STR_FPS
+[ mtl][free] uid=78 name=STR_FPS
+[ tex][ rls] uid=9 ref=3 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=4 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=5 status=DYN[ 1 2 3 4 | 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][rqst] uid=81 ref=1 name=STR_FPS
+[strg][init] name=STR_FPS
+[mesh][init] name=debug_info_string vertices=104
+[pool][aloc] uid=6 name=Meshes handle=18 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 | 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=82 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=83 type=RICO_UID_BBOX name=debug_info_string
+[ mtl][init] name=STR_FPS
+[pool][aloc] uid=5 name=Materials handle=5 status=DYN[ 1 2 3 4 5 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=84 type=RICO_UID_MATERIAL name=STR_FPS
+[ tex][rqst] uid=9 ref=4 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=5 name=TEXTURE_DEFAULT_SPEC
+[mesh][ rls] uid=79 ref=0 name=debug_info_string
+[mesh][free] uid=79 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=17 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 | 17 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[mesh][rqst] uid=82 ref=1 name=debug_info_string
+[ mtl][ rls] uid=81 ref=0 name=STR_FPS
+[ mtl][free] uid=81 name=STR_FPS
+[ tex][ rls] uid=9 ref=3 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=4 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=4 status=DYN[ 1 2 3 5 | 4 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][rqst] uid=84 ref=1 name=STR_FPS
+[strg][init] name=STR_FPS
+[mesh][init] name=debug_info_string vertices=104
+[pool][aloc] uid=6 name=Meshes handle=17 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 17 | 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=85 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=86 type=RICO_UID_BBOX name=debug_info_string
+[ mtl][init] name=STR_FPS
+[pool][aloc] uid=5 name=Materials handle=4 status=DYN[ 1 2 3 5 4 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=87 type=RICO_UID_MATERIAL name=STR_FPS
+[ tex][rqst] uid=9 ref=4 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=5 name=TEXTURE_DEFAULT_SPEC
+[mesh][ rls] uid=82 ref=0 name=debug_info_string
+[mesh][free] uid=82 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=18 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 | 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[mesh][rqst] uid=85 ref=1 name=debug_info_string
+[ mtl][ rls] uid=84 ref=0 name=STR_FPS
+[ mtl][free] uid=84 name=STR_FPS
+[ tex][ rls] uid=9 ref=3 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=4 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=5 status=DYN[ 1 2 3 4 | 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][rqst] uid=87 ref=1 name=STR_FPS
+[strg][init] name=STR_FPS
+[mesh][init] name=debug_info_string vertices=104
+[pool][aloc] uid=6 name=Meshes handle=18 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 | 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=88 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=89 type=RICO_UID_BBOX name=debug_info_string
+[ mtl][init] name=STR_FPS
+[pool][aloc] uid=5 name=Materials handle=5 status=DYN[ 1 2 3 4 5 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=90 type=RICO_UID_MATERIAL name=STR_FPS
+[ tex][rqst] uid=9 ref=4 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=5 name=TEXTURE_DEFAULT_SPEC
+[mesh][ rls] uid=85 ref=0 name=debug_info_string
+[mesh][free] uid=85 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=17 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 | 17 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[mesh][rqst] uid=88 ref=1 name=debug_info_string
+[ mtl][ rls] uid=87 ref=0 name=STR_FPS
+[ mtl][free] uid=87 name=STR_FPS
+[ tex][ rls] uid=9 ref=3 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=4 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=4 status=DYN[ 1 2 3 5 | 4 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][rqst] uid=90 ref=1 name=STR_FPS
+[strg][init] name=STR_FPS
+[mesh][init] name=debug_info_string vertices=104
+[pool][aloc] uid=6 name=Meshes handle=17 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 17 | 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=91 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=92 type=RICO_UID_BBOX name=debug_info_string
+[ mtl][init] name=STR_FPS
+[pool][aloc] uid=5 name=Materials handle=4 status=DYN[ 1 2 3 5 4 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=93 type=RICO_UID_MATERIAL name=STR_FPS
+[ tex][rqst] uid=9 ref=4 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=5 name=TEXTURE_DEFAULT_SPEC
+[mesh][ rls] uid=88 ref=0 name=debug_info_string
+[mesh][free] uid=88 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=18 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 | 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[mesh][rqst] uid=91 ref=1 name=debug_info_string
+[ mtl][ rls] uid=90 ref=0 name=STR_FPS
+[ mtl][free] uid=90 name=STR_FPS
+[ tex][ rls] uid=9 ref=3 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=4 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=5 status=DYN[ 1 2 3 4 | 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][rqst] uid=93 ref=1 name=STR_FPS
+[strg][init] name=STR_FPS
+[mesh][init] name=debug_info_string vertices=104
+[pool][aloc] uid=6 name=Meshes handle=18 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 | 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=94 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=95 type=RICO_UID_BBOX name=debug_info_string
+[ mtl][init] name=STR_FPS
+[pool][aloc] uid=5 name=Materials handle=5 status=DYN[ 1 2 3 4 5 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=96 type=RICO_UID_MATERIAL name=STR_FPS
+[ tex][rqst] uid=9 ref=4 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=5 name=TEXTURE_DEFAULT_SPEC
+[mesh][ rls] uid=91 ref=0 name=debug_info_string
+[mesh][free] uid=91 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=17 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 | 17 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[mesh][rqst] uid=94 ref=1 name=debug_info_string
+[ mtl][ rls] uid=93 ref=0 name=STR_FPS
+[ mtl][free] uid=93 name=STR_FPS
+[ tex][ rls] uid=9 ref=3 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=4 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=4 status=DYN[ 1 2 3 5 | 4 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][rqst] uid=96 ref=1 name=STR_FPS
+[strg][init] name=STR_FPS
+[mesh][init] name=debug_info_string vertices=104
+[pool][aloc] uid=6 name=Meshes handle=17 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 17 | 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=97 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=98 type=RICO_UID_BBOX name=debug_info_string
+[ mtl][init] name=STR_FPS
+[pool][aloc] uid=5 name=Materials handle=4 status=DYN[ 1 2 3 5 4 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=99 type=RICO_UID_MATERIAL name=STR_FPS
+[ tex][rqst] uid=9 ref=4 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=5 name=TEXTURE_DEFAULT_SPEC
+[mesh][ rls] uid=94 ref=0 name=debug_info_string
+[mesh][free] uid=94 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=18 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 | 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[mesh][rqst] uid=97 ref=1 name=debug_info_string
+[ mtl][ rls] uid=96 ref=0 name=STR_FPS
+[ mtl][free] uid=96 name=STR_FPS
+[ tex][ rls] uid=9 ref=3 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=4 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=5 status=DYN[ 1 2 3 4 | 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][rqst] uid=99 ref=1 name=STR_FPS
+[strg][init] name=STR_FPS
+[mesh][init] name=debug_info_string vertices=104
+[pool][aloc] uid=6 name=Meshes handle=18 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 | 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=100 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=101 type=RICO_UID_BBOX name=debug_info_string
+[ mtl][init] name=STR_FPS
+[pool][aloc] uid=5 name=Materials handle=5 status=DYN[ 1 2 3 4 5 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=102 type=RICO_UID_MATERIAL name=STR_FPS
+[ tex][rqst] uid=9 ref=4 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=5 name=TEXTURE_DEFAULT_SPEC
+[mesh][ rls] uid=97 ref=0 name=debug_info_string
+[mesh][free] uid=97 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=17 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 | 17 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[mesh][rqst] uid=100 ref=1 name=debug_info_string
+[ mtl][ rls] uid=99 ref=0 name=STR_FPS
+[ mtl][free] uid=99 name=STR_FPS
+[ tex][ rls] uid=9 ref=3 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=4 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=4 status=DYN[ 1 2 3 5 | 4 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][rqst] uid=102 ref=1 name=STR_FPS
+[strg][init] name=STR_FPS
+[mesh][init] name=debug_info_string vertices=104
+[pool][aloc] uid=6 name=Meshes handle=17 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 17 | 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=103 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=104 type=RICO_UID_BBOX name=debug_info_string
+[ mtl][init] name=STR_FPS
+[pool][aloc] uid=5 name=Materials handle=4 status=DYN[ 1 2 3 5 4 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=105 type=RICO_UID_MATERIAL name=STR_FPS
+[ tex][rqst] uid=9 ref=4 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=5 name=TEXTURE_DEFAULT_SPEC
+[mesh][ rls] uid=100 ref=0 name=debug_info_string
+[mesh][free] uid=100 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=18 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 | 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[mesh][rqst] uid=103 ref=1 name=debug_info_string
+[ mtl][ rls] uid=102 ref=0 name=STR_FPS
+[ mtl][free] uid=102 name=STR_FPS
+[ tex][ rls] uid=9 ref=3 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=4 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=5 status=DYN[ 1 2 3 4 | 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][rqst] uid=105 ref=1 name=STR_FPS
+[strg][init] name=STR_FPS
+[mesh][init] name=debug_info_string vertices=104
+[pool][aloc] uid=6 name=Meshes handle=18 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 | 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=106 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=107 type=RICO_UID_BBOX name=debug_info_string
+[ mtl][init] name=STR_FPS
+[pool][aloc] uid=5 name=Materials handle=5 status=DYN[ 1 2 3 4 5 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=108 type=RICO_UID_MATERIAL name=STR_FPS
+[ tex][rqst] uid=9 ref=4 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=5 name=TEXTURE_DEFAULT_SPEC
+[mesh][ rls] uid=103 ref=0 name=debug_info_string
+[mesh][free] uid=103 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=17 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 | 17 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[mesh][rqst] uid=106 ref=1 name=debug_info_string
+[ mtl][ rls] uid=105 ref=0 name=STR_FPS
+[ mtl][free] uid=105 name=STR_FPS
+[ tex][ rls] uid=9 ref=3 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=4 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=4 status=DYN[ 1 2 3 5 | 4 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][rqst] uid=108 ref=1 name=STR_FPS
+[strg][init] name=STR_FPS
+[mesh][init] name=debug_info_string vertices=104
+[pool][aloc] uid=6 name=Meshes handle=17 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 17 | 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=109 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=110 type=RICO_UID_BBOX name=debug_info_string
+[ mtl][init] name=STR_FPS
+[pool][aloc] uid=5 name=Materials handle=4 status=DYN[ 1 2 3 5 4 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=111 type=RICO_UID_MATERIAL name=STR_FPS
+[ tex][rqst] uid=9 ref=4 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=5 name=TEXTURE_DEFAULT_SPEC
+[mesh][ rls] uid=106 ref=0 name=debug_info_string
+[mesh][free] uid=106 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=18 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 | 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[mesh][rqst] uid=109 ref=1 name=debug_info_string
+[ mtl][ rls] uid=108 ref=0 name=STR_FPS
+[ mtl][free] uid=108 name=STR_FPS
+[ tex][ rls] uid=9 ref=3 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=4 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=5 status=DYN[ 1 2 3 4 | 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][rqst] uid=111 ref=1 name=STR_FPS
+[strg][init] name=STR_FPS
+[mesh][init] name=debug_info_string vertices=104
+[pool][aloc] uid=6 name=Meshes handle=18 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 | 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=112 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=113 type=RICO_UID_BBOX name=debug_info_string
+[ mtl][init] name=STR_FPS
+[pool][aloc] uid=5 name=Materials handle=5 status=DYN[ 1 2 3 4 5 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=114 type=RICO_UID_MATERIAL name=STR_FPS
+[ tex][rqst] uid=9 ref=4 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=5 name=TEXTURE_DEFAULT_SPEC
+[mesh][ rls] uid=109 ref=0 name=debug_info_string
+[mesh][free] uid=109 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=17 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 | 17 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[mesh][rqst] uid=112 ref=1 name=debug_info_string
+[ mtl][ rls] uid=111 ref=0 name=STR_FPS
+[ mtl][free] uid=111 name=STR_FPS
+[ tex][ rls] uid=9 ref=3 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=4 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=4 status=DYN[ 1 2 3 5 | 4 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][rqst] uid=114 ref=1 name=STR_FPS
+[strg][init] name=STR_FPS
+[mesh][init] name=debug_info_string vertices=104
+[pool][aloc] uid=6 name=Meshes handle=17 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 17 | 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=115 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=116 type=RICO_UID_BBOX name=debug_info_string
+[ mtl][init] name=STR_FPS
+[pool][aloc] uid=5 name=Materials handle=4 status=DYN[ 1 2 3 5 4 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=117 type=RICO_UID_MATERIAL name=STR_FPS
+[ tex][rqst] uid=9 ref=4 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=5 name=TEXTURE_DEFAULT_SPEC
+[mesh][ rls] uid=112 ref=0 name=debug_info_string
+[mesh][free] uid=112 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=18 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 | 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[mesh][rqst] uid=115 ref=1 name=debug_info_string
+[ mtl][ rls] uid=114 ref=0 name=STR_FPS
+[ mtl][free] uid=114 name=STR_FPS
+[ tex][ rls] uid=9 ref=3 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=4 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=5 status=DYN[ 1 2 3 4 | 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][rqst] uid=117 ref=1 name=STR_FPS
+[strg][init] name=STR_FPS
+[mesh][init] name=debug_info_string vertices=104
+[pool][aloc] uid=6 name=Meshes handle=18 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 | 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=118 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=119 type=RICO_UID_BBOX name=debug_info_string
+[ mtl][init] name=STR_FPS
+[pool][aloc] uid=5 name=Materials handle=5 status=DYN[ 1 2 3 4 5 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=120 type=RICO_UID_MATERIAL name=STR_FPS
+[ tex][rqst] uid=9 ref=4 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=5 name=TEXTURE_DEFAULT_SPEC
+[mesh][ rls] uid=115 ref=0 name=debug_info_string
+[mesh][free] uid=115 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=17 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 | 17 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[mesh][rqst] uid=118 ref=1 name=debug_info_string
+[ mtl][ rls] uid=117 ref=0 name=STR_FPS
+[ mtl][free] uid=117 name=STR_FPS
+[ tex][ rls] uid=9 ref=3 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=4 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=4 status=DYN[ 1 2 3 5 | 4 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][rqst] uid=120 ref=1 name=STR_FPS
+[strg][init] name=STR_FPS
+[mesh][init] name=debug_info_string vertices=104
+[pool][aloc] uid=6 name=Meshes handle=17 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 17 | 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=121 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=122 type=RICO_UID_BBOX name=debug_info_string
+[ mtl][init] name=STR_FPS
+[pool][aloc] uid=5 name=Materials handle=4 status=DYN[ 1 2 3 5 4 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=123 type=RICO_UID_MATERIAL name=STR_FPS
+[ tex][rqst] uid=9 ref=4 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=5 name=TEXTURE_DEFAULT_SPEC
+[mesh][ rls] uid=118 ref=0 name=debug_info_string
+[mesh][free] uid=118 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=18 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 | 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[mesh][rqst] uid=121 ref=1 name=debug_info_string
+[ mtl][ rls] uid=120 ref=0 name=STR_FPS
+[ mtl][free] uid=120 name=STR_FPS
+[ tex][ rls] uid=9 ref=3 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=4 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=5 status=DYN[ 1 2 3 4 | 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][rqst] uid=123 ref=1 name=STR_FPS
+[strg][init] name=STR_FPS
+[mesh][init] name=debug_info_string vertices=104
+[pool][aloc] uid=6 name=Meshes handle=18 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 | 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=124 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=125 type=RICO_UID_BBOX name=debug_info_string
+[ mtl][init] name=STR_FPS
+[pool][aloc] uid=5 name=Materials handle=5 status=DYN[ 1 2 3 4 5 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=126 type=RICO_UID_MATERIAL name=STR_FPS
+[ tex][rqst] uid=9 ref=4 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=5 name=TEXTURE_DEFAULT_SPEC
+[mesh][ rls] uid=121 ref=0 name=debug_info_string
+[mesh][free] uid=121 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=17 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 | 17 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[mesh][rqst] uid=124 ref=1 name=debug_info_string
+[ mtl][ rls] uid=123 ref=0 name=STR_FPS
+[ mtl][free] uid=123 name=STR_FPS
+[ tex][ rls] uid=9 ref=3 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=4 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=4 status=DYN[ 1 2 3 5 | 4 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][rqst] uid=126 ref=1 name=STR_FPS
+[strg][init] name=STR_FPS
+[mesh][init] name=debug_info_string vertices=104
+[pool][aloc] uid=6 name=Meshes handle=17 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 17 | 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=127 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=128 type=RICO_UID_BBOX name=debug_info_string
+[ mtl][init] name=STR_FPS
+[pool][aloc] uid=5 name=Materials handle=4 status=DYN[ 1 2 3 5 4 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=129 type=RICO_UID_MATERIAL name=STR_FPS
+[ tex][rqst] uid=9 ref=4 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=5 name=TEXTURE_DEFAULT_SPEC
+[mesh][ rls] uid=124 ref=0 name=debug_info_string
+[mesh][free] uid=124 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=18 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 | 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[mesh][rqst] uid=127 ref=1 name=debug_info_string
+[ mtl][ rls] uid=126 ref=0 name=STR_FPS
+[ mtl][free] uid=126 name=STR_FPS
+[ tex][ rls] uid=9 ref=3 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=4 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=5 status=DYN[ 1 2 3 4 | 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][rqst] uid=129 ref=1 name=STR_FPS
+[strg][init] name=STR_FPS
+[mesh][init] name=debug_info_string vertices=104
+[pool][aloc] uid=6 name=Meshes handle=18 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 | 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=130 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=131 type=RICO_UID_BBOX name=debug_info_string
+[ mtl][init] name=STR_FPS
+[pool][aloc] uid=5 name=Materials handle=5 status=DYN[ 1 2 3 4 5 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=132 type=RICO_UID_MATERIAL name=STR_FPS
+[ tex][rqst] uid=9 ref=4 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=5 name=TEXTURE_DEFAULT_SPEC
+[mesh][ rls] uid=127 ref=0 name=debug_info_string
+[mesh][free] uid=127 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=17 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 | 17 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[mesh][rqst] uid=130 ref=1 name=debug_info_string
+[ mtl][ rls] uid=129 ref=0 name=STR_FPS
+[ mtl][free] uid=129 name=STR_FPS
+[ tex][ rls] uid=9 ref=3 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=4 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=4 status=DYN[ 1 2 3 5 | 4 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][rqst] uid=132 ref=1 name=STR_FPS
+[strg][free] uid=62 name=STR_FPS
+[ obj][free] uid=63 name=STR_FPS
+[mesh][ rls] uid=130 ref=0 name=debug_info_string
+[mesh][free] uid=130 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=18 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 | 18 17 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][ rls] uid=132 ref=0 name=STR_FPS
+[ mtl][free] uid=132 name=STR_FPS
+[ tex][ rls] uid=9 ref=2 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=3 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=5 status=DYN[ 1 2 3 | 5 4 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[pool][free] uid=7 name=Objects handle=4 status=DYN[ 1 2 3 | 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[pool][free] uid=2 name=Strings handle=3 status=STC[ 1 2 3 4 5 6 ] DYN[ | 7 8 9 10 11 12 13 14 15 16 ]
 [strg][init] name=STR_CONFIRM_QUIT
 [mesh][init] name=debug_info_string vertices=368
-[pool][aloc] name=Meshes handle=17
- status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 | 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_MESH uid=59 name=debug_info_string
-[ uid][init] type=RICO_UID_BBOX uid=60 name=debug_info_string
+[pool][aloc] uid=6 name=Meshes handle=18 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 | 17 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=133 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=134 type=RICO_UID_BBOX name=debug_info_string
 [ mtl][init] name=STR_CONFIRM_QUIT
-[pool][aloc] name=Materials handle=4
- status=DYN[ 1 2 3 4 | 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_MATERIAL uid=61 name=STR_CONFIRM_QUIT
-[ tex][++ 3] name=font/courier_new.bff
-[ tex][++ 4] name=TEXTURE_DEFAULT_SPEC
-[ uid][init] type=RICO_UID_STRING uid=62 name=STR_CONFIRM_QUIT
+[pool][aloc] uid=5 name=Materials handle=5 status=DYN[ 1 2 3 5 | 4 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=135 type=RICO_UID_MATERIAL name=STR_CONFIRM_QUIT
+[ tex][rqst] uid=9 ref=3 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=4 name=TEXTURE_DEFAULT_SPEC
+[ uid][init] uid=136 type=RICO_UID_STRING name=STR_CONFIRM_QUIT
 [ obj][init] name=STR_CONFIRM_QUIT
-[pool][aloc] name=Objects handle=4
- status=DYN[ 1 2 3 4 | 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_OBJECT uid=63 name=STR_CONFIRM_QUIT
-[mesh][++ 1] name=debug_info_string
-[ mtl][++ 1] name=STR_CONFIRM_QUIT
+[pool][aloc] uid=7 name=Objects handle=4 status=DYN[ 1 2 3 4 | 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=137 type=RICO_UID_OBJECT name=STR_CONFIRM_QUIT
+[mesh][rqst] uid=133 ref=1 name=debug_info_string
+[ mtl][rqst] uid=135 ref=1 name=STR_CONFIRM_QUIT
 [strg][init] name=STR_STATE
 [mesh][init] name=debug_info_string vertices=96
-[pool][aloc] name=Meshes handle=18
- status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 | 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_MESH uid=64 name=debug_info_string
-[ uid][init] type=RICO_UID_BBOX uid=65 name=debug_info_string
+[pool][aloc] uid=6 name=Meshes handle=17 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 17 | 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=138 type=RICO_UID_MESH name=debug_info_string
+[ uid][init] uid=139 type=RICO_UID_BBOX name=debug_info_string
 [ mtl][init] name=STR_STATE
-[pool][aloc] name=Materials handle=5
- status=DYN[ 1 2 3 4 5 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ uid][init] type=RICO_UID_MATERIAL uid=66 name=STR_STATE
-[ tex][++ 4] name=font/courier_new.bff
-[ tex][++ 5] name=TEXTURE_DEFAULT_SPEC
-[mesh][-- 0] name=debug_info_string
-[mesh][free] name=debug_info_string
-[pool][free] name=Meshes handle=16
- status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 18 17 | 16 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[mesh][++ 1] name=debug_info_string
-[ mtl][-- 0] name=STR_STATE
-[ mtl][free] name=STR_STATE
-[ tex][-- 3] name=font/courier_new.bff
-[pool][free] name=Materials handle=3
- status=DYN[ 1 2 5 4 | 3 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ mtl][++ 1] name=STR_STATE
-[strg][free] name=STR_CONFIRM_QUIT
-[ obj][free] name=STR_CONFIRM_QUIT
-[mesh][-- 0] name=debug_info_string
-[mesh][free] name=debug_info_string
-[pool][free] name=Meshes handle=17
- status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 18 | 17 16 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ mtl][-- 0] name=STR_CONFIRM_QUIT
-[ mtl][free] name=STR_CONFIRM_QUIT
-[ tex][-- 2] name=font/courier_new.bff
-[pool][free] name=Materials handle=4
- status=DYN[ 1 2 5 | 4 3 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[pool][free] name=Objects handle=4
- status=DYN[ 1 2 3 | 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[pool][free] name=Strings handle=4
- status=STC[ 1 2 3 4 5 6 ] DYN[ | 7 8 9 10 11 12 13 14 15 16 ]
-[chnk][save] name=RICO_CHUNK_DEFAULT filename=chunks/cereal.bin total_size=68432
-[chnk][save] name=RICO_CHUNK_DEFAULT filename=chunks/cereal_20170514T000906.bin total_size=68432
-[ obj][free] name=STR_STATE
-[mesh][-- 0] name=debug_info_string
-[mesh][free] name=debug_info_string
-[pool][free] name=Meshes handle=18
- status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 | 18 17 16 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ mtl][-- 0] name=STR_STATE
-[ mtl][free] name=STR_STATE
-[ tex][-- 1] name=font/courier_new.bff
-[pool][free] name=Materials handle=5
- status=DYN[ 1 2 | 5 4 3 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[pool][free] name=Objects handle=3
- status=DYN[ 1 2 | 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ obj][free] name=Sphere
-[mesh][-- 1] name=Sphere
-[pool][free] name=Objects handle=2
- status=DYN[ 1 | 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ obj][free] name=Ground
-[ mtl][-- 0] name=Rock
-[ mtl][free] name=Rock
-[ tex][-- 0] name=bricks
-[ tex][free] name=bricks
-[pool][free] name=Textures handle=6
- status=DYN[ 1 2 3 4 5 8 7 | 6 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[pool][free] name=Materials handle=2
- status=DYN[ 1 | 2 5 4 3 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[pool][free] name=Objects handle=1
- status=[EMPTY]
-[ tex][-- 0] name=grass
-[ tex][free] name=grass
-[pool][free] name=Textures handle=5
- status=DYN[ 1 2 3 4 7 8 | 5 6 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ tex][-- 0] name=bricks
-[ tex][free] name=bricks
-[pool][free] name=Textures handle=6
- status=DYN[ 1 2 3 4 7 | 6 8 6 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
-[ tex][-- 0] name=hello
-[ tex][free] name=hello
-[pool][free] name=Textures handle=7
- status=DYN[ 1 2 3 4 | 7 6 8 6 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[pool][aloc] uid=5 name=Materials handle=4 status=DYN[ 1 2 3 5 4 | 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ uid][init] uid=140 type=RICO_UID_MATERIAL name=STR_STATE
+[ tex][rqst] uid=9 ref=4 name=font/courier_new.bff
+[ tex][rqst] uid=11 ref=5 name=TEXTURE_DEFAULT_SPEC
+[mesh][ rls] uid=54 ref=0 name=debug_info_string
+[mesh][free] uid=54 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=16 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 17 18 | 16 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[mesh][rqst] uid=138 ref=1 name=debug_info_string
+[ mtl][ rls] uid=56 ref=0 name=STR_STATE
+[ mtl][free] uid=56 name=STR_STATE
+[ tex][ rls] uid=9 ref=3 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=4 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=3 status=DYN[ 1 2 4 5 | 3 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][rqst] uid=140 ref=1 name=STR_STATE
+[strg][free] uid=136 name=STR_CONFIRM_QUIT
+[ obj][free] uid=137 name=STR_CONFIRM_QUIT
+[mesh][ rls] uid=133 ref=0 name=debug_info_string
+[mesh][free] uid=133 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=18 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 17 | 18 16 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][ rls] uid=135 ref=0 name=STR_CONFIRM_QUIT
+[ mtl][free] uid=135 name=STR_CONFIRM_QUIT
+[ tex][ rls] uid=9 ref=2 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=3 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=5 status=DYN[ 1 2 4 | 5 3 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[pool][free] uid=7 name=Objects handle=4 status=DYN[ 1 2 3 | 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[pool][free] uid=2 name=Strings handle=4 status=STC[ 1 2 3 4 5 6 ] DYN[ | 7 8 9 10 11 12 13 14 15 16 ]
+[chnk][save] uid=1 name=RICO_CHUNK_DEFAULT filename=chunks/cereal.bin total_size=68432
+[chnk][save] uid=1 name=RICO_CHUNK_DEFAULT filename=chunks/cereal_20170514T173813.bin total_size=68432
+[ obj][free] uid=58 name=STR_STATE
+[mesh][ rls] uid=138 ref=0 name=debug_info_string
+[mesh][free] uid=138 name=debug_info_string
+[pool][free] uid=6 name=Meshes handle=17 status=DYN[ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 | 17 18 16 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ mtl][ rls] uid=140 ref=0 name=STR_STATE
+[ mtl][free] uid=140 name=STR_STATE
+[ tex][ rls] uid=9 ref=1 name=font/courier_new.bff
+[ tex][ rls] uid=11 ref=2 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=4 status=DYN[ 1 2 | 4 5 3 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[pool][free] uid=7 name=Objects handle=3 status=DYN[ 1 2 | 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ obj][free] uid=52 name=Sphere
+[mesh][ rls] uid=15 ref=1 name=Sphere
+[ mtl][ rls] uid=12 ref=0 name=MATERIAL_DEFAULT
+[pool][free] uid=7 name=Objects handle=2 status=DYN[ 1 | 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ obj][free] uid=51 name=Ground
+[mesh][ rls] uid=13 ref=0 name=MESH_DEFAULT
+[ mtl][ rls] uid=50 ref=0 name=Rock
+[ mtl][free] uid=50 name=Rock
+[ tex][ rls] uid=46 ref=0 name=bricks
+[ tex][free] uid=46 name=bricks
+[pool][free] uid=4 name=Textures handle=6 status=DYN[ 1 2 3 4 5 8 7 | 6 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ tex][ rls] uid=11 ref=1 name=TEXTURE_DEFAULT_SPEC
+[pool][free] uid=5 name=Materials handle=2 status=DYN[ 1 | 2 4 5 3 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[pool][free] uid=7 name=Objects handle=1 status=[EMPTY]
+[ tex][ rls] uid=45 ref=0 name=grass
+[ tex][free] uid=45 name=grass
+[pool][free] uid=4 name=Textures handle=5 status=DYN[ 1 2 3 4 7 8 | 5 6 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ tex][ rls] uid=0 ref=0 name=bricks
+[ tex][free] uid=0 name=bricks
+[pool][free] uid=4 name=Textures handle=6 status=DYN[ 1 2 3 4 7 | 6 8 6 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
+[ tex][ rls] uid=47 ref=0 name=hello
+[ tex][free] uid=47 name=hello
+[pool][free] uid=4 name=Textures handle=7 status=DYN[ 1 2 3 4 | 7 6 8 6 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 ]
 ------------------------------------------------------------
 [MAIN][term] Clean up
 ------------------------------------------------------------

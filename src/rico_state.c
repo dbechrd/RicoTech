@@ -1209,7 +1209,7 @@ static void rico_init_cereal()
     rico_cereals[RICO_UID_BBOX].load[0] = &bbox_deserialize_0;
 }
 
-static int rico_init_pools()
+static int rico_init_chunks()
 {
     enum rico_error err;
 
@@ -1377,7 +1377,7 @@ static int load_mesh_files()
     if (err) return err;
 
     u32 ticks2 = SDL_GetTicks();
-    printf("[perf][mesh] Meshes loaded in: %d ticks\n", ticks2 - ticks);
+    printf("[PERF][mesh] Meshes loaded in: %d ticks\n", ticks2 - ticks);
 
     return err;
 }
@@ -1441,7 +1441,8 @@ static int init_hardcoded_test_chunk()
         if (err) return err;
 
         // HACK: Don't z-fight ground plane
-        //object_trans_set(arr_objects[i], &(struct vec3) { 0.0f, EPSILON, 0.0f });
+        //object_trans_set(arr_objects[i],
+        //                 &(struct vec3) { 0.0f, EPSILON, 0.0f });
     }
 
     //--------------------------------------------------------------------------
@@ -1472,46 +1473,46 @@ static int rico_init()
 {
     enum rico_error err;
 
-    printf("------------------------------------------------------------\n");
+    printf("----------------------------------------------------------\n");
     printf("[MAIN][init] Initializing serializers\n");
-    printf("------------------------------------------------------------\n");
+    printf("----------------------------------------------------------\n");
     rico_init_cereal();
 
-    printf("------------------------------------------------------------\n");
+    printf("----------------------------------------------------------\n");
     printf("[MAIN][init] Initializing shaders\n");
-    printf("------------------------------------------------------------\n");
+    printf("----------------------------------------------------------\n");
     err = rico_init_shaders();
     if (err) return err;
 
-    printf("------------------------------------------------------------\n");
+    printf("----------------------------------------------------------\n");
     printf("[MAIN][init] Initializing primitives\n");
-    printf("------------------------------------------------------------\n");
+    printf("----------------------------------------------------------\n");
     prim_init(PRIM_SEGMENT);
     prim_init(PRIM_RAY);
 
     if (reset_game_world)
     {
-        printf("------------------------------------------------------------\n");
-        printf("[MAIN][init] Initializing pools\n");
-        printf("------------------------------------------------------------\n");
-        err = rico_init_pools();
+        printf("----------------------------------------------------------\n");
+        printf("[MAIN][init] Initializing chunks\n");
+        printf("----------------------------------------------------------\n");
+        err = rico_init_chunks();
         if (err) return err;
 
-        printf("------------------------------------------------------------\n");
+        printf("----------------------------------------------------------\n");
         printf("[MAIN][init] Initializing fonts\n");
-        printf("------------------------------------------------------------\n");
+        printf("----------------------------------------------------------\n");
         err = rico_init_fonts();
         if (err) return err;
 
-        printf("------------------------------------------------------------\n");
+        printf("----------------------------------------------------------\n");
         printf("[MAIN][init] Initializing textures\n");
-        printf("------------------------------------------------------------\n");
+        printf("----------------------------------------------------------\n");
         err = rico_init_textures();
         if (err) return err;
 
-        printf("------------------------------------------------------------\n");
+        printf("----------------------------------------------------------\n");
         printf("[MAIN][init] Initializing materials\n");
-        printf("------------------------------------------------------------\n");
+        printf("----------------------------------------------------------\n");
         err = rico_init_materials();
         if (err) return err;
 
@@ -1519,21 +1520,21 @@ static int rico_init()
         //       accompanying rico_mesh object. Fixup VAO ids by having a
         //       mesh_name lookup table. Load meshes into VRAM as necessary if
         //       they aren't found in the lookup table.
-        printf("------------------------------------------------------------\n");
+        printf("----------------------------------------------------------\n");
         printf("[MAIN][init] Initializing meshes\n");
-        printf("------------------------------------------------------------\n");
+        printf("----------------------------------------------------------\n");
         err = rico_init_meshes();
         if (err) return err;
 
-        printf("------------------------------------------------------------\n");
-        printf("[MAIN][init] Initializing meshes from resource files\n");
-        printf("------------------------------------------------------------\n");
+        printf("----------------------------------------------------------\n");
+        printf("[MAIN][init] Loading meshes from resource files\n");
+        printf("----------------------------------------------------------\n");
         err = load_mesh_files();
         if (err) return err;
 
-        printf("------------------------------------------------------------\n");
+        printf("----------------------------------------------------------\n");
         printf("[MAIN][init] Initializing game world\n");
-        printf("------------------------------------------------------------\n");
+        printf("----------------------------------------------------------\n");
         err = init_glref();
         if (err) return err;
     
@@ -1545,6 +1546,9 @@ static int rico_init()
     }
     else
     {
+        printf("----------------------------------------------------------\n");
+        printf("[MAIN][init] Initializing chunks\n");
+        printf("----------------------------------------------------------\n");
         struct rico_file file;
         err = rico_file_open_read(&file, "chunks/cereal.bin");
         if (err) return err;
@@ -1567,9 +1571,9 @@ static int rico_init()
         chunk_active_set(chunk_ptr);
     }
 
-    printf("------------------------------------------------------------\n");
+    printf("----------------------------------------------------------\n");
     printf("[MAIN][init] Initializing camera\n");
-    printf("------------------------------------------------------------\n");
+    printf("----------------------------------------------------------\n");
     camera_reset(&cam_player);
     return err;
 }
@@ -1578,7 +1582,7 @@ static int state_engine_init()
 {
     enum rico_error err;
 
-    printf("------------------------------------------------------------\n");
+    printf("----------------------------------------------------------\n");
     printf("#         ______            _______        _               #\n");
     printf("#         |  __ \\ O        |__   __|      | |              #\n");
     printf("#         | |__| |_  ___ ___  | | ___  ___| |__            #\n");
@@ -1587,7 +1591,7 @@ static int state_engine_init()
     printf("#         |_|  \\_\\_|\\___\\___/ |_|\\___|\\___|_| |_|          #\n");
     printf("#                                                          #\n");
     printf("#               Copyright 2017 Dan Bechard                 #\n");
-    printf("------------------------------------------------------------\n");
+    printf("----------------------------------------------------------\n");
 
     // TODO: Where does this belong? Needs access to "mouse_lock".
     SDL_SetRelativeMouseMode(mouse_lock);
@@ -1610,9 +1614,9 @@ static int state_engine_init()
     err = rico_init();
     if (err) return err;
 
-    printf("------------------------------------------------------------\n");
+    printf("----------------------------------------------------------\n");
     printf("[MAIN][  GO] Initialization complete. Starting game.\n");
-    printf("------------------------------------------------------------\n");
+    printf("----------------------------------------------------------\n");
 
     state = STATE_PLAY_EXPLORE;
     return err;

@@ -29,7 +29,8 @@ int material_request(u32 handle)
     material->ref_count++;
 
 #if RICO_DEBUG_MATERIAL
-    printf("[ mtl][++ %d] name=%s\n", material->ref_count, material->uid.name);
+    printf("[ mtl][rqst] uid=%d ref=%d name=%s\n", material->uid.uid,
+           material->ref_count, material->uid.name);
 #endif
 
     return handle;
@@ -59,23 +60,25 @@ int material_init(const char *name, u32 tex_diffuse, u32 tex_specular,
 
 void material_free(u32 handle)
 {
-    // TODO: Use static pool slots
-    if (handle == RICO_DEFAULT_MATERIAL)
-        return;
-
     struct rico_material *material = material_find(handle);
     if (material->ref_count > 0)
         material->ref_count--;
 
 #if RICO_DEBUG_MATERIAL
-    printf("[ mtl][-- %d] name=%s\n", material->ref_count, material->uid.name);
+    printf("[ mtl][ rls] uid=%d ref=%d name=%s\n", material->uid.uid,
+           material->ref_count, material->uid.name);
 #endif
 
     if (material->ref_count > 0)
         return;
 
+    // TODO: Use static pool slots
+    if (handle == RICO_DEFAULT_MATERIAL)
+        return;
+
 #if RICO_DEBUG_MATERIAL
-    printf("[ mtl][free] name=%s\n", material->uid.name);
+    printf("[ mtl][free] uid=%d name=%s\n", material->uid.uid,
+           material->uid.name);
 #endif
 
     texture_free(material->tex_diffuse);

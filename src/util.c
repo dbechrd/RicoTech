@@ -174,7 +174,8 @@ void *read_tga(const char *filename, int *width, int *height)
         return NULL;
     }
     if (header.bits_per_pixel != 24) {
-        fprintf(stderr, "%s is not a 24-bit uncompressed RGB tga file\n", filename);
+        fprintf(stderr, "%s is not a 24-bit uncompressed RGB tga file\n",
+                filename);
         fclose(f);
         return NULL;
     }
@@ -186,7 +187,8 @@ void *read_tga(const char *filename, int *width, int *height)
             return NULL;
         }
 
-    color_map_size = le_short(header.color_map_length) * (header.color_map_depth / 8);
+    color_map_size = le_short(header.color_map_length) *
+                     (header.color_map_depth / 8);
     for (i = 0; i < color_map_size; ++i)
         if (getc(f) == EOF) {
             fprintf(stderr, "%s has incomplete color map\n", filename);

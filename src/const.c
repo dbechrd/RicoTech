@@ -36,10 +36,12 @@ enum rico_error rico_fatal_print(const char *file, int line,
                 err, rico_error_string[err], desc);
 
         char title[128] = { 0 };
-        snprintf(title, sizeof(title), "%s : Line %d", strstr(file, "src"), line);
+        snprintf(title, sizeof(title), "%s : Line %d", strstr(file, "src"),
+                 line);
 
         char msg[500] = { 0 };
-        snprintf(msg, sizeof(msg), "%s [%d]\n\n%s", rico_error_string[err], err, desc);
+        snprintf(msg, sizeof(msg), "%s [%d]\n\n%s", rico_error_string[err], err,
+                 desc);
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, msg, NULL);
     }
     return err;

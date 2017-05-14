@@ -53,7 +53,8 @@ bool collide_ray_obb(const struct ray *r, const struct bbox *bbox,
                      const struct mat4 *model_matrix,
                      const struct mat4 *model_matrix_inv, float *_dist)
 {
-	// Intersection method from Real-Time Rendering and Essential Mathematics for Games
+	// Intersection method from Real-Time Rendering and Essential Mathematics
+    // for Games
 
 	float t_min = 0.0f;
 	float t_max = 100000.0f;
@@ -111,9 +112,12 @@ bool collide_ray_obb(const struct ray *r, const struct bbox *bbox,
 
 		if (fabs(f) > 0.00001f) // Standard case
         {
-            float t1 = (e + bbox->p[0].x) / f; // Intersection with the "left" plane
-			float t2 = (e + bbox->p[1].x) / f; // Intersection with the "right" plane
-			// t1 and t2 now contain distances betwen ray origin and ray-plane intersections
+            // Intersection with the "left" plane
+            float t1 = (e + bbox->p[0].x) / f;
+            // Intersection with the "right" plane
+			float t2 = (e + bbox->p[1].x) / f;
+			// t1 and t2 now contain distances betwen ray origin and ray-plane
+            // intersections
 
 			// We want t1 to represent the nearest intersection,
 			// so if it's not the case, invert t1 and t2
@@ -121,10 +125,12 @@ bool collide_ray_obb(const struct ray *r, const struct bbox *bbox,
 				float w=t1;t1=t2;t2=w; // swap t1 and t2
 			}
 
-			// t_max is the nearest "far" intersection (amongst the X,Y and Z planes pairs)
+			// t_max is the nearest "far" intersection (amongst the X,Y and Z
+            // planes pairs)
 			if ( t2 < t_max )
 				t_max = t2;
-			// t_min is the farthest "near" intersection (amongst the X,Y and Z planes pairs)
+			// t_min is the farthest "near" intersection (amongst the X,Y and Z
+            // planes pairs)
 			if ( t1 > t_min )
 				t_min = t1;
 
@@ -136,7 +142,9 @@ bool collide_ray_obb(const struct ray *r, const struct bbox *bbox,
 
 		}
         else
-        { // Rare case : the ray is almost parallel to the planes, so they don't have any "intersection"
+        {
+            // Rare case : the ray is almost parallel to the planes, so they
+            // don't have any "intersection"
 			if(-e + bbox->p[0].x > 0.0f || -e + bbox->p[1].x < 0.0f)
 				return false;
 		}

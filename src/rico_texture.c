@@ -33,7 +33,8 @@ int texture_request(u32 handle)
     tex->ref_count++;
 
 #if RICO_DEBUG_TEXTURE
-    printf("[ tex][++ %d] name=%s\n", tex->ref_count, tex->uid.name);
+    printf("[ tex][rqst] uid=%d ref=%d name=%s\n", tex->uid.uid, tex->ref_count,
+           tex->uid.name);
 #endif
 
     return handle;
@@ -205,25 +206,26 @@ static int build_texture(struct rico_texture *tex, const void *pixels)
 
 void texture_free(u32 handle)
 {
+    struct rico_texture *tex = texture_find(handle);
+    if (tex->ref_count > 0)
+        tex->ref_count--;
+
+#if RICO_DEBUG_TEXTURE
+    printf("[ tex][ rls] uid=%d ref=%d name=%s\n", tex->uid.uid, tex->ref_count,
+           tex->uid.name);
+#endif
+
+    if (tex->ref_count > 0)
+        return;
+
     // TODO: Use static pool slots
     if (handle == RICO_DEFAULT_TEXTURE_DIFF)
         return;
     if (handle == RICO_DEFAULT_TEXTURE_SPEC)
         return;
 
-    struct rico_texture *tex = texture_find(handle);
-    if (tex->ref_count > 0)
-        tex->ref_count--;
-
 #if RICO_DEBUG_TEXTURE
-    printf("[ tex][-- %d] name=%s\n", tex->ref_count, tex->uid.name);
-#endif
-
-    if (tex->ref_count > 0)
-        return;
-
-#if RICO_DEBUG_TEXTURE
-    printf("[ tex][free] name=%s\n", tex->uid.name);
+    printf("[ tex][free] uid=%d name=%s\n", tex->uid.uid, tex->uid.name);
 #endif
 
     glDeleteTextures(1, &tex->gl_id);

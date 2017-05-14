@@ -16,6 +16,7 @@
 #define RICO_DEBUG_OBJECT           RICO_DEBUG && 1
 #define RICO_DEBUG_STRING           RICO_DEBUG && 1
 #define RICO_DEBUG_MATERIAL         RICO_DEBUG && 1
+#define RICO_DEBUG_FONT             RICO_DEBUG && 1
 
 //------------------------------------------------------------------------------
 // Rico constants
