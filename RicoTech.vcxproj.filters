@@ -18,9 +18,6 @@
     <Filter Include="Header Files\rico">
       <UniqueIdentifier>{ddc16885-7711-4b4f-a49b-59c466ecebc8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\3rdparty">
-      <UniqueIdentifier>{d2741dc5-44f5-4dd5-95d2-434d74947920}</UniqueIdentifier>
-    </Filter>
     <Filter Include="_Misc">
       <UniqueIdentifier>{f14e08dd-76b1-4d61-baa9-03b05329a2d4}</UniqueIdentifier>
     </Filter>
@@ -74,9 +71,6 @@
     <ClInclude Include="include\rico_material.h">
       <Filter>Header Files\rico</Filter>
     </ClInclude>
-    <ClInclude Include="include\rico_mem.h">
-      <Filter>Header Files\rico</Filter>
-    </ClInclude>
     <ClInclude Include="include\rico_mesh.h">
       <Filter>Header Files\rico</Filter>
     </ClInclude>
@@ -104,20 +98,29 @@
     <ClInclude Include="include\shader.h">
       <Filter>Header Files\rico</Filter>
     </ClInclude>
-    <ClInclude Include="include\test_geom.h">
-      <Filter>Header Files\rico</Filter>
-    </ClInclude>
     <ClInclude Include="include\util.h">
       <Filter>Header Files\rico</Filter>
     </ClInclude>
-    <ClInclude Include="include\vec3.h">
+    <ClInclude Include="include\rico.h">
       <Filter>Header Files\rico</Filter>
-    </ClInclude>
-    <ClInclude Include="include\MurmurHash3.h">
-      <Filter>Header Files\3rdparty</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\3rdparty\MurmurHash3.c">
+      <Filter>Source Files\3rdparty</Filter>
+    </ClCompile>
+    <ClCompile Include="src\3rdparty\main_nuke.c">
+      <Filter>Source Files\3rdparty</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gl3w.c">
+      <Filter>Source Files\3rdparty</Filter>
+    </ClCompile>
+    <ClCompile Include="src\notes.c">
+      <Filter>_Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\3rdparty\CacheLineSize.c">
+      <Filter>Source Files\3rdparty</Filter>
+    </ClCompile>
     <ClCompile Include="src\bbox.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
@@ -205,17 +208,8 @@
     <ClCompile Include="src\util.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
-    <ClCompile Include="src\3rdparty\MurmurHash3.c">
-      <Filter>Source Files\3rdparty</Filter>
-    </ClCompile>
-    <ClCompile Include="src\3rdparty\main_nuke.c">
-      <Filter>Source Files\3rdparty</Filter>
-    </ClCompile>
-    <ClCompile Include="src\gl3w.c">
-      <Filter>Source Files\3rdparty</Filter>
-    </ClCompile>
-    <ClCompile Include="src\notes.c">
-      <Filter>_Misc</Filter>
+    <ClCompile Include="src\rico.c">
+      <Filter>Source Files\rico</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

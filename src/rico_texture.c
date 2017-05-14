@@ -1,27 +1,35 @@
-#include "rico_texture.h"
-#include "rico_uid.h"
-#include "rico_pool.h"
-#include "stb_image.h"
-#include <stdlib.h>
-#include <stdio.h>
+//#include "rico_texture.h"
+//#include "rico_uid.h"
+//#include "rico_pool.h"
+//#include "rico_chunk.h"
+//#include "stb_image.h"
+//#include <stdlib.h>
+//#include <stdio.h>
 
-struct rico_texture {
-    struct rico_uid uid;
-    u32 ref_count;
-
-    GLuint gl_id;
-    GLenum gl_target;
-
-    //TODO: What's the point of saving this if we don't also save pixel data?
-    GLsizei width;
-    GLsizei height;
-    GLsizei bpp;
-};
 const u32 RICO_TEXTURE_SIZE = sizeof(struct rico_texture);
 
-u32 RICO_TEXTURE_DEFAULT_DIFF = 0;
-u32 RICO_TEXTURE_DEFAULT_SPEC = 0;
-static struct rico_pool *textures;
+u32 RICO_DEFAULT_TEXTURE_DIFF = 0;
+u32 RICO_DEFAULT_TEXTURE_SPEC = 0;
+
+static inline struct rico_pool **texture_pool_ptr()
+{
+    struct rico_chunk *chunk = chunk_active();
+    RICO_ASSERT(chunk);
+    RICO_ASSERT(chunk->textures);
+    return &chunk->textures;
+}
+
+static inline struct rico_pool *texture_pool()
+{
+    return *texture_pool_ptr();
+}
+
+static inline struct rico_texture *texture_find(u32 handle)
+{
+    struct rico_texture *texture = pool_read(texture_pool(), handle);
+    RICO_ASSERT(texture);
+    return texture;
+}
 
 static int build_texture(struct rico_texture *tex, const void *pixels);
 
@@ -29,10 +37,10 @@ static int build_texture(struct rico_texture *tex, const void *pixels);
 //       filename for that to work (how to track load_pixels calls?)
 int texture_request(u32 handle)
 {
-    struct rico_texture *tex = pool_read(textures, handle);
+    struct rico_texture *tex = texture_find(handle);
     tex->ref_count++;
 
-#ifdef RICO_DEBUG_TEXTURE
+#if RICO_DEBUG_TEXTURE
     printf("[ tex][++ %d] name=%s\n", tex->ref_count, tex->uid.name);
 #endif
 
@@ -42,7 +50,7 @@ int texture_request(u32 handle)
 int texture_load_file(const char *name, GLenum target, const char *filename,
                       u32 bpp, u32 *_handle)
 {
-#ifdef RICO_DEBUG_TEXTURE
+#if RICO_DEBUG_TEXTURE
     printf("[ tex][load] filename=%s\n", filename);
 #endif
 
@@ -70,16 +78,16 @@ cleanup:
 int texture_load_pixels(const char *name, GLenum target, u32 width, u32 height,
                         u32 bpp, const void *pixels, u32 *_handle)
 {
-#ifdef RICO_DEBUG_TEXTURE
+#if RICO_DEBUG_TEXTURE
     printf("[ tex][init] name=%s\n", name);
 #endif
 
     enum rico_error err;
 
-    err = pool_handle_alloc(&textures, _handle);
+    err = pool_handle_alloc(texture_pool_ptr(), _handle);
     if (err) return err;
 
-    struct rico_texture *tex = pool_read(textures, *_handle);
+    struct rico_texture *tex = texture_find(*_handle);
 
     // Note: If we want to serialize texture data we have to store the filename
     //       or the pixel data in the struct.
@@ -206,54 +214,49 @@ static int build_texture(struct rico_texture *tex, const void *pixels)
 void texture_free(u32 handle)
 {
     // TODO: Use static pool slots
-    if (handle == RICO_TEXTURE_DEFAULT_DIFF)
+    if (handle == RICO_DEFAULT_TEXTURE_DIFF)
         return;
-    if (handle == RICO_TEXTURE_DEFAULT_SPEC)
+    if (handle == RICO_DEFAULT_TEXTURE_SPEC)
         return;
 
-    struct rico_texture *tex = pool_read(textures, handle);
+    struct rico_texture *tex = texture_find(handle);
     if (tex->ref_count > 0)
         tex->ref_count--;
 
-#ifdef RICO_DEBUG_TEXTURE
+#if RICO_DEBUG_TEXTURE
     printf("[ tex][-- %d] name=%s\n", tex->ref_count, tex->uid.name);
 #endif
 
     if (tex->ref_count > 0)
         return;
 
-#ifdef RICO_DEBUG_TEXTURE
+#if RICO_DEBUG_TEXTURE
     printf("[ tex][free] name=%s\n", tex->uid.name);
 #endif
 
     glDeleteTextures(1, &tex->gl_id);
 
     tex->uid.uid = UID_NULL;
-    pool_handle_free(textures, handle);
+    pool_handle_free(texture_pool(), handle);
 }
 
 const char *texture_name(u32 handle)
 {
-    struct rico_texture *tex = pool_read(textures, handle);
+    struct rico_texture *tex = texture_find(handle);
     return tex->uid.name;
 }
 
 void texture_bind(u32 handle, GLenum texture_unit)
 {
     // TODO: When is this useful in the context of this application?
-    struct rico_texture *tex = pool_read(textures, handle);
+    struct rico_texture *tex = texture_find(handle);
     glActiveTexture(texture_unit);
     glBindTexture(tex->gl_target, tex->gl_id);
 }
 
 void texture_unbind(u32 handle, GLenum texture_unit)
 {
-    struct rico_texture *tex = pool_read(textures, handle);
+    struct rico_texture *tex = texture_find(handle);
     glActiveTexture(texture_unit);
     glBindTexture(tex->gl_target, 0);
-}
-
-struct rico_pool *texture_pool_unsafe()
-{
-    return textures;
 }

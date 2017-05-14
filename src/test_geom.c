@@ -1,5 +1,4 @@
-#include "test_geom.h"
-#include "geom.h"
+//#include "geom.h"
 
 void test_geom()
 {

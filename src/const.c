@@ -1,7 +1,7 @@
-#include "const.h"
-#include "SDL/SDL.h"
-#include <stdio.h>
-#include <string.h>
+//#include "const.h"
+//#include "SDL/SDL.h"
+//#include <stdio.h>
+//#include <string.h>
 
 const char *rico_error_string[] = {
     RICO_ERRORS(GEN_STRING)
@@ -29,6 +29,8 @@ enum rico_error rico_fatal_print(const char *file, int line,
 {
     if (err != SUCCESS)
     {
+        RICO_ASSERT(RICO_DEBUG_FATAL_ASSERT == 0);
+
         char desc[256] = { 0 };
         va_list args;
         va_start(args, fmt);

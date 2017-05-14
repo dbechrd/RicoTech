@@ -1,11 +1,27 @@
-#ifndef RICO_OBJ_H
-#define RICO_OBJ_H
+#ifndef RICO_OBJECT_H
+#define RICO_OBJECT_H
 
-#include "geom.h"
-#include "rico_mesh.h"
-#include "rico_uid.h"
-struct program_default;
+// IMPORTANT: *DO NOT* add pointers in this struct, it will break cereal!
+struct rico_object {
+    struct rico_uid uid;
+    enum rico_obj_type type;
 
+    //TODO: Refactor into rico_transform
+    //TODO: Animation
+    struct vec3 trans;
+    struct vec3 rot;
+    struct vec3 scale;
+    struct mat4 transform;
+    struct mat4 transform_inverse;
+
+    //TODO: Support multiple meshes
+    u32 mesh;
+
+    //TODO: Support multiple textures (per mesh?)
+    u32 material;
+
+    struct bbox bbox;
+};
 extern const u32 RICO_OBJECT_SIZE;
 
 #define RICO_OBJ_TYPES(f)   \
@@ -17,9 +33,8 @@ extern const u32 RICO_OBJECT_SIZE;
 enum rico_obj_type {
     RICO_OBJ_TYPES(GEN_LIST)
 };
-extern const char *rico_obj_type_string[];
+//extern const char *rico_obj_type_string[];
 
-int rico_object_init(u32 pool_size);
 int object_create(u32 *_handle, const char *name, enum rico_obj_type type,
                   u32 mesh, u32 material, const struct bbox *bbox,
                   bool serialize);
@@ -65,7 +80,4 @@ char *object_to_string(u32 handle);
 SERIAL(object_serialize_0);
 DESERIAL(object_deserialize_0);
 
-struct rico_pool *object_pool_get_unsafe();
-void object_pool_set_unsafe(struct rico_pool *pool);
-
-#endif // RICO_OBJ_H
+#endif // RICO_OBJECT_H

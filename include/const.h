@@ -1,23 +1,21 @@
 #ifndef CONST_H
 #define CONST_H
 
-
 // Debug
-#define RICO_DEBUG
+#define RICO_DEBUG 1
 
-#ifdef RICO_DEBUG
-    #define RICO_DEBUG_ALL_ERRORS_FATAL
-    #define RICO_DEBUG_WARN
-    #define RICO_DEBUG_INFO
-    #define RICO_DEBUG_UID
-    //#define RICO_DEBUG_POOL
-    #define RICO_DEBUG_CHUNK
-    #define RICO_DEBUG_TEXTURE
-    #define RICO_DEBUG_MESH
-    #define RICO_DEBUG_OBJECT
-    #define RICO_DEBUG_STRING
-    #define RICO_DEBUG_MATERIAL
-#endif
+#define RICO_DEBUG_ALL_ERRORS_FATAL RICO_DEBUG && 1
+#define RICO_DEBUG_FATAL_ASSERT     RICO_DEBUG && 1
+#define RICO_DEBUG_WARN             RICO_DEBUG && 1
+#define RICO_DEBUG_INFO             RICO_DEBUG && 1
+#define RICO_DEBUG_UID              RICO_DEBUG && 1
+#define RICO_DEBUG_POOL             RICO_DEBUG && 1
+#define RICO_DEBUG_CHUNK            RICO_DEBUG && 1
+#define RICO_DEBUG_TEXTURE          RICO_DEBUG && 1
+#define RICO_DEBUG_MESH             RICO_DEBUG && 1
+#define RICO_DEBUG_OBJECT           RICO_DEBUG && 1
+#define RICO_DEBUG_STRING           RICO_DEBUG && 1
+#define RICO_DEBUG_MATERIAL         RICO_DEBUG && 1
 
 //------------------------------------------------------------------------------
 // Rico constants
@@ -36,13 +34,8 @@
 #define RICO_SHADER_UV_LOC 3
 
 // Math / Physics
-#ifndef M_PI
 #define M_PI 3.14159265358979323846264338327950288
-#endif
-
-#ifndef M_2PI
 #define M_2PI 6.28318530717958647692528676655900576
-#endif
 
 #define DEG_TO_RAD(deg) deg * M_PI / 180.0
 #define RAD_TO_DEG(rad) rad * 180.0 / M_PI
@@ -59,7 +52,7 @@
 //------------------------------------------------------------------------------
 // Basic type redefinitions
 //------------------------------------------------------------------------------
-#include <stdint.h>
+//#include <stdint.h>
 // #include <stddef.h>
 // #include <limits.h>
 // #include <float.h>
@@ -85,10 +78,10 @@ typedef u32 bool;
 //
 // NOTE(casey): Types
 //
-#include <stdint.h>
-#include <stddef.h>
-#include <limits.h>
-#include <float.h>
+//#include <stdint.h>
+//#include <stddef.h>
+//#include <limits.h>
+//#include <float.h>
 
 typedef int8_t int8;
 typedef int16_t int16;
@@ -168,7 +161,7 @@ enum rico_vbo {
 enum rico_error {
     RICO_ERRORS(GEN_LIST)
 };
-extern const char *rico_error_string[];
+//extern const char *rico_error_string[];
 
 //------------------------------------------------------------------------------
 // Global functions
@@ -189,7 +182,7 @@ enum rico_error rico_fatal_print(const char *file, int line,
 #define UNUSED(x) (void)(x)
 #define sizeof_member(type, member) sizeof(((type *)0)->member)
 
-/****************/ #ifdef RICO_DEBUG /*****************************************/
+/****************/ #if RICO_DEBUG /*****************************************/
 
 #define RICO_ASSERT(exp) if(!(exp)) {*(int*)0=0;}
 
@@ -197,7 +190,7 @@ enum rico_error rico_fatal_print(const char *file, int line,
 
 #define RICO_FATAL(err, desc, ...) rico_fatal_print(FILE_LOC, err, desc, __VA_ARGS__)
 
-#ifdef RICO_DEBUG_ALL_ERRORS_FATAL
+#if RICO_DEBUG_ALL_ERRORS_FATAL
     #define RICO_ERROR(err, desc, ...) RICO_FATAL(err, desc, __VA_ARGS__)
 #else
     #define RICO_ERROR(err, desc) rico_error_print(FILE_LOC, err, desc)

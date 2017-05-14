@@ -1,8 +1,8 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include "geom.h"
-#include "bbox.h"
+//#include "geom.h"
+//#include "bbox.h"
 
 //------------------------------------------------------------------------------
 //TODO: Probably should prefix these? Possibly move to const.h?
@@ -33,19 +33,19 @@ struct camera {
     struct mat4 proj_matrix;
 };
 
-extern struct camera cam_player;
-extern const struct vec3 CAMERA_POS_INITIAL;
-
-void camera_init(struct camera *_camera, struct vec3 position,
-                 struct quat view, float fov);
-void camera_reset(struct camera *camera);
-void camera_translate_world(struct camera *camera, const struct vec3 *v);
-void camera_translate_local(struct camera *camera, const struct vec3 *v);
-void camera_rotate(struct camera *camera, float dx, float dy);
-void camera_rotate_angle(struct camera *camera, struct vec3 axis,
-                         float angle_deg);
-void camera_update(struct camera *camera);
-void camera_render(struct camera *camera);
-void camera_fwd(struct ray *_ray, struct camera *camera);
+//extern struct camera cam_player;
+//extern const struct vec3 CAMERA_POS_INITIAL;
+//
+//void camera_init(struct camera *_camera, struct vec3 position,
+//                 struct quat view, float fov);
+//void camera_reset(struct camera *camera);
+//void camera_translate_world(struct camera *camera, const struct vec3 *v);
+//void camera_translate_local(struct camera *camera, const struct vec3 *v);
+//void camera_rotate(struct camera *camera, float dx, float dy);
+//void camera_rotate_angle(struct camera *camera, struct vec3 axis,
+//                         float angle_deg);
+//void camera_update(struct camera *camera);
+//void camera_render(struct camera *camera);
+//void camera_fwd(struct ray *_ray, struct camera *camera);
 
 #endif // CAMERA_H

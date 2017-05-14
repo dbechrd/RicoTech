@@ -1,7 +1,7 @@
-#include "util.h"
-#include "const.h"
-#include <stdio.h>
-#include <stdlib.h>
+//#include "util.h"
+//#include "const.h"
+//#include <stdio.h>
+//#include <stdlib.h>
 
 /*
 * Boring, non-OpenGL-related utility functions

@@ -1,24 +1,24 @@
-#include "glref.h"
-#include "const.h"
-#include "geom.h"
-#include "util.h"
-#include "shader.h"
-#include "program.h"
-#include "bbox.h"
-#include "camera.h"
-#include "rico_texture.h"
-#include "rico_material.h"
-#include "rico_mesh.h"
-#include "rico_object.h"
-#include "rico_font.h"
-#include "rico_chunk.h"
-#include "rico_pool.h"
-#include "primitives.h"
-
-#include <GL/gl3w.h>
-#include <SDL/SDL_assert.h>
-#include <stdio.h>
-#include <malloc.h>
+//#include "glref.h"
+//#include "const.h"
+//#include "geom.h"
+//#include "util.h"
+//#include "shader.h"
+//#include "program.h"
+//#include "bbox.h"
+//#include "camera.h"
+//#include "rico_texture.h"
+//#include "rico_material.h"
+//#include "rico_mesh.h"
+//#include "rico_object.h"
+//#include "rico_font.h"
+//#include "rico_chunk.h"
+//#include "rico_pool.h"
+//#include "primitives.h"
+//
+//#include <GL/gl3w.h>
+//#include <SDL/SDL_assert.h>
+//#include <stdio.h>
+//#include <malloc.h>
 
 //TODO: Implement better camera with position + lookat. Is that necessary?
 //      Maybe it's easy to derive lookat when I need it? Probably not..
@@ -56,15 +56,6 @@ int init_glref()
     // TODO: Add error handling to make_font()
     font_init("font/courier_new.bff", &font);
 
-    //--------------------------------------------------------------------------
-    // Create shader program
-    //--------------------------------------------------------------------------
-    err = make_program_default(&prog_default);
-    if (err) return err;
-
-    err = make_program_primitive(&prog_primitive);
-    if (err) return err;
-
     /*************************************************************************
     | Frequency of access:
     |
@@ -100,15 +91,6 @@ int init_glref()
     if (err) return err;
 
     //--------------------------------------------------------------------------
-    // Create 3D strings
-    //--------------------------------------------------------------------------
-    // Font Test
-    err = font_render(font, 0, 0, COLOR_DARK_RED_HIGHLIGHT,
-                      "This is a test.\nYay!", "Font test", MESH_OBJ_WORLD,
-                      &mesh_font_test, &tex_font_test);
-    if (err) return err;
-
-    //--------------------------------------------------------------------------
     // Create axis label bboxes
     //--------------------------------------------------------------------------
     err = bbox_init(&axis_bbox, "Axis BBox",
@@ -134,93 +116,6 @@ int init_glref()
     return err;
 }
 
-int init_hardcoded_test_chunk()
-{
-    enum rico_error err;
-
-    //--------------------------------------------------------------------------
-    // Create materials
-    //--------------------------------------------------------------------------
-    u32 material_rock;
-    err = material_init("Rock", tex_rock, RICO_TEXTURE_DEFAULT_SPEC, 0.5f,
-                        &material_rock);
-    if (err) return err;
-
-    //--------------------------------------------------------------------------
-    // Create world objects
-    //--------------------------------------------------------------------------
-
-    // Ground
-    u32 obj_ground;
-    err = object_create(&obj_ground, "Ground", OBJ_STATIC, RICO_MESH_DEFAULT,
-                        material_rock, NULL, true);
-    if (err) return err;
-    object_rot_x(obj_ground, -90.0f);
-    object_scale(obj_ground, &(struct vec3) { 64.0f, 64.0f, 1.0f });
-
-    // TEST: Create test object for each mesh / primitive
-    {
-        u32 arr_objects[RICO_MESH_POOL_SIZE] = { 0 };
-        u32 i = 0;
-
-        /*
-        // Cleanup: Could use mesh_pool_get_unsafe(), but what's really the
-        //          the point of this code?
-        // Create test object for each loaded mesh
-        for (; i < mesh_count; i++)
-        {
-            err = object_create(&arr_objects[i], mesh_name(meshes[i]),
-                                OBJ_STATIC, meshes[i], RICO_MATERIAL_DEFAULT,
-                                mesh_bbox(meshes[i]), true);
-            if (err) return err;
-
-            // HACK: Don't z-fight ground plane
-            object_trans_set(arr_objects[i],
-                             &(struct vec3) { 0.0f, EPSILON, 0.0f });
-
-            // HACK: Scale scene 1/10 (for conference room test)
-            // object_scale_set(arr_objects[i],
-            //                  &(struct vec3) { 0.1f, 0.1f, 0.1f });
-        }
-        */
-
-        // Create test object for each primitive
-        err = object_create(&arr_objects[i], mesh_name(PRIM_SPHERE_MESH),
-                            OBJ_STATIC, PRIM_SPHERE_MESH,
-                            RICO_MATERIAL_DEFAULT, mesh_bbox(PRIM_SPHERE_MESH),
-                            true);
-        i++;
-        if (err) return err;
-
-        // HACK: Don't z-fight ground plane
-        object_trans_set(arr_objects[i], &(struct vec3) { 0.0f, EPSILON, 0.0f });
-    }
-
-    //--------------------------------------------------------------------------
-    // Save manual chunk
-    //--------------------------------------------------------------------------
-    struct rico_chunk chunkA;
-
-    err = chunk_init("my_first_chunk", 0,
-                     RICO_STRING_POOL_SIZE,
-                     RICO_FONT_POOL_SIZE,
-                     RICO_TEXTURE_POOL_SIZE,
-                     RICO_MATERIAL_POOL_SIZE,
-                     RICO_MESH_POOL_SIZE,
-                     RICO_OBJECT_POOL_SIZE,
-                     &chunkA);
-    if (err) return err;
-
-    struct rico_file file;
-    err = rico_file_open_write(&file, "../res/chunks/cereal.bin", 0);
-    if (err) return err;
-
-    err = rico_serialize(&chunkA, &file);
-    rico_file_close(&file);
-
-    return err;
-}
-
 int create_obj()
 {
     enum rico_error err;
@@ -230,8 +125,8 @@ int create_obj()
     u32 new_obj;
 
     // Create new object with default properties
-    err = object_create(&new_obj, name, OBJ_STATIC, RICO_MESH_DEFAULT,
-                        RICO_MATERIAL_DEFAULT, NULL, true);
+    err = object_create(&new_obj, name, OBJ_STATIC, RICO_DEFAULT_MESH,
+                        RICO_DEFAULT_MATERIAL, NULL, true);
     if (err) return err;
 
     // Select new object

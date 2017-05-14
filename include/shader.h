@@ -1,8 +1,8 @@
 #ifndef SHADER_H
 #define SHADER_H
 
-#include "util.h"
-#include <GL/gl3w.h>
+//#include "util.h"
+//#include <GL/gl3w.h>
 
 /*************************************************************************
 | Shader types:

@@ -1,31 +1,45 @@
-#include "rico_string.h"
-#include "rico_uid.h"
-#include "geom.h"
-#include "rico_pool.h"
-#include "rico_font.h"
-#include "rico_object.h"
-#include "camera.h"
-#include "rico_material.h"
+//#include "rico_string.h"
+//#include "rico_uid.h"
+//#include "geom.h"
+//#include "rico_pool.h"
+//#include "rico_font.h"
+//#include "rico_object.h"
+//#include "camera.h"
+//#include "rico_material.h"
+//#include "rico_chunk.h"
 
-struct rico_string {
-    struct rico_uid uid;
-    u32 obj_handle;
-    u32 lifespan;
-};
 const u32 RICO_STRING_SIZE = sizeof(struct rico_string);
 
 const char *rico_string_slot_string[] = {
     RICO_STRING_SLOTS(GEN_STRING)
 };
 
-static struct rico_pool *strings;
+static inline struct rico_pool **string_pool_ptr()
+{
+    struct rico_chunk *chunk = chunk_active();
+    RICO_ASSERT(chunk);
+    RICO_ASSERT(chunk->strings);
+    return &chunk->strings;
+}
+
+static inline struct rico_pool *string_pool()
+{
+    return *string_pool_ptr();
+}
+
+static inline struct rico_string *string_find(u32 handle)
+{
+    struct rico_string *string = pool_read(string_pool(), handle);
+    RICO_ASSERT(string);
+    return string;
+}
 
 int string_init(const char *name, enum rico_string_slot slot, u32 x, u32 y,
                 struct col4 color, u32 lifespan, u32 font, const char *text)
 {
     //RICO_ASSERT(slot <= STR_SLOT_COUNT || lifespan > 0);
 
-#ifdef RICO_DEBUG_STRING
+#if RICO_DEBUG_STRING
     printf("[strg][init] name=%s\n", name);
 #endif
 
@@ -39,7 +53,7 @@ int string_init(const char *name, enum rico_string_slot slot, u32 x, u32 y,
     if (err) return err;
 
     u32 text_material;
-    err = material_init(name, text_tex, RICO_TEXTURE_DEFAULT_SPEC, 0.5f,
+    err = material_init(name, text_tex, RICO_DEFAULT_TEXTURE_SPEC, 0.5f,
                         &text_material);
     if (err) return err;
 
@@ -48,13 +62,13 @@ int string_init(const char *name, enum rico_string_slot slot, u32 x, u32 y,
     if (slot == STR_SLOT_DYNAMIC)
     {
         u32 handle;
-        err = pool_handle_alloc(&strings, &handle);
+        err = pool_handle_alloc(string_pool_ptr(), &handle);
         if (err) return err;
-        str = pool_read(strings, handle);
+        str = string_find(handle);
     }
     else
     {
-        str = pool_read(strings, slot);
+        str = string_find(slot);
     }
 
     // Reuse existing static string objects
@@ -87,15 +101,15 @@ int string_free(u32 handle)
     //     return SUCCESS;
 
     enum rico_error err;
-    struct rico_string *str = pool_read(strings, handle);
+    struct rico_string *str = string_find(handle);
 
-#ifdef RICO_DEBUG_STRING
+#if RICO_DEBUG_STRING
     printf("[strg][free] name=%s\n", str->uid.name);
 #endif
 
     if (handle < STR_SLOT_COUNT && str->uid.uid == UID_NULL)
     {
-#ifdef RICO_DEBUG_WARN
+#if RICO_DEBUG_WARN
         printf("[strg][WARN] handle=%d Static string already freed\n", handle);
 #endif
         return SUCCESS;
@@ -105,7 +119,7 @@ int string_free(u32 handle)
     str->obj_handle = 0;
 
     str->uid.uid = UID_NULL;
-    err = pool_handle_free(strings, handle);
+    err = pool_handle_free(string_pool(), handle);
     return err;
 }
 
@@ -114,10 +128,11 @@ int string_update(r64 dt)
     enum rico_error err;
     u32 delta_ms = (u32)(dt * 1000);
 
+    u32 *handles = string_pool()->handles;
     struct rico_string *str;
-    for (u32 i = 0; i < strings->active; ++i)
+    for (u32 i = 0; i < string_pool()->active; ++i)
     {
-        str = pool_read(strings, strings->handles[i]);
+        str = string_find(handles[i]);
         if (str->uid.uid == UID_NULL || str->lifespan == 0)
         {
             continue;
@@ -126,7 +141,7 @@ int string_update(r64 dt)
         // Free strings with expired lifespans
         if (str->lifespan <= delta_ms)
         {
-            err = string_free(strings->handles[i]);
+            err = string_free(handles[i]);
             if (err) return err;
         }
         else

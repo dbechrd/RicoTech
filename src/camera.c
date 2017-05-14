@@ -1,6 +1,6 @@
-#include "camera.h"
-#include "bbox.h"
-#include "primitives.h"
+//#include "camera.h"
+//#include "bbox.h"
+//#include "primitives.h"
 
 struct camera cam_player;
 

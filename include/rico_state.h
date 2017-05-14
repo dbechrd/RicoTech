@@ -1,7 +1,7 @@
 #ifndef RICO_STATE_H
 #define RICO_STATE_H
 
-#include "const.h"
+//#include "const.h"
 
 #define RICO_STATES(f)          \
     f(STATE_ENGINE_INIT)        \

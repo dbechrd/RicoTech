@@ -1,7 +1,7 @@
 #ifndef RICO_LIGHT_H
 #define RICO_LIGHT_H
 
-#include "geom.h"
+//#include "geom.h"
 
 struct light_ambient {
     struct vec3 color;

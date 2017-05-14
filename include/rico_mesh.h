@@ -1,11 +1,18 @@
-#ifndef MESH_H
-#define MESH_H
+#ifndef RICO_MESH_H
+#define RICO_MESH_H
 
-#include "bbox.h"
-#include "rico_uid.h"
-#include "rico_texture.h"
-#include <GL/gl3w.h>
+// IMPORTANT: *DO NOT* add pointers in this struct, it will break cereal!
+struct rico_mesh {
+    struct rico_uid uid;
+    enum rico_mesh_type type;
+    u32 ref_count;
 
+    GLuint vao;
+    GLuint vbos[2];
+    GLsizei element_count;
+
+    struct bbox bbox;
+};
 extern const u32 RICO_MESH_SIZE;
 
 /*
@@ -26,7 +33,7 @@ extern const char *rico_mesh_slot_string[];
 
 #define RICO_MESH_TYPES(f)  \
     f(MESH_NULL)            \
-    f(MESH_OBJ_WORLD)          \
+    f(MESH_OBJ_WORLD)       \
     f(MESH_STRING_SCREEN)
 
 enum rico_mesh_type {
@@ -43,9 +50,8 @@ struct mesh_vertex {
     //GLubyte specular[4];
 };
 
-extern u32 RICO_MESH_DEFAULT;
+extern u32 RICO_DEFAULT_MESH;
 
-int rico_mesh_init(u32 pool_size);
 u32 mesh_request(u32 handle);
 u32 mesh_request_by_name(const char *name);
 u32 mesh_next(u32 handle);
@@ -59,6 +65,4 @@ const struct bbox *mesh_bbox(u32 handle);
 void mesh_update(u32 handle);
 void mesh_render(u32 handle);
 
-struct rico_pool *mesh_pool_unsafe();
-
-#endif
+#endif // RICO_MESH_H

@@ -1,5 +1,5 @@
-#include "rico_physics.h"
-#include <stdlib.h>
+//#include "rico_physics.h"
+//#include <stdlib.h>
 
 struct rico_physics *make_physics(struct vec3 size)
 {

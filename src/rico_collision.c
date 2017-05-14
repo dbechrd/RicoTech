@@ -1,9 +1,9 @@
-#include "rico_collision.h"
-#include "bbox.h"
-
-// TODO: Cleanup
-#include "primitives.h"
-#include "SDL/SDL.h"
+//#include "rico_collision.h"
+//#include "bbox.h"
+//
+//// TODO: Cleanup
+//#include "primitives.h"
+//#include "SDL/SDL.h"
 
 bool collide_ray_bbox(const struct ray *ray, const struct bbox *bbox,
                       const struct mat4 *transform)

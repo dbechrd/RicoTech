@@ -1,10 +1,10 @@
 #ifndef PROGRAM_H
 #define PROGRAM_H
 
-#include "const.h"
-#include "shader.h"
-#include "geom.h"
-#include <GL/gl3w.h>
+//#include "const.h"
+//#include "shader.h"
+//#include "geom.h"
+//#include <GL/gl3w.h>
 
 //--------------------------------------------------------------------------
 // Default program
@@ -41,10 +41,10 @@ struct program_default {
     GLint u_light_kq;       // float
 };
 
-int make_program_default(struct program_default **_program);
-void free_program_default(struct program_default **program);
-void program_default_uniform_projection(struct program_default *program,
-                                        struct mat4 *proj);
+//int make_program_default(struct program_default **_program);
+//void free_program_default(struct program_default **program);
+//void program_default_uniform_projection(struct program_default *program,
+//                                        struct mat4 *proj);
 
 //--------------------------------------------------------------------------
 // Primitive program
@@ -64,9 +64,9 @@ struct program_primitive {
     GLint u_col;    //vec3
 };
 
-int make_program_primitive(struct program_primitive **_program);
-void free_program_primitive(struct program_primitive **program);
-void program_primitive_uniform_projection(struct program_primitive *program,
-                                          struct mat4 *proj);
+//int make_program_primitive(struct program_primitive **_program);
+//void free_program_primitive(struct program_primitive **program);
+//void program_primitive_uniform_projection(struct program_primitive *program,
+//                                          struct mat4 *proj);
 
 #endif // PROGRAM_H

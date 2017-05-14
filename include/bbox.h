@@ -1,15 +1,15 @@
 #ifndef BBOX_H
 #define BBOX_H
 
-#include "geom.h"
-#include "rico_uid.h"
-#include "rico_cereal.h"
+//#include "geom.h"
+//#include "rico_uid.h"
+//#include "rico_cereal.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // TODO: Move this to primitives
 
-struct mesh_vertex;
-struct camera;
+//struct mesh_vertex;
+//struct camera;
 
 struct bbox {
     struct rico_uid uid;

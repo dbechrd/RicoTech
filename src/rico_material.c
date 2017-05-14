@@ -1,31 +1,43 @@
-#include "rico_material.h"
-#include "rico_texture.h"
-#include "rico_uid.h"
-#include "rico_pool.h"
-#include <malloc.h>
-// #include <stdlib.h>
-// #include <stdio.h>
+//#include "rico_material.h"
+//#include "rico_texture.h"
+//#include "rico_uid.h"
+//#include "rico_pool.h"
+//#include "rico_chunk.h"
+//#include <malloc.h>
+//#include <stdlib.h>
+//#include <stdio.h>
 
-struct rico_material {
-    struct rico_uid uid;
-    u32 ref_count;
-
-    u32 tex_diffuse;
-    u32 tex_specular;
-    float shiny;
-};
 const u32 RICO_MATERIAL_SIZE = sizeof(struct rico_material);
 
-u32 RICO_MATERIAL_DEFAULT = 0;
-static struct rico_pool *materials;
+u32 RICO_DEFAULT_MATERIAL = 0;
+
+static inline struct rico_pool **material_pool_ptr()
+{
+    struct rico_chunk *chunk = chunk_active();
+    RICO_ASSERT(chunk);
+    RICO_ASSERT(chunk->materials);
+    return &chunk->materials;
+}
+
+static inline struct rico_pool *material_pool()
+{
+    return *material_pool_ptr();
+}
+
+static inline struct rico_material *material_find(u32 handle)
+{
+    struct rico_material *material = pool_read(material_pool(), handle);
+    RICO_ASSERT(material);
+    return material;
+}
 
 // TODO: Do proper reference counting, this function is stupid.
 int material_request(u32 handle)
 {
-    struct rico_material *material = pool_read(materials, handle);
+    struct rico_material *material = material_find(handle);
     material->ref_count++;
 
-#ifdef RICO_DEBUG_MATERIAL
+#if RICO_DEBUG_MATERIAL
     printf("[ mtl][++ %d] name=%s\n", material->ref_count, material->uid.name);
 #endif
 
@@ -35,18 +47,17 @@ int material_request(u32 handle)
 int material_init(const char *name, u32 tex_diffuse, u32 tex_specular,
                   float shiny, u32 *_handle)
 {
-#ifdef RICO_DEBUG_MATERIAL
+#if RICO_DEBUG_MATERIAL
     printf("[ mtl][init] name=%s\n", name);
 #endif
 
     enum rico_error err;
-    *_handle = RICO_MATERIAL_DEFAULT;
+    *_handle = RICO_DEFAULT_MATERIAL;
 
-    err = pool_handle_alloc(&materials, _handle);
+    err = pool_handle_alloc(material_pool_ptr(), _handle);
     if (err) return err;
 
-    struct rico_material *material = pool_read(materials, *_handle);
-
+    struct rico_material *material = material_find(*_handle);
     uid_init(&material->uid, RICO_UID_MATERIAL, name, true);
     material->tex_diffuse = texture_request(tex_diffuse);
     material->tex_specular = texture_request(tex_specular);
@@ -58,21 +69,21 @@ int material_init(const char *name, u32 tex_diffuse, u32 tex_specular,
 void material_free(u32 handle)
 {
     // TODO: Use static pool slots
-    if (handle == RICO_MATERIAL_DEFAULT)
+    if (handle == RICO_DEFAULT_MATERIAL)
         return;
 
-    struct rico_material *material = pool_read(materials, handle);
+    struct rico_material *material = material_find(handle);
     if (material->ref_count > 0)
         material->ref_count--;
 
-#ifdef RICO_DEBUG_MATERIAL
+#if RICO_DEBUG_MATERIAL
     printf("[ mtl][-- %d] name=%s\n", material->ref_count, material->uid.name);
 #endif
 
     if (material->ref_count > 0)
         return;
 
-#ifdef RICO_DEBUG_MATERIAL
+#if RICO_DEBUG_MATERIAL
     printf("[ mtl][free] name=%s\n", material->uid.name);
 #endif
 
@@ -80,31 +91,29 @@ void material_free(u32 handle)
     texture_free(material->tex_specular);
 
     material->uid.uid = UID_NULL;
-    pool_handle_free(materials, handle);
+    pool_handle_free(material_pool(), handle);
 }
 
-const char *material_name(u32 handle)
+inline const char *material_name(u32 handle)
 {
-    struct rico_material *material = pool_read(materials, handle);
-    return material->uid.name;
+    return material_find(handle)->uid.name;
 }
 
-float material_shiny_get(u32 handle)
+inline float material_shiny(u32 handle)
 {
-    struct rico_material *material = pool_read(materials, handle);
-    return material->shiny;
+    return material_find(handle)->shiny;
 }
 
 void material_bind(u32 handle)
 {
-    struct rico_material *material = pool_read(materials, handle);
+    struct rico_material *material = material_find(handle);
     texture_bind(material->tex_diffuse, GL_TEXTURE0);
     texture_bind(material->tex_specular, GL_TEXTURE1);
 }
 
 void material_unbind(u32 handle)
 {
-    struct rico_material *material = pool_read(materials, handle);
+    struct rico_material *material = material_find(handle);
     texture_unbind(material->tex_diffuse, GL_TEXTURE0);
     texture_unbind(material->tex_specular, GL_TEXTURE1);
 }
@@ -126,7 +135,7 @@ DESERIAL(material_deserialize_0)
 {
     u32 diffuse, specular;
 
-    struct rico_material *mat = _handle;
+    struct rico_material *mat = *_handle;
     fread(&mat->ref_count, sizeof(mat->ref_count),    1, file->fs);
     fread(&diffuse,        sizeof(mat->tex_diffuse),  1, file->fs);
     fread(&specular,       sizeof(mat->tex_specular), 1, file->fs);
@@ -135,14 +144,4 @@ DESERIAL(material_deserialize_0)
     mat->tex_diffuse  = texture_request(diffuse);
     mat->tex_specular = texture_request(specular);
     return SUCCESS;
-}
-
-struct rico_pool *material_pool_get_unsafe()
-{
-    return materials;
-}
-
-void material_pool_set_unsafe(struct rico_pool *pool)
-{
-    materials = pool;
 }

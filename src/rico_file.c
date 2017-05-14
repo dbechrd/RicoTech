@@ -1,5 +1,5 @@
-#include "rico_file.h"
-#include <string.h>
+//#include "rico_file.h"
+//#include <string.h>
 
 #define SIGNATURE_SIZE 4
 static const char SIGNATURE[SIGNATURE_SIZE] = { 'R', '1', 'C', '0' };
@@ -19,8 +19,31 @@ int rico_file_open_write(struct rico_file *_file, const char *filename,
                           filename);
     }
 
+    // File version
+    if (version < RICO_FILE_VERSION_MINIMUM_SUPPORTED)
+    {
+        rico_file_close(_file);
+        fprintf(stderr, "Unsupported file version [%d]. The minimum supported" \
+                "version for this build is [%d].\n", version,
+                RICO_FILE_VERSION_MAXIMUM_SUPPORTED);
+        return RICO_ERROR(ERR_FILE_VERSION,
+                          "Unsupported file version %d while writing file %s",
+                          version, filename);
+    }
+    else if (version > RICO_FILE_VERSION_MAXIMUM_SUPPORTED)
+    {
+        rico_file_close(_file);
+        fprintf(stderr, "Unsupported file version [%d]. The maximum supported" \
+                "version for this build is [%d].\n", version,
+                RICO_FILE_VERSION_MAXIMUM_SUPPORTED);
+        return RICO_ERROR(ERR_FILE_VERSION,
+                          "Unsupported file version %d while writing file %s",
+                          version, filename);
+    }
+    
     _file->version = version;
     _file->filename = filename;
+    _file->cereal_index = version - RICO_FILE_VERSION_MINIMUM_SUPPORTED;
 
     // TODO: Separate dynamic data from static data. Textures, meshes, and
     //       static objects should be in their own file. Dynamic objects
@@ -87,6 +110,7 @@ int rico_file_open_read(struct rico_file *_file, const char *filename)
                           _file->version, filename);
     }
 
+    _file->cereal_index = _file->version - RICO_FILE_VERSION_MINIMUM_SUPPORTED;
     _file->filename = filename;
     return err;
 }

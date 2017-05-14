@@ -1,28 +1,39 @@
-#include "rico_mesh.h"
-#include "rico_texture.h"
-#include "rico_pool.h"
-#include <stdlib.h>
-#include <string.h>
+//#include "rico_mesh.h"
+//#include "rico_uid.h"
+//#include "bbox.h"
+//#include "rico_texture.h"
+//#include "rico_pool.h"
+//#include "rico_chunk.h"
+//#include <stdlib.h>
+//#include <string.h>
 
-struct rico_mesh {
-    struct rico_uid uid;
-    enum rico_mesh_type type;
-    u32 ref_count;
-
-    GLuint vao;
-    GLuint vbos[2];
-    GLsizei element_count;
-
-    struct bbox bbox;
-};
 const u32 RICO_MESH_SIZE = sizeof(struct rico_mesh);
 
 const char *rico_mesh_type_string[] = {
     RICO_MESH_TYPES(GEN_STRING)
 };
 
-u32 RICO_MESH_DEFAULT = 0;
-static struct rico_pool *meshes;
+u32 RICO_DEFAULT_MESH = 0;
+
+static inline struct rico_pool **mesh_pool_ptr()
+{
+    struct rico_chunk *chunk = chunk_active();
+    RICO_ASSERT(chunk);
+    RICO_ASSERT(chunk->meshes);
+    return &chunk->meshes;
+}
+
+static inline struct rico_pool *mesh_pool()
+{
+    return *mesh_pool_ptr();
+}
+
+static inline struct rico_mesh *mesh_find(u32 handle)
+{
+    struct rico_mesh *mesh = pool_read(mesh_pool(), handle);
+    RICO_ASSERT(mesh);
+    return mesh;
+}
 
 static int build_mesh(struct rico_mesh *mesh, u32 vertex_count,
                       const struct mesh_vertex *vertex_data,
@@ -32,10 +43,10 @@ static int build_mesh(struct rico_mesh *mesh, u32 vertex_count,
 //TODO: Should be requesting const char* filename or u32 filename (string hash)
 u32 mesh_request(u32 handle)
 {
-    struct rico_mesh *mesh = pool_read(meshes, handle);
+    struct rico_mesh *mesh = mesh_find(handle);
     mesh->ref_count++;
 
-#ifdef RICO_DEBUG_MESH
+#if RICO_DEBUG_MESH
     printf("[mesh][++ %d] name=%s\n", mesh->ref_count, mesh->uid.name);
 #endif
 
@@ -44,7 +55,7 @@ u32 mesh_request(u32 handle)
 
 u32 mesh_request_by_name(const char *name)
 {
-    u32 first = pool_handle_first(meshes);
+    u32 first = pool_handle_first(mesh_pool());
     if (!first) return 0;
 
     u32 handle = first;
@@ -55,15 +66,15 @@ u32 mesh_request_by_name(const char *name)
             break;
 
         // Keep looking (unless we're back at the start)
-        handle = pool_handle_next(meshes, handle);
+        handle = pool_handle_next(mesh_pool(), handle);
         if (handle == first)
             return 0;
     }
 
-    struct rico_mesh *mesh = pool_read(meshes, handle);
+    struct rico_mesh *mesh = mesh_find(handle);
     mesh->ref_count++;
 
-#ifdef RICO_DEBUG_MESH
+#if RICO_DEBUG_MESH
     printf("[mesh][++ %d] name=%s\n", mesh->ref_count, mesh->uid.name);
 #endif
 
@@ -75,7 +86,7 @@ enum rico_mesh_type mesh_type_get(u32 handle)
     if (!handle)
         return MESH_NULL;
 
-    struct rico_mesh *mesh = pool_read(meshes, handle);
+    struct rico_mesh *mesh = mesh_find(handle);
     return mesh->type;
 }
 
@@ -88,7 +99,7 @@ bool mesh_selectable(u32 handle)
 
 u32 mesh_next(u32 handle)
 {
-    u32 start = pool_handle_next(meshes, handle);
+    u32 start = pool_handle_next(mesh_pool(), handle);
     u32 next = start;
 
     do
@@ -96,7 +107,7 @@ u32 mesh_next(u32 handle)
         if (mesh_selectable(next))
             return next;
 
-        next = pool_handle_next(meshes, next);
+        next = pool_handle_next(mesh_pool(), next);
     } while (next != start);
 
     return 0;
@@ -104,7 +115,7 @@ u32 mesh_next(u32 handle)
 
 u32 mesh_prev(u32 handle)
 {
-    u32 start = pool_handle_prev(meshes, handle);
+    u32 start = pool_handle_prev(mesh_pool(), handle);
     u32 prev = start;
 
     do
@@ -112,7 +123,7 @@ u32 mesh_prev(u32 handle)
         if (mesh_selectable(prev))
             return prev;
 
-        prev = pool_handle_prev(meshes, prev);
+        prev = pool_handle_prev(mesh_pool(), prev);
     } while (prev != start);
 
     return 0;
@@ -122,17 +133,17 @@ int mesh_load(u32 *_handle, const char *name, enum rico_mesh_type type,
               u32 vertex_count, const struct mesh_vertex *vertex_data,
               u32 element_count, const GLuint *element_data, GLenum hint)
 {
-#ifdef RICO_DEBUG_MESH
+#if RICO_DEBUG_MESH
     printf("[mesh][init] name=%s vertices=%d\n", name, vertex_count);
 #endif
 
     enum rico_error err;
-    *_handle = RICO_MESH_DEFAULT;
+    *_handle = RICO_DEFAULT_MESH;
 
-    err = pool_handle_alloc(&meshes, _handle);
+    err = pool_handle_alloc(mesh_pool_ptr(), _handle);
     if (err) return err;
 
-    struct rico_mesh *mesh = pool_read(meshes, *_handle);
+    struct rico_mesh *mesh = mesh_find(*_handle);
 
     // Note: If we want to serialize mesh data we have to store the vertex data
     //       and element array in the struct.
@@ -211,14 +222,14 @@ static int build_mesh(struct rico_mesh *mesh, u32 vertex_count,
 void mesh_free(u32 handle)
 {
     // TODO: Use static pool slots
-    if (handle == RICO_MESH_DEFAULT)
+    if (handle == RICO_DEFAULT_MESH)
         return;
 
-    struct rico_mesh *mesh = pool_read(meshes, handle);
+    struct rico_mesh *mesh = mesh_find(handle);
     if (mesh->ref_count > 0)
         mesh->ref_count--;
 
-#ifdef RICO_DEBUG_MESH
+#if RICO_DEBUG_MESH
     printf("[mesh][-- %d] name=%s\n", mesh->ref_count, mesh->uid.name);
 #endif
 
@@ -231,7 +242,7 @@ void mesh_free(u32 handle)
     if (mesh->type == MESH_OBJ_WORLD)
         return;
 
-#ifdef RICO_DEBUG_MESH
+#if RICO_DEBUG_MESH
     printf("[mesh][free] name=%s\n", mesh->uid.name);
 #endif
 
@@ -241,18 +252,18 @@ void mesh_free(u32 handle)
     glDeleteVertexArrays(1, &mesh->vao);
 
     mesh->uid.uid = UID_NULL;
-    pool_handle_free(meshes, handle);
+    pool_handle_free(mesh_pool(), handle);
 }
 
 const char *mesh_name(u32 handle)
 {
-    struct rico_mesh *mesh = pool_read(meshes, handle);
+    struct rico_mesh *mesh = mesh_find(handle);
     return mesh->uid.name;
 }
 
 const struct bbox *mesh_bbox(u32 handle)
 {
-    struct rico_mesh *mesh = pool_read(meshes, handle);
+    struct rico_mesh *mesh = mesh_find(handle);
     return &mesh->bbox;
 }
 
@@ -264,15 +275,10 @@ void mesh_update(u32 handle)
 
 void mesh_render(u32 handle)
 {
-    struct rico_mesh *mesh = pool_read(meshes, handle);
+    struct rico_mesh *mesh = mesh_find(handle);
 
     // Draw
     glBindVertexArray(mesh->vao);
     glDrawElements(GL_TRIANGLES, mesh->element_count, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
-}
-
-struct rico_pool *mesh_pool_unsafe()
-{
-    return meshes;
 }

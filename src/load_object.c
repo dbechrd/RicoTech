@@ -1,10 +1,10 @@
-#include "util.h"
-#include "geom.h"
-#include "rico_mesh.h"
-#include "rico_object.h"
-#include <stdio.h>
-#include <stdlib.h>
-
+//#include "util.h"
+//#include "geom.h"
+//#include "rico_mesh.h"
+//#include "rico_object.h"
+//#include <stdio.h>
+//#include <stdlib.h>
+//
 //#define TINYOBJ_LOADER_C_IMPLEMENTATION
 //#include "tinyobjloader.h"
 
@@ -64,7 +64,7 @@ int load_obj_file(const char *filename)
 {
     enum rico_error err;
 
-    // TODO: Colossal waste of memory here, hmmm.
+    // TODO: Colossal waste of memory, just preprocess the file and count them!
     struct vec3 *positions = calloc(MESH_VERTICES_MAX, sizeof(*positions));
     struct tex2 *texcoords = calloc(MESH_VERTICES_MAX, sizeof(*texcoords));
     struct vec3 *normals = calloc(MESH_VERTICES_MAX, sizeof(*normals));

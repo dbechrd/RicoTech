@@ -1,10 +1,12 @@
 #ifndef RICO_STRING_H
 #define RICO_STRING_H
 
-#include "const.h"
-struct col4;
-struct rico_font;
-
+// IMPORTANT: *DO NOT* add pointers in this struct, it will break cereal!
+struct rico_string {
+    struct rico_uid uid;
+    u32 obj_handle;
+    u32 lifespan;
+};
 extern const u32 RICO_STRING_SIZE;
 
 #define RICO_STRING_SLOTS(f)    \
@@ -21,7 +23,6 @@ enum rico_string_slot {
 };
 extern const char *rico_string_slot_string[];
 
-int rico_string_init(u32 pool_size);
 int string_init(const char *name, enum rico_string_slot slot, u32 x, u32 y,
                 struct col4 color, u32 lifespan, u32 font, const char *text);
 int string_free(u32 handle);

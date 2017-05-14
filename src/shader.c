@@ -1,8 +1,8 @@
-#include "shader.h"
-#include "const.h"
-#include <GL/gl3w.h>
-#include <stdio.h>
-#include <stdlib.h>
+//#include "shader.h"
+//#include "const.h"
+//#include <GL/gl3w.h>
+//#include <stdio.h>
+//#include <stdlib.h>
 
 int make_shader(const GLenum type, const char *filename, GLuint *_shader)
 {

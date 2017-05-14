@@ -1,19 +1,19 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-#include <GL/gl3w.h>
+//#include <GL/gl3w.h>
 
-int file_contents(const char *filename, int *_length, char **_buffer);
-//void *read_tga(const char *filename, int *width, int *height);
-
-void APIENTRY openglCallbackFunction(GLenum source, GLenum type, GLuint id,
-                                     GLenum severity, GLsizei length,
-                                     const GLchar *message,
-                                     const void *userParam);
-
-void show_info_log(GLuint object,
-                   PFNGLGETSHADERIVPROC glGet__iv,
-                   PFNGLGETSHADERINFOLOGPROC glGet__InfoLog);
+//int file_contents(const char *filename, int *_length, char **_buffer);
+////void *read_tga(const char *filename, int *width, int *height);
+//
+//void APIENTRY openglCallbackFunction(GLenum source, GLenum type, GLuint id,
+//                                     GLenum severity, GLsizei length,
+//                                     const GLchar *message,
+//                                     const void *userParam);
+//
+//void show_info_log(GLuint object,
+//                   PFNGLGETSHADERIVPROC glGet__iv,
+//                   PFNGLGETSHADERINFOLOGPROC glGet__InfoLog);
 
 static inline int str_starts_with(const char *str, const char *prefix)
 {
@@ -34,4 +34,4 @@ static inline unsigned long swap_32bit(unsigned long ul)
                            ((ul & 0x000000FF) << 24));
 }
 
-#endif
+#endif // UTIL_H

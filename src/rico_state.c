@@ -1,18 +1,18 @@
-#include "rico_state.h"
-#include "const.h"
-#include "geom.h"
-#include "rico_string.h"
-#include "rico_font.h"
-#include "camera.h"
-#include "glref.h"
-#include "primitives.h"
-#include "rico_object.h"
-#include "rico_chunk.h"
-#include "rico_material.h"
-#include "load_object.h"
-#include "GL/gl3w.h"
-#include "SDL/SDL.h"
-#include <time.h>
+//#include "rico_state.h"
+//#include "const.h"
+//#include "geom.h"
+//#include "rico_string.h"
+//#include "rico_font.h"
+//#include "camera.h"
+//#include "glref.h"
+//#include "primitives.h"
+//#include "rico_object.h"
+//#include "rico_chunk.h"
+//#include "rico_material.h"
+//#include "load_object.h"
+//#include "GL/gl3w.h"
+//#include "SDL/SDL.h"
+//#include <time.h>
 
 const char *rico_state_string[] = {
     RICO_STATES(GEN_STRING)
@@ -29,8 +29,8 @@ enum rico_key {
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-static const bool reset_game_world = false;
-static struct rico_chunk RICO_CHUNK_DEFAULT;
+static const bool reset_game_world = true;
+static struct rico_chunk *RICO_DEFAULT_CHUNK;
 
 ////////////////////////////////////////////////////////////////////////////////
 //Human walk speed empirically found to be 33 steps in 20 seconds. That
@@ -148,8 +148,7 @@ int state_update(enum rico_state *_state)
         char buf[128] = { 0 };
         int len = sprintf(buf, "%.f fps %.2f ms %.2f mcyc", fps, ms, mcyc);
         err = string_init("STR_FPS", STR_SLOT_FPS, SCREEN_W - (u32)(12.5 * len),
-                          0, COLOR_DARK_RED_HIGHLIGHT, 0, RICO_FONT_DEFAULT,
-                          buf);
+                          0, COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
         if (err) return err;
         fps_last_render = last_perfs;
     }
@@ -182,7 +181,7 @@ int state_update(enum rico_state *_state)
         char buf[50] = { 0 };
         sprintf(buf, "State: %d %s", state, rico_state_string[state]);
         err = string_init("STR_STATE", STR_SLOT_EDIT_INFO, 0, 0,
-                          COLOR_DARK_RED_HIGHLIGHT, 0, RICO_FONT_DEFAULT, buf);
+                          COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
         if (err) return err;
     }
 
@@ -285,7 +284,9 @@ static int save_file()
 {
     enum rico_error err;
 
-    if (RICO_CHUNK_DEFAULT.uid.uid == UID_NULL)
+    struct rico_chunk *chunk = chunk_active();
+
+    if (chunk->uid.uid == UID_NULL)
         return RICO_ERROR(ERR_CHUNK_NULL, "Failed to save NULL chunk");
 
     struct rico_file file;
@@ -293,7 +294,7 @@ static int save_file()
                                RICO_FILE_VERSION_CURRENT);
     if (err) return err;
 
-    err = rico_serialize(&RICO_CHUNK_DEFAULT, &file);
+    err = rico_serialize(chunk, &file);
     rico_file_close(&file);
 
     // Save backup copy
@@ -310,7 +311,7 @@ static int save_file()
                                RICO_FILE_VERSION_CURRENT);
     if (err) return err;
 
-    err = rico_serialize(&RICO_CHUNK_DEFAULT, &backupFile);
+    err = rico_serialize(chunk, &backupFile);
     rico_file_close(&backupFile);
 
     return err;
@@ -396,7 +397,7 @@ static int handle_engine_events(SDL_Event event, bool *handled)
             if (event.key.keysym.sym == SDLK_BACKQUOTE)
             {
                 err = string_init("STR_EDIT_MODE", STR_SLOT_DYNAMIC, 0, 0,
-                                  COLOR_GREEN, 3000, RICO_FONT_DEFAULT,
+                                  COLOR_GREEN, 3000, 0,
                                   "Blah blah testing some stuff.\n3333");
                 if (err) return err;
                 *handled = true;
@@ -425,7 +426,7 @@ static int handle_engine_events(SDL_Event event, bool *handled)
         else if (event.key.keysym.sym == SDLK_ESCAPE)
         {
             err = string_init("STR_CONFIRM_QUIT", STR_SLOT_MENU_QUIT, 600,
-                              400, COLOR_GREEN, 0, RICO_FONT_DEFAULT,
+                              400, COLOR_GREEN, 0, 0,
                               "Are you sure you want to quit?\n" \
                               "                              \n" \
                               "      Yes (Y) or No (N)       ");
@@ -873,8 +874,7 @@ static int state_edit_translate()
         char buf[50] = { 0 };
         sprintf(buf, "Trans Delta: %f", trans_delta);
         err = string_init("STR_EDIT_TRANS_DELTA", STR_SLOT_EDIT_INFO, 0, 0,
-                          COLOR_DARK_BLUE_HIGHLIGHT, 1000, RICO_FONT_DEFAULT,
-                          buf);
+                          COLOR_DARK_BLUE_HIGHLIGHT, 1000, 0, buf);
         if (err) return err;
     }
 
@@ -979,8 +979,7 @@ static int state_edit_rotate()
         char buf[50] = { 0 };
         sprintf(buf, "Rot Delta: %f", rot_delta);
         err = string_init("STR_EDIT_ROT_DELTA", STR_SLOT_EDIT_INFO, 0, 0,
-                          COLOR_DARK_BLUE_HIGHLIGHT, 1000, RICO_FONT_DEFAULT,
-                          buf);
+                          COLOR_DARK_BLUE_HIGHLIGHT, 1000, 0, buf);
         if (err) return err;
     }
 
@@ -1077,8 +1076,7 @@ static int state_edit_scale()
         char buf[50] = { 0 };
         sprintf(buf, "Scale Delta: %f", scale_delta);
         err = string_init("STR_EDIT_SCALE_DELTA", STR_SLOT_EDIT_INFO, 0, 0,
-                          COLOR_DARK_BLUE_HIGHLIGHT, 1000, RICO_FONT_DEFAULT,
-                          buf);
+                          COLOR_DARK_BLUE_HIGHLIGHT, 1000, 0, buf);
         if (err) return err;
     }
 
@@ -1196,6 +1194,18 @@ static int state_text_input()
     return SUCCESS;
 }
 
+static int rico_init_shaders()
+{
+    enum rico_error err;
+
+    // Create shader programs
+    err = make_program_default(&prog_default);
+    if (err) return err;
+
+    err = make_program_primitive(&prog_primitive);
+    return err;
+}
+
 static void rico_init_cereal()
 {
     // Custom serialiers
@@ -1219,43 +1229,20 @@ static int rico_init_pools()
 {
     enum rico_error err;
 
-    // TODO: Don't initialize these manually this way if they're going to be
-    //       deserialized from chunks. Instead, create a hard-coded test chunk
-    //       that gets loaded if the real chunk can't be loaded from the save
-    //       file.
+    // TODO: Create a hard-coded test chunk that gets loaded if the real chunk
+    //       can't be loaded from the save file.
 
-    err = chunk_init("RICO_CHUNK_DEFAULT", 0,
+    err = chunk_init("RICO_CHUNK_DEFAULT",
                      RICO_STRING_POOL_SIZE,
                      RICO_FONT_POOL_SIZE,
                      RICO_TEXTURE_POOL_SIZE,
                      RICO_MATERIAL_POOL_SIZE,
                      RICO_MESH_POOL_SIZE,
                      RICO_OBJECT_POOL_SIZE,
-                     &RICO_CHUNK_DEFAULT);
+                     &RICO_DEFAULT_CHUNK);
     if (err) return err;
 
-    // TODO: Remove the self-hosted pool points from all of the classes below
-    //       and send them chunk pointers instead.
-
-    /*
-    err = rico_string_init(RICO_STRING_POOL_SIZE);
-    if (err) return err;
-
-    err = rico_font_init(RICO_FONT_POOL_SIZE);
-    if (err) return err;
-
-    err = rico_texture_init(RICO_TEXTURE_POOL_SIZE);
-    if (err) return err;
-
-    err = rico_material_init(RICO_MATERIAL_POOL_SIZE);
-    if (err) return err;
-
-    err = rico_mesh_init(RICO_MESH_POOL_SIZE);
-    if (err) return err;
-
-    err = rico_object_init(RICO_OBJECT_POOL_SIZE);
-    if (err) return err;
-    */
+    chunk_active_set(RICO_DEFAULT_CHUNK);
 
     return err;
 }
@@ -1265,7 +1252,7 @@ static int rico_init_fonts()
     enum rico_error err;
 
     // TODO: Use static slots to allocate default resources
-    err = font_init("font/courier_new.bff", &RICO_FONT_DEFAULT);
+    err = font_init("font/courier_new.bff", &RICO_DEFAULT_FONT);
     return err;
 }
 
@@ -1276,12 +1263,12 @@ static int rico_init_textures()
     // TODO: Use static slots to allocate default resources
     err = texture_load_file("TEXTURE_DEFAULT_DIFF", GL_TEXTURE_2D,
                             "texture/basic_diff.tga", 32,
-                            &RICO_TEXTURE_DEFAULT_DIFF);
+                            &RICO_DEFAULT_TEXTURE_DIFF);
     if (err) return err;
 
     err = texture_load_file("TEXTURE_DEFAULT_SPEC", GL_TEXTURE_2D,
                             "texture/basic_spec.tga", 32,
-                            &RICO_TEXTURE_DEFAULT_SPEC);
+                            &RICO_DEFAULT_TEXTURE_SPEC);
     return err;
 }
 
@@ -1290,9 +1277,9 @@ static int rico_init_materials()
     enum rico_error err;
 
     // TODO: Use static slots to allocate default resources
-    err = material_init("MATERIAL_DEFAULT", RICO_TEXTURE_DEFAULT_DIFF,
-                        RICO_TEXTURE_DEFAULT_SPEC, 0.5f,
-                        &RICO_MATERIAL_DEFAULT);
+    err = material_init("MATERIAL_DEFAULT", RICO_DEFAULT_TEXTURE_DIFF,
+                        RICO_DEFAULT_TEXTURE_SPEC, 0.5f,
+                        &RICO_DEFAULT_MATERIAL);
     return err;
 }
 
@@ -1364,10 +1351,17 @@ static int rico_init_meshes()
         4, 5, 1, 1, 0, 4
     };
 
-    err = mesh_load(&RICO_MESH_DEFAULT, "MESH_DEFAULT", MESH_OBJ_WORLD,
+    // TODO: Use static slot for default mesh (do this for all other defaults
+    //       as well.
+    err = mesh_load(&RICO_DEFAULT_MESH, "MESH_DEFAULT", MESH_OBJ_WORLD,
                     vert_count, vertices, element_count, elements,
                     GL_STATIC_DRAW);
-    if (err) return err;
+    return err;
+}
+
+static int load_mesh_files()
+{
+    enum rico_error err;
 
     u32 ticks = SDL_GetTicks();
 
@@ -1404,40 +1398,105 @@ static int rico_init_meshes()
     return err;
 }
 
+static int init_hardcoded_test_chunk()
+{
+    enum rico_error err;
+
+    //--------------------------------------------------------------------------
+    // Create materials
+    //--------------------------------------------------------------------------
+    u32 material_rock;
+    err = material_init("Rock", tex_rock, RICO_DEFAULT_TEXTURE_SPEC, 0.5f,
+                        &material_rock);
+    if (err) return err;
+
+    //--------------------------------------------------------------------------
+    // Create world objects
+    //--------------------------------------------------------------------------
+
+    // Ground
+    u32 obj_ground;
+    err = object_create(&obj_ground, "Ground", OBJ_STATIC, RICO_DEFAULT_MESH,
+                        material_rock, NULL, true);
+    if (err) return err;
+    object_rot_x(obj_ground, -90.0f);
+    object_scale(obj_ground, &(struct vec3) { 64.0f, 64.0f, 1.0f });
+
+    // TEST: Create test object for each mesh / primitive
+    {
+        u32 arr_objects[RICO_MESH_POOL_SIZE] = { 0 };
+        u32 i = 0;
+
+        /*
+        // Cleanup: Could use mesh_pool_get_unsafe(), but what's really the
+        //          the point of this code?
+        // Create test object for each loaded mesh
+        for (; i < mesh_count; i++)
+        {
+        err = object_create(&arr_objects[i], mesh_name(meshes[i]),
+        OBJ_STATIC, meshes[i], RICO_MATERIAL_DEFAULT,
+        mesh_bbox(meshes[i]), true);
+        if (err) return err;
+
+        // HACK: Don't z-fight ground plane
+        object_trans_set(arr_objects[i],
+        &(struct vec3) { 0.0f, EPSILON, 0.0f });
+
+        // HACK: Scale scene 1/10 (for conference room test)
+        // object_scale_set(arr_objects[i],
+        //                  &(struct vec3) { 0.1f, 0.1f, 0.1f });
+        }
+        */
+
+        // Create test object for each primitive
+        err = object_create(&arr_objects[i], mesh_name(PRIM_SPHERE_MESH),
+                            OBJ_STATIC, PRIM_SPHERE_MESH,
+                            RICO_DEFAULT_MATERIAL, mesh_bbox(PRIM_SPHERE_MESH),
+                            true);
+        i++;
+        if (err) return err;
+
+        // HACK: Don't z-fight ground plane
+        //object_trans_set(arr_objects[i], &(struct vec3) { 0.0f, EPSILON, 0.0f });
+    }
+
+    //--------------------------------------------------------------------------
+    // Save manual chunk
+    //--------------------------------------------------------------------------
+    //err = chunk_init("my_first_chunk", 1,
+    //                 RICO_STRING_POOL_SIZE,
+    //                 RICO_FONT_POOL_SIZE,
+    //                 RICO_TEXTURE_POOL_SIZE,
+    //                 RICO_MATERIAL_POOL_SIZE,
+    //                 RICO_MESH_POOL_SIZE,
+    //                 RICO_OBJECT_POOL_SIZE,
+    //                 &chunk_home);
+    //if (err) return err;
+
+    /*   struct rico_file file;
+    err = rico_file_open_write(&file, "chunks/cereal.bin",
+    RICO_FILE_VERSION_CURRENT);
+    if (err) return err;
+
+    err = rico_serialize(chunk_home, &file);
+    rico_file_close(&file);*/
+
+    return err;
+}
+
 static int rico_init()
 {
     enum rico_error err;
 
+    printf("------------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing serializers\n");
+    printf("------------------------------------------------------------\n");
     rico_init_cereal();
 
     printf("------------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing pools\n");
+    printf("[MAIN][init] Initializing shaders\n");
     printf("------------------------------------------------------------\n");
-    err = rico_init_pools();
-    if (err) return err;
-
-    printf("------------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing fonts\n");
-    printf("------------------------------------------------------------\n");
-    err = rico_init_fonts();
-    if (err) return err;
-
-    printf("------------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing textures\n");
-    printf("------------------------------------------------------------\n");
-    err = rico_init_textures();
-    if (err) return err;
-
-    printf("------------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing materials\n");
-    printf("------------------------------------------------------------\n");
-    err = rico_init_materials();
-    if (err) return err;
-
-    printf("------------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing meshes\n");
-    printf("------------------------------------------------------------\n");
-    err = rico_init_meshes();
+    err = rico_init_shaders();
     if (err) return err;
 
     printf("------------------------------------------------------------\n");
@@ -1446,17 +1505,59 @@ static int rico_init()
     prim_init(PRIM_SEGMENT);
     prim_init(PRIM_RAY);
 
-    printf("------------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing game world\n");
-    printf("------------------------------------------------------------\n");
-    err = init_glref();
-    if (err) return err;
-
     if (reset_game_world)
     {
+        printf("------------------------------------------------------------\n");
+        printf("[MAIN][init] Initializing pools\n");
+        printf("------------------------------------------------------------\n");
+        err = rico_init_pools();
+        if (err) return err;
+
+        printf("------------------------------------------------------------\n");
+        printf("[MAIN][init] Initializing fonts\n");
+        printf("------------------------------------------------------------\n");
+        err = rico_init_fonts();
+        if (err) return err;
+
+        printf("------------------------------------------------------------\n");
+        printf("[MAIN][init] Initializing textures\n");
+        printf("------------------------------------------------------------\n");
+        err = rico_init_textures();
+        if (err) return err;
+
+        printf("------------------------------------------------------------\n");
+        printf("[MAIN][init] Initializing materials\n");
+        printf("------------------------------------------------------------\n");
+        err = rico_init_materials();
+        if (err) return err;
+
+        // TODO: Load mesh data directly into OpenGL, independant of creating an
+        //       accompanying rico_mesh object. Fixup VAO ids by having a
+        //       mesh_name lookup table. Load meshes into VRAM as necessary if
+        //       they aren't found in the lookup table.
+        printf("------------------------------------------------------------\n");
+        printf("[MAIN][init] Initializing meshes\n");
+        printf("------------------------------------------------------------\n");
+        err = rico_init_meshes();
+        if (err) return err;
+
+        printf("------------------------------------------------------------\n");
+        printf("[MAIN][init] Initializing meshes from resource files\n");
+        printf("------------------------------------------------------------\n");
+        err = load_mesh_files();
+        if (err) return err;
+
+        printf("------------------------------------------------------------\n");
+        printf("[MAIN][init] Initializing game world\n");
+        printf("------------------------------------------------------------\n");
+        err = init_glref();
+        if (err) return err;
+    
         printf("Loading hard-coded test chunk\n");
         err = init_hardcoded_test_chunk();
         if (err) return err;
+
+        chunk_active_set(RICO_DEFAULT_CHUNK);
     }
     else
     {
@@ -1464,9 +1565,22 @@ static int rico_init()
         err = rico_file_open_read(&file, "chunks/cereal.bin");
         if (err) return err;
 
-        err = rico_deserialize(&RICO_CHUNK_DEFAULT, &file);
+        struct rico_chunk chunk = { 0 };
+        uid_init(&chunk.uid, RICO_UID_CHUNK, "CHUNK_LOADING", false);
+        struct rico_chunk *chunk_ptr = &chunk;
+        err = rico_deserialize(&chunk_ptr, &file);
         rico_file_close(&file);
         if (err) return err;
+
+        // TODO: Use static slots, or find by name and load if don't exist?
+        RICO_DEFAULT_FONT = 1;
+        RICO_DEFAULT_TEXTURE_DIFF = 1;
+        RICO_DEFAULT_TEXTURE_SPEC = 2;
+        RICO_DEFAULT_MATERIAL = 1;
+        RICO_DEFAULT_MESH = 1;
+        //RICO_DEFAULT_OBJECT = 1;
+
+        chunk_active_set(chunk_ptr);
     }
 
     printf("------------------------------------------------------------\n");

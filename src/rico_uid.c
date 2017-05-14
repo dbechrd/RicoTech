@@ -1,6 +1,6 @@
-#include "rico_uid.h"
-#include <string.h>
-#include <stdio.h>
+//#include "rico_uid.h"
+//#include <string.h>
+//#include <stdio.h>
 
 static u32 next_uid = 1;
 
@@ -30,7 +30,7 @@ void uid_init(struct rico_uid *_uid, enum rico_uid_type type, const char *name,
     strncpy(_uid->name, name, sizeof(_uid->name));
     _uid->serialize = serialize;
 
-#ifdef RICO_DEBUG_UID
+#if RICO_DEBUG_UID
     printf("[ uid][init] type=%s uid=%d name=%s",
            rico_uid_type_string[_uid->type], _uid->uid, _uid->name);
 
@@ -51,6 +51,7 @@ SERIAL(uid_serialize)
         return ERR_SERIALIZE_DISABLED;
     }
 
+    // TODO: Do a single write
     u32 name_length = strlen(uid->name);
     fwrite(&uid->type,   sizeof(uid->type),   1, file->fs);
     fwrite(&uid->uid,    sizeof(uid->uid),    1, file->fs);
@@ -62,13 +63,14 @@ SERIAL(uid_serialize)
 //int uid_deserialize(void *_handle, const struct rico_file *file)
 DESERIAL(uid_deserialize)
 {
-    struct rico_uid *uid = _handle;
+    struct rico_uid *uid = *_handle;
     fread(&uid->type, sizeof(uid->type), 1, file->fs);
     if (uid->type == RICO_UID_NULL)
     {
         return ERR_SERIALIZE_DISABLED;
     }
 
+    // TODO: Do a single read
     u32 name_length;
     fread(&uid->uid,    sizeof(uid->uid),    1, file->fs);
     fread(&name_length, sizeof(name_length), 1, file->fs);

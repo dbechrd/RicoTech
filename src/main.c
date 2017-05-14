@@ -1,19 +1,4 @@
-#ifdef __APPLE__
-#define __gl_h_
-//#define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
-#endif
-
-#include "const.h"
-#include "camera.h"
-#include "util.h"
-#include "rico_state.h"
-
-#define STB_IMAGE_IMPLEMENTATION
-#define STBI_ONLY_TGA
-#include "stb_image.h"
-#include "MurmurHash3.h"
-#include "SDL/SDL.h"
-#include "GL/gl3w.h"
+#include "../src/rico.c"
 
 #define GL_VERSION_MAJOR 3
 #define GL_VERSION_MINOR 2
@@ -132,7 +117,7 @@ static int init_gl3w(int major, int minor)
 
 static void init_opengl()
 {
-#ifdef RICO_DEBUG
+#if RICO_DEBUG
     {
         GLint gl_max_vertex_attribs;
         glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &gl_max_vertex_attribs);
@@ -177,8 +162,13 @@ static void init_opengl()
     glEnable(GL_BLEND);
 }
 
+#include "3rdparty\CacheLineSize.h"
+
 int mymain()
 {
+    size_t cacheSize = CacheLineSize();
+    printf("Cache line size: %d bytes", cacheSize);
+
     enum rico_error err;
 
     printf("------------------------------------------------------------\n");
@@ -223,7 +213,7 @@ int main(int argc, char *argv[])
     UNUSED(argv);
 
     // Don't report fatal errors again when ALL_ERRORS_FATAL flag is set
-#ifdef RICO_DEBUG_ALL_ERRORS_FATAL
+#if RICO_DEBUG_ALL_ERRORS_FATAL
     enum rico_error err = mymain();
 #else
     enum rico_error err = RICO_FATAL(mymain());

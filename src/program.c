@@ -1,10 +1,10 @@
-#include "program.h"
-#include "const.h"
-#include "geom.h"
-#include "shader.h"
-
-#include <stdlib.h>
-#include <stdio.h>
+//#include "program.h"
+//#include "const.h"
+//#include "geom.h"
+//#include "shader.h"
+//
+//#include <stdlib.h>
+//#include <stdio.h>
 
 //==============================================================================
 // General-purpose

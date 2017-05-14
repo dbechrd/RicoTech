@@ -1,8 +1,8 @@
 #ifndef PRIMITIVES_H
 #define PRIMITIVES_H
 
-#include "const.h"
-#include "geom.h"
+//#include "const.h"
+//#include "geom.h"
 
 
 #define RICO_PRIMITIVES(f)  \
@@ -13,7 +13,7 @@
 enum rico_prim {
     RICO_PRIMITIVES(GEN_LIST)
 };
-extern const char *rico_prim_string[];
+//extern const char *rico_prim_string[];
 
 extern u32 PRIM_SPHERE_MESH;
 

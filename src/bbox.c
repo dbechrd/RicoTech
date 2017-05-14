@@ -1,15 +1,18 @@
-#include "bbox.h"
-#include "const.h"
-#include "geom.h"
-#include "camera.h"
-#include "rico_mesh.h"
-#include "program.h"
-#include "primitives.h"
-#include <GL/gl3w.h>
+//#include "bbox.h"
+//#include "const.h"
+//#include "geom.h"
+//#include "camera.h"
+//#include "rico_mesh.h"
+//#include "program.h"
+//#include "primitives.h"
+//#include <GL/gl3w.h>
 
 #define BBOX_EPSILON 0.01f
 
 static int init_gl(struct bbox *bbox);
+
+void bbox_render_color(const struct bbox *box, const struct mat4 *model_matrix,
+                       const struct col4 color);
 
 int bbox_init(struct bbox *bbox, const char *name, struct vec3 p0,
               struct vec3 p1, struct col4 color)
@@ -212,7 +215,7 @@ SERIAL(bbox_serialize_0)
 DESERIAL(bbox_deserialize_0)
 {
     enum rico_error err;
-    struct bbox *bbox = _handle;
+    struct bbox *bbox = *_handle;
 
     fread(&bbox->p[0],      sizeof(bbox->p[0]),      1, file->fs);
     fread(&bbox->p[1],      sizeof(bbox->p[1]),      1, file->fs);

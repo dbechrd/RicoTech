@@ -1,7 +1,7 @@
 #ifndef REGULARPOLY_H
 #define REGULARPOLY_H
 
-#include "geom.h"
+//#include "geom.h"
 
 struct regularpoly {
     struct vec3 pos;

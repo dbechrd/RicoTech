@@ -1,10 +1,10 @@
 #ifndef GEOM_H
 #define GEOM_H
 
-#include "const.h"
-#include "GL/gl3w.h"
-#include <math.h>
-#include <stdio.h>
+//#include "const.h"
+//#include "GL/gl3w.h"
+//#include <math.h>
+//#include <stdio.h>
 
 #define VEC3_EPSILON 0.00001f
 #define MAT4_EPSILON 0.00001f
@@ -17,43 +17,43 @@ struct col4 {
     float r, g, b, a;
 };
 
-//Predefined colors
-extern const struct col4 COLOR_TRANSPARENT;
-extern const struct col4 COLOR_BLACK;
-extern const struct col4 COLOR_RED;
-extern const struct col4 COLOR_GREEN;
-extern const struct col4 COLOR_BLUE;
-extern const struct col4 COLOR_YELLOW;
-extern const struct col4 COLOR_CYAN;
-extern const struct col4 COLOR_MAGENTA;
-extern const struct col4 COLOR_WHITE;
-extern const struct col4 COLOR_GRAY;
-
-extern const struct col4 COLOR_BLACK_HIGHLIGHT;
-extern const struct col4 COLOR_RED_HIGHLIGHT;
-extern const struct col4 COLOR_GREEN_HIGHLIGHT;
-extern const struct col4 COLOR_BLUE_HIGHLIGHT;
-extern const struct col4 COLOR_YELLOW_HIGHLIGHT;
-extern const struct col4 COLOR_CYAN_HIGHLIGHT;
-extern const struct col4 COLOR_MAGENTA_HIGHLIGHT;
-extern const struct col4 COLOR_WHITE_HIGHLIGHT;
-extern const struct col4 COLOR_GRAY_HIGHLIGHT;
-
-extern const struct col4 COLOR_DARK_RED;
-extern const struct col4 COLOR_DARK_GREEN;
-extern const struct col4 COLOR_DARK_BLUE;
-extern const struct col4 COLOR_DARK_YELLOW;
-extern const struct col4 COLOR_DARK_CYAN;
-extern const struct col4 COLOR_DARK_MAGENTA;
-extern const struct col4 COLOR_DARK_GRAY;
-
-extern const struct col4 COLOR_DARK_RED_HIGHLIGHT;
-extern const struct col4 COLOR_DARK_GREEN_HIGHLIGHT;
-extern const struct col4 COLOR_DARK_BLUE_HIGHLIGHT;
-extern const struct col4 COLOR_DARK_YELLOW_HIGHLIGHT;
-extern const struct col4 COLOR_DARK_CYAN_HIGHLIGHT;
-extern const struct col4 COLOR_DARK_MAGENTA_HIGHLIGHT;
-extern const struct col4 COLOR_DARK_GRAY_HIGHLIGHT;
+////Predefined colors
+//extern const struct col4 COLOR_TRANSPARENT;
+//extern const struct col4 COLOR_BLACK;
+//extern const struct col4 COLOR_RED;
+//extern const struct col4 COLOR_GREEN;
+//extern const struct col4 COLOR_BLUE;
+//extern const struct col4 COLOR_YELLOW;
+//extern const struct col4 COLOR_CYAN;
+//extern const struct col4 COLOR_MAGENTA;
+//extern const struct col4 COLOR_WHITE;
+//extern const struct col4 COLOR_GRAY;
+//
+//extern const struct col4 COLOR_BLACK_HIGHLIGHT;
+//extern const struct col4 COLOR_RED_HIGHLIGHT;
+//extern const struct col4 COLOR_GREEN_HIGHLIGHT;
+//extern const struct col4 COLOR_BLUE_HIGHLIGHT;
+//extern const struct col4 COLOR_YELLOW_HIGHLIGHT;
+//extern const struct col4 COLOR_CYAN_HIGHLIGHT;
+//extern const struct col4 COLOR_MAGENTA_HIGHLIGHT;
+//extern const struct col4 COLOR_WHITE_HIGHLIGHT;
+//extern const struct col4 COLOR_GRAY_HIGHLIGHT;
+//
+//extern const struct col4 COLOR_DARK_RED;
+//extern const struct col4 COLOR_DARK_GREEN;
+//extern const struct col4 COLOR_DARK_BLUE;
+//extern const struct col4 COLOR_DARK_YELLOW;
+//extern const struct col4 COLOR_DARK_CYAN;
+//extern const struct col4 COLOR_DARK_MAGENTA;
+//extern const struct col4 COLOR_DARK_GRAY;
+//
+//extern const struct col4 COLOR_DARK_RED_HIGHLIGHT;
+//extern const struct col4 COLOR_DARK_GREEN_HIGHLIGHT;
+//extern const struct col4 COLOR_DARK_BLUE_HIGHLIGHT;
+//extern const struct col4 COLOR_DARK_YELLOW_HIGHLIGHT;
+//extern const struct col4 COLOR_DARK_CYAN_HIGHLIGHT;
+//extern const struct col4 COLOR_DARK_MAGENTA_HIGHLIGHT;
+//extern const struct col4 COLOR_DARK_GRAY_HIGHLIGHT;
 
 //------------------------------------------------------------------------------
 // 2D Texture coordinates
@@ -76,17 +76,17 @@ struct vec4 {
     float x, y, z, w;
 };
 
-extern const struct vec3 VEC3_ZERO;
-extern const struct vec3 VEC3_ONE;
-extern const struct vec3 VEC3_UNIT;
-extern const struct vec3 VEC3_X;
-extern const struct vec3 VEC3_Y;
-extern const struct vec3 VEC3_Z;
-extern const struct vec3 VEC3_UP;
-extern const struct vec3 VEC3_FWD;
-extern const struct vec3 VEC3_RIGHT;
-extern const struct vec3 VEC3_SMALL;
-extern const struct vec3 VEC3_SCALE_ASPECT;
+//extern const struct vec3 VEC3_ZERO;
+//extern const struct vec3 VEC3_ONE;
+//extern const struct vec3 VEC3_UNIT;
+//extern const struct vec3 VEC3_X;
+//extern const struct vec3 VEC3_Y;
+//extern const struct vec3 VEC3_Z;
+//extern const struct vec3 VEC3_UP;
+//extern const struct vec3 VEC3_FWD;
+//extern const struct vec3 VEC3_RIGHT;
+//extern const struct vec3 VEC3_SMALL;
+//extern const struct vec3 VEC3_SCALE_ASPECT;
 
 static inline struct vec3 *vec3_add(struct vec3 *a, const struct vec3 *b)
 {
@@ -163,6 +163,7 @@ static inline int vec3_equals(const struct vec3 *a, const struct vec3 *b)
     return (a->x == b->x && a->y == b->y && a->z == b->z);
 }
 
+// TODO: Refactor *all* printf stuff out into a single file
 static inline void vec3_print(struct vec3 *v)
 {
     printf("Vec XYZ: %10f %10f %10f\n", v->x, v->y, v->z);
@@ -185,7 +186,7 @@ struct mat4 {
 };
 
 extern const struct mat4 MAT4_IDENT;
-extern const struct mat4 MAT4_PROJ_SCREEN;
+//extern const struct mat4 MAT4_PROJ_SCREEN;
 
 //Store as row-major, one-dimensional array of floats
 static inline struct mat4 mat4_init(
@@ -306,7 +307,7 @@ static inline int mat4_equals(const struct mat4 *a, const struct mat4 *b)
     return 1;
 }
 
-static struct mat4 *mat4_mul(struct mat4 *a, const struct mat4 *b)
+static inline struct mat4 *mat4_mul(struct mat4 *a, const struct mat4 *b)
 {
     struct mat4 c = { 0 };
     for (int aj = 0; aj < 4; ++aj)

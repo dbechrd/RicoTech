@@ -1,9 +1,9 @@
 #ifndef RICO_COLLISION_H
 #define RICO_COLLISION_H
 
-#include "const.h"
-#include "geom.h"
-#include "bbox.h"
+//#include "const.h"
+//#include "geom.h"
+//#include "bbox.h"
 
 bool collide_ray_bbox(const struct ray *ray, const struct bbox *bbox,
                       const struct mat4 *transform);

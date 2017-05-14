@@ -1,9 +1,9 @@
 #ifndef UID_H
 #define UID_H
 
-#include "const.h"
-#include "rico_string.h"
-#include "rico_cereal.h"
+//#include "const.h"
+//#include "rico_string.h"
+//#include "rico_cereal.h"
 
 #define UID_NULL 0
 
@@ -23,7 +23,7 @@
 enum rico_uid_type {
     RICO_UID_TYPES(GEN_LIST)
 };
-extern const char *rico_uid_type_string[];
+//extern const char *rico_uid_type_string[];
 
 struct rico_uid {
     enum rico_uid_type type;

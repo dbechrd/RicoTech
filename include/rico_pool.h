@@ -1,7 +1,7 @@
 #ifndef RICO_POOL_H
 #define RICO_POOL_H
 
-#include "rico_uid.h"
+//#include "rico_uid.h"
 
 typedef void(destructor)(u32 handle);
 
@@ -17,10 +17,12 @@ struct rico_pool {
 
 #define POOL_SIZE_HANDLES(count) (count * sizeof(u32))
 #define POOL_SIZE_DATA(count, size) (count * size)
-#define POOL_SIZE(count, size) (POOL_SIZE_HANDLES(count) + POOL_SIZE_DATA(count, size))
+#define POOL_SIZE(count, size) (POOL_SIZE_HANDLES(count) + \
+                                POOL_SIZE_DATA(count, size))
 
 #define POOL_OFFSET_HANDLES() (sizeof(struct rico_pool))
-#define POOL_OFFSET_DATA(count) (POOL_OFFSET_HANDLES() + POOL_SIZE_HANDLES(count))
+#define POOL_OFFSET_DATA(count) (POOL_OFFSET_HANDLES() + \
+                                 POOL_SIZE_HANDLES(count))
 
 int pool_init(void *mem_block, const char *name, u32 count, u32 size,
               u32 static_count);
@@ -33,7 +35,14 @@ u32 pool_handle_prev(struct rico_pool *pool, u32 handle);
 SERIAL(pool_serialize_0);
 DESERIAL(pool_deserialize_0);
 
-static inline void *pool_read(const struct rico_pool *pool, u32 handle)
+inline void pool_fixup(struct rico_pool *pool)
+{
+    // TODO: Could clean this up with PTR_ADD_BYTE macro
+    pool->handles = (u32 *)((u8 *)pool + POOL_OFFSET_HANDLES());
+    pool->data = (u8 *)pool + POOL_OFFSET_DATA(pool->count);
+}
+
+inline void *pool_read(const struct rico_pool *pool, u32 handle)
 {
     RICO_ASSERT(pool);
     RICO_ASSERT(handle > 0);

@@ -1,23 +1,12 @@
-#include "rico_font.h"
-#include "const.h"
-#include "util.h"
-#include "rico_mesh.h"
-#include "rico_texture.h"
-#include <GL/gl3w.h>
-#include <stdlib.h>
+//#include "rico_font.h"
+//#include "const.h"
+//#include "util.h"
+//#include "rico_mesh.h"
+//#include "rico_texture.h"
+//#include "rico_chunk.h"
+//#include <GL/gl3w.h>
+//#include <stdlib.h>
 
-struct rico_font {
-    struct rico_uid uid;
-    int CellX, CellY, YOffset, RowPitch;
-    char Base;
-    char Width[256];
-
-    // TODO: Use rico_texture??
-    u32 texture;
-    float RowFactor, ColFactor;
-    int RenderStyle;
-    bool InvertYAxis;
-};
 const u32 RICO_FONT_SIZE = sizeof(struct rico_font);
 
 #define BFG_RS_NONE  0x0  // Blend flags
@@ -38,22 +27,41 @@ struct bff_header
     unsigned char StartPoint;
 };
 
-u32 RICO_FONT_DEFAULT = 0;
-static struct rico_pool *fonts;
+u32 RICO_DEFAULT_FONT = 0;
+
+static inline struct rico_pool **font_pool_ptr()
+{
+    struct rico_chunk *chunk = chunk_active();
+    RICO_ASSERT(chunk);
+    RICO_ASSERT(chunk->fonts);
+    return &chunk->fonts;
+}
+
+static inline struct rico_pool *font_pool()
+{
+    return *font_pool_ptr();
+}
+
+static inline struct rico_font *font_find(u32 handle)
+{
+    struct rico_font *font = pool_read(font_pool(), handle);
+    RICO_ASSERT(font);
+    return font;
+}
 
 int font_init(const char *filename, u32 *_handle)
 {
     enum rico_error err;
-    *_handle = RICO_FONT_DEFAULT;
+    *_handle = RICO_DEFAULT_FONT;
 
-    #ifdef RICO_DEBUG_INFO
+    #if RICO_DEBUG_INFO
         printf("[font][init] filename=%s\n", filename);
     #endif
 
-    err = pool_handle_alloc(&fonts, _handle);
+    err = pool_handle_alloc(font_pool_ptr(), _handle);
     if (err) return err;
 
-    struct rico_font *font = pool_read(fonts, *_handle);
+    struct rico_font *font = font_find(*_handle);
     uid_init(&font->uid, RICO_UID_FONT, filename, false);
 	font->InvertYAxis = false;
 
@@ -119,11 +127,11 @@ cleanup:
 
 void font_free(u32 handle)
 {
-    struct rico_font *font = pool_read(fonts, handle);
+    struct rico_font *font = font_find(handle);
     texture_free(font->texture);
 
     font->uid.uid = UID_NULL;
-    pool_handle_free(fonts, handle);
+    pool_handle_free(font_pool(), handle);
 }
 
 static void font_setblend(const struct rico_font *font)
@@ -151,7 +159,10 @@ int font_render(u32 handle, int x, int y, struct col4 bg, const char *text,
 {
     enum rico_error err;
 
-    struct rico_font *font = pool_read(fonts, handle);
+    if (!handle) handle = RICO_DEFAULT_FONT;
+
+    struct rico_font *font = font_find(handle);
+    RICO_ASSERT(font->uid.uid != UID_NULL);
 
     //font_setblend(font);
 

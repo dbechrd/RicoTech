@@ -1,48 +1,46 @@
-#include "rico_object.h"
-#include "const.h"
-#include "rico_pool.h"
-#include "camera.h"
-#include "rico_cereal.h"
-#include "program.h"
-#include "rico_font.h"
-#include "rico_collision.h"
-#include "rico_material.h"
-#include "rico_light.h"
-#include "rico_state.h"
-#include "rico_mesh.h"
-#include "SDL/SDL.h"
-#include <malloc.h>
+//#include "rico_object.h"
+//#include "rico_uid.h"
+//#include "rico_pool.h"
+//#include "camera.h"
+//#include "rico_cereal.h"
+//#include "program.h"
+//#include "rico_font.h"
+//#include "rico_collision.h"
+//#include "rico_material.h"
+//#include "rico_light.h"
+//#include "rico_state.h"
+//#include "rico_mesh.h"
+//#include "rico_chunk.h"
+//#include "SDL/SDL.h"
+//#include <malloc.h>
 
-struct rico_object {
-    struct rico_uid uid;
-    enum rico_obj_type type;
-
-    //TODO: Refactor into rico_transform
-    //TODO: Animation
-    struct vec3 trans;
-    struct vec3 rot;
-    struct vec3 scale;
-    struct mat4 transform;
-    struct mat4 transform_inverse;
-
-    //TODO: Support multiple meshes
-    u32 mesh;
-
-    //TODO: Support multiple textures (per mesh?)
-    u32 material;
-
-    struct bbox bbox;
-};
 const u32 RICO_OBJECT_SIZE = sizeof(struct rico_object);
 
 const char *rico_obj_type_string[] = {
     RICO_OBJ_TYPES(GEN_STRING)
 };
 
-// TODO: Don't store pools in individual files, query via e.g.
-//       chunk_active().objects
-u32 RICO_OBJECT_DEFAULT = 0;
-static struct rico_pool *objects;
+u32 RICO_DEFAULT_OBJECT = 0;
+
+static inline struct rico_pool **object_pool_ptr()
+{
+    struct rico_chunk *chunk = chunk_active();
+    RICO_ASSERT(chunk);
+    RICO_ASSERT(chunk->objects);
+    return &chunk->objects;
+}
+
+static inline struct rico_pool *object_pool()
+{
+    return *object_pool_ptr();
+}
+
+static inline struct rico_object *object_find(u32 handle)
+{
+    struct rico_object *object = pool_read(object_pool(), handle);
+    RICO_ASSERT(object);
+    return object;
+}
 
 static void update_transform(struct rico_object *obj);
 
@@ -50,17 +48,17 @@ int object_create(u32 *_handle, const char *name, enum rico_obj_type type,
                   u32 mesh, u32 material, const struct bbox *bbox,
                   bool serialize)
 {
-#ifdef RICO_DEBUG_OBJECT
+#if RICO_DEBUG_OBJECT
     printf("[ obj][init] name=%s\n", name);
 #endif
 
     enum rico_error err;
-    *_handle = RICO_OBJECT_DEFAULT;
+    *_handle = RICO_DEFAULT_OBJECT;
 
-    err = pool_handle_alloc(&objects, _handle);
+    err = pool_handle_alloc(object_pool_ptr(), _handle);
     if (err) return err;
 
-    struct rico_object *obj = pool_read(objects, *_handle);
+    struct rico_object *obj = object_find(*_handle);
 
     uid_init(&obj->uid, RICO_UID_OBJECT, name, serialize);
     obj->type = type;
@@ -84,7 +82,7 @@ int object_create(u32 *_handle, const char *name, enum rico_obj_type type,
 int object_copy(u32 *_handle, u32 handle, const char *name)
 {
     enum rico_error err;
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
 
     // Create new object with same mesh / texture
     err = object_create(_handle, name, obj->type, obj->mesh, obj->material,
@@ -102,12 +100,12 @@ int object_copy(u32 *_handle, u32 handle, const char *name)
 void object_free(u32 handle)
 {
     // TODO: Use static pool slots
-    if (handle == RICO_OBJECT_DEFAULT)
+    if (handle == RICO_DEFAULT_OBJECT)
         return;
 
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
 
-#ifdef RICO_DEBUG_OBJECT
+#if RICO_DEBUG_OBJECT
     printf("[ obj][free] name=%s\n", obj->uid.name);
 #endif
 
@@ -115,34 +113,36 @@ void object_free(u32 handle)
     material_free(obj->material);
 
     obj->uid.uid = UID_NULL;
-    pool_handle_free(objects, handle);
+    pool_handle_free(object_pool(), handle);
 }
 
 void object_free_all()
 {
-    for (int i = objects->active - 1; i >= 0; --i)
+    u32 *handles = object_pool()->handles;
+    for (int i = object_pool()->active - 1; i >= 0; --i)
     {
-        object_free(objects->handles[i]);
+        object_free(handles[i]);
     }
 }
 
 void object_bbox_recalculate_all()
 {
-    for (int i = objects->active - 1; i >= 0; --i)
+    u32 *handles = object_pool()->handles;
+    for (int i = object_pool()->active - 1; i >= 0; --i)
     {
-        object_bbox_set(objects->handles[i], NULL);
+        object_bbox_set(handles[i], NULL);
     }
 }
 
 void object_bbox_set(u32 handle, const struct bbox *bbox)
 {
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
     obj->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(obj->mesh);
 }
 
 void object_mesh_set(u32 handle, u32 mesh, const struct bbox *bbox)
 {
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
     mesh_free(obj->mesh);
     obj->mesh = mesh_request(mesh);
     obj->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(mesh);
@@ -150,7 +150,7 @@ void object_mesh_set(u32 handle, u32 mesh, const struct bbox *bbox)
 
 void object_mesh_next(u32 handle)
 {
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
 
     u32 next_mesh = mesh_next(obj->mesh);
     if (next_mesh == obj->mesh)
@@ -163,7 +163,7 @@ void object_mesh_next(u32 handle)
 
 void object_mesh_prev(u32 handle)
 {
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
 
     u32 prev_mesh = mesh_prev(obj->mesh);
     if (prev_mesh == obj->mesh)
@@ -176,7 +176,7 @@ void object_mesh_prev(u32 handle)
 
 void object_material_set(u32 handle, u32 material)
 {
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
     material_free(obj->material);
     obj->material = material_request(material);
 }
@@ -186,7 +186,7 @@ enum rico_obj_type object_type_get(u32 handle)
     if (!handle)
         return OBJ_NULL;
 
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
     return obj->type;
 }
 
@@ -199,7 +199,7 @@ bool object_selectable(u32 handle)
 
 u32 object_next(u32 handle)
 {
-    u32 start = pool_handle_next(objects, handle);
+    u32 start = pool_handle_next(object_pool(), handle);
     u32 next = start;
 
     do
@@ -207,7 +207,7 @@ u32 object_next(u32 handle)
         if (object_selectable(next))
             return next;
 
-        next = pool_handle_next(objects, next);
+        next = pool_handle_next(object_pool(), next);
     } while (next != start);
 
     return 0;
@@ -215,7 +215,7 @@ u32 object_next(u32 handle)
 
 u32 object_prev(u32 handle)
 {
-    u32 start = pool_handle_prev(objects, handle);
+    u32 start = pool_handle_prev(object_pool(), handle);
     u32 prev = start;
 
     do
@@ -223,7 +223,7 @@ u32 object_prev(u32 handle)
         if (object_selectable(prev))
             return prev;
 
-        prev = pool_handle_prev(objects, prev);
+        prev = pool_handle_prev(object_pool(), prev);
     } while (prev != start);
 
     return 0;
@@ -231,115 +231,115 @@ u32 object_prev(u32 handle)
 
 void object_select(u32 handle)
 {
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
     obj->bbox.wireframe = false;
 }
 
 void object_deselect(u32 handle)
 {
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
     obj->bbox.wireframe = true;
 }
 
 void object_trans(u32 handle, const struct vec3 *v)
 {
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
     vec3_add(&obj->trans, v);
     update_transform(obj);
 }
 
 const struct vec3 *object_trans_get(u32 handle)
 {
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
     return &obj->trans;
 }
 
 void object_trans_set(u32 handle, const struct vec3 *v)
 {
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
     obj->trans = *v;
     update_transform(obj);
 }
 
 void object_rot(u32 handle, const struct vec3 *v)
 {
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
     vec3_add(&obj->rot, v);
     update_transform(obj);
 }
 
 void object_rot_set(u32 handle, const struct vec3 *v)
 {
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
     obj->rot = *v;
     update_transform(obj);
 }
 
 const struct vec3 *object_rot_get(u32 handle)
 {
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
     return &obj->rot;
 }
 
 void object_rot_x(u32 handle, float deg)
 {
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
     obj->rot.x += deg;
     update_transform(obj);
 }
 
 void object_rot_x_set(u32 handle, float deg)
 {
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
     obj->rot.x = deg;
     update_transform(obj);
 }
 
 void object_rot_y(u32 handle, float deg)
 {
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
     obj->rot.y += deg;
     update_transform(obj);
 }
 
 void object_rot_y_set(u32 handle, float deg)
 {
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
     obj->rot.y = deg;
     update_transform(obj);
 }
 
 void object_rot_z(u32 handle, float deg)
 {
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
     obj->rot.z += deg;
     update_transform(obj);
 }
 
 void object_rot_z_set(u32 handle, float deg)
 {
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
     obj->rot.z = deg;
     update_transform(obj);
 }
 
 void object_scale(u32 handle, const struct vec3 *v)
 {
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
     vec3_add(&obj->scale, v);
     update_transform(obj);
 }
 
 void object_scale_set(u32 handle, const struct vec3 *v)
 {
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
     obj->scale = *v;
     update_transform(obj);
 }
 
 const struct vec3 *object_scale_get(u32 handle)
 {
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
     return &obj->scale;
 }
 
@@ -380,13 +380,13 @@ static void update_transform(struct rico_object *obj)
 
 const struct mat4 *object_transform_get(u32 handle)
 {
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
     return &obj->transform;
 }
 
 bool object_collide_ray(u32 handle, const struct ray *ray, float *_dist)
 {
-    struct rico_object *obj = pool_read(objects, handle);
+    struct rico_object *obj = object_find(handle);
     return collide_ray_obb(ray, &obj->bbox, &obj->transform,
                            &obj->transform_inverse, _dist);
 }
@@ -398,16 +398,17 @@ u32 object_collide_ray_type(enum rico_obj_type type, const struct ray *ray,
     float distance;
     float min_distance = Z_FAR; // Track closest object
 
+    u32 *handles = object_pool()->handles;
     struct rico_object *obj;
-    for (u32 i = 0; i < objects->active; ++i)
+    for (u32 i = 0; i < object_pool()->active; ++i)
     {
-        obj = pool_read(objects, objects->handles[i]);
+        obj = object_find(handles[i]);
         if (obj->type == type &&
             collide_ray_obb(ray, &obj->bbox, &obj->transform,
                             &obj->transform_inverse, &distance))
         {
             // Record object handle and distance
-            _handle[idx_collide] = objects->handles[i];
+            _handle[idx_collide] = handles[i];
             _dist[idx_collide] = distance;
 
             // If closest so far, update "first" index
@@ -503,10 +504,11 @@ void object_render_type(enum rico_obj_type type,
     glUniform1f(prog->u_light_kl, light.kl);
     glUniform1f(prog->u_light_kq, light.kq);
 
+    u32 *handles = object_pool()->handles;
     struct rico_object *obj;
-    for (u32 i = 0; i < objects->active; ++i)
+    for (u32 i = 0; i < object_pool()->active; ++i)
     {
-        obj = pool_read(objects, objects->handles[i]);
+        obj = object_find(handles[i]);
         if (obj->type == type)
         {
             glUseProgram(prog->prog_id);
@@ -534,8 +536,7 @@ void object_render_type(enum rico_obj_type type,
             glUniformMatrix4fv(prog->u_model, 1, GL_TRUE, obj->transform.a);
 
             // Model material shiny
-            glUniform1f(prog->u_material_shiny,
-                        material_shiny_get(obj->material));
+            glUniform1f(prog->u_material_shiny, material_shiny(obj->material));
 
             // Render object
             render(obj, camera);
@@ -557,7 +558,7 @@ int object_print(u32 handle, enum rico_string_slot slot)
     // Print to screen
     char *buf = object_to_string(handle);
     err = string_init(rico_string_slot_string[slot], slot, 0, 26,
-                      COLOR_GRAY_HIGHLIGHT, 0, RICO_FONT_DEFAULT, buf);
+                      COLOR_GRAY_HIGHLIGHT, 0, 0, buf);
     if (err) goto cleanup;
 
 cleanup:
@@ -584,7 +585,7 @@ char *object_to_string(u32 handle)
     }
     else
     {
-        struct rico_object *obj = pool_read(objects, handle);
+        struct rico_object *obj = object_find(handle);
         sprintf(buf,
             "     UID: %d\n"       \
             "    Name: %s\n"       \
@@ -592,17 +593,16 @@ char *object_to_string(u32 handle)
             "   Trans: %f %f %f\n" \
             "     Rot: %f %f %f\n" \
             "   Scale: %f %f %f\n" \
-            "    Mesh: %d %s\n"       \
+            "    Mesh: %d %s\n"    \
             "Material: %d %s\n",
             obj->uid.uid,
             obj->uid.name,
             rico_obj_type_string[obj->type],
-            obj->trans.x, obj->trans.y, obj->trans.z,
-            obj->rot.x,   obj->rot.y,   obj->rot.z,
-            obj->scale.x, obj->scale.y, obj->scale.z,
+            obj->trans.x,  obj->trans.y, obj->trans.z,
+            obj->rot.x,    obj->rot.y,   obj->rot.z,
+            obj->scale.x,  obj->scale.y, obj->scale.z,
             obj->mesh,     mesh_name(obj->mesh),
             obj->material, material_name(obj->material));
-
     }
     return buf;
 }
@@ -626,7 +626,7 @@ DESERIAL(object_deserialize_0)
     enum rico_error err;
     u32 mesh, material;
 
-    struct rico_object *obj = _handle;
+    struct rico_object *obj = *_handle;
     fread(&obj->type,  sizeof(obj->type),     1, file->fs);
     fread(&obj->trans, sizeof(obj->trans),    1, file->fs);
     fread(&obj->rot,   sizeof(obj->rot),      1, file->fs);
@@ -638,21 +638,13 @@ DESERIAL(object_deserialize_0)
     obj->mesh     = mesh_request(mesh);
     obj->material = material_request(material);
 
-    err = rico_deserialize(&obj->bbox, file);
+    struct bbox *bbox;
+    err = rico_deserialize(&bbox, file);
     if (err == ERR_SERIALIZE_DISABLED)
-    {
         obj->bbox = *mesh_bbox(obj->mesh);
-    }
+    else
+        obj->bbox = *bbox;
+
     obj->bbox.wireframe = true;
     return err;
-}
-
-struct rico_pool *object_pool_get_unsafe()
-{
-    return objects;
-}
-
-void object_pool_set_unsafe(struct rico_pool *pool)
-{
-    objects = pool;
 }
