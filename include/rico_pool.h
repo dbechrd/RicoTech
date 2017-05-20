@@ -9,7 +9,7 @@ struct rico_pool {
     struct rico_uid uid;
     u32 count;          // number of elements
     u32 size;           // size of each element
-    u32 static_count;   // number of static elements
+    u32 fixed_count;   // number of fixed elements
     u32 active;         // number of elements in use
     u32 *handles;       // pool handles
     void *data;         // element pool
@@ -25,7 +25,7 @@ struct rico_pool {
                                  POOL_SIZE_HANDLES(count))
 
 int pool_init(void *mem_block, const char *name, u32 count, u32 size,
-              u32 static_count);
+              u32 fixed_count);
 void pool_free(struct rico_pool *pool, destructor *destruct);
 int pool_handle_alloc(struct rico_pool **pool_ptr, u32 *_handle);
 int pool_handle_free(struct rico_pool *pool, u32 handle);

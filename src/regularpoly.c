@@ -1,4 +1,4 @@
-static struct program_primitive *regularpoly_program = NULL;
+internal struct program_primitive *regularpoly_program = NULL;
 
 int init_regularpoly_program()
 {
@@ -10,7 +10,7 @@ int init_regularpoly_program()
     return err;
 }
 
-static void rebuild_vao(struct regularpoly *poly)
+internal void rebuild_vao(struct regularpoly *poly)
 {
     if (poly->vao)
     {

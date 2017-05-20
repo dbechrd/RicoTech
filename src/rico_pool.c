@@ -1,8 +1,8 @@
-static void pool_print_handles(struct rico_pool *pool);
+internal void pool_print_handles(struct rico_pool *pool);
 
 // TODO: Allocate from heap pool, don't keep calling calloc
 int pool_init(void *mem_block, const char *name, u32 count, u32 size,
-              u32 static_count)
+              u32 fixed_count)
 {
     RICO_ASSERT(count > 0);
 
@@ -10,8 +10,8 @@ int pool_init(void *mem_block, const char *name, u32 count, u32 size,
     uid_init(&pool->uid, RICO_UID_POOL, name, true);
     pool->count = count;
     pool->size = size;
-    pool->static_count = static_count;
-    pool->active = static_count;
+    pool->fixed_count = fixed_count;
+    pool->active = fixed_count;
 
     // TODO: Do these work..?
     pool_fixup(pool);
@@ -72,7 +72,7 @@ int pool_handle_alloc(struct rico_pool **pool_ptr, u32 *_handle)
         // Resize pool
         struct rico_pool *new_pool;
         err = pool_init(pool->uid.name, pool->count * 2, pool->size,
-                        pool->static_count, &new_pool);
+                        pool->fixed_count, &new_pool);
         if (err)
         {
 #if RICO_DEBUG_POOL
@@ -146,8 +146,8 @@ int pool_handle_free(struct rico_pool *pool, u32 handle)
     //      Free handle 1 (swaps with 4)
     //      [0 4 2 3|1 5 6 7 8 9]
 
-    // Don't rearrange the static sub-pool
-    if (i >= pool->static_count)
+    // Don't rearrange the fixed sub-pool
+    if (i >= pool->fixed_count)
     {
         pool->active--;
         if (pool->active > 0)
@@ -224,7 +224,7 @@ SERIAL(pool_serialize_0)
     const struct rico_pool *pool = handle;
     fwrite(&pool->count,        sizeof(pool->count),        1, file->fs);
     fwrite(&pool->size,         sizeof(pool->size),         1, file->fs);
-    fwrite(&pool->static_count, sizeof(pool->static_count), 1, file->fs);
+    fwrite(&pool->fixed_count, sizeof(pool->fixed_count), 1, file->fs);
     fwrite(&pool->active,       sizeof(pool->active),       1, file->fs);
     fwrite(pool->handles, sizeof(*pool->handles), pool->count, file->fs);
     for (u32 i = 0; i < pool->active; ++i)
@@ -247,7 +247,7 @@ DESERIAL(pool_deserialize_0)
     struct rico_pool *pool = *_handle;
     fread(&pool->count,        sizeof(pool->count),        1, file->fs);
     fread(&pool->size,         sizeof(pool->size),         1, file->fs);
-    fread(&pool->static_count, sizeof(pool->static_count), 1, file->fs);
+    fread(&pool->fixed_count, sizeof(pool->fixed_count), 1, file->fs);
     fread(&pool->active,       sizeof(pool->active),       1, file->fs);
 
     if(pool->count > 0)
@@ -277,7 +277,7 @@ DESERIAL(pool_deserialize_0)
         {
             struct rico_uid *uid;
             u32 handle;
-            for (u32 i = pool->active - 1; i > pool->static_count; --i)
+            for (u32 i = pool->active - 1; i > pool->fixed_count; --i)
             {
                 uid = pool_read(pool, pool->handles[i]);
                 if (uid->uid == UID_NULL)
@@ -303,7 +303,7 @@ DESERIAL(pool_deserialize_0)
     return SUCCESS;
 }
 
-static void pool_print_handles(struct rico_pool *pool)
+internal void pool_print_handles(struct rico_pool *pool)
 {
 #if RICO_DEBUG_POOL
     // if (pool->uid.uid > 1) {
@@ -319,11 +319,11 @@ static void pool_print_handles(struct rico_pool *pool)
         return;
     }
 
-    // Print static sub-pool
-    if (pool->static_count > 0)
+    // Print fixed sub-pool
+    if (pool->fixed_count > 0)
     {
-        printf("STC[ ");
-        for (u32 i = 0; i < pool->static_count; i++)
+        printf("FIX[ ");
+        for (u32 i = 0; i < pool->fixed_count; i++)
         {
             printf("%d ", pool->handles[i]);
         }
@@ -332,7 +332,7 @@ static void pool_print_handles(struct rico_pool *pool)
 
     // Print dynamic sub-pool
     printf("DYN[ ");
-    for (u32 i = pool->static_count; i < pool->active; i++)
+    for (u32 i = pool->fixed_count; i < pool->active; i++)
     {
         printf("%d ", pool->handles[i]);
     }

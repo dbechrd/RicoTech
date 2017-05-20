@@ -20,7 +20,7 @@ struct bff_header
 
 u32 RICO_DEFAULT_FONT = 0;
 
-static inline struct rico_pool **font_pool_ptr()
+internal inline struct rico_pool **font_pool_ptr()
 {
     struct rico_chunk *chunk = chunk_active();
     RICO_ASSERT(chunk);
@@ -28,12 +28,12 @@ static inline struct rico_pool **font_pool_ptr()
     return &chunk->fonts;
 }
 
-static inline struct rico_pool *font_pool()
+internal inline struct rico_pool *font_pool()
 {
     return *font_pool_ptr();
 }
 
-static inline struct rico_font *font_find(u32 handle)
+internal inline struct rico_font *font_find(u32 handle)
 {
     struct rico_font *font = pool_read(font_pool(), handle);
     RICO_ASSERT(font);
@@ -120,7 +120,7 @@ void font_free(u32 handle)
 {
     struct rico_font *font = font_find(handle);
 
-    // TODO: Use static pool slots
+    // TODO: Use fixed pool slots
     if (handle == RICO_DEFAULT_FONT)
         return;
 
@@ -134,7 +134,7 @@ void font_free(u32 handle)
     pool_handle_free(font_pool(), handle);
 }
 
-static void font_setblend(const struct rico_font *font)
+internal void font_setblend(const struct rico_font *font)
 {
     // TODO: Preserve blend settings before changing
 	switch(font->RenderStyle)

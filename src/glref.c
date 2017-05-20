@@ -2,27 +2,27 @@
 //      Maybe it's easy to derive lookat when I need it? Probably not..
 //struct vec3 camera_right = {  }
 
-//static GLuint vao;
-//static GLuint vbos[2];
+//global GLuint vao;
+//global GLuint vbos[2];
 
-static u32 selected_handle = 0;
+global u32 selected_handle = 0;
 
-static struct program_default *prog_default;
-static struct program_primitive *prog_primitive;
+global struct program_default *prog_default;
+global struct program_primitive *prog_primitive;
 
-static u32 font;
-static u32 tex_font_test;
-static u32 mesh_font_test;
-static u32 tex_grass;
-static u32 tex_rock;
-static u32 tex_hello;
-static u32 tex_yellow;
+global u32 font;
+global u32 tex_font_test;
+global u32 mesh_font_test;
+global u32 tex_grass;
+global u32 tex_rock;
+global u32 tex_hello;
+global u32 tex_yellow;
 
-static struct bbox axis_bbox;
+global struct bbox axis_bbox;
 
-static struct mat4 x_axis_transform;
-static struct mat4 y_axis_transform;
-static struct mat4 z_axis_transform;
+global struct mat4 x_axis_transform;
+global struct mat4 y_axis_transform;
+global struct mat4 z_axis_transform;
 
 int init_glref()
 {

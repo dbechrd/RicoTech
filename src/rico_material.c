@@ -2,7 +2,7 @@ const u32 RICO_MATERIAL_SIZE = sizeof(struct rico_material);
 
 u32 RICO_DEFAULT_MATERIAL = 0;
 
-static inline struct rico_pool **material_pool_ptr()
+internal inline struct rico_pool **material_pool_ptr()
 {
     struct rico_chunk *chunk = chunk_active();
     RICO_ASSERT(chunk);
@@ -10,12 +10,12 @@ static inline struct rico_pool **material_pool_ptr()
     return &chunk->materials;
 }
 
-static inline struct rico_pool *material_pool()
+internal inline struct rico_pool *material_pool()
 {
     return *material_pool_ptr();
 }
 
-static inline struct rico_material *material_find(u32 handle)
+internal inline struct rico_material *material_find(u32 handle)
 {
     struct rico_material *material = pool_read(material_pool(), handle);
     RICO_ASSERT(material);
@@ -72,7 +72,7 @@ void material_free(u32 handle)
     if (material->ref_count > 0)
         return;
 
-    // TODO: Use static pool slots
+    // TODO: Use fixed pool slots
     if (handle == RICO_DEFAULT_MATERIAL)
         return;
 

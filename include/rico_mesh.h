@@ -16,7 +16,7 @@ struct rico_mesh {
 extern const u32 RICO_MESH_SIZE;
 
 /*
-// Cleanup: Do I need static slots here? Anywhere?
+// Cleanup: Do I need fixed slots here? Anywhere?
 #define RICO_MESH_SLOTS(f)    \
     f(MESH_SLOT_NULL)         \
     f(MESH_SLOT_SELECTED_OBJ) \

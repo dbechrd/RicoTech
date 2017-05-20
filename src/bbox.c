@@ -1,6 +1,6 @@
 #define BBOX_EPSILON 0.01f
 
-static int init_gl(struct bbox *bbox);
+internal int init_gl(struct bbox *bbox);
 
 void bbox_render_color(const struct bbox *box, const struct mat4 *model_matrix,
                        const struct col4 color);
@@ -54,7 +54,7 @@ int bbox_init_mesh(struct bbox *bbox, const char *name,
     return bbox_init(bbox, name, p0, p1, color);
 }
 
-static int init_gl(struct bbox *bbox)
+internal int init_gl(struct bbox *bbox)
 {
     enum rico_error err = make_program_primitive(&bbox->prog);
     if (err) return err;
@@ -103,7 +103,7 @@ static int init_gl(struct bbox *bbox)
     // }
 
     // Bbox faces
-    static GLuint elements[36] = {
+    local GLuint elements[36] = {
         0, 1, 2, 2, 3, 0,
         4, 0, 3, 3, 7, 4,
         5, 4, 7, 7, 6, 5,

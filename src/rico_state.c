@@ -13,8 +13,8 @@ enum rico_key {
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-static const bool reset_game_world = true;
-static struct rico_chunk *RICO_DEFAULT_CHUNK;
+global const bool reset_game_world = true;
+global struct rico_chunk *RICO_DEFAULT_CHUNK;
 
 ////////////////////////////////////////////////////////////////////////////////
 //Human walk speed empirically found to be 33 steps in 20 seconds. That
@@ -29,67 +29,67 @@ static struct rico_chunk *RICO_DEFAULT_CHUNK;
 ////////////////////////////////////////////////
 // Before delta change
 ////////////////////////////////////////////////
-// static struct vec3 view_vel;
-// static GLfloat view_vel_max = 8.0f;
-// static GLfloat view_vel_max_sprint = 16.0f;
+// global struct vec3 view_vel;
+// global GLfloat view_vel_max = 8.0f;
+// global GLfloat view_vel_max_sprint = 16.0f;
 
-// static struct vec3 view_acc;
-// static GLfloat view_acc_delta = 0.05f;
-// static GLfloat sprint_factor = 2.0f;
+// global struct vec3 view_acc;
+// global GLfloat view_acc_delta = 0.05f;
+// global GLfloat sprint_factor = 2.0f;
 ////////////////////////////////////////////////
-static float look_sensitivity_x = 0.5f;
-static float look_sensitivity_y = 0.5f;
-static struct vec3 mouse_acc;
+global float look_sensitivity_x = 0.5f;
+global float look_sensitivity_y = 0.5f;
+global struct vec3 mouse_acc;
 
-static struct vec3 view_vel;
-static float view_vel_max = 2.5f; //5.0f;
-static float view_vel_max_sprint = 10.0f;
-static float view_vel_max_snail = 0.05f;
+global struct vec3 view_vel;
+global float view_vel_max = 2.5f; //5.0f;
+global float view_vel_max_sprint = 10.0f;
+global float view_vel_max_snail = 0.05f;
 
-static struct vec3 view_acc;
-static float sprint_factor = 2.0f;
+global struct vec3 view_acc;
+global float sprint_factor = 2.0f;
 
-// static struct vec3 view_rot_vel;
-// static float view_rot_vel_max = 300.0f;
+// global struct vec3 view_rot_vel;
+// global float view_rot_vel_max = 300.0f;
 
-// static struct vec3 view_rot_acc;
-// static float view_rot_acc_max = 50.0f;
+// global struct vec3 view_rot_acc;
+// global float view_rot_acc_max = 50.0f;
 ////////////////////////////////////////////////
 
 #define TRANS_DELTA_MIN 0.01f
 #define TRANS_DELTA_MAX 10.0f
-static float trans_delta = 1.0f;
+global float trans_delta = 1.0f;
 
 #define ROT_DELTA_MIN 1.0f
 #define ROT_DELTA_MAX 90.0f
 #define ROT_DELTA_DEFAULT 5.0f
-static float rot_delta = ROT_DELTA_DEFAULT;
+global float rot_delta = ROT_DELTA_DEFAULT;
 
 #define SCALE_DELTA_MIN 0.1f
 #define SCALE_DELTA_MAX 5.0f
-static float scale_delta = 1.0f;
+global float scale_delta = 1.0f;
 
-static bool mouse_lock = true;
-static bool sprint = false;
-static bool snail = false;
-static bool enable_lighting = true;
+global bool mouse_lock = true;
+global bool sprint = false;
+global bool snail = false;
+global bool enable_lighting = true;
 
 // Performance timing
-static u64 perfs_frequency;
-static u64 last_perfs;
-static u64 last_cycles;
+global u64 perfs_frequency;
+global u64 last_perfs;
+global u64 last_cycles;
 
 // FPS UI
-static u64 fps_last_render;
-static u64 fps_render_delta = 200000;  // 200 ms
-static bool fps_render = false;
+global u64 fps_last_render;
+global u64 fps_render_delta = 200000;  // 200 ms
+global bool fps_render = false;
 
 // Key map and state
-static s32 sdlk[RICOKEY_COUNT];
-static bool pressed[RICOKEY_COUNT] = { false };
+global s32 sdlk[RICOKEY_COUNT];
+global bool pressed[RICOKEY_COUNT] = { false };
 
 // Current state
-static enum rico_state state;
+global enum rico_state state;
 
 // State change handlers
 typedef int (*state_handler)();
@@ -264,7 +264,7 @@ inline bool state_is_edit()
             state == STATE_EDIT_MESH);
 }
 
-static int save_file()
+internal int save_file()
 {
     enum rico_error err;
 
@@ -304,7 +304,7 @@ static int save_file()
 ////////////////////////////////////////////////////////////////////////
 // Camera forward ray v. scene
 ////////////////////////////////////////////////////////////////////////
-static void select_first_obj()
+internal void select_first_obj()
 {
     #define COLLIDE_COUNT 10
     u32 obj_collided[COLLIDE_COUNT] = { 0 };
@@ -332,7 +332,7 @@ static void select_first_obj()
     // }
 }
 
-static int handle_engine_events(SDL_Event event, bool *handled)
+internal int handle_engine_events(SDL_Event event, bool *handled)
 {
     enum rico_error err = SUCCESS;
 
@@ -444,7 +444,7 @@ static int handle_engine_events(SDL_Event event, bool *handled)
     return err;
 }
 
-static int handle_camera_events(SDL_Event event, bool *handled)
+internal int handle_camera_events(SDL_Event event, bool *handled)
 {
     struct vec3 delta = VEC3_ZERO;
 
@@ -606,7 +606,7 @@ static int handle_camera_events(SDL_Event event, bool *handled)
     return SUCCESS;
 }
 
-static int handle_edit_events(SDL_Event event, bool *handled)
+internal int handle_edit_events(SDL_Event event, bool *handled)
 {
     RICO_ASSERT(state_is_edit());
 
@@ -729,7 +729,7 @@ static int handle_edit_events(SDL_Event event, bool *handled)
     return SUCCESS;
 }
 
-static int state_play_explore()
+internal int state_play_explore()
 {
     enum rico_error err = SUCCESS;
 
@@ -768,7 +768,7 @@ static int state_play_explore()
     return err;
 }
 
-static int state_edit_translate()
+internal int state_edit_translate()
 {
     enum rico_error err = SUCCESS;
 
@@ -865,7 +865,7 @@ static int state_edit_translate()
     return err;
 }
 
-static int state_edit_rotate()
+internal int state_edit_rotate()
 {
     enum rico_error err = SUCCESS;
 
@@ -970,7 +970,7 @@ static int state_edit_rotate()
     return err;
 }
 
-static int state_edit_scale()
+internal int state_edit_scale()
 {
     enum rico_error err = SUCCESS;
 
@@ -1067,7 +1067,7 @@ static int state_edit_scale()
     return err;
 }
 
-static int state_edit_texture()
+internal int state_edit_texture()
 {
     enum rico_error err = SUCCESS;
 
@@ -1095,7 +1095,7 @@ static int state_edit_texture()
     return err;
 }
 
-static int state_edit_mesh()
+internal int state_edit_mesh()
 {
     enum rico_error err = SUCCESS;
 
@@ -1133,7 +1133,7 @@ static int state_edit_mesh()
     return err;
 }
 
-static int state_menu_quit()
+internal int state_menu_quit()
 {
     enum rico_error err = SUCCESS;
 
@@ -1173,12 +1173,12 @@ static int state_menu_quit()
     return err;
 }
 
-static int state_text_input()
+internal int state_text_input()
 {
     return SUCCESS;
 }
 
-static int rico_init_shaders()
+internal int rico_init_shaders()
 {
     enum rico_error err;
 
@@ -1190,7 +1190,7 @@ static int rico_init_shaders()
     return err;
 }
 
-static void rico_init_cereal()
+internal void rico_init_cereal()
 {
     // Custom serialiers
     rico_cereals[RICO_UID_CHUNK].save[0] = &chunk_serialize_0;
@@ -1209,7 +1209,7 @@ static void rico_init_cereal()
     rico_cereals[RICO_UID_BBOX].load[0] = &bbox_deserialize_0;
 }
 
-static int rico_init_chunks()
+internal int rico_init_chunks()
 {
     enum rico_error err;
 
@@ -1231,20 +1231,20 @@ static int rico_init_chunks()
     return err;
 }
 
-static int rico_init_fonts()
+internal int rico_init_fonts()
 {
     enum rico_error err;
 
-    // TODO: Use static slots to allocate default resources
+    // TODO: Use fixed slots to allocate default resources
     err = font_init("font/courier_new.bff", &RICO_DEFAULT_FONT);
     return err;
 }
 
-static int rico_init_textures()
+internal int rico_init_textures()
 {
     enum rico_error err;
 
-    // TODO: Use static slots to allocate default resources
+    // TODO: Use fixed slots to allocate default resources
     err = texture_load_file("TEXTURE_DEFAULT_DIFF", GL_TEXTURE_2D,
                             "texture/basic_diff.tga", 32,
                             &RICO_DEFAULT_TEXTURE_DIFF);
@@ -1256,18 +1256,18 @@ static int rico_init_textures()
     return err;
 }
 
-static int rico_init_materials()
+internal int rico_init_materials()
 {
     enum rico_error err;
 
-    // TODO: Use static slots to allocate default resources
+    // TODO: Use fixed slots to allocate default resources
     err = material_init("MATERIAL_DEFAULT", RICO_DEFAULT_TEXTURE_DIFF,
                         RICO_DEFAULT_TEXTURE_SPEC, 0.5f,
                         &RICO_DEFAULT_MATERIAL);
     return err;
 }
 
-static int rico_init_meshes()
+internal int rico_init_meshes()
 {
     enum rico_error err;
 
@@ -1335,7 +1335,7 @@ static int rico_init_meshes()
         4, 5, 1, 1, 0, 4
     };
 
-    // TODO: Use static slot for default mesh (do this for all other defaults
+    // TODO: Use fixed slot for default mesh (do this for all other defaults
     //       as well.
     err = mesh_load(&RICO_DEFAULT_MESH, "MESH_DEFAULT", MESH_OBJ_WORLD,
                     vert_count, vertices, element_count, elements,
@@ -1343,7 +1343,7 @@ static int rico_init_meshes()
     return err;
 }
 
-static int load_mesh_files()
+internal int load_mesh_files()
 {
     enum rico_error err;
 
@@ -1382,7 +1382,7 @@ static int load_mesh_files()
     return err;
 }
 
-static int init_hardcoded_test_chunk()
+internal int init_hardcoded_test_chunk()
 {
     enum rico_error err;
 
@@ -1469,7 +1469,7 @@ static int init_hardcoded_test_chunk()
     return err;
 }
 
-static int rico_init()
+internal int rico_init()
 {
     enum rico_error err;
 
@@ -1560,7 +1560,7 @@ static int rico_init()
         rico_file_close(&file);
         if (err) return err;
 
-        // TODO: Use static slots, or find by name and load if don't exist?
+        // TODO: Use fixed slots, or find by name and load if don't exist?
         RICO_DEFAULT_FONT = 1;
         RICO_DEFAULT_TEXTURE_DIFF = 1;
         RICO_DEFAULT_TEXTURE_SPEC = 2;
@@ -1578,7 +1578,7 @@ static int rico_init()
     return err;
 }
 
-static int state_engine_init()
+internal int state_engine_init()
 {
     enum rico_error err;
 
@@ -1622,7 +1622,7 @@ static int state_engine_init()
     return err;
 }
 
-static int state_engine_shutdown()
+internal int state_engine_shutdown()
 {
     free_glref();
     return SUCCESS;

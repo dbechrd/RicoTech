@@ -1,17 +1,14 @@
 #include "../src/rico.c"
 
-#define GL_VERSION_MAJOR 3
-#define GL_VERSION_MINOR 2
+global SDL_Window *window = NULL;
+global SDL_GLContext context = NULL;
 
-static SDL_Window *window = NULL;
-static SDL_GLContext context = NULL;
-
-static inline void init_stb()
+internal inline void init_stb()
 {
     stbi_set_flip_vertically_on_load(1);
 }
 
-static inline void init_murmurhash3()
+internal inline void init_murmurhash3()
 {
     // key=RicoTech, seed=0
     MurmurHash3_seed = 3533902173;
@@ -23,7 +20,7 @@ static inline void init_murmurhash3()
     printf("Hash: %u\n", hash);
 }
 
-static int sdl_gl_attrib(SDL_GLattr attr, int value)
+internal int sdl_gl_attrib(SDL_GLattr attr, int value)
 {
     int sdl_err = SDL_GL_SetAttribute(attr, value);
     if (sdl_err < 0)
@@ -34,7 +31,7 @@ static int sdl_gl_attrib(SDL_GLattr attr, int value)
     return SUCCESS;
 }
 
-static int init_sdl()
+internal int init_sdl()
 {
     enum rico_error err;
     int sdl_err;
@@ -100,7 +97,7 @@ static int init_sdl()
     return SUCCESS;
 }
 
-static int init_gl3w(int major, int minor)
+internal int init_gl3w(int major, int minor)
 {
     int init = gl3wInit();
     if (init)
@@ -115,7 +112,7 @@ static int init_gl3w(int major, int minor)
     return SUCCESS;
 }
 
-static void init_opengl()
+internal void init_opengl()
 {
 #if RICO_DEBUG
     {

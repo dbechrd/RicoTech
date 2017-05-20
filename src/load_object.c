@@ -18,7 +18,7 @@ struct OBJ_FACE {
 enum OBJ_LINE_TYPE line_type(const char *line);
 //bool load_mesh(const char *line, struct rico_mesh *mesh);
 
-static inline char *strsep(char **stringp, const char *delim)
+internal inline char *strsep(char **stringp, const char *delim)
 {
     char *start = *stringp;
     char *p;
@@ -39,7 +39,7 @@ static inline char *strsep(char **stringp, const char *delim)
     return start;
 }
 
-static inline long fast_atol(const char *str)
+internal inline long fast_atol(const char *str)
 {
     if (!str) return 0;
 
@@ -221,7 +221,7 @@ cleanup:
 
 // bool load_mesh(const char *line, struct rico_mesh *mesh)
 // {
-//     static const char *prefix = "o ";
+//     local const char *prefix = "o ";
 //     if (!str_starts_with(line, prefix))
 //         return false;
 

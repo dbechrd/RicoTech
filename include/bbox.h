@@ -36,7 +36,7 @@ void bbox_render_color(const struct bbox *box, const struct mat4 *model_matrix,
 SERIAL(bbox_serialize_0);
 DESERIAL(bbox_deserialize_0);
 
-static inline bool bbox_intersects(const struct bbox *a, const struct bbox *b)
+internal inline bool bbox_intersects(const struct bbox *a, const struct bbox *b)
 {
     return !(a->p[1].x < b->p[0].x ||
              b->p[1].x < a->p[0].x ||

@@ -2,7 +2,7 @@
 // General-purpose
 //==============================================================================
 
-static int make_program(GLuint vertex_shader, GLuint fragment_shader,
+internal int make_program(GLuint vertex_shader, GLuint fragment_shader,
                         GLuint *_program)
 {
     GLint status;
@@ -31,12 +31,12 @@ static int make_program(GLuint vertex_shader, GLuint fragment_shader,
     return SUCCESS;
 }
 
-static inline void free_program(GLuint program)
+internal inline void free_program(GLuint program)
 {
     if (program) glDeleteProgram(program);
 }
 
-static inline GLint program_get_attrib_location(GLuint program,
+internal inline GLint program_get_attrib_location(GLuint program,
                                                 const char* name)
 {
     GLint location = glGetAttribLocation(program, name);
@@ -49,7 +49,7 @@ static inline GLint program_get_attrib_location(GLuint program,
     return location;
 }
 
-static inline GLint program_get_uniform_location(GLuint program,
+internal inline GLint program_get_uniform_location(GLuint program,
                                                  const char* name)
 {
     GLint location = glGetUniformLocation(program, name);
@@ -66,7 +66,7 @@ static inline GLint program_get_uniform_location(GLuint program,
 // Default program
 //==============================================================================
 
-static inline void program_default_get_locations(struct program_default *p)
+internal inline void program_default_get_locations(struct program_default *p)
 {
     // Vertex shader
     p->u_time = program_get_uniform_location(p->prog_id, "u_time");
@@ -109,7 +109,7 @@ static inline void program_default_get_locations(struct program_default *p)
 
 int make_program_default(struct program_default **_program)
 {
-    static struct program_default *prog_default = NULL;
+    local struct program_default *prog_default = NULL;
     enum rico_error err;
 
     if (prog_default != NULL) {
@@ -171,7 +171,7 @@ void program_default_uniform_projection(struct program_default *program,
 // Primitive program
 //==============================================================================
 
-static inline void program_primitive_get_locations(struct program_primitive *p)
+internal inline void program_primitive_get_locations(struct program_primitive *p)
 {
     // Vertex shader
     p->u_model = program_get_uniform_location(p->prog_id, "u_model");
@@ -190,7 +190,7 @@ static inline void program_primitive_get_locations(struct program_primitive *p)
 
 int make_program_primitive(struct program_primitive **_program)
 {
-    static struct program_primitive *prog_primitive = NULL;
+    local struct program_primitive *prog_primitive = NULL;
     enum rico_error err;
 
     if (prog_primitive != NULL) {

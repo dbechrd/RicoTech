@@ -3,7 +3,7 @@ const u32 RICO_TEXTURE_SIZE = sizeof(struct rico_texture);
 u32 RICO_DEFAULT_TEXTURE_DIFF = 0;
 u32 RICO_DEFAULT_TEXTURE_SPEC = 0;
 
-static inline struct rico_pool **texture_pool_ptr()
+internal inline struct rico_pool **texture_pool_ptr()
 {
     struct rico_chunk *chunk = chunk_active();
     RICO_ASSERT(chunk);
@@ -11,19 +11,19 @@ static inline struct rico_pool **texture_pool_ptr()
     return &chunk->textures;
 }
 
-static inline struct rico_pool *texture_pool()
+internal inline struct rico_pool *texture_pool()
 {
     return *texture_pool_ptr();
 }
 
-static inline struct rico_texture *texture_find(u32 handle)
+internal inline struct rico_texture *texture_find(u32 handle)
 {
     struct rico_texture *texture = pool_read(texture_pool(), handle);
     RICO_ASSERT(texture);
     return texture;
 }
 
-static int build_texture(struct rico_texture *tex, const void *pixels);
+internal int build_texture(struct rico_texture *tex, const void *pixels);
 
 // TODO: Do proper reference counting, this function is stupid. Need to save
 //       filename for that to work (how to track load_pixels calls?)
@@ -93,7 +93,7 @@ int texture_load_pixels(const char *name, GLenum target, u32 width, u32 height,
     return build_texture(tex, pixels);
 }
 
-static int build_texture(struct rico_texture *tex, const void *pixels)
+internal int build_texture(struct rico_texture *tex, const void *pixels)
 {
     //--------------------------------------------------------------------------
     // Generate textures
@@ -218,7 +218,7 @@ void texture_free(u32 handle)
     if (tex->ref_count > 0)
         return;
 
-    // TODO: Use static pool slots
+    // TODO: Use fixed pool slots
     if (handle == RICO_DEFAULT_TEXTURE_DIFF)
         return;
     if (handle == RICO_DEFAULT_TEXTURE_SPEC)

@@ -2,9 +2,9 @@
 #define PTR_SUBTRACT(a, b) ((u8 *)a - (u8 *)b)
 
 // TODO: Is a global chunk the best way to keep track of the pools?
-static struct rico_chunk *global_chunk;
+global struct rico_chunk *global_chunk;
 
-static void chunk_print(struct rico_chunk *chunk);
+internal void chunk_print(struct rico_chunk *chunk);
 
 int chunk_init(const char *name, u32 strings, u32 fonts, u32 textures,
                u32 materials, u32 meshes, u32 objects,
@@ -84,6 +84,11 @@ SERIAL(chunk_serialize_0)
     u32 bytes = chunk->total_size - skip;
     u8 *seek = (u8 *)chunk; ADD_BYTES(seek, skip);
 
+    // TODO: Don't write entire pools. Write pool header (w/ size) and then only
+    //       the handles in use. No point writing empty pool slots to disk. How
+    //       different is this from doing compression in RAM before writing to
+    //       disk?
+
     // TODO: Check fwrite success
     fwrite(seek, bytes, 1, file->fs);
 
@@ -118,6 +123,9 @@ DESERIAL(chunk_deserialize_0)
 
     struct rico_chunk *chunk = mem_block;
     memcpy(chunk, tmp_chunk, sizeof(struct rico_chunk));
+
+    // TODO: Set pool pointers first, then read pools from file and skip the
+    //       unused storage space (which is pointless to store in the file).
 
     // Read chunk from file
     u32 skip = sizeof(chunk->uid) + sizeof(chunk->total_size);
@@ -161,7 +169,7 @@ DESERIAL(chunk_deserialize_0)
 }
 
 #if RICO_DEBUG_CHUNK
-static void chunk_print(struct rico_chunk *chunk)
+internal void chunk_print(struct rico_chunk *chunk)
 {
     // Print information about chunk and pool sizes
     printf("[chnk][show] uid=%d name=%s total_size=%d\n" \

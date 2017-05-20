@@ -88,39 +88,39 @@ struct vec4 {
 //extern const struct vec3 VEC3_SMALL;
 //extern const struct vec3 VEC3_SCALE_ASPECT;
 
-static inline struct vec3 *vec3_add(struct vec3 *a, const struct vec3 *b)
+internal inline struct vec3 *vec3_add(struct vec3 *a, const struct vec3 *b)
 {
     a->x += b->x;
     a->y += b->y;
     a->z += b->z;
     return a;
 }
-static inline struct vec3 *vec3_sub(struct vec3 *a, const struct vec3 *b)
+internal inline struct vec3 *vec3_sub(struct vec3 *a, const struct vec3 *b)
 {
     a->x -= b->x;
     a->y -= b->y;
     a->z -= b->z;
     return a;
 }
-static inline struct vec3 *vec3_scale(struct vec3 *v, const struct vec3 *s)
+internal inline struct vec3 *vec3_scale(struct vec3 *v, const struct vec3 *s)
 {
     v->x *= s->x;
     v->y *= s->y;
     v->z *= s->z;
     return v;
 }
-static inline struct vec3 *vec3_scalef(struct vec3 *v, float s)
+internal inline struct vec3 *vec3_scalef(struct vec3 *v, float s)
 {
     v->x *= s;
     v->y *= s;
     v->z *= s;
     return v;
 }
-static inline float vec3_dot(const struct vec3 *a, const struct vec3 *b)
+internal inline float vec3_dot(const struct vec3 *a, const struct vec3 *b)
 {
     return a->x*b->x + a->y*b->y + a->z*b->z;
 }
-static inline struct vec3 vec3_cross(const struct vec3 *a, const struct vec3 *b)
+internal inline struct vec3 vec3_cross(const struct vec3 *a, const struct vec3 *b)
 {
     struct vec3 c;
     c.x = a->y * b->z - a->z * b->y;
@@ -128,7 +128,7 @@ static inline struct vec3 vec3_cross(const struct vec3 *a, const struct vec3 *b)
     c.z = a->x * b->y - a->y * b->x;
     return c;
 }
-static inline float vec3_length(const struct vec3 *v)
+internal inline float vec3_length(const struct vec3 *v)
 {
     return sqrtf(
         v->x * v->x +
@@ -136,14 +136,14 @@ static inline float vec3_length(const struct vec3 *v)
         v->z * v->z
     );
 }
-static inline struct vec3 *vec3_negate(struct vec3 *v)
+internal inline struct vec3 *vec3_negate(struct vec3 *v)
 {
     v->x = -v->x;
     v->y = -v->y;
     v->z = -v->z;
     return v;
 }
-static inline struct vec3 *vec3_normalize(struct vec3 *v)
+internal inline struct vec3 *vec3_normalize(struct vec3 *v)
 {
     float len = 1.0f / vec3_length(v);
     v->x *= len;
@@ -151,20 +151,20 @@ static inline struct vec3 *vec3_normalize(struct vec3 *v)
     v->z *= len;
     return v;
 }
-static inline struct vec3 *vec3_positive(struct vec3 *v)
+internal inline struct vec3 *vec3_positive(struct vec3 *v)
 {
     if (v->x < 0) v->x *= -1;
     if (v->y < 0) v->y *= -1;
     if (v->z < 0) v->z *= -1;
     return v;
 }
-static inline int vec3_equals(const struct vec3 *a, const struct vec3 *b)
+internal inline int vec3_equals(const struct vec3 *a, const struct vec3 *b)
 {
     return (a->x == b->x && a->y == b->y && a->z == b->z);
 }
 
 // TODO: Refactor *all* printf stuff out into a single file
-static inline void vec3_print(struct vec3 *v)
+internal inline void vec3_print(struct vec3 *v)
 {
     printf("Vec XYZ: %10f %10f %10f\n", v->x, v->y, v->z);
 }
@@ -189,7 +189,7 @@ extern const struct mat4 MAT4_IDENT;
 //extern const struct mat4 MAT4_PROJ_SCREEN;
 
 //Store as row-major, one-dimensional array of floats
-static inline struct mat4 mat4_init(
+internal inline struct mat4 mat4_init(
     float m00, float m01, float m02, float m03,
     float m10, float m11, float m12, float m13,
     float m20, float m21, float m22, float m23,
@@ -215,7 +215,7 @@ static inline struct mat4 mat4_init(
     return mat;
 }
 
-static inline struct mat4 mat4_init_transpose(const struct mat4 *m)
+internal inline struct mat4 mat4_init_transpose(const struct mat4 *m)
 {
     return mat4_init(
         m->m[0][0], m->m[1][0], m->m[2][0], m->m[3][0],
@@ -225,7 +225,7 @@ static inline struct mat4 mat4_init_transpose(const struct mat4 *m)
     );
 }
 
-static inline struct mat4 mat4_init_translate(const struct vec3 *v)
+internal inline struct mat4 mat4_init_translate(const struct vec3 *v)
 {
     return mat4_init(
         1, 0, 0, v->x,
@@ -235,7 +235,7 @@ static inline struct mat4 mat4_init_translate(const struct vec3 *v)
     );
 }
 
-static inline struct mat4 mat4_init_scale(const struct vec3 *s)
+internal inline struct mat4 mat4_init_scale(const struct vec3 *s)
 {
     return mat4_init(
         s->x, 0, 0, 0,
@@ -245,7 +245,7 @@ static inline struct mat4 mat4_init_scale(const struct vec3 *s)
     );
 }
 
-static inline struct mat4 mat4_init_scalef(float s)
+internal inline struct mat4 mat4_init_scalef(float s)
 {
     return mat4_init(
         s, 0, 0, 0,
@@ -255,7 +255,7 @@ static inline struct mat4 mat4_init_scalef(float s)
     );
 }
 
-static inline struct mat4 mat4_init_rotx(float deg)
+internal inline struct mat4 mat4_init_rotx(float deg)
 {
     float rad = DEG_TO_RADF(deg);
     float s = sinf(rad);
@@ -268,7 +268,7 @@ static inline struct mat4 mat4_init_rotx(float deg)
     );
 }
 
-static inline struct mat4 mat4_init_roty(float deg)
+internal inline struct mat4 mat4_init_roty(float deg)
 {
     float rad = DEG_TO_RADF(deg);
     float s = sinf(rad);
@@ -281,7 +281,7 @@ static inline struct mat4 mat4_init_roty(float deg)
     );
 }
 
-static inline struct mat4 mat4_init_rotz(float deg)
+internal inline struct mat4 mat4_init_rotz(float deg)
 {
     float rad = DEG_TO_RADF(deg);
     float s = sinf(rad);
@@ -294,7 +294,7 @@ static inline struct mat4 mat4_init_rotz(float deg)
     );
 }
 
-static inline int mat4_equals(const struct mat4 *a, const struct mat4 *b)
+internal inline int mat4_equals(const struct mat4 *a, const struct mat4 *b)
 {
     for (int i = 0; i < 4; ++i)
     {
@@ -307,7 +307,7 @@ static inline int mat4_equals(const struct mat4 *a, const struct mat4 *b)
     return 1;
 }
 
-static inline struct mat4 *mat4_mul(struct mat4 *a, const struct mat4 *b)
+internal inline struct mat4 *mat4_mul(struct mat4 *a, const struct mat4 *b)
 {
     struct mat4 c = { 0 };
     for (int aj = 0; aj < 4; ++aj)
@@ -324,43 +324,43 @@ static inline struct mat4 *mat4_mul(struct mat4 *a, const struct mat4 *b)
     return a;
 }
 
-static inline void mat4_translate(struct mat4 *m, const struct vec3 *v)
+internal inline void mat4_translate(struct mat4 *m, const struct vec3 *v)
 {
     struct mat4 trans = mat4_init_translate(v);
     mat4_mul(m, &trans);
 }
 
-static inline void mat4_scale(struct mat4 *m, const struct vec3 *s)
+internal inline void mat4_scale(struct mat4 *m, const struct vec3 *s)
 {
     struct mat4 scale = mat4_init_scale(s);
     mat4_mul(m, &scale);
 }
 
-static inline void mat4_scalef(struct mat4 *m, float s)
+internal inline void mat4_scalef(struct mat4 *m, float s)
 {
     struct mat4 scale = mat4_init_scalef(s);
     mat4_mul(m, &scale);
 }
 
-static inline void mat4_rotx(struct mat4 *m, float deg)
+internal inline void mat4_rotx(struct mat4 *m, float deg)
 {
     struct mat4 rot = mat4_init_rotx(deg);
     mat4_mul(m, &rot);
 }
 
-static inline void mat4_roty(struct mat4 *m, float deg)
+internal inline void mat4_roty(struct mat4 *m, float deg)
 {
     struct mat4 rot = mat4_init_roty(deg);
     mat4_mul(m, &rot);
 }
 
-static inline void mat4_rotz(struct mat4 *m, float deg)
+internal inline void mat4_rotz(struct mat4 *m, float deg)
 {
     struct mat4 rot = mat4_init_rotz(deg);
     mat4_mul(m, &rot);
 }
 
-static inline void mat4_transpose(struct mat4 *m)
+internal inline void mat4_transpose(struct mat4 *m)
 {
     float tmp;
 
@@ -389,7 +389,7 @@ static inline void mat4_transpose(struct mat4 *m)
     m->m[3][2] = tmp;
 }
 
-static inline struct vec3 *vec3_mul_mat4(struct vec3 *v, const struct mat4 *m)
+internal inline struct vec3 *vec3_mul_mat4(struct vec3 *v, const struct mat4 *m)
 {
     // Copy v
     struct vec3 vv = *v;
@@ -411,7 +411,7 @@ static inline struct vec3 *vec3_mul_mat4(struct vec3 *v, const struct mat4 *m)
 }
 
 //Calculate PERSPECTIVE projection
-static inline struct mat4 mat4_init_perspective(float width, float height,
+internal inline struct mat4 mat4_init_perspective(float width, float height,
                                                 float z_near, float z_far,
                                                 float fov_deg)
 {
@@ -431,7 +431,7 @@ static inline struct mat4 mat4_init_perspective(float width, float height,
 }
 
 //Calculate lookAt matrix
-static inline struct mat4 mat4_init_lookat(struct vec3 *pos, struct vec3 *view,
+internal inline struct mat4 mat4_init_lookat(struct vec3 *pos, struct vec3 *view,
                                            struct vec3 *up)
 {
     struct mat4 look;
@@ -451,7 +451,7 @@ static inline struct mat4 mat4_init_lookat(struct vec3 *pos, struct vec3 *view,
 }
 
 //Debug: Print matrix in row-major form
-static inline void mat4_print(const struct mat4 *m)
+internal inline void mat4_print(const struct mat4 *m)
 {
     for (int i = 0; i < 4; ++i)
     {
@@ -479,7 +479,7 @@ struct quat {
 
 const struct quat QUAT_IDENT;
 
-static inline struct quat *quat_ident(struct quat *q)
+internal inline struct quat *quat_ident(struct quat *q)
 {
     q->w = 1.0f;
     q->x = 0.0f;
@@ -488,7 +488,7 @@ static inline struct quat *quat_ident(struct quat *q)
     return q;
 }
 
-static inline int quat_is_ident(const struct quat *q)
+internal inline int quat_is_ident(const struct quat *q)
 {
     return (q->w == 1.0f &&
             q->x == 0.0f &&
@@ -496,7 +496,7 @@ static inline int quat_is_ident(const struct quat *q)
             q->z == 0.0f);
 }
 
-static inline int quat_equals(const struct quat *a, const struct quat *b)
+internal inline int quat_equals(const struct quat *a, const struct quat *b)
 {
     return (a->w == b->w &&
             a->x == b->x &&
@@ -504,7 +504,7 @@ static inline int quat_equals(const struct quat *a, const struct quat *b)
             a->z == b->z);
 }
 
-static inline float quat_norm_sq(const struct quat *q)
+internal inline float quat_norm_sq(const struct quat *q)
 {
     return (q->w * q->w +
             q->x * q->x +
@@ -512,12 +512,12 @@ static inline float quat_norm_sq(const struct quat *q)
             q->z * q->z);
 }
 
-static inline float quat_norm(const struct quat *q)
+internal inline float quat_norm(const struct quat *q)
 {
     return sqrtf(quat_norm_sq(q));
 }
 
-static inline struct quat *quat_normalize(struct quat *q)
+internal inline struct quat *quat_normalize(struct quat *q)
 {
     float norm = quat_norm(q);
 
@@ -534,7 +534,7 @@ static inline struct quat *quat_normalize(struct quat *q)
     // TODO: Set 0,0,0,0 if len < epsilon
 }
 
-static inline struct quat *quat_conjugate(struct quat *q)
+internal inline struct quat *quat_conjugate(struct quat *q)
 {
     q->x = -q->x;
     q->y = -q->y;
@@ -543,7 +543,7 @@ static inline struct quat *quat_conjugate(struct quat *q)
     // TODO: Set 0,0,0,0 if len < epsilon
 }
 
-static inline struct quat *quat_inverse(struct quat *q)
+internal inline struct quat *quat_inverse(struct quat *q)
 {
     quat_conjugate(q);
     float norm_sq = quat_norm_sq(q);
@@ -561,8 +561,8 @@ static inline struct quat *quat_inverse(struct quat *q)
     // TODO: Set 0,0,0,0 if len < epsilon
 }
 
-//static inline struct quat *quat_mul(struct quat *a, const struct quat *b)
-static inline struct quat *quat_mul(struct quat *a, const struct quat *b)
+//internal inline struct quat *quat_mul(struct quat *a, const struct quat *b)
+internal inline struct quat *quat_mul(struct quat *a, const struct quat *b)
 {
     struct quat c;
     c.w = a->w*b->w - a->x*b->x - a->y*b->y - a->z*b->z;
@@ -573,7 +573,7 @@ static inline struct quat *quat_mul(struct quat *a, const struct quat *b)
     return a;
 }
 
-static inline float quat_dot(const struct quat *a, const struct quat *b)
+internal inline float quat_dot(const struct quat *a, const struct quat *b)
 {
     return (a->w * b->w +
             a->x * b->x +
@@ -581,7 +581,7 @@ static inline float quat_dot(const struct quat *a, const struct quat *b)
             a->z * b->z);
 }
 
-static inline struct quat *quat_from_axis_angle(struct quat *q,
+internal inline struct quat *quat_from_axis_angle(struct quat *q,
                                                 const struct vec3 *axis,
                                                 float angle_deg)
 {
@@ -595,7 +595,7 @@ static inline struct quat *quat_from_axis_angle(struct quat *q,
     return q;
 }
 
-static inline struct vec3 *vec3_mul_quat(struct vec3 *v, const struct quat *q)
+internal inline struct vec3 *vec3_mul_quat(struct vec3 *v, const struct quat *q)
 {
     // Copy q
     struct quat qq = *q;
@@ -630,7 +630,7 @@ static inline struct vec3 *vec3_mul_quat(struct vec3 *v, const struct quat *q)
 ////////////////////////////////////////////////////////////////////////////////
 // I don't think these are useful quaternion operations.
 ////////////////////////////////////////////////////////////////////////////////
-static inline struct quat *quat_scale(struct quat *q, float s)
+internal inline struct quat *quat_scale(struct quat *q, float s)
 {
     q->w *= s;
     q->x *= s;
@@ -639,7 +639,7 @@ static inline struct quat *quat_scale(struct quat *q, float s)
     return q;
 }
 
-static inline struct quat *quat_add(struct quat *a, struct quat *b)
+internal inline struct quat *quat_add(struct quat *a, struct quat *b)
 {
     a->w += b->w;
     a->x += b->x;
@@ -648,7 +648,7 @@ static inline struct quat *quat_add(struct quat *a, struct quat *b)
     return a;
 }
 
-static inline struct quat *quat_sub(struct quat *a, struct quat *b)
+internal inline struct quat *quat_sub(struct quat *a, struct quat *b)
 {
     a->w -= b->w;
     a->x -= b->x;
@@ -658,7 +658,7 @@ static inline struct quat *quat_sub(struct quat *a, struct quat *b)
 }
 ////////////////////////////////////////////////////////////////////////////////
 
-static inline void mat4_from_quat(struct mat4 *_m, const struct quat *q)
+internal inline void mat4_from_quat(struct mat4 *_m, const struct quat *q)
 {
     struct quat qq = *q;
     quat_normalize(&qq);
@@ -704,7 +704,7 @@ static inline void mat4_from_quat(struct mat4 *_m, const struct quat *q)
     // _m->m[3][3] = a*a + b*b + c*c + d*d;
 }
 
-static inline void quat_print(struct quat *q)
+internal inline void quat_print(struct quat *q)
 {
     printf("Quat WXYZ: %10f %10f %10f %10f\n", q->w, q->x, q->y, q->z);
 }

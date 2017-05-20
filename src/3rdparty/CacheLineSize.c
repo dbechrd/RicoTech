@@ -42,7 +42,7 @@ size_t CacheLineSize() {
 #ifdef _SC_LEVEL1_DCACHE_LINESIZE
 #define CacheLineSize() sysconf(_SC_LEVEL1_DCACHE_LINESIZE)
 #else
-static size_t CacheLineSize()
+size_t CacheLineSize()
 {
     int lineSize;
     if (sysfs__read_int("devices/system/cpu/cpu0/cache/index0/coherency_line_size", &cachelinesize)) {

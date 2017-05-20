@@ -1,9 +1,15 @@
 #ifndef CONST_H
 #define CONST_H
 
+//------------------------------------------------------------------------------
+// Start-up
+//------------------------------------------------------------------------------
+// Open GL
+#define GL_VERSION_MAJOR 3
+#define GL_VERSION_MINOR 2
+
 // Debug
 #define RICO_DEBUG 1
-
 #define RICO_DEBUG_ALL_ERRORS_FATAL RICO_DEBUG && 1
 #define RICO_DEBUG_FATAL_ASSERT     RICO_DEBUG && 1
 #define RICO_DEBUG_WARN             RICO_DEBUG && 1
@@ -18,21 +24,22 @@
 #define RICO_DEBUG_MATERIAL         RICO_DEBUG && 1
 #define RICO_DEBUG_FONT             RICO_DEBUG && 1
 
+// Memory pools
+#define RICO_TEXTURE_POOL_SIZE  100
+#define RICO_MATERIAL_POOL_SIZE 100
+#define RICO_MESH_POOL_SIZE     100
+#define RICO_OBJECT_POOL_SIZE   100
+#define RICO_FONT_POOL_SIZE     10
+#define RICO_STRING_POOL_SIZE   16
+
 //------------------------------------------------------------------------------
 // Rico constants
 //------------------------------------------------------------------------------
-// Memory constants
-#define RICO_TEXTURE_POOL_SIZE 100
-#define RICO_MATERIAL_POOL_SIZE 100
-#define RICO_MESH_POOL_SIZE 100
-#define RICO_OBJECT_POOL_SIZE 100
-#define RICO_FONT_POOL_SIZE 10
-#define RICO_STRING_POOL_SIZE 16
-
-#define RICO_SHADER_POS_LOC 0
-#define RICO_SHADER_COL_LOC 1
-#define RICO_SHADER_NORMAL_LOC 2
-#define RICO_SHADER_UV_LOC 3
+// TODO: Is there a better way to handle this?
+#define RICO_SHADER_POS_LOC     0
+#define RICO_SHADER_COL_LOC     1
+#define RICO_SHADER_NORMAL_LOC  2
+#define RICO_SHADER_UV_LOC      3
 
 // Math / Physics
 #define M_PI 3.14159265358979323846264338327950288
@@ -74,6 +81,11 @@ typedef double r64;
 typedef u32 bool;
 #define true 1
 #define false 0
+
+// NOTE: internal and global are relative to translation unit
+#define internal static
+#define local    static
+#define global   static
 
 /*
 //

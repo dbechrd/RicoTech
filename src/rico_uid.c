@@ -1,4 +1,4 @@
-static u32 next_uid = 1;
+global u32 next_uid = 1;
 
 const char *rico_uid_type_string[] = {
     RICO_UID_TYPES(GEN_STRING)

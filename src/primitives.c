@@ -4,12 +4,12 @@ const char *rico_prim_string[] = {
 
 u32 PRIM_SPHERE_MESH;
 
-static GLuint vaos[PRIM_COUNT];
-static GLuint vbos[PRIM_COUNT][VBO_COUNT];
+global GLuint vaos[PRIM_COUNT];
+global GLuint vbos[PRIM_COUNT][VBO_COUNT];
 
-static struct program_primitive *program;
+global struct program_primitive *program;
 
-static int prim_init_gl(enum rico_prim prim);
+internal int prim_init_gl(enum rico_prim prim);
 
 int prim_init(enum rico_prim prim)
 {
@@ -19,7 +19,7 @@ int prim_init(enum rico_prim prim)
     return prim_init_gl(prim);
 }
 
-static int prim_init_gl(enum rico_prim prim)
+internal int prim_init_gl(enum rico_prim prim)
 {
     //--------------------------------------------------------------------------
     // Generate VAO and buffers
@@ -78,6 +78,8 @@ void prim_draw_segment(const struct segment *seg,
     // Draw
     glBindVertexArray(vaos[PRIM_SEGMENT]);
     glBindBuffer(GL_ARRAY_BUFFER, vbos[PRIM_SEGMENT][VBO_VERTEX]);
+    // TODO: Calling glBufferData here a bunch of times per frame is quite
+    //       expensive, find some way to reuse a line segments.
     glBufferData(GL_ARRAY_BUFFER, sizeof(seg->vertices), seg->vertices,
                  GL_DYNAMIC_DRAW);
 

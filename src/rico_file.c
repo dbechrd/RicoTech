@@ -1,5 +1,5 @@
 #define SIGNATURE_SIZE 4
-static const char SIGNATURE[SIGNATURE_SIZE] = { 'R', '1', 'C', '0' };
+global const char SIGNATURE[SIGNATURE_SIZE] = { 'R', '1', 'C', '0' };
 
 int rico_file_open_write(struct rico_file *_file, const char *filename,
                          u32 version)

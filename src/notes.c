@@ -4,11 +4,6 @@
 
 void notes_casey()
 {
-    // TODO: Clarify static?
-    #define internal static
-    #define local_persist static
-    #define global_variable static  //Only true if single translation unit
-
     // TODO: Better memory allocation (than malloc)
     // Windows:
     //   void *Block;

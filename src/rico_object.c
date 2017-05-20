@@ -6,7 +6,7 @@ const char *rico_obj_type_string[] = {
 
 u32 RICO_DEFAULT_OBJECT = 0;
 
-static inline struct rico_pool **object_pool_ptr()
+internal inline struct rico_pool **object_pool_ptr()
 {
     struct rico_chunk *chunk = chunk_active();
     RICO_ASSERT(chunk);
@@ -14,19 +14,19 @@ static inline struct rico_pool **object_pool_ptr()
     return &chunk->objects;
 }
 
-static inline struct rico_pool *object_pool()
+internal inline struct rico_pool *object_pool()
 {
     return *object_pool_ptr();
 }
 
-static inline struct rico_object *object_find(u32 handle)
+internal inline struct rico_object *object_find(u32 handle)
 {
     struct rico_object *object = pool_read(object_pool(), handle);
     RICO_ASSERT(object);
     return object;
 }
 
-static void update_transform(struct rico_object *obj);
+internal void update_transform(struct rico_object *obj);
 
 int object_create(u32 *_handle, const char *name, enum rico_obj_type type,
                   u32 mesh, u32 material, const struct bbox *bbox,
@@ -85,7 +85,7 @@ void object_free(u32 handle)
 {
     struct rico_object *obj = object_find(handle);
 
-    // TODO: Use static pool slots
+    // TODO: Use fixed pool slots
     if (handle == RICO_DEFAULT_OBJECT)
         return;
 
@@ -327,7 +327,7 @@ const struct vec3 *object_scale_get(u32 handle)
     return &obj->scale;
 }
 
-static void update_transform(struct rico_object *obj)
+internal void update_transform(struct rico_object *obj)
 {
     //HACK: Order of these operations might not always be the same.. should
     //      probably just store the transformation matrix directly rather than
@@ -410,8 +410,8 @@ u32 object_collide_ray_type(enum rico_obj_type type, const struct ray *ray,
     return idx_collide;
 }
 
-static void render(const struct rico_object *obj,
-                   const struct camera *camera)
+internal void render(const struct rico_object *obj,
+                     const struct camera *camera)
 {
     if (obj->type == OBJ_STATIC)
     {

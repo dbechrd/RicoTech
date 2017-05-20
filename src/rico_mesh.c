@@ -6,7 +6,7 @@ const char *rico_mesh_type_string[] = {
 
 u32 RICO_DEFAULT_MESH = 0;
 
-static inline struct rico_pool **mesh_pool_ptr()
+internal inline struct rico_pool **mesh_pool_ptr()
 {
     struct rico_chunk *chunk = chunk_active();
     RICO_ASSERT(chunk);
@@ -14,19 +14,19 @@ static inline struct rico_pool **mesh_pool_ptr()
     return &chunk->meshes;
 }
 
-static inline struct rico_pool *mesh_pool()
+internal inline struct rico_pool *mesh_pool()
 {
     return *mesh_pool_ptr();
 }
 
-static inline struct rico_mesh *mesh_find(u32 handle)
+internal inline struct rico_mesh *mesh_find(u32 handle)
 {
     struct rico_mesh *mesh = pool_read(mesh_pool(), handle);
     RICO_ASSERT(mesh);
     return mesh;
 }
 
-static int build_mesh(struct rico_mesh *mesh, u32 vertex_count,
+internal int build_mesh(struct rico_mesh *mesh, u32 vertex_count,
                       const struct mesh_vertex *vertex_data,
                       u32 element_count, const GLuint *element_data,
                       GLenum hint);
@@ -144,10 +144,10 @@ int mesh_load(u32 *_handle, const char *name, enum rico_mesh_type type,
     return err;
 }
 
-static int build_mesh(struct rico_mesh *mesh, u32 vertex_count,
-                      const struct mesh_vertex *vertex_data,
-                      u32 element_count, const GLuint *element_data,
-                      GLenum hint)
+internal int build_mesh(struct rico_mesh *mesh, u32 vertex_count,
+                        const struct mesh_vertex *vertex_data,
+                        u32 element_count, const GLuint *element_data,
+                        GLenum hint)
 {
     mesh->element_count = element_count;
 
@@ -218,7 +218,7 @@ void mesh_free(u32 handle)
     if (mesh->ref_count > 0)
         return;
 
-    // TODO: Use static pool slots
+    // TODO: Use fixed pool slots
     if (handle == RICO_DEFAULT_MESH)
         return;
 

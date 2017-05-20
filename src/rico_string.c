@@ -4,7 +4,7 @@ const char *rico_string_slot_string[] = {
     RICO_STRING_SLOTS(GEN_STRING)
 };
 
-static inline struct rico_pool **string_pool_ptr()
+internal inline struct rico_pool **string_pool_ptr()
 {
     struct rico_chunk *chunk = chunk_active();
     RICO_ASSERT(chunk);
@@ -12,12 +12,12 @@ static inline struct rico_pool **string_pool_ptr()
     return &chunk->strings;
 }
 
-static inline struct rico_pool *string_pool()
+internal inline struct rico_pool *string_pool()
 {
     return *string_pool_ptr();
 }
 
-static inline struct rico_string *string_find(u32 handle)
+internal inline struct rico_string *string_find(u32 handle)
 {
     struct rico_string *string = pool_read(string_pool(), handle);
     RICO_ASSERT(string);
@@ -47,7 +47,7 @@ int string_init(const char *name, enum rico_string_slot slot, u32 x, u32 y,
                         &text_material);
     if (err) return err;
 
-    // Generate dynamic string object or update existing static string
+    // Generate dynamic string object or update existing fixed string
     struct rico_string *str;
     if (slot == STR_SLOT_DYNAMIC)
     {
@@ -61,7 +61,8 @@ int string_init(const char *name, enum rico_string_slot slot, u32 x, u32 y,
         str = string_find(slot);
     }
 
-    // Reuse existing static string objects
+    // TODO: Reuse mesh and material if they are the same
+    // Reuse existing fixed string objects
     if (str->uid.uid != UID_NULL)
     {
         object_mesh_set(str->obj_handle, text_mesh, NULL);
@@ -86,7 +87,7 @@ int string_init(const char *name, enum rico_string_slot slot, u32 x, u32 y,
 
 int string_free(u32 handle)
 {
-    // // Preserve static string slots
+    // // Preserve fixed string slots
     // if (handle < STR_SLOT_COUNT)
     //     return SUCCESS;
 

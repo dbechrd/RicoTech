@@ -128,7 +128,7 @@ void show_info_log(GLuint object,
 ////////////////////////////////////////////////////////////////////////////////
 
 /*
-static short le_short(unsigned char *bytes)
+internal short le_short(unsigned char *bytes)
 {
     return bytes[0] | ((char)bytes[1] << 8);
 }
