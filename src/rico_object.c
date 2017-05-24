@@ -540,23 +540,20 @@ int object_print(u32 handle, enum rico_string_slot slot)
     enum rico_error err;
 
     // Print to screen
-    char *buf = object_to_string(handle);
+    char buf[256] = { 0 };
+    object_to_string(handle, buf, sizeof(buf));
     err = string_init(rico_string_slot_string[slot], slot, 0, 26,
                       COLOR_GRAY_HIGHLIGHT, 0, 0, buf);
-    if (err) goto cleanup;
-
-cleanup:
-    free(buf);
     return err;
 }
 
-char *object_to_string(u32 handle)
+void object_to_string(u32 handle, char *buf, int buf_count)
 {
-    char *buf = calloc(1, 256);
+    int len;
 
     if (!handle)
     {
-        sprintf(buf,
+        len = snprintf(buf, buf_count,
             "    UID: %d\n" \
             "   Name: --\n" \
             "   Type: --\n" \
@@ -570,7 +567,7 @@ char *object_to_string(u32 handle)
     else
     {
         struct rico_object *obj = object_find(handle);
-        sprintf(buf,
+        len = snprintf(buf, buf_count,
             "     UID: %d\n"       \
             "    Name: %s\n"       \
             "    Type: %s\n"       \
@@ -588,7 +585,8 @@ char *object_to_string(u32 handle)
             obj->mesh,     mesh_name(obj->mesh),
             obj->material, material_name(obj->material));
     }
-    return buf;
+
+    string_truncate(buf, buf_count, len);
 }
 
 //int object_serialize_0(const void *handle, const struct rico_file *file)

@@ -146,7 +146,10 @@ internal inline struct vec3 *v3_negate(struct vec3 *v)
 }
 internal inline struct vec3 *v3_normalize(struct vec3 *v)
 {
-    float len = 1.0f / v3_length(v);
+    float len = v3_length(v);
+    if (len == 0) return v;
+
+    len = 1.0f / len;
     v->x *= len;
     v->y *= len;
     v->z *= len;

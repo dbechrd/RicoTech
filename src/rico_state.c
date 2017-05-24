@@ -124,8 +124,11 @@ int state_update(enum rico_state *_state)
 
     if (state_changed)
     {
-        char buf[50] = { 0 };
-        sprintf(buf, "State: %d %s", state, rico_state_string[state]);
+        char buf[32] = { 0 };
+        int len = snprintf(buf, sizeof(buf), "State: %d %s", state,
+                           rico_state_string[state]);
+        string_truncate(buf, sizeof(buf), len);
+
         err = string_init("STR_STATE", STR_SLOT_EDIT_INFO, 0, 0,
                           COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
         if (err) return err;
@@ -157,7 +160,10 @@ int state_update(enum rico_state *_state)
         //       Allow x/y coords to be given in characters instead of pixels
         //       based on FONT_WIDTH / FONT_HEIGHT.
         char buf[128] = { 0 };
-        int len = sprintf(buf, "%.f fps %.2f ms %.2f mcyc", fps, ms, mcyc);
+        int len = snprintf(buf, sizeof(buf), "%.f fps %.2f ms %.2f mcyc", fps,
+                           ms, mcyc);
+        string_truncate(buf, sizeof(buf), len);
+
         err = string_init("STR_FPS", STR_SLOT_FPS, SCREEN_W - (u32)(12.5 * len),
                           0, COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
         if (err) return err;
@@ -203,7 +209,10 @@ int state_update(enum rico_state *_state)
     }
 
     char buf[64] = { 0 };
-    sprintf(buf, "Vel: %.1f %.1f %.1f", view_vel.x, view_vel.y, view_vel.z);
+    int len = snprintf(buf, sizeof(buf), "Vel: %.1f %.1f %.1f", view_vel.x,
+                       view_vel.y, view_vel.z);
+    string_truncate(buf, sizeof(buf), len);
+
     err = string_init("STR_STATE", STR_SLOT_EDIT_INFO, 0, 0,
                       COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
     if (err) return err;
@@ -212,6 +221,7 @@ int state_update(enum rico_state *_state)
     // dp' = 1/2at^2 + vt
     struct vec3 half_at_squared = view_acc;
     v3_scalef(&half_at_squared, 0.5f * (r32)dt * (r32)dt);
+
     struct vec3 vt = view_vel;
     v3_scalef(&vt, (r32)dt);
 
@@ -281,9 +291,11 @@ internal int save_file()
     struct tm *tm = localtime(&rawtime);
 
     char backupFilename[128] = { 0 };
-    snprintf(backupFilename, sizeof(backupFilename),
-             "chunks/cereal_%04d%02d%02dT%02d%02d%02d.bin", 1900 + tm->tm_year,
-             1 + tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
+    int len = snprintf(backupFilename, sizeof(backupFilename),
+                       "chunks/cereal_%04d%02d%02dT%02d%02d%02d.bin",
+                       1900 + tm->tm_year, 1 + tm->tm_mon, tm->tm_mday,
+                       tm->tm_hour, tm->tm_min, tm->tm_sec);
+    string_truncate(backupFilename, sizeof(backupFilename), len);
 
     struct rico_file backupFile;
     err = rico_file_open_write(&backupFile, backupFilename,
@@ -417,8 +429,8 @@ internal int handle_engine_events(SDL_Event event, bool *handled)
         // [Esc]: Save and exit
         else if (keys[SDL_SCANCODE_ESCAPE])
         {
-            err = string_init("STR_CONFIRM_QUIT", STR_SLOT_MENU_QUIT, 600,
-                              400, COLOR_GREEN, 0, 0,
+            err = string_init("STR_CONFIRM_QUIT", STR_SLOT_MENU_QUIT, 600, 400,
+                              COLOR_GREEN, 0, 0,
                               "Are you sure you want to quit?\n" \
                               "                              \n" \
                               "      Yes (Y) or No (N)       ");
@@ -467,6 +479,9 @@ internal int handle_camera_events(SDL_Event event, bool *handled)
     if KEY_DOWN(RICOKEY_FORWARD)  view_acc.z += 1.0f;
     if KEY_DOWN(RICOKEY_BACKWARD) view_acc.z -= 1.0f;
 
+    // NOTE: Prevent faster movement on diagonal
+    v3_normalize(&view_acc);
+
     sprint = KEY_DOWN(RICOKEY_SPRINT);
 
     if KEY_PRESSED(RICOKEY_CAMERA_SLOW)  camera_slow = !camera_slow;
@@ -474,10 +489,6 @@ internal int handle_camera_events(SDL_Event event, bool *handled)
     if KEY_PRESSED(RICOKEY_CAMERA_LOCK)  cam_player.locked = !cam_player.locked;
     if KEY_PRESSED(RICOKEY_CAMERA_WIREFRAME) cam_player.fill_mode =
         (cam_player.fill_mode == GL_FILL) ? GL_LINE : GL_FILL;
-
-    // TODO: Fix diagonal movement
-    //v3_normalize(&delta);
-    //view_acc = delta;
 
     return err;
 }
@@ -731,8 +742,10 @@ internal int state_edit_translate()
 
     if (trans_delta_changed)
     {
-        char buf[50] = { 0 };
-        sprintf(buf, "Trans Delta: %f", trans_delta);
+        char buf[32] = { 0 };
+        int len = snprintf(buf, sizeof(buf), "Trans Delta: %f", trans_delta);
+        string_truncate(buf, sizeof(buf), len);
+
         err = string_init("STR_EDIT_TRANS_DELTA", STR_SLOT_EDIT_INFO, 0, 0,
                           COLOR_DARK_BLUE_HIGHLIGHT, 1000, 0, buf);
         if (err) return err;
@@ -834,8 +847,10 @@ internal int state_edit_rotate()
 
     if (rot_delta_changed)
     {
-        char buf[50] = { 0 };
-        sprintf(buf, "Rot Delta: %f", rot_delta);
+        char buf[32] = { 0 };
+        int len = snprintf(buf, sizeof(buf), "Rot Delta: %f", rot_delta);
+        string_truncate(buf, sizeof(buf), len);
+
         err = string_init("STR_EDIT_ROT_DELTA", STR_SLOT_EDIT_INFO, 0, 0,
                           COLOR_DARK_BLUE_HIGHLIGHT, 1000, 0, buf);
         if (err) return err;
@@ -929,8 +944,10 @@ internal int state_edit_scale()
 
     if (scale_delta_changed)
     {
-        char buf[50] = { 0 };
-        sprintf(buf, "Scale Delta: %f", scale_delta);
+        char buf[32] = { 0 };
+        int len = snprintf(buf, sizeof(buf), "Scale Delta: %f", scale_delta);
+        string_truncate(buf, sizeof(buf), len);
+
         err = string_init("STR_EDIT_SCALE_DELTA", STR_SLOT_EDIT_INFO, 0, 0,
                           COLOR_DARK_BLUE_HIGHLIGHT, 1000, 0, buf);
         if (err) return err;
