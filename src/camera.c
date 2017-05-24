@@ -36,7 +36,7 @@ void camera_reset(struct camera *camera)
 
 void camera_translate_world(struct camera *camera, const struct vec3 *v)
 {
-    vec3_add(&camera->position, v);
+    v3_add(&camera->position, v);
 
     // Prevent camera from going below the floor
     if (camera->position.y < CAMERA_POS_Y_MIN)
@@ -51,14 +51,14 @@ void camera_translate_local(struct camera *camera, const struct vec3 *v)
     struct vec3 fwd = VEC3_FWD;
 
     quat_normalize(&camera->view);
-    vec3_mul_quat(&right, &camera->view);
-    vec3_mul_quat(&fwd, &camera->view);
+    v3_mul_quat(&right, &camera->view);
+    v3_mul_quat(&fwd, &camera->view);
 
     // Don't slow down when looking down (ignore Y component)
     right.y = EPSILON;
     fwd.y = EPSILON;
-    vec3_normalize(&right);
-    vec3_normalize(&fwd);
+    v3_normalize(&right);
+    v3_normalize(&fwd);
 
     camera->position.x += v->x * right.x + v->z * fwd.x;
     camera->position.y += v->y;
@@ -74,9 +74,9 @@ void camera_translate_local(struct camera *camera, const struct vec3 *v)
 void camera_rotate(struct camera *camera, float dx, float dy)
 {
     struct quat pitch;
-    quat_from_axis_angle(&pitch, &VEC3_X, dy);
+    quat_from_axis_angle(&pitch, VEC3_X, dy);
     struct quat yaw;
-    quat_from_axis_angle(&yaw, &VEC3_Y, dx);
+    quat_from_axis_angle(&yaw, VEC3_Y, dx);
 
     quat_normalize(&pitch);
     quat_normalize(&yaw);
@@ -111,7 +111,7 @@ void camera_update(struct camera *camera)
     mat4_scalef(&camera->view_matrix, QUAT_SCALE_HACK);
 
     struct vec3 pos = camera->position;
-    mat4_translate(&camera->view_matrix, vec3_negate(&pos));
+    mat4_translate(&camera->view_matrix, v3_negate(&pos));
 
     camera->need_update = false;
 }
@@ -120,17 +120,17 @@ void camera_render(struct camera *camera)
 {
     struct vec3 x = VEC3_RIGHT;
     struct vec3 y = VEC3_UP;
-    vec3_mul_quat(vec3_scalef(&x, 0.1f / QUAT_SCALE_HACK), &camera->view);
-    vec3_mul_quat(vec3_scalef(&y, 0.1f / QUAT_SCALE_HACK), &camera->view);
+    v3_mul_quat(v3_scalef(&x, 0.1f / QUAT_SCALE_HACK), &camera->view);
+    v3_mul_quat(v3_scalef(&y, 0.1f / QUAT_SCALE_HACK), &camera->view);
 
     struct vec3 x0 = camera->position;
     struct vec3 x1 = camera->position;
     struct vec3 y0 = camera->position;
     struct vec3 y1 = camera->position;
-    vec3_sub(&x0, &x);
-    vec3_add(&x1, &x);
-    vec3_sub(&y0, &y);
-    vec3_add(&y1, &y);
+    v3_sub(&x0, &x);
+    v3_add(&x1, &x);
+    v3_sub(&y0, &y);
+    v3_add(&y1, &y);
 
     struct segment x_axis;
     x_axis.vertices[0] = (struct prim_vertex) { x0, COLOR_TRANSPARENT };
@@ -167,7 +167,7 @@ void camera_render(struct camera *camera)
 void camera_fwd(struct ray *_ray, struct camera *camera)
 {
     struct vec3 z = VEC3_FWD;
-    vec3_mul_quat(&z, &camera->view);
+    v3_mul_quat(&z, &camera->view);
     _ray->orig = camera->position;
     _ray->dir = z;
 }

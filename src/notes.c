@@ -4,6 +4,9 @@
 
 void notes_casey()
 {
+    //--------------------------------------------------------------------------
+    // Handmade Hero
+    //--------------------------------------------------------------------------
     // TODO: Better memory allocation (than malloc)
     // Windows:
     //   void *Block;
@@ -52,8 +55,6 @@ void notes_casey()
         }
     }
 
-    //          Casey uses C++ like C with oper/func overloading
-
     // Day 024: sizeof("blah") == 5; sizeof() counts null terminator!!!
     //          1:03:00 Translation Lookaside Buffer (TLB) VRAM -> RAM map
 
@@ -65,6 +66,57 @@ void notes_casey()
 
     // Day 027: 1:04:00 round float to nearest int: (int)(f + 0.5f);
 
+    // Day 041: Math in game programming
+    //
+    //  Partial differential equations
+    //  Ordinary differential equations
+    //  Minkowski algebra (collision detection)
+    //  Control theory
+    //      Feedback systems
+    //      Springs
+    //      Proportional derivative controllers (PDC)
+    //  Operations research (optimization -> min/max)
+    //      Metropolis algorithm (e.g. optimizing assembly)
+    //  Prob & Stats
+    //      PRNG
+    //      Cryptography
+	//  Lagrange Multipliers
+
+    //  1:32:00 Use #define for global constants (e.g. VEC3_UP, VEC3_ZERO, etc.)
+
+	// Day 043: Player motion:
+
+	//			Position = 1/2at^2 + vt + p
+	//			Velocity = at + p
+	//			Acceleration = 10 // From d-pad
+
+	// Prevent double speed when moving diagonally
+	// TODO: How to extend this to 3D?
+	if (player.acc.x != 0.0f && player.acc.y != 0.0f)
+	{
+		player.acc.x *= 0.707106781187f; // cos(45 deg)
+		player.acc.y *= 0.707106781187f;
+	}
+
+	// Coefficient of restitution = how much energy to absorb during collision.
+
+	// Day 045: Collision via nearest walkable point
+
+	//			49:35 For a bounding box, clip would-be destination point to 
+	//			bounding volume to find the closest point in this particular
+	//			space.
+
+
+
+
+
+
+
+
+
+    //--------------------------------------------------------------------------
+    // Blog
+    //--------------------------------------------------------------------------
     // Stream 0008: "Compatible camera controls"; allow camera to moved around
     //              while in edit mode the same way the camera is moved in e.g.
     //              Blender, Maya, 3DS Max, etc. to help artists work fast.
@@ -186,6 +238,14 @@ void notes_casey()
     // 49:42: API file formats must always be optional.
 
     // 49:44: Full run-time source code must be available.
+
+    //--------------------------------------------------------------------------
+    // IMGUI
+    //--------------------------------------------------------------------------
+
+
+
+    // -------------------------------------------------------------------------
 }
 
 void notes_gl()
@@ -293,4 +353,258 @@ void notes_gl()
     //Note: Setting vec3 W component to 0.0f makes a mesh ignore the camera
     //      and be rendered relative to the viewport. This might be useful for
     //      effects like a skybox.
+}
+
+void notes_geom()
+{
+#if 0
+    internal inline struct vec3 *v3_add(struct vec3 *a, const struct vec3 *b)
+    {
+        a->x += b->x;
+        a->y += b->y;
+        a->z += b->z;
+        return a;
+    }
+    internal inline struct vec3 *v3_sub(struct vec3 *a, const struct vec3 *b)
+    {
+        a->x -= b->x;
+        a->y -= b->y;
+        a->z -= b->z;
+        return a;
+    }
+    internal inline struct vec3 *v3_scale(struct vec3 *v, const struct vec3 *s)
+    {
+        v->x *= s->x;
+        v->y *= s->y;
+        v->z *= s->z;
+        return v;
+    }
+    internal inline struct vec3 *v3_scalef(struct vec3 *v, float s)
+    {
+        v->x *= s;
+        v->y *= s;
+        v->z *= s;
+        return v;
+    }
+    internal inline float v3_dot(const struct vec3 *a, const struct vec3 *b)
+    {
+        return a->x*b->x + a->y*b->y + a->z*b->z;
+    }
+    internal inline struct vec3 v3_cross(const struct vec3 *a, const struct vec3 *b)
+    {
+        struct vec3 c;
+        c.x = a->y * b->z - a->z * b->y;
+        c.y = a->z * b->x - a->x * b->z;
+        c.z = a->x * b->y - a->y * b->x;
+        return c;
+    }
+    internal inline float v3_length(const struct vec3 *v)
+    {
+        return sqrtf(
+            v->x * v->x +
+            v->y * v->y +
+            v->z * v->z
+        );
+    }
+    internal inline struct vec3 *v3_negate(struct vec3 *v)
+    {
+        v->x = -v->x;
+        v->y = -v->y;
+        v->z = -v->z;
+        return v;
+    }
+    internal inline struct vec3 *v3_normalize(struct vec3 *v)
+    {
+        float len = 1.0f / v3_length(v);
+        v->x *= len;
+        v->y *= len;
+        v->z *= len;
+        return v;
+    }
+    internal inline struct vec3 *v3_positive(struct vec3 *v)
+    {
+        if (v->x < 0) v->x *= -1;
+        if (v->y < 0) v->y *= -1;
+        if (v->z < 0) v->z *= -1;
+        return v;
+    }
+    internal inline int v3_equals(const struct vec3 *a, const struct vec3 *b)
+    {
+        return (a->x == b->x && a->y == b->y && a->z == b->z);
+    }
+
+    // TODO: Refactor *all* printf stuff out into a single file
+    internal inline void v3_print(struct vec3 *v)
+    {
+        printf("Vec XYZ: %10f %10f %10f\n", v->x, v->y, v->z);
+    }
+#elif 0
+    internal inline struct vec3 v3_add(const struct vec3 *a, const struct vec3 *b)
+    {
+        struct vec3 c;
+        c.x = a->x + b->x;
+        c.y = a->y + b->y;
+        c.z = a->z + b->z;
+        return c;
+    }
+    internal inline struct vec3 v3_sub(const struct vec3 *a, const struct vec3 *b)
+    {
+        struct vec3 c;
+        c.x = a->x - b->x;
+        c.y = a->y - b->y;
+        c.z = a->z - b->z;
+        return c;
+    }
+    internal inline struct vec3 v3_scale(const struct vec3 *v, const struct vec3 *s)
+    {
+        struct vec3 r;
+        r.x = v->x * s->x;
+        r.y = v->y * s->y;
+        r.z = v->z * s->z;
+        return r;
+    }
+    internal inline struct vec3 v3_scalef(const struct vec3 *v, float s)
+    {
+        struct vec3 r;
+        r.x = v->x * s;
+        r.y = v->y * s;
+        r.z = v->z * s;
+        return r;
+    }
+    internal inline float v3_dot(const struct vec3 *a, const struct vec3 *b)
+    {
+        return a->x*b->x + a->y*b->y + a->z*b->z;
+    }
+    internal inline struct vec3 v3_cross(const struct vec3 *a, const struct vec3 *b)
+    {
+        struct vec3 c;
+        c.x = a->y * b->z - a->z * b->y;
+        c.y = a->z * b->x - a->x * b->z;
+        c.z = a->x * b->y - a->y * b->x;
+        return c;
+    }
+    internal inline float v3_length(const struct vec3 *v)
+    {
+        return sqrtf(
+            v->x * v->x +
+            v->y * v->y +
+            v->z * v->z
+        );
+    }
+    internal inline struct vec3 v3_negate(const struct vec3 *v)
+    {
+        struct vec3 r;
+        r.x = -v->x;
+        r.y = -v->y;
+        r.z = -v->z;
+        return r;
+    }
+    internal inline void v3_normalize(struct vec3 *v)
+    {
+        float len = 1.0f / v3_length(v);
+        v->x *= len;
+        v->y *= len;
+        v->z *= len;
+        return v;
+    }
+    internal inline struct vec3 v3_positive(const struct vec3 *v)
+    {
+        struct vec3 r;
+        r.x = fabsf(v->x);
+        r.y = fabsf(v->y);
+        r.z = fabsf(v->z);
+        return r;
+    }
+    internal inline int v3_equals(const struct vec3 *a, const struct vec3 *b)
+    {
+        return (a->x == b->x && a->y == b->y && a->z == b->z);
+    }
+
+    // TODO: Refactor *all* printf stuff out into a single file
+    internal inline void v3_print(struct vec3 *v)
+    {
+        printf("Vec XYZ: %10f %10f %10f\n", v->x, v->y, v->z);
+    }
+#elif 0
+    internal inline struct vec3 v3_add(struct vec3 a, struct vec3 b)
+    {
+        a.x += b.x;
+        a.y += b.y;
+        a.z += b.z;
+        return a;
+    }
+    internal inline struct vec3 v3_sub(struct vec3 a, struct vec3 b)
+    {
+        a.x -= b.x;
+        a.y -= b.y;
+        a.z -= b.z;
+        return a;
+    }
+    internal inline struct vec3 v3_scale(struct vec3 v, struct vec3 s)
+    {
+        v.x *= s.x;
+        v.y *= s.y;
+        v.z *= s.z;
+        return v;
+    }
+    internal inline struct vec3 v3_scalef(struct vec3 v, float s)
+    {
+        v.x *= s;
+        v.y *= s;
+        v.z *= s;
+        return v;
+    }
+    internal inline float v3_dot(struct vec3 a, struct vec3 b)
+    {
+        return a.x*b.x + a.y*b.y + a.z*b.z;
+    }
+    internal inline struct vec3 v3_cross(struct vec3 a, struct vec3 b)
+    {
+        struct vec3 c;
+        c.x = a.y * b.z - a.z * b.y;
+        c.y = a.z * b.x - a.x * b.z;
+        c.z = a.x * b.y - a.y * b.x;
+        return c;
+    }
+    internal inline float v3_length(struct vec3 v)
+    {
+        return sqrtf(
+            v.x * v.x +
+            v.y * v.y +
+            v.z * v.z
+        );
+    }
+    internal inline struct vec3 v3_negate(struct vec3 v)
+    {
+        v.x = -v.x;
+        v.y = -v.y;
+        v.z = -v.z;
+        return v;
+    }
+    internal inline struct vec3 v3_normalize(struct vec3 v)
+    {
+        float len = 1.0f / v3_length(v);
+        v.x *= len;
+        v.y *= len;
+        v.z *= len;
+        return v;
+    }
+    internal inline struct vec3 v3_positive(struct vec3 v)
+    {
+        v.x = fabsf(v.x);
+        v.y = fabsf(v.y);
+        v.z = fabsf(v.z);
+        return v;
+    }
+    internal inline int v3_equals(struct vec3 a, struct vec3 b)
+    {
+        return (a.x == b.x && a.y == b.y && a.z == b.z);
+    }
+
+    // TODO: Refactor *all* printf stuff out into a single file
+    internal inline void v3_print(struct vec3 v)
+    {
+        printf("Vec XYZ: %10f %10f %10f\n", v.x, v.y, v.z);
+    }
+#endif
 }

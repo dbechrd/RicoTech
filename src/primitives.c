@@ -98,7 +98,7 @@ void prim_draw_ray(const struct ray *ray, const struct mat4 *model_matrix,
                    struct col4 color)
 {
     struct vec3 ray_end = ray->orig;
-    vec3_add(&ray_end, &ray->dir);
+    v3_add(&ray_end, &ray->dir);
 
     struct segment ray_seg;
     ray_seg.vertices[0] = (struct prim_vertex) { ray->orig, COLOR_GRAY };

@@ -7,19 +7,18 @@
 #endif
 
 #include <stdint.h>
+//#include <stdlib.h>
 #include "const.h"
-
 #include "3rdparty/GL/gl3w.h"
+
 #include <math.h>
 #include <stdio.h>
+
 #include "geom.h"
 #include "util.h"
-
 #include "rico_uid.h"
-
 #include "rico_file.h"
 #include "rico_cereal.h"
-
 #include "bbox.h"
 #include "camera.h"
 #include "glref.h"
@@ -52,7 +51,5 @@
 #include "3rdparty/tinyobjloader.h"
 #include "3rdparty/MurmurHash3.h"
 #include "3rdparty/SDL/SDL.h"
-
-#include <stdlib.h>
 
 #endif // RICO_H

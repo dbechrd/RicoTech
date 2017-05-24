@@ -5,8 +5,8 @@ bool collide_ray_bbox(const struct ray *ray, const struct bbox *bbox,
     struct vec3 bbox_p[2];
     bbox_p[0] = bbox->p[0];
     bbox_p[1] = bbox->p[1];
-    vec3_mul_mat4(&bbox_p[0], transform);
-    vec3_mul_mat4(&bbox_p[1], transform);
+    v3_mul_mat4(&bbox_p[0], transform);
+    v3_mul_mat4(&bbox_p[1], transform);
 
     struct vec3 invdir;
     invdir.x = 1.0f / ray->dir.x;
@@ -70,7 +70,7 @@ bool collide_ray_obb(const struct ray *r, const struct bbox *bbox,
     model_orig.z = model_matrix->m[2][3];
 
     ray.orig = model_orig;
-    vec3_sub(&ray.orig, &r->orig);
+    v3_sub(&ray.orig, &r->orig);
 
     //DEBUG: Draw sphere / ray
     // struct sphere sphere_ray;
@@ -79,7 +79,7 @@ bool collide_ray_obb(const struct ray *r, const struct bbox *bbox,
     // prim_draw_sphere(&sphere_ray, &COLOR_MAGENTA_HIGHLIGHT);
 
     // struct ray debug_ray = ray;
-    // vec3_scalef(&debug_ray.dir, 10.0f);
+    // v3_scalef(&debug_ray.dir, 10.0f);
     // prim_draw_ray(&debug_ray, &MAT4_IDENT, COLOR_YELLOW_HIGHLIGHT);
 
     UNUSED(model_matrix);
@@ -92,9 +92,9 @@ bool collide_ray_obb(const struct ray *r, const struct bbox *bbox,
         x_axis.y = model_matrix->m[1][0];
         x_axis.z = model_matrix->m[2][0];
 
-        float x_scale = vec3_length(&x_axis);
-        vec3_normalize(&x_axis);
-        vec3_scalef(&x_axis, 1.0f / x_scale);
+        float x_scale = v3_length(&x_axis);
+        v3_normalize(&x_axis);
+        v3_scalef(&x_axis, 1.0f / x_scale);
 
         // struct ray x_ray;
         // x_ray.orig = model_orig;
@@ -103,14 +103,14 @@ bool collide_ray_obb(const struct ray *r, const struct bbox *bbox,
 
         // struct sphere x_sphere;
         // x_sphere.orig = x_ray.orig;
-        // vec3_add(&x_sphere.orig, &x_ray.dir);
+        // v3_add(&x_sphere.orig, &x_ray.dir);
         // x_sphere.radius = 0.05f;
         // prim_draw_sphere(&x_sphere, &COLOR_RED_HIGHLIGHT);
 
-		float e = vec3_dot(&x_axis, &ray.orig);
-		float f = vec3_dot(&ray.dir, &x_axis);
+		float e = v3_dot(&x_axis, &ray.orig);
+		float f = v3_dot(&ray.dir, &x_axis);
 
-		if (fabs(f) > 0.00001f) // Standard case
+		if (fabsf(f) > 0.00001f) // Standard case
         {
             // Intersection with the "left" plane
             float t1 = (e + bbox->p[0].x) / f;
@@ -157,9 +157,9 @@ bool collide_ray_obb(const struct ray *r, const struct bbox *bbox,
         y_axis.y = model_matrix->m[1][1];
         y_axis.z = model_matrix->m[2][1];
 
-        float scale = vec3_length(&y_axis);
-        vec3_normalize(&y_axis);
-        vec3_scalef(&y_axis, 1.0f / scale);
+        float scale = v3_length(&y_axis);
+        v3_normalize(&y_axis);
+        v3_scalef(&y_axis, 1.0f / scale);
 
         // struct ray y_ray;
         // y_ray.orig = model_orig;
@@ -168,14 +168,14 @@ bool collide_ray_obb(const struct ray *r, const struct bbox *bbox,
 
         // struct sphere y_sphere;
         // y_sphere.orig = y_ray.orig;
-        // vec3_add(&y_sphere.orig, &y_ray.dir);
+        // v3_add(&y_sphere.orig, &y_ray.dir);
         // y_sphere.radius = 0.05f;
         // prim_draw_sphere(&y_sphere, &COLOR_GREEN_HIGHLIGHT);
 
-        float e = vec3_dot(&y_axis, &ray.orig);
-		float f = vec3_dot(&ray.dir, &y_axis);
+        float e = v3_dot(&y_axis, &ray.orig);
+		float f = v3_dot(&ray.dir, &y_axis);
 
-		if (fabs(f) > 0.00001f)
+		if (fabsf(f) > 0.00001f)
         {
             float t1 = (e + bbox->p[0].y) / f;
 			float t2 = (e + bbox->p[1].y) / f;
@@ -203,9 +203,9 @@ bool collide_ray_obb(const struct ray *r, const struct bbox *bbox,
         z_axis.y = model_matrix->m[1][2];
         z_axis.z = model_matrix->m[2][2];
 
-        float scale = vec3_length(&z_axis);
-        vec3_normalize(&z_axis);
-        vec3_scalef(&z_axis, 1.0f / scale);
+        float scale = v3_length(&z_axis);
+        v3_normalize(&z_axis);
+        v3_scalef(&z_axis, 1.0f / scale);
 
         // struct ray z_ray;
         // z_ray.orig = model_orig;
@@ -214,14 +214,14 @@ bool collide_ray_obb(const struct ray *r, const struct bbox *bbox,
 
         // struct sphere z_sphere;
         // z_sphere.orig = z_ray.orig;
-        // vec3_add(&z_sphere.orig, &z_ray.dir);
+        // v3_add(&z_sphere.orig, &z_ray.dir);
         // z_sphere.radius = 0.05f;
         // prim_draw_sphere(&z_sphere, &COLOR_BLUE_HIGHLIGHT);
 
-        float e = vec3_dot(&z_axis, &ray.orig);
-		float f = vec3_dot(&ray.dir, &z_axis);
+        float e = v3_dot(&z_axis, &ray.orig);
+		float f = v3_dot(&ray.dir, &z_axis);
 
-		if (fabs(f) > 0.00001f)
+		if (fabsf(f) > 0.00001f)
         {
 			float t1 = (e + bbox->p[0].z) / f;
 			float t2 = (e + bbox->p[1].z) / f;

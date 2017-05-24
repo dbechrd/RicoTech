@@ -78,18 +78,18 @@ int init_glref()
 
     // X-axis label
     x_axis_transform = MAT4_IDENT;
-    mat4_scale(&x_axis_transform, &((struct vec3) { 1.0f, 0.01f, 0.01f }));
-    mat4_translate(&x_axis_transform, &((struct vec3) { 0.5f, 0.0f, 0.0f }));
+    mat4_scale(&x_axis_transform, &(struct vec3) { 1.0f, 0.01f, 0.01f });
+    mat4_translate(&x_axis_transform, &(struct vec3) { 0.5f, 0.0f, 0.0f });
 
     // Y-axis label
     y_axis_transform = MAT4_IDENT;
-    mat4_scale(&y_axis_transform, &((struct vec3) { 0.01f, 1.0f, 0.01f }));
-    mat4_translate(&y_axis_transform, &((struct vec3) { 0.0f, 0.5f, 0.0f }));
+    mat4_scale(&y_axis_transform, &(struct vec3) { 0.01f, 1.0f, 0.01f });
+    mat4_translate(&y_axis_transform, &(struct vec3) { 0.0f, 0.5f, 0.0f });
 
     // Z-axis label
     z_axis_transform = MAT4_IDENT;
-    mat4_scale(&z_axis_transform, &((struct vec3) { 0.01f, 0.01f, 1.0f }));
-    mat4_translate(&z_axis_transform, &((struct vec3) { 0.0f, 0.0f, 0.5f }));
+    mat4_scale(&z_axis_transform, &(struct vec3) { 0.01f, 0.01f, 1.0f });
+    mat4_translate(&z_axis_transform, &(struct vec3) { 0.0f, 0.0f, 0.5f });
 
     return err;
 }
@@ -161,7 +161,7 @@ void selected_translate(struct camera *camera, const struct vec3 *offset)
 
     enum rico_obj_type selected_type = object_type_get(selected_handle);
 
-    if (vec3_equals(offset, &VEC3_ZERO))
+    if (v3_equals(offset, &VEC3_ZERO))
     {
         if (camera->locked && selected_type != OBJ_STRING_SCREEN)
         {
@@ -173,8 +173,7 @@ void selected_translate(struct camera *camera, const struct vec3 *offset)
     {
         if (camera->locked && selected_type != OBJ_STRING_SCREEN)
         {
-            struct vec3 offset_tmp = *offset;
-            camera_translate_world(camera, &offset_tmp);
+            camera_translate_world(camera, offset);
         }
         object_trans(selected_handle, offset);
     }
@@ -187,7 +186,7 @@ void selected_rotate(const struct vec3 *offset)
     if (!selected_handle)
         return;
 
-    if (vec3_equals(offset, &VEC3_ZERO))
+    if (v3_equals(offset, &VEC3_ZERO))
     {
         object_rot_set(selected_handle, &VEC3_ZERO);
     }
@@ -204,7 +203,7 @@ void selected_scale(const struct vec3 *offset)
     if (!selected_handle)
         return;
 
-    if (vec3_equals(offset, &VEC3_ZERO))
+    if (v3_equals(offset, &VEC3_ZERO))
     {
         object_scale_set(selected_handle, &VEC3_ONE);
     }

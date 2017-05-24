@@ -28,7 +28,7 @@ struct camera {
     bool locked;
     bool need_update;
 
-    struct bbox bbox; //TODO: Replace with vec3 and do vec3_render()
+    struct bbox bbox; //TODO: Replace with vec3 and do v3_render()
     struct mat4 view_matrix;
     struct mat4 proj_matrix;
 };

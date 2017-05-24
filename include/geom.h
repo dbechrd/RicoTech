@@ -88,39 +88,40 @@ struct vec4 {
 //extern const struct vec3 VEC3_SMALL;
 //extern const struct vec3 VEC3_SCALE_ASPECT;
 
-internal inline struct vec3 *vec3_add(struct vec3 *a, const struct vec3 *b)
+#if 1
+internal inline struct vec3 *v3_add(struct vec3 *a, const struct vec3 *b)
 {
     a->x += b->x;
     a->y += b->y;
     a->z += b->z;
     return a;
 }
-internal inline struct vec3 *vec3_sub(struct vec3 *a, const struct vec3 *b)
+internal inline struct vec3 *v3_sub(struct vec3 *a, const struct vec3 *b)
 {
     a->x -= b->x;
     a->y -= b->y;
     a->z -= b->z;
     return a;
 }
-internal inline struct vec3 *vec3_scale(struct vec3 *v, const struct vec3 *s)
+internal inline struct vec3 *v3_scale(struct vec3 *v, const struct vec3 *s)
 {
     v->x *= s->x;
     v->y *= s->y;
     v->z *= s->z;
     return v;
 }
-internal inline struct vec3 *vec3_scalef(struct vec3 *v, float s)
+internal inline struct vec3 *v3_scalef(struct vec3 *v, float s)
 {
     v->x *= s;
     v->y *= s;
     v->z *= s;
     return v;
 }
-internal inline float vec3_dot(const struct vec3 *a, const struct vec3 *b)
+internal inline float v3_dot(const struct vec3 *a, const struct vec3 *b)
 {
     return a->x*b->x + a->y*b->y + a->z*b->z;
 }
-internal inline struct vec3 vec3_cross(const struct vec3 *a, const struct vec3 *b)
+internal inline struct vec3 v3_cross(const struct vec3 *a, const struct vec3 *b)
 {
     struct vec3 c;
     c.x = a->y * b->z - a->z * b->y;
@@ -128,7 +129,7 @@ internal inline struct vec3 vec3_cross(const struct vec3 *a, const struct vec3 *
     c.z = a->x * b->y - a->y * b->x;
     return c;
 }
-internal inline float vec3_length(const struct vec3 *v)
+internal inline float v3_length(const struct vec3 *v)
 {
     return sqrtf(
         v->x * v->x +
@@ -136,38 +137,120 @@ internal inline float vec3_length(const struct vec3 *v)
         v->z * v->z
     );
 }
-internal inline struct vec3 *vec3_negate(struct vec3 *v)
+internal inline struct vec3 *v3_negate(struct vec3 *v)
 {
     v->x = -v->x;
     v->y = -v->y;
     v->z = -v->z;
     return v;
 }
-internal inline struct vec3 *vec3_normalize(struct vec3 *v)
+internal inline struct vec3 *v3_normalize(struct vec3 *v)
 {
-    float len = 1.0f / vec3_length(v);
+    float len = 1.0f / v3_length(v);
     v->x *= len;
     v->y *= len;
     v->z *= len;
     return v;
 }
-internal inline struct vec3 *vec3_positive(struct vec3 *v)
+internal inline struct vec3 *v3_positive(struct vec3 *v)
 {
     if (v->x < 0) v->x *= -1;
     if (v->y < 0) v->y *= -1;
     if (v->z < 0) v->z *= -1;
     return v;
 }
-internal inline int vec3_equals(const struct vec3 *a, const struct vec3 *b)
+internal inline int v3_equals(const struct vec3 *a, const struct vec3 *b)
 {
     return (a->x == b->x && a->y == b->y && a->z == b->z);
 }
 
 // TODO: Refactor *all* printf stuff out into a single file
-internal inline void vec3_print(struct vec3 *v)
+internal inline void v3_print(struct vec3 *v)
 {
     printf("Vec XYZ: %10f %10f %10f\n", v->x, v->y, v->z);
 }
+#else
+internal inline struct vec3 v3_add(struct vec3 a, struct vec3 b)
+{
+    a.x += b.x;
+    a.y += b.y;
+    a.z += b.z;
+    return a;
+}
+internal inline struct vec3 v3_sub(struct vec3 a, struct vec3 b)
+{
+    a.x -= b.x;
+    a.y -= b.y;
+    a.z -= b.z;
+    return a;
+}
+internal inline struct vec3 v3_scale(struct vec3 v, struct vec3 s)
+{
+    v.x *= s.x;
+    v.y *= s.y;
+    v.z *= s.z;
+    return v;
+}
+internal inline struct vec3 v3_scalef(struct vec3 v, float s)
+{
+    v.x *= s;
+    v.y *= s;
+    v.z *= s;
+    return v;
+}
+internal inline float v3_dot(struct vec3 a, struct vec3 b)
+{
+    return a.x*b.x + a.y*b.y + a.z*b.z;
+}
+internal inline struct vec3 v3_cross(struct vec3 a, struct vec3 b)
+{
+    struct vec3 c;
+    c.x = a.y * b.z - a.z * b.y;
+    c.y = a.z * b.x - a.x * b.z;
+    c.z = a.x * b.y - a.y * b.x;
+    return c;
+}
+internal inline float v3_length(struct vec3 v)
+{
+    return sqrtf(
+        v.x * v.x +
+        v.y * v.y +
+        v.z * v.z
+    );
+}
+internal inline struct vec3 v3_negate(struct vec3 v)
+{
+    v.x = -v.x;
+    v.y = -v.y;
+    v.z = -v.z;
+    return v;
+}
+internal inline struct vec3 v3_normalize(struct vec3 v)
+{
+    float len = 1.0f / v3_length(v);
+    v.x *= len;
+    v.y *= len;
+    v.z *= len;
+    return v;
+}
+internal inline struct vec3 v3_positive(struct vec3 v)
+{
+    v.x = fabsf(v.x);
+    v.y = fabsf(v.y);
+    v.z = fabsf(v.z);
+    return v;
+}
+internal inline int v3_equals(struct vec3 a, struct vec3 b)
+{
+    return (a.x == b.x && a.y == b.y && a.z == b.z);
+}
+
+// TODO: Refactor *all* printf stuff out into a single file
+internal inline void v3_print(struct vec3 v)
+{
+    printf("Vec XYZ: %10f %10f %10f\n", v.x, v.y, v.z);
+}
+#endif
 
 //------------------------------------------------------------------------------
 // 4D Matrix
@@ -389,7 +472,7 @@ internal inline void mat4_transpose(struct mat4 *m)
     m->m[3][2] = tmp;
 }
 
-internal inline struct vec3 *vec3_mul_mat4(struct vec3 *v, const struct mat4 *m)
+internal inline struct vec3 *v3_mul_mat4(struct vec3 *v, const struct mat4 *m)
 {
     // Copy v
     struct vec3 vv = *v;
@@ -412,8 +495,8 @@ internal inline struct vec3 *vec3_mul_mat4(struct vec3 *v, const struct mat4 *m)
 
 //Calculate PERSPECTIVE projection
 internal inline struct mat4 mat4_init_perspective(float width, float height,
-                                                float z_near, float z_far,
-                                                float fov_deg)
+                                                  float z_near, float z_far,
+                                                  float fov_deg)
 {
     ///////////////////////////////////////////////////////
 
@@ -431,20 +514,20 @@ internal inline struct mat4 mat4_init_perspective(float width, float height,
 }
 
 //Calculate lookAt matrix
-internal inline struct mat4 mat4_init_lookat(struct vec3 *pos, struct vec3 *view,
-                                           struct vec3 *up)
+internal inline struct mat4 mat4_init_lookat(struct vec3 *pos,
+                                             struct vec3 *view,
+                                             struct vec3 *up)
 {
     struct mat4 look;
-    struct vec3 tmp = *view;
-    struct vec3 right = vec3_cross(vec3_sub(&tmp, pos), up);
-    vec3_normalize(&right);
+    struct vec3 right = v3_cross(v3_sub(view, pos), up);
+    v3_normalize(&right);
     look = mat4_init(
-        right.x, right.y, right.z, 0.0f,
-          up->x,   up->y,   up->z, 0.0f,
-        view->x, view->y, view->z, 0.0f,
+        right.x,  right.y, right.z, 0.0f,
+          up->x,    up->y,   up->z, 0.0f,
+        view->x,  view->y, view->z, 0.0f,
            0.0f,    0.0f,    0.0f, 1.0f
     );
-    struct mat4 trans = mat4_init_translate(vec3_negate(pos));
+    struct mat4 trans = mat4_init_translate(v3_negate(pos));
     mat4_mul(&look, &trans);
     //mat4_mul(&trans, &look);
     return look;
@@ -582,20 +665,20 @@ internal inline float quat_dot(const struct quat *a, const struct quat *b)
 }
 
 internal inline struct quat *quat_from_axis_angle(struct quat *q,
-                                                const struct vec3 *axis,
-                                                float angle_deg)
+                                                  struct vec3 axis,
+                                                  float angle_deg)
 {
     float s = sinf(DEG_TO_RADF(angle_deg) / 2.0f);
     q->w = cosf(DEG_TO_RADF(angle_deg) / 2.0f);
-    q->x = axis->x * s;
-    q->y = axis->y * s;
-    q->z = axis->z * s;
+    q->x = axis.x * s;
+    q->y = axis.y * s;
+    q->z = axis.z * s;
 
     quat_normalize(q);
     return q;
 }
 
-internal inline struct vec3 *vec3_mul_quat(struct vec3 *v, const struct quat *q)
+internal inline struct vec3 *v3_mul_quat(struct vec3 *v, const struct quat *q)
 {
     // Copy q
     struct quat qq = *q;
@@ -614,10 +697,10 @@ internal inline struct vec3 *vec3_mul_quat(struct vec3 *v, const struct quat *q)
     quat_mul(&qq, q);
     */
 
-    if (fabs(qq.w) < QUAT_EPSILON) qq.w = 0.0f;
-    if (fabs(qq.x) < QUAT_EPSILON) qq.x = 0.0f;
-    if (fabs(qq.y) < QUAT_EPSILON) qq.y = 0.0f;
-    if (fabs(qq.z) < QUAT_EPSILON) qq.z = 0.0f;
+    if (fabsf(qq.w) < QUAT_EPSILON) qq.w = 0.0f;
+    if (fabsf(qq.x) < QUAT_EPSILON) qq.x = 0.0f;
+    if (fabsf(qq.y) < QUAT_EPSILON) qq.y = 0.0f;
+    if (fabsf(qq.z) < QUAT_EPSILON) qq.z = 0.0f;
 
     // Quaternion must be pure to properly convert back into vec3
     RICO_ASSERT(qq.w == 0.0f);

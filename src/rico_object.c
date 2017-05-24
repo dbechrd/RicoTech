@@ -228,7 +228,7 @@ void object_deselect(u32 handle)
 void object_trans(u32 handle, const struct vec3 *v)
 {
     struct rico_object *obj = object_find(handle);
-    vec3_add(&obj->trans, v);
+    v3_add(&obj->trans, v);
     update_transform(obj);
 }
 
@@ -248,7 +248,7 @@ void object_trans_set(u32 handle, const struct vec3 *v)
 void object_rot(u32 handle, const struct vec3 *v)
 {
     struct rico_object *obj = object_find(handle);
-    vec3_add(&obj->rot, v);
+    v3_add(&obj->rot, v);
     update_transform(obj);
 }
 
@@ -310,7 +310,7 @@ void object_rot_z_set(u32 handle, float deg)
 void object_scale(u32 handle, const struct vec3 *v)
 {
     struct rico_object *obj = object_find(handle);
-    vec3_add(&obj->scale, v);
+    v3_add(&obj->scale, v);
     update_transform(obj);
 }
 
@@ -348,7 +348,7 @@ internal void update_transform(struct rico_object *obj)
     scale_inv.z = 1.0f / obj->scale.z;
 
     struct vec3 trans_inv = obj->trans;
-    vec3_negate(&trans_inv);
+    v3_negate(&trans_inv);
 
     obj->transform_inverse = MAT4_IDENT;
     mat4_scale(&obj->transform_inverse, &scale_inv);

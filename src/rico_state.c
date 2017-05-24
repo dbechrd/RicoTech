@@ -1,3 +1,4 @@
+
 const char *rico_state_string[] = {
     RICO_STATES(GEN_STRING)
 };
@@ -9,6 +10,11 @@ enum rico_key {
     RICOKEY_DOWN,
     RICOKEY_FORWARD,
     RICOKEY_BACKWARD,
+    RICOKEY_SPRINT,
+    RICOKEY_CAMERA_SLOW,
+    RICOKEY_CAMERA_RESET,
+    RICOKEY_CAMERA_LOCK,
+    RICOKEY_CAMERA_WIREFRAME,
     RICOKEY_COUNT
 };
 
@@ -22,40 +28,21 @@ global struct rico_chunk *RICO_DEFAULT_CHUNK;
 //per frame. Typical walking stride is ~0.762 meters (30 inches). Distance
 //travelled per frame (60hz) is 0.762 * 0.0275 = 0.020955 ~= 0.021
 
-//TODO: This assumes 1/60th second (60fps), this should be 1.65 * dt.
-//GLfloat view_acc_delta = 0.001f;
-//GLfloat view_acc_delta = 1.65f;
-
-////////////////////////////////////////////////
-// Before delta change
-////////////////////////////////////////////////
-// global struct vec3 view_vel;
-// global GLfloat view_vel_max = 8.0f;
-// global GLfloat view_vel_max_sprint = 16.0f;
-
-// global struct vec3 view_acc;
-// global GLfloat view_acc_delta = 0.05f;
-// global GLfloat sprint_factor = 2.0f;
-////////////////////////////////////////////////
+global struct vec3 mouse_acc;
 global float look_sensitivity_x = 0.5f;
 global float look_sensitivity_y = 0.5f;
-global struct vec3 mouse_acc;
 
 global struct vec3 view_vel;
-global float view_vel_max = 2.5f; //5.0f;
-global float view_vel_max_sprint = 10.0f;
-global float view_vel_max_snail = 0.05f;
-
 global struct vec3 view_acc;
+global float player_acceleration = 4.0f;
 global float sprint_factor = 2.0f;
+global bool sprint = false;
+global float friction_factor = 0.04f;
 
-// global struct vec3 view_rot_vel;
-// global float view_rot_vel_max = 300.0f;
+global float camera_slow_factor = 0.1f;
+global bool camera_slow = false;
 
-// global struct vec3 view_rot_acc;
-// global float view_rot_acc_max = 50.0f;
-////////////////////////////////////////////////
-
+////////////////////////////////////////////////////////////////////////////////
 #define TRANS_DELTA_MIN 0.01f
 #define TRANS_DELTA_MAX 10.0f
 global float trans_delta = 1.0f;
@@ -70,10 +57,9 @@ global float rot_delta = ROT_DELTA_DEFAULT;
 global float scale_delta = 1.0f;
 
 global bool mouse_lock = true;
-global bool sprint = false;
-global bool snail = false;
 global bool enable_lighting = true;
 
+////////////////////////////////////////////////////////////////////////////////
 // Performance timing
 global u64 perfs_frequency;
 global u64 last_perfs;
@@ -84,9 +70,18 @@ global u64 fps_last_render;
 global u64 fps_render_delta = 200000;  // 200 ms
 global bool fps_render = false;
 
+////////////////////////////////////////////////////////////////////////////////
 // Key map and state
-global s32 sdlk[RICOKEY_COUNT];
-global bool pressed[RICOKEY_COUNT] = { false };
+global u8 keystate_buffers[2][SDL_NUM_SCANCODES];
+
+global u8* keys      = keystate_buffers[0];
+global u8* keys_prev = keystate_buffers[1];
+
+global u8 sdlk[RICOKEY_COUNT];
+
+#define KEY_DOWN(key)     (keys[sdlk[key]])
+#define KEY_PRESSED(key)  (keys[sdlk[key]] && !keys_prev[sdlk[key]])
+#define KEY_RELEASED(key) (keys_prev[sdlk[key]] && !keys[sdlk[key]])
 
 // Current state
 global enum rico_state state;
@@ -99,14 +94,46 @@ int state_update(enum rico_state *_state)
 {
     enum rico_error err;
 
-    ////////////////////////////////////////////////////////////////////////
-    // Reset frame state
-    ////////////////////////////////////////////////////////////////////////
+    ///--------------------------------------------------------------------------
+    //| Reset frame state
+    ///--------------------------------------------------------------------------
     mouse_acc = VEC3_ZERO;
 
-    ////////////////////////////////////////////////////////////////////////
-    // Update time
-    ////////////////////////////////////////////////////////////////////////
+    ///--------------------------------------------------------------------------
+    //| Handle input & state changes
+    ///--------------------------------------------------------------------------
+    enum rico_state start_state;
+    bool state_changed = false;
+
+    while (1)
+    {
+        start_state = state;
+        err = state_handlers[state]();
+        if (err)
+            return err;
+
+        if (state == start_state)
+            break;
+
+        state_changed = true;
+    }
+    *_state = state;
+
+    if (state == STATE_ENGINE_SHUTDOWN)
+        return SUCCESS;
+
+    if (state_changed)
+    {
+        char buf[50] = { 0 };
+        sprintf(buf, "State: %d %s", state, rico_state_string[state]);
+        err = string_init("STR_STATE", STR_SLOT_EDIT_INFO, 0, 0,
+                          COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
+        if (err) return err;
+    }
+
+    ///--------------------------------------------------------------------------
+    //| Update time
+    ///--------------------------------------------------------------------------
     u64 perfs = SDL_GetPerformanceCounter();
     u64 delta_perfs = (perfs - last_perfs);
     // Smoothing function (weighted running average)
@@ -137,94 +164,62 @@ int state_update(enum rico_state *_state)
         fps_last_render = last_perfs;
     }
 
-    ////////////////////////////////////////////////////////////////////////
-    // Handle input & state changes
-    ////////////////////////////////////////////////////////////////////////
-    enum rico_state start_state;
-    bool state_changed = false;
-
-    while (1)
-    {
-        start_state = state;
-        err = state_handlers[state]();
-        if (err)
-            return err;
-
-        if (state == start_state)
-            break;
-
-        state_changed = true;
-    }
-    *_state = state;
-
-    if (state == STATE_ENGINE_SHUTDOWN)
-        return SUCCESS;
-
-    if (state_changed)
-    {
-        char buf[50] = { 0 };
-        sprintf(buf, "State: %d %s", state, rico_state_string[state]);
-        err = string_init("STR_STATE", STR_SLOT_EDIT_INFO, 0, 0,
-                          COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
-        if (err) return err;
-    }
-
-    ////////////////////////////////////////////////////////////////////////
-    // Clear screen
-    ////////////////////////////////////////////////////////////////////////
+    ///--------------------------------------------------------------------------
+    //| Clear screen
+    ///--------------------------------------------------------------------------
     //glClearColor(0.1f, 0.1f, 0.3f, 1.0f);
     glClearColor(0.46f, 0.70f, 1.0f, 1.0f);
     //glClearDepth(0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    ////////////////////////////////////////////////////////////////////////
-    // Update camera
-    ////////////////////////////////////////////////////////////////////////
-    float mag_acc = vec3_length(&view_acc);
-    if (mag_acc < VEC3_EPSILON)
-    {
-        mag_acc = 0;
-        view_acc = VEC3_ZERO;
-    }
+    ///--------------------------------------------------------------------------
+    //| Update camera
+    ///--------------------------------------------------------------------------
+
+    //TODO: Only allow sprinting on the ground during normal play (X/Z)
+    // Calculate delta velocity
+    // dv' = at;
+    struct vec3 delta_vel = view_acc;
+    v3_scalef(&delta_vel, player_acceleration);
+    if (sprint)      v3_scalef(&delta_vel, sprint_factor);
+    if (camera_slow) v3_scalef(&delta_vel, camera_slow_factor);
+    v3_scalef(&delta_vel, (r32)dt);
+
+    // Update velocity
+    v3_add(&view_vel, &delta_vel);
+    
+    // Apply friction (double when slowing down for a more realistic stop)
+    float mag_acc = v3_length(&view_acc);
+    if (mag_acc != 0.0f)
+        v3_scalef(&view_vel, 1.0f - friction_factor);
     else
-    {
-        struct vec3 delta = view_acc;
-        if (sprint)
-        {
-            //TODO: Only allow sprinting on the ground during normal play (X/Z)
-            vec3_scalef(&delta, sprint_factor);
-        }
-        // vec3_scalef(&delta, dt);
+        v3_scalef(&view_vel, 1.0f - friction_factor * 2.0f);
 
-        vec3_add(&view_vel, &delta);
-    }
-
-    float mag_vel = vec3_length(&view_vel);
+    // Resting check
+    float mag_vel = v3_length(&view_vel);
     if (mag_vel < VEC3_EPSILON)
     {
-        mag_vel = 0;
         view_vel = VEC3_ZERO;
     }
-    else
-    {
-        if (mag_acc == 0)
-        {
-            vec3_scalef(&view_vel, 0.75f);
-        }
 
-        float vel_max = (sprint) ? view_vel_max_sprint : view_vel_max;
-        vel_max = (snail) ? view_vel_max_snail : vel_max;
-        if (mag_vel > vel_max)
-        {
-            vec3_normalize(&view_vel);
-            vec3_scalef(&view_vel, vel_max);
-        }
+    char buf[64] = { 0 };
+    sprintf(buf, "Vel: %.1f %.1f %.1f", view_vel.x, view_vel.y, view_vel.z);
+    err = string_init("STR_STATE", STR_SLOT_EDIT_INFO, 0, 0,
+                      COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
+    if (err) return err;
 
-        struct vec3 delta = view_vel;
-        vec3_scalef(&delta, (r32)dt);
+    // Calculate delta position
+    // dp' = 1/2at^2 + vt
+    struct vec3 half_at_squared = view_acc;
+    v3_scalef(&half_at_squared, 0.5f * (r32)dt * (r32)dt);
+    struct vec3 vt = view_vel;
+    v3_scalef(&vt, (r32)dt);
 
-        camera_translate_local(&cam_player, &delta);
-    }
+    struct vec3 delta_pos = half_at_squared;
+    v3_add(&delta_pos, &vt);
+
+    // Update position
+    camera_translate_local(&cam_player, &delta_pos);
 
     // TODO: Smooth mouse look somehow
     if (mouse_acc.x != 0 || mouse_acc.y != 0)
@@ -237,9 +232,9 @@ int state_update(enum rico_state *_state)
 
     camera_update(&cam_player);
 
-    ////////////////////////////////////////////////////////////////////////
-    // Render
-    ////////////////////////////////////////////////////////////////////////
+    ///--------------------------------------------------------------------------
+    //| Render
+    ///--------------------------------------------------------------------------
     // glPolygonMode(GL_FRONT_AND_BACK, cam_player.fill_mode);
     glPolygonMode(GL_FRONT, cam_player.fill_mode);
 
@@ -301,9 +296,9 @@ internal int save_file()
     return err;
 }
 
-////////////////////////////////////////////////////////////////////////
-// Camera forward ray v. scene
-////////////////////////////////////////////////////////////////////////
+///----------------------------------------------------------------------
+//| Camera forward ray v. scene
+///----------------------------------------------------------------------
 internal void select_first_obj()
 {
     #define COLLIDE_COUNT 10
@@ -330,6 +325,19 @@ internal void select_first_obj()
     //     }
     //     printf("\n");
     // }
+}
+
+internal int sdl_poll(SDL_Event *event)
+{
+    int has_events = SDL_PollEvent(event);
+
+    // Get keyboard state
+    u8 *keys_tmp = keys_prev;
+    keys_prev = keys;
+    keys = keys_tmp;
+    memcpy(keys, SDL_GetKeyboardState(0), SDL_NUM_SCANCODES);
+
+    return has_events;
 }
 
 internal int handle_engine_events(SDL_Event event, bool *handled)
@@ -369,7 +377,7 @@ internal int handle_engine_events(SDL_Event event, bool *handled)
         }
         *handled = true;
     }
-    else if (event.type == SDL_KEYDOWN)
+    else if (event.type == SDL_KEYDOWN && !event.key.repeat)
     {
         if (event.key.keysym.mod & KMOD_CTRL &&
             event.key.keysym.mod & KMOD_SHIFT) {}
@@ -378,7 +386,7 @@ internal int handle_engine_events(SDL_Event event, bool *handled)
         else if (event.key.keysym.mod & KMOD_SHIFT)
         {
             // [`]: DEBUG: Show a test string for 3 seconds
-            if (event.key.keysym.sym == SDLK_BACKQUOTE)
+            if (keys[SDL_SCANCODE_GRAVE])
             {
                 err = string_init("STR_EDIT_MODE", STR_SLOT_DYNAMIC, 0, 0,
                                   COLOR_GREEN, 3000, 0,
@@ -390,7 +398,7 @@ internal int handle_engine_events(SDL_Event event, bool *handled)
         else if (event.key.keysym.mod & KMOD_CTRL)
         {
             // [Ctrl-S]: Save chunk
-            if (event.key.keysym.sym == SDLK_s)
+            if (keys[SDL_SCANCODE_S])
             {
                 save_file();
                 *handled = true;
@@ -399,7 +407,7 @@ internal int handle_engine_events(SDL_Event event, bool *handled)
         else if (event.key.keysym.mod & KMOD_ALT)
         {}
         // [2]: Toggle FPS counter
-        else if (event.key.keysym.sym == SDLK_2)
+        else if (keys[SDL_SCANCODE_2])
         {
             fps_render = !fps_render;
             if (!fps_render)
@@ -407,7 +415,7 @@ internal int handle_engine_events(SDL_Event event, bool *handled)
             *handled = true;
         }
         // [Esc]: Save and exit
-        else if (event.key.keysym.sym == SDLK_ESCAPE)
+        else if (keys[SDL_SCANCODE_ESCAPE])
         {
             err = string_init("STR_CONFIRM_QUIT", STR_SLOT_MENU_QUIT, 600,
                               400, COLOR_GREEN, 0, 0,
@@ -419,7 +427,7 @@ internal int handle_engine_events(SDL_Event event, bool *handled)
             *handled = true;
         }
         // [L]: Toggle scene lighting
-        else if (event.key.keysym.sym == SDLK_l)
+        else if (keys[SDL_SCANCODE_L])
         {
             // TODO: Pretty sure this is broken
             // TODO: Use this to change shader program on render
@@ -427,18 +435,20 @@ internal int handle_engine_events(SDL_Event event, bool *handled)
             *handled = true;
         }
         // [M]: Toggle mouse lock-to-window
-        else if (event.key.keysym.sym == SDLK_m)
+        else if (keys[SDL_SCANCODE_M])
         {
             mouse_lock = !mouse_lock;
             SDL_SetRelativeMouseMode(mouse_lock);
             *handled = true;
         }
+#if DEBUG
         // [P]: DEBUG: Force breakpoint
-        else if (event.key.keysym.sym == SDLK_p)
+        else if (keys[SDL_SCANCODE_p])
         {
-            // SDL_TriggerBreakpoint();
-            // *handled = true;
+             sdl_triggerbreakpoint();
+             *handled = true;
         }
+#endif
     }
 
     return err;
@@ -446,164 +456,69 @@ internal int handle_engine_events(SDL_Event event, bool *handled)
 
 internal int handle_camera_events(SDL_Event event, bool *handled)
 {
-    struct vec3 delta = VEC3_ZERO;
+    enum rico_error err = SUCCESS;
 
-    if (event.type == SDL_KEYDOWN)
-    {
-        if (event.key.keysym.mod & KMOD_CTRL &&
-            event.key.keysym.mod & KMOD_SHIFT) {}
-        else if (event.key.keysym.mod & KMOD_CTRL &&
-                 event.key.keysym.mod & KMOD_ALT) {}
-        //else if (event.key.keysym.mod & KMOD_SHIFT) {}
-        else if (event.key.keysym.mod & KMOD_CTRL) {}
-        else if (event.key.keysym.mod & KMOD_ALT) {}
+    view_acc = VEC3_ZERO;
 
-        // [Shift]: Sprint
-        else if (event.key.keysym.sym == SDLK_LSHIFT)
-        {
-            sprint = true;
-            *handled = true;
-        }
-        // [1]: Toggle wireframe mode
-        else if (event.key.keysym.sym == SDLK_1)
-        {
-            cam_player.fill_mode = (cam_player.fill_mode == GL_FILL)
-                ? GL_LINE
-                : GL_FILL;
-            *handled = true;
-        }
-        // [R]: Toggle sprint (fast camera)
-        else if (event.key.keysym.sym == SDLK_r)
-        {
-            snail = !snail;
-            *handled = true;
-        }
-        // [Q]: Move camera down
-        else if (event.key.keysym.sym == sdlk[RICOKEY_DOWN] &&
-                 !event.key.repeat)
-        {
-            pressed[RICOKEY_DOWN] = true;
-            delta.y -= 1.0f;
-            *handled = true;
-        }
-        // [E]: Move camera up
-        else if (event.key.keysym.sym == sdlk[RICOKEY_UP] &&
-                 !event.key.repeat)
-        {
-            pressed[RICOKEY_UP] = true;
-            delta.y += 1.0f;
-            *handled = true;
-        }
-        // [A]: Move camera left
-        else if (event.key.keysym.sym == sdlk[RICOKEY_LEFT] &&
-                 !event.key.repeat)
-        {
-            pressed[RICOKEY_LEFT] = true;
-            delta.x -= 1.0f;
-            *handled = true;
-        }
-        // [D]: Move camera right
-        else if (event.key.keysym.sym == sdlk[RICOKEY_RIGHT] &&
-                 !event.key.repeat)
-        {
-            pressed[RICOKEY_RIGHT] = true;
-            delta.x += 1.0f;
-            *handled = true;
-        }
-        // [W]: Move camera forward
-        else if (event.key.keysym.sym == sdlk[RICOKEY_FORWARD] &&
-                 !event.key.repeat)
-        {
-            pressed[RICOKEY_FORWARD] = true;
-            delta.z += 1.0f;
-            *handled = true;
-        }
-        // [S]: Move camera backward
-        else if (event.key.keysym.sym == sdlk[RICOKEY_BACKWARD] &&
-                 !event.key.repeat)
-        {
-            pressed[RICOKEY_BACKWARD] = true;
-            delta.z -= 1.0f;
-            *handled = true;
-        }
-        // [F]: Reset camera to starting position
-        else if (event.key.keysym.sym == SDLK_f)
-        {
-            //TODO: FIX ME
-            // camera_reset(&camera);
-            cam_player.position.y = 1.7f;
-            cam_player.need_update = true;
-            *handled = true;
-        }
-        // [C]: Toggle locked camera
-        else if (event.key.keysym.sym == SDLK_c)
-        {
-            cam_player.locked = !cam_player.locked;
-            *handled = true;
-        }
-    }
-    else if (event.type == SDL_KEYUP)
+    if KEY_DOWN(RICOKEY_UP)       view_acc.y += 1.0f;
+    if KEY_DOWN(RICOKEY_DOWN)     view_acc.y -= 1.0f;
+    if KEY_DOWN(RICOKEY_RIGHT)    view_acc.x += 1.0f;
+    if KEY_DOWN(RICOKEY_LEFT)     view_acc.x -= 1.0f;
+    if KEY_DOWN(RICOKEY_FORWARD)  view_acc.z += 1.0f;
+    if KEY_DOWN(RICOKEY_BACKWARD) view_acc.z -= 1.0f;
+
+    sprint = KEY_DOWN(RICOKEY_SPRINT);
+
+    if KEY_PRESSED(RICOKEY_CAMERA_SLOW)  camera_slow = !camera_slow;
+    if KEY_PRESSED(RICOKEY_CAMERA_RESET) camera_reset(&cam_player);
+    if KEY_PRESSED(RICOKEY_CAMERA_LOCK)  cam_player.locked = !cam_player.locked;
+    if KEY_PRESSED(RICOKEY_CAMERA_WIREFRAME) cam_player.fill_mode =
+        (cam_player.fill_mode == GL_FILL) ? GL_LINE : GL_FILL;
+
+    // TODO: Fix diagonal movement
+    //v3_normalize(&delta);
+    //view_acc = delta;
+
+    return err;
+}
+
+internal int state_play_explore()
+{
+    enum rico_error err = SUCCESS;
+
+    SDL_Event event;
+    while (state == STATE_PLAY_EXPLORE && sdl_poll(&event))
     {
-        // [Shift]: Sprint
-        if (event.key.keysym.sym == SDLK_LSHIFT)
+        bool handled = 0;
+
+        err = handle_engine_events(event, &handled);
+        if (err)     return err;
+        if (handled) continue;
+
+        err = handle_camera_events(event, &handled);
+        if (err)     return err;
+        if (handled) continue;
+
+        if (event.type == SDL_KEYDOWN && !event.key.repeat)
         {
-            sprint = false;
-            *handled = true;
-        }
-        else if (pressed[RICOKEY_DOWN] &&
-                 event.key.keysym.sym == sdlk[RICOKEY_DOWN])
-        {
-            pressed[RICOKEY_DOWN] = false;
-            delta.y += 1.0f;
-            *handled = true;
-        }
-        else if (pressed[RICOKEY_UP] &&
-                 event.key.keysym.sym == sdlk[RICOKEY_UP])
-        {
-            pressed[RICOKEY_UP] = false;
-            delta.y -= 1.0f;
-            *handled = true;
-        }
-        else if (pressed[RICOKEY_LEFT] &&
-                 event.key.keysym.sym == sdlk[RICOKEY_LEFT])
-        {
-            pressed[RICOKEY_LEFT] = false;
-            delta.x += 1.0f;
-            *handled = true;
-        }
-        else if (pressed[RICOKEY_RIGHT] &&
-                 event.key.keysym.sym == sdlk[RICOKEY_RIGHT])
-        {
-            pressed[RICOKEY_RIGHT] = false;
-            delta.x -= 1.0f;
-            *handled = true;
-        }
-        else if (pressed[RICOKEY_FORWARD] &&
-                 event.key.keysym.sym == sdlk[RICOKEY_FORWARD])
-        {
-            pressed[RICOKEY_FORWARD] = false;
-            delta.z -= 1.0f;
-            *handled = true;
-        }
-        else if (pressed[RICOKEY_BACKWARD] &&
-                 event.key.keysym.sym == sdlk[RICOKEY_BACKWARD])
-        {
-            pressed[RICOKEY_BACKWARD] = false;
-            delta.z += 1.0f;
-            *handled = true;
+            if (event.key.keysym.mod & KMOD_CTRL &&
+                event.key.keysym.mod & KMOD_SHIFT) {}
+            else if (event.key.keysym.mod & KMOD_CTRL &&
+                     event.key.keysym.mod & KMOD_ALT) {}
+            else if (event.key.keysym.mod & KMOD_SHIFT) {}
+            else if (event.key.keysym.mod & KMOD_CTRL) {}
+            else if (event.key.keysym.mod & KMOD_ALT) {}
+
+            // [`]: Enter edit mode
+            else if (keys[SDL_SCANCODE_GRAVE]) // backtick
+            {
+                state = STATE_EDIT_TRANSLATE;
+                selected_print();
+            }
         }
     }
 
-    if (*handled)
-    {
-        if (!vec3_equals(&delta, &VEC3_ZERO))
-        {
-            vec3_normalize(&delta);
-            vec3_add(&view_acc, &delta);
-        }
-    }
-
-    return SUCCESS;
+    return err;
 }
 
 internal int handle_edit_events(SDL_Event event, bool *handled)
@@ -613,11 +528,11 @@ internal int handle_edit_events(SDL_Event event, bool *handled)
     enum rico_error err;
 
     err = handle_engine_events(event, handled);
-    if (err)     return err;
+    if (err)      return err;
     if (*handled) return SUCCESS;
 
     err = handle_camera_events(event, handled);
-    if (err)     return err;
+    if (err)      return err;
     if (*handled) return SUCCESS;
 
     if (event.type == SDL_MOUSEBUTTONDOWN)
@@ -629,22 +544,24 @@ internal int handle_edit_events(SDL_Event event, bool *handled)
             *handled = true;
         }
     }
-    else if (event.type == SDL_KEYDOWN)
+    else if (event.type == SDL_KEYDOWN && !event.key.repeat)
     {
         if (event.key.keysym.mod & KMOD_CTRL &&
-            event.key.keysym.mod & KMOD_SHIFT) {}
+            event.key.keysym.mod & KMOD_SHIFT) {
+        }
         else if (event.key.keysym.mod & KMOD_CTRL &&
-                 event.key.keysym.mod & KMOD_ALT) {}
+                 event.key.keysym.mod & KMOD_ALT) {
+        }
         else if (event.key.keysym.mod & KMOD_SHIFT)
         {
             // [Shift-Tab]: Cycle select through objects (in reverse)
-            if (event.key.keysym.sym == SDLK_TAB)
+            if (keys[SDL_SCANCODE_TAB])
             {
                 select_prev_obj();
                 *handled = true;
             }
             // [Shift-B]: Recalculate bounding boxes of all objects
-            else if (event.key.keysym.sym == SDLK_b)
+            else if (keys[SDL_SCANCODE_B])
             {
                 recalculate_all_bbox();
                 *handled = true;
@@ -653,7 +570,7 @@ internal int handle_edit_events(SDL_Event event, bool *handled)
         else if (event.key.keysym.mod & KMOD_CTRL)
         {
             // [Ctrl-D]: Duplicate selected object
-            if (event.key.keysym.sym == SDLK_d)
+            if (keys[SDL_SCANCODE_D])
             {
                 selected_duplicate();
                 *handled = true;
@@ -662,14 +579,14 @@ internal int handle_edit_events(SDL_Event event, bool *handled)
         else if (event.key.keysym.mod & KMOD_ALT) {}
 
         // [`]: Exit edit mode
-        else if (event.key.keysym.sym == SDLK_BACKQUOTE)
+        else if (keys[SDL_SCANCODE_GRAVE])
         {
             string_free(STR_SLOT_SELECTED_OBJ);
             state = STATE_PLAY_EXPLORE;
             *handled = true;
         }
         // [Numpad 0]: Select next edit mode
-        else if (event.key.keysym.sym == SDLK_KP_0)
+        else if (keys[SDL_SCANCODE_KP_0])
         {
             switch (state)
             {
@@ -688,7 +605,7 @@ internal int handle_edit_events(SDL_Event event, bool *handled)
             *handled = true;
         }
         // [Numpad .]: Select previous edit mode
-        else if (event.key.keysym.sym == SDLK_KP_PERIOD)
+        else if (keys[SDL_SCANCODE_KP_PERIOD])
         {
             switch (state)
             {
@@ -707,19 +624,19 @@ internal int handle_edit_events(SDL_Event event, bool *handled)
             *handled = true;
         }
         // [Tab]: Cycle select through objects
-        else if (event.key.keysym.sym == SDLK_TAB)
+        else if (keys[SDL_SCANCODE_TAB])
         {
             select_next_obj();
             *handled = true;
         }
         // [Ins]: Create new object
-        else if (event.key.keysym.sym == SDLK_INSERT)
+        else if (keys[SDL_SCANCODE_INSERT])
         {
             create_obj();
             *handled = true;
         }
         // [Del]: Delete selected object
-        else if (event.key.keysym.sym == SDLK_DELETE)
+        else if (keys[SDL_SCANCODE_DELETE])
         {
             selected_delete();
             *handled = true;
@@ -727,45 +644,6 @@ internal int handle_edit_events(SDL_Event event, bool *handled)
     }
 
     return SUCCESS;
-}
-
-internal int state_play_explore()
-{
-    enum rico_error err = SUCCESS;
-
-    SDL_Event event;
-    while (state == STATE_PLAY_EXPLORE && SDL_PollEvent(&event))
-    {
-        bool handled = 0;
-
-        err = handle_engine_events(event, &handled);
-        if (err)     return err;
-        if (handled) continue;
-
-        err = handle_camera_events(event, &handled);
-        if (err)     return err;
-        if (handled) continue;
-
-        if (event.type == SDL_KEYDOWN)
-        {
-            if (event.key.keysym.mod & KMOD_CTRL &&
-                event.key.keysym.mod & KMOD_SHIFT) {}
-            else if (event.key.keysym.mod & KMOD_CTRL &&
-                     event.key.keysym.mod & KMOD_ALT) {}
-            else if (event.key.keysym.mod & KMOD_SHIFT) {}
-            else if (event.key.keysym.mod & KMOD_CTRL) {}
-            else if (event.key.keysym.mod & KMOD_ALT) {}
-
-            // [`]: Enter edit mode
-            else if (event.key.keysym.sym == SDLK_BACKQUOTE) // backtick
-            {
-                state = STATE_EDIT_TRANSLATE;
-                selected_print();
-            }
-        }
-    }
-
-    return err;
 }
 
 internal int state_edit_translate()
@@ -777,7 +655,7 @@ internal int state_edit_translate()
     bool trans_delta_changed = false;
 
     SDL_Event event;
-    while (state == STATE_EDIT_TRANSLATE && SDL_PollEvent(&event))
+    while (state == STATE_EDIT_TRANSLATE && sdl_poll(&event))
     {
         bool handled = 0;
 
@@ -785,7 +663,7 @@ internal int state_edit_translate()
         if (err)     return err;
         if (handled) continue;
 
-        if (event.type == SDL_KEYDOWN)
+        if (event.type == SDL_KEYDOWN && !event.key.repeat)
         {
             if (event.key.keysym.mod & KMOD_CTRL &&
                 event.key.keysym.mod & KMOD_SHIFT) {}
@@ -795,29 +673,28 @@ internal int state_edit_translate()
             else if (event.key.keysym.mod & KMOD_CTRL) {}
             else if (event.key.keysym.mod & KMOD_ALT) {}
             // [0]: Reset selected object's translation
-            else if (event.key.keysym.sym == SDLK_0)
+            else if (keys[SDL_SCANCODE_0])
                 translate_reset = true;
             // [Up Arrow]: Translate selected object up
-            else if (event.key.keysym.sym == SDLK_UP)
+            else if (keys[SDL_SCANCODE_UP])
                 translate.y += trans_delta;
             // [Down Arrow]: Translate selected object down
-            else if (event.key.keysym.sym == SDLK_DOWN)
+            else if (keys[SDL_SCANCODE_DOWN])
                 translate.y -= trans_delta;
             // [Left Arrow]: Translate selected object west
-            else if (event.key.keysym.sym == SDLK_LEFT)
+            else if (keys[SDL_SCANCODE_LEFT])
                 translate.x -= trans_delta;
             // [Right Arrow]: Translate selected object east
-            else if (event.key.keysym.sym == SDLK_RIGHT)
+            else if (keys[SDL_SCANCODE_RIGHT])
                 translate.x += trans_delta;
             // [Page Up]: Translate selected object north
-            else if (event.key.keysym.sym == SDLK_PAGEUP)
+            else if (keys[SDL_SCANCODE_PAGEUP])
                 translate.z -= trans_delta;
             // [Page Down]: Translate selected object south
-            else if (event.key.keysym.sym == SDLK_PAGEDOWN)
+            else if (keys[SDL_SCANCODE_PAGEDOWN])
                 translate.z += trans_delta;
-            // [+ / Numpad +]: Increase translation delta
-            else if (event.key.keysym.sym == SDLK_PLUS ||
-                     event.key.keysym.sym == SDLK_KP_PLUS)
+            // [Numpad +]: Increase translation delta
+            else if (keys[SDL_SCANCODE_KP_PLUS])
             {
                 if (trans_delta < TRANS_DELTA_MAX)
                 {
@@ -828,9 +705,8 @@ internal int state_edit_translate()
                     trans_delta_changed = true;
                 }
             }
-            // [- / Numpad -]: Decrease translation delta
-            else if (event.key.keysym.sym == SDLK_MINUS ||
-                     event.key.keysym.sym == SDLK_KP_MINUS)
+            // [Numpad -]: Decrease translation delta
+            else if (keys[SDL_SCANCODE_KP_MINUS])
             {
                 if (trans_delta > TRANS_DELTA_MIN)
                 {
@@ -848,7 +724,7 @@ internal int state_edit_translate()
     {
         selected_translate(&cam_player, &VEC3_ZERO);
     }
-    else if (!vec3_equals(&translate, &VEC3_ZERO))
+    else if (!v3_equals(&translate, &VEC3_ZERO))
     {
         selected_translate(&cam_player, &translate);
     }
@@ -874,7 +750,7 @@ internal int state_edit_rotate()
     bool rot_delta_changed = false;
 
     SDL_Event event;
-    while (state == STATE_EDIT_ROTATE && SDL_PollEvent(&event))
+    while (state == STATE_EDIT_ROTATE && sdl_poll(&event))
     {
         bool handled = 0;
 
@@ -882,7 +758,7 @@ internal int state_edit_rotate()
         if (err)     return err;
         if (handled) continue;
 
-        if (event.type == SDL_KEYDOWN)
+        if (event.type == SDL_KEYDOWN && !event.key.repeat)
         {
             if (event.key.keysym.mod & KMOD_CTRL &&
                 event.key.keysym.mod & KMOD_SHIFT) {}
@@ -892,7 +768,7 @@ internal int state_edit_rotate()
             else if (event.key.keysym.mod & KMOD_CTRL) {}
             else if (event.key.keysym.mod & KMOD_ALT) {}
             // [7]: Toggle heptagonal rotations
-            else if (event.key.keysym.sym == SDLK_7)
+            else if (keys[SDL_SCANCODE_7])
             {
                 if (rot_delta == ROT_DELTA_DEFAULT)
                     rot_delta = (float)M_SEVENTH_DEG;
@@ -900,29 +776,28 @@ internal int state_edit_rotate()
                     rot_delta = ROT_DELTA_DEFAULT;
             }
             // [0]: Reset selected object's rotation
-            else if (event.key.keysym.sym == SDLK_0)
+            else if (keys[SDL_SCANCODE_0])
                 rotate_reset = true;
             // [Up Arrow]: Rotate selected object up
-            else if (event.key.keysym.sym == SDLK_UP)
+            else if (keys[SDL_SCANCODE_UP])
                 rotate.x -= rot_delta;
             // [Down Arrow]: Rotate selected object down
-            else if (event.key.keysym.sym == SDLK_DOWN)
+            else if (keys[SDL_SCANCODE_DOWN])
                 rotate.x += rot_delta;
             // [Left Arrow]: Rotate selected object west
-            else if (event.key.keysym.sym == SDLK_LEFT)
+            else if (keys[SDL_SCANCODE_LEFT])
                 rotate.y -= rot_delta;
             // [Right Arrow]: Rotate selected object east
-            else if (event.key.keysym.sym == SDLK_RIGHT)
+            else if (keys[SDL_SCANCODE_RIGHT])
                 rotate.y += rot_delta;
             // [Page Up]: Rotate selected object north
-            else if (event.key.keysym.sym == SDLK_PAGEUP)
+            else if (keys[SDL_SCANCODE_PAGEUP])
                 rotate.z -= rot_delta;
             // [Page Down]: Rotate selected object south
-            else if (event.key.keysym.sym == SDLK_PAGEDOWN)
+            else if (keys[SDL_SCANCODE_PAGEDOWN])
                 rotate.z += rot_delta;
-            // [+ / Numpad +]: Increase rotation delta
-            else if (event.key.keysym.sym == SDLK_PLUS ||
-                     event.key.keysym.sym == SDLK_KP_PLUS)
+            // [Numpad +]: Increase rotation delta
+            else if (keys[SDL_SCANCODE_KP_PLUS])
             {
                 if (rot_delta < ROT_DELTA_MAX)
                 {
@@ -933,9 +808,8 @@ internal int state_edit_rotate()
                     rot_delta_changed = true;
                 }
             }
-            // [- / Numpad -]: Decrease rotation delta
-            else if (event.key.keysym.sym == SDLK_MINUS ||
-                     event.key.keysym.sym == SDLK_KP_MINUS)
+            // [Numpad -]: Decrease rotation delta
+            else if (keys[SDL_SCANCODE_KP_MINUS])
             {
                 if (rot_delta > ROT_DELTA_MIN)
                 {
@@ -953,7 +827,7 @@ internal int state_edit_rotate()
     {
         selected_rotate(&VEC3_ZERO);
     }
-    else if (!vec3_equals(&rotate, &VEC3_ZERO))
+    else if (!v3_equals(&rotate, &VEC3_ZERO))
     {
         selected_rotate(&rotate);
     }
@@ -979,7 +853,7 @@ internal int state_edit_scale()
     bool scale_delta_changed = false;
 
     SDL_Event event;
-    while (state == STATE_EDIT_SCALE && SDL_PollEvent(&event))
+    while (state == STATE_EDIT_SCALE && sdl_poll(&event))
     {
         bool handled = 0;
 
@@ -987,7 +861,7 @@ internal int state_edit_scale()
         if (err)     return err;
         if (handled) continue;
 
-        if (event.type == SDL_KEYDOWN)
+        if (event.type == SDL_KEYDOWN && !event.key.repeat)
         {
             if (event.key.keysym.mod & KMOD_CTRL &&
                 event.key.keysym.mod & KMOD_SHIFT) {}
@@ -997,29 +871,28 @@ internal int state_edit_scale()
             else if (event.key.keysym.mod & KMOD_CTRL) {}
             else if (event.key.keysym.mod & KMOD_ALT) {}
             // [0]: Reset selected object's scale
-            else if (event.key.keysym.sym == SDLK_0)
+            else if (keys[SDL_SCANCODE_0])
                 scale_reset = true;
             // [Up Arrow]: Scale selected object up
-            else if (event.key.keysym.sym == SDLK_UP)
+            else if (keys[SDL_SCANCODE_UP])
                 scale.y += scale_delta;
             // [Down Arrow]: Scale selected object down
-            else if (event.key.keysym.sym == SDLK_DOWN)
+            else if (keys[SDL_SCANCODE_DOWN])
                 scale.y -= scale_delta;
             // [Left Arrow]: Scale selected object west
-            else if (event.key.keysym.sym == SDLK_LEFT)
+            else if (keys[SDL_SCANCODE_LEFT])
                 scale.x -= scale_delta;
             // [Right Arrow]: Scale selected object east
-            else if (event.key.keysym.sym == SDLK_RIGHT)
+            else if (keys[SDL_SCANCODE_RIGHT])
                 scale.x += scale_delta;
             // [Page Up]: Scale selected object north
-            else if (event.key.keysym.sym == SDLK_PAGEUP)
+            else if (keys[SDL_SCANCODE_PAGEUP])
                 scale.z += scale_delta;
             // [Page Down]: Scale selected object south
-            else if (event.key.keysym.sym == SDLK_PAGEDOWN)
+            else if (keys[SDL_SCANCODE_PAGEDOWN])
                 scale.z -= scale_delta;
-            // [+ / Numpad +]: Increase scale delta
-            else if (event.key.keysym.sym == SDLK_PLUS ||
-                     event.key.keysym.sym == SDLK_KP_PLUS)
+            // [Numpad +]: Increase scale delta
+            else if (keys[SDL_SCANCODE_KP_PLUS])
             {
                 if (scale_delta < SCALE_DELTA_MAX)
                 {
@@ -1030,9 +903,8 @@ internal int state_edit_scale()
                     scale_delta_changed = true;
                 }
             }
-            // [- / Numpad -]: Decrease scale delta
-            else if (event.key.keysym.sym == SDLK_MINUS ||
-                     event.key.keysym.sym == SDLK_KP_MINUS)
+            // [Numpad -]: Decrease scale delta
+            else if (keys[SDL_SCANCODE_KP_MINUS])
             {
                 if (scale_delta > SCALE_DELTA_MIN)
                 {
@@ -1050,7 +922,7 @@ internal int state_edit_scale()
     {
         selected_scale(&VEC3_ZERO);
     }
-    else if (!vec3_equals(&scale, &VEC3_ZERO))
+    else if (!v3_equals(&scale, &VEC3_ZERO))
     {
         selected_scale(&scale);
     }
@@ -1072,7 +944,7 @@ internal int state_edit_texture()
     enum rico_error err = SUCCESS;
 
     SDL_Event event;
-    while (state == STATE_EDIT_TEXTURE && SDL_PollEvent(&event))
+    while (state == STATE_EDIT_TEXTURE && sdl_poll(&event))
     {
         bool handled = 0;
 
@@ -1080,7 +952,7 @@ internal int state_edit_texture()
         if (err)     return err;
         if (handled) continue;
 
-        if (event.type == SDL_KEYDOWN)
+        if (event.type == SDL_KEYDOWN && !event.key.repeat)
         {
             if (event.key.keysym.mod & KMOD_CTRL &&
                 event.key.keysym.mod & KMOD_SHIFT) {}
@@ -1100,7 +972,7 @@ internal int state_edit_mesh()
     enum rico_error err = SUCCESS;
 
     SDL_Event event;
-    while (state == STATE_EDIT_MESH && SDL_PollEvent(&event))
+    while (state == STATE_EDIT_MESH && sdl_poll(&event))
     {
         bool handled = 0;
 
@@ -1108,7 +980,7 @@ internal int state_edit_mesh()
         if (err)     return err;
         if (handled) continue;
 
-        if (event.type == SDL_KEYDOWN)
+        if (event.type == SDL_KEYDOWN && !event.key.repeat)
         {
             if (event.key.keysym.mod & KMOD_CTRL &&
                 event.key.keysym.mod & KMOD_SHIFT) {}
@@ -1119,13 +991,13 @@ internal int state_edit_mesh()
             else if (event.key.keysym.mod & KMOD_ALT) {}
 
             // [Left Arrow]: Cycle selected object's mesh (in reverse)
-            else if (event.key.keysym.sym == SDLK_LEFT)
+            else if (keys[SDL_SCANCODE_LEFT])
                 selected_mesh_prev();
             // [Right Arrow]: Cycle selected object's mesh
-            else if (event.key.keysym.sym == SDLK_RIGHT)
+            else if (keys[SDL_SCANCODE_RIGHT])
                 selected_mesh_next();
             // [B]: Recalculate bounding box based on current mesh
-            else if (event.key.keysym.sym == SDLK_b)
+            else if (keys[SDL_SCANCODE_B])
                 selected_bbox_reset();
         }
     }
@@ -1138,9 +1010,9 @@ internal int state_menu_quit()
     enum rico_error err = SUCCESS;
 
     SDL_Event event;
-    while (state == STATE_MENU_QUIT && SDL_PollEvent(&event))
+    while (state == STATE_MENU_QUIT && sdl_poll(&event))
     {
-        if (event.type == SDL_KEYDOWN)
+        if (event.type == SDL_KEYDOWN && !event.key.repeat)
         {
             if (event.key.keysym.mod & KMOD_CTRL &&
                 event.key.keysym.mod & KMOD_SHIFT) {
@@ -1152,16 +1024,15 @@ internal int state_menu_quit()
             else if (event.key.keysym.mod & KMOD_CTRL) {}
             else if (event.key.keysym.mod & KMOD_ALT) {}
 
-            // [Y]: Confirm: Save and exit
-            else if (event.key.keysym.sym == SDLK_y)
+            // [Y] / [Return]: Confirm: Save and exit
+            else if (keys[SDL_SCANCODE_Y] || keys[SDL_SCANCODE_RETURN])
             {
                 string_free(STR_SLOT_MENU_QUIT);
                 save_file();
                 state = STATE_ENGINE_SHUTDOWN;
             }
             // [N] / [Escape]: Abort: Return to play mode
-            else if (event.key.keysym.sym == SDLK_n ||
-                     event.key.keysym.sym == SDLK_ESCAPE)
+            else if (keys[SDL_SCANCODE_N] || keys[SDL_SCANCODE_ESCAPE])
             {
                 string_free(STR_SLOT_MENU_QUIT);
                 state = STATE_PLAY_EXPLORE;
@@ -1603,13 +1474,20 @@ internal int state_engine_init()
     view_vel = VEC3_ZERO;
     view_acc = VEC3_ZERO;
 
+    // TODO: Load from config file?
     // Initialize key map
-    sdlk[RICOKEY_RIGHT]     = SDLK_d;
-    sdlk[RICOKEY_LEFT]      = SDLK_a;
-    sdlk[RICOKEY_UP]        = SDLK_e;
-    sdlk[RICOKEY_DOWN]      = SDLK_q;
-    sdlk[RICOKEY_FORWARD]   = SDLK_w;
-    sdlk[RICOKEY_BACKWARD]  = SDLK_s;
+    sdlk[RICOKEY_RIGHT]    = SDL_SCANCODE_D;
+    sdlk[RICOKEY_LEFT]     = SDL_SCANCODE_A;
+    sdlk[RICOKEY_UP]       = SDL_SCANCODE_E;
+    sdlk[RICOKEY_DOWN]     = SDL_SCANCODE_Q;
+    sdlk[RICOKEY_FORWARD]  = SDL_SCANCODE_W;
+    sdlk[RICOKEY_BACKWARD] = SDL_SCANCODE_S;
+    sdlk[RICOKEY_SPRINT]   = SDL_SCANCODE_LSHIFT;
+
+    sdlk[RICOKEY_CAMERA_SLOW]       = SDL_SCANCODE_R;
+    sdlk[RICOKEY_CAMERA_RESET]      = SDL_SCANCODE_F;
+    sdlk[RICOKEY_CAMERA_LOCK]       = SDL_SCANCODE_C;
+    sdlk[RICOKEY_CAMERA_WIREFRAME]  = SDL_SCANCODE_1;
 
     err = rico_init();
     if (err) return err;

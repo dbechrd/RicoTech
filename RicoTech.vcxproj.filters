@@ -115,11 +115,11 @@
     <ClCompile Include="src\gl3w.c">
       <Filter>Source Files\3rdparty</Filter>
     </ClCompile>
-    <ClCompile Include="src\notes.c">
-      <Filter>_Misc</Filter>
-    </ClCompile>
     <ClCompile Include="src\3rdparty\CacheLineSize.c">
       <Filter>Source Files\3rdparty</Filter>
+    </ClCompile>
+    <ClCompile Include="src\notes.c">
+      <Filter>_Misc</Filter>
     </ClCompile>
     <ClCompile Include="src\bbox.c">
       <Filter>Source Files\rico</Filter>
@@ -149,6 +149,9 @@
       <Filter>Source Files\rico</Filter>
     </ClCompile>
     <ClCompile Include="src\regularpoly.c">
+      <Filter>Source Files\rico</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
     <ClCompile Include="src\rico_cereal.c">
@@ -200,9 +203,6 @@
       <Filter>Source Files\rico</Filter>
     </ClCompile>
     <ClCompile Include="src\util.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
   </ItemGroup>
