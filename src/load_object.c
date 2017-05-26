@@ -1,4 +1,4 @@
-#define MESH_VERTICES_MAX 10000
+#define MESH_VERTICES_MAX 200000
 
 enum OBJ_LINE_TYPE {
     OBJ_IGNORE,
@@ -18,6 +18,8 @@ struct OBJ_FACE {
 enum OBJ_LINE_TYPE line_type(const char *line);
 //bool load_mesh(const char *line, struct rico_mesh *mesh);
 
+#if 0
+// TODO: Original strsep, profile vs. new strsep
 internal inline char *strsep(char **stringp, const char *delim)
 {
     char *start = *stringp;
@@ -38,6 +40,43 @@ internal inline char *strsep(char **stringp, const char *delim)
 
     return start;
 }
+#elif 0
+internal inline char *strsep(char **stringp, const char *delim)
+{
+    if (*stringp == NULL)
+        return NULL;
+
+    char *start = *stringp;
+
+    // Returns pointer to first instance of any char in delim list
+    *stringp = strpbrk(*stringp, delim);
+    if (*stringp != NULL)
+    {
+        **stringp = '\0';
+        (*stringp)++;
+    }
+
+    return start;
+}
+#elif 1
+internal inline char *strsep(char **stringp, const char delim)
+{
+    char *start = *stringp;
+
+    while (**stringp)
+    {
+        if (**stringp == delim)
+        {
+            **stringp = '\0';
+            (*stringp)++;
+            break;
+        }
+        (*stringp)++;
+    }
+
+    return start;
+}
+#endif
 
 internal inline long fast_atol(const char *str)
 {
@@ -82,10 +121,9 @@ int load_obj_file(const char *filename)
 
     char *name = NULL;
     char *buffer_ptr = buffer;
-    for(;;)
+    while(*buffer_ptr)
     {
-        tok = strsep(&buffer_ptr, "\r\n");
-        if (!tok) break;
+        tok = strsep(&buffer_ptr, '\n');
 
         // New object
         if (str_starts_with(tok, "o "))
@@ -148,12 +186,13 @@ int load_obj_file(const char *filename)
         else if (str_starts_with(tok, "f "))
         {
             char *tok_ptr = tok + 2;
-            char *vert = strsep(&tok_ptr, " ");
-            while (vert != NULL)
+            char *vert;
+            while (*tok_ptr)
             {
-                vert_pos = fast_atol(strsep(&vert, "/"));
-                vert_tex = fast_atol(strsep(&vert, "/"));
-                vert_norm = fast_atol(strsep(&vert, "/"));
+                vert = strsep(&tok_ptr, ' ');
+                vert_pos = fast_atol(strsep(&vert, '/'));
+                vert_tex = fast_atol(strsep(&vert, '/'));
+                vert_norm = fast_atol(strsep(&vert, '/'));
 
                 vertices[idx_vertex].col = COLOR_WHITE;
                 if (vert_pos > 0)
@@ -178,8 +217,6 @@ int load_obj_file(const char *filename)
                                      filename);
                     goto cleanup;
                 }
-
-                vert = strsep(&tok_ptr, " ");
             }
         }
     }
