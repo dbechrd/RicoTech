@@ -18,47 +18,6 @@ struct OBJ_FACE {
 enum OBJ_LINE_TYPE line_type(const char *line);
 //bool load_mesh(const char *line, struct rico_mesh *mesh);
 
-#if 0
-// TODO: Original strsep, profile vs. new strsep
-internal inline char *strsep(char **stringp, const char *delim)
-{
-    char *start = *stringp;
-    char *p;
-
-    // Returns pointer to first instance of any char in delim list
-    p = (start != NULL) ? strpbrk(start, delim) : NULL;
-
-    if (p == NULL)
-    {
-        *stringp = NULL;
-    }
-    else
-    {
-        *p = '\0';
-        *stringp = p + 1;
-    }
-
-    return start;
-}
-#elif 0
-internal inline char *strsep(char **stringp, const char *delim)
-{
-    if (*stringp == NULL)
-        return NULL;
-
-    char *start = *stringp;
-
-    // Returns pointer to first instance of any char in delim list
-    *stringp = strpbrk(*stringp, delim);
-    if (*stringp != NULL)
-    {
-        **stringp = '\0';
-        (*stringp)++;
-    }
-
-    return start;
-}
-#elif 1
 internal inline char *strsep(char **stringp, const char delim)
 {
     char *start = *stringp;
