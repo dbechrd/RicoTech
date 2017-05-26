@@ -1,4 +1,3 @@
-
 const char *rico_state_string[] = {
     RICO_STATES(GEN_STRING)
 };
@@ -34,10 +33,10 @@ global float look_sensitivity_y = 0.5f;
 
 global struct vec3 view_vel;
 global struct vec3 view_acc;
-global float player_acceleration = 4.0f;
+global float player_acceleration = 20.0f;
 global float sprint_factor = 2.0f;
 global bool sprint = false;
-global float friction_factor = 0.04f;
+global float friction_factor = 0.1f;
 
 global float camera_slow_factor = 0.1f;
 global bool camera_slow = false;
@@ -103,8 +102,9 @@ int state_update(enum rico_state *_state)
     //| Handle input & state changes
     ///--------------------------------------------------------------------------
     enum rico_state start_state;
-    bool state_changed = false;
 
+#if 0
+    // Cleanup: Is this loop a good idea?
     while (1)
     {
         start_state = state;
@@ -114,15 +114,19 @@ int state_update(enum rico_state *_state)
 
         if (state == start_state)
             break;
-
-        state_changed = true;
     }
+#else
+    start_state = state;
+    err = state_handlers[state]();
+    if (err) return err;
+#endif
+
     *_state = state;
 
     if (state == STATE_ENGINE_SHUTDOWN)
         return SUCCESS;
 
-    if (state_changed)
+    if (state != start_state)
     {
         char buf[32] = { 0 };
         int len = snprintf(buf, sizeof(buf), "State: %d %s", state,
@@ -208,6 +212,7 @@ int state_update(enum rico_state *_state)
         view_vel = VEC3_ZERO;
     }
 
+    // DEBUG: Print velocity
     char buf[64] = { 0 };
     int len = snprintf(buf, sizeof(buf), "Vel: %.1f %.1f %.1f", view_vel.x,
                        view_vel.y, view_vel.z);
@@ -471,16 +476,13 @@ internal int handle_camera_events(SDL_Event event, bool *handled)
     enum rico_error err = SUCCESS;
 
     view_acc = VEC3_ZERO;
-
     if KEY_DOWN(RICOKEY_UP)       view_acc.y += 1.0f;
     if KEY_DOWN(RICOKEY_DOWN)     view_acc.y -= 1.0f;
     if KEY_DOWN(RICOKEY_RIGHT)    view_acc.x += 1.0f;
     if KEY_DOWN(RICOKEY_LEFT)     view_acc.x -= 1.0f;
     if KEY_DOWN(RICOKEY_FORWARD)  view_acc.z += 1.0f;
     if KEY_DOWN(RICOKEY_BACKWARD) view_acc.z -= 1.0f;
-
-    // NOTE: Prevent faster movement on diagonal
-    v3_normalize(&view_acc);
+    v3_normalize(&view_acc);  // NOTE: Prevent faster movement on diagonal
 
     sprint = KEY_DOWN(RICOKEY_SPRINT);
 
@@ -1262,6 +1264,9 @@ internal int load_mesh_files()
     if (err) return err;
 
     err = load_obj_file("mesh/grass.ric");
+    if (err) return err;
+
+    err = load_obj_file("mesh/conference.ric");
     if (err) return err;
 
     u32 ticks2 = SDL_GetTicks();

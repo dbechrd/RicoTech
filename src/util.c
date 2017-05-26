@@ -18,7 +18,7 @@ int file_contents(const char *filename, int *_length, char **_buffer)
                           filename);
     }
 
-    *_buffer = calloc(*_length + 1, sizeof(char));
+    *_buffer = malloc(*_length + 1, sizeof(char));
     if (!*_buffer) {
         return RICO_ERROR(ERR_BAD_ALLOC,
                           "Failed to allocate file buffer for %s", filename);

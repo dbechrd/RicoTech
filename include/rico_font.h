@@ -7,12 +7,10 @@ struct rico_font {
     int CellX, CellY, YOffset, RowPitch;
     char Base;
     char Width[256];
-
-    // TODO: Use rico_texture??
-    u32 texture;
     float RowFactor, ColFactor;
     int RenderStyle;
     bool InvertYAxis;
+    u32 texture;
 };
 extern const u32 RICO_FONT_SIZE;
 

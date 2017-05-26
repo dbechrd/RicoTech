@@ -14,10 +14,8 @@ struct rico_object {
     struct mat4 transform;
     struct mat4 transform_inverse;
 
-    //TODO: Support multiple meshes
+    //TODO: Support multiple meshes and textures
     u32 mesh;
-
-    //TODO: Support multiple textures (per mesh?)
     u32 material;
 
     struct bbox bbox;

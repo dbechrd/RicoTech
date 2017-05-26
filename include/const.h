@@ -11,7 +11,7 @@
 // Debug
 #define RICO_DEBUG 1
 #define RICO_DEBUG_ALL_ERRORS_FATAL RICO_DEBUG && 1
-#define RICO_DEBUG_FATAL_ASSERT     RICO_DEBUG && 1
+#define RICO_DEBUG_FATAL_ASSERT     RICO_DEBUG && 0
 #define RICO_DEBUG_WARN             RICO_DEBUG && 1
 #define RICO_DEBUG_INFO             RICO_DEBUG && 1
 #define RICO_DEBUG_UID              RICO_DEBUG && 1
@@ -86,6 +86,8 @@ typedef u32 bool;
 #define internal static
 #define local    static
 #define global   static
+
+#define rico_string u32
 
 /*
 //
