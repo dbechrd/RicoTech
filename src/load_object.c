@@ -35,7 +35,6 @@ internal inline char *strsep(char **stringp, const char delim)
 
     return start;
 }
-#endif
 
 internal inline long fast_atol(const char *str)
 {
