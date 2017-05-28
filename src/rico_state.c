@@ -307,13 +307,13 @@ internal void select_first_obj()
 }
 
 // Current state
+global enum rico_state state_prev;
 global enum rico_state state;
 
 // State change handlers
 typedef int (*state_handler)();
 struct state_handlers {
-    // TODO: Initialize states?
-    //state_handler init;
+    state_handler init;
     state_handler run;
     state_handler cleanup;
 };
@@ -337,7 +337,7 @@ int state_update()
     enum rico_error err;
 
     ///-------------------------------------------------------------------------
-    //| Handle input & state changes
+    //| Query input state
     ///-------------------------------------------------------------------------
     // Get mouse state
     mouse_buttons_prev = mouse_buttons;
@@ -349,19 +349,28 @@ int state_update()
     keys = keys_tmp;
     memcpy(keys, SDL_GetKeyboardState(0), SDL_NUM_SCANCODES);
     
-    enum rico_state start_state = state;
+    ///-------------------------------------------------------------------------
+    //| State actions
+    ///-------------------------------------------------------------------------
+    state_prev = state;
     err = state_handlers[state].run();
     if (err) return err;
 
     if (state == STATE_ENGINE_SHUTDOWN)
         return SUCCESS;
 
-    if (state != start_state)
+    if (state != state_prev)
     {
-        // Call state cleanup handler
-        if (state_handlers[start_state].cleanup)
+        // Clean up old state
+        if (state_handlers[state_prev].cleanup)
         {
-            err = state_handlers[start_state].cleanup();
+            err = state_handlers[state_prev].cleanup();
+            if (err) return err;
+        }
+        // Initialize new state
+        if (state_handlers[state].init)
+        {
+            err = state_handlers[state].init();
             if (err) return err;
         }
 
@@ -405,8 +414,8 @@ int state_update()
                            ms, mcyc);
         string_truncate(buf, sizeof(buf), len);
 
-        err = string_init("STR_FPS", STR_SLOT_FPS, SCREEN_W - (u32)(12.5 * len),
-                          0, COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
+        err = string_init("STR_FPS", STR_SLOT_FPS, -(FONT_WIDTH * len), 0,
+                          COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
         if (err) return err;
         fps_last_render = last_perfs;
     }
@@ -455,7 +464,7 @@ int state_update()
                        view_vel.y, view_vel.z);
     string_truncate(buf, sizeof(buf), len);
 
-    err = string_init("STR_STATE", STR_SLOT_EDIT_INFO, 0, 0,
+    err = string_init("STR_STATE", STR_SLOT_DEBUG, 0, -FONT_HEIGHT,
                       COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
     if (err) return err;
 
@@ -470,16 +479,19 @@ int state_update()
     struct vec3 delta_pos = half_at_squared;
     v3_add(&delta_pos, &vt);
 
-    // Update position
-    camera_translate_local(&cam_player, &delta_pos);
-
-    // TODO: Smooth mouse look somehow
-    if (mouse_delta.x != 0 || mouse_delta.y != 0)
+    if (mouse_lock)
     {
-        struct vec3 delta;
-        delta.x = mouse_delta.x * look_sensitivity_x;
-        delta.y = mouse_delta.y * look_sensitivity_y;
-        camera_rotate(&cam_player, delta.x, delta.y);
+        // Update position
+        camera_translate_local(&cam_player, &delta_pos);
+
+        // TODO: Smooth mouse look somehow
+        if (mouse_delta.x != 0 || mouse_delta.y != 0)
+        {
+            struct vec3 delta;
+            delta.x = mouse_delta.x * look_sensitivity_x;
+            delta.y = mouse_delta.y * look_sensitivity_y;
+            camera_rotate(&cam_player, delta.x, delta.y);
+        }
     }
 
     camera_update(&cam_player);
@@ -677,8 +689,8 @@ internal int state_play_explore()
 {
     enum rico_error err = SUCCESS;
 
-    err = shared_engine_events();   if (err) return err;
-    err = shared_camera_events();   if (err) return err;
+    err = shared_engine_events(); if (err || state != state_prev) return err;
+    err = shared_camera_events(); if (err || state != state_prev) return err;
 
     // Enter edit mode
     if (chord_pressed(ACTION_ENGINE_EDITOR_TOGGLE))
@@ -697,9 +709,9 @@ internal int state_edit_translate()
 {
     enum rico_error err = SUCCESS;
 
-    err = shared_engine_events();   if (err) return err;
-    err = shared_camera_events();   if (err) return err;
-    err = shared_edit_events();     if (err) return err;
+    err = shared_edit_events();   if (err || state != state_prev) return err;
+    err = shared_engine_events(); if (err || state != state_prev) return err;
+    err = shared_camera_events(); if (err || state != state_prev) return err;
 
     struct vec3 translate = VEC3_ZERO;
     bool translate_reset = false;
@@ -774,9 +786,9 @@ internal int state_edit_rotate()
 {
     enum rico_error err = SUCCESS;
 
-    err = shared_engine_events();   if (err) return err;
-    err = shared_camera_events();   if (err) return err;
-    err = shared_edit_events();     if (err) return err;
+    err = shared_edit_events();   if (err || state != state_prev) return err;
+    err = shared_engine_events(); if (err || state != state_prev) return err;
+    err = shared_camera_events(); if (err || state != state_prev) return err;
 
     struct vec3 rotate = VEC3_ZERO;
     bool rotate_reset = false;
@@ -859,9 +871,9 @@ internal int state_edit_scale()
 {
     enum rico_error err = SUCCESS;
 
-    err = shared_engine_events();   if (err) return err;
-    err = shared_camera_events();   if (err) return err;
-    err = shared_edit_events();     if (err) return err;
+    err = shared_edit_events();   if (err || state != state_prev) return err;
+    err = shared_engine_events(); if (err || state != state_prev) return err;
+    err = shared_camera_events(); if (err || state != state_prev) return err;
 
     struct vec3 scale = VEC3_ZERO;
     bool scale_reset = false;
@@ -950,9 +962,9 @@ internal int state_edit_texture()
 {
     enum rico_error err = SUCCESS;
 
-    err = shared_engine_events();   if (err) return err;
-    err = shared_camera_events();   if (err) return err;
-    err = shared_edit_events();     if (err) return err;
+    err = shared_edit_events();   if (err || state != state_prev) return err;
+    err = shared_engine_events(); if (err || state != state_prev) return err;
+    err = shared_camera_events(); if (err || state != state_prev) return err;
 
     // TODO: Add texture events
 
@@ -962,9 +974,9 @@ internal int state_edit_mesh()
 {
     enum rico_error err = SUCCESS;
 
-    err = shared_engine_events();   if (err) return err;
-    err = shared_camera_events();   if (err) return err;
-    err = shared_edit_events();     if (err) return err;
+    err = shared_edit_events();   if (err || state != state_prev) return err;
+    err = shared_engine_events(); if (err || state != state_prev) return err;
+    err = shared_camera_events(); if (err || state != state_prev) return err;
 
     // Cycle selected object's mesh
     if (chord_pressed(ACTION_EDIT_MESH_NEXT))
@@ -1008,9 +1020,9 @@ internal int state_text_input()
 {
     enum rico_error err = SUCCESS;
 
-    err = shared_engine_events();   if (err) return err;
-    err = shared_camera_events();   if (err) return err;
-    err = shared_edit_events();     if (err) return err;
+    err = shared_edit_events();   if (err || state != state_prev) return err;
+    err = shared_engine_events(); if (err || state != state_prev) return err;
+    err = shared_camera_events(); if (err || state != state_prev) return err;
 
     // TODO: Handle text input
 
@@ -1207,9 +1219,6 @@ internal int load_mesh_files()
     if (err) return err;
 
     err = load_obj_file("mesh/grass.ric");
-    if (err) return err;
-
-    err = load_obj_file("mesh/conference.ric");
     if (err) return err;
 
     u32 ticks2 = SDL_GetTicks();
@@ -1480,7 +1489,7 @@ internal int state_engine_init()
     CHORD_2(ACTION_EDIT_SELECTED_DUPLICATE,         SDL_SCANCODE_LCTRL,   SDL_SCANCODE_D);
     CHORD_1(ACTION_EDIT_SELECTED_DELETE,            SDL_SCANCODE_DELETE); 
     CHORD_1(ACTION_EDIT_MODE_NEXT,                  SDL_SCANCODE_KP_0);   
-    CHORD_2(ACTION_EDIT_MODE_PREVIOUS,              SDL_SCANCODE_LSHIFT,  SDL_SCANCODE_KP_0);
+    CHORD_1(ACTION_EDIT_MODE_PREVIOUS,              SDL_SCANCODE_KP_PERIOD);
 
     CHORD_1(ACTION_EDIT_TRANSLATE_RESET,            SDL_SCANCODE_0);
     CHORD_1(ACTION_EDIT_TRANSLATE_UP,               SDL_SCANCODE_UP);

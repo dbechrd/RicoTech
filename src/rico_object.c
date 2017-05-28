@@ -542,7 +542,7 @@ int object_print(u32 handle, enum rico_string_slot slot)
     // Print to screen
     char buf[256] = { 0 };
     object_to_string(handle, buf, sizeof(buf));
-    err = string_init(rico_string_slot_string[slot], slot, 0, 26,
+    err = string_init(rico_string_slot_string[slot], slot, 0, FONT_HEIGHT,
                       COLOR_GRAY_HIGHLIGHT, 0, 0, buf);
     return err;
 }

@@ -1,6 +1,11 @@
 #ifndef RICO_FONT_H
 #define RICO_FONT_H
 
+// HACK: Hard-coded font width/height
+// TODO: Figure out how to determine font w/h in screen space
+#define FONT_WIDTH 12.5f
+#define FONT_HEIGHT 25.0f
+
 // IMPORTANT: *DO NOT* add pointers in this struct, it will break cereal!
 struct rico_font {
     struct rico_uid uid;

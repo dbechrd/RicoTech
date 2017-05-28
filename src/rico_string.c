@@ -24,7 +24,7 @@ internal inline struct rico_string *string_find(u32 handle)
     return string;
 }
 
-int string_init(const char *name, enum rico_string_slot slot, u32 x, u32 y,
+int string_init(const char *name, enum rico_string_slot slot, float x, float y,
                 struct col4 color, u32 lifespan, u32 font, const char *text)
 {
     //RICO_ASSERT(slot <= STR_SLOT_COUNT || lifespan > 0);

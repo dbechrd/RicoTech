@@ -2,7 +2,6 @@
 // Up Next
 ================================================================================
 [x] Finish keyboard state handling
-[ ] Test conference.ric by switching to mesh in edit mode
 [ ] Fix chunk loading by separating OGL ids out of rico_mesh and rico_texture
 
 ================================================================================

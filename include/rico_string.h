@@ -11,6 +11,7 @@ extern const u32 RICO_STRING_SIZE;
 
 #define RICO_STRING_SLOTS(f)    \
     f(STR_SLOT_NULL)            \
+    f(STR_SLOT_DEBUG)           \
     f(STR_SLOT_SELECTED_OBJ)    \
     f(STR_SLOT_EDIT_INFO)       \
     f(STR_SLOT_FPS)             \
@@ -23,7 +24,7 @@ enum rico_string_slot {
 };
 extern const char *rico_string_slot_string[];
 
-int string_init(const char *name, enum rico_string_slot slot, u32 x, u32 y,
+int string_init(const char *name, enum rico_string_slot slot, float x, float y,
                 struct col4 color, u32 lifespan, u32 font, const char *text);
 int string_free(u32 handle);
 int string_update(r64 dt);

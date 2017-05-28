@@ -178,6 +178,7 @@ int font_render(u32 handle, int x, int y, struct col4 bg, const char *text,
     // Each quad is two triangles, or 6 vertices
     int element_count = text_len * 6;
 
+    // TODO: Cleanup memory allocs
     struct mesh_vertex *vertices = calloc(vertex_count, sizeof(*vertices));
     GLuint *elements = calloc(element_count, sizeof(*elements));
 
