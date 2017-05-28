@@ -1,7 +1,6 @@
+
 #ifndef RICO_STATE_H
 #define RICO_STATE_H
-
-//#include "const.h"
 
 #define RICO_STATES(f)          \
     f(STATE_ENGINE_INIT)        \
@@ -21,9 +20,9 @@ enum rico_state {
 };
 extern const char *rico_state_string[];
 
-int state_update(enum rico_state *_state);
-enum rico_state state_get();
-bool state_is_edit();
+int state_update();
+inline enum rico_state state_get();
+inline bool is_edit_state(enum rico_state state);
 void init_rico_engine();
 
 #endif // RICO_STATE_H

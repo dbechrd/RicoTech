@@ -181,13 +181,25 @@ int mymain()
 
     //test_geom();
 
-    enum rico_state state;
-    while (1)
+    while (!SDL_QuitRequested())
     {
-        err = state_update(&state);
+        ////////////////////////////////////////////////////////////////////////////
+        // TODO: How do I check for SDL resize window events?
+        ////////////////////////////////////////////////////////////////////////////
+        /*
+        // Resize OpenGL viewport
+        else if (event.type == SDL_WINDOWEVENT_SIZE)
+        {
+        glViewport(0, 0, event.window.event.size.width,
+        event.window.event.size.height);
+        *handled = true;
+        }
+        */
+
+        err = state_update();
         if (err) break;
 
-        if (state == STATE_ENGINE_SHUTDOWN)
+        if (state_get() == STATE_ENGINE_SHUTDOWN)
             break;
 
         SDL_GL_SwapWindow(window);

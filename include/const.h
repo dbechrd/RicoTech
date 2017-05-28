@@ -25,12 +25,12 @@
 #define RICO_DEBUG_FONT             RICO_DEBUG && 1
 
 // Memory pools
-#define RICO_TEXTURE_POOL_SIZE  100
-#define RICO_MATERIAL_POOL_SIZE 100
-#define RICO_MESH_POOL_SIZE     100
-#define RICO_OBJECT_POOL_SIZE   100
-#define RICO_FONT_POOL_SIZE     10
-#define RICO_STRING_POOL_SIZE   16
+#define RICO_TEXTURE_POOL_SIZE  128
+#define RICO_MATERIAL_POOL_SIZE 128
+#define RICO_MESH_POOL_SIZE     128
+#define RICO_OBJECT_POOL_SIZE   128
+#define RICO_FONT_POOL_SIZE     4
+#define RICO_STRING_POOL_SIZE   32
 
 //------------------------------------------------------------------------------
 // Rico constants
