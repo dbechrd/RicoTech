@@ -885,32 +885,32 @@ internal int state_edit_scale()
         scale_reset = true;
     }
     // Scale selected object up
-    else if (chord_is_down(ACTION_EDIT_SCALE_UP))
+    else if (chord_pressed(ACTION_EDIT_SCALE_UP))
     {
         scale.y += scale_delta;
     }
     // Scale selected object down
-    else if (chord_is_down(ACTION_EDIT_SCALE_DOWN))
+    else if (chord_pressed(ACTION_EDIT_SCALE_DOWN))
     {
         scale.y -= scale_delta;
     }
     // Scale selected object west
-    else if (chord_is_down(ACTION_EDIT_SCALE_WEST))
+    else if (chord_pressed(ACTION_EDIT_SCALE_WEST))
     {
         scale.x -= scale_delta;
     }
     // Scale selected object east
-    else if (chord_is_down(ACTION_EDIT_SCALE_EAST))
+    else if (chord_pressed(ACTION_EDIT_SCALE_EAST))
     {
         scale.x += scale_delta;
     }
     // Scale selected object north
-    else if (chord_is_down(ACTION_EDIT_SCALE_NORTH))
+    else if (chord_pressed(ACTION_EDIT_SCALE_NORTH))
     {
         scale.z += scale_delta;
     }
     // Scale selected object south
-    else if (chord_is_down(ACTION_EDIT_SCALE_SOUTH))
+    else if (chord_pressed(ACTION_EDIT_SCALE_SOUTH))
     {
         scale.z -= scale_delta;
     }
