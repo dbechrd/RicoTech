@@ -14,7 +14,7 @@ internal inline void init_murmurhash3()
     MurmurHash3_seed = 3533902173;
 
     const char key[] = "This is a MurmurHash3 test key";
-    uint32_t hash;
+    u32 hash;
     MurmurHash3_x86_32(key, sizeof(key) - 1, &hash);
     printf("Key: %s\n", key);
     printf("Hash: %u\n", hash);

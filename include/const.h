@@ -87,7 +87,7 @@ typedef u32 bool;
 #define local    static
 #define global   static
 
-#define rico_string u32
+typedef u32 rico_hash;
 
 /*
 //
