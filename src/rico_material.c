@@ -23,7 +23,7 @@ internal inline struct rico_material *material_find(u32 handle)
 }
 
 // TODO: Do proper reference counting, this function is stupid.
-int material_request(u32 handle)
+u32 material_request(u32 handle)
 {
     struct rico_material *material = material_find(handle);
     material->ref_count++;
@@ -36,8 +36,8 @@ int material_request(u32 handle)
     return handle;
 }
 
-int material_init(const char *name, u32 tex_diffuse, u32 tex_specular,
-                  float shiny, u32 *_handle)
+int material_init(u32 *_handle, const char *name, hash_key tex_diffuse_key,
+                  hash_key tex_specular_key, float shiny)
 {
 #if RICO_DEBUG_MATERIAL
     printf("[ mtl][init] name=%s\n", name);
@@ -51,8 +51,8 @@ int material_init(const char *name, u32 tex_diffuse, u32 tex_specular,
 
     struct rico_material *material = material_find(*_handle);
     uid_init(&material->uid, RICO_UID_MATERIAL, name, true);
-    material->tex_diffuse = texture_request(tex_diffuse);
-    material->tex_specular = texture_request(tex_specular);
+    material->tex_diffuse = texture_request_by_key(tex_diffuse_key);
+    material->tex_specular = texture_request_by_key(tex_specular_key);
     material->shiny = shiny;
 
     return err;

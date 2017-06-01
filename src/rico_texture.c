@@ -1,7 +1,7 @@
 const u32 RICO_TEXTURE_SIZE = sizeof(struct rico_texture);
 
-u32 RICO_DEFAULT_TEXTURE_DIFF = 0;
-u32 RICO_DEFAULT_TEXTURE_SPEC = 0;
+hash_key RICO_DEFAULT_TEXTURE_DIFF = 0;
+hash_key RICO_DEFAULT_TEXTURE_SPEC = 0;
 
 internal inline struct rico_pool **texture_pool_ptr()
 {
@@ -27,7 +27,7 @@ internal int build_texture(struct rico_texture *tex, const void *pixels);
 
 // TODO: Do proper reference counting, this function is stupid. Need to save
 //       filename for that to work (how to track load_pixels calls?)
-int texture_request(u32 handle)
+u32 texture_request(u32 handle)
 {
     struct rico_texture *tex = texture_find(handle);
     tex->ref_count++;
@@ -40,8 +40,19 @@ int texture_request(u32 handle)
     return handle;
 }
 
-int texture_load_file(const char *name, GLenum target, const char *filename,
-                      u32 bpp, u32 *_handle)
+u32 texture_request_by_key(hash_key key)
+{
+    u32 handle = hashtable_search(&global_hash_textures, key);
+    if (!handle)
+    {
+        return RICO_ERROR(ERR_HASH_INVALID_KEY, "Texture key not found.");
+    }
+
+    return texture_request(handle);
+}
+
+int texture_load_file(hash_key *_key, const char *name, GLenum target,
+                      const char *filename, u32 bpp)
 {
 #if RICO_DEBUG_TEXTURE
     printf("[ tex][load] filename=%s\n", filename);
@@ -60,16 +71,15 @@ int texture_load_file(const char *name, GLenum target, const char *filename,
     }
 
     // Load pixels
-    err = texture_load_pixels(name, target, width, height, bpp, pixels,
-                              _handle);
+    err = texture_load_pixels(_key, name, target, width, height, bpp, pixels);
 
 cleanup:
     stbi_image_free(pixels);
     return err;
 }
 
-int texture_load_pixels(const char *name, GLenum target, u32 width, u32 height,
-                        u32 bpp, const void *pixels, u32 *_handle)
+int texture_load_pixels(hash_key *_key, const char *name, GLenum target,
+                        u32 width, u32 height, u32 bpp, const void *pixels)
 {
 #if RICO_DEBUG_TEXTURE
     printf("[ tex][init] name=%s\n", name);
@@ -77,10 +87,11 @@ int texture_load_pixels(const char *name, GLenum target, u32 width, u32 height,
 
     enum rico_error err;
 
-    err = pool_handle_alloc(texture_pool_ptr(), _handle);
+    u32 handle;
+    err = pool_handle_alloc(texture_pool_ptr(), &handle);
     if (err) return err;
 
-    struct rico_texture *tex = texture_find(*_handle);
+    struct rico_texture *tex = texture_find(handle);
 
     // Note: If we want to serialize texture data we have to store the filename
     //       or the pixel data in the struct.
@@ -90,7 +101,16 @@ int texture_load_pixels(const char *name, GLenum target, u32 width, u32 height,
     tex->height = height;
     tex->bpp = bpp;
 
-    return build_texture(tex, pixels);
+    err = build_texture(tex, pixels);
+    if (err) return err;
+
+    // Store in global hash table
+    hash_key key = hashgen_str(tex->uid.name);
+    err = hashtable_insert(&global_hash_textures, key, handle);
+    if (err) return err;
+    *_key = key;
+
+    return err;
 }
 
 internal int build_texture(struct rico_texture *tex, const void *pixels)
@@ -218,15 +238,18 @@ void texture_free(u32 handle)
     if (tex->ref_count > 0)
         return;
 
-    // TODO: Use fixed pool slots
-    if (handle == RICO_DEFAULT_TEXTURE_DIFF)
-        return;
-    if (handle == RICO_DEFAULT_TEXTURE_SPEC)
-        return;
+    // TODO: Use fixed pool slots or request and never release at initialize
+    //if (handle == RICO_DEFAULT_TEXTURE_DIFF)
+    //    return;
+    //if (handle == RICO_DEFAULT_TEXTURE_SPEC)
+    //    return;
 
 #if RICO_DEBUG_TEXTURE
     printf("[ tex][free] uid=%d name=%s\n", tex->uid.uid, tex->uid.name);
 #endif
+
+    hash_key key = hashgen_str(tex->uid.name);
+    hashtable_delete(&global_hash_textures, key);
 
     glDeleteTextures(1, &tex->gl_id);
 

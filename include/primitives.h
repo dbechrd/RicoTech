@@ -1,10 +1,6 @@
 #ifndef PRIMITIVES_H
 #define PRIMITIVES_H
 
-//#include "const.h"
-//#include "geom.h"
-
-
 #define RICO_PRIMITIVES(f)  \
     f(PRIM_SEGMENT)         \
     f(PRIM_RAY)             \
@@ -16,6 +12,7 @@ enum rico_prim {
 //extern const char *rico_prim_string[];
 
 extern u32 PRIM_SPHERE_MESH;
+extern hash_key PRIM_SPHERE_MESH_KEY;
 
 struct prim_vertex {
     struct vec3 pos;

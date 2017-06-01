@@ -104,6 +104,9 @@
     <ClInclude Include="include\rico.h">
       <Filter>Header Files\rico</Filter>
     </ClInclude>
+    <ClInclude Include="include\rico_hash.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\3rdparty\MurmurHash3.c">
@@ -199,10 +202,13 @@
     <ClCompile Include="src\shader.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
-    <ClCompile Include="src\test_geom.c">
+    <ClCompile Include="src\util.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
-    <ClCompile Include="src\util.c">
+    <ClCompile Include="src\rico_hash.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tests.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
   </ItemGroup>

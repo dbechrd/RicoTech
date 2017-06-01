@@ -4,6 +4,7 @@
 #include "../src/const.c"
 #include "../src/geom.c"
 #include "../src/util.c"
+#include "../src/rico_hash.c"
 
 #include "../src/rico_uid.c"
 #include "../src/shader.c"
@@ -33,7 +34,7 @@
 
 #include "../src/rico_string.c"
 #include "../src/rico_texture.c"
-#include "../src/test_geom.c"
+#include "../src/tests.c"
 
 #include "../src/3rdparty/CacheLineSize.c"
 //#include "../src/3rdparty/main_nuke.c"

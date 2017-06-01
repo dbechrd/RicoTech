@@ -1,10 +1,6 @@
 #ifndef GLREF_H
 #define GLREF_H
 
-//#include "geom.h"
-//#include "camera.h"
-//#include "rico_mesh.h"
-
 int init_glref();
 int init_hardcoded_test_chunk();
 int create_obj();

@@ -15,7 +15,7 @@ internal inline void init_murmurhash3()
 
     const char key[] = "This is a MurmurHash3 test key";
     u32 hash;
-    MurmurHash3_x86_32(key, sizeof(key) - 1, &hash);
+    MurmurHash3_x86_32(key, sizeof(key), &hash);
     printf("Key: %s\n", key);
     printf("Hash: %u\n", hash);
 }
@@ -180,6 +180,7 @@ int mymain()
     init_rico_engine();
 
     //test_geom();
+    //test_hashtable();
 
     while (!SDL_QuitRequested())
     {

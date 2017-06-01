@@ -105,11 +105,13 @@ int font_init(const char *filename, u32 *_handle)
     // Store character widths
     memcpy(font->Width, &buffer[WIDTH_DATA_OFFSET], 256);
 
-    err = texture_load_pixels(filename, GL_TEXTURE_2D, width, height, bpp,
-                              &buffer[MAP_DATA_OFFSET], &font->texture);
+    hash_key key;
+    err = texture_load_pixels(&key, filename, GL_TEXTURE_2D, width,
+                              height, bpp, &buffer[MAP_DATA_OFFSET]);
     if (err) goto cleanup;
 
-    texture_request(font->texture);
+    font->texture_key = key;
+    font->texture = texture_request_by_key(key);
 
 cleanup:
     free(buffer);
@@ -154,8 +156,8 @@ internal void font_setblend(const struct rico_font *font)
 }
 
 int font_render(u32 handle, int x, int y, struct col4 bg, const char *text,
-                const char *mesh_name, enum rico_mesh_type type, u32 *_mesh,
-                u32 *_texture)
+                const char *mesh_name, enum rico_mesh_type type,
+                hash_key *_mesh_key, hash_key *_texture_key)
 {
     enum rico_error err;
 
@@ -270,11 +272,13 @@ int font_render(u32 handle, int x, int y, struct col4 bg, const char *text,
         cur_x += xOffset;
     }
 
-    err = mesh_load(_mesh, mesh_name, type, vertex_count, vertices,
+    hash_key mesh_key;
+    err = mesh_load(&mesh_key, mesh_name, type, vertex_count, vertices,
                     element_count, elements, GL_STATIC_DRAW);
     if (err) goto cleanup;
-
-    *_texture = font->texture;
+    
+    *_mesh_key = mesh_key;
+    *_texture_key = font->texture_key;
 
 cleanup:
     free(vertices);

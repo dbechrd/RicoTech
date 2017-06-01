@@ -133,9 +133,7 @@ global struct rico_chunk *RICO_DEFAULT_CHUNK;
 // frame. Typical walking stride is ~0.762 meters (30 inches). Distance traveled
 // per frame (60hz) is 0.762 * 0.0275 = 0.020955 ~= 0.021
 
-struct {
-    int x, y;
-} mouse_delta = { 0 };
+struct { int x, y; } mouse_delta = { 0 };
 global float look_sensitivity_x = 0.1f;
 global float look_sensitivity_y = 0.1f;
 
@@ -464,7 +462,7 @@ int state_update()
                        view_vel.y, view_vel.z);
     string_truncate(buf, sizeof(buf), len);
 
-    err = string_init("STR_STATE", STR_SLOT_DEBUG, 0, -FONT_HEIGHT,
+    err = string_init("STR_VEL", STR_SLOT_DEBUG, 0, -FONT_HEIGHT,
                       COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
     if (err) return err;
 
@@ -1092,14 +1090,12 @@ internal int rico_init_textures()
     enum rico_error err;
 
     // TODO: Use fixed slots to allocate default resources
-    err = texture_load_file("TEXTURE_DEFAULT_DIFF", GL_TEXTURE_2D,
-                            "texture/basic_diff.tga", 32,
-                            &RICO_DEFAULT_TEXTURE_DIFF);
+    err = texture_load_file(&RICO_DEFAULT_TEXTURE_DIFF, "TEXTURE_DEFAULT_DIFF",
+                            GL_TEXTURE_2D, "texture/basic_diff.tga", 32);
     if (err) return err;
 
-    err = texture_load_file("TEXTURE_DEFAULT_SPEC", GL_TEXTURE_2D,
-                            "texture/basic_spec.tga", 32,
-                            &RICO_DEFAULT_TEXTURE_SPEC);
+    err = texture_load_file(&RICO_DEFAULT_TEXTURE_SPEC, "TEXTURE_DEFAULT_SPEC",
+                            GL_TEXTURE_2D, "texture/basic_spec.tga", 32);
     return err;
 }
 internal int rico_init_materials()
@@ -1107,9 +1103,9 @@ internal int rico_init_materials()
     enum rico_error err;
 
     // TODO: Use fixed slots to allocate default resources
-    err = material_init("MATERIAL_DEFAULT", RICO_DEFAULT_TEXTURE_DIFF,
-                        RICO_DEFAULT_TEXTURE_SPEC, 0.5f,
-                        &RICO_DEFAULT_MATERIAL);
+    err = material_init(&RICO_DEFAULT_MATERIAL, "MATERIAL_DEFAULT",
+                        RICO_DEFAULT_TEXTURE_DIFF, RICO_DEFAULT_TEXTURE_SPEC,
+                        0.5f);
     return err;
 }
 internal int rico_init_meshes()
@@ -1198,10 +1194,8 @@ internal int load_mesh_files()
     if (err) return err;
 
     const char *sphere_mesh_name = "Sphere";
-    PRIM_SPHERE_MESH = mesh_request_by_name(sphere_mesh_name);
-    if (!PRIM_SPHERE_MESH)
-        return RICO_ERROR(ERR_MESH_INVALID_NAME, "Invalid mesh name: %s",
-                          sphere_mesh_name);
+    err = mesh_request_by_name(&PRIM_SPHERE_MESH, sphere_mesh_name);
+    if (err) return err;
 
     // err = load_obj_file("mesh/conference.ric");
     // if (err) return err;
@@ -1234,8 +1228,8 @@ internal int init_hardcoded_test_chunk()
     // Create materials
     //--------------------------------------------------------------------------
     u32 material_rock;
-    err = material_init("Rock", tex_rock, RICO_DEFAULT_TEXTURE_SPEC, 0.5f,
-                        &material_rock);
+    err = material_init(&material_rock, "Rock", tex_rock_key,
+                        RICO_DEFAULT_TEXTURE_SPEC, 0.5f);
     if (err) return err;
 
     //--------------------------------------------------------------------------
@@ -1278,7 +1272,7 @@ internal int init_hardcoded_test_chunk()
 
         // Create test object for each primitive
         err = object_create(&arr_objects[i], mesh_name(PRIM_SPHERE_MESH),
-                            OBJ_STATIC, PRIM_SPHERE_MESH,
+                            OBJ_STATIC, PRIM_SPHERE_MESH_KEY,
                             RICO_DEFAULT_MATERIAL, mesh_bbox(PRIM_SPHERE_MESH),
                             true);
         i++;
@@ -1316,6 +1310,11 @@ internal int init_hardcoded_test_chunk()
 internal int rico_init()
 {
     enum rico_error err;
+
+    printf("----------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing hash tables\n");
+    printf("----------------------------------------------------------\n");
+    rico_hashtable_init();
 
     printf("----------------------------------------------------------\n");
     printf("[MAIN][init] Initializing serializers\n");
@@ -1405,11 +1404,11 @@ internal int rico_init()
         if (err) return err;
 
         // TODO: Use fixed slots, or find by name and load if don't exist?
-        RICO_DEFAULT_FONT = 1;
-        RICO_DEFAULT_TEXTURE_DIFF = 1;
-        RICO_DEFAULT_TEXTURE_SPEC = 2;
-        RICO_DEFAULT_MATERIAL = 1;
-        RICO_DEFAULT_MESH = 1;
+        //RICO_DEFAULT_FONT = 1;
+        //RICO_DEFAULT_TEXTURE_DIFF = 1;
+        //RICO_DEFAULT_TEXTURE_SPEC = 2;
+        //RICO_DEFAULT_MATERIAL = 1;
+        //RICO_DEFAULT_MESH = 1;
         //RICO_DEFAULT_OBJECT = 1;
 
         chunk_active_set(chunk_ptr);

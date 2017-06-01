@@ -88,8 +88,7 @@ int load_obj_file(const char *filename)
         {
             if (idx_vertex > 0)
             {
-                u32 handle;
-                err = mesh_load(&handle, name, MESH_OBJ_WORLD, idx_vertex,
+                err = mesh_load(NULL, name, MESH_OBJ_WORLD, idx_vertex,
                                 vertices, idx_element, elements,
                                 GL_STATIC_DRAW);
                 if (err) goto cleanup;
@@ -181,8 +180,7 @@ int load_obj_file(const char *filename)
 
     if (idx_vertex > 0)
     {
-        u32 handle;
-        err = mesh_load(&handle, name, MESH_OBJ_WORLD, idx_vertex, vertices,
+        err = mesh_load(NULL, name, MESH_OBJ_WORLD, idx_vertex, vertices,
                         idx_element, elements, GL_STATIC_DRAW);
         if (err) goto cleanup;
         idx_mesh++;

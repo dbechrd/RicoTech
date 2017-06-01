@@ -19,6 +19,7 @@
 #include "rico_uid.h"
 #include "rico_file.h"
 #include "rico_cereal.h"
+#include "rico_hash.h"
 #include "bbox.h"
 #include "camera.h"
 #include "glref.h"

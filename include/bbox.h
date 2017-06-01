@@ -1,16 +1,14 @@
 #ifndef BBOX_H
 #define BBOX_H
 
-//#include "geom.h"
-//#include "rico_uid.h"
-//#include "rico_cereal.h"
-
 ////////////////////////////////////////////////////////////////////////////////
 // TODO: Move this to primitives
 
-//struct mesh_vertex;
-//struct camera;
+// TODO: Implement reuse of data for bounding boxes.. no need to initialize
+//       an entirely new vao/vbo for every bbox.
+// TODO: Don't serialize vao/vbo!
 
+// IMPORTANT: *DO NOT* add pointers in this struct, it will break cereal!
 struct bbox {
     struct rico_uid uid;
 

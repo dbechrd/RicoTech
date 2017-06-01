@@ -1,11 +1,6 @@
 #ifndef PROGRAM_H
 #define PROGRAM_H
 
-//#include "const.h"
-//#include "shader.h"
-//#include "geom.h"
-//#include <GL/gl3w.h>
-
 //--------------------------------------------------------------------------
 // Default program
 //--------------------------------------------------------------------------

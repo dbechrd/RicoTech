@@ -36,15 +36,15 @@ int string_init(const char *name, enum rico_string_slot slot, float x, float y,
     enum rico_error err;
 
     // Generate font mesh and get texture handle
-    u32 text_mesh;
-    u32 text_tex;
-    err = font_render(font, 0, 0, color, text, "debug_info_string",
+    hash_key text_mesh;
+    hash_key text_tex;
+    err = font_render(font, 0, 0, color, text, name,
                       MESH_STRING_SCREEN, &text_mesh, &text_tex);
     if (err) return err;
 
     u32 text_material;
-    err = material_init(name, text_tex, RICO_DEFAULT_TEXTURE_SPEC, 0.5f,
-                        &text_material);
+    err = material_init(&text_material, name, text_tex,
+                        RICO_DEFAULT_TEXTURE_SPEC, 0.5f);
     if (err) return err;
 
     // Generate dynamic string object or update existing fixed string
@@ -65,7 +65,9 @@ int string_init(const char *name, enum rico_string_slot slot, float x, float y,
     // Reuse existing fixed string objects
     if (str->uid.uid != UID_NULL)
     {
-        object_mesh_set(str->obj_handle, text_mesh, NULL);
+        err = object_mesh_set(str->obj_handle, text_mesh, NULL);
+        if (err) return err;
+
         object_material_set(str->obj_handle, text_material);
     }
     else

@@ -23,14 +23,14 @@ void uid_init(struct rico_uid *_uid, enum rico_uid_type type, const char *name,
 
     _uid->uid = next_uid++;
 
-    strncpy(_uid->name, name, sizeof(_uid->name));
+    strncpy(_uid->name, name, sizeof(_uid->name) - 1);
     _uid->serialize = serialize;
 
 #if RICO_DEBUG_UID
     printf("[ uid][init] uid=%d type=%s name=%s", _uid->uid,
            rico_uid_type_string[_uid->type], _uid->name);
 
-    if (strlen(name) > sizeof(_uid->name))
+    if (strlen(name) > sizeof(_uid->name) - 1)
         printf("...");
     printf("\n");
 

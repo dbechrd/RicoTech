@@ -1,11 +1,6 @@
 #ifndef GEOM_H
 #define GEOM_H
 
-//#include "const.h"
-//#include "GL/gl3w.h"
-//#include <math.h>
-//#include <stdio.h>
-
 #define VEC3_EPSILON 0.00001f
 #define MAT4_EPSILON 0.00001f
 #define QUAT_EPSILON 0.00001f

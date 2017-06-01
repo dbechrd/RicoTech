@@ -4,7 +4,9 @@ internal void pool_print_handles(struct rico_pool *pool);
 int pool_init(void *mem_block, const char *name, u32 count, u32 size,
               u32 fixed_count)
 {
-    RICO_ASSERT(count > 0);
+    // TODO: Disallow NULL pools (abusing this for debugging bigchunk atm)
+    //RICO_ASSERT(count > 0);
+    //RICO_ASSERT(size > 0);
 
     struct rico_pool *pool = mem_block;
     uid_init(&pool->uid, RICO_UID_POOL, name, true);
@@ -13,7 +15,7 @@ int pool_init(void *mem_block, const char *name, u32 count, u32 size,
     pool->fixed_count = fixed_count;
     pool->active = fixed_count;
 
-    // TODO: Do these work..?
+    // Pointer fix-up
     pool_fixup(pool);
 
     // TODO: Should I use UIDs for handles instead of e.g. 1-100?

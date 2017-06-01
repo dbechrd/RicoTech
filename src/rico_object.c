@@ -29,7 +29,7 @@ internal inline struct rico_object *object_find(u32 handle)
 internal void update_transform(struct rico_object *obj);
 
 int object_create(u32 *_handle, const char *name, enum rico_obj_type type,
-                  u32 mesh, u32 material, const struct bbox *bbox,
+                  hash_key mesh_key, u32 material, const struct bbox *bbox,
                   bool serialize)
 {
 #if RICO_DEBUG_OBJECT
@@ -54,9 +54,11 @@ int object_create(u32 *_handle, const char *name, enum rico_obj_type type,
         obj->scale = VEC3_ONE;
     obj->transform = MAT4_IDENT;
     obj->transform_inverse = MAT4_IDENT;
-    obj->mesh = mesh_request(mesh);
+    obj->mesh_key = mesh_key;
+    err = mesh_request_by_key(&obj->mesh, mesh_key);
+    if (err) return err;
     obj->material = material_request(material);
-    obj->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(mesh);
+    obj->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(obj->mesh);
 
     update_transform(obj);
 
@@ -69,7 +71,7 @@ int object_copy(u32 *_handle, u32 handle, const char *name)
     struct rico_object *obj = object_find(handle);
 
     // Create new object with same mesh / texture
-    err = object_create(_handle, name, obj->type, obj->mesh, obj->material,
+    err = object_create(_handle, name, obj->type, obj->mesh_key, obj->material,
                         NULL, true);
     if (err) return err;
 
@@ -124,12 +126,17 @@ void object_bbox_set(u32 handle, const struct bbox *bbox)
     obj->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(obj->mesh);
 }
 
-void object_mesh_set(u32 handle, u32 mesh, const struct bbox *bbox)
+int object_mesh_set(u32 handle, hash_key mesh_key, const struct bbox *bbox)
 {
+    enum rico_error err;
+
     struct rico_object *obj = object_find(handle);
     mesh_free(obj->mesh);
-    obj->mesh = mesh_request(mesh);
-    obj->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(mesh);
+    err = mesh_request_by_key(&obj->mesh, mesh_key);
+    if (err) return err;
+    obj->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(obj->mesh);
+
+    return err;
 }
 
 void object_mesh_next(u32 handle)

@@ -15,6 +15,8 @@ struct rico_font {
     float RowFactor, ColFactor;
     int RenderStyle;
     bool InvertYAxis;
+
+    hash_key texture_key;
     u32 texture;
 };
 extern const u32 RICO_FONT_SIZE;
@@ -24,6 +26,6 @@ extern u32 RICO_DEFAULT_FONT;
 int font_init(const char *filename, u32 *_handle);
 void font_free(u32 handle);
 int font_render(u32 handle, int x, int y, struct col4 bg, const char *text,
-                const char *mesh_name, enum rico_mesh_type type, u32 *_mesh,
-                u32 *_texture);
+                const char *mesh_name, enum rico_mesh_type type,
+                hash_key *_mesh_key, hash_key *_texture_key);
 #endif // RICO_FONT_H

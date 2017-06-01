@@ -29,6 +29,8 @@ int chunk_init(const char *name, u32 strings, u32 fonts, u32 textures,
                                       "Failed to alloc memory for chunk %s",
                                       name);
 
+    //memset(mem_block, INT_MAX, total_size);
+
     struct rico_chunk *chunk = (struct rico_chunk *)mem_block;
     uid_init(&chunk->uid, RICO_UID_CHUNK, name, true);
     chunk->total_size      = total_size;

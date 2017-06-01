@@ -87,8 +87,6 @@ typedef u32 bool;
 #define local    static
 #define global   static
 
-typedef u32 rico_hash;
-
 /*
 //
 // NOTE(casey): Types
@@ -171,6 +169,8 @@ enum rico_vbo {
     f(ERR_OBJ_TOO_MANY_VERTS)       \
     f(ERR_CHUNK_NULL)               \
     f(ERR_MESH_INVALID_NAME)        \
+    f(ERR_HASH_TABLE_FULL)          \
+    f(ERR_HASH_INVALID_KEY)         \
     f(ERR_COUNT)
 
 enum rico_error {

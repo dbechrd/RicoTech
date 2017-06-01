@@ -4,7 +4,7 @@ const char *rico_mesh_type_string[] = {
     RICO_MESH_TYPES(GEN_STRING)
 };
 
-u32 RICO_DEFAULT_MESH = 0;
+hash_key RICO_DEFAULT_MESH = 0;
 
 internal inline struct rico_pool **mesh_pool_ptr()
 {
@@ -27,11 +27,10 @@ internal inline struct rico_mesh *mesh_find(u32 handle)
 }
 
 internal int build_mesh(struct rico_mesh *mesh, u32 vertex_count,
-                      const struct mesh_vertex *vertex_data,
-                      u32 element_count, const GLuint *element_data,
-                      GLenum hint);
+                        const struct mesh_vertex *vertex_data,
+                        u32 element_count, const GLuint *element_data,
+                        GLenum hint);
 
-//TODO: Should be requesting const char* filename or u32 filename (string hash)
 u32 mesh_request(u32 handle)
 {
     struct rico_mesh *mesh = mesh_find(handle);
@@ -45,8 +44,32 @@ u32 mesh_request(u32 handle)
     return handle;
 }
 
-u32 mesh_request_by_name(const char *name)
+int mesh_request_by_key(u32 *_handle, hash_key key)
 {
+    *_handle = hashtable_search(&global_hash_meshes, key);
+    if (!*_handle)
+    {
+        return RICO_ERROR(ERR_HASH_INVALID_KEY, "Mesh key not found.");
+    }
+    mesh_request(*_handle);
+
+    return SUCCESS;
+}
+
+int mesh_request_by_name(u32 *_handle, const char *name)
+{
+    enum rico_error err;
+
+    hash_key key = hashgen_str(name);
+
+    err = mesh_request_by_key(_handle, key);
+    if (err == ERR_HASH_INVALID_KEY)
+    {
+        return RICO_ERROR(ERR_MESH_INVALID_NAME, "Invalid mesh name: %s", name);
+    }
+    return err;
+
+#if 0
     u32 first = pool_handle_first(mesh_pool());
     if (!first) return 0;
 
@@ -64,6 +87,7 @@ u32 mesh_request_by_name(const char *name)
     }
 
     return mesh_request(handle);
+#endif
 }
 
 enum rico_mesh_type mesh_type_get(u32 handle)
@@ -114,7 +138,7 @@ u32 mesh_prev(u32 handle)
     return 0;
 }
 
-int mesh_load(u32 *_handle, const char *name, enum rico_mesh_type type,
+int mesh_load(hash_key *_key, const char *name, enum rico_mesh_type type,
               u32 vertex_count, const struct mesh_vertex *vertex_data,
               u32 element_count, const GLuint *element_data, GLenum hint)
 {
@@ -123,12 +147,12 @@ int mesh_load(u32 *_handle, const char *name, enum rico_mesh_type type,
 #endif
 
     enum rico_error err;
-    *_handle = RICO_DEFAULT_MESH;
 
-    err = pool_handle_alloc(mesh_pool_ptr(), _handle);
+    u32 handle;
+    err = pool_handle_alloc(mesh_pool_ptr(), &handle);
     if (err) return err;
 
-    struct rico_mesh *mesh = mesh_find(*_handle);
+    struct rico_mesh *mesh = mesh_find(handle);
 
     // Note: If we want to serialize mesh data we have to store the vertex data
     //       and element array in the struct.
@@ -141,6 +165,14 @@ int mesh_load(u32 *_handle, const char *name, enum rico_mesh_type type,
 
     err = bbox_init_mesh(&mesh->bbox, name, vertex_data, vertex_count,
                          COLOR_WHITE_HIGHLIGHT);
+    if (err) return err;
+
+    // Store in global hash table
+    hash_key key = hashgen_str(mesh->uid.name);
+    err = hashtable_insert(&global_hash_meshes, key, handle);
+    if (err) return err;
+
+    if (_key) *_key = key;
     return err;
 }
 
@@ -218,9 +250,9 @@ void mesh_free(u32 handle)
     if (mesh->ref_count > 0)
         return;
 
-    // TODO: Use fixed pool slots
-    if (handle == RICO_DEFAULT_MESH)
-        return;
+    // TODO: Use fixed pool slots or request and never release at initialize
+    //if (handle == RICO_DEFAULT_MESH)
+    //    return;
 
     // HACK: For now, don't ever delete meshes loaded from *.ric files.
     //       Eventually, there should be an unload_obj_file method or some
@@ -237,6 +269,9 @@ void mesh_free(u32 handle)
 #if RICO_DEBUG_MESH
     printf("[mesh][free] uid=%d name=%s\n", mesh->uid.uid, mesh->uid.name);
 #endif
+
+    hash_key key = hashgen_str(mesh->uid.name);
+    hashtable_delete(&global_hash_meshes, key);
 
     bbox_free_mesh(&mesh->bbox);
 
