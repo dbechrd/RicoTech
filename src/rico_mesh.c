@@ -4,7 +4,7 @@ const char *rico_mesh_type_string[] = {
     RICO_MESH_TYPES(GEN_STRING)
 };
 
-hash_key RICO_DEFAULT_MESH = 0;
+u32 RICO_DEFAULT_MESH = 0;
 
 internal inline struct rico_pool **mesh_pool_ptr()
 {
@@ -44,31 +44,18 @@ u32 mesh_request(u32 handle)
     return handle;
 }
 
-int mesh_request_by_key(u32 *_handle, hash_key key)
-{
-    *_handle = hashtable_search(&global_hash_meshes, key);
-    if (!*_handle)
-    {
-        return RICO_ERROR(ERR_HASH_INVALID_KEY, "Mesh key not found.");
-    }
-    mesh_request(*_handle);
-
-    return SUCCESS;
-}
-
 int mesh_request_by_name(u32 *_handle, const char *name)
 {
-    enum rico_error err;
-
-    hash_key key = hashgen_str(name);
-
-    err = mesh_request_by_key(_handle, key);
-    if (err == ERR_HASH_INVALID_KEY)
+    u32 handle = hashtable_search_by_name(&global_meshes, name);
+    if (!handle)
     {
-        return RICO_ERROR(ERR_MESH_INVALID_NAME, "Invalid mesh name: %s", name);
+        return RICO_ERROR(ERR_MESH_INVALID_NAME, "Mesh not found: %s", name);
     }
-    return err;
 
+    *_handle = mesh_request(handle);
+    return SUCCESS;
+
+    // Cleanup: Pre hash table lookup
 #if 0
     u32 first = pool_handle_first(mesh_pool());
     if (!first) return 0;
@@ -138,7 +125,7 @@ u32 mesh_prev(u32 handle)
     return 0;
 }
 
-int mesh_load(hash_key *_key, const char *name, enum rico_mesh_type type,
+int mesh_load(u32 *_handle, const char *name, enum rico_mesh_type type,
               u32 vertex_count, const struct mesh_vertex *vertex_data,
               u32 element_count, const GLuint *element_data, GLenum hint)
 {
@@ -147,6 +134,7 @@ int mesh_load(hash_key *_key, const char *name, enum rico_mesh_type type,
 #endif
 
     enum rico_error err;
+    if (_handle) *_handle = RICO_DEFAULT_MESH;
 
     u32 handle;
     err = pool_handle_alloc(mesh_pool_ptr(), &handle);
@@ -169,10 +157,10 @@ int mesh_load(hash_key *_key, const char *name, enum rico_mesh_type type,
 
     // Store in global hash table
     hash_key key = hashgen_str(mesh->uid.name);
-    err = hashtable_insert(&global_hash_meshes, key, handle);
+    err = hashtable_insert(&global_meshes, key, handle);
     if (err) return err;
 
-    if (_key) *_key = key;
+    if (_handle) *_handle = handle;
     return err;
 }
 
@@ -271,7 +259,7 @@ void mesh_free(u32 handle)
 #endif
 
     hash_key key = hashgen_str(mesh->uid.name);
-    hashtable_delete(&global_hash_meshes, key);
+    hashtable_delete(&global_meshes, key);
 
     bbox_free_mesh(&mesh->bbox);
 

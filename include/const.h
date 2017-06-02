@@ -10,8 +10,8 @@
 
 // Debug
 #define RICO_DEBUG 1
+#define RICO_DEBUG_FATAL_ASSERT     RICO_DEBUG && 1
 #define RICO_DEBUG_ALL_ERRORS_FATAL RICO_DEBUG && 1
-#define RICO_DEBUG_FATAL_ASSERT     RICO_DEBUG && 0
 #define RICO_DEBUG_WARN             RICO_DEBUG && 1
 #define RICO_DEBUG_INFO             RICO_DEBUG && 1
 #define RICO_DEBUG_UID              RICO_DEBUG && 1
@@ -23,14 +23,15 @@
 #define RICO_DEBUG_STRING           RICO_DEBUG && 1
 #define RICO_DEBUG_MATERIAL         RICO_DEBUG && 1
 #define RICO_DEBUG_FONT             RICO_DEBUG && 1
+#define RICO_DEBUG_HASH             RICO_DEBUG && 1
 
 // Memory pools
+#define RICO_STRING_POOL_SIZE   32
+#define RICO_FONT_POOL_SIZE     4
 #define RICO_TEXTURE_POOL_SIZE  128
 #define RICO_MATERIAL_POOL_SIZE 128
 #define RICO_MESH_POOL_SIZE     128
 #define RICO_OBJECT_POOL_SIZE   128
-#define RICO_FONT_POOL_SIZE     4
-#define RICO_STRING_POOL_SIZE   32
 
 //------------------------------------------------------------------------------
 // Rico constants
@@ -169,6 +170,8 @@ enum rico_vbo {
     f(ERR_OBJ_TOO_MANY_VERTS)       \
     f(ERR_CHUNK_NULL)               \
     f(ERR_MESH_INVALID_NAME)        \
+    f(ERR_TEXTURE_INVALID_NAME)     \
+    f(ERR_MATERIAL_INVALID_NAME)    \
     f(ERR_HASH_TABLE_FULL)          \
     f(ERR_HASH_INVALID_KEY)         \
     f(ERR_COUNT)

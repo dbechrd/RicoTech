@@ -54,13 +54,20 @@ u32 hashtable_search(struct hash_table *table, hash_key key)
     }
 }
 
+u32 hashtable_search_by_name(struct hash_table *table, const char *name)
+{
+    hash_key key = hashgen_str(name);
+    u32 handle = hashtable_search(table, key);
+    return handle;
+}
+
 // TODO: Replace linear search/insert with quadratic if necessary
 int hashtable_insert(struct hash_table *table, hash_key key, u32 handle)
 {
     u32 start_index = hash_code(table, key);
     u32 index = start_index;
 
-    while (table->slots[index].handle != 0)
+    while (table->slots[index].handle != 0 && table->slots[index].key != key)
     {
         // Next slot
         index = ++index % table->count;
@@ -71,6 +78,14 @@ int hashtable_insert(struct hash_table *table, hash_key key, u32 handle)
                               "Failed to insert into full hash table %s",
                               table->uid.name);
     }
+
+#if RICO_DEBUG_HASH
+    if (table->slots[index].key == key)
+    {
+        printf("[hash][WARN] uid=%d name=%s key=%d Overwriting existing key\n",
+               table->uid.uid, table->uid.name, key);
+    }
+#endif
 
     // Empty slot found; insert
     table->slots[index].key = key;
@@ -110,13 +125,21 @@ bool hashtable_delete(struct hash_table *table, hash_key key)
 ///|////////////////////////////////////////////////////////////////////////////
 
 // TODO: Where should global hash tables actually live?
-struct hash_table global_hash_textures;
-struct hash_table global_hash_meshes;
+struct hash_table global_strings;
+struct hash_table global_fonts;
+struct hash_table global_textures;
+struct hash_table global_materials;
+struct hash_table global_meshes;
+struct hash_table global_objects;
 
 void rico_hashtable_init()
 {
     //struct rico_chunk *chunk = chunk_active();
     //hashtable_init(&global_hash_textures, "Textures", chunk->count_textures);
-    hashtable_init(&global_hash_textures, "Textures", RICO_TEXTURE_POOL_SIZE);
-    hashtable_init(&global_hash_meshes, "Meshes", RICO_MESH_POOL_SIZE);
+    hashtable_init(&global_strings,   "Strings",   RICO_STRING_POOL_SIZE);
+    hashtable_init(&global_fonts,     "Fonts",     RICO_FONT_POOL_SIZE);
+    hashtable_init(&global_textures,  "Textures",  RICO_TEXTURE_POOL_SIZE);
+    hashtable_init(&global_materials, "Materials", RICO_MATERIAL_POOL_SIZE);
+    hashtable_init(&global_meshes,    "Meshes",    RICO_MESH_POOL_SIZE);
+    hashtable_init(&global_objects,   "Objects",   RICO_OBJECT_POOL_SIZE);
 }

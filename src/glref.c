@@ -10,13 +10,9 @@ global u32 selected_handle = 0;
 global struct program_default *prog_default;
 global struct program_primitive *prog_primitive;
 
-global u32 font;
+//global u32 font;
 global u32 tex_font_test;
 global u32 mesh_font_test;
-global hash_key tex_grass_key;
-global hash_key tex_rock_key;
-global hash_key tex_hello_key;
-global hash_key tex_yellow_key;
 global u32 tex_grass;
 global u32 tex_rock;
 global u32 tex_hello;
@@ -36,7 +32,7 @@ int init_glref()
     // Initialize fonts
     //--------------------------------------------------------------------------
     // TODO: Add error handling to make_font()
-    font_init("font/courier_new.bff", &font);
+    //font_init("font/courier_new.bff", &font);
 
     /*************************************************************************
     | Frequency of access:
@@ -59,25 +55,21 @@ int init_glref()
     //--------------------------------------------------------------------------
     // Create textures
     //--------------------------------------------------------------------------
-    err = texture_load_file(&tex_grass_key, "grass", GL_TEXTURE_2D,
+    /*err = texture_load_file(&tex_grass, "grass", GL_TEXTURE_2D,
                             "texture/grass.tga", 32);
     if (err) return err;
-    tex_grass = texture_request_by_key(tex_grass_key);
 
-    err = texture_load_file(&tex_rock_key, "bricks", GL_TEXTURE_2D,
+    err = texture_load_file(&tex_rock, "bricks", GL_TEXTURE_2D,
                             "texture/clean_bricks.tga", 32);
     if (err) return err;
-    tex_rock = texture_request_by_key(tex_rock_key);
 
-    err = texture_load_file(&tex_hello_key, "hello", GL_TEXTURE_2D,
+    err = texture_load_file(&tex_hello, "hello", GL_TEXTURE_2D,
                             "texture/hello.tga", 32);
     if (err) return err;
-    tex_hello = texture_request_by_key(tex_hello_key);
 
-    err = texture_load_file(&tex_yellow_key, "yellow", GL_TEXTURE_2D,
+    err = texture_load_file(&tex_yellow, "yellow", GL_TEXTURE_2D,
                             "texture/fake_yellow.tga", 32);
-    if (err) return err;
-    tex_yellow = texture_request_by_key(tex_yellow_key);
+    if (err) return err;*/
 
     //--------------------------------------------------------------------------
     // Create axis label bboxes

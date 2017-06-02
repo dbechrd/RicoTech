@@ -105,13 +105,11 @@ int font_init(const char *filename, u32 *_handle)
     // Store character widths
     memcpy(font->Width, &buffer[WIDTH_DATA_OFFSET], 256);
 
-    hash_key key;
-    err = texture_load_pixels(&key, filename, GL_TEXTURE_2D, width,
+    u32 handle;
+    err = texture_load_pixels(&handle, filename, GL_TEXTURE_2D, width,
                               height, bpp, &buffer[MAP_DATA_OFFSET]);
     if (err) goto cleanup;
-
-    font->texture_key = key;
-    font->texture = texture_request_by_key(key);
+    font->texture = texture_request(handle);
 
 cleanup:
     free(buffer);
@@ -157,7 +155,7 @@ internal void font_setblend(const struct rico_font *font)
 
 int font_render(u32 handle, int x, int y, struct col4 bg, const char *text,
                 const char *mesh_name, enum rico_mesh_type type,
-                hash_key *_mesh_key, hash_key *_texture_key)
+                u32 *_mesh, u32 *_texture)
 {
     enum rico_error err;
 
@@ -171,7 +169,7 @@ int font_render(u32 handle, int x, int y, struct col4 bg, const char *text,
     int text_len = strlen(text);
 
     // Truncate strings that are too long to render
-    if (BFG_MAXSTRING < text_len)
+    if (text_len > BFG_MAXSTRING)
         text_len = BFG_MAXSTRING;
 
     // TODO: We're wasting a lot of vertices here, use a proper triangle strip
@@ -181,8 +179,10 @@ int font_render(u32 handle, int x, int y, struct col4 bg, const char *text,
     int element_count = text_len * 6;
 
     // TODO: Cleanup memory allocs
-    struct mesh_vertex *vertices = calloc(vertex_count, sizeof(*vertices));
-    GLuint *elements = calloc(element_count, sizeof(*elements));
+    local struct mesh_vertex vertices[BFG_MAXSTRING * 4];
+    local GLuint elements[BFG_MAXSTRING * 6];
+    //struct mesh_vertex *vertices = calloc(vertex_count, sizeof(*vertices));
+    //GLuint *elements = calloc(element_count, sizeof(*elements));
 
     int idx_vertex = 0;
     int idx_element = 0;
@@ -272,17 +272,17 @@ int font_render(u32 handle, int x, int y, struct col4 bg, const char *text,
         cur_x += xOffset;
     }
 
-    hash_key mesh_key;
-    err = mesh_load(&mesh_key, mesh_name, type, vertex_count, vertices,
+    u32 mesh_handle;
+    err = mesh_load(&mesh_handle, mesh_name, type, vertex_count, vertices,
                     element_count, elements, GL_STATIC_DRAW);
     if (err) goto cleanup;
     
-    *_mesh_key = mesh_key;
-    *_texture_key = font->texture_key;
+    *_mesh = mesh_handle;
+    *_texture = font->texture;
 
 cleanup:
-    free(vertices);
-    free(elements);
+    //free(vertices);
+    //free(elements);
     return err;
 }
 

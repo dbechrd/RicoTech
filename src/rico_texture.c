@@ -1,7 +1,7 @@
 const u32 RICO_TEXTURE_SIZE = sizeof(struct rico_texture);
 
-hash_key RICO_DEFAULT_TEXTURE_DIFF = 0;
-hash_key RICO_DEFAULT_TEXTURE_SPEC = 0;
+u32 RICO_DEFAULT_TEXTURE_DIFF = 0;
+u32 RICO_DEFAULT_TEXTURE_SPEC = 0;
 
 internal inline struct rico_pool **texture_pool_ptr()
 {
@@ -40,18 +40,20 @@ u32 texture_request(u32 handle)
     return handle;
 }
 
-u32 texture_request_by_key(hash_key key)
+int texture_request_by_name(u32 *_handle, const char *name)
 {
-    u32 handle = hashtable_search(&global_hash_textures, key);
+    u32 handle = hashtable_search_by_name(&global_textures, name);
     if (!handle)
     {
-        return RICO_ERROR(ERR_HASH_INVALID_KEY, "Texture key not found.");
+        return RICO_ERROR(ERR_TEXTURE_INVALID_NAME, "Texture not found: %s.",
+                          name);
     }
 
-    return texture_request(handle);
+    *_handle = texture_request(handle);
+    return SUCCESS;
 }
 
-int texture_load_file(hash_key *_key, const char *name, GLenum target,
+int texture_load_file(u32 *_handle, const char *name, GLenum target,
                       const char *filename, u32 bpp)
 {
 #if RICO_DEBUG_TEXTURE
@@ -71,14 +73,14 @@ int texture_load_file(hash_key *_key, const char *name, GLenum target,
     }
 
     // Load pixels
-    err = texture_load_pixels(_key, name, target, width, height, bpp, pixels);
+    err = texture_load_pixels(_handle, name, target, width, height, bpp, pixels);
 
 cleanup:
     stbi_image_free(pixels);
     return err;
 }
 
-int texture_load_pixels(hash_key *_key, const char *name, GLenum target,
+int texture_load_pixels(u32 *_handle, const char *name, GLenum target,
                         u32 width, u32 height, u32 bpp, const void *pixels)
 {
 #if RICO_DEBUG_TEXTURE
@@ -86,6 +88,7 @@ int texture_load_pixels(hash_key *_key, const char *name, GLenum target,
 #endif
 
     enum rico_error err;
+    *_handle = RICO_DEFAULT_TEXTURE_DIFF;
 
     u32 handle;
     err = pool_handle_alloc(texture_pool_ptr(), &handle);
@@ -106,10 +109,10 @@ int texture_load_pixels(hash_key *_key, const char *name, GLenum target,
 
     // Store in global hash table
     hash_key key = hashgen_str(tex->uid.name);
-    err = hashtable_insert(&global_hash_textures, key, handle);
+    err = hashtable_insert(&global_textures, key, handle);
     if (err) return err;
-    *_key = key;
-
+    
+    *_handle = handle;
     return err;
 }
 
@@ -249,7 +252,7 @@ void texture_free(u32 handle)
 #endif
 
     hash_key key = hashgen_str(tex->uid.name);
-    hashtable_delete(&global_hash_textures, key);
+    hashtable_delete(&global_textures, key);
 
     glDeleteTextures(1, &tex->gl_id);
 

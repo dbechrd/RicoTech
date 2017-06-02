@@ -20,12 +20,13 @@ inline hash_key hashgen_strlen(const char *str, int len);
 void hashtable_init(struct hash_table *table, const char *name, u32 count);
 void hashtable_free(struct hash_table *table);
 u32 hashtable_search(struct hash_table *table, hash_key key);
+u32 hashtable_search_by_name(struct hash_table *table, const char *name);
 int hashtable_insert(struct hash_table *table, hash_key key, u32 handle);
 bool hashtable_delete(struct hash_table *table, hash_key key);
 
 // TODO: Where should global hash tables actually live?
-extern struct hash_table global_hash_textures;
-extern struct hash_table global_hash_meshes;
+extern struct hash_table global_textures;
+extern struct hash_table global_meshes;
 void rico_hashtable_init();
 
 #endif // RICO_HASH_H

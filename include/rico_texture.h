@@ -16,14 +16,14 @@ struct rico_texture {
 };
 extern const u32 RICO_TEXTURE_SIZE;
 
-extern hash_key RICO_DEFAULT_TEXTURE_DIFF;
-extern hash_key RICO_DEFAULT_TEXTURE_SPEC;
+extern u32 RICO_DEFAULT_TEXTURE_DIFF;
+extern u32 RICO_DEFAULT_TEXTURE_SPEC;
 
 u32 texture_request(u32 handle);
-u32 texture_request_by_key(hash_key key);
-int texture_load_file(hash_key *_key, const char *name, GLenum target,
+int texture_request_by_name(u32 *_handle, const char *name);
+int texture_load_file(u32 *_handle, const char *name, GLenum target,
                       const char *filename, u32 bpp);
-int texture_load_pixels(hash_key *_key, const char *name, GLenum target,
+int texture_load_pixels(u32 *_handle, const char *name, GLenum target,
                         u32 width, u32 height, u32 bpp, const void *pixels);
 void texture_free(u32 handle);
 const char *texture_name(u32 handle);

@@ -36,8 +36,8 @@ int string_init(const char *name, enum rico_string_slot slot, float x, float y,
     enum rico_error err;
 
     // Generate font mesh and get texture handle
-    hash_key text_mesh;
-    hash_key text_tex;
+    u32 text_mesh;
+    u32 text_tex;
     err = font_render(font, 0, 0, color, text, name,
                       MESH_STRING_SCREEN, &text_mesh, &text_tex);
     if (err) return err;
@@ -65,9 +65,7 @@ int string_init(const char *name, enum rico_string_slot slot, float x, float y,
     // Reuse existing fixed string objects
     if (str->uid.uid != UID_NULL)
     {
-        err = object_mesh_set(str->obj_handle, text_mesh, NULL);
-        if (err) return err;
-
+        object_mesh_set(str->obj_handle, text_mesh, NULL);
         object_material_set(str->obj_handle, text_material);
     }
     else

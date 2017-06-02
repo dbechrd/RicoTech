@@ -167,6 +167,7 @@ void bbox_render(const struct bbox *box, const struct mat4 *model_matrix)
 void bbox_render_color(const struct bbox *box, const struct mat4 *model_matrix,
                        const struct col4 color)
 {
+#if 0
     if (box->wireframe && cam_player.fill_mode != GL_LINE)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -189,6 +190,7 @@ void bbox_render_color(const struct bbox *box, const struct mat4 *model_matrix,
 
     if (box->wireframe && cam_player.fill_mode != GL_LINE)
         glPolygonMode(GL_FRONT_AND_BACK, cam_player.fill_mode);
+#endif
 }
 
 //int bbox_serialize_0(const void *handle, const struct rico_file *file)

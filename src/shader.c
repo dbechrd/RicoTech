@@ -7,11 +7,10 @@ int make_shader(const GLenum type, const char *filename, GLuint *_shader)
     GLint status;
 
     err = file_contents(filename, &len, &source);
-    if (err) return err;
+    if (err) goto cleanup;
 
     shader = glCreateShader(type);
     glShaderSource(shader, 1, (const GLchar**)&source, &len);
-    free(source);
     glCompileShader(shader);
 
     glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
@@ -24,5 +23,8 @@ int make_shader(const GLenum type, const char *filename, GLuint *_shader)
     }
 
     *_shader = shader;
+
+cleanup:
+    free(source);
     return err;
 }

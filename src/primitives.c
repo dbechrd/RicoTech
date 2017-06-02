@@ -3,7 +3,6 @@ const char *rico_prim_string[] = {
 };
 
 u32 PRIM_SPHERE_MESH;
-hash_key PRIM_SPHERE_MESH_KEY;
 
 global GLuint vaos[PRIM_COUNT];
 global GLuint vbos[PRIM_COUNT][VBO_COUNT];

@@ -50,14 +50,13 @@ struct mesh_vertex {
     //GLubyte specular[4];
 };
 
-extern hash_key RICO_DEFAULT_MESH;
+extern u32 RICO_DEFAULT_MESH;
 
 u32 mesh_request(u32 handle);
-int mesh_request_by_key(u32 *_handle, hash_key key);
 int mesh_request_by_name(u32 *_handle, const char *name);
 u32 mesh_next(u32 handle);
 u32 mesh_prev(u32 handle);
-int mesh_load(hash_key *_key, const char *name, enum rico_mesh_type type,
+int mesh_load(u32 *_handle, const char *name, enum rico_mesh_type type,
               u32 vertex_count, const struct mesh_vertex *vertex_data,
               u32 element_count, const GLuint *element_data, GLenum hint);
 void mesh_free(u32 handle);

@@ -124,7 +124,7 @@ struct rico_keyevent
 static struct rico_keychord action_chords[ACTION_COUNT] = { 0 };
 
 ///|////////////////////////////////////////////////////////////////////////////
-global const bool reset_game_world = true;
+global const bool load_save_file = false;
 global struct rico_chunk *RICO_DEFAULT_CHUNK;
 
 ///|////////////////////////////////////////////////////////////////////////////
@@ -456,6 +456,7 @@ int state_update()
         view_vel = VEC3_ZERO;
     }
 
+#if 0
     // DEBUG: Print velocity
     char buf[64] = { 0 };
     int len = snprintf(buf, sizeof(buf), "Vel: %.1f %.1f %.1f", view_vel.x,
@@ -465,6 +466,7 @@ int state_update()
     err = string_init("STR_VEL", STR_SLOT_DEBUG, 0, -FONT_HEIGHT,
                       COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
     if (err) return err;
+#endif
 
     // Calculate delta position
     // dp' = 1/2at^2 + vt
@@ -1096,6 +1098,27 @@ internal int rico_init_textures()
 
     err = texture_load_file(&RICO_DEFAULT_TEXTURE_SPEC, "TEXTURE_DEFAULT_SPEC",
                             GL_TEXTURE_2D, "texture/basic_spec.tga", 32);
+    if (err) return err;
+
+    //--------------------------------------------------------------------------
+    // Create textures
+    //--------------------------------------------------------------------------
+    err = texture_load_file(&tex_grass, "grass", GL_TEXTURE_2D,
+                            "texture/grass.tga", 32);
+    if (err) return err;
+
+    err = texture_load_file(&tex_rock, "bricks", GL_TEXTURE_2D,
+                            "texture/clean_bricks.tga", 32);
+    if (err) return err;
+
+    err = texture_load_file(&tex_hello, "hello", GL_TEXTURE_2D,
+                            "texture/hello.tga", 32);
+    if (err) return err;
+
+    err = texture_load_file(&tex_yellow, "yellow", GL_TEXTURE_2D,
+                            "texture/fake_yellow.tga", 32);
+    if (err) return err;
+
     return err;
 }
 internal int rico_init_materials()
@@ -1115,9 +1138,7 @@ internal int rico_init_meshes()
     //--------------------------------------------------------------------------
     // Create default mesh (white rect)
     //--------------------------------------------------------------------------
-    #define vert_count 8
-    #define element_count 36
-    const struct mesh_vertex vertices[vert_count] = {
+    const struct mesh_vertex vertices[] = {
         {
             { -1.0f, -1.0f, 0.01f },   //Position
             { 1.0f, 1.0f, 1.0f, 1.0f }, //Color
@@ -1167,7 +1188,7 @@ internal int rico_init_meshes()
             { 0.0f, 1.0f }
         }
     };
-    const GLuint elements[element_count] = {
+    const GLuint elements[] = {
         0, 1, 2, 2, 3, 0,
         4, 0, 3, 3, 7, 4,
         5, 4, 7, 7, 6, 5,
@@ -1179,7 +1200,7 @@ internal int rico_init_meshes()
     // TODO: Use fixed slot for default mesh (do this for all other defaults
     //       as well.
     err = mesh_load(&RICO_DEFAULT_MESH, "MESH_DEFAULT", MESH_OBJ_WORLD,
-                    vert_count, vertices, element_count, elements,
+                    8, vertices, 36, elements,
                     GL_STATIC_DRAW);
     return err;
 }
@@ -1193,7 +1214,7 @@ internal int load_mesh_files()
     err = load_obj_file("mesh/sphere.ric");
     if (err) return err;
 
-    const char *sphere_mesh_name = "Sphere";
+    const char sphere_mesh_name[] = "Sphere";
     err = mesh_request_by_name(&PRIM_SPHERE_MESH, sphere_mesh_name);
     if (err) return err;
 
@@ -1228,7 +1249,7 @@ internal int init_hardcoded_test_chunk()
     // Create materials
     //--------------------------------------------------------------------------
     u32 material_rock;
-    err = material_init(&material_rock, "Rock", tex_rock_key,
+    err = material_init(&material_rock, "Rock", tex_rock,
                         RICO_DEFAULT_TEXTURE_SPEC, 0.5f);
     if (err) return err;
 
@@ -1272,9 +1293,8 @@ internal int init_hardcoded_test_chunk()
 
         // Create test object for each primitive
         err = object_create(&arr_objects[i], mesh_name(PRIM_SPHERE_MESH),
-                            OBJ_STATIC, PRIM_SPHERE_MESH_KEY,
-                            RICO_DEFAULT_MATERIAL, mesh_bbox(PRIM_SPHERE_MESH),
-                            true);
+                            OBJ_STATIC, PRIM_SPHERE_MESH, RICO_DEFAULT_MATERIAL,
+                            mesh_bbox(PRIM_SPHERE_MESH), true);
         i++;
         if (err) return err;
 
@@ -1333,61 +1353,49 @@ internal int rico_init()
     prim_init(PRIM_SEGMENT);
     prim_init(PRIM_RAY);
 
-    if (reset_game_world)
-    {
-        printf("----------------------------------------------------------\n");
-        printf("[MAIN][init] Initializing chunks\n");
-        printf("----------------------------------------------------------\n");
-        err = rico_init_chunks();
-        if (err) return err;
+    /////////////////////////
 
-        printf("----------------------------------------------------------\n");
-        printf("[MAIN][init] Initializing fonts\n");
-        printf("----------------------------------------------------------\n");
-        err = rico_init_fonts();
-        if (err) return err;
+    printf("----------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing chunks\n");
+    printf("----------------------------------------------------------\n");
+    err = rico_init_chunks();
+    if (err) return err;
 
-        printf("----------------------------------------------------------\n");
-        printf("[MAIN][init] Initializing textures\n");
-        printf("----------------------------------------------------------\n");
-        err = rico_init_textures();
-        if (err) return err;
+    printf("----------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing fonts\n");
+    printf("----------------------------------------------------------\n");
+    err = rico_init_fonts();
+    if (err) return err;
 
-        printf("----------------------------------------------------------\n");
-        printf("[MAIN][init] Initializing materials\n");
-        printf("----------------------------------------------------------\n");
-        err = rico_init_materials();
-        if (err) return err;
+    printf("----------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing textures\n");
+    printf("----------------------------------------------------------\n");
+    err = rico_init_textures();
+    if (err) return err;
 
-        // TODO: Load mesh data directly into OpenGL, independant of creating an
-        //       accompanying rico_mesh object. Fixup VAO ids by having a
-        //       mesh_name lookup table. Load meshes into VRAM as necessary if
-        //       they aren't found in the lookup table.
-        printf("----------------------------------------------------------\n");
-        printf("[MAIN][init] Initializing meshes\n");
-        printf("----------------------------------------------------------\n");
-        err = rico_init_meshes();
-        if (err) return err;
+    printf("----------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing materials\n");
+    printf("----------------------------------------------------------\n");
+    err = rico_init_materials();
+    if (err) return err;
 
-        printf("----------------------------------------------------------\n");
-        printf("[MAIN][init] Loading meshes from resource files\n");
-        printf("----------------------------------------------------------\n");
-        err = load_mesh_files();
-        if (err) return err;
+    // TODO: Load mesh data directly into OpenGL, independant of creating an
+    //       accompanying rico_mesh object. Fixup VAO ids by having a
+    //       mesh_name lookup table. Load meshes into VRAM as necessary if
+    //       they aren't found in the lookup table.
+    printf("----------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing meshes\n");
+    printf("----------------------------------------------------------\n");
+    err = rico_init_meshes();
+    if (err) return err;
 
-        printf("----------------------------------------------------------\n");
-        printf("[MAIN][init] Initializing game world\n");
-        printf("----------------------------------------------------------\n");
-        err = init_glref();
-        if (err) return err;
+    printf("----------------------------------------------------------\n");
+    printf("[MAIN][init] Loading meshes from resource files\n");
+    printf("----------------------------------------------------------\n");
+    err = load_mesh_files();
+    if (err) return err;
     
-        printf("Loading hard-coded test chunk\n");
-        err = init_hardcoded_test_chunk();
-        if (err) return err;
-
-        chunk_active_set(RICO_DEFAULT_CHUNK);
-    }
-    else
+    if (load_save_file)
     {
         printf("----------------------------------------------------------\n");
         printf("[MAIN][init] Initializing chunks\n");
@@ -1404,14 +1412,30 @@ internal int rico_init()
         if (err) return err;
 
         // TODO: Use fixed slots, or find by name and load if don't exist?
-        //RICO_DEFAULT_FONT = 1;
-        //RICO_DEFAULT_TEXTURE_DIFF = 1;
-        //RICO_DEFAULT_TEXTURE_SPEC = 2;
-        //RICO_DEFAULT_MATERIAL = 1;
-        //RICO_DEFAULT_MESH = 1;
-        //RICO_DEFAULT_OBJECT = 1;
+        RICO_DEFAULT_FONT = 1;
+        RICO_DEFAULT_TEXTURE_DIFF = 1;
+        RICO_DEFAULT_TEXTURE_SPEC = 2;
+        RICO_DEFAULT_MATERIAL = 1;
+        RICO_DEFAULT_MESH = 1;
+        RICO_DEFAULT_OBJECT = 1;
 
         chunk_active_set(chunk_ptr);
+    }
+    else
+    {
+        printf("----------------------------------------------------------\n");
+        printf("[MAIN][init] Initializing game world\n");
+        printf("----------------------------------------------------------\n");
+        err = init_glref();
+        if (err) return err;
+
+        printf("----------------------------------------------------------\n");
+        printf("[MAIN][init] Loading hard-coded test chunk\n");
+        printf("----------------------------------------------------------\n");
+        err = init_hardcoded_test_chunk();
+        if (err) return err;
+
+        chunk_active_set(RICO_DEFAULT_CHUNK);
     }
 
     printf("----------------------------------------------------------\n");

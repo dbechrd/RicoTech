@@ -36,8 +36,21 @@ u32 material_request(u32 handle)
     return handle;
 }
 
-int material_init(u32 *_handle, const char *name, hash_key tex_diffuse_key,
-                  hash_key tex_specular_key, float shiny)
+int material_request_by_name(u32 *_handle, const char *name)
+{
+    u32 handle = hashtable_search_by_name(&global_materials, name);
+    if (!handle)
+    {
+        return RICO_ERROR(ERR_MATERIAL_INVALID_NAME, "Material not found: %s.",
+                          name);
+    }
+
+    *_handle = material_request(handle);
+    return SUCCESS;
+}
+
+int material_init(u32 *_handle, const char *name, u32 tex_diffuse,
+                  u32 tex_specular, float shiny)
 {
 #if RICO_DEBUG_MATERIAL
     printf("[ mtl][init] name=%s\n", name);
@@ -46,15 +59,22 @@ int material_init(u32 *_handle, const char *name, hash_key tex_diffuse_key,
     enum rico_error err;
     *_handle = RICO_DEFAULT_MATERIAL;
 
-    err = pool_handle_alloc(material_pool_ptr(), _handle);
+    u32 handle;
+    err = pool_handle_alloc(material_pool_ptr(), &handle);
     if (err) return err;
 
-    struct rico_material *material = material_find(*_handle);
+    struct rico_material *material = material_find(handle);
     uid_init(&material->uid, RICO_UID_MATERIAL, name, true);
-    material->tex_diffuse = texture_request_by_key(tex_diffuse_key);
-    material->tex_specular = texture_request_by_key(tex_specular_key);
+    material->tex_diffuse = texture_request(tex_diffuse);
+    material->tex_specular = texture_request(tex_specular);
     material->shiny = shiny;
 
+    // Store in global hash table
+    hash_key key = hashgen_str(material->uid.name);
+    err = hashtable_insert(&global_materials, key, handle);
+    if (err) return err;
+
+    *_handle = handle;
     return err;
 }
 
@@ -80,6 +100,9 @@ void material_free(u32 handle)
     printf("[ mtl][free] uid=%d name=%s\n", material->uid.uid,
            material->uid.name);
 #endif
+
+    hash_key key = hashgen_str(material->uid.name);
+    hashtable_delete(&global_materials, key);
 
     texture_free(material->tex_diffuse);
     texture_free(material->tex_specular);

@@ -155,7 +155,12 @@ DESERIAL(chunk_deserialize_0)
     chunk->objects   = (struct rico_pool *)offset; ADD_BYTES(offset, pool6);
     RICO_ASSERT(PTR_SUBTRACT(offset, chunk) == chunk->total_size);
 
-    pool_fixup(chunk->strings);
+    // HACK: Nuke string pool instead of keeping whatever was in the save file
+    memset(chunk->strings, 0, pool1);
+    pool_init(chunk->strings, "Strings", chunk->count_strings, RICO_STRING_SIZE,
+              STR_SLOT_DYNAMIC);
+    //pool_fixup(chunk->strings);
+
     pool_fixup(chunk->fonts);
     pool_fixup(chunk->textures);
     pool_fixup(chunk->materials);

@@ -50,7 +50,7 @@ void test_hashtable()
     hash_key key2 = hashgen_strlen(bleh2, sizeof(bleh2));
     hash_key key3 = hashgen_strlen(bleh3, sizeof(bleh3));
 
-    struct hash_table *table = &global_hash_textures;
+    struct hash_table *table = &global_textures;
 
     rico_hashtable_init();
     hashtable_insert(table, key1, blah1);
