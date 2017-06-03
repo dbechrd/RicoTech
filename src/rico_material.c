@@ -113,12 +113,14 @@ void material_free(u32 handle)
 
 inline const char *material_name(u32 handle)
 {
-    return material_find(handle)->uid.name;
+    struct rico_material *material = material_find(handle);
+    return material->uid.name;
 }
 
 inline float material_shiny(u32 handle)
 {
-    return material_find(handle)->shiny;
+    struct rico_material *material = material_find(handle);
+    return material->shiny;
 }
 
 void material_bind(u32 handle)

@@ -157,6 +157,14 @@ int font_render(u32 handle, int x, int y, struct col4 bg, const char *text,
                 const char *mesh_name, enum rico_mesh_type type,
                 u32 *_mesh, u32 *_texture)
 {
+    // Persistent buffers for font rendering
+    local struct mesh_vertex vertices[BFG_MAXSTRING * 4];
+    local GLuint elements[BFG_MAXSTRING * 6];
+
+    // Cleanup: Debug code
+    //memset(vertices, 0, sizeof(vertices));
+    //memset(elements, 0, sizeof(elements));
+
     enum rico_error err;
 
     if (!handle) handle = RICO_DEFAULT_FONT;
@@ -171,18 +179,6 @@ int font_render(u32 handle, int x, int y, struct col4 bg, const char *text,
     // Truncate strings that are too long to render
     if (text_len > BFG_MAXSTRING)
         text_len = BFG_MAXSTRING;
-
-    // TODO: We're wasting a lot of vertices here, use a proper triangle strip
-    // Each letter is a quad
-    int vertex_count = text_len * 4;
-    // Each quad is two triangles, or 6 vertices
-    int element_count = text_len * 6;
-
-    // TODO: Cleanup memory allocs
-    local struct mesh_vertex vertices[BFG_MAXSTRING * 4];
-    local GLuint elements[BFG_MAXSTRING * 6];
-    //struct mesh_vertex *vertices = calloc(vertex_count, sizeof(*vertices));
-    //GLuint *elements = calloc(element_count, sizeof(*elements));
 
     int idx_vertex = 0;
     int idx_element = 0;
@@ -273,8 +269,8 @@ int font_render(u32 handle, int x, int y, struct col4 bg, const char *text,
     }
 
     u32 mesh_handle;
-    err = mesh_load(&mesh_handle, mesh_name, type, vertex_count, vertices,
-                    element_count, elements, GL_STATIC_DRAW);
+    err = mesh_load(&mesh_handle, mesh_name, type, idx_vertex, vertices,
+                    idx_element, elements, GL_STATIC_DRAW);
     if (err) goto cleanup;
     
     *_mesh = mesh_handle;

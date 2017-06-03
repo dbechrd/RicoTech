@@ -528,7 +528,7 @@ void object_render_type(enum rico_obj_type type,
             // TODO: Batch bounding boxes
             // Render bbox
             if (is_edit_state(state_get()))
-                bbox_render(&obj->bbox, &obj->transform);
+                prim_draw_bbox(&obj->bbox, &obj->transform);
         }
     }
 

@@ -1,3 +1,7 @@
+global const bool load_save_file = true;
+global struct rico_chunk *RICO_DEFAULT_CHUNK;
+
+///|////////////////////////////////////////////////////////////////////////////
 const char *rico_state_string[] = {
     RICO_STATES(GEN_STRING)
 };
@@ -122,10 +126,6 @@ struct rico_keyevent
 #endif
 
 static struct rico_keychord action_chords[ACTION_COUNT] = { 0 };
-
-///|////////////////////////////////////////////////////////////////////////////
-global const bool load_save_file = false;
-global struct rico_chunk *RICO_DEFAULT_CHUNK;
 
 ///|////////////////////////////////////////////////////////////////////////////
 //Human walk speed empirically found to be 33 steps in 20 seconds. That is
@@ -544,7 +544,7 @@ internal int shared_engine_events()
         mouse_lock = !mouse_lock;
         SDL_SetRelativeMouseMode(mouse_lock);
     }
-#if DEBUG
+#ifdef DEBUG
     // DEBUG: Trigger breakpoint
     else if (chord_pressed(ACTION_ENGINE_DEBUG_TRIGGER_BREAKPOINT)
     {
@@ -1042,6 +1042,7 @@ internal int rico_init_shaders()
 }
 internal void rico_init_cereal()
 {
+    // Cleanup: Old serializiation methods
     // Custom serialiers
     rico_cereals[RICO_UID_CHUNK].save[0] = &chunk_serialize_0;
     rico_cereals[RICO_UID_CHUNK].load[0] = &chunk_deserialize_0;
@@ -1055,8 +1056,8 @@ internal void rico_init_cereal()
     rico_cereals[RICO_UID_MATERIAL].save[0] = &material_serialize_0;
     rico_cereals[RICO_UID_MATERIAL].load[0] = &material_deserialize_0;
 
-    rico_cereals[RICO_UID_BBOX].save[0] = &bbox_serialize_0;
-    rico_cereals[RICO_UID_BBOX].load[0] = &bbox_deserialize_0;
+    //rico_cereals[RICO_UID_BBOX].save[0] = &bbox_serialize_0;
+    //rico_cereals[RICO_UID_BBOX].load[0] = &bbox_deserialize_0;
 }
 internal int rico_init_chunks()
 {
@@ -1138,52 +1139,52 @@ internal int rico_init_meshes()
     //--------------------------------------------------------------------------
     // Create default mesh (white rect)
     //--------------------------------------------------------------------------
-    const struct mesh_vertex vertices[] = {
+    const struct mesh_vertex default_vertices[] = {
         {
-            { -1.0f, -1.0f, 0.01f },   //Position
-            { 1.0f, 1.0f, 1.0f, 1.0f }, //Color
+            { -1.0f, -1.0f, 1.0f },    //Position
+            COLOR_BLACK,                //Color
             { 0.0f, 0.0f, 1.0f },       //Normal
             { 0.0f, 0.0f }              //UV-coords
         },
         {
-            { 1.0f, -1.0f, 0.01f },
-            { 1.0f, 1.0f, 1.0f, 1.0f },
+            { 1.0f, -1.0f, 1.0f },
+            COLOR_RED,
             { 0.0f, 0.0f, 1.0f },
             { 1.0f, 0.0f }
         },
         {
-            { 1.0f, 1.0f, 0.01f },
-            { 1.0f, 1.0f, 1.0f, 1.0f },
+            { 1.0f, 1.0f, 1.0f },
+            COLOR_YELLOW,
             { 0.0f, 0.0f, 1.0f },
             { 1.0f, 1.0f }
         },
         {
-            { -1.0f, 1.0f, 0.01f },
-            { 1.0f, 1.0f, 1.0f, 1.0f },
+            { -1.0f, 1.0f, 1.0f },
+            COLOR_GREEN,
             { 0.0f, 0.0f, 1.0f },
             { 0.0f, 1.0f }
         },
         {
-            { -1.0f, -1.0f, -0.01f },
-            { 1.0f, 1.0f, 1.0f, 1.0f },
+            { -1.0f, -1.0f, -1.0f },
+            COLOR_BLUE,
             { 0.0f, 0.0f, 1.0f },
             { 0.0f, 0.0f }
         },
         {
-            { 1.0f, -1.0f, -0.01f },
-            { 1.0f, 1.0f, 1.0f, 1.0f },
+            { 1.0f, -1.0f, -1.0f },
+            COLOR_MAGENTA,
             { 0.0f, 0.0f, 1.0f },
             { 1.0f, 0.0f }
         },
         {
-            { 1.0f, 1.0f, -0.01f },
-            { 1.0f, 1.0f, 1.0f, 1.0f },
+            { 1.0f, 1.0f, -1.0f },
+            COLOR_WHITE,
             { 0.0f, 0.0f, 1.0f },
             { 1.0f, 1.0f }
         },
         {
-            { -1.0f, 1.0f, -0.01f },
-            { 1.0f, 1.0f, 1.0f, 1.0f },
+            { -1.0f, 1.0f, -1.0f },
+            COLOR_CYAN,
             { 0.0f, 0.0f, 1.0f },
             { 0.0f, 1.0f }
         }
@@ -1197,11 +1198,13 @@ internal int rico_init_meshes()
         4, 5, 1, 1, 0, 4
     };
 
-    // TODO: Use fixed slot for default mesh (do this for all other defaults
-    //       as well.
-    err = mesh_load(&RICO_DEFAULT_MESH, "MESH_DEFAULT", MESH_OBJ_WORLD,
-                    8, vertices, 36, elements,
-                    GL_STATIC_DRAW);
+    // TODO: Use fixed slot for default mesh (do this for all other defaults as
+    //       well).
+    err = mesh_load(&RICO_DEFAULT_MESH, "BBox", MESH_OBJ_WORLD, 8,
+                    default_vertices, 36, elements, GL_STATIC_DRAW);
+    if (err) return err;
+
+    PRIM_MESH_BBOX = RICO_DEFAULT_MESH;
     return err;
 }
 
@@ -1215,7 +1218,7 @@ internal int load_mesh_files()
     if (err) return err;
 
     const char sphere_mesh_name[] = "Sphere";
-    err = mesh_request_by_name(&PRIM_SPHERE_MESH, sphere_mesh_name);
+    err = mesh_request_by_name(&PRIM_MESH_SPHERE, sphere_mesh_name);
     if (err) return err;
 
     // err = load_obj_file("mesh/conference.ric");
@@ -1263,7 +1266,8 @@ internal int init_hardcoded_test_chunk()
                         material_rock, NULL, true);
     if (err) return err;
     object_rot_x(obj_ground, -90.0f);
-    object_scale(obj_ground, &(struct vec3) { 64.0f, 64.0f, 1.0f });
+    object_scale(obj_ground, &(struct vec3) { 64.0f, 64.0f, 0.001f });
+    object_trans(obj_ground, &(struct vec3) { 0.0f, -1.0f, 0.0f });
 
     // TEST: Create test object for each mesh / primitive
     {
@@ -1292,9 +1296,9 @@ internal int init_hardcoded_test_chunk()
         */
 
         // Create test object for each primitive
-        err = object_create(&arr_objects[i], mesh_name(PRIM_SPHERE_MESH),
-                            OBJ_STATIC, PRIM_SPHERE_MESH, RICO_DEFAULT_MATERIAL,
-                            mesh_bbox(PRIM_SPHERE_MESH), true);
+        err = object_create(&arr_objects[i], mesh_name(PRIM_MESH_SPHERE),
+                            OBJ_STATIC, PRIM_MESH_SPHERE, RICO_DEFAULT_MATERIAL,
+                            mesh_bbox(PRIM_MESH_SPHERE), true);
         i++;
         if (err) return err;
 
@@ -1395,6 +1399,12 @@ internal int rico_init()
     err = load_mesh_files();
     if (err) return err;
     
+    printf("----------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing game world\n");
+    printf("----------------------------------------------------------\n");
+    err = init_glref();
+    if (err) return err;
+
     if (load_save_file)
     {
         printf("----------------------------------------------------------\n");
@@ -1423,12 +1433,6 @@ internal int rico_init()
     }
     else
     {
-        printf("----------------------------------------------------------\n");
-        printf("[MAIN][init] Initializing game world\n");
-        printf("----------------------------------------------------------\n");
-        err = init_glref();
-        if (err) return err;
-
         printf("----------------------------------------------------------\n");
         printf("[MAIN][init] Loading hard-coded test chunk\n");
         printf("----------------------------------------------------------\n");

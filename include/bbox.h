@@ -12,9 +12,9 @@
 struct bbox {
     struct rico_uid uid;
 
-    GLuint vao;
-    GLuint vbos[2];
-    struct program_primitive *prog;
+    //GLuint vao;
+    //GLuint vbos[2];
+    //struct program_primitive *prog;
 
     struct vec3 p[2];
     struct col4 color;
@@ -27,12 +27,14 @@ int bbox_init(struct bbox *bbox, const char *name, struct vec3 p0,
 int bbox_init_mesh(struct bbox *bbox, const char *name,
                    const struct mesh_vertex *verts, int count,
                    struct col4 color);
+#if 0
 void bbox_free_mesh(struct bbox *bbox);
 void bbox_render(const struct bbox *box, const struct mat4 *model_matrix);
 void bbox_render_color(const struct bbox *box, const struct mat4 *model_matrix,
                        const struct col4 color);
 SERIAL(bbox_serialize_0);
 DESERIAL(bbox_deserialize_0);
+#endif
 
 internal inline bool bbox_intersects(const struct bbox *a, const struct bbox *b)
 {

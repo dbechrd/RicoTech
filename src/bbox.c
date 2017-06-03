@@ -1,9 +1,9 @@
 #define BBOX_EPSILON 0.01f
 
-internal int init_gl(struct bbox *bbox);
+//internal int init_gl(struct bbox *bbox);
 
-void bbox_render_color(const struct bbox *box, const struct mat4 *model_matrix,
-                       const struct col4 color);
+//void bbox_render_color(const struct bbox *box, const struct mat4 *model_matrix,
+//                       const struct col4 color);
 
 int bbox_init(struct bbox *bbox, const char *name, struct vec3 p0,
               struct vec3 p1, struct col4 color)
@@ -14,7 +14,7 @@ int bbox_init(struct bbox *bbox, const char *name, struct vec3 p0,
     bbox->color = color;
     bbox->wireframe = true;
 
-    return init_gl(bbox);
+    return SUCCESS; //init_gl(bbox);
 }
 
 int bbox_init_mesh(struct bbox *bbox, const char *name,
@@ -54,6 +54,7 @@ int bbox_init_mesh(struct bbox *bbox, const char *name,
     return bbox_init(bbox, name, p0, p1, color);
 }
 
+#if 0
 internal int init_gl(struct bbox *bbox)
 {
     enum rico_error err = make_program_primitive(&bbox->prog);
@@ -167,7 +168,7 @@ void bbox_render(const struct bbox *box, const struct mat4 *model_matrix)
 void bbox_render_color(const struct bbox *box, const struct mat4 *model_matrix,
                        const struct col4 color)
 {
-#if 0
+#if 1
     if (box->wireframe && cam_player.fill_mode != GL_LINE)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -217,3 +218,4 @@ DESERIAL(bbox_deserialize_0)
     err = init_gl(bbox);
     return err;
 }
+#endif

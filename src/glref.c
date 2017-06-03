@@ -306,9 +306,10 @@ void glref_render(struct camera *camera)
     //--------------------------------------------------------------------------
     // Axes labels (bboxes)
     //--------------------------------------------------------------------------
-    bbox_render_color(&axis_bbox, &x_axis_transform, COLOR_RED);
-    bbox_render_color(&axis_bbox, &y_axis_transform, COLOR_GREEN);
-    bbox_render_color(&axis_bbox, &z_axis_transform, COLOR_BLUE);
+    RICO_ASSERT(axis_bbox.uid.uid != UID_NULL);
+    prim_draw_bbox_color(&axis_bbox, &x_axis_transform, &COLOR_RED);
+    prim_draw_bbox_color(&axis_bbox, &y_axis_transform, &COLOR_GREEN);
+    prim_draw_bbox_color(&axis_bbox, &z_axis_transform, &COLOR_BLUE);
 
     object_render_type(OBJ_STRING_SCREEN, prog_default, camera);
 }

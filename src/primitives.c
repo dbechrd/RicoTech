@@ -2,7 +2,8 @@ const char *rico_prim_string[] = {
     RICO_PRIMITIVES(GEN_STRING)
 };
 
-u32 PRIM_SPHERE_MESH;
+u32 PRIM_MESH_BBOX;
+u32 PRIM_MESH_SPHERE;
 
 global GLuint vaos[PRIM_COUNT];
 global GLuint vbos[PRIM_COUNT][VBO_COUNT];
@@ -58,6 +59,8 @@ internal int prim_init_gl(enum rico_prim prim)
     return SUCCESS;
 }
 
+// TODO: Queue up primitive requests and batch them within a single
+//       glUseProgram() call.
 // Render line segment
 void prim_draw_segment(const struct segment *seg,
                        const struct mat4 *model_matrix, struct col4 color)
@@ -78,8 +81,7 @@ void prim_draw_segment(const struct segment *seg,
     // Draw
     glBindVertexArray(vaos[PRIM_SEGMENT]);
     glBindBuffer(GL_ARRAY_BUFFER, vbos[PRIM_SEGMENT][VBO_VERTEX]);
-    // TODO: Calling glBufferData here a bunch of times per frame is quite
-    //       expensive, find some way to reuse a line segments.
+    // TODO: Batch these into a single glDrawArrays(LINES, 0, 2 * segment_count)
     glBufferData(GL_ARRAY_BUFFER, sizeof(seg->vertices), seg->vertices,
                  GL_DYNAMIC_DRAW);
 
@@ -107,6 +109,47 @@ void prim_draw_ray(const struct ray *ray, const struct mat4 *model_matrix,
     prim_draw_segment(&ray_seg, model_matrix, color);
 }
 
+void prim_draw_bbox(const struct bbox *bbox, const struct mat4 *model_matrix)
+{
+    prim_draw_bbox_color(bbox, model_matrix, &bbox->color);
+}
+
+void prim_draw_bbox_color(const struct bbox *bbox,
+                          const struct mat4 *model_matrix,
+                          const struct col4 *color)
+{
+    if (bbox->wireframe && cam_player.fill_mode != GL_LINE)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    /*struct vec3 origin = bbox->p[0];
+    v3_scalef(v3_add(&origin, &bbox->p[1]), 0.5f);
+
+    struct vec3 scale = bbox->p[1];
+    v3_sub(&scale, &bbox->p[0]);
+
+    struct mat4 model_matrix = MAT4_IDENT;
+    mat4_translate(&model_matrix, &origin);
+    mat4_scale(&model_matrix, &scale);*/
+
+    glUseProgram(program->prog_id);
+
+    glUniformMatrix4fv(program->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
+    glUniformMatrix4fv(program->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
+    glUniformMatrix4fv(program->u_model, 1, GL_TRUE, model_matrix->a);
+
+    // TODO: Use per-bbox color instead of rainbowgasm
+    //glUniform4f(program->u_col, color->r, color->g, color->b, color->a);
+    glUniform4f(program->u_col, 1.0f, 1.0f, 1.0f, 0.5f);
+
+    mesh_render(PRIM_MESH_BBOX);
+
+    // Clean up
+    glUseProgram(0);
+
+    if (bbox->wireframe && cam_player.fill_mode != GL_LINE)
+        glPolygonMode(GL_FRONT_AND_BACK, cam_player.fill_mode);
+}
+
 void prim_draw_sphere(const struct sphere *sphere, const struct col4 *color)
 {
     if (cam_player.fill_mode != GL_LINE)
@@ -123,7 +166,7 @@ void prim_draw_sphere(const struct sphere *sphere, const struct col4 *color)
     glUniformMatrix4fv(program->u_model, 1, GL_TRUE, model_matrix.a);
     glUniform4f(program->u_col, color->r, color->g, color->b, color->a);
 
-    mesh_render(PRIM_SPHERE_MESH);
+    mesh_render(PRIM_MESH_SPHERE);
 
     // Clean up
     glUseProgram(0);

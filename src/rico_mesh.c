@@ -261,7 +261,7 @@ void mesh_free(u32 handle)
     hash_key key = hashgen_str(mesh->uid.name);
     hashtable_delete(&global_meshes, key);
 
-    bbox_free_mesh(&mesh->bbox);
+    //bbox_free_mesh(&mesh->bbox);
 
     glDeleteBuffers(2, mesh->vbos);
     glDeleteVertexArrays(1, &mesh->vao);
