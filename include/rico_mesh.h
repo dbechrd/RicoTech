@@ -52,17 +52,19 @@ struct mesh_vertex {
 
 extern u32 RICO_DEFAULT_MESH;
 
-u32 mesh_request(u32 handle);
-int mesh_request_by_name(u32 *_handle, const char *name);
-u32 mesh_next(u32 handle);
-u32 mesh_prev(u32 handle);
-int mesh_load(u32 *_handle, const char *name, enum rico_mesh_type type,
-              u32 vertex_count, const struct mesh_vertex *vertex_data,
-              u32 element_count, const GLuint *element_data, GLenum hint);
-void mesh_free(u32 handle);
-const char *mesh_name(u32 handle);
-const struct bbox *mesh_bbox(u32 handle);
-void mesh_update(u32 handle);
-void mesh_render(u32 handle);
+u32 mesh_request(enum rico_persist persist, u32 handle);
+int mesh_request_by_name(u32 *_handle, enum rico_persist persist,
+                         const char *name);
+u32 mesh_next(enum rico_persist persist, u32 handle);
+u32 mesh_prev(enum rico_persist persist, u32 handle);
+int mesh_load(u32 *_handle, enum rico_persist persist, const char *name,
+              enum rico_mesh_type type, u32 vertex_count,
+              const struct mesh_vertex *vertex_data, u32 element_count,
+              const GLuint *element_data, GLenum hint);
+void mesh_free(enum rico_persist persist, u32 handle);
+const char *mesh_name(enum rico_persist persist, u32 handle);
+const struct bbox *mesh_bbox(enum rico_persist persist, u32 handle);
+void mesh_update(enum rico_persist persist, u32 handle);
+void mesh_render(enum rico_persist persist, u32 handle);
 
 #endif // RICO_MESH_H

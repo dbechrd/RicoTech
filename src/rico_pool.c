@@ -1,3 +1,28 @@
+const char *rico_persist_string[] = {
+    RICO_PERSIST_TYPES(GEN_STRING)
+};
+const char *rico_pool_item_type_string[] = {
+    RICO_POOL_ITEMTYPES(GEN_STRING)
+};
+
+u32 pool_item_sizes[POOL_ITEMTYPE_COUNT] = {
+    sizeof(struct rico_string),
+    sizeof(struct rico_font),
+    sizeof(struct rico_texture),
+    sizeof(struct rico_material),
+    sizeof(struct rico_mesh),
+    sizeof(struct rico_object)
+};
+
+u32 pool_item_fixed_counts[POOL_ITEMTYPE_COUNT] = {
+    STR_SLOT_DYNAMIC,
+    0,
+    0,
+    0,
+    0,
+    0
+};
+
 internal void pool_print_handles(struct rico_pool *pool);
 
 // TODO: Allocate from heap pool, don't keep calling calloc
@@ -67,6 +92,9 @@ int pool_handle_alloc(struct rico_pool **pool_ptr, u32 *_handle)
     struct rico_pool *pool = *pool_ptr;
     RICO_ASSERT(pool);
 
+    ////////////////////////////////////////////////////////////////////////////
+    // NOTE: Cannot auto-extend pool without updating the corresponding counts
+    //       in the chunk.
     ////////////////////////////////////////////////////////////////////////////
     /*
     if (pool->active == pool->count)
@@ -218,6 +246,7 @@ u32 pool_handle_prev(struct rico_pool *pool, u32 handle)
     return 0;
 }
 
+#if 0
 //int pool_serialize_0(const void *handle, const struct rico_file *file)
 SERIAL(pool_serialize_0)
 {
@@ -304,6 +333,7 @@ DESERIAL(pool_deserialize_0)
 
     return SUCCESS;
 }
+#endif
 
 internal void pool_print_handles(struct rico_pool *pool)
 {

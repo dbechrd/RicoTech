@@ -1,4 +1,4 @@
-global const bool load_save_file = true;
+global const bool load_save_file = false;
 global struct rico_chunk *RICO_DEFAULT_CHUNK;
 
 ///|////////////////////////////////////////////////////////////////////////////
@@ -277,31 +277,14 @@ internal int save_file()
 }
 internal void select_first_obj()
 {
-#define COLLIDE_COUNT 10
-    u32 obj_collided[COLLIDE_COUNT] = { 0 };
-    float dist[COLLIDE_COUNT] = { 0 };
-    u32 idx_first = 0;
+    u32 obj_collided = 0;
+    float dist;
 
     // Camera forward ray v. scene
     struct ray cam_fwd;
     camera_fwd(&cam_fwd, &cam_player);
-    u32 collided = object_collide_ray_type(OBJ_STATIC, &cam_fwd,
-                                           COLLIDE_COUNT, obj_collided,
-                                           dist, &idx_first);
-    select_obj(obj_collided[idx_first]);
-
-    // TODO: Loop through collided objects?
-    UNUSED(collided);
-    // if (collided > 0)
-    // {
-    //     printf("Colliding: ");
-    //     for (int i = 0; i < COLLIDE_COUNT; ++i)
-    //     {
-    //         if (obj_collided[i] == 0) break;
-    //         printf(" %d", obj_collided[i]);
-    //     }
-    //     printf("\n");
-    // }
+    object_collide_ray_type(&obj_collided, &dist, OBJ_STATIC, &cam_fwd);
+    select_obj(obj_collided);
 }
 
 // Current state
@@ -377,7 +360,7 @@ int state_update()
                            rico_state_string[state]);
         string_truncate(buf, sizeof(buf), len);
 
-        err = string_init("STR_STATE", STR_SLOT_EDIT_INFO, 0, 0,
+        err = string_init(RICO_TRANSIENT, "STR_STATE", STR_SLOT_EDIT_INFO, 0, 0,
                           COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
         if (err) return err;
     }
@@ -412,8 +395,9 @@ int state_update()
                            ms, mcyc);
         string_truncate(buf, sizeof(buf), len);
 
-        err = string_init("STR_FPS", STR_SLOT_FPS, -(FONT_WIDTH * len), 0,
-                          COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
+        err = string_init(RICO_TRANSIENT, "STR_FPS", STR_SLOT_FPS,
+                          -(FONT_WIDTH * len), 0, COLOR_DARK_RED_HIGHLIGHT, 0,
+                          0, buf);
         if (err) return err;
         fps_last_render = last_perfs;
     }
@@ -463,8 +447,8 @@ int state_update()
                        view_vel.y, view_vel.z);
     string_truncate(buf, sizeof(buf), len);
 
-    err = string_init("STR_VEL", STR_SLOT_DEBUG, 0, -FONT_HEIGHT,
-                      COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
+    err = string_init(RICO_TRANSIENT, "STR_VEL", STR_SLOT_DEBUG, 0,
+                      -FONT_HEIGHT, COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
     if (err) return err;
 #endif
 
@@ -518,13 +502,13 @@ internal int shared_engine_events()
     {
         fps_render = !fps_render;
         if (!fps_render)
-            string_free(STR_SLOT_FPS);
+            string_free(RICO_TRANSIENT, STR_SLOT_FPS);
     }
     // Save and exit
     else if (chord_pressed(ACTION_ENGINE_QUIT))
     {
-        err = string_init("STR_CONFIRM_QUIT", STR_SLOT_MENU_QUIT, 600, 400,
-                          COLOR_GREEN, 0, 0,
+        err = string_init(RICO_TRANSIENT, "STR_CONFIRM_QUIT",
+                          STR_SLOT_MENU_QUIT, 600, 400, COLOR_GREEN, 0, 0,
                           "Are you sure you want to quit?\n" \
                           "                              \n" \
                           "      Yes (Y) or No (N)       ");
@@ -544,11 +528,11 @@ internal int shared_engine_events()
         mouse_lock = !mouse_lock;
         SDL_SetRelativeMouseMode(mouse_lock);
     }
-#ifdef DEBUG
+#if RICO_DEBUG
     // DEBUG: Trigger breakpoint
-    else if (chord_pressed(ACTION_ENGINE_DEBUG_TRIGGER_BREAKPOINT)
+    else if (chord_pressed(ACTION_ENGINE_DEBUG_TRIGGER_BREAKPOINT))
     {
-        sdl_triggerbreakpoint();
+        SDL_TriggerBreakpoint();
     }
 #endif
 
@@ -703,7 +687,7 @@ internal int state_play_explore()
 }
 internal int state_edit_cleanup()
 {
-    return string_free(STR_SLOT_SELECTED_OBJ);
+    return string_free(RICO_TRANSIENT, STR_SLOT_SELECTED_OBJ);
 }
 internal int state_edit_translate()
 {
@@ -775,8 +759,9 @@ internal int state_edit_translate()
         int len = snprintf(buf, sizeof(buf), "Trans Delta: %f", trans_delta);
         string_truncate(buf, sizeof(buf), len);
 
-        err = string_init("STR_EDIT_TRANS_DELTA", STR_SLOT_EDIT_INFO, 0, 0,
-                          COLOR_DARK_BLUE_HIGHLIGHT, 1000, 0, buf);
+        err = string_init(RICO_TRANSIENT, "STR_EDIT_TRANS_DELTA",
+                          STR_SLOT_EDIT_INFO, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
+                          1000, 0, buf);
         if (err) return err;
     }
 
@@ -860,8 +845,9 @@ internal int state_edit_rotate()
         int len = snprintf(buf, sizeof(buf), "Rot Delta: %f", rot_delta);
         string_truncate(buf, sizeof(buf), len);
 
-        err = string_init("STR_EDIT_ROT_DELTA", STR_SLOT_EDIT_INFO, 0, 0,
-                          COLOR_DARK_BLUE_HIGHLIGHT, 1000, 0, buf);
+        err = string_init(RICO_TRANSIENT, "STR_EDIT_ROT_DELTA",
+                          STR_SLOT_EDIT_INFO, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
+                          1000, 0, buf);
         if (err) return err;
     }
 
@@ -951,8 +937,9 @@ internal int state_edit_scale()
         int len = snprintf(buf, sizeof(buf), "Scale Delta: %f", scale_delta);
         string_truncate(buf, sizeof(buf), len);
 
-        err = string_init("STR_EDIT_SCALE_DELTA", STR_SLOT_EDIT_INFO, 0, 0,
-                          COLOR_DARK_BLUE_HIGHLIGHT, 1000, 0, buf);
+        err = string_init(RICO_TRANSIENT, "STR_EDIT_SCALE_DELTA",
+                          STR_SLOT_EDIT_INFO, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
+                          1000, 0, buf);
         if (err) return err;
     }
 
@@ -1003,14 +990,14 @@ internal int state_menu_quit()
     // [Y] / [Return]: Save and exit
     if (KEY_PRESSED(SDL_SCANCODE_Y) || KEY_PRESSED(SDL_SCANCODE_RETURN))
     {
-        string_free(STR_SLOT_MENU_QUIT);
+        string_free(RICO_TRANSIENT, STR_SLOT_MENU_QUIT);
         save_file();
         state = STATE_ENGINE_SHUTDOWN;
     }
     // [N] / [Escape]: Return to play mode
     else if (KEY_PRESSED(SDL_SCANCODE_N) || KEY_PRESSED(SDL_SCANCODE_ESCAPE))
     {
-        string_free(STR_SLOT_MENU_QUIT);
+        string_free(RICO_TRANSIENT, STR_SLOT_MENU_QUIT);
         state = STATE_PLAY_EXPLORE;
     }
 
@@ -1042,11 +1029,12 @@ internal int rico_init_shaders()
 }
 internal void rico_init_cereal()
 {
-    // Cleanup: Old serializiation methods
     // Custom serialiers
     rico_cereals[RICO_UID_CHUNK].save[0] = &chunk_serialize_0;
     rico_cereals[RICO_UID_CHUNK].load[0] = &chunk_deserialize_0;
 
+    // Cleanup: Old serializiation methods
+#if 0
     rico_cereals[RICO_UID_POOL].save[0] = &pool_serialize_0;
     rico_cereals[RICO_UID_POOL].load[0] = &pool_deserialize_0;
 
@@ -1056,8 +1044,9 @@ internal void rico_init_cereal()
     rico_cereals[RICO_UID_MATERIAL].save[0] = &material_serialize_0;
     rico_cereals[RICO_UID_MATERIAL].load[0] = &material_deserialize_0;
 
-    //rico_cereals[RICO_UID_BBOX].save[0] = &bbox_serialize_0;
-    //rico_cereals[RICO_UID_BBOX].load[0] = &bbox_deserialize_0;
+    rico_cereals[RICO_UID_BBOX].save[0] = &bbox_serialize_0;
+    rico_cereals[RICO_UID_BBOX].load[0] = &bbox_deserialize_0;
+#endif
 }
 internal int rico_init_chunks()
 {
@@ -1066,14 +1055,15 @@ internal int rico_init_chunks()
     // TODO: Create a hard-coded test chunk that gets loaded if the real chunk
     //       can't be loaded from the save file.
 
-    err = chunk_init("RICO_CHUNK_DEFAULT",
-                     RICO_STRING_POOL_SIZE,
-                     RICO_FONT_POOL_SIZE,
-                     RICO_TEXTURE_POOL_SIZE,
-                     RICO_MATERIAL_POOL_SIZE,
-                     RICO_MESH_POOL_SIZE,
-                     RICO_OBJECT_POOL_SIZE,
-                     &RICO_DEFAULT_CHUNK);
+    chunk_pool_counts pool_counts;
+    pool_counts[POOL_ITEMTYPE_STRINGS]   = RICO_POOL_SIZE_STRING;
+    pool_counts[POOL_ITEMTYPE_FONTS]     = RICO_POOL_SIZE_FONT;
+    pool_counts[POOL_ITEMTYPE_TEXTURES]  = RICO_POOL_SIZE_TEXTURE;
+    pool_counts[POOL_ITEMTYPE_MATERIALS] = RICO_POOL_SIZE_MATERIAL;
+    pool_counts[POOL_ITEMTYPE_MESHES]    = RICO_POOL_SIZE_MESH;
+    pool_counts[POOL_ITEMTYPE_OBJECTS]   = RICO_POOL_SIZE_OBJECT;
+
+    err = chunk_init(&RICO_DEFAULT_CHUNK, "RICO_CHUNK_DEFAULT", &pool_counts);
     if (err) return err;
 
     chunk_active_set(RICO_DEFAULT_CHUNK);
@@ -1085,7 +1075,8 @@ internal int rico_init_fonts()
     enum rico_error err;
 
     // TODO: Use fixed slots to allocate default resources
-    err = font_init("font/courier_new.bff", &RICO_DEFAULT_FONT);
+    err = font_init(&RICO_DEFAULT_FONT, RICO_PERSISTENT,
+                    "font/courier_new.bff");
     return err;
 }
 internal int rico_init_textures()
@@ -1093,30 +1084,33 @@ internal int rico_init_textures()
     enum rico_error err;
 
     // TODO: Use fixed slots to allocate default resources
-    err = texture_load_file(&RICO_DEFAULT_TEXTURE_DIFF, "TEXTURE_DEFAULT_DIFF",
-                            GL_TEXTURE_2D, "texture/basic_diff.tga", 32);
+    err = texture_load_file(&RICO_DEFAULT_TEXTURE_DIFF, RICO_PERSISTENT,
+                            "TEXTURE_DEFAULT_DIFF", GL_TEXTURE_2D,
+                            "texture/basic_diff.tga", 32);
     if (err) return err;
 
-    err = texture_load_file(&RICO_DEFAULT_TEXTURE_SPEC, "TEXTURE_DEFAULT_SPEC",
-                            GL_TEXTURE_2D, "texture/basic_spec.tga", 32);
+    err = texture_load_file(&RICO_DEFAULT_TEXTURE_SPEC, RICO_PERSISTENT,
+                            "TEXTURE_DEFAULT_SPEC", GL_TEXTURE_2D,
+                            "texture/basic_spec.tga", 32);
     if (err) return err;
 
     //--------------------------------------------------------------------------
     // Create textures
     //--------------------------------------------------------------------------
-    err = texture_load_file(&tex_grass, "grass", GL_TEXTURE_2D,
+    u32 handle;
+    err = texture_load_file(&handle, RICO_PERSISTENT, "grass", GL_TEXTURE_2D,
                             "texture/grass.tga", 32);
     if (err) return err;
 
-    err = texture_load_file(&tex_rock, "bricks", GL_TEXTURE_2D,
+    err = texture_load_file(&handle, RICO_PERSISTENT, "bricks", GL_TEXTURE_2D,
                             "texture/clean_bricks.tga", 32);
     if (err) return err;
 
-    err = texture_load_file(&tex_hello, "hello", GL_TEXTURE_2D,
+    err = texture_load_file(&handle, RICO_PERSISTENT, "hello", GL_TEXTURE_2D,
                             "texture/hello.tga", 32);
     if (err) return err;
 
-    err = texture_load_file(&tex_yellow, "yellow", GL_TEXTURE_2D,
+    err = texture_load_file(&handle, RICO_PERSISTENT, "yellow", GL_TEXTURE_2D,
                             "texture/fake_yellow.tga", 32);
     if (err) return err;
 
@@ -1127,9 +1121,9 @@ internal int rico_init_materials()
     enum rico_error err;
 
     // TODO: Use fixed slots to allocate default resources
-    err = material_init(&RICO_DEFAULT_MATERIAL, "MATERIAL_DEFAULT",
-                        RICO_DEFAULT_TEXTURE_DIFF, RICO_DEFAULT_TEXTURE_SPEC,
-                        0.5f);
+    err = material_init(&RICO_DEFAULT_MATERIAL, RICO_PERSISTENT,
+                        "MATERIAL_DEFAULT", RICO_DEFAULT_TEXTURE_DIFF,
+                        RICO_DEFAULT_TEXTURE_SPEC, 0.5f);
     return err;
 }
 internal int rico_init_meshes()
@@ -1200,8 +1194,8 @@ internal int rico_init_meshes()
 
     // TODO: Use fixed slot for default mesh (do this for all other defaults as
     //       well).
-    err = mesh_load(&RICO_DEFAULT_MESH, "BBox", MESH_OBJ_WORLD, 8,
-                    default_vertices, 36, elements, GL_STATIC_DRAW);
+    err = mesh_load(&RICO_DEFAULT_MESH, RICO_PERSISTENT, "BBox", MESH_OBJ_WORLD,
+                    8, default_vertices, 36, elements, GL_STATIC_DRAW);
     if (err) return err;
 
     PRIM_MESH_BBOX = RICO_DEFAULT_MESH;
@@ -1214,29 +1208,28 @@ internal int load_mesh_files()
 
     u32 ticks = SDL_GetTicks();
 
-    err = load_obj_file("mesh/sphere.ric");
+    err = load_obj_file(RICO_PERSISTENT, "mesh/sphere.ric");
     if (err) return err;
 
-    const char sphere_mesh_name[] = "Sphere";
-    err = mesh_request_by_name(&PRIM_MESH_SPHERE, sphere_mesh_name);
+    err = mesh_request_by_name(&PRIM_MESH_SPHERE, RICO_PERSISTENT, "Sphere");
     if (err) return err;
 
-    // err = load_obj_file("mesh/conference.ric");
+    // err = load_obj_file(RICO_PERSISTENT, "mesh/conference.ric");
     // if (err) return err;
 
-    err = load_obj_file("mesh/spawn.ric");
+    err = load_obj_file(RICO_PERSISTENT, "mesh/spawn.ric");
     if (err) return err;
 
-    err = load_obj_file("mesh/door.ric");
+    err = load_obj_file(RICO_PERSISTENT, "mesh/door.ric");
     if (err) return err;
 
-    err = load_obj_file("mesh/welcome_floor.ric");
+    err = load_obj_file(RICO_PERSISTENT, "mesh/welcome_floor.ric");
     if (err) return err;
 
-    err = load_obj_file("mesh/wall_cornertest.ric");
+    err = load_obj_file(RICO_PERSISTENT, "mesh/wall_cornertest.ric");
     if (err) return err;
 
-    err = load_obj_file("mesh/grass.ric");
+    err = load_obj_file(RICO_PERSISTENT, "mesh/grass.ric");
     if (err) return err;
 
     u32 ticks2 = SDL_GetTicks();
@@ -1251,8 +1244,12 @@ internal int init_hardcoded_test_chunk()
     //--------------------------------------------------------------------------
     // Create materials
     //--------------------------------------------------------------------------
+    u32 tex_rock;
+    err = texture_request_by_name(&tex_rock, RICO_PERSISTENT, "bricks");
+    if (err) return err;
+    
     u32 material_rock;
-    err = material_init(&material_rock, "Rock", tex_rock,
+    err = material_init(&material_rock, RICO_PERSISTENT, "Rock", tex_rock,
                         RICO_DEFAULT_TEXTURE_SPEC, 0.5f);
     if (err) return err;
 
@@ -1262,16 +1259,18 @@ internal int init_hardcoded_test_chunk()
 
     // Ground
     u32 obj_ground;
-    err = object_create(&obj_ground, "Ground", OBJ_STATIC, RICO_DEFAULT_MESH,
-                        material_rock, NULL, true);
+    err = object_create(&obj_ground, RICO_PERSISTENT, "Ground", OBJ_STATIC,
+                        RICO_DEFAULT_MESH, material_rock, NULL, true);
     if (err) return err;
-    object_rot_x(obj_ground, -90.0f);
-    object_scale(obj_ground, &(struct vec3) { 64.0f, 64.0f, 0.001f });
-    object_trans(obj_ground, &(struct vec3) { 0.0f, -1.0f, 0.0f });
+    object_rot_x(RICO_PERSISTENT, obj_ground, -90.0f);
+    object_scale(RICO_PERSISTENT, obj_ground,
+                 &(struct vec3) { 64.0f, 64.0f, 0.001f });
+    object_trans(RICO_PERSISTENT, obj_ground,
+                 &(struct vec3) { 0.0f, -1.0f, 0.0f });
 
     // TEST: Create test object for each mesh / primitive
     {
-        u32 arr_objects[RICO_MESH_POOL_SIZE] = { 0 };
+        u32 arr_objects[RICO_POOL_SIZE_MESH] = { 0 };
         u32 i = 0;
 
         /*
@@ -1296,9 +1295,10 @@ internal int init_hardcoded_test_chunk()
         */
 
         // Create test object for each primitive
-        err = object_create(&arr_objects[i], mesh_name(PRIM_MESH_SPHERE),
+        err = object_create(&arr_objects[i], RICO_PERSISTENT,
+                            mesh_name(RICO_PERSISTENT, PRIM_MESH_SPHERE),
                             OBJ_STATIC, PRIM_MESH_SPHERE, RICO_DEFAULT_MATERIAL,
-                            mesh_bbox(PRIM_MESH_SPHERE), true);
+                            mesh_bbox(RICO_PERSISTENT, PRIM_MESH_SPHERE), true);
         i++;
         if (err) return err;
 

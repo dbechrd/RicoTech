@@ -49,9 +49,9 @@ bool collide_ray_bbox(const struct ray *ray, const struct bbox *bbox,
     return true;
 }
 
-bool collide_ray_obb(const struct ray *r, const struct bbox *bbox,
+bool collide_ray_obb(float *_dist, const struct ray *r, const struct bbox *bbox,
                      const struct mat4 *model_matrix,
-                     const struct mat4 *model_matrix_inv, float *_dist)
+                     const struct mat4 *model_matrix_inv)
 {
 	// Intersection method from Real-Time Rendering and Essential Mathematics
     // for Games

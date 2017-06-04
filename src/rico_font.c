@@ -20,27 +20,28 @@ struct bff_header
 
 u32 RICO_DEFAULT_FONT = 0;
 
-internal inline struct rico_pool **font_pool_ptr()
+internal inline struct rico_pool **font_pool_ptr(enum rico_persist persist)
 {
     struct rico_chunk *chunk = chunk_active();
     RICO_ASSERT(chunk);
-    RICO_ASSERT(chunk->fonts);
-    return &chunk->fonts;
+    RICO_ASSERT(chunk->pools[POOL_ITEMTYPE_FONTS][persist]);
+    return &chunk->pools[POOL_ITEMTYPE_FONTS][persist];
 }
 
-internal inline struct rico_pool *font_pool()
+internal inline struct rico_pool *font_pool(enum rico_persist persist)
 {
-    return *font_pool_ptr();
+    return *font_pool_ptr(persist);
 }
 
-internal inline struct rico_font *font_find(u32 handle)
+internal inline struct rico_font *font_find(enum rico_persist persist,
+                                            u32 handle)
 {
-    struct rico_font *font = pool_read(font_pool(), handle);
+    struct rico_font *font = pool_read(font_pool(persist), handle);
     RICO_ASSERT(font);
     return font;
 }
 
-int font_init(const char *filename, u32 *_handle)
+int font_init(u32 *_handle, enum rico_persist persist, const char *filename)
 {
     enum rico_error err;
     *_handle = RICO_DEFAULT_FONT;
@@ -49,10 +50,10 @@ int font_init(const char *filename, u32 *_handle)
     printf("[font][init] filename=%s\n", filename);
 #endif
 
-    err = pool_handle_alloc(font_pool_ptr(), _handle);
+    err = pool_handle_alloc(font_pool_ptr(persist), _handle);
     if (err) return err;
 
-    struct rico_font *font = font_find(*_handle);
+    struct rico_font *font = font_find(persist, *_handle);
     uid_init(&font->uid, RICO_UID_FONT, filename, false);
 	font->InvertYAxis = false;
 
@@ -106,19 +107,19 @@ int font_init(const char *filename, u32 *_handle)
     memcpy(font->Width, &buffer[WIDTH_DATA_OFFSET], 256);
 
     u32 handle;
-    err = texture_load_pixels(&handle, filename, GL_TEXTURE_2D, width,
+    err = texture_load_pixels(&handle, persist, filename, GL_TEXTURE_2D, width,
                               height, bpp, &buffer[MAP_DATA_OFFSET]);
     if (err) goto cleanup;
-    font->texture = texture_request(handle);
+    font->texture = texture_request(persist, handle);
 
 cleanup:
     free(buffer);
     return err;
 }
 
-void font_free(u32 handle)
+void font_free(enum rico_persist persist, u32 handle)
 {
-    struct rico_font *font = font_find(handle);
+    struct rico_font *font = font_find(persist, handle);
 
     // TODO: Use fixed pool slots
     if (handle == RICO_DEFAULT_FONT)
@@ -128,10 +129,10 @@ void font_free(u32 handle)
     printf("[font][free] uid=%d name=%s\n", font->uid.uid, font->uid.name);
 #endif
 
-    texture_free(font->texture);
+    texture_free(persist, font->texture);
 
     font->uid.uid = UID_NULL;
-    pool_handle_free(font_pool(), handle);
+    pool_handle_free(font_pool(persist), handle);
 }
 
 internal void font_setblend(const struct rico_font *font)
@@ -153,23 +154,23 @@ internal void font_setblend(const struct rico_font *font)
 	}
 }
 
-int font_render(u32 handle, int x, int y, struct col4 bg, const char *text,
-                const char *mesh_name, enum rico_mesh_type type,
-                u32 *_mesh, u32 *_texture)
+int font_render(u32 *_mesh, u32 *_texture, enum rico_persist persist,
+                u32 handle, int x, int y, struct col4 bg, const char *text,
+                const char *mesh_name, enum rico_mesh_type type)
 {
     // Persistent buffers for font rendering
     local struct mesh_vertex vertices[BFG_MAXSTRING * 4];
     local GLuint elements[BFG_MAXSTRING * 6];
 
     // Cleanup: Debug code
-    //memset(vertices, 0, sizeof(vertices));
-    //memset(elements, 0, sizeof(elements));
+    memset(vertices, 0, sizeof(vertices));
+    memset(elements, 0, sizeof(elements));
 
     enum rico_error err;
 
     if (!handle) handle = RICO_DEFAULT_FONT;
 
-    struct rico_font *font = font_find(handle);
+    struct rico_font *font = font_find(persist, handle);
     RICO_ASSERT(font->uid.uid != UID_NULL);
 
     //font_setblend(font);
@@ -269,8 +270,8 @@ int font_render(u32 handle, int x, int y, struct col4 bg, const char *text,
     }
 
     u32 mesh_handle;
-    err = mesh_load(&mesh_handle, mesh_name, type, idx_vertex, vertices,
-                    idx_element, elements, GL_STATIC_DRAW);
+    err = mesh_load(&mesh_handle, persist, mesh_name, type, idx_vertex,
+                    vertices, idx_element, elements, GL_STATIC_DRAW);
     if (err) goto cleanup;
     
     *_mesh = mesh_handle;

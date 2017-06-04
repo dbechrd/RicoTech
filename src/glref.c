@@ -13,10 +13,10 @@ global struct program_primitive *prog_primitive;
 //global u32 font;
 global u32 tex_font_test;
 global u32 mesh_font_test;
-global u32 tex_grass;
-global u32 tex_rock;
-global u32 tex_hello;
-global u32 tex_yellow;
+//global u32 tex_grass;
+//global u32 tex_rock;
+//global u32 tex_hello;
+//global u32 tex_yellow;
 
 global struct bbox axis_bbox;
 
@@ -106,8 +106,8 @@ int create_obj()
     u32 new_obj;
 
     // Create new object with default properties
-    err = object_create(&new_obj, name, OBJ_STATIC, RICO_DEFAULT_MESH,
-                        RICO_DEFAULT_MATERIAL, NULL, true);
+    err = object_create(&new_obj, RICO_PERSISTENT, name, OBJ_STATIC,
+                        RICO_DEFAULT_MESH, RICO_DEFAULT_MATERIAL, NULL, true);
     if (err) return err;
 
     // Select new object
@@ -117,11 +117,11 @@ int create_obj()
 
 void recalculate_all_bbox()
 {
-    object_bbox_recalculate_all();
+    object_bbox_recalculate_all(RICO_PERSISTENT);
 
     // Reselect current object
     if (selected_handle)
-        object_select(selected_handle);
+        object_select(RICO_PERSISTENT, selected_handle);
 }
 
 void select_obj(u32 handle)
@@ -131,30 +131,30 @@ void select_obj(u32 handle)
 
     // Deselect current object
     if (selected_handle)
-        object_deselect(selected_handle);
+        object_deselect(RICO_PERSISTENT, selected_handle);
 
     // Select requested object
     selected_handle = handle;
     if (selected_handle)
-        object_select(selected_handle);
+        object_select(RICO_PERSISTENT, selected_handle);
 
     selected_print();
 }
 
 void select_next_obj()
 {
-    select_obj(object_next(selected_handle));
+    select_obj(object_next(RICO_PERSISTENT, selected_handle));
 }
 
 void select_prev_obj()
 {
-    select_obj(object_prev(selected_handle));
+    select_obj(object_prev(RICO_PERSISTENT, selected_handle));
 }
 
 void selected_print()
 {
     // Print select object's properties
-    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
+    object_print(RICO_PERSISTENT, selected_handle, STR_SLOT_SELECTED_OBJ);
 }
 
 void selected_translate(struct camera *camera, const struct vec3 *offset)
@@ -162,7 +162,8 @@ void selected_translate(struct camera *camera, const struct vec3 *offset)
     if (!selected_handle)
         return;
 
-    enum rico_obj_type selected_type = object_type_get(selected_handle);
+    enum rico_obj_type selected_type = object_type_get(RICO_PERSISTENT,
+                                                       selected_handle);
 
     if (v3_equals(offset, &VEC3_ZERO))
     {
@@ -170,7 +171,7 @@ void selected_translate(struct camera *camera, const struct vec3 *offset)
         {
             camera->position = VEC3_ZERO;
         }
-        object_trans_set(selected_handle, &VEC3_ZERO);
+        object_trans_set(RICO_PERSISTENT, selected_handle, &VEC3_ZERO);
     }
     else
     {
@@ -178,10 +179,10 @@ void selected_translate(struct camera *camera, const struct vec3 *offset)
         {
             camera_translate_world(camera, offset);
         }
-        object_trans(selected_handle, offset);
+        object_trans(RICO_PERSISTENT, selected_handle, offset);
     }
 
-    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
+    object_print(RICO_PERSISTENT, selected_handle, STR_SLOT_SELECTED_OBJ);
 }
 
 void selected_rotate(const struct vec3 *offset)
@@ -191,14 +192,14 @@ void selected_rotate(const struct vec3 *offset)
 
     if (v3_equals(offset, &VEC3_ZERO))
     {
-        object_rot_set(selected_handle, &VEC3_ZERO);
+        object_rot_set(RICO_PERSISTENT, selected_handle, &VEC3_ZERO);
     }
     else
     {
-        object_rot(selected_handle, offset);
+        object_rot(RICO_PERSISTENT, selected_handle, offset);
     }
 
-    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
+    object_print(RICO_PERSISTENT, selected_handle, STR_SLOT_SELECTED_OBJ);
 }
 
 void selected_scale(const struct vec3 *offset)
@@ -208,14 +209,14 @@ void selected_scale(const struct vec3 *offset)
 
     if (v3_equals(offset, &VEC3_ZERO))
     {
-        object_scale_set(selected_handle, &VEC3_ONE);
+        object_scale_set(RICO_PERSISTENT, selected_handle, &VEC3_ONE);
     }
     else
     {
-        object_scale(selected_handle, offset);
+        object_scale(RICO_PERSISTENT, selected_handle, offset);
     }
 
-    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
+    object_print(RICO_PERSISTENT, selected_handle, STR_SLOT_SELECTED_OBJ);
 }
 
 void selected_mesh_next()
@@ -223,9 +224,9 @@ void selected_mesh_next()
     if (!selected_handle)
         return;
 
-    object_mesh_next(selected_handle);
-    object_select(selected_handle);
-    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
+    object_mesh_next(RICO_PERSISTENT, selected_handle);
+    object_select(RICO_PERSISTENT, selected_handle);
+    object_print(RICO_PERSISTENT, selected_handle, STR_SLOT_SELECTED_OBJ);
 }
 
 void selected_mesh_prev()
@@ -233,9 +234,9 @@ void selected_mesh_prev()
     if (!selected_handle)
         return;
 
-    object_mesh_prev(selected_handle);
-    object_select(selected_handle);
-    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
+    object_mesh_prev(RICO_PERSISTENT, selected_handle);
+    object_select(RICO_PERSISTENT, selected_handle);
+    object_print(RICO_PERSISTENT, selected_handle, STR_SLOT_SELECTED_OBJ);
 }
 
 void selected_bbox_reset()
@@ -243,9 +244,9 @@ void selected_bbox_reset()
     if (!selected_handle)
         return;
 
-    object_bbox_set(selected_handle, NULL);
-    object_select(selected_handle);
-    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
+    object_bbox_set(RICO_PERSISTENT, selected_handle, NULL);
+    object_select(RICO_PERSISTENT, selected_handle);
+    object_print(RICO_PERSISTENT, selected_handle, STR_SLOT_SELECTED_OBJ);
 }
 
 int selected_duplicate()
@@ -256,7 +257,7 @@ int selected_duplicate()
     enum rico_error err;
 
     u32 new_obj;
-    err = object_copy(&new_obj, selected_handle, "Duplicate");
+    err = object_copy(&new_obj, RICO_PERSISTENT, selected_handle, "Duplicate");
     if (err) return err;
 
     select_obj(new_obj);
@@ -268,15 +269,17 @@ void selected_delete()
     if (!selected_handle)
         return;
 
-    enum rico_obj_type selected_type = object_type_get(selected_handle);
-    if (selected_type == OBJ_NULL || selected_type == OBJ_STRING_SCREEN)
+    enum rico_obj_type selected_type = object_type_get(RICO_PERSISTENT,
+                                                       selected_handle);
+    if (selected_type == OBJ_NULL ||
+        selected_type == OBJ_STRING_SCREEN)
         return;
 
-    u32 prev = object_prev(selected_handle);
+    u32 prev = object_prev(RICO_PERSISTENT, selected_handle);
     if (prev == selected_handle)
         prev = 0;
 
-    object_free(selected_handle);
+    object_free(RICO_PERSISTENT, selected_handle);
     select_obj(prev);
 }
 
@@ -300,8 +303,10 @@ void glref_render(struct camera *camera)
     //--------------------------------------------------------------------------
     // Render objects
     //--------------------------------------------------------------------------
-    object_render_type(OBJ_STATIC, prog_default, camera);
-    object_render_type(OBJ_STRING_WORLD, prog_default, camera);
+    object_render_type(RICO_PERSISTENT, OBJ_STATIC, prog_default, camera);
+    object_render_type(RICO_TRANSIENT,  OBJ_STATIC, prog_default, camera);
+    object_render_type(RICO_PERSISTENT, OBJ_STRING_WORLD, prog_default, camera);
+    object_render_type(RICO_TRANSIENT,  OBJ_STRING_WORLD, prog_default, camera);
 
     //--------------------------------------------------------------------------
     // Axes labels (bboxes)
@@ -311,22 +316,26 @@ void glref_render(struct camera *camera)
     prim_draw_bbox_color(&axis_bbox, &y_axis_transform, &COLOR_GREEN);
     prim_draw_bbox_color(&axis_bbox, &z_axis_transform, &COLOR_BLUE);
 
-    object_render_type(OBJ_STRING_SCREEN, prog_default, camera);
+    object_render_type(RICO_PERSISTENT, OBJ_STRING_SCREEN, prog_default,
+                       camera);
+    object_render_type(RICO_TRANSIENT,  OBJ_STRING_SCREEN, prog_default,
+                       camera);
 }
 void free_glref()
 {
     //--------------------------------------------------------------------------
     // Clean up
     //--------------------------------------------------------------------------
-    //TODO: Free all game objects
-    object_free_all();
+    // Free all game objects
+    object_free_all(RICO_PERSISTENT);
+    object_free_all(RICO_TRANSIENT);
 
     //TODO: Free all meshes
 
     //TODO: Free all textures
-    texture_free(tex_grass);
-    texture_free(tex_rock);
-    texture_free(tex_hello);
+    //texture_free(tex_grass);
+    //texture_free(tex_rock);
+    //texture_free(tex_hello);
 
     //TODO: Free all programs
     free_program_default(&prog_default);

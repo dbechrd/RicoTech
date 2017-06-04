@@ -15,6 +15,33 @@ struct rico_pool {
     void *data;         // element pool
 };
 
+#define RICO_PERSIST_TYPES(f)  \
+    f(RICO_PERSISTENT) \
+    f(RICO_TRANSIENT)  \
+    f(PERSIST_COUNT)
+
+enum rico_persist {
+    RICO_PERSIST_TYPES(GEN_LIST)
+};
+extern const char *rico_persist_string[];
+
+#define RICO_POOL_ITEMTYPES(f) \
+    f(POOL_ITEMTYPE_STRINGS)   \
+    f(POOL_ITEMTYPE_FONTS)     \
+    f(POOL_ITEMTYPE_TEXTURES)  \
+    f(POOL_ITEMTYPE_MATERIALS) \
+    f(POOL_ITEMTYPE_MESHES)    \
+    f(POOL_ITEMTYPE_OBJECTS)   \
+    f(POOL_ITEMTYPE_COUNT)
+
+enum rico_pool_item_type {
+    RICO_POOL_ITEMTYPES(GEN_LIST)
+};
+extern const char *rico_pool_item_type_string[];
+
+extern u32 pool_item_sizes[POOL_ITEMTYPE_COUNT];
+extern u32 pool_item_fixed_counts[POOL_ITEMTYPE_COUNT];
+
 #define POOL_SIZE_HANDLES(count) (count * sizeof(u32))
 #define POOL_SIZE_DATA(count, size) (count * size)
 #define POOL_SIZE(count, size) (sizeof(struct rico_pool) + \
@@ -33,8 +60,8 @@ int pool_handle_free(struct rico_pool *pool, u32 handle);
 u32 pool_handle_first(struct rico_pool *pool);
 u32 pool_handle_next(struct rico_pool *pool, u32 handle);
 u32 pool_handle_prev(struct rico_pool *pool, u32 handle);
-SERIAL(pool_serialize_0);
-DESERIAL(pool_deserialize_0);
+//SERIAL(pool_serialize_0);
+//DESERIAL(pool_deserialize_0);
 
 inline void pool_fixup(struct rico_pool *pool)
 {

@@ -6,56 +6,61 @@ global struct rico_chunk *global_chunk;
 
 internal void chunk_print(struct rico_chunk *chunk);
 
-int chunk_init(const char *name, u32 strings, u32 fonts, u32 textures,
-               u32 materials, u32 meshes, u32 objects,
-               struct rico_chunk **_chunk)
+int chunk_init(struct rico_chunk **_chunk, const char *name,
+               const chunk_pool_counts *pool_counts)
 {
 #if RICO_DEBUG_CHUNK
     printf("[chnk][init] name=%s\n", name);
 #endif
 
-    u32 chunkSize = sizeof(struct rico_chunk);
-    u32 pool1 = POOL_SIZE(strings,   RICO_STRING_SIZE);
-    u32 pool2 = POOL_SIZE(fonts,     RICO_FONT_SIZE);
-    u32 pool3 = POOL_SIZE(textures,  RICO_TEXTURE_SIZE);
-    u32 pool4 = POOL_SIZE(materials, RICO_MATERIAL_SIZE);
-    u32 pool5 = POOL_SIZE(meshes,    RICO_MESH_SIZE);
-    u32 pool6 = POOL_SIZE(objects,   RICO_OBJECT_SIZE);
-    u32 total_size = chunkSize + pool1 + pool2 + pool3 + pool4 + pool5 + pool6;
+    u32 chunk_size = sizeof(struct rico_chunk);
+    
+    // Calculate pool sizes
+    u32 pool_sizes[POOL_ITEMTYPE_COUNT];
+    u32 cereal_size = 0;
+    for (int i = 0; i < POOL_ITEMTYPE_COUNT; ++i)
+    {
+        u32 pool_size = POOL_SIZE((*pool_counts)[i], pool_item_sizes[i]);
+        pool_sizes[i] = pool_size;
+        cereal_size += pool_size;
+    }
+    u32 transient_size = cereal_size;
+    u32 total_size = cereal_size + transient_size;
 
     // TODO: Memory management
     void *mem_block = calloc(1, total_size);
-    if (!mem_block) return RICO_ERROR(ERR_BAD_ALLOC,
-                                      "Failed to alloc memory for chunk %s",
-                                      name);
+    if (!mem_block)
+    {
+        return RICO_ERROR(ERR_BAD_ALLOC, "Failed to alloc memory for chunk %s",
+                          name);
+    }
 
-    //memset(mem_block, INT_MAX, total_size);
-
+    // Initialize chunk
     struct rico_chunk *chunk = (struct rico_chunk *)mem_block;
     uid_init(&chunk->uid, RICO_UID_CHUNK, name, true);
-    chunk->total_size      = total_size;
-    chunk->count_strings   = strings;
-    chunk->count_fonts     = fonts;
-    chunk->count_textures  = textures;
-    chunk->count_materials = materials;
-    chunk->count_meshes    = meshes;
-    chunk->count_objects   = objects;
+    chunk->total_size = total_size;
+    chunk->cereal_size = cereal_size;
+    memcpy(&chunk->pool_counts, pool_counts, sizeof(chunk->pool_counts));
 
-    u8 *offset = (u8 *)chunk; ADD_BYTES(offset, chunkSize);
-    chunk->strings   = (struct rico_pool *)offset; ADD_BYTES(offset, pool1);
-    chunk->fonts     = (struct rico_pool *)offset; ADD_BYTES(offset, pool2);
-    chunk->textures  = (struct rico_pool *)offset; ADD_BYTES(offset, pool3);
-    chunk->materials = (struct rico_pool *)offset; ADD_BYTES(offset, pool4);
-    chunk->meshes    = (struct rico_pool *)offset; ADD_BYTES(offset, pool5);
-    chunk->objects   = (struct rico_pool *)offset; ADD_BYTES(offset, pool6);
+    // Initialize pools
+    u8 *offset = (u8 *)chunk;
+    ADD_BYTES(offset, chunk_size);
+    for (int i = 0; i < POOL_ITEMTYPE_COUNT; ++i)
+    {
+        for (int type = 0; type < PERSIST_COUNT; ++type)
+        {
+            chunk->pools[i][type] = (struct rico_pool *)offset;
+            ADD_BYTES(offset, pool_sizes[i]);
+
+            char pool_name[32];
+            snprintf("%s_%s", sizeof(pool_name), rico_pool_item_type_string[i],
+                     rico_persist_string[i]);
+
+            pool_init(chunk->pools[i], pool_name, chunk->pool_counts[i],
+                      pool_item_sizes[i], pool_item_fixed_counts[i]);
+        }
+    }
     RICO_ASSERT(PTR_SUBTRACT(offset, chunk) == chunk->total_size);
-
-    pool_init(chunk->strings,   "Strings",   strings,   RICO_STRING_SIZE,   STR_SLOT_DYNAMIC);
-    pool_init(chunk->fonts,     "Fonts",     fonts,     RICO_FONT_SIZE,     0);
-    pool_init(chunk->textures,  "Textures",  textures,  RICO_TEXTURE_SIZE,  0);
-    pool_init(chunk->materials, "Materials", materials, RICO_MATERIAL_SIZE, 0);
-    pool_init(chunk->meshes,    "Meshes",    meshes,    RICO_MESH_SIZE,     0);
-    pool_init(chunk->objects,   "Objects",   objects,   RICO_OBJECT_SIZE,   0);
 
 #if RICO_DEBUG_CHUNK
     chunk_print(chunk);
@@ -83,7 +88,7 @@ SERIAL(chunk_serialize_0)
 
     // Write chunk to file
     u32 skip = sizeof(chunk->uid);
-    u32 bytes = chunk->total_size - skip;
+    u32 bytes = chunk->cereal_size - skip;
     u8 *seek = (u8 *)chunk; ADD_BYTES(seek, skip);
 
     // TODO: Don't write entire pools. Write pool header (w/ size) and then only
@@ -95,9 +100,9 @@ SERIAL(chunk_serialize_0)
     fwrite(seek, bytes, 1, file->fs);
 
     #if RICO_DEBUG_CHUNK
-        printf("[chnk][save] uid=%d name=%s filename=%s total_size=%d\n",
+        printf("[chnk][save] uid=%d name=%s filename=%s total_size=%d cereal_size=%d\n",
                chunk->uid.uid, chunk->uid.name, file->filename,
-               chunk->total_size);
+               chunk->total_size, chunk->cereal_size);
     #endif
 
     return err;
@@ -116,56 +121,67 @@ DESERIAL(chunk_deserialize_0)
     // Read chunk size from file so we know how much to allocate, then
     // initialize the chunk properly before calling fread().
     fread(&tmp_chunk->total_size, sizeof(tmp_chunk->total_size), 1, file->fs);
+    fread(&tmp_chunk->cereal_size, sizeof(tmp_chunk->cereal_size), 1, file->fs);
 
     // TODO: Memory management
     void *mem_block = calloc(1, tmp_chunk->total_size);
-    if (!mem_block) return RICO_ERROR(ERR_BAD_ALLOC,
-                                      "Failed to alloc memory for chunk %s",
-                                      tmp_chunk->uid.name);
+    if (!mem_block)
+    {
+        return RICO_ERROR(ERR_BAD_ALLOC, "Failed to alloc memory for chunk %s",
+                          tmp_chunk->uid.name);
+    }
 
     struct rico_chunk *chunk = mem_block;
     memcpy(chunk, tmp_chunk, sizeof(struct rico_chunk));
 
-    // TODO: Set pool pointers first, then read pools from file and skip the
-    //       unused storage space (which is pointless to store in the file).
-
     // Read chunk from file
-    u32 skip = sizeof(chunk->uid) + sizeof(chunk->total_size);
-    u32 bytes = chunk->total_size - skip;
+    u32 skip = sizeof(chunk->uid) + sizeof(chunk->total_size) +
+               sizeof(chunk->cereal_size);
+    u32 bytes = chunk->cereal_size - skip;
     u8 *seek = (u8 *)chunk; ADD_BYTES(seek, skip);
 
     // TODO: Check fread success
     fread(seek, bytes, 1, file->fs);
 
+    // Calculate pool sizes
+    u32 chunk_size = sizeof(struct rico_chunk);
+    u32 pool_sizes[POOL_ITEMTYPE_COUNT];
+    for (int i = 0; i < POOL_ITEMTYPE_COUNT; ++i)
+    {
+        u32 pool_size = POOL_SIZE(chunk->pool_counts[i], pool_item_sizes[i]);
+        pool_sizes[i] = pool_size;
+    }
+
     // Fix pool pointers
-    u32 chunkSize = sizeof(struct rico_chunk);
-    u32 pool1 = POOL_SIZE(chunk->count_strings,   RICO_STRING_SIZE);
-    u32 pool2 = POOL_SIZE(chunk->count_fonts,     RICO_FONT_SIZE);
-    u32 pool3 = POOL_SIZE(chunk->count_textures,  RICO_TEXTURE_SIZE);
-    u32 pool4 = POOL_SIZE(chunk->count_materials, RICO_MATERIAL_SIZE);
-    u32 pool5 = POOL_SIZE(chunk->count_meshes,    RICO_MESH_SIZE);
-    u32 pool6 = POOL_SIZE(chunk->count_objects,   RICO_OBJECT_SIZE);
+    u8 *offset = (u8 *)chunk;
+    ADD_BYTES(offset, chunk_size);
+    for (int i = 0; i < POOL_ITEMTYPE_COUNT; ++i)
+    {
+        for (int type = 0; type < PERSIST_COUNT; ++type)
+        {
+            chunk->pools[i][type] = (struct rico_pool *)offset;
+            ADD_BYTES(offset, pool_sizes[i]);
 
-    u8 *offset = (u8 *)chunk; ADD_BYTES(offset, chunkSize);
-    chunk->strings   = (struct rico_pool *)offset; ADD_BYTES(offset, pool1);
-    chunk->fonts     = (struct rico_pool *)offset; ADD_BYTES(offset, pool2);
-    chunk->textures  = (struct rico_pool *)offset; ADD_BYTES(offset, pool3);
-    chunk->materials = (struct rico_pool *)offset; ADD_BYTES(offset, pool4);
-    chunk->meshes    = (struct rico_pool *)offset; ADD_BYTES(offset, pool5);
-    chunk->objects   = (struct rico_pool *)offset; ADD_BYTES(offset, pool6);
+            if (type == RICO_PERSISTENT)
+            {
+                // Fix member pointers
+                pool_fixup(chunk->pools[i][type]);
+            }
+            else if (type == RICO_TRANSIENT)
+            {
+                // Reinitialize transient pools, which aren't stored in save files
+                char pool_name[32];
+                snprintf("%s_%s", sizeof(pool_name),
+                         rico_pool_item_type_string[i],
+                         rico_persist_string[i]);
+
+                pool_init(chunk->pools[i], pool_name,
+                          chunk->pool_counts[i], pool_item_sizes[i],
+                          pool_item_fixed_counts[i]);
+            }
+        }
+    }
     RICO_ASSERT(PTR_SUBTRACT(offset, chunk) == chunk->total_size);
-
-    // HACK: Nuke string pool instead of keeping whatever was in the save file
-    memset(chunk->strings, 0, pool1);
-    pool_init(chunk->strings, "Strings", chunk->count_strings, RICO_STRING_SIZE,
-              STR_SLOT_DYNAMIC);
-    //pool_fixup(chunk->strings);
-
-    pool_fixup(chunk->fonts);
-    pool_fixup(chunk->textures);
-    pool_fixup(chunk->materials);
-    pool_fixup(chunk->meshes);
-    pool_fixup(chunk->objects);
 
 #if RICO_DEBUG_CHUNK
     chunk_print(chunk);
@@ -179,19 +195,18 @@ DESERIAL(chunk_deserialize_0)
 internal void chunk_print(struct rico_chunk *chunk)
 {
     // Print information about chunk and pool sizes
-    printf("[chnk][show] uid=%d name=%s total_size=%d\n" \
-           "     Strings = %d\n" \
-           "       Fonts = %d\n" \
-           "    Textures = %d\n" \
-           "   Materials = %d\n" \
-           "      Meshes = %d\n" \
-           "     Objects = %d\n",
+    printf("[chnk][show] uid=%d name=%s total_size=%d cereal_size=%d\n",
            chunk->uid.uid, chunk->uid.name, chunk->total_size,
-           chunk->count_strings,
-           chunk->count_fonts,
-           chunk->count_textures,
-           chunk->count_materials,
-           chunk->count_meshes,
-           chunk->count_objects);
+           chunk->cereal_size);
+
+    for (int i = 0; i < POOL_ITEMTYPE_COUNT; ++i)
+    {
+        for (int type = 0; type < PERSIST_COUNT; ++type)
+        {
+            printf("             %s = %d\n",
+                   chunk->pools[i][type]->uid.name,
+                   chunk->pool_counts[i]);
+        }
+    }
 }
 #endif
