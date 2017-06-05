@@ -16,16 +16,17 @@ struct rico_font {
     int RenderStyle;
     bool InvertYAxis;
 
-    u32 texture;
+    struct hnd texture;
 };
 extern const u32 RICO_FONT_SIZE;
 
-extern u32 RICO_DEFAULT_FONT;
+extern struct hnd RICO_DEFAULT_FONT;
 
-int font_init(u32 *_handle, enum rico_persist persist, const char *filename);
-void font_free(enum rico_persist persist, u32 handle);
-int font_render(u32 *_mesh, u32 *_texture, enum rico_persist persist,
-                u32 handle, int x, int y, struct col4 bg, const char *text,
-                const char *mesh_name, enum rico_mesh_type type);
+int font_init(struct hnd *_handle, enum rico_persist persist, const char *filename);
+void font_free(struct hnd handle);
+int font_render(struct hnd *_mesh, struct hnd *_texture,
+                struct hnd handle, int x, int y, struct col4 bg,
+                const char *text, const char *mesh_name,
+                enum rico_mesh_type type);
 
 #endif // RICO_FONT_H

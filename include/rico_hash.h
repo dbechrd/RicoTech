@@ -5,7 +5,7 @@ typedef u32 hash_key;
 
 struct hash_keyval {
     hash_key key;
-    u32 handle;
+    struct hnd handle;
 };
 
 struct hash_table {
@@ -19,9 +19,11 @@ inline hash_key hashgen_strlen(const char *str, int len);
 
 void hashtable_init(struct hash_table *table, const char *name, u32 count);
 void hashtable_free(struct hash_table *table);
-u32 hashtable_search(struct hash_table *table, hash_key key);
-u32 hashtable_search_by_name(struct hash_table *table, const char *name);
-int hashtable_insert(struct hash_table *table, hash_key key, u32 handle);
+struct hnd hashtable_search(struct hash_table *table, hash_key key);
+struct hnd hashtable_search_by_name(struct hash_table *table,
+                                       const char *name);
+int hashtable_insert(struct hash_table *table, hash_key key,
+                     struct hnd handle);
 bool hashtable_delete(struct hash_table *table, hash_key key);
 
 // TODO: Where should global hash tables actually live?

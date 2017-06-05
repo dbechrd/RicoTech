@@ -1,12 +1,6 @@
 #ifndef UID_H
 #define UID_H
 
-//#include "const.h"
-//#include "rico_string.h"
-//#include "rico_cereal.h"
-
-#define UID_NULL 0
-
 #define RICO_UID_TYPES(f)   \
     f(RICO_UID_NULL)        \
     f(RICO_UID_OBJECT)      \
@@ -32,6 +26,8 @@ struct rico_uid {
     char name[32];
     bool serialize;
 };
+#define UID_NULL 0
+#define UID_BASE 1000
 
 void uid_init(struct rico_uid *_uid, enum rico_uid_type type, const char *name,
               bool serialize);

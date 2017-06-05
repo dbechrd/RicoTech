@@ -16,16 +16,16 @@ int chunk_init(struct rico_chunk **_chunk, const char *name,
     u32 chunk_size = sizeof(struct rico_chunk);
     
     // Calculate pool sizes
-    u32 pool_sizes[POOL_ITEMTYPE_COUNT];
+    u32 pool_sizes[POOL_COUNT];
     u32 cereal_size = 0;
-    for (int i = 0; i < POOL_ITEMTYPE_COUNT; ++i)
+    for (int i = 0; i < POOL_COUNT; ++i)
     {
         u32 pool_size = POOL_SIZE((*pool_counts)[i], pool_item_sizes[i]);
         pool_sizes[i] = pool_size;
         cereal_size += pool_size;
     }
     u32 transient_size = cereal_size;
-    u32 total_size = cereal_size + transient_size;
+    u32 total_size = sizeof(struct rico_chunk) + cereal_size + transient_size;
 
     // TODO: Memory management
     void *mem_block = calloc(1, total_size);
@@ -45,22 +45,27 @@ int chunk_init(struct rico_chunk **_chunk, const char *name,
     // Initialize pools
     u8 *offset = (u8 *)chunk;
     ADD_BYTES(offset, chunk_size);
-    for (int i = 0; i < POOL_ITEMTYPE_COUNT; ++i)
+    for (int i = 0; i < POOL_COUNT; ++i)
     {
-        for (int type = 0; type < PERSIST_COUNT; ++type)
+        for (enum rico_persist persist = 0; persist < PERSIST_COUNT; ++persist)
         {
-            chunk->pools[i][type] = (struct rico_pool *)offset;
+            chunk->pools[persist][i] = (struct rico_pool *)offset;
             ADD_BYTES(offset, pool_sizes[i]);
 
-            char pool_name[32];
-            snprintf("%s_%s", sizeof(pool_name), rico_pool_item_type_string[i],
-                     rico_persist_string[i]);
+            char pool_name[32] = { 0 };
+            const char *itemtype = rico_pool_itemtype_string[i];
+            const char *persisttype = rico_persist_string[persist];
+            snprintf(pool_name, sizeof(pool_name), "%s_%s",
+                     rico_pool_itemtype_string[i], rico_persist_string[persist]);
 
-            pool_init(chunk->pools[i], pool_name, chunk->pool_counts[i],
-                      pool_item_sizes[i], pool_item_fixed_counts[i]);
+            pool_init(chunk->pools[persist][i], persist, pool_name,
+                      chunk->pool_counts[i], pool_item_sizes[i],
+                      pool_item_fixed_counts[i]);
         }
     }
-    RICO_ASSERT(PTR_SUBTRACT(offset, chunk) == chunk->total_size);
+
+    u32 offset_delta = PTR_SUBTRACT(offset, chunk);
+    RICO_ASSERT(offset_delta == chunk->total_size);
 
 #if RICO_DEBUG_CHUNK
     chunk_print(chunk);
@@ -145,8 +150,8 @@ DESERIAL(chunk_deserialize_0)
 
     // Calculate pool sizes
     u32 chunk_size = sizeof(struct rico_chunk);
-    u32 pool_sizes[POOL_ITEMTYPE_COUNT];
-    for (int i = 0; i < POOL_ITEMTYPE_COUNT; ++i)
+    u32 pool_sizes[POOL_COUNT];
+    for (int i = 0; i < POOL_COUNT; ++i)
     {
         u32 pool_size = POOL_SIZE(chunk->pool_counts[i], pool_item_sizes[i]);
         pool_sizes[i] = pool_size;
@@ -155,27 +160,27 @@ DESERIAL(chunk_deserialize_0)
     // Fix pool pointers
     u8 *offset = (u8 *)chunk;
     ADD_BYTES(offset, chunk_size);
-    for (int i = 0; i < POOL_ITEMTYPE_COUNT; ++i)
+    for (int i = 0; i < POOL_COUNT; ++i)
     {
-        for (int type = 0; type < PERSIST_COUNT; ++type)
+        for (enum rico_persist persist = 0; persist < PERSIST_COUNT; ++persist)
         {
-            chunk->pools[i][type] = (struct rico_pool *)offset;
+            chunk->pools[persist][i] = (struct rico_pool *)offset;
             ADD_BYTES(offset, pool_sizes[i]);
 
-            if (type == RICO_PERSISTENT)
+            if (persist == PERSISTENT)
             {
                 // Fix member pointers
-                pool_fixup(chunk->pools[i][type]);
+                pool_fixup(chunk->pools[persist][i]);
             }
-            else if (type == RICO_TRANSIENT)
+            else if (persist == TRANSIENT)
             {
                 // Reinitialize transient pools, which aren't stored in save files
                 char pool_name[32];
                 snprintf("%s_%s", sizeof(pool_name),
-                         rico_pool_item_type_string[i],
+                         rico_pool_itemtype_string[i],
                          rico_persist_string[i]);
 
-                pool_init(chunk->pools[i], pool_name,
+                pool_init(chunk->pools[persist][i], persist, pool_name,
                           chunk->pool_counts[i], pool_item_sizes[i],
                           pool_item_fixed_counts[i]);
             }
@@ -199,12 +204,12 @@ internal void chunk_print(struct rico_chunk *chunk)
            chunk->uid.uid, chunk->uid.name, chunk->total_size,
            chunk->cereal_size);
 
-    for (int i = 0; i < POOL_ITEMTYPE_COUNT; ++i)
+    for (int i = 0; i < POOL_COUNT; ++i)
     {
         for (int type = 0; type < PERSIST_COUNT; ++type)
         {
             printf("             %s = %d\n",
-                   chunk->pools[i][type]->uid.name,
+                   chunk->pools[type][i]->uid.name,
                    chunk->pool_counts[i]);
         }
     }

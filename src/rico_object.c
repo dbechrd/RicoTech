@@ -2,14 +2,14 @@ const char *rico_obj_type_string[] = {
     RICO_OBJ_TYPES(GEN_STRING)
 };
 
-u32 RICO_DEFAULT_OBJECT = 0;
+struct hnd RICO_DEFAULT_OBJECT = { 0 };
 
 internal inline struct rico_pool **object_pool_ptr(enum rico_persistence persist)
 {
     struct rico_chunk *chunk = chunk_active();
     RICO_ASSERT(chunk);
-    RICO_ASSERT(chunk->pools[POOL_ITEMTYPE_OBJECTS]);
-    return &chunk->pools[POOL_ITEMTYPE_OBJECTS][persist];
+    RICO_ASSERT(chunk->pools[persist][POOL_OBJECTS]);
+    return &chunk->pools[persist][POOL_OBJECTS];
 }
 
 internal inline struct rico_pool *object_pool(enum rico_persistence persist)
@@ -17,31 +17,31 @@ internal inline struct rico_pool *object_pool(enum rico_persistence persist)
     return *object_pool_ptr(persist);
 }
 
-internal inline struct rico_object *object_find(enum rico_persistence persist,
-                                                u32 handle)
+internal inline struct rico_object *object_find(struct hnd handle)
 {
-    struct rico_object *object = pool_read(object_pool(persist), handle);
-    RICO_ASSERT(object);
+    struct rico_object *object = pool_read(object_pool(handle.persist),
+                                           handle.value);
     return object;
 }
 
 internal void update_transform(struct rico_object *obj);
 
-int object_create(u32 *_handle, enum rico_persist persist, const char *name,
-                  enum rico_obj_type type, u32 mesh, u32 material,
-                  const struct bbox *bbox, bool serialize)
+int object_create(struct hnd *_handle, enum rico_persist persist,
+                  const char *name, enum rico_obj_type type, struct hnd mesh,
+                  struct hnd material, const struct bbox *bbox,
+                  bool serialize)
 {
+    enum rico_error err;
+
 #if RICO_DEBUG_OBJECT
     printf("[ obj][init] name=%s\n", name);
 #endif
 
-    enum rico_error err;
-    *_handle = RICO_DEFAULT_OBJECT;
-
-    err = pool_handle_alloc(object_pool_ptr(RICO_PERSISTENT), _handle);
+    struct hnd handle;
+    err = pool_handle_alloc(object_pool_ptr(persist), &handle);
     if (err) return err;
 
-    struct rico_object *obj = object_find(RICO_PERSISTENT, *_handle);
+    struct rico_object *obj = object_find(handle);
 
     uid_init(&obj->uid, RICO_UID_OBJECT, name, serialize);
     obj->type = type;
@@ -53,281 +53,285 @@ int object_create(u32 *_handle, enum rico_persist persist, const char *name,
         obj->scale = VEC3_ONE;
     obj->transform = MAT4_IDENT;
     obj->transform_inverse = MAT4_IDENT;
-    obj->mesh = mesh_request(persist, mesh);
-    obj->material = material_request(persist, material);
-    obj->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(persist, obj->mesh);
+    obj->mesh = mesh_request(mesh);
+    obj->material = material_request(material);
+    obj->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(obj->mesh);
 
     update_transform(obj);
 
+    if (_handle) *_handle = handle;
     return err;
 }
 
-int object_copy(u32 *_handle, enum rico_persist persist, u32 handle,
+int object_copy(struct hnd *_handle, struct hnd handle,
                 const char *name)
 {
     enum rico_error err;
-    struct rico_object *obj = object_find(persist, handle);
+    struct rico_object *obj = object_find(handle);
 
     // Create new object with same mesh / texture
-    err = object_create(_handle, persist, name, obj->type, obj->mesh,
+    err = object_create(_handle, handle.persist, name, obj->type, obj->mesh,
                         obj->material, NULL, true);
     if (err) return err;
 
     // Copy transform
-    object_trans_set(persist, *_handle, &obj->trans);
-    object_rot_set(persist, *_handle, &obj->rot);
-    object_scale_set(persist, *_handle, &obj->scale);
+    object_trans_set(*_handle, &obj->trans);
+    object_rot_set(*_handle, &obj->rot);
+    object_scale_set(*_handle, &obj->scale);
 
     return err;
 }
 
-void object_free(enum rico_persist persist, u32 handle)
+void object_free(struct hnd handle)
 {
-    struct rico_object *obj = object_find(persist, handle);
+    struct rico_object *obj = object_find(handle);
 
-    // TODO: Use fixed pool slots
-    if (handle == RICO_DEFAULT_OBJECT)
-        return;
+    // Cleanup: Use fixed pool slots
+    //if (handle.value == RICO_DEFAULT_OBJECT)
+    //    return;
 
 #if RICO_DEBUG_OBJECT
     printf("[ obj][free] uid=%d name=%s\n", obj->uid.uid, obj->uid.name);
 #endif
 
-    mesh_free(persist, obj->mesh);
-    material_free(persist, obj->material);
+    mesh_free(obj->mesh);
+    material_free(obj->material);
 
     obj->uid.uid = UID_NULL;
-    pool_handle_free(object_pool(persist), handle);
+    pool_handle_free(object_pool(handle.persist), handle);
 }
 
 void object_free_all(enum rico_persist persist)
 {
-    u32 *handles = object_pool(persist)->handles;
     for (int i = object_pool(persist)->active - 1; i >= 0; --i)
     {
-        object_free(persist, handles[i]);
+        object_free(object_pool(persist)->handles[i]);
     }
 }
 
-void object_bbox_recalculate_all(enum rico_persist persist)
+void object_bbox_recalculate_all()
 {
-    u32 *handles = object_pool(persist)->handles;
-    for (int i = object_pool(persist)->active - 1; i >= 0; --i)
+    struct rico_pool *pool;
+    for (u32 persist = 0; persist < PERSIST_COUNT; ++persist)
     {
-        object_bbox_set(persist, handles[i], NULL);
+        pool = object_pool(persist);
+        for (u32 i = 0; i < pool->active; ++i)
+        {
+            object_bbox_set(pool->handles[i], NULL);
+        }
     }
 }
 
-void object_bbox_set(enum rico_persist persist, u32 handle,
+void object_bbox_set(struct hnd handle,
                      const struct bbox *bbox)
 {
-    struct rico_object *obj = object_find(persist, handle);
-    obj->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(persist, obj->mesh);
+    struct rico_object *obj = object_find(handle);
+    obj->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(obj->mesh);
 }
 
-void object_mesh_set(enum rico_persist persist, u32 handle, u32 mesh,
+void object_mesh_set(struct hnd handle, struct hnd mesh,
                      const struct bbox *bbox)
 {
-    struct rico_object *obj = object_find(persist, handle);
-    mesh_free(persist, obj->mesh);
-    obj->mesh = mesh_request(persist, mesh);
-    obj->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(persist, obj->mesh);
+    struct rico_object *obj = object_find(handle);
+    mesh_free(obj->mesh);
+    obj->mesh = mesh_request(mesh);
+    obj->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(obj->mesh);
 }
 
-void object_mesh_next(enum rico_persist persist, u32 handle)
+void object_mesh_next(struct hnd handle)
 {
-    struct rico_object *obj = object_find(persist, handle);
+    struct rico_object *obj = object_find(handle);
 
-    u32 next_mesh = mesh_next(persist, obj->mesh);
-    if (next_mesh == obj->mesh)
+    struct hnd next_mesh = mesh_next(obj->mesh);
+    if (next_mesh.value == obj->mesh.value)
         return;
 
-    mesh_free(persist, obj->mesh);
-    obj->mesh = mesh_request(persist, next_mesh);
-    obj->bbox = *mesh_bbox(persist, next_mesh);
+    mesh_free(obj->mesh);
+    obj->mesh = mesh_request(next_mesh);
+    obj->bbox = *mesh_bbox(next_mesh);
 }
 
-void object_mesh_prev(enum rico_persist persist, u32 handle)
+void object_mesh_prev(struct hnd handle)
 {
-    struct rico_object *obj = object_find(persist, handle);
+    struct rico_object *obj = object_find(handle);
 
-    u32 prev_mesh = mesh_prev(persist, obj->mesh);
-    if (prev_mesh == obj->mesh)
+    struct hnd prev_mesh = mesh_prev(obj->mesh);
+    if (prev_mesh.value == obj->mesh.value)
         return;
 
-    mesh_free(persist, obj->mesh);
-    obj->mesh = mesh_request(persist, prev_mesh);
-    obj->bbox = *mesh_bbox(persist, prev_mesh);
+    mesh_free(obj->mesh);
+    obj->mesh = mesh_request(prev_mesh);
+    obj->bbox = *mesh_bbox(prev_mesh);
 }
 
-void object_material_set(enum rico_persist persist, u32 handle, u32 material)
+void object_material_set(struct hnd handle, struct hnd material)
 {
-    struct rico_object *obj = object_find(persist, handle);
-    material_free(persist, obj->material);
-    obj->material = material_request(persist, material);
+    struct rico_object *obj = object_find(handle);
+    material_free(obj->material);
+    obj->material = material_request(material);
 }
 
-enum rico_obj_type object_type_get(enum rico_persist persist, u32 handle)
+enum rico_obj_type object_type_get(struct hnd handle)
 {
-    if (!handle)
+    if (!handle.value)
         return OBJ_NULL;
 
-    struct rico_object *obj = object_find(persist, handle);
+    struct rico_object *obj = object_find(handle);
     return obj->type;
 }
 
-bool object_selectable(enum rico_persist persist, u32 handle)
+bool object_selectable(struct hnd handle)
 {
-    enum rico_obj_type type = object_type_get(persist, handle);
+    enum rico_obj_type type = object_type_get(handle);
     return (type != OBJ_NULL &&
             type != OBJ_STRING_SCREEN);
 }
 
-u32 object_next(enum rico_persist persist, u32 handle)
+struct hnd object_next(struct hnd handle)
 {
-    u32 start = pool_handle_next(object_pool(persist), handle);
-    u32 next = start;
+    struct hnd start = pool_handle_next(object_pool(handle.persist), handle);
+    struct hnd next = start;
 
     do
     {
-        if (object_selectable(persist, next))
+        if (object_selectable(next))
             return next;
 
-        next = pool_handle_next(object_pool(persist), next);
-    } while (next != start);
+        next = pool_handle_next(object_pool(handle.persist), next);
+    } while (next.value != start.value);
 
-    return 0;
+    return HANDLE_NULL;
 }
 
-u32 object_prev(enum rico_persist persist, u32 handle)
+struct hnd object_prev(struct hnd handle)
 {
-    u32 start = pool_handle_prev(object_pool(persist), handle);
-    u32 prev = start;
+    struct hnd start = pool_handle_prev(object_pool(handle.persist), handle);
+    struct hnd prev = start;
 
     do
     {
-        if (object_selectable(persist, prev))
+        if (object_selectable(prev))
             return prev;
 
-        prev = pool_handle_prev(object_pool(persist), prev);
-    } while (prev != start);
+        prev = pool_handle_prev(object_pool(handle.persist), prev);
+    } while (prev.value != start.value);
 
-    return 0;
+    return HANDLE_NULL;
 }
 
-void object_select(enum rico_persist persist, u32 handle)
+void object_select(struct hnd handle)
 {
-    struct rico_object *obj = object_find(persist, handle);
+    struct rico_object *obj = object_find(handle);
     obj->bbox.wireframe = false;
 }
 
-void object_deselect(enum rico_persist persist, u32 handle)
+void object_deselect(struct hnd handle)
 {
-    struct rico_object *obj = object_find(persist, handle);
+    struct rico_object *obj = object_find(handle);
     obj->bbox.wireframe = true;
 }
 
-void object_trans(enum rico_persist persist, u32 handle, const struct vec3 *v)
+void object_trans(struct hnd handle, const struct vec3 *v)
 {
-    struct rico_object *obj = object_find(persist, handle);
+    struct rico_object *obj = object_find(handle);
     v3_add(&obj->trans, v);
     update_transform(obj);
 }
 
-const struct vec3 *object_trans_get(enum rico_persist persist, u32 handle)
+const struct vec3 *object_trans_get(struct hnd handle)
 {
-    struct rico_object *obj = object_find(persist, handle);
+    struct rico_object *obj = object_find(handle);
     return &obj->trans;
 }
 
-void object_trans_set(enum rico_persist persist, u32 handle,
+void object_trans_set(struct hnd handle,
                       const struct vec3 *v)
 {
-    struct rico_object *obj = object_find(persist, handle);
+    struct rico_object *obj = object_find(handle);
     obj->trans = *v;
     update_transform(obj);
 }
 
-void object_rot(enum rico_persist persist, u32 handle, const struct vec3 *v)
+void object_rot(struct hnd handle, const struct vec3 *v)
 {
-    struct rico_object *obj = object_find(persist, handle);
+    struct rico_object *obj = object_find(handle);
     v3_add(&obj->rot, v);
     update_transform(obj);
 }
 
-void object_rot_set(enum rico_persist persist, u32 handle, const struct vec3 *v)
+void object_rot_set(struct hnd handle, const struct vec3 *v)
 {
-    struct rico_object *obj = object_find(persist, handle);
+    struct rico_object *obj = object_find(handle);
     obj->rot = *v;
     update_transform(obj);
 }
 
-const struct vec3 *object_rot_get(enum rico_persist persist, u32 handle)
+const struct vec3 *object_rot_get(struct hnd handle)
 {
-    struct rico_object *obj = object_find(persist, handle);
+    struct rico_object *obj = object_find(handle);
     return &obj->rot;
 }
 
-void object_rot_x(enum rico_persist persist, u32 handle, float deg)
+void object_rot_x(struct hnd handle, float deg)
 {
-    struct rico_object *obj = object_find(persist, handle);
+    struct rico_object *obj = object_find(handle);
     obj->rot.x += deg;
     update_transform(obj);
 }
 
-void object_rot_x_set(enum rico_persist persist, u32 handle, float deg)
+void object_rot_x_set(struct hnd handle, float deg)
 {
-    struct rico_object *obj = object_find(persist, handle);
+    struct rico_object *obj = object_find(handle);
     obj->rot.x = deg;
     update_transform(obj);
 }
 
-void object_rot_y(enum rico_persist persist, u32 handle, float deg)
+void object_rot_y(struct hnd handle, float deg)
 {
-    struct rico_object *obj = object_find(persist, handle);
+    struct rico_object *obj = object_find(handle);
     obj->rot.y += deg;
     update_transform(obj);
 }
 
-void object_rot_y_set(enum rico_persist persist, u32 handle, float deg)
+void object_rot_y_set(struct hnd handle, float deg)
 {
-    struct rico_object *obj = object_find(persist, handle);
+    struct rico_object *obj = object_find(handle);
     obj->rot.y = deg;
     update_transform(obj);
 }
 
-void object_rot_z(enum rico_persist persist, u32 handle, float deg)
+void object_rot_z(struct hnd handle, float deg)
 {
-    struct rico_object *obj = object_find(persist, handle);
+    struct rico_object *obj = object_find(handle);
     obj->rot.z += deg;
     update_transform(obj);
 }
 
-void object_rot_z_set(enum rico_persist persist, u32 handle, float deg)
+void object_rot_z_set(struct hnd handle, float deg)
 {
-    struct rico_object *obj = object_find(persist, handle);
+    struct rico_object *obj = object_find(handle);
     obj->rot.z = deg;
     update_transform(obj);
 }
 
-void object_scale(enum rico_persist persist, u32 handle, const struct vec3 *v)
+void object_scale(struct hnd handle, const struct vec3 *v)
 {
-    struct rico_object *obj = object_find(persist, handle);
+    struct rico_object *obj = object_find(handle);
     v3_add(&obj->scale, v);
     update_transform(obj);
 }
 
-void object_scale_set(enum rico_persist persist, u32 handle,
+void object_scale_set(struct hnd handle,
                       const struct vec3 *v)
 {
-    struct rico_object *obj = object_find(persist, handle);
+    struct rico_object *obj = object_find(handle);
     obj->scale = *v;
     update_transform(obj);
 }
 
-const struct vec3 *object_scale_get(enum rico_persist persist, u32 handle)
+const struct vec3 *object_scale_get(struct hnd handle)
 {
-    struct rico_object *obj = object_find(persist, handle);
+    struct rico_object *obj = object_find(handle);
     return &obj->scale;
 }
 
@@ -366,36 +370,33 @@ internal void update_transform(struct rico_object *obj)
     //RICO_ASSERT(mat4_equals(&mm, &MAT4_IDENT));
 }
 
-const struct mat4 *object_transform_get(enum rico_persist persist, u32 handle)
+const struct mat4 *object_transform_get(struct hnd handle)
 {
-    struct rico_object *obj = object_find(persist, handle);
+    struct rico_object *obj = object_find(handle);
     return &obj->transform;
 }
 
-bool object_collide_ray(float *_dist, enum rico_persist persist, u32 handle,
+bool object_collide_ray(float *_dist, struct hnd handle,
                         const struct ray *ray)
 {
-    struct rico_object *obj = object_find(persist, handle);
+    struct rico_object *obj = object_find(handle);
     return collide_ray_obb(_dist, ray, &obj->bbox, &obj->transform,
                            &obj->transform_inverse);
 }
 
-bool object_collide_ray_type(u32 *_handle, float *_dist,
+bool object_collide_ray_type(struct hnd *_handle, float *_dist,
                              enum rico_obj_type type, const struct ray *ray)
 {
     bool collided = false;
     float distance;
     *_dist = Z_FAR; // Track closest object
 
-    u32 *handles;
     struct rico_object *obj;
-
     for (u32 persist = 0; persist < PERSIST_COUNT; ++persist)
     {
-        handles = object_pool(persist)->handles;
         for (u32 i = 0; i < object_pool(persist)->active; ++i)
         {
-            obj = object_find(persist, handles[i]);
+            obj = object_find(object_pool(persist)->handles[i]);
             if (obj->type == type)
             {
                 collided = collide_ray_obb(&distance, ray, &obj->bbox,
@@ -406,7 +407,7 @@ bool object_collide_ray_type(u32 *_handle, float *_dist,
                 if (collided && distance < *_dist)
                 {
                     // Record object handle and distance
-                    *_handle = handles[i];
+                    *_handle = object_pool(persist)->handles[i];
                     *_dist = distance;
                 }
             }
@@ -416,10 +417,9 @@ bool object_collide_ray_type(u32 *_handle, float *_dist,
     return collided;
 }
 
-void object_render(enum rico_persist persist, u32 handle,
-                   const struct camera *camera)
+void object_render(struct hnd handle, const struct camera *camera)
 {
-    struct rico_object *obj = object_find(persist, handle);
+    struct rico_object *obj = object_find(handle);
 
     if (obj->type == OBJ_STATIC)
     {
@@ -432,14 +432,14 @@ void object_render(enum rico_persist persist, u32 handle,
 
 
     // Bind material and render mesh
-    material_bind(persist, obj->material);
-    mesh_render(persist, obj->mesh);
+    material_bind(obj->material);
+    mesh_render(obj->mesh);
 
     // Clean up
-    material_unbind(persist, obj->material);
+    material_unbind(obj->material);
 }
 
-void object_render_type(enum rico_persist persist, enum rico_obj_type type,
+void object_render_type(enum rico_obj_type type,
                         const struct program_default *prog,
                         const struct camera *camera)
 {
@@ -496,16 +496,12 @@ void object_render_type(enum rico_persist persist, enum rico_obj_type type,
     glUniform1f(prog->u_light_kl, light.kl);
     glUniform1f(prog->u_light_kq, light.kq);
 
-    u32 *handles;
     struct rico_object *obj;
-
     for (u32 persist = 0; persist < PERSIST_COUNT; ++persist)
     {
-        handles = object_pool(persist)->handles;
-
         for (u32 i = 0; i < object_pool(persist)->active; ++i)
         {
-            obj = object_find(persist, handles[i]);
+            obj = object_find(object_pool(persist)->handles[i]);
             if (obj->type != type)
                 continue;
 
@@ -534,11 +530,10 @@ void object_render_type(enum rico_persist persist, enum rico_obj_type type,
             glUniformMatrix4fv(prog->u_model, 1, GL_TRUE, obj->transform.a);
 
             // Model material shiny
-            glUniform1f(prog->u_material_shiny,
-                        material_shiny(persist, obj->material));
+            glUniform1f(prog->u_material_shiny, material_shiny(obj->material));
 
             // Render object
-            object_render(persist, handles[i], camera);
+            object_render(object_pool(persist)->handles[i], camera);
 
             // TODO: Batch bounding boxes
             // Render bbox
@@ -550,25 +545,23 @@ void object_render_type(enum rico_persist persist, enum rico_obj_type type,
     glUseProgram(0);
 }
 
-int object_print(enum rico_persist persist, u32 handle,
-                 enum rico_string_slot slot)
+int object_print(struct hnd handle, enum rico_string_slot slot)
 {
     enum rico_error err;
 
     // Print to screen
     char buf[256] = { 0 };
-    object_to_string(persist, handle, buf, sizeof(buf));
-    err = string_init(persist, rico_string_slot_string[slot], slot, 0,
-                      FONT_HEIGHT, COLOR_GRAY_HIGHLIGHT, 0, 0, buf);
+    object_to_string(handle, buf, sizeof(buf));
+    err = string_init(TRANSIENT, rico_string_slot_string[slot], slot, 0,
+                      FONT_HEIGHT, COLOR_GRAY_HIGHLIGHT, 0, HANDLE_NULL, buf);
     return err;
 }
 
-void object_to_string(enum rico_persist persist, u32 handle, char *buf,
-                      int buf_count)
+void object_to_string(struct hnd handle, char *buf, int buf_count)
 {
     int len;
 
-    if (!handle)
+    if (!handle.value)
     {
         len = snprintf(buf, buf_count,
             "    UID: %d\n" \
@@ -583,7 +576,7 @@ void object_to_string(enum rico_persist persist, u32 handle, char *buf,
     }
     else
     {
-        struct rico_object *obj = object_find(persist, handle);
+        struct rico_object *obj = object_find(handle);
         len = snprintf(buf, buf_count,
             "     UID: %d\n"       \
             "    Name: %s\n"       \
@@ -599,8 +592,8 @@ void object_to_string(enum rico_persist persist, u32 handle, char *buf,
             obj->trans.x,  obj->trans.y, obj->trans.z,
             obj->rot.x,    obj->rot.y,   obj->rot.z,
             obj->scale.x,  obj->scale.y, obj->scale.z,
-            obj->mesh,     mesh_name(persist, obj->mesh),
-            obj->material, material_name(persist, obj->material));
+            obj->mesh.value,     mesh_name(obj->mesh),
+            obj->material.value, material_name(obj->material));
     }
 
     string_truncate(buf, buf_count, len);

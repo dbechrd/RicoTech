@@ -5,7 +5,7 @@
 //global GLuint vao;
 //global GLuint vbos[2];
 
-global u32 selected_handle = 0;
+global struct hnd selected_handle = { 0 };
 
 global struct program_default *prog_default;
 global struct program_primitive *prog_primitive;
@@ -103,10 +103,10 @@ int create_obj()
 
     // TODO: Prompt user for object name
     const char *name = "new_obj";
-    u32 new_obj;
+    struct hnd new_obj;
 
     // Create new object with default properties
-    err = object_create(&new_obj, RICO_PERSISTENT, name, OBJ_STATIC,
+    err = object_create(&new_obj, PERSISTENT, name, OBJ_STATIC,
                         RICO_DEFAULT_MESH, RICO_DEFAULT_MATERIAL, NULL, true);
     if (err) return err;
 
@@ -117,53 +117,52 @@ int create_obj()
 
 void recalculate_all_bbox()
 {
-    object_bbox_recalculate_all(RICO_PERSISTENT);
+    object_bbox_recalculate_all(PERSISTENT);
 
     // Reselect current object
-    if (selected_handle)
-        object_select(RICO_PERSISTENT, selected_handle);
+    if (selected_handle.value)
+        object_select(selected_handle);
 }
 
-void select_obj(u32 handle)
+void select_obj(struct hnd handle)
 {
-    if (selected_handle == handle)
+    if (selected_handle.value == handle.value)
         return;
 
     // Deselect current object
-    if (selected_handle)
-        object_deselect(RICO_PERSISTENT, selected_handle);
+    if (selected_handle.value)
+        object_deselect(selected_handle);
 
     // Select requested object
     selected_handle = handle;
-    if (selected_handle)
-        object_select(RICO_PERSISTENT, selected_handle);
+    if (selected_handle.value)
+        object_select(selected_handle);
 
     selected_print();
 }
 
 void select_next_obj()
 {
-    select_obj(object_next(RICO_PERSISTENT, selected_handle));
+    select_obj(object_next(selected_handle));
 }
 
 void select_prev_obj()
 {
-    select_obj(object_prev(RICO_PERSISTENT, selected_handle));
+    select_obj(object_prev(selected_handle));
 }
 
 void selected_print()
 {
     // Print select object's properties
-    object_print(RICO_PERSISTENT, selected_handle, STR_SLOT_SELECTED_OBJ);
+    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
 }
 
 void selected_translate(struct camera *camera, const struct vec3 *offset)
 {
-    if (!selected_handle)
+    if (!selected_handle.value)
         return;
 
-    enum rico_obj_type selected_type = object_type_get(RICO_PERSISTENT,
-                                                       selected_handle);
+    enum rico_obj_type selected_type = object_type_get(selected_handle);
 
     if (v3_equals(offset, &VEC3_ZERO))
     {
@@ -171,7 +170,7 @@ void selected_translate(struct camera *camera, const struct vec3 *offset)
         {
             camera->position = VEC3_ZERO;
         }
-        object_trans_set(RICO_PERSISTENT, selected_handle, &VEC3_ZERO);
+        object_trans_set(selected_handle, &VEC3_ZERO);
     }
     else
     {
@@ -179,85 +178,85 @@ void selected_translate(struct camera *camera, const struct vec3 *offset)
         {
             camera_translate_world(camera, offset);
         }
-        object_trans(RICO_PERSISTENT, selected_handle, offset);
+        object_trans(selected_handle, offset);
     }
 
-    object_print(RICO_PERSISTENT, selected_handle, STR_SLOT_SELECTED_OBJ);
+    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
 }
 
 void selected_rotate(const struct vec3 *offset)
 {
-    if (!selected_handle)
+    if (!selected_handle.value)
         return;
 
     if (v3_equals(offset, &VEC3_ZERO))
     {
-        object_rot_set(RICO_PERSISTENT, selected_handle, &VEC3_ZERO);
+        object_rot_set(selected_handle, &VEC3_ZERO);
     }
     else
     {
-        object_rot(RICO_PERSISTENT, selected_handle, offset);
+        object_rot(selected_handle, offset);
     }
 
-    object_print(RICO_PERSISTENT, selected_handle, STR_SLOT_SELECTED_OBJ);
+    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
 }
 
 void selected_scale(const struct vec3 *offset)
 {
-    if (!selected_handle)
+    if (!selected_handle.value)
         return;
 
     if (v3_equals(offset, &VEC3_ZERO))
     {
-        object_scale_set(RICO_PERSISTENT, selected_handle, &VEC3_ONE);
+        object_scale_set(selected_handle, &VEC3_ONE);
     }
     else
     {
-        object_scale(RICO_PERSISTENT, selected_handle, offset);
+        object_scale(selected_handle, offset);
     }
 
-    object_print(RICO_PERSISTENT, selected_handle, STR_SLOT_SELECTED_OBJ);
+    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
 }
 
 void selected_mesh_next()
 {
-    if (!selected_handle)
+    if (!selected_handle.value)
         return;
 
-    object_mesh_next(RICO_PERSISTENT, selected_handle);
-    object_select(RICO_PERSISTENT, selected_handle);
-    object_print(RICO_PERSISTENT, selected_handle, STR_SLOT_SELECTED_OBJ);
+    object_mesh_next(selected_handle);
+    object_select(selected_handle);
+    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
 }
 
 void selected_mesh_prev()
 {
-    if (!selected_handle)
+    if (!selected_handle.value)
         return;
 
-    object_mesh_prev(RICO_PERSISTENT, selected_handle);
-    object_select(RICO_PERSISTENT, selected_handle);
-    object_print(RICO_PERSISTENT, selected_handle, STR_SLOT_SELECTED_OBJ);
+    object_mesh_prev(selected_handle);
+    object_select(selected_handle);
+    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
 }
 
 void selected_bbox_reset()
 {
-    if (!selected_handle)
+    if (!selected_handle.value)
         return;
 
-    object_bbox_set(RICO_PERSISTENT, selected_handle, NULL);
-    object_select(RICO_PERSISTENT, selected_handle);
-    object_print(RICO_PERSISTENT, selected_handle, STR_SLOT_SELECTED_OBJ);
+    object_bbox_set(selected_handle, NULL);
+    object_select(selected_handle);
+    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
 }
 
 int selected_duplicate()
 {
-    if (!selected_handle)
+    if (!selected_handle.value)
         return SUCCESS;
 
     enum rico_error err;
 
-    u32 new_obj;
-    err = object_copy(&new_obj, RICO_PERSISTENT, selected_handle, "Duplicate");
+    struct hnd new_obj;
+    err = object_copy(&new_obj, selected_handle, "Duplicate");
     if (err) return err;
 
     select_obj(new_obj);
@@ -266,20 +265,19 @@ int selected_duplicate()
 
 void selected_delete()
 {
-    if (!selected_handle)
+    if (!selected_handle.value)
         return;
 
-    enum rico_obj_type selected_type = object_type_get(RICO_PERSISTENT,
-                                                       selected_handle);
+    enum rico_obj_type selected_type = object_type_get(selected_handle);
     if (selected_type == OBJ_NULL ||
         selected_type == OBJ_STRING_SCREEN)
         return;
 
-    u32 prev = object_prev(RICO_PERSISTENT, selected_handle);
-    if (prev == selected_handle)
-        prev = 0;
+    struct hnd prev = object_prev(selected_handle);
+    if (prev.value == selected_handle.value)
+        prev = HANDLE_NULL;
 
-    object_free(RICO_PERSISTENT, selected_handle);
+    object_free(selected_handle);
     select_obj(prev);
 }
 
@@ -303,10 +301,8 @@ void glref_render(struct camera *camera)
     //--------------------------------------------------------------------------
     // Render objects
     //--------------------------------------------------------------------------
-    object_render_type(RICO_PERSISTENT, OBJ_STATIC, prog_default, camera);
-    object_render_type(RICO_TRANSIENT,  OBJ_STATIC, prog_default, camera);
-    object_render_type(RICO_PERSISTENT, OBJ_STRING_WORLD, prog_default, camera);
-    object_render_type(RICO_TRANSIENT,  OBJ_STRING_WORLD, prog_default, camera);
+    object_render_type(OBJ_STATIC, prog_default, camera);
+    object_render_type(OBJ_STRING_WORLD, prog_default, camera);
 
     //--------------------------------------------------------------------------
     // Axes labels (bboxes)
@@ -316,10 +312,7 @@ void glref_render(struct camera *camera)
     prim_draw_bbox_color(&axis_bbox, &y_axis_transform, &COLOR_GREEN);
     prim_draw_bbox_color(&axis_bbox, &z_axis_transform, &COLOR_BLUE);
 
-    object_render_type(RICO_PERSISTENT, OBJ_STRING_SCREEN, prog_default,
-                       camera);
-    object_render_type(RICO_TRANSIENT,  OBJ_STRING_SCREEN, prog_default,
-                       camera);
+    object_render_type(OBJ_STRING_SCREEN, prog_default, camera);
 }
 void free_glref()
 {
@@ -327,8 +320,8 @@ void free_glref()
     // Clean up
     //--------------------------------------------------------------------------
     // Free all game objects
-    object_free_all(RICO_PERSISTENT);
-    object_free_all(RICO_TRANSIENT);
+    object_free_all(PERSISTENT);
+    object_free_all(TRANSIENT);
 
     //TODO: Free all meshes
 

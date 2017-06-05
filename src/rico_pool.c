@@ -1,11 +1,11 @@
 const char *rico_persist_string[] = {
     RICO_PERSIST_TYPES(GEN_STRING)
 };
-const char *rico_pool_item_type_string[] = {
+const char *rico_pool_itemtype_string[] = {
     RICO_POOL_ITEMTYPES(GEN_STRING)
 };
 
-u32 pool_item_sizes[POOL_ITEMTYPE_COUNT] = {
+u32 pool_item_sizes[POOL_COUNT] = {
     sizeof(struct rico_string),
     sizeof(struct rico_font),
     sizeof(struct rico_texture),
@@ -14,7 +14,7 @@ u32 pool_item_sizes[POOL_ITEMTYPE_COUNT] = {
     sizeof(struct rico_object)
 };
 
-u32 pool_item_fixed_counts[POOL_ITEMTYPE_COUNT] = {
+u32 pool_item_fixed_counts[POOL_COUNT] = {
     STR_SLOT_DYNAMIC,
     0,
     0,
@@ -26,8 +26,8 @@ u32 pool_item_fixed_counts[POOL_ITEMTYPE_COUNT] = {
 internal void pool_print_handles(struct rico_pool *pool);
 
 // TODO: Allocate from heap pool, don't keep calling calloc
-int pool_init(void *mem_block, const char *name, u32 count, u32 size,
-              u32 fixed_count)
+int pool_init(void *mem_block, enum rico_persist persist, const char *name,
+              u32 count, u32 size, u32 fixed_count)
 {
     // TODO: Disallow NULL pools (abusing this for debugging bigchunk atm)
     //RICO_ASSERT(count > 0);
@@ -44,11 +44,12 @@ int pool_init(void *mem_block, const char *name, u32 count, u32 size,
     pool_fixup(pool);
 
     // TODO: Should I use UIDs for handles instead of e.g. 1-100?
-    //       'u32 uid' or 'struct rico_uid *uid'?
+    //       Pools would need hash table to map uid->index
     // Initialize free list
     for (u32 i = 0; i < count; i++)
     {
-        pool->handles[i] = i + 1;
+        pool->handles[i].persist = persist;
+        pool->handles[i].value = i + 1;
     }
 
 #if RICO_DEBUG_POOL
@@ -70,8 +71,8 @@ void pool_free(struct rico_pool *pool, destructor *destruct)
     // DEBUG: Make sure contents of pool have been properly freed
     for (u32 i = 0; i < pool->active; ++i)
     {
-        u32 handle = pool->handles[i];
-        struct rico_uid *uid = pool_read(pool, handle);
+        struct hnd handle = pool->handles[i];
+        struct rico_uid *uid = pool_read(pool, handle.value);
 
         if (uid->uid != UID_NULL)
         {
@@ -85,7 +86,7 @@ void pool_free(struct rico_pool *pool, destructor *destruct)
     pool->uid.uid = UID_NULL;
 }
 
-int pool_handle_alloc(struct rico_pool **pool_ptr, u32 *_handle)
+int pool_handle_alloc(struct rico_pool **pool_ptr, struct hnd *_handle)
 {
     enum rico_error err = SUCCESS;
 
@@ -149,26 +150,26 @@ int pool_handle_alloc(struct rico_pool **pool_ptr, u32 *_handle)
 
 #if RICO_DEBUG_POOL
     printf("[pool][aloc] uid=%d name=%s handle=%d ", pool->uid.uid,
-           pool->uid.name, *_handle);
+           pool->uid.name, _handle->value);
     pool_print_handles(pool);
 #endif
 
     return err;
 }
 
-int pool_handle_free(struct rico_pool *pool, u32 handle)
+int pool_handle_free(struct rico_pool *pool, struct hnd handle)
 {
     RICO_ASSERT(pool);
+    RICO_ASSERT(handle.value);
 
     // Find requested handle
-    u32 i;
-    for (i = 0; i < pool->active; ++i)
-    {
-        if (pool->handles[i] == handle)
-            break;
-    }
+    u32 i = 0;
+    while (pool->handles[i].value != handle.value && i++ < pool->active) {}
 
-    struct rico_uid *uid = pool_read(pool, pool->handles[i]);
+    if (pool->handles[i].value != handle.value)
+        return RICO_ERROR(ERR_POOL_INVALID_HANDLE, "Pool handle not found.");
+
+    struct rico_uid *uid = pool_read(pool, handle.value);
     uid->uid = UID_NULL;
 
     // Move deleted handle to free list
@@ -177,7 +178,7 @@ int pool_handle_free(struct rico_pool *pool, u32 handle)
     //      [0 4 2 3|1 5 6 7 8 9]
 
     // Don't rearrange the fixed sub-pool
-    if (i >= pool->fixed_count)
+    if (handle.value > pool->fixed_count)
     {
         pool->active--;
         if (pool->active > 0)
@@ -189,61 +190,52 @@ int pool_handle_free(struct rico_pool *pool, u32 handle)
 
 #if RICO_DEBUG_POOL
     printf("[pool][free] uid=%d name=%s handle=%d ", pool->uid.uid,
-           pool->uid.name, handle);
+           pool->uid.name, handle.value);
     pool_print_handles(pool);
 #endif
 
     return SUCCESS;
 }
 
-u32 pool_handle_first(struct rico_pool *pool)
+struct hnd pool_handle_first(struct rico_pool *pool)
 {
-    if (pool->active > 0)
+    // Pool is empty, return null
+    if (pool->active == 0)
+        return HANDLE_NULL;
+
+    return pool->handles[0];
+}
+
+struct hnd pool_handle_next(struct rico_pool *pool, struct hnd handle)
+{
+    RICO_ASSERT(pool);
+
+    // Pool is empty, return null
+    if (pool->active == 0)
+        return HANDLE_NULL;
+
+    // Nothing or last item selected, return first item in pool
+    if (!handle.value || handle.value >= pool->active)
         return pool->handles[0];
-    else
-        return 0;
+    
+    // Return next item
+    return pool->handles[handle.value];
 }
 
-u32 pool_handle_next(struct rico_pool *pool, u32 handle)
+struct hnd pool_handle_prev(struct rico_pool *pool, struct hnd handle)
 {
-    if (!handle)
-    {
-        // Nothing selected, return first item in pool or 0 if empty
-        return (pool->active) ? pool->handles[0] : 0;
-    }
+    RICO_ASSERT(pool);
 
-    for (u32 i = 0; i < pool->active; ++i)
-    {
-        if (pool->handles[i] == handle)
-        {
-            if (i + 1 < pool->active)
-                return pool->handles[i + 1];
-            else
-                return pool->handles[0];
-        }
-    }
-    return 0;
-}
+    // Pool is empty, return null
+    if (pool->active == 0)
+        return HANDLE_NULL;
 
-u32 pool_handle_prev(struct rico_pool *pool, u32 handle)
-{
-    if (!handle)
-    {
-        // Nothing selected, return last item in pool or 0 if empty
-        return (pool->active) ? pool->handles[pool->active - 1] : 0;
-    }
-
-    for (u32 i = 0; i < pool->active; ++i)
-    {
-        if (pool->handles[i] == handle)
-        {
-            if (i > 0)
-                return pool->handles[i - 1];
-            else
-                return pool->handles[pool->active - 1];
-        }
-    }
-    return 0;
+    // Nothing or first item selected, return last item in pool
+    if (handle.value <= 1)
+        return pool->handles[pool->active - 1];
+    
+    // Return previous item
+    return pool->handles[handle.value - 2];
 }
 
 #if 0
@@ -307,7 +299,7 @@ DESERIAL(pool_deserialize_0)
         if (pool->active > 0)
         {
             struct rico_uid *uid;
-            u32 handle;
+            struct handle handle;
             for (u32 i = pool->active - 1; i > pool->fixed_count; --i)
             {
                 uid = pool_read(pool, pool->handles[i]);
@@ -343,7 +335,7 @@ internal void pool_print_handles(struct rico_pool *pool)
     //     return;
     // }
 
-    printf("status=");
+    printf("status= ");
 
     if (pool->active == 0)
     {
@@ -354,24 +346,23 @@ internal void pool_print_handles(struct rico_pool *pool)
     // Print fixed sub-pool
     if (pool->fixed_count > 0)
     {
-        printf("FIX[ ");
+        printf("FIXED: ");
         for (u32 i = 0; i < pool->fixed_count; i++)
         {
-            printf("%d ", pool->handles[i]);
+            printf("%d ", pool->handles[i].value);
         }
-        printf("] ");
     }
 
     // Print dynamic sub-pool
-    printf("DYN[ ");
+    printf("DYNAMIC: ");
     for (u32 i = pool->fixed_count; i < pool->active; i++)
     {
-        printf("%d ", pool->handles[i]);
+        printf("%d ", pool->handles[i].value);
     }
-    printf("| ");
+    printf("FREE: ");
     for (u32 i = pool->active; i < pool->count; i++)
     {
-        printf("%d ", pool->handles[i]);
+        printf("%d ", pool->handles[i].value);
     }
     printf("]\n");
 #else

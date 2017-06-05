@@ -38,9 +38,9 @@ void test_geom()
 
 void test_hashtable()
 {
-    u32 blah1 = 123;
-    u32 blah2 = 456;
-    u32 blah3 = 789;
+    struct hnd blah1 = { TRANSIENT, 123 };
+    struct hnd blah2 = { TRANSIENT, 456 };
+    struct hnd blah3 = { TRANSIENT, 789 };
 
     const char bleh1[] = "blah blah";
     const char bleh2[] = "foo foo";
@@ -57,11 +57,11 @@ void test_hashtable()
     hashtable_insert(table, key2, blah2);
     hashtable_insert(table, key3, blah3);
 
-    u32 lookup1 = hashtable_search(table, key1);
-    u32 lookup2 = hashtable_search(table, key2);
-    u32 lookup3 = hashtable_search(table, key3);
+    struct hnd lookup1 = hashtable_search(table, key1);
+    struct hnd lookup2 = hashtable_search(table, key2);
+    struct hnd lookup3 = hashtable_search(table, key3);
 
-    RICO_ASSERT(lookup1 == blah1);
-    RICO_ASSERT(lookup2 == blah2);
-    RICO_ASSERT(lookup3 == blah3);
+    RICO_ASSERT(lookup1.value == blah1.value);
+    RICO_ASSERT(lookup2.value == blah2.value);
+    RICO_ASSERT(lookup3.value == blah3.value);
 }

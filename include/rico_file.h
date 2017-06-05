@@ -13,6 +13,7 @@
 struct rico_file {
     FILE *fs;
     u32 version;
+    u32 next_uid;
     u32 cereal_index;
     const char *filename;
 };

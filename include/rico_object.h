@@ -15,8 +15,8 @@ struct rico_object {
     struct mat4 transform_inverse;
 
     //TODO: Support multiple meshes and textures
-    u32 mesh;
-    u32 material;
+    struct hnd mesh;
+    struct hnd material;
 
     struct bbox bbox;
 };
@@ -33,59 +33,58 @@ enum rico_obj_type {
 };
 extern const char *rico_obj_type_string[];
 
-int object_create(u32 *_handle, enum rico_persist persist, const char *name,
-                  enum rico_obj_type type, u32 mesh, u32 material,
-                  const struct bbox *bbox, bool serialize);
-int object_copy(u32 *_handle, enum rico_persist persist, u32 handle,
+int object_create(struct hnd *_handle, enum rico_persist persist,
+                  const char *name, enum rico_obj_type type, struct hnd mesh,
+                  struct hnd material, const struct bbox *bbox,
+                  bool serialize);
+int object_copy(struct hnd *_handle, struct hnd handle,
                 const char *name);
-void object_free(enum rico_persist persist, u32 handle);
+void object_free(struct hnd handle);
 void object_free_all(enum rico_persist persist);
-void object_bbox_recalculate_all(enum rico_persist persist);
-void object_bbox_set(enum rico_persist persist, u32 handle,
+void object_bbox_recalculate_all();
+void object_bbox_set(struct hnd handle,
                      const struct bbox *bbox);
-void object_mesh_set(enum rico_persist persist, u32 handle, u32 mesh,
+void object_mesh_set(struct hnd handle, struct hnd mesh,
                      const struct bbox *bbox);
-void object_mesh_next(enum rico_persist persist, u32 handle);
-void object_mesh_prev(enum rico_persist persist, u32 handle);
-void object_material_set(enum rico_persist persist, u32 handle, u32 material);
-enum rico_obj_type object_type_get(enum rico_persist persist, u32 handle);
-bool object_selectable(enum rico_persist persist, u32 handle);
-u32 object_next(enum rico_persist persist, u32 handle);
-u32 object_prev(enum rico_persist persist, u32 handle);
-void object_select(enum rico_persist persist, u32 handle);
-void object_deselect(enum rico_persist persist, u32 handle);
-void object_trans(enum rico_persist persist, u32 handle, const struct vec3 *v);
-void object_trans_set(enum rico_persist persist, u32 handle,
+void object_mesh_next(struct hnd handle);
+void object_mesh_prev(struct hnd handle);
+void object_material_set(struct hnd handle, struct hnd material);
+enum rico_obj_type object_type_get(struct hnd handle);
+bool object_selectable(struct hnd handle);
+struct hnd object_next(struct hnd handle);
+struct hnd object_prev(struct hnd handle);
+void object_select(struct hnd handle);
+void object_deselect(struct hnd handle);
+void object_trans(struct hnd handle, const struct vec3 *v);
+void object_trans_set(struct hnd handle,
                       const struct vec3 *v);
-const struct vec3 *object_trans_get(enum rico_persist persist, u32 handle);
-void object_rot(enum rico_persist persist, u32 handle, const struct vec3 *v);
-void object_rot_set(enum rico_persist persist, u32 handle,
+const struct vec3 *object_trans_get(struct hnd handle);
+void object_rot(struct hnd handle, const struct vec3 *v);
+void object_rot_set(struct hnd handle,
                     const struct vec3 *v);
-const struct vec3 *object_rot_get(enum rico_persist persist, u32 handle);
-void object_rot_x(enum rico_persist persist, u32 handle, float deg);
-void object_rot_x_set(enum rico_persist persist, u32 handle, float deg);
-void object_rot_y(enum rico_persist persist, u32 handle, float deg);
-void object_rot_y_set(enum rico_persist persist, u32 handle, float deg);
-void object_rot_z(enum rico_persist persist, u32 handle, float deg);
-void object_rot_z_set(enum rico_persist persist, u32 handle, float deg);
-void object_scale(enum rico_persist persist, u32 handle, const struct vec3 *v);
-void object_scale_set(enum rico_persist persist, u32 handle,
+const struct vec3 *object_rot_get(struct hnd handle);
+void object_rot_x(struct hnd handle, float deg);
+void object_rot_x_set(struct hnd handle, float deg);
+void object_rot_y(struct hnd handle, float deg);
+void object_rot_y_set(struct hnd handle, float deg);
+void object_rot_z(struct hnd handle, float deg);
+void object_rot_z_set(struct hnd handle, float deg);
+void object_scale(struct hnd handle, const struct vec3 *v);
+void object_scale_set(struct hnd handle,
                       const struct vec3 *v);
-const struct vec3 *object_scale_get(enum rico_persist persist, u32 handle);
-const struct mat4 *object_transform_get(enum rico_persist persist, u32 handle);
-bool object_collide_ray(float *_dist, enum rico_persist persist, u32 handle,
+const struct vec3 *object_scale_get(struct hnd handle);
+const struct mat4 *object_transform_get(struct hnd handle);
+bool object_collide_ray(float *_dist, struct hnd handle,
                         const struct ray *ray);
-bool object_collide_ray_type(u32 *_handle, float *_dist,
+bool object_collide_ray_type(struct hnd *_handle, float *_dist,
                              enum rico_obj_type type, const struct ray *ray);
-void object_render(enum rico_persist persist, u32 handle,
+void object_render(struct hnd handle,
                    const struct camera *camera);
-void object_render_type(enum rico_persist persist, enum rico_obj_type type,
+void object_render_type(enum rico_obj_type type,
                         const struct program_default *prog,
                         const struct camera *camera);
-int object_print(enum rico_persist persist, u32 handle,
-                 enum rico_string_slot slot);
-void object_to_string(enum rico_persist persist, u32 handle, char *buf,
-                      int buf_count);
+int object_print(struct hnd handle, enum rico_string_slot slot);
+void object_to_string(struct hnd handle, char *buf, int buf_count);
 //SERIAL(object_serialize_0);
 //DESERIAL(object_deserialize_0);
 

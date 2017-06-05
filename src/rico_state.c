@@ -1,4 +1,4 @@
-global const bool load_save_file = false;
+global const bool load_save_file = true;
 global struct rico_chunk *RICO_DEFAULT_CHUNK;
 
 ///|////////////////////////////////////////////////////////////////////////////
@@ -277,7 +277,7 @@ internal int save_file()
 }
 internal void select_first_obj()
 {
-    u32 obj_collided = 0;
+    struct hnd obj_collided = { 0 };
     float dist;
 
     // Camera forward ray v. scene
@@ -360,8 +360,8 @@ int state_update()
                            rico_state_string[state]);
         string_truncate(buf, sizeof(buf), len);
 
-        err = string_init(RICO_TRANSIENT, "STR_STATE", STR_SLOT_EDIT_INFO, 0, 0,
-                          COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
+        err = string_init(TRANSIENT, "STR_STATE", STR_SLOT_EDIT_INFO, 0, 0,
+                          COLOR_DARK_RED_HIGHLIGHT, 0, HANDLE_NULL, buf);
         if (err) return err;
     }
 
@@ -395,9 +395,9 @@ int state_update()
                            ms, mcyc);
         string_truncate(buf, sizeof(buf), len);
 
-        err = string_init(RICO_TRANSIENT, "STR_FPS", STR_SLOT_FPS,
+        err = string_init(TRANSIENT, "STR_FPS", STR_SLOT_FPS,
                           -(FONT_WIDTH * len), 0, COLOR_DARK_RED_HIGHLIGHT, 0,
-                          0, buf);
+                          HANDLE_NULL, buf);
         if (err) return err;
         fps_last_render = last_perfs;
     }
@@ -448,7 +448,8 @@ int state_update()
     string_truncate(buf, sizeof(buf), len);
 
     err = string_init(RICO_TRANSIENT, "STR_VEL", STR_SLOT_DEBUG, 0,
-                      -FONT_HEIGHT, COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
+                      -FONT_HEIGHT, COLOR_DARK_RED_HIGHLIGHT, 0, HANDLE_NULL,
+                      buf);
     if (err) return err;
 #endif
 
@@ -502,13 +503,19 @@ internal int shared_engine_events()
     {
         fps_render = !fps_render;
         if (!fps_render)
-            string_free(RICO_TRANSIENT, STR_SLOT_FPS);
+        {
+            // TODO: How to make this more logical? Maybe STR_SLOT_* should be handles?
+            struct hnd handle;
+            handle.persist = TRANSIENT;
+            handle.value = STR_SLOT_FPS;
+            string_free(handle);
+        }
     }
     // Save and exit
     else if (chord_pressed(ACTION_ENGINE_QUIT))
     {
-        err = string_init(RICO_TRANSIENT, "STR_CONFIRM_QUIT",
-                          STR_SLOT_MENU_QUIT, 600, 400, COLOR_GREEN, 0, 0,
+        err = string_init(TRANSIENT, "STR_CONFIRM_QUIT", STR_SLOT_MENU_QUIT,
+                          600, 400, COLOR_GREEN, 0, HANDLE_NULL,
                           "Are you sure you want to quit?\n" \
                           "                              \n" \
                           "      Yes (Y) or No (N)       ");
@@ -687,7 +694,19 @@ internal int state_play_explore()
 }
 internal int state_edit_cleanup()
 {
-    return string_free(RICO_TRANSIENT, STR_SLOT_SELECTED_OBJ);
+    enum rico_error err = SUCCESS;
+
+    if (!is_edit_state(state))
+    {
+        // TODO: How to make this more logical? Should STR_SLOT_* be handles?
+        struct hnd handle;
+        handle.persist = TRANSIENT;
+        handle.value = STR_SLOT_SELECTED_OBJ;
+        err = string_free(handle);
+        if (err) return err;
+    }
+
+    return err;
 }
 internal int state_edit_translate()
 {
@@ -759,9 +778,9 @@ internal int state_edit_translate()
         int len = snprintf(buf, sizeof(buf), "Trans Delta: %f", trans_delta);
         string_truncate(buf, sizeof(buf), len);
 
-        err = string_init(RICO_TRANSIENT, "STR_EDIT_TRANS_DELTA",
-                          STR_SLOT_EDIT_INFO, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
-                          1000, 0, buf);
+        err = string_init(TRANSIENT, "STR_EDIT_TRANS_DELTA", STR_SLOT_EDIT_INFO,
+                          0, 0, COLOR_DARK_BLUE_HIGHLIGHT, 1000, HANDLE_NULL,
+                          buf);
         if (err) return err;
     }
 
@@ -845,9 +864,9 @@ internal int state_edit_rotate()
         int len = snprintf(buf, sizeof(buf), "Rot Delta: %f", rot_delta);
         string_truncate(buf, sizeof(buf), len);
 
-        err = string_init(RICO_TRANSIENT, "STR_EDIT_ROT_DELTA",
-                          STR_SLOT_EDIT_INFO, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
-                          1000, 0, buf);
+        err = string_init(TRANSIENT, "STR_EDIT_ROT_DELTA", STR_SLOT_EDIT_INFO,
+                          0, 0, COLOR_DARK_BLUE_HIGHLIGHT, 1000, HANDLE_NULL,
+                          buf);
         if (err) return err;
     }
 
@@ -937,9 +956,9 @@ internal int state_edit_scale()
         int len = snprintf(buf, sizeof(buf), "Scale Delta: %f", scale_delta);
         string_truncate(buf, sizeof(buf), len);
 
-        err = string_init(RICO_TRANSIENT, "STR_EDIT_SCALE_DELTA",
-                          STR_SLOT_EDIT_INFO, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
-                          1000, 0, buf);
+        err = string_init(TRANSIENT, "STR_EDIT_SCALE_DELTA", STR_SLOT_EDIT_INFO,
+                          0, 0, COLOR_DARK_BLUE_HIGHLIGHT, 1000, HANDLE_NULL,
+                          buf);
         if (err) return err;
     }
 
@@ -990,14 +1009,24 @@ internal int state_menu_quit()
     // [Y] / [Return]: Save and exit
     if (KEY_PRESSED(SDL_SCANCODE_Y) || KEY_PRESSED(SDL_SCANCODE_RETURN))
     {
-        string_free(RICO_TRANSIENT, STR_SLOT_MENU_QUIT);
+        // TODO: How to make this more logical? Maybe STR_SLOT_* should be handles?
+        struct hnd handle;
+        handle.persist = TRANSIENT;
+        handle.value = STR_SLOT_MENU_QUIT;
+        string_free(handle);
         save_file();
+
         state = STATE_ENGINE_SHUTDOWN;
     }
     // [N] / [Escape]: Return to play mode
     else if (KEY_PRESSED(SDL_SCANCODE_N) || KEY_PRESSED(SDL_SCANCODE_ESCAPE))
     {
-        string_free(RICO_TRANSIENT, STR_SLOT_MENU_QUIT);
+        // TODO: How to make this more logical? Maybe STR_SLOT_* should be handles?
+        struct hnd handle;
+        handle.persist = TRANSIENT;
+        handle.value = STR_SLOT_MENU_QUIT;
+        string_free(handle);
+
         state = STATE_PLAY_EXPLORE;
     }
 
@@ -1056,12 +1085,12 @@ internal int rico_init_chunks()
     //       can't be loaded from the save file.
 
     chunk_pool_counts pool_counts;
-    pool_counts[POOL_ITEMTYPE_STRINGS]   = RICO_POOL_SIZE_STRING;
-    pool_counts[POOL_ITEMTYPE_FONTS]     = RICO_POOL_SIZE_FONT;
-    pool_counts[POOL_ITEMTYPE_TEXTURES]  = RICO_POOL_SIZE_TEXTURE;
-    pool_counts[POOL_ITEMTYPE_MATERIALS] = RICO_POOL_SIZE_MATERIAL;
-    pool_counts[POOL_ITEMTYPE_MESHES]    = RICO_POOL_SIZE_MESH;
-    pool_counts[POOL_ITEMTYPE_OBJECTS]   = RICO_POOL_SIZE_OBJECT;
+    pool_counts[POOL_STRINGS]   = RICO_POOL_SIZE_STRING;
+    pool_counts[POOL_FONTS]     = RICO_POOL_SIZE_FONT;
+    pool_counts[POOL_TEXTURES]  = RICO_POOL_SIZE_TEXTURE;
+    pool_counts[POOL_MATERIALS] = RICO_POOL_SIZE_MATERIAL;
+    pool_counts[POOL_MESHES]    = RICO_POOL_SIZE_MESH;
+    pool_counts[POOL_OBJECTS]   = RICO_POOL_SIZE_OBJECT;
 
     err = chunk_init(&RICO_DEFAULT_CHUNK, "RICO_CHUNK_DEFAULT", &pool_counts);
     if (err) return err;
@@ -1075,7 +1104,7 @@ internal int rico_init_fonts()
     enum rico_error err;
 
     // TODO: Use fixed slots to allocate default resources
-    err = font_init(&RICO_DEFAULT_FONT, RICO_PERSISTENT,
+    err = font_init(&RICO_DEFAULT_FONT, TRANSIENT,
                     "font/courier_new.bff");
     return err;
 }
@@ -1084,12 +1113,12 @@ internal int rico_init_textures()
     enum rico_error err;
 
     // TODO: Use fixed slots to allocate default resources
-    err = texture_load_file(&RICO_DEFAULT_TEXTURE_DIFF, RICO_PERSISTENT,
+    err = texture_load_file(&RICO_DEFAULT_TEXTURE_DIFF, TRANSIENT,
                             "TEXTURE_DEFAULT_DIFF", GL_TEXTURE_2D,
                             "texture/basic_diff.tga", 32);
     if (err) return err;
 
-    err = texture_load_file(&RICO_DEFAULT_TEXTURE_SPEC, RICO_PERSISTENT,
+    err = texture_load_file(&RICO_DEFAULT_TEXTURE_SPEC, TRANSIENT,
                             "TEXTURE_DEFAULT_SPEC", GL_TEXTURE_2D,
                             "texture/basic_spec.tga", 32);
     if (err) return err;
@@ -1097,20 +1126,20 @@ internal int rico_init_textures()
     //--------------------------------------------------------------------------
     // Create textures
     //--------------------------------------------------------------------------
-    u32 handle;
-    err = texture_load_file(&handle, RICO_PERSISTENT, "grass", GL_TEXTURE_2D,
+    struct hnd handle;
+    err = texture_load_file(&handle, TRANSIENT, "grass", GL_TEXTURE_2D,
                             "texture/grass.tga", 32);
     if (err) return err;
 
-    err = texture_load_file(&handle, RICO_PERSISTENT, "bricks", GL_TEXTURE_2D,
+    err = texture_load_file(&handle, TRANSIENT, "bricks", GL_TEXTURE_2D,
                             "texture/clean_bricks.tga", 32);
     if (err) return err;
 
-    err = texture_load_file(&handle, RICO_PERSISTENT, "hello", GL_TEXTURE_2D,
+    err = texture_load_file(&handle, TRANSIENT, "hello", GL_TEXTURE_2D,
                             "texture/hello.tga", 32);
     if (err) return err;
 
-    err = texture_load_file(&handle, RICO_PERSISTENT, "yellow", GL_TEXTURE_2D,
+    err = texture_load_file(&handle, TRANSIENT, "yellow", GL_TEXTURE_2D,
                             "texture/fake_yellow.tga", 32);
     if (err) return err;
 
@@ -1121,7 +1150,7 @@ internal int rico_init_materials()
     enum rico_error err;
 
     // TODO: Use fixed slots to allocate default resources
-    err = material_init(&RICO_DEFAULT_MATERIAL, RICO_PERSISTENT,
+    err = material_init(&RICO_DEFAULT_MATERIAL, TRANSIENT,
                         "MATERIAL_DEFAULT", RICO_DEFAULT_TEXTURE_DIFF,
                         RICO_DEFAULT_TEXTURE_SPEC, 0.5f);
     return err;
@@ -1194,7 +1223,7 @@ internal int rico_init_meshes()
 
     // TODO: Use fixed slot for default mesh (do this for all other defaults as
     //       well).
-    err = mesh_load(&RICO_DEFAULT_MESH, RICO_PERSISTENT, "BBox", MESH_OBJ_WORLD,
+    err = mesh_load(&RICO_DEFAULT_MESH, TRANSIENT, "BBox", MESH_OBJ_WORLD,
                     8, default_vertices, 36, elements, GL_STATIC_DRAW);
     if (err) return err;
 
@@ -1208,28 +1237,28 @@ internal int load_mesh_files()
 
     u32 ticks = SDL_GetTicks();
 
-    err = load_obj_file(RICO_PERSISTENT, "mesh/sphere.ric");
+    err = load_obj_file(TRANSIENT, "mesh/sphere.ric");
     if (err) return err;
 
-    err = mesh_request_by_name(&PRIM_MESH_SPHERE, RICO_PERSISTENT, "Sphere");
+    err = mesh_request_by_name(&PRIM_MESH_SPHERE, TRANSIENT, "Sphere");
     if (err) return err;
 
-    // err = load_obj_file(RICO_PERSISTENT, "mesh/conference.ric");
+    // err = load_obj_file(TRANSIENT, "mesh/conference.ric");
     // if (err) return err;
 
-    err = load_obj_file(RICO_PERSISTENT, "mesh/spawn.ric");
+    err = load_obj_file(TRANSIENT, "mesh/spawn.ric");
     if (err) return err;
 
-    err = load_obj_file(RICO_PERSISTENT, "mesh/door.ric");
+    err = load_obj_file(TRANSIENT, "mesh/door.ric");
     if (err) return err;
 
-    err = load_obj_file(RICO_PERSISTENT, "mesh/welcome_floor.ric");
+    err = load_obj_file(TRANSIENT, "mesh/welcome_floor.ric");
     if (err) return err;
 
-    err = load_obj_file(RICO_PERSISTENT, "mesh/wall_cornertest.ric");
+    err = load_obj_file(TRANSIENT, "mesh/wall_cornertest.ric");
     if (err) return err;
 
-    err = load_obj_file(RICO_PERSISTENT, "mesh/grass.ric");
+    err = load_obj_file(TRANSIENT, "mesh/grass.ric");
     if (err) return err;
 
     u32 ticks2 = SDL_GetTicks();
@@ -1244,12 +1273,12 @@ internal int init_hardcoded_test_chunk()
     //--------------------------------------------------------------------------
     // Create materials
     //--------------------------------------------------------------------------
-    u32 tex_rock;
-    err = texture_request_by_name(&tex_rock, RICO_PERSISTENT, "bricks");
+    struct hnd tex_rock;
+    err = texture_request_by_name(&tex_rock, PERSISTENT, "bricks");
     if (err) return err;
     
-    u32 material_rock;
-    err = material_init(&material_rock, RICO_PERSISTENT, "Rock", tex_rock,
+    struct hnd material_rock;
+    err = material_init(&material_rock, PERSISTENT, "Rock", tex_rock,
                         RICO_DEFAULT_TEXTURE_SPEC, 0.5f);
     if (err) return err;
 
@@ -1258,19 +1287,17 @@ internal int init_hardcoded_test_chunk()
     //--------------------------------------------------------------------------
 
     // Ground
-    u32 obj_ground;
-    err = object_create(&obj_ground, RICO_PERSISTENT, "Ground", OBJ_STATIC,
+    struct hnd obj_ground;
+    err = object_create(&obj_ground, PERSISTENT, "Ground", OBJ_STATIC,
                         RICO_DEFAULT_MESH, material_rock, NULL, true);
     if (err) return err;
-    object_rot_x(RICO_PERSISTENT, obj_ground, -90.0f);
-    object_scale(RICO_PERSISTENT, obj_ground,
-                 &(struct vec3) { 64.0f, 64.0f, 0.001f });
-    object_trans(RICO_PERSISTENT, obj_ground,
-                 &(struct vec3) { 0.0f, -1.0f, 0.0f });
+    object_rot_x(obj_ground, -90.0f);
+    object_scale(obj_ground, &(struct vec3) { 64.0f, 64.0f, 0.001f });
+    object_trans(obj_ground, &(struct vec3) { 0.0f, -1.0f, 0.0f });
 
     // TEST: Create test object for each mesh / primitive
     {
-        u32 arr_objects[RICO_POOL_SIZE_MESH] = { 0 };
+        struct hnd arr_objects[RICO_POOL_SIZE_MESH] = { 0 };
         u32 i = 0;
 
         /*
@@ -1295,10 +1322,10 @@ internal int init_hardcoded_test_chunk()
         */
 
         // Create test object for each primitive
-        err = object_create(&arr_objects[i], RICO_PERSISTENT,
-                            mesh_name(RICO_PERSISTENT, PRIM_MESH_SPHERE),
-                            OBJ_STATIC, PRIM_MESH_SPHERE, RICO_DEFAULT_MATERIAL,
-                            mesh_bbox(RICO_PERSISTENT, PRIM_MESH_SPHERE), true);
+        err = object_create(&arr_objects[i], PERSISTENT,
+                            mesh_name(PRIM_MESH_SPHERE), OBJ_STATIC,
+                            PRIM_MESH_SPHERE, RICO_DEFAULT_MATERIAL,
+                            mesh_bbox(PRIM_MESH_SPHERE), true);
         i++;
         if (err) return err;
 
@@ -1346,6 +1373,12 @@ internal int rico_init()
     rico_init_cereal();
 
     printf("----------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing chunks\n");
+    printf("----------------------------------------------------------\n");
+    err = rico_init_chunks();
+    if (err) return err;
+
+    printf("----------------------------------------------------------\n");
     printf("[MAIN][init] Initializing shaders\n");
     printf("----------------------------------------------------------\n");
     err = rico_init_shaders();
@@ -1356,14 +1389,6 @@ internal int rico_init()
     printf("----------------------------------------------------------\n");
     prim_init(PRIM_SEGMENT);
     prim_init(PRIM_RAY);
-
-    /////////////////////////
-
-    printf("----------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing chunks\n");
-    printf("----------------------------------------------------------\n");
-    err = rico_init_chunks();
-    if (err) return err;
 
     printf("----------------------------------------------------------\n");
     printf("[MAIN][init] Initializing fonts\n");
@@ -1383,10 +1408,6 @@ internal int rico_init()
     err = rico_init_materials();
     if (err) return err;
 
-    // TODO: Load mesh data directly into OpenGL, independant of creating an
-    //       accompanying rico_mesh object. Fixup VAO ids by having a
-    //       mesh_name lookup table. Load meshes into VRAM as necessary if
-    //       they aren't found in the lookup table.
     printf("----------------------------------------------------------\n");
     printf("[MAIN][init] Initializing meshes\n");
     printf("----------------------------------------------------------\n");
@@ -1408,19 +1429,27 @@ internal int rico_init()
     if (load_save_file)
     {
         printf("----------------------------------------------------------\n");
-        printf("[MAIN][init] Initializing chunks\n");
+        printf("[MAIN][init] Loading chunks\n");
         printf("----------------------------------------------------------\n");
         struct rico_file file;
         err = rico_file_open_read(&file, "chunks/cereal.bin");
         if (err) return err;
 
-        struct rico_chunk chunk = { 0 };
-        uid_init(&chunk.uid, RICO_UID_CHUNK, "CHUNK_LOADING", false);
-        struct rico_chunk *chunk_ptr = &chunk;
+        RICO_ASSERT(next_uid < UID_BASE);
+        RICO_ASSERT(next_uid < file.next_uid);
+        next_uid = file.next_uid;
+
+        struct rico_chunk tmp_chunk = { 0 };
+        uid_init(&tmp_chunk.uid, RICO_UID_CHUNK, "CHUNK_LOADING", false);
+
+        struct rico_chunk *chunk_ptr = &tmp_chunk;
         err = rico_deserialize(&chunk_ptr, &file);
         rico_file_close(&file);
         if (err) return err;
 
+        // TODO: Fix the default settings below
+        RICO_ASSERT(0);
+#if 0
         // TODO: Use fixed slots, or find by name and load if don't exist?
         RICO_DEFAULT_FONT = 1;
         RICO_DEFAULT_TEXTURE_DIFF = 1;
@@ -1428,11 +1457,15 @@ internal int rico_init()
         RICO_DEFAULT_MATERIAL = 1;
         RICO_DEFAULT_MESH = 1;
         RICO_DEFAULT_OBJECT = 1;
+#endif
 
         chunk_active_set(chunk_ptr);
     }
     else
     {
+        RICO_ASSERT(next_uid < UID_BASE);
+        next_uid = UID_BASE;
+
         printf("----------------------------------------------------------\n");
         printf("[MAIN][init] Loading hard-coded test chunk\n");
         printf("----------------------------------------------------------\n");

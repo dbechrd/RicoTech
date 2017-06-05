@@ -48,8 +48,9 @@ int rico_file_open_write(struct rico_file *_file, const char *filename,
     //       override static objects' positions, states, etc.
 
     // File signature and version
-    fwrite(SIGNATURE,       SIGNATURE_SIZE,         1, _file->fs);
-    fwrite(&_file->version, sizeof(_file->version), 1, _file->fs);
+    fwrite(SIGNATURE,        SIGNATURE_SIZE,          1, _file->fs);
+    fwrite(&_file->version,  sizeof(_file->version),  1, _file->fs);
+    fwrite(&_file->next_uid, sizeof(_file->next_uid), 1, _file->fs);
 
     return err;
 }
@@ -106,6 +107,9 @@ int rico_file_open_read(struct rico_file *_file, const char *filename)
                           "Unsupported file version %d in file %s",
                           _file->version, filename);
     }
+    
+    // Next available uid
+    fread(&_file->next_uid, sizeof(_file->next_uid), 1, _file->fs);
 
     _file->cereal_index = _file->version - RICO_FILE_VERSION_MINIMUM_SUPPORTED;
     _file->filename = filename;

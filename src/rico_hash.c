@@ -30,14 +30,14 @@ inline u32 hash_code(struct hash_table *table, hash_key key)
 }
 
 // TODO: Replace linear search/insert with quadratic if necessary
-u32 hashtable_search(struct hash_table *table, hash_key key)
+struct hnd hashtable_search(struct hash_table *table, hash_key key)
 {
     u32 start_index = hash_code(table, key);
     u32 index = start_index;
 
     // Initial check to keep loop clean
-    if (table->slots[index].handle == 0)
-        return 0;
+    if (!table->slots[index].handle.value)
+        return HANDLE_NULL;
 
     while (1)
     {
@@ -49,25 +49,27 @@ u32 hashtable_search(struct hash_table *table, hash_key key)
         index = ++index % table->count;
 
         // Empty slot or back at start; not found
-        if (table->slots[index].handle == 0 || index == start_index)
-            return 0;
+        if (!table->slots[index].handle.value || index == start_index)
+            return HANDLE_NULL;
     }
 }
 
-u32 hashtable_search_by_name(struct hash_table *table, const char *name)
+struct hnd hashtable_search_by_name(struct hash_table *table,
+                                       const char *name)
 {
     hash_key key = hashgen_str(name);
-    u32 handle = hashtable_search(table, key);
+    struct hnd handle = hashtable_search(table, key);
     return handle;
 }
 
 // TODO: Replace linear search/insert with quadratic if necessary
-int hashtable_insert(struct hash_table *table, hash_key key, u32 handle)
+int hashtable_insert(struct hash_table *table, hash_key key,
+                     struct hnd handle)
 {
     u32 start_index = hash_code(table, key);
     u32 index = start_index;
 
-    while (table->slots[index].handle != 0 && table->slots[index].key != key)
+    while (table->slots[index].handle.value && table->slots[index].key != key)
     {
         // Next slot
         index = ++index % table->count;
@@ -100,7 +102,7 @@ bool hashtable_delete(struct hash_table *table, hash_key key)
     u32 index = start_index;
 
     // Initial check to keep loop clean
-    if (table->slots[index].handle == 0)
+    if (!table->slots[index].handle.value)
         return false;
 
     while (1)
@@ -109,7 +111,7 @@ bool hashtable_delete(struct hash_table *table, hash_key key)
         if (table->slots[index].key == key)
         {
             table->slots[index].key = 0;
-            table->slots[index].handle = 0;
+            table->slots[index].handle = HANDLE_NULL;
             return true;
         }
 
@@ -117,7 +119,7 @@ bool hashtable_delete(struct hash_table *table, hash_key key)
         index = ++index % table->count;
 
         // Empty slot or back at start; not found
-        if (table->slots[index].handle == 0 || index == start_index)
+        if (!table->slots[index].handle.value || index == start_index)
             return false;
     }
 }

@@ -1,14 +1,14 @@
 const u32 RICO_TEXTURE_SIZE = sizeof(struct rico_texture);
 
-u32 RICO_DEFAULT_TEXTURE_DIFF = 0;
-u32 RICO_DEFAULT_TEXTURE_SPEC = 0;
+struct hnd RICO_DEFAULT_TEXTURE_DIFF = { 0 };
+struct hnd RICO_DEFAULT_TEXTURE_SPEC = { 0 };
 
 internal inline struct rico_pool **texture_pool_ptr(enum rico_persist persist)
 {
     struct rico_chunk *chunk = chunk_active();
     RICO_ASSERT(chunk);
-    RICO_ASSERT(chunk->pools[POOL_ITEMTYPE_TEXTURES][persist]);
-    return &chunk->pools[POOL_ITEMTYPE_TEXTURES][persist];
+    RICO_ASSERT(chunk->pools[persist][POOL_TEXTURES]);
+    return &chunk->pools[persist][POOL_TEXTURES];
 }
 
 internal inline struct rico_pool *texture_pool(enum rico_persist persist)
@@ -16,10 +16,10 @@ internal inline struct rico_pool *texture_pool(enum rico_persist persist)
     return *texture_pool_ptr(persist);
 }
 
-internal inline struct rico_texture *texture_find(enum rico_persist persist,
-                                                  u32 handle)
+internal inline struct rico_texture *texture_find(struct hnd handle)
 {
-    struct rico_texture *texture = pool_read(texture_pool(persist), handle);
+    struct rico_texture *texture = pool_read(texture_pool(handle.persist),
+                                             handle.value);
     RICO_ASSERT(texture);
     return texture;
 }
@@ -28,9 +28,9 @@ internal int build_texture(struct rico_texture *tex, const void *pixels);
 
 // TODO: Do proper reference counting, this function is stupid. Need to save
 //       filename for that to work (how to track load_pixels calls?)
-u32 texture_request(enum rico_persist persist, u32 handle)
+struct hnd texture_request(struct hnd handle)
 {
-    struct rico_texture *tex = texture_find(persist, handle);
+    struct rico_texture *tex = texture_find(handle);
     tex->ref_count++;
 
 #if RICO_DEBUG_TEXTURE
@@ -41,21 +41,21 @@ u32 texture_request(enum rico_persist persist, u32 handle)
     return handle;
 }
 
-int texture_request_by_name(u32 *_handle, enum rico_persist persist,
+int texture_request_by_name(struct hnd *_handle, enum rico_persist persist,
                             const char *name)
 {
-    u32 handle = hashtable_search_by_name(&global_textures, name);
-    if (!handle)
+    struct hnd handle = hashtable_search_by_name(&global_textures, name);
+    if (!handle.value)
     {
         return RICO_ERROR(ERR_TEXTURE_INVALID_NAME, "Texture not found: %s.",
                           name);
     }
 
-    *_handle = texture_request(persist, handle);
+    *_handle = texture_request(handle);
     return SUCCESS;
 }
 
-int texture_load_file(u32 *_handle, enum rico_persist persist, const char *name,
+int texture_load_file(struct hnd *_handle, enum rico_persist persist, const char *name,
                       GLenum target, const char *filename, u32 bpp)
 {
 #if RICO_DEBUG_TEXTURE
@@ -83,22 +83,21 @@ cleanup:
     return err;
 }
 
-int texture_load_pixels(u32 *_handle, enum rico_persist persist,
+int texture_load_pixels(struct hnd *_handle, enum rico_persist persist,
                         const char *name, GLenum target, u32 width, u32 height,
                         u32 bpp, const void *pixels)
 {
+    enum rico_error err;
+
 #if RICO_DEBUG_TEXTURE
     printf("[ tex][init] name=%s\n", name);
 #endif
 
-    enum rico_error err;
-    *_handle = RICO_DEFAULT_TEXTURE_DIFF;
-
-    u32 handle;
+    struct hnd handle;
     err = pool_handle_alloc(texture_pool_ptr(persist), &handle);
     if (err) return err;
 
-    struct rico_texture *tex = texture_find(persist, handle);
+    struct rico_texture *tex = texture_find(handle);
 
     // Note: If we want to serialize texture data we have to store the filename
     //       or the pixel data in the struct.
@@ -116,7 +115,7 @@ int texture_load_pixels(u32 *_handle, enum rico_persist persist,
     err = hashtable_insert(&global_textures, key, handle);
     if (err) return err;
     
-    *_handle = handle;
+    if(_handle) *_handle = handle;
     return err;
 }
 
@@ -231,9 +230,9 @@ internal int build_texture(struct rico_texture *tex, const void *pixels)
     return SUCCESS;
 }
 
-void texture_free(enum rico_persist persist, u32 handle)
+void texture_free(struct hnd handle)
 {
-    struct rico_texture *tex = texture_find(persist, handle);
+    struct rico_texture *tex = texture_find(handle);
     if (tex->ref_count > 0)
         tex->ref_count--;
 
@@ -261,26 +260,26 @@ void texture_free(enum rico_persist persist, u32 handle)
     glDeleteTextures(1, &tex->gl_id);
 
     tex->uid.uid = UID_NULL;
-    pool_handle_free(texture_pool(persist), handle);
+    pool_handle_free(texture_pool(handle.persist), handle);
 }
 
-const char *texture_name(enum rico_persist persist, u32 handle)
+const char *texture_name(struct hnd handle)
 {
-    struct rico_texture *tex = texture_find(persist, handle);
+    struct rico_texture *tex = texture_find(handle);
     return tex->uid.name;
 }
 
-void texture_bind(enum rico_persist persist, u32 handle, GLenum texture_unit)
+void texture_bind(struct hnd handle, GLenum texture_unit)
 {
     // TODO: When is this useful in the context of this application?
-    struct rico_texture *tex = texture_find(persist, handle);
+    struct rico_texture *tex = texture_find(handle);
     glActiveTexture(texture_unit);
     glBindTexture(tex->gl_target, tex->gl_id);
 }
 
-void texture_unbind(enum rico_persist persist, u32 handle, GLenum texture_unit)
+void texture_unbind(struct hnd handle, GLenum texture_unit)
 {
-    struct rico_texture *tex = texture_find(persist, handle);
+    struct rico_texture *tex = texture_find(handle);
     glActiveTexture(texture_unit);
     glBindTexture(tex->gl_target, 0);
 }

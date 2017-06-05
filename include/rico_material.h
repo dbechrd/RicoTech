@@ -6,25 +6,26 @@ struct rico_material {
     struct rico_uid uid;
     u32 ref_count;
 
-    u32 tex_diffuse;
-    u32 tex_specular;
+    struct hnd tex_diffuse;
+    struct hnd tex_specular;
 
     float shiny;
 };
 extern const u32 RICO_MATERIAL_SIZE;
 
-extern u32 RICO_DEFAULT_MATERIAL;
+extern struct hnd RICO_DEFAULT_MATERIAL;
 
-u32 material_request(enum rico_persist persist, u32 handle);
-int material_request_by_name(u32 *_handle, enum rico_persist persist,
+struct hnd material_request(struct hnd handle);
+int material_request_by_name(struct hnd *_handle, enum rico_persist persist,
                              const char *name);
-int material_init(u32 *_handle, enum rico_persist persist, const char *name,
-                  u32 tex_diffuse, u32 tex_specular, float shiny);
-void material_free(enum rico_persist persist, u32 handle);
-inline const char *material_name(enum rico_persist persist, u32 handle);
-inline float material_shiny(enum rico_persist persist, u32 handle);
-void material_bind(enum rico_persist persist, u32 handle);
-void material_unbind(enum rico_persist persist, u32 handle);
+int material_init(struct hnd *_handle, enum rico_persist persist,
+                  const char *name, struct hnd tex_diffuse,
+                  struct hnd tex_specular, float shiny);
+void material_free(struct hnd handle);
+inline const char *material_name(struct hnd handle);
+inline float material_shiny(struct hnd handle);
+void material_bind(struct hnd handle);
+void material_unbind(struct hnd handle);
 //SERIAL(material_serialize_0);
 //DESERIAL(material_deserialize_0);
 

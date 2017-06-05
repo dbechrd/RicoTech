@@ -3,21 +3,45 @@
 
 //#include "rico_uid.h"
 
-typedef void(destructor)(u32 handle);
+#if 0
+struct handle {
+    union {
+        u32 hnd;
+        struct {
+            u32 persist : 1;
+            u32 middle : 15;
+            u32 value : 16;
+        };
+    };
+};
+#else
+// NOTE: The *only* reason this isn't called "handle" is because Visual Studio's
+//       watch window is retarded and doesn't differentiate between structures
+//       and local variables. Since I had "struct handle handle" it was
+//       impossible to debug pool handle tables. Eventually, I might just
+//       replace handles altogether with rico_uid.
+struct hnd {
+    u32 persist : 1;
+    u32 value : 31;
+};
+#endif
+const struct hnd HANDLE_NULL = { 0 };
 
 struct rico_pool {
     struct rico_uid uid;
-    u32 count;          // number of elements
-    u32 size;           // size of each element
-    u32 fixed_count;    // number of fixed elements
-    u32 active;         // number of elements in use
-    u32 *handles;       // pool handles
-    void *data;         // element pool
+    u32 count;              // number of elements
+    u32 size;               // size of each element
+    u32 fixed_count;        // number of fixed elements
+    u32 active;             // number of elements in use
+    struct hnd *handles; // pool handles
+    void *data;             // element pool
 };
 
+typedef void(destructor)(struct hnd handle);
+
 #define RICO_PERSIST_TYPES(f)  \
-    f(RICO_PERSISTENT) \
-    f(RICO_TRANSIENT)  \
+    f(PERSISTENT) \
+    f(TRANSIENT)  \
     f(PERSIST_COUNT)
 
 enum rico_persist {
@@ -26,21 +50,21 @@ enum rico_persist {
 extern const char *rico_persist_string[];
 
 #define RICO_POOL_ITEMTYPES(f) \
-    f(POOL_ITEMTYPE_STRINGS)   \
-    f(POOL_ITEMTYPE_FONTS)     \
-    f(POOL_ITEMTYPE_TEXTURES)  \
-    f(POOL_ITEMTYPE_MATERIALS) \
-    f(POOL_ITEMTYPE_MESHES)    \
-    f(POOL_ITEMTYPE_OBJECTS)   \
-    f(POOL_ITEMTYPE_COUNT)
+    f(POOL_STRINGS)   \
+    f(POOL_FONTS)     \
+    f(POOL_TEXTURES)  \
+    f(POOL_MATERIALS) \
+    f(POOL_MESHES)    \
+    f(POOL_OBJECTS)   \
+    f(POOL_COUNT)
 
 enum rico_pool_item_type {
     RICO_POOL_ITEMTYPES(GEN_LIST)
 };
-extern const char *rico_pool_item_type_string[];
+extern const char *rico_pool_itemtype_string[];
 
-extern u32 pool_item_sizes[POOL_ITEMTYPE_COUNT];
-extern u32 pool_item_fixed_counts[POOL_ITEMTYPE_COUNT];
+extern u32 pool_item_sizes[POOL_COUNT];
+extern u32 pool_item_fixed_counts[POOL_COUNT];
 
 #define POOL_SIZE_HANDLES(count) (count * sizeof(u32))
 #define POOL_SIZE_DATA(count, size) (count * size)
@@ -52,32 +76,32 @@ extern u32 pool_item_fixed_counts[POOL_ITEMTYPE_COUNT];
 #define POOL_OFFSET_DATA(count) (POOL_OFFSET_HANDLES() + \
                                  POOL_SIZE_HANDLES(count))
 
-int pool_init(void *mem_block, const char *name, u32 count, u32 size,
-              u32 fixed_count);
+int pool_init(void *mem_block, enum rico_persist persist, const char *name,
+              u32 count, u32 size, u32 fixed_count);
 void pool_free(struct rico_pool *pool, destructor *destruct);
-int pool_handle_alloc(struct rico_pool **pool_ptr, u32 *_handle);
-int pool_handle_free(struct rico_pool *pool, u32 handle);
-u32 pool_handle_first(struct rico_pool *pool);
-u32 pool_handle_next(struct rico_pool *pool, u32 handle);
-u32 pool_handle_prev(struct rico_pool *pool, u32 handle);
+int pool_handle_alloc(struct rico_pool **pool_ptr, struct hnd *_handle);
+int pool_handle_free(struct rico_pool *pool, struct hnd handle);
+struct hnd pool_handle_first(struct rico_pool *pool);
+struct hnd pool_handle_next(struct rico_pool *pool, struct hnd handle);
+struct hnd pool_handle_prev(struct rico_pool *pool, struct hnd handle);
 //SERIAL(pool_serialize_0);
 //DESERIAL(pool_deserialize_0);
 
 inline void pool_fixup(struct rico_pool *pool)
 {
     // TODO: Could clean this up with PTR_ADD_BYTE macro
-    pool->handles = (u32 *)((u8 *)pool + POOL_OFFSET_HANDLES());
+    pool->handles = (struct hnd *)((u8 *)pool + POOL_OFFSET_HANDLES());
     pool->data = (u8 *)pool + POOL_OFFSET_DATA(pool->count);
 }
 
-inline void *pool_read(const struct rico_pool *pool, u32 handle)
+inline void *pool_read(const struct rico_pool *pool, u32 value)
 {
     RICO_ASSERT(pool);
-    RICO_ASSERT(handle > 0);
-    RICO_ASSERT(handle <= pool->count);
+    RICO_ASSERT(value > 0);
+    RICO_ASSERT(value <= pool->count);
 
-    // Note: Handles are index + 1, 0 is reserved
-    return (void *)&(((char *)pool->data)[pool->size * (handle - 1)]);
+    // Note: Handle values start at 1; 0 is reserved
+    return (void *)&(((char *)pool->data)[pool->size * (value - 1)]);
 }
 
 #endif // RICO_POOL_H

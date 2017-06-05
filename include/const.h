@@ -14,16 +14,16 @@
 #define RICO_DEBUG_ALL_ERRORS_FATAL RICO_DEBUG && 1
 #define RICO_DEBUG_WARN             RICO_DEBUG && 1
 #define RICO_DEBUG_INFO             RICO_DEBUG && 1
-#define RICO_DEBUG_UID              RICO_DEBUG && 1
+#define RICO_DEBUG_UID              RICO_DEBUG && 0
 #define RICO_DEBUG_POOL             RICO_DEBUG && 1
-#define RICO_DEBUG_CHUNK            RICO_DEBUG && 1
-#define RICO_DEBUG_TEXTURE          RICO_DEBUG && 1
+#define RICO_DEBUG_CHUNK            RICO_DEBUG && 0
+#define RICO_DEBUG_TEXTURE          RICO_DEBUG && 0
 #define RICO_DEBUG_MESH             RICO_DEBUG && 1
 #define RICO_DEBUG_OBJECT           RICO_DEBUG && 1
 #define RICO_DEBUG_STRING           RICO_DEBUG && 1
-#define RICO_DEBUG_MATERIAL         RICO_DEBUG && 1
-#define RICO_DEBUG_FONT             RICO_DEBUG && 1
-#define RICO_DEBUG_HASH             RICO_DEBUG && 1
+#define RICO_DEBUG_MATERIAL         RICO_DEBUG && 0
+#define RICO_DEBUG_FONT             RICO_DEBUG && 0
+#define RICO_DEBUG_HASH             RICO_DEBUG && 0
 
 // Memory pools
 #define RICO_POOL_SIZE_STRING           32
@@ -33,6 +33,31 @@
 #define RICO_POOL_SIZE_MESH             128
 #define RICO_POOL_SIZE_OBJECT           128
 #define RICO_POOL_SIZE_OBJECT_TRANSIENT 128
+
+#if 0
+// Handle section flags
+// ------------------------------------------------------
+// | persist | middle             | value               |
+// |       0 | 000 0000 0000 0000 | 0000 0000 0000 0000 |
+// ------------------------------------------------------
+#define FLAG_PERSIST 0x80000000  // 31
+#define FLAG_MIDDLE  0x7FFF0000  // 15
+#define FLAG_HANDLE  0x0000FFFF  // 0
+
+// Handle section get/set
+#define HANDLE_PERSIST(handle) (enum rico_persist)((handle & FLAG_PERSIST) >> 31)
+#define HANDLE_MIDDLE(handle)  ((handle & FLAG_MIDDLE) >> 15)
+#define HANDLE_VALUE(handle)   ((handle & FLAG_HANDLE) >> 0)
+#define HANDLE_PERSIST_SET(handle, val) ((handle & ~FLAG_PERSIST) & (val << 31))
+#define HANDLE_MIDDLE_SET(handle, val)  ((handle & ~FLAG_MIDDLE) & (val << 15))
+#define HANDLE_VALUE_SET(handle, val)   ((handle & ~FLAG_HANDLE) & (val << 0))
+#endif
+
+//#define FLAG_PERSIST 31
+//#define BIT_SET(num, bit, val) (num ^= (-val ^ num) & (1 << bit))
+//#define BIT_GET(num, bit) ((num >> bit) & 1)
+//#define FLAG_PERSIST_SET(handle, persist) BIT_SET(handle, FLAG_PERSIST, persist)
+//#define FLAG_PERSIST_GET(handle)          BIT_GET(handle, FLAG_PERSIST)
 
 //------------------------------------------------------------------------------
 // Rico constants
@@ -154,6 +179,7 @@ enum rico_vbo {
     f(SUCCESS)                      \
     f(ERR_BAD_ALLOC)                \
     f(ERR_POOL_OUT_OF_MEMORY)       \
+    f(ERR_POOL_INVALID_HANDLE)      \
     f(ERR_FILE_WRITE)               \
     f(ERR_FILE_READ)                \
     f(ERR_FILE_SIGNATURE)           \

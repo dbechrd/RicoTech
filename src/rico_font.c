@@ -18,14 +18,14 @@ struct bff_header
     unsigned char StartPoint;
 };
 
-u32 RICO_DEFAULT_FONT = 0;
+struct hnd RICO_DEFAULT_FONT = { 0 };
 
 internal inline struct rico_pool **font_pool_ptr(enum rico_persist persist)
 {
     struct rico_chunk *chunk = chunk_active();
     RICO_ASSERT(chunk);
-    RICO_ASSERT(chunk->pools[POOL_ITEMTYPE_FONTS][persist]);
-    return &chunk->pools[POOL_ITEMTYPE_FONTS][persist];
+    RICO_ASSERT(chunk->pools[persist][POOL_FONTS]);
+    return &chunk->pools[persist][POOL_FONTS];
 }
 
 internal inline struct rico_pool *font_pool(enum rico_persist persist)
@@ -33,27 +33,27 @@ internal inline struct rico_pool *font_pool(enum rico_persist persist)
     return *font_pool_ptr(persist);
 }
 
-internal inline struct rico_font *font_find(enum rico_persist persist,
-                                            u32 handle)
+internal inline struct rico_font *font_find(struct hnd handle)
 {
-    struct rico_font *font = pool_read(font_pool(persist), handle);
+    struct rico_font *font = pool_read(font_pool(handle.persist), handle.value);
     RICO_ASSERT(font);
     return font;
 }
 
-int font_init(u32 *_handle, enum rico_persist persist, const char *filename)
+int font_init(struct hnd *_handle, enum rico_persist persist,
+              const char *filename)
 {
     enum rico_error err;
-    *_handle = RICO_DEFAULT_FONT;
 
 #if RICO_DEBUG_FONT
     printf("[font][init] filename=%s\n", filename);
 #endif
 
-    err = pool_handle_alloc(font_pool_ptr(persist), _handle);
+    struct hnd handle;
+    err = pool_handle_alloc(font_pool_ptr(persist), &handle);
     if (err) return err;
 
-    struct rico_font *font = font_find(persist, *_handle);
+    struct rico_font *font = font_find(handle);
     uid_init(&font->uid, RICO_UID_FONT, filename, false);
 	font->InvertYAxis = false;
 
@@ -106,33 +106,35 @@ int font_init(u32 *_handle, enum rico_persist persist, const char *filename)
     // Store character widths
     memcpy(font->Width, &buffer[WIDTH_DATA_OFFSET], 256);
 
-    u32 handle;
-    err = texture_load_pixels(&handle, persist, filename, GL_TEXTURE_2D, width,
-                              height, bpp, &buffer[MAP_DATA_OFFSET]);
+    struct hnd tex_handle;
+    err = texture_load_pixels(&tex_handle, persist, filename, GL_TEXTURE_2D,
+                              width, height, bpp, &buffer[MAP_DATA_OFFSET]);
     if (err) goto cleanup;
-    font->texture = texture_request(persist, handle);
+    font->texture = texture_request(tex_handle);
+
+    if (_handle) *_handle = handle;
 
 cleanup:
     free(buffer);
     return err;
 }
 
-void font_free(enum rico_persist persist, u32 handle)
+void font_free(struct hnd handle)
 {
-    struct rico_font *font = font_find(persist, handle);
+    struct rico_font *font = font_find(handle);
 
-    // TODO: Use fixed pool slots
-    if (handle == RICO_DEFAULT_FONT)
-        return;
+    // Cleanup: Use fixed pool slots
+    //if (handle == RICO_DEFAULT_FONT)
+    //    return;
 
 #if RICO_DEBUG_FONT
     printf("[font][free] uid=%d name=%s\n", font->uid.uid, font->uid.name);
 #endif
 
-    texture_free(persist, font->texture);
+    texture_free(font->texture);
 
     font->uid.uid = UID_NULL;
-    pool_handle_free(font_pool(persist), handle);
+    pool_handle_free(font_pool(handle.persist), handle);
 }
 
 internal void font_setblend(const struct rico_font *font)
@@ -154,9 +156,10 @@ internal void font_setblend(const struct rico_font *font)
 	}
 }
 
-int font_render(u32 *_mesh, u32 *_texture, enum rico_persist persist,
-                u32 handle, int x, int y, struct col4 bg, const char *text,
-                const char *mesh_name, enum rico_mesh_type type)
+int font_render(struct hnd *_mesh, struct hnd *_texture,
+                struct hnd handle, int x, int y, struct col4 bg,
+                const char *text, const char *mesh_name,
+                enum rico_mesh_type type)
 {
     // Persistent buffers for font rendering
     local struct mesh_vertex vertices[BFG_MAXSTRING * 4];
@@ -168,9 +171,9 @@ int font_render(u32 *_mesh, u32 *_texture, enum rico_persist persist,
 
     enum rico_error err;
 
-    if (!handle) handle = RICO_DEFAULT_FONT;
+    if (!handle.value) handle = RICO_DEFAULT_FONT;
 
-    struct rico_font *font = font_find(persist, handle);
+    struct rico_font *font = font_find(handle);
     RICO_ASSERT(font->uid.uid != UID_NULL);
 
     //font_setblend(font);
@@ -269,8 +272,8 @@ int font_render(u32 *_mesh, u32 *_texture, enum rico_persist persist,
         cur_x += xOffset;
     }
 
-    u32 mesh_handle;
-    err = mesh_load(&mesh_handle, persist, mesh_name, type, idx_vertex,
+    struct hnd mesh_handle;
+    err = mesh_load(&mesh_handle, handle.persist, mesh_name, type, idx_vertex,
                     vertices, idx_element, elements, GL_STATIC_DRAW);
     if (err) goto cleanup;
     

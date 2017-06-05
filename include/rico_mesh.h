@@ -50,21 +50,21 @@ struct mesh_vertex {
     //GLubyte specular[4];
 };
 
-extern u32 RICO_DEFAULT_MESH;
+extern struct hnd RICO_DEFAULT_MESH;
 
-u32 mesh_request(enum rico_persist persist, u32 handle);
-int mesh_request_by_name(u32 *_handle, enum rico_persist persist,
+struct hnd mesh_request(struct hnd handle);
+int mesh_request_by_name(struct hnd *_handle, enum rico_persist persist,
                          const char *name);
-u32 mesh_next(enum rico_persist persist, u32 handle);
-u32 mesh_prev(enum rico_persist persist, u32 handle);
-int mesh_load(u32 *_handle, enum rico_persist persist, const char *name,
+struct hnd mesh_next(struct hnd handle);
+struct hnd mesh_prev(struct hnd handle);
+int mesh_load(struct hnd *_handle, enum rico_persist persist, const char *name,
               enum rico_mesh_type type, u32 vertex_count,
               const struct mesh_vertex *vertex_data, u32 element_count,
               const GLuint *element_data, GLenum hint);
-void mesh_free(enum rico_persist persist, u32 handle);
-const char *mesh_name(enum rico_persist persist, u32 handle);
-const struct bbox *mesh_bbox(enum rico_persist persist, u32 handle);
-void mesh_update(enum rico_persist persist, u32 handle);
-void mesh_render(enum rico_persist persist, u32 handle);
+void mesh_free(struct hnd handle);
+const char *mesh_name(struct hnd handle);
+const struct bbox *mesh_bbox(struct hnd handle);
+void mesh_update(struct hnd handle);
+void mesh_render(struct hnd handle);
 
 #endif // RICO_MESH_H

@@ -4,7 +4,7 @@
 // IMPORTANT: *DO NOT* add pointers in this struct, it will break cereal!
 struct rico_string {
     struct rico_uid uid;
-    u32 obj_handle;
+    struct hnd object;
     u32 lifespan;
 };
 extern const u32 RICO_STRING_SIZE;
@@ -26,8 +26,8 @@ extern const char *rico_string_slot_string[];
 
 int string_init(enum rico_persist persist, const char *name,
                 enum rico_string_slot slot, float x, float y, struct col4 color,
-                u32 lifespan, u32 font, const char *text);
-int string_free(enum rico_persist persist, u32 handle);
+                u32 lifespan, struct hnd font, const char *text);
+int string_free(struct hnd handle);
 int string_update(r64 dt);
 
 #endif // RICO_STRING_H

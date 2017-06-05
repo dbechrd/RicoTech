@@ -12,8 +12,8 @@ enum rico_prim {
 };
 //extern const char *rico_prim_string[];
 
-extern u32 PRIM_MESH_BBOX;
-extern u32 PRIM_MESH_SPHERE;
+struct hnd PRIM_MESH_BBOX;
+struct hnd PRIM_MESH_SPHERE;
 
 struct prim_vertex {
     struct vec3 pos;
