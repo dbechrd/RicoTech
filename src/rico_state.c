@@ -254,6 +254,7 @@ internal int save_file()
     err = rico_serialize(chunk, &file);
     rico_file_close(&file);
 
+#if RICO_SAVE_BACKUP
     // Save backup copy
     time_t rawtime = time(NULL);
     struct tm *tm = localtime(&rawtime);
@@ -272,6 +273,7 @@ internal int save_file()
 
     err = rico_serialize(chunk, &backupFile);
     rico_file_close(&backupFile);
+#endif
 
     return err;
 }
@@ -1021,7 +1023,7 @@ internal int state_menu_quit()
     // [N] / [Escape]: Return to play mode
     else if (KEY_PRESSED(SDL_SCANCODE_N) || KEY_PRESSED(SDL_SCANCODE_ESCAPE))
     {
-        // TODO: How to make this more logical? Maybe STR_SLOT_* should be handles?
+        // TODO: How to make this more logical? Should STR_SLOT_* be handles?
         struct hnd handle;
         handle.persist = TRANSIENT;
         handle.value = STR_SLOT_MENU_QUIT;
@@ -1135,6 +1137,7 @@ internal int rico_init_textures()
                             "texture/clean_bricks.tga", 32);
     if (err) return err;
 
+#if 0
     err = texture_load_file(&handle, TRANSIENT, "hello", GL_TEXTURE_2D,
                             "texture/hello.tga", 32);
     if (err) return err;
@@ -1142,6 +1145,7 @@ internal int rico_init_textures()
     err = texture_load_file(&handle, TRANSIENT, "yellow", GL_TEXTURE_2D,
                             "texture/fake_yellow.tga", 32);
     if (err) return err;
+#endif
 
     return err;
 }
@@ -1243,8 +1247,9 @@ internal int load_mesh_files()
     err = mesh_request_by_name(&PRIM_MESH_SPHERE, TRANSIENT, "Sphere");
     if (err) return err;
 
-    // err = load_obj_file(TRANSIENT, "mesh/conference.ric");
-    // if (err) return err;
+#if 0
+    err = load_obj_file(TRANSIENT, "mesh/conference.ric");
+    if (err) return err;
 
     err = load_obj_file(TRANSIENT, "mesh/spawn.ric");
     if (err) return err;
@@ -1254,12 +1259,15 @@ internal int load_mesh_files()
 
     err = load_obj_file(TRANSIENT, "mesh/welcome_floor.ric");
     if (err) return err;
+#endif
 
     err = load_obj_file(TRANSIENT, "mesh/wall_cornertest.ric");
     if (err) return err;
 
+#if 0
     err = load_obj_file(TRANSIENT, "mesh/grass.ric");
     if (err) return err;
+#endif
 
     u32 ticks2 = SDL_GetTicks();
     printf("[PERF][mesh] Meshes loaded in: %d ticks\n", ticks2 - ticks);
@@ -1274,7 +1282,7 @@ internal int init_hardcoded_test_chunk()
     // Create materials
     //--------------------------------------------------------------------------
     struct hnd tex_rock;
-    err = texture_request_by_name(&tex_rock, PERSISTENT, "bricks");
+    err = texture_request_by_name(&tex_rock, TRANSIENT, "bricks");
     if (err) return err;
     
     struct hnd material_rock;
@@ -1372,11 +1380,60 @@ internal int rico_init()
     printf("----------------------------------------------------------\n");
     rico_init_cereal();
 
-    printf("----------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing chunks\n");
-    printf("----------------------------------------------------------\n");
-    err = rico_init_chunks();
-    if (err) return err;
+    if (load_save_file)
+    {
+        printf("----------------------------------------------------------\n");
+        printf("[MAIN][init] Loading chunks\n");
+        printf("----------------------------------------------------------\n");
+        struct rico_file file;
+        err = rico_file_open_read(&file, "chunks/cereal.bin");
+        if (err) return err;
+
+        RICO_ASSERT(next_uid < UID_BASE);
+        RICO_ASSERT(next_uid < file.next_uid);
+        next_uid = file.next_uid;
+
+        struct rico_chunk tmp_chunk = { 0 };
+        uid_init(&tmp_chunk.uid, RICO_UID_CHUNK, "CHUNK_LOADING", false);
+
+        struct rico_chunk *chunk_ptr = &tmp_chunk;
+        err = rico_deserialize(&chunk_ptr, &file);
+        rico_file_close(&file);
+        if (err) return err;
+
+        // TODO: Fix the default settings below
+        //RICO_ASSERT(0);
+#if 0
+        // TODO: Use fixed slots, or find by name and load if don't exist?
+        RICO_DEFAULT_FONT = 1;
+        RICO_DEFAULT_TEXTURE_DIFF = 1;
+        RICO_DEFAULT_TEXTURE_SPEC = 2;
+        RICO_DEFAULT_MATERIAL = 1;
+        RICO_DEFAULT_MESH = 1;
+        RICO_DEFAULT_OBJECT = 1;
+#endif
+
+        chunk_active_set(chunk_ptr);
+    }
+    else
+    {
+        printf("----------------------------------------------------------\n");
+        printf("[MAIN][init] Initializing chunks\n");
+        printf("----------------------------------------------------------\n");
+        err = rico_init_chunks();
+        if (err) return err;
+
+        RICO_ASSERT(next_uid < UID_BASE);
+        next_uid = UID_BASE;
+
+        printf("----------------------------------------------------------\n");
+        printf("[MAIN][init] Loading hard-coded test chunk\n");
+        printf("----------------------------------------------------------\n");
+        err = init_hardcoded_test_chunk();
+        if (err) return err;
+
+        chunk_active_set(RICO_DEFAULT_CHUNK);
+    }
 
     printf("----------------------------------------------------------\n");
     printf("[MAIN][init] Initializing shaders\n");
@@ -1425,55 +1482,6 @@ internal int rico_init()
     printf("----------------------------------------------------------\n");
     err = init_glref();
     if (err) return err;
-
-    if (load_save_file)
-    {
-        printf("----------------------------------------------------------\n");
-        printf("[MAIN][init] Loading chunks\n");
-        printf("----------------------------------------------------------\n");
-        struct rico_file file;
-        err = rico_file_open_read(&file, "chunks/cereal.bin");
-        if (err) return err;
-
-        RICO_ASSERT(next_uid < UID_BASE);
-        RICO_ASSERT(next_uid < file.next_uid);
-        next_uid = file.next_uid;
-
-        struct rico_chunk tmp_chunk = { 0 };
-        uid_init(&tmp_chunk.uid, RICO_UID_CHUNK, "CHUNK_LOADING", false);
-
-        struct rico_chunk *chunk_ptr = &tmp_chunk;
-        err = rico_deserialize(&chunk_ptr, &file);
-        rico_file_close(&file);
-        if (err) return err;
-
-        // TODO: Fix the default settings below
-        RICO_ASSERT(0);
-#if 0
-        // TODO: Use fixed slots, or find by name and load if don't exist?
-        RICO_DEFAULT_FONT = 1;
-        RICO_DEFAULT_TEXTURE_DIFF = 1;
-        RICO_DEFAULT_TEXTURE_SPEC = 2;
-        RICO_DEFAULT_MATERIAL = 1;
-        RICO_DEFAULT_MESH = 1;
-        RICO_DEFAULT_OBJECT = 1;
-#endif
-
-        chunk_active_set(chunk_ptr);
-    }
-    else
-    {
-        RICO_ASSERT(next_uid < UID_BASE);
-        next_uid = UID_BASE;
-
-        printf("----------------------------------------------------------\n");
-        printf("[MAIN][init] Loading hard-coded test chunk\n");
-        printf("----------------------------------------------------------\n");
-        err = init_hardcoded_test_chunk();
-        if (err) return err;
-
-        chunk_active_set(RICO_DEFAULT_CHUNK);
-    }
 
     printf("----------------------------------------------------------\n");
     printf("[MAIN][init] Initializing camera\n");

@@ -17,15 +17,16 @@ int chunk_init(struct rico_chunk **_chunk, const char *name,
     
     // Calculate pool sizes
     u32 pool_sizes[POOL_COUNT];
-    u32 cereal_size = 0;
+    u32 poolhouse_size = 0;
     for (int i = 0; i < POOL_COUNT; ++i)
     {
         u32 pool_size = POOL_SIZE((*pool_counts)[i], pool_item_sizes[i]);
         pool_sizes[i] = pool_size;
-        cereal_size += pool_size;
+        poolhouse_size += pool_size;
     }
-    u32 transient_size = cereal_size;
-    u32 total_size = sizeof(struct rico_chunk) + cereal_size + transient_size;
+    u32 cereal_size = chunk_size + poolhouse_size;
+    u32 transient_size = poolhouse_size;
+    u32 total_size = cereal_size + transient_size;
 
     // TODO: Memory management
     void *mem_block = calloc(1, total_size);
@@ -45,13 +46,17 @@ int chunk_init(struct rico_chunk **_chunk, const char *name,
     // Initialize pools
     u8 *offset = (u8 *)chunk;
     ADD_BYTES(offset, chunk_size);
-    for (int i = 0; i < POOL_COUNT; ++i)
+    for (enum rico_persist persist = 0; persist < PERSIST_COUNT; ++persist)
     {
-        for (enum rico_persist persist = 0; persist < PERSIST_COUNT; ++persist)
+        for (int i = 0; i < POOL_COUNT; ++i)
         {
             chunk->pools[persist][i] = (struct rico_pool *)offset;
             ADD_BYTES(offset, pool_sizes[i]);
-
+#if 0
+            char dbg[32] = { 0 };
+            snprintf(dbg, sizeof(dbg), "%d %d %d\n", persist, i, (int)offset - (int)chunk);
+            OutputDebugStringA(dbg);
+#endif
             char pool_name[32] = { 0 };
             const char *itemtype = rico_pool_itemtype_string[i];
             const char *persisttype = rico_persist_string[persist];
@@ -125,7 +130,7 @@ DESERIAL(chunk_deserialize_0)
 
     // Read chunk size from file so we know how much to allocate, then
     // initialize the chunk properly before calling fread().
-    fread(&tmp_chunk->total_size, sizeof(tmp_chunk->total_size), 1, file->fs);
+    fread(&tmp_chunk->total_size,  sizeof(tmp_chunk->total_size),  1, file->fs);
     fread(&tmp_chunk->cereal_size, sizeof(tmp_chunk->cereal_size), 1, file->fs);
 
     // TODO: Memory management
@@ -149,7 +154,6 @@ DESERIAL(chunk_deserialize_0)
     fread(seek, bytes, 1, file->fs);
 
     // Calculate pool sizes
-    u32 chunk_size = sizeof(struct rico_chunk);
     u32 pool_sizes[POOL_COUNT];
     for (int i = 0; i < POOL_COUNT; ++i)
     {
@@ -159,14 +163,18 @@ DESERIAL(chunk_deserialize_0)
 
     // Fix pool pointers
     u8 *offset = (u8 *)chunk;
-    ADD_BYTES(offset, chunk_size);
-    for (int i = 0; i < POOL_COUNT; ++i)
+    ADD_BYTES(offset, sizeof(struct rico_chunk));
+    for (enum rico_persist persist = 0; persist < PERSIST_COUNT; ++persist)
     {
-        for (enum rico_persist persist = 0; persist < PERSIST_COUNT; ++persist)
+        for (int i = 0; i < POOL_COUNT; ++i)
         {
             chunk->pools[persist][i] = (struct rico_pool *)offset;
             ADD_BYTES(offset, pool_sizes[i]);
-
+#if 0
+            char dbg[32] = { 0 };
+            snprintf(dbg, sizeof(dbg), "%d %d %d\n", persist, i, (int)offset - (int)chunk);
+            OutputDebugStringA(dbg);
+#endif
             if (persist == PERSISTENT)
             {
                 // Fix member pointers
@@ -176,9 +184,9 @@ DESERIAL(chunk_deserialize_0)
             {
                 // Reinitialize transient pools, which aren't stored in save files
                 char pool_name[32];
-                snprintf("%s_%s", sizeof(pool_name),
+                snprintf(pool_name, sizeof(pool_name), "%s_%s",
                          rico_pool_itemtype_string[i],
-                         rico_persist_string[i]);
+                         rico_persist_string[persist]);
 
                 pool_init(chunk->pools[persist][i], persist, pool_name,
                           chunk->pool_counts[i], pool_item_sizes[i],

@@ -41,6 +41,7 @@ int rico_file_open_write(struct rico_file *_file, const char *filename,
     _file->version = version;
     _file->filename = filename;
     _file->cereal_index = version - RICO_FILE_VERSION_MINIMUM_SUPPORTED;
+    _file->next_uid = next_uid;
 
     // TODO: Separate dynamic data from static data. Textures, meshes, and
     //       static objects should be in their own file. Dynamic objects

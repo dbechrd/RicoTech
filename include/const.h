@@ -8,6 +8,9 @@
 #define GL_VERSION_MAJOR 3
 #define GL_VERSION_MINOR 2
 
+// Save file
+#define RICO_SAVE_BACKUP 0
+
 // Debug
 #define RICO_DEBUG 1
 #define RICO_DEBUG_FATAL_ASSERT     RICO_DEBUG && 1
