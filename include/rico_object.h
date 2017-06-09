@@ -33,6 +33,8 @@ enum rico_obj_type {
 };
 extern const char *rico_obj_type_string[];
 
+int object_request_by_name(struct hnd *_handle, enum rico_persist persist,
+                           const char *name);
 int object_create(struct hnd *_handle, enum rico_persist persist,
                   const char *name, enum rico_obj_type type, struct hnd mesh,
                   struct hnd material, const struct bbox *bbox,

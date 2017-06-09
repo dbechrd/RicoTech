@@ -20,7 +20,7 @@ internal inline struct rico_texture *texture_find(struct hnd handle)
 {
     struct rico_texture *texture = pool_read(texture_pool(handle.persist),
                                              handle.value);
-    RICO_ASSERT(texture);
+    RICO_ASSERT(texture->uid.uid);
     return texture;
 }
 
@@ -94,10 +94,9 @@ int texture_load_pixels(struct hnd *_handle, enum rico_persist persist,
 #endif
 
     struct hnd handle;
-    err = pool_handle_alloc(texture_pool_ptr(persist), &handle);
+    struct rico_texture *tex;
+    err = pool_handle_alloc(texture_pool_ptr(persist), &handle, &tex);
     if (err) return err;
-
-    struct rico_texture *tex = texture_find(handle);
 
     // Note: If we want to serialize texture data we have to store the filename
     //       or the pixel data in the struct.
@@ -271,7 +270,6 @@ const char *texture_name(struct hnd handle)
 
 void texture_bind(struct hnd handle, GLenum texture_unit)
 {
-    // TODO: When is this useful in the context of this application?
     struct rico_texture *tex = texture_find(handle);
     glActiveTexture(texture_unit);
     glBindTexture(tex->gl_target, tex->gl_id);
@@ -281,5 +279,49 @@ void texture_unbind(struct hnd handle, GLenum texture_unit)
 {
     struct rico_texture *tex = texture_find(handle);
     glActiveTexture(texture_unit);
+    glBindTexture(tex->gl_target, 0);
+}
+
+void texture_bind_diff(struct hnd handle)
+{
+    struct rico_texture *tex = pool_read(texture_pool(handle.persist),
+                                         handle.value);
+    if (!tex->uid.uid)
+        tex = texture_find(RICO_DEFAULT_TEXTURE_DIFF);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(tex->gl_target, tex->gl_id);
+}
+
+void texture_bind_spec(struct hnd handle)
+{
+    struct rico_texture *tex = pool_read(texture_pool(handle.persist),
+                                         handle.value);
+    if (!tex->uid.uid)
+        tex = texture_find(RICO_DEFAULT_TEXTURE_SPEC);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(tex->gl_target, tex->gl_id);
+}
+
+void texture_unbind_diff(struct hnd handle)
+{
+    struct rico_texture *tex = pool_read(texture_pool(handle.persist),
+                                         handle.value);
+    if (!tex->uid.uid)
+        tex = texture_find(RICO_DEFAULT_TEXTURE_DIFF);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(tex->gl_target, 0);
+}
+
+void texture_unbind_spec(struct hnd handle)
+{
+    struct rico_texture *tex = pool_read(texture_pool(handle.persist),
+                                         handle.value);
+    if (!tex->uid.uid)
+        tex = texture_find(RICO_DEFAULT_TEXTURE_SPEC);
+
+    glActiveTexture(GL_TEXTURE1);
     glBindTexture(tex->gl_target, 0);
 }

@@ -1129,9 +1129,13 @@ internal int rico_init_textures()
     // Create textures
     //--------------------------------------------------------------------------
     struct hnd handle;
+
+    // TODO: Load TRANSIENT handles into hash table?
+#if 0
     err = texture_load_file(&handle, TRANSIENT, "grass", GL_TEXTURE_2D,
                             "texture/grass.tga", 32);
     if (err) return err;
+#endif
 
     err = texture_load_file(&handle, TRANSIENT, "bricks", GL_TEXTURE_2D,
                             "texture/clean_bricks.tga", 32);
@@ -1154,9 +1158,9 @@ internal int rico_init_materials()
     enum rico_error err;
 
     // TODO: Use fixed slots to allocate default resources
-    err = material_init(&RICO_DEFAULT_MATERIAL, TRANSIENT,
-                        "MATERIAL_DEFAULT", RICO_DEFAULT_TEXTURE_DIFF,
-                        RICO_DEFAULT_TEXTURE_SPEC, 0.5f);
+    err = material_init(&RICO_DEFAULT_MATERIAL, TRANSIENT, "MATERIAL_DEFAULT",
+                        RICO_DEFAULT_TEXTURE_DIFF, RICO_DEFAULT_TEXTURE_SPEC,
+                        0.5f);
     return err;
 }
 internal int rico_init_meshes()

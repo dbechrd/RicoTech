@@ -6,6 +6,11 @@ const char *rico_mesh_type_string[] = {
 
 struct hnd RICO_DEFAULT_MESH = { 0 };
 
+internal int build_mesh(struct rico_mesh *mesh, u32 vertex_count,
+                        const struct mesh_vertex *vertex_data,
+                        u32 element_count, const GLuint *element_data,
+                        GLenum hint);
+
 internal inline struct rico_pool **mesh_pool_ptr(enum rico_persist persist)
 {
     struct rico_chunk *chunk = chunk_active();
@@ -22,14 +27,9 @@ internal inline struct rico_pool *mesh_pool(enum rico_persist persist)
 internal inline struct rico_mesh *mesh_find(struct hnd handle)
 {
     struct rico_mesh *mesh = pool_read(mesh_pool(handle.persist), handle.value);
-    RICO_ASSERT(mesh);
+    RICO_ASSERT(mesh->uid.uid);
     return mesh;
 }
-
-internal int build_mesh(struct rico_mesh *mesh, u32 vertex_count,
-                        const struct mesh_vertex *vertex_data,
-                        u32 element_count, const GLuint *element_data,
-                        GLenum hint);
 
 struct hnd mesh_request(struct hnd handle)
 {
@@ -55,27 +55,6 @@ int mesh_request_by_name(struct hnd *_handle, enum rico_persist persist,
 
     *_handle = mesh_request(handle);
     return SUCCESS;
-
-    // Cleanup: Pre hash table lookup
-#if 0
-    u32 first = pool_handle_first(mesh_pool());
-    if (!first) return 0;
-
-    struct handle handle = first;
-    while (1)
-    {
-        // Found it!
-        if (strcmp(mesh_name(handle), name) == 0)
-            break;
-
-        // Keep looking (unless we're back at the start)
-        handle = pool_handle_next(mesh_pool(), handle);
-        if (handle == first)
-            return 0;
-    }
-
-    return mesh_request(handle);
-#endif
 }
 
 enum rico_mesh_type mesh_type_get(struct hnd handle)
@@ -138,10 +117,9 @@ int mesh_load(struct hnd *_handle, enum rico_persist persist, const char *name,
     enum rico_error err;
 
     struct hnd handle;
-    err = pool_handle_alloc(mesh_pool_ptr(persist), &handle);
+    struct rico_mesh *mesh;
+    err = pool_handle_alloc(mesh_pool_ptr(persist), &handle, &mesh);
     if (err) return err;
-
-    struct rico_mesh *mesh = mesh_find(handle);
 
     // Note: If we want to serialize mesh data we have to store the vertex data
     //       and element array in the struct.

@@ -86,7 +86,8 @@ void pool_free(struct rico_pool *pool, destructor *destruct)
     pool->uid.uid = UID_NULL;
 }
 
-int pool_handle_alloc(struct rico_pool **pool_ptr, struct hnd *_handle)
+int pool_handle_alloc(struct rico_pool **pool_ptr, struct hnd *_handle,
+                      void **_item)
 {
     enum rico_error err = SUCCESS;
 
@@ -145,8 +146,8 @@ int pool_handle_alloc(struct rico_pool **pool_ptr, struct hnd *_handle)
     }
     ////////////////////////////////////////////////////////////////////////////
 
-    *_handle = pool->handles[pool->active];
-    pool->active++;
+    *_handle = pool->handles[pool->active++];
+    *_item = pool_read(pool, (*_handle).value);
 
 #if RICO_DEBUG_POOL
     printf("[pool][aloc] uid=%d name=%s handle=%d ", pool->uid.uid,

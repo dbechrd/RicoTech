@@ -29,12 +29,12 @@ const struct hnd HANDLE_NULL = { 0 };
 
 struct rico_pool {
     struct rico_uid uid;
-    u32 count;              // number of elements
-    u32 size;               // size of each element
-    u32 fixed_count;        // number of fixed elements
-    u32 active;             // number of elements in use
-    struct hnd *handles; // pool handles
-    void *data;             // element pool
+    u32 count;            // number of elements
+    u32 size;             // size of each element
+    u32 fixed_count;      // number of fixed elements
+    u32 active;           // number of elements in use
+    struct hnd *handles;  // pool handles
+    u8 *data;             // element pool
 };
 
 typedef void(destructor)(struct hnd handle);
@@ -79,7 +79,8 @@ extern u32 pool_item_fixed_counts[POOL_COUNT];
 int pool_init(void *mem_block, enum rico_persist persist, const char *name,
               u32 count, u32 size, u32 fixed_count);
 void pool_free(struct rico_pool *pool, destructor *destruct);
-int pool_handle_alloc(struct rico_pool **pool_ptr, struct hnd *_handle);
+int pool_handle_alloc(struct rico_pool **pool_ptr, struct hnd *_handle,
+                      void **_item);
 int pool_handle_free(struct rico_pool *pool, struct hnd handle);
 struct hnd pool_handle_first(struct rico_pool *pool);
 struct hnd pool_handle_next(struct rico_pool *pool, struct hnd handle);
@@ -101,7 +102,7 @@ inline void *pool_read(const struct rico_pool *pool, u32 value)
     RICO_ASSERT(value <= pool->count);
 
     // Note: Handle values start at 1; 0 is reserved
-    return (void *)&(((char *)pool->data)[pool->size * (value - 1)]);
+    return (void *)&((pool->data)[pool->size * (value - 1)]);
 }
 
 #endif // RICO_POOL_H

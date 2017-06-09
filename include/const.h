@@ -202,6 +202,9 @@ enum rico_vbo {
     f(ERR_MESH_INVALID_NAME)        \
     f(ERR_TEXTURE_INVALID_NAME)     \
     f(ERR_MATERIAL_INVALID_NAME)    \
+    f(ERR_OBJECT_INVALID_NAME)      \
+    f(ERR_STRING_INVALID_NAME)      \
+    f(ERR_FONT_INVALID_NAME)        \
     f(ERR_HASH_TABLE_FULL)          \
     f(ERR_HASH_INVALID_KEY)         \
     f(ERR_COUNT)

@@ -4,6 +4,8 @@ const char *rico_obj_type_string[] = {
 
 struct hnd RICO_DEFAULT_OBJECT = { 0 };
 
+internal void update_transform(struct rico_object *obj);
+
 internal inline struct rico_pool **object_pool_ptr(enum rico_persistence persist)
 {
     struct rico_chunk *chunk = chunk_active();
@@ -21,10 +23,23 @@ internal inline struct rico_object *object_find(struct hnd handle)
 {
     struct rico_object *object = pool_read(object_pool(handle.persist),
                                            handle.value);
+    RICO_ASSERT(object->uid.uid);
     return object;
 }
 
-internal void update_transform(struct rico_object *obj);
+int object_request_by_name(struct hnd *_handle, enum rico_persist persist,
+                           const char *name)
+{
+    struct hnd handle = hashtable_search_by_name(&global_objects, name);
+    if (!handle.value)
+    {
+        return RICO_ERROR(ERR_OBJECT_INVALID_NAME, "Object not found: %s.",
+                          name);
+    }
+
+    *_handle = handle;
+    return SUCCESS;
+}
 
 int object_create(struct hnd *_handle, enum rico_persist persist,
                   const char *name, enum rico_obj_type type, struct hnd mesh,
@@ -38,10 +53,9 @@ int object_create(struct hnd *_handle, enum rico_persist persist,
 #endif
 
     struct hnd handle;
-    err = pool_handle_alloc(object_pool_ptr(persist), &handle);
+    struct rico_object *obj;
+    err = pool_handle_alloc(object_pool_ptr(persist), &handle, &obj);
     if (err) return err;
-
-    struct rico_object *obj = object_find(handle);
 
     uid_init(&obj->uid, RICO_UID_OBJECT, name, serialize);
     obj->type = type;
@@ -564,14 +578,14 @@ void object_to_string(struct hnd handle, char *buf, int buf_count)
     if (!handle.value)
     {
         len = snprintf(buf, buf_count,
-            "    UID: %d\n" \
-            "   Name: --\n" \
-            "   Type: --\n" \
-            "  Trans: --\n" \
-            "    Rot: --\n" \
-            "  Scale: --\n" \
-            "   Mesh: --\n" \
-            "Texture: --\n",
+            "     UID: %d\n" \
+            "    Name: --\n" \
+            "    Type: --\n" \
+            "   Trans: --\n" \
+            "     Rot: --\n" \
+            "   Scale: --\n" \
+            "    Mesh: --\n" \
+            "Material: --\n",
             UID_NULL);
     }
     else

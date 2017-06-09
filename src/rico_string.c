@@ -19,7 +19,7 @@ internal inline struct rico_string *string_find(struct hnd handle)
 {
     struct rico_string *string = pool_read(string_pool(handle.persist),
                                            handle.value);
-    RICO_ASSERT(string);
+    RICO_ASSERT(string->uid.uid);
     return string;
 }
 
@@ -27,8 +27,22 @@ internal inline struct rico_string *string_find_slot(enum rico_persist persist,
                                                      u32 slot)
 {
     struct rico_string *string = pool_read(string_pool(persist), slot);
-    RICO_ASSERT(string);
+    RICO_ASSERT(string->uid.uid);
     return string;
+}
+
+int string_request_by_name(struct hnd *_handle, enum rico_persist persist,
+                           const char *name)
+{
+    struct hnd handle = hashtable_search_by_name(&global_strings, name);
+    if (!handle.value)
+    {
+        return RICO_ERROR(ERR_STRING_INVALID_NAME, "String not found: %s.",
+                          name);
+    }
+
+    *_handle = handle;
+    return SUCCESS;
 }
 
 int string_init(enum rico_persist persist, const char *name,
@@ -60,17 +74,12 @@ int string_init(enum rico_persist persist, const char *name,
     if (slot == STR_SLOT_DYNAMIC)
     {
         struct hnd handle;
-        err = pool_handle_alloc(string_pool_ptr(persist), &handle);
+        err = pool_handle_alloc(string_pool_ptr(persist), &handle, &str);
         if (err) return err;
-        str = string_find(handle);
     }
     else
     {
-        // TODO: How to make this more logical? Should STR_SLOT_* be handles?
-        struct hnd handle;
-        handle.persist = persist;
-        handle.value = slot;
-        str = string_find(handle);
+        str = pool_read(string_pool(persist), slot);
     }
 
     // TODO: Reuse mesh and material if they are the same
@@ -136,13 +145,12 @@ int string_update(r64 dt)
 
     for (u32 persist = 0; persist < PERSIST_COUNT; ++persist)
     {
+        struct rico_pool *pool = string_pool(persist);
         for (u32 i = 0; i < string_pool(persist)->active; ++i)
         {
-            str = string_find(string_pool(persist)->handles[i]);
+            str = pool_read(pool, pool->handles[i].value);
             if (str->uid.uid == UID_NULL || str->lifespan == 0)
-            {
                 continue;
-            }
 
             // Free strings with expired lifespans
             if (str->lifespan <= delta_ms)

@@ -36,8 +36,21 @@ internal inline struct rico_pool *font_pool(enum rico_persist persist)
 internal inline struct rico_font *font_find(struct hnd handle)
 {
     struct rico_font *font = pool_read(font_pool(handle.persist), handle.value);
-    RICO_ASSERT(font);
+    RICO_ASSERT(font->uid.uid);
     return font;
+}
+
+int font_request_by_name(struct hnd *_handle, enum rico_persist persist,
+                         const char *name)
+{
+    struct hnd handle = hashtable_search_by_name(&global_fonts, name);
+    if (!handle.value)
+    {
+        return RICO_ERROR(ERR_FONT_INVALID_NAME, "Font not found: %s.", name);
+    }
+
+    *_handle = handle;
+    return SUCCESS;
 }
 
 int font_init(struct hnd *_handle, enum rico_persist persist,
@@ -50,10 +63,10 @@ int font_init(struct hnd *_handle, enum rico_persist persist,
 #endif
 
     struct hnd handle;
-    err = pool_handle_alloc(font_pool_ptr(persist), &handle);
+    struct rico_font *font;
+    err = pool_handle_alloc(font_pool_ptr(persist), &handle, &font);
     if (err) return err;
 
-    struct rico_font *font = font_find(handle);
     uid_init(&font->uid, RICO_UID_FONT, filename, false);
 	font->InvertYAxis = false;
 

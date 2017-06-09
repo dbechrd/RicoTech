@@ -30,9 +30,11 @@ int texture_load_pixels(struct hnd *_handle, enum rico_persist persist,
                         u32 bpp, const void *pixels);
 void texture_free(struct hnd handle);
 const char *texture_name(struct hnd handle);
-void texture_bind(struct hnd handle,
-                  GLenum texture_unit);
-void texture_unbind(struct hnd handle,
-                    GLenum texture_unit);
+void texture_bind(struct hnd handle, GLenum texture_unit);
+void texture_unbind(struct hnd handle, GLenum texture_unit);
+void texture_bind_diff(struct hnd handle);
+void texture_bind_spec(struct hnd handle);
+void texture_unbind_diff(struct hnd handle);
+void texture_unbind_spec(struct hnd handle);
 
 #endif // RICO_TEXTURE_H

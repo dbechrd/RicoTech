@@ -19,7 +19,7 @@ internal inline struct rico_material *material_find(struct hnd handle)
 {
     struct rico_material *material = pool_read(material_pool(handle.persist),
                                                handle.value);
-    RICO_ASSERT(material);
+    RICO_ASSERT(material->uid.uid);
     return material;
 }
 
@@ -62,10 +62,10 @@ int material_init(struct hnd *_handle, enum rico_persist persist,
 #endif
 
     struct hnd handle;
-    err = pool_handle_alloc(material_pool_ptr(persist), &handle);
+    struct rico_material *material;
+    err = pool_handle_alloc(material_pool_ptr(persist), &handle, &material);
     if (err) return err;
 
-    struct rico_material *material = material_find(handle);
     uid_init(&material->uid, RICO_UID_MATERIAL, name, true);
     material->tex_diffuse = texture_request(tex_diffuse);
     material->tex_specular = texture_request(tex_specular);
@@ -128,15 +128,19 @@ inline float material_shiny(struct hnd handle)
 void material_bind(struct hnd handle)
 {
     struct rico_material *material = material_find(handle);
-    texture_bind(material->tex_diffuse, GL_TEXTURE0);
-    texture_bind(material->tex_specular, GL_TEXTURE1);
+    RICO_ASSERT(material->uid.uid != UID_NULL);
+
+    texture_bind_diff(material->tex_diffuse);
+    texture_bind_spec(material->tex_specular);
 }
 
 void material_unbind(struct hnd handle)
 {
     struct rico_material *material = material_find(handle);
-    texture_unbind(material->tex_diffuse, GL_TEXTURE0);
-    texture_unbind(material->tex_specular, GL_TEXTURE1);
+    RICO_ASSERT(material->uid.uid != UID_NULL);
+
+    texture_unbind_diff(material->tex_diffuse);
+    texture_unbind_spec(material->tex_specular);
 }
 
 #if 0
