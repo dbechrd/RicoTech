@@ -197,24 +197,32 @@ internal int build_texture(struct rico_texture *tex, const void *pixels)
     | const void *pixels
     *************************************************************************/
     // Tex creation params are dependent on BPP
+    GLenum format_internal;
     GLenum format;
     switch (tex->bpp)
     {
-    case 8: // Greyscale
-        format = GL_RED;
+    case 8: // Greyscale (assume not gamma-corrected???)
+        format          = GL_RED;
+        format_internal = GL_RED;
         break;
     case 24: // RGB
-        format = GL_RGB;
+        format          = GL_RGB;
+        // TODO: Store processed texture data in linear space and change this
+        //       back to GL_RGB.
+        format_internal = GL_SRGB;
         break;
     case 32: // RGBA
-        format = GL_RGBA;
+        format          = GL_RGBA;
+        // TODO: Store processed texture data in linear space and change this
+        //       back to GL_RGBA.
+        format_internal = GL_SRGB_ALPHA;
         break;
     default: // Unsupported BPP
         return RICO_ERROR(ERR_TEXTURE_UNSUPPORTED_BPP, NULL);
     }
 
-    glTexImage2D(tex->gl_target, 0, format, tex->width, tex->height, 0, format,
-                 GL_UNSIGNED_BYTE, pixels);
+    glTexImage2D(tex->gl_target, 0, format_internal, tex->width, tex->height, 0,
+                 format, GL_UNSIGNED_BYTE, pixels);
 
     //--------------------------------------------------------------------------
     // Generate mipmaps

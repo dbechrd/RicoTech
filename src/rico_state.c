@@ -314,6 +314,80 @@ inline bool is_edit_state(enum rico_state state)
             state == STATE_EDIT_TEXTURE ||
             state == STATE_EDIT_MESH);
 }
+inline bool is_paused_state(enum rico_state state)
+{
+    return state == STATE_MENU_QUIT;
+}
+
+// TODO: Move this to camera file
+void temp_camera_update(r64 dt)
+{
+    // Calculate delta velocity
+    // dv' = at;
+    struct vec3 delta_vel = view_acc;
+    v3_scalef(&delta_vel, player_acceleration);
+    if (sprint)      v3_scalef(&delta_vel, sprint_factor);
+    if (camera_slow) v3_scalef(&delta_vel, camera_slow_factor);
+    v3_scalef(&delta_vel, (r32)dt);
+
+    // Update velocity
+    v3_add(&view_vel, &delta_vel);
+
+    // Apply friction (double when slowing down for a more realistic stop)
+    float mag_acc = v3_length(&view_acc);
+    if (mag_acc != 0.0f)
+        v3_scalef(&view_vel, 1.0f - friction_factor);
+    else
+        v3_scalef(&view_vel, 1.0f - friction_factor * 2.0f);
+
+    // Resting check
+    float mag_vel = v3_length(&view_vel);
+    if (mag_vel < VEC3_EPSILON)
+    {
+        view_vel = VEC3_ZERO;
+    }
+
+#if 0
+    // DEBUG: Print velocity
+    char buf[64] = { 0 };
+    int len = snprintf(buf, sizeof(buf), "Vel: %.1f %.1f %.1f", view_vel.x,
+                       view_vel.y, view_vel.z);
+    string_truncate(buf, sizeof(buf), len);
+
+    err = string_init(RICO_TRANSIENT, "STR_VEL", STR_SLOT_DEBUG, 0,
+                      -FONT_HEIGHT, COLOR_DARK_RED_HIGHLIGHT, 0, HANDLE_NULL,
+                      buf);
+    if (err) return err;
+#endif
+
+    // Calculate delta position
+    // dp' = 1/2at^2 + vt
+    struct vec3 half_at_squared = view_acc;
+    v3_scalef(&half_at_squared, 0.5f * (r32)dt * (r32)dt);
+
+    struct vec3 vt = view_vel;
+    v3_scalef(&vt, (r32)dt);
+
+    struct vec3 delta_pos = half_at_squared;
+    v3_add(&delta_pos, &vt);
+
+    if (mouse_lock)
+    {
+        // Update position
+        camera_translate_local(&cam_player, &delta_pos);
+
+        // TODO: Smooth mouse look somehow
+        if (mouse_delta.x != 0 || mouse_delta.y != 0)
+        {
+            struct vec3 delta;
+            delta.x = mouse_delta.x * look_sensitivity_x;
+            delta.y = mouse_delta.y * look_sensitivity_y;
+            camera_rotate(&cam_player, delta.x, delta.y);
+        }
+    }
+
+    camera_update(&cam_player);
+}
 
 int state_update()
 {
@@ -336,6 +410,7 @@ int state_update()
     //| State actions
     ///-------------------------------------------------------------------------
     state_prev = state;
+
     err = state_handlers[state].run();
     if (err) return err;
 
@@ -405,91 +480,27 @@ int state_update()
     }
 
     ///-------------------------------------------------------------------------
-    //| Clear screen
+    //| Update
+    ///-------------------------------------------------------------------------
+    if (!is_paused_state(state))
+    {
+        temp_camera_update(dt);
+        glref_update(dt);
+    }
+
+    // Update debug text
+    string_update(dt);
+
+    ///-------------------------------------------------------------------------
+    //| Render
     ///-------------------------------------------------------------------------
     //glClearColor(0.1f, 0.1f, 0.3f, 1.0f);
     glClearColor(0.46f, 0.70f, 1.0f, 1.0f);
     //glClearDepth(0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    ///-------------------------------------------------------------------------
-    //| Update camera
-    ///-------------------------------------------------------------------------
-
-    //TODO: Only allow sprinting on the ground during normal play (X/Z)
-    // Calculate delta velocity
-    // dv' = at;
-    struct vec3 delta_vel = view_acc;
-    v3_scalef(&delta_vel, player_acceleration);
-    if (sprint)      v3_scalef(&delta_vel, sprint_factor);
-    if (camera_slow) v3_scalef(&delta_vel, camera_slow_factor);
-    v3_scalef(&delta_vel, (r32)dt);
-
-    // Update velocity
-    v3_add(&view_vel, &delta_vel);
-    
-    // Apply friction (double when slowing down for a more realistic stop)
-    float mag_acc = v3_length(&view_acc);
-    if (mag_acc != 0.0f)
-        v3_scalef(&view_vel, 1.0f - friction_factor);
-    else
-        v3_scalef(&view_vel, 1.0f - friction_factor * 2.0f);
-
-    // Resting check
-    float mag_vel = v3_length(&view_vel);
-    if (mag_vel < VEC3_EPSILON)
-    {
-        view_vel = VEC3_ZERO;
-    }
-
-#if 0
-    // DEBUG: Print velocity
-    char buf[64] = { 0 };
-    int len = snprintf(buf, sizeof(buf), "Vel: %.1f %.1f %.1f", view_vel.x,
-                       view_vel.y, view_vel.z);
-    string_truncate(buf, sizeof(buf), len);
-
-    err = string_init(RICO_TRANSIENT, "STR_VEL", STR_SLOT_DEBUG, 0,
-                      -FONT_HEIGHT, COLOR_DARK_RED_HIGHLIGHT, 0, HANDLE_NULL,
-                      buf);
-    if (err) return err;
-#endif
-
-    // Calculate delta position
-    // dp' = 1/2at^2 + vt
-    struct vec3 half_at_squared = view_acc;
-    v3_scalef(&half_at_squared, 0.5f * (r32)dt * (r32)dt);
-
-    struct vec3 vt = view_vel;
-    v3_scalef(&vt, (r32)dt);
-
-    struct vec3 delta_pos = half_at_squared;
-    v3_add(&delta_pos, &vt);
-
-    if (mouse_lock)
-    {
-        // Update position
-        camera_translate_local(&cam_player, &delta_pos);
-
-        // TODO: Smooth mouse look somehow
-        if (mouse_delta.x != 0 || mouse_delta.y != 0)
-        {
-            struct vec3 delta;
-            delta.x = mouse_delta.x * look_sensitivity_x;
-            delta.y = mouse_delta.y * look_sensitivity_y;
-            camera_rotate(&cam_player, delta.x, delta.y);
-        }
-    }
-
-    camera_update(&cam_player);
-
-    ///-------------------------------------------------------------------------
-    //| Render
-    ///-------------------------------------------------------------------------
     // glPolygonMode(GL_FRONT_AND_BACK, cam_player.fill_mode);
     glPolygonMode(GL_FRONT, cam_player.fill_mode);
 
-    glref_update(dt);
     glref_render(&cam_player);
     camera_render(&cam_player);
 
@@ -613,24 +624,6 @@ internal int shared_edit_events()
     {
         state = STATE_PLAY_EXPLORE;
     }
-    // Select next edit mode
-    else if (chord_pressed(ACTION_EDIT_MODE_NEXT))
-    {
-        switch (state)
-        {
-        case STATE_EDIT_TRANSLATE:
-        case STATE_EDIT_ROTATE:
-        case STATE_EDIT_SCALE:
-        case STATE_EDIT_TEXTURE:
-            state++;
-            break;
-        case STATE_EDIT_MESH:
-            state = STATE_EDIT_TRANSLATE;
-            break;
-        default:
-            RICO_ASSERT("WTF");
-        }
-    }
     // Select previous edit mode
     else if (chord_pressed(ACTION_EDIT_MODE_PREVIOUS))
     {
@@ -649,15 +642,33 @@ internal int shared_edit_events()
             RICO_ASSERT("WTF");
         }
     }
-    // Cycle select through objects
-    else if (chord_pressed(ACTION_EDIT_CYCLE))
+    // Select next edit mode
+    else if (chord_pressed(ACTION_EDIT_MODE_NEXT))
     {
-        select_next_obj();
+        switch (state)
+        {
+        case STATE_EDIT_TRANSLATE:
+        case STATE_EDIT_ROTATE:
+        case STATE_EDIT_SCALE:
+        case STATE_EDIT_TEXTURE:
+            state++;
+            break;
+        case STATE_EDIT_MESH:
+            state = STATE_EDIT_TRANSLATE;
+            break;
+        default:
+            RICO_ASSERT("WTF");
+        }
     }
     // Cycle select through objects (in reverse)
     else if (chord_pressed(ACTION_EDIT_CYCLE_REVERSE))
     {
         select_prev_obj();
+    }
+    // Cycle select through objects
+    else if (chord_pressed(ACTION_EDIT_CYCLE))
+    {
+        select_next_obj();
     }
     // Create new object
     else if (chord_pressed(ACTION_EDIT_CREATE_OBJECT))
@@ -1554,14 +1565,14 @@ internal int state_engine_init()
 
     // Editor
     CHORD_2(ACTION_EDIT_SAVE,                       SDL_SCANCODE_LCTRL,   SDL_SCANCODE_S);
-    CHORD_1(ACTION_EDIT_CYCLE,                      SDL_SCANCODE_TAB);    
     CHORD_2(ACTION_EDIT_CYCLE_REVERSE,              SDL_SCANCODE_LSHIFT,  SDL_SCANCODE_TAB);
+    CHORD_1(ACTION_EDIT_CYCLE,                      SDL_SCANCODE_TAB);    
     CHORD_2(ACTION_EDIT_BBOX_RECALCULATE,           SDL_SCANCODE_LSHIFT,  SDL_SCANCODE_B);
-    CHORD_1(ACTION_EDIT_CREATE_OBJECT,              SDL_SCANCODE_INSERT); 
+    CHORD_1(ACTION_EDIT_CREATE_OBJECT,              SDL_SCANCODE_INSERT);
     CHORD_2(ACTION_EDIT_SELECTED_DUPLICATE,         SDL_SCANCODE_LCTRL,   SDL_SCANCODE_D);
-    CHORD_1(ACTION_EDIT_SELECTED_DELETE,            SDL_SCANCODE_DELETE); 
-    CHORD_1(ACTION_EDIT_MODE_NEXT,                  SDL_SCANCODE_KP_0);   
+    CHORD_1(ACTION_EDIT_SELECTED_DELETE,            SDL_SCANCODE_DELETE);
     CHORD_1(ACTION_EDIT_MODE_PREVIOUS,              SDL_SCANCODE_KP_PERIOD);
+    CHORD_1(ACTION_EDIT_MODE_NEXT,                  SDL_SCANCODE_KP_0);
 
     CHORD_1(ACTION_EDIT_TRANSLATE_RESET,            SDL_SCANCODE_0);
     CHORD_1(ACTION_EDIT_TRANSLATE_UP,               SDL_SCANCODE_UP);

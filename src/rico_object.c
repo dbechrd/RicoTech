@@ -463,6 +463,8 @@ void object_render_type(enum rico_obj_type type,
     struct mat4 proj_matrix = camera->proj_matrix;
     struct mat4 view_matrix = camera->view_matrix;
 
+    // TODO: Get the light out of here!!! It should't be updating its position
+    //       in the render function, argh!
     u32 ticks = SDL_GetTicks();
     float light_pos_x = cosf((float)ticks / 2000.0f) * 16.0f;
     float light_pos_z = sinf((float)ticks / 2000.0f) * 16.0f;
@@ -470,8 +472,8 @@ void object_render_type(enum rico_obj_type type,
     struct light_point light;
     light.color    = (struct vec3) { 1.0f, 0.9f, 0.6f };
     light.position = (struct vec3) { light_pos_x, 3.0f, light_pos_z};
-    light.ambient  = (struct vec3) { 0.17f, 0.17f, 0.19f };
-    //light.ambient  = (struct vec3){ 0.07f, 0.07f, 0.09f };
+    //light.ambient  = (struct vec3) { 0.17f, 0.17f, 0.19f };
+    light.ambient  = (struct vec3){ 0.01f, 0.01f, 0.01f };
     light.kc = 1.0f;
     light.kl = 0.05f;
     light.kq = 0.001f;

@@ -13,7 +13,7 @@
 
 // Debug
 #define RICO_DEBUG 1
-#define RICO_DEBUG_FATAL_ASSERT     RICO_DEBUG && 1
+#define RICO_DEBUG_FATAL_ASSERT     RICO_DEBUG && 0
 #define RICO_DEBUG_ALL_ERRORS_FATAL RICO_DEBUG && 1
 #define RICO_DEBUG_WARN             RICO_DEBUG && 1
 #define RICO_DEBUG_INFO             RICO_DEBUG && 1

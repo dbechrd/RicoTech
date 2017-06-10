@@ -278,6 +278,7 @@ void selected_delete()
         prev = HANDLE_NULL;
 
     object_free(selected_handle);
+    selected_handle = HANDLE_NULL;
     select_obj(prev);
 }
 
@@ -289,11 +290,6 @@ void glref_update(r64 dt)
     glUseProgram(prog_default->prog_id);
     glUniform1f(prog_default->u_time, (r32)dt);
     glUseProgram(0);
-
-    //--------------------------------------------------------------------------
-    // Update debug text
-    //--------------------------------------------------------------------------
-    string_update(dt);
 }
 
 void glref_render(struct camera *camera)
