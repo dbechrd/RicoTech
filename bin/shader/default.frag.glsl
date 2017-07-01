@@ -95,6 +95,8 @@ void main()
     gammaColor = ambient + (diffuse + specular) * attenuation;
 
     // Gamma correct
+    // TODO: Don't apply gamma correction to specular maps! (Or.. just get rid
+    //       of specular maps altogether).
     color.rgb = pow(gammaColor.rgb, vec3(1/2.2));
     //color.rgb = gammaColor.rgb;
 

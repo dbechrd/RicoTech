@@ -106,9 +106,27 @@ void notes_casey()
 	//			bounding volume to find the closest point in this particular
 	//			space.
 
+    // Day 055:
+    
+    //      Modulus by power of two:
+    //          HashValue % ArrayCount(HashTable)
+    //          HashValue & (ArrayCount(HashTable) - 1)
+    //
+    //          Subtracting 1 from a power of two gives us a bit mask to perform
+    //          a perfect modulus operation.
 
+    //      Array indexing with pointer arithmetic:
+    //          Item *item = HashTable[HashSlot]
+    //          Item *item = HashTable + HashSlot
 
+    //  1:22:40 Refactoring hash map out of specific struct use-case
+    //  1:36:00 Run-length encoding (RLE) for tile chunks. Split chunks into
+    //          "bands" of empty->filled(+data)->empty->filled(+data)->etc..
 
+    // Day 060:
+
+    //      Alpha destination buffer:
+    //          Allows rendering translucent objects front-to-back??
 
 
 
