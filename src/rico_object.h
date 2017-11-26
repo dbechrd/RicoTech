@@ -1,6 +1,17 @@
 #ifndef RICO_OBJECT_H
 #define RICO_OBJECT_H
 
+#define RICO_OBJ_TYPES(f) \
+    f(OBJ_NULL)           \
+    f(OBJ_STATIC)         \
+    f(OBJ_STRING_WORLD)   \
+    f(OBJ_STRING_SCREEN)
+
+enum rico_obj_type {
+    RICO_OBJ_TYPES(GEN_LIST)
+};
+extern const char *rico_obj_type_string[];
+
 // IMPORTANT: *DO NOT* add pointers in this struct, it will break cereal!
 struct rico_object {
     struct rico_uid uid;
@@ -22,19 +33,7 @@ struct rico_object {
 };
 const u32 RICO_OBJECT_SIZE = sizeof(struct rico_object);
 
-#define RICO_OBJ_TYPES(f) \
-    f(OBJ_NULL)           \
-    f(OBJ_STATIC)         \
-    f(OBJ_STRING_WORLD)   \
-    f(OBJ_STRING_SCREEN)
-
-enum rico_obj_type {
-    RICO_OBJ_TYPES(GEN_LIST)
-};
-extern const char *rico_obj_type_string[];
-
-int object_request_by_name(struct hnd *_handle, enum rico_persist persist,
-                           const char *name);
+int object_request_by_name(struct hnd *_handle, const char *name);
 int object_create(struct hnd *_handle, enum rico_persist persist,
                   const char *name, enum rico_obj_type type, struct hnd mesh,
                   struct hnd material, const struct bbox *bbox,

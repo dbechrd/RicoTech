@@ -1,4 +1,4 @@
-#include "../src/rico.c"
+#include "rico.c"
 
 global SDL_Window *window = NULL;
 global SDL_GLContext context = NULL;
@@ -159,8 +159,6 @@ internal void init_opengl()
     glEnable(GL_BLEND);
 }
 
-#include "3rdparty\CacheLineSize.h"
-
 int mymain()
 {
     enum rico_error err;
@@ -168,8 +166,8 @@ int mymain()
     printf("------------------------------------------------------------\n");
     printf("[MAIN][init] Initializing third party\n");
     printf("------------------------------------------------------------\n");
-    size_t cacheSize = CacheLineSize();
-    printf("Cache line size: %d bytes\n", cacheSize);
+    //size_t cacheSize = CacheLineSize();
+    //printf("Cache line size: %d bytes\n", cacheSize);
     init_stb();
     init_murmurhash3();
     err = init_sdl();

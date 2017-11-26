@@ -21,8 +21,8 @@ enum rico_state {
 extern const char *rico_state_string[];
 
 int state_update();
-inline enum rico_state state_get();
-inline bool is_edit_state(enum rico_state state);
+internal inline enum rico_state state_get();
+internal inline bool is_edit_state(enum rico_state state);
 void init_rico_engine();
 
 #endif // RICO_STATE_H

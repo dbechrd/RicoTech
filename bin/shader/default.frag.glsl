@@ -87,18 +87,10 @@ void main()
                                u_light.kl * light_dist +
                                u_light.kq * (light_dist * light_dist));
 
-    vec3 gammaColor;
-
     // Ambient based on distance from light?
-    //gammaColor = (ambient + diffuse + specular) * attenuation;
+    //color.xyz = (ambient + diffuse + specular) * attenuation;
     // Ambient constant
-    gammaColor = ambient + (diffuse + specular) * attenuation;
-
-    // Gamma correct
-    // TODO: Don't apply gamma correction to specular maps! (Or.. just get rid
-    //       of specular maps altogether).
-    color.rgb = pow(gammaColor.rgb, vec3(1/2.2));
-    //color.rgb = gammaColor.rgb;
+    color.xyz = ambient + (diffuse + specular) * attenuation;
 
     // What is the point of this??
     color.a = 1.0 + (vtx.normal.x * 0.0000001); //texel_diffuse.a;

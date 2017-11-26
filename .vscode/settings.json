@@ -9,11 +9,10 @@
         "include/nuklear/**": true,
         //"include/SDL/**": true,
         "include/stb/**": true
+    },
+    "files.associations": {
+        "*.h": "c",
+        "*.glsl": "shaderlab",
+        "*.H": "cpp"
     }
-,
-"files.associations": {
-    "*.h": "c",
-    "*.glsl": "shaderlab",
-    "*.H": "cpp"
-}
 }

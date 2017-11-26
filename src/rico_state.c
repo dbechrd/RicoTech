@@ -18,7 +18,7 @@ enum rico_action {
     ACTION_CAMERA_RESET,
     ACTION_CAMERA_LOCK_TOGGLE,
     ACTION_CAMERA_WIREFRAME_TOGGLE,
-    
+
     ACTION_MOVE_RIGHT,
     ACTION_MOVE_LEFT,
     ACTION_MOVE_UP,
@@ -78,19 +78,12 @@ enum rico_action {
 typedef u8 rico_key;
 
 struct rico_keychord {
-    union {
-        enum rico_key keys[3];
-        struct {
-            enum rico_key k0;
-            enum rico_key k1;
-            enum rico_key k2;
-        };
-    };
+    rico_key keys[3];
 };
 
-#define CHORD3(k0, k1, k2) (struct rico_keychord) { k0, k1, k2 };
+#define CHORD3(k0, k1, k2) (struct rico_keychord) {{ k0, k1, k2 }};
 #define CHORD2(k0, k1) CHORD3(k0, k1, 0)
-#define CHORD1(k0) CHORD3(k0, 0, 0)
+#define CHORD1(k0)     CHORD3(k0, 0, 0)
 
 #if 0
 struct rico_keysequence {
@@ -184,46 +177,44 @@ global u8 keystate_buffers[2][SDL_NUM_SCANCODES] = { 0 };
 global u8 *keys      = keystate_buffers[0];
 global u8 *keys_prev = keystate_buffers[1];
 
+const u8 RICO_SCANCODE_ALT   = 1;
+const u8 RICO_SCANCODE_CTRL  = 2;
+const u8 RICO_SCANCODE_SHIFT = 3;
+
 #define KEY_IS_DOWN(key) (key == 0 || keys[key] || \
-(key == SDL_SCANCODE_LALT   && keys[SDL_SCANCODE_RALT])   || \
-(key == SDL_SCANCODE_RALT   && keys[SDL_SCANCODE_LALT])   || \
-(key == SDL_SCANCODE_LCTRL  && keys[SDL_SCANCODE_RCTRL])  || \
-(key == SDL_SCANCODE_RCTRL  && keys[SDL_SCANCODE_LCTRL])  || \
-(key == SDL_SCANCODE_LSHIFT && keys[SDL_SCANCODE_RSHIFT]) || \
-(key == SDL_SCANCODE_RSHIFT && keys[SDL_SCANCODE_LSHIFT]))
+(key == RICO_SCANCODE_ALT   && (keys[SDL_SCANCODE_LALT]   || keys[SDL_SCANCODE_RALT]))  || \
+(key == RICO_SCANCODE_CTRL  && (keys[SDL_SCANCODE_LCTRL]  || keys[SDL_SCANCODE_RCTRL])) || \
+(key == RICO_SCANCODE_SHIFT && (keys[SDL_SCANCODE_LSHIFT] || keys[SDL_SCANCODE_RSHIFT])))
 
 #define KEY_WAS_DOWN(key) (key == 0 || keys_prev[key] || \
-(key == SDL_SCANCODE_LALT   && keys_prev[SDL_SCANCODE_RALT])   || \
-(key == SDL_SCANCODE_RALT   && keys_prev[SDL_SCANCODE_LALT])   || \
-(key == SDL_SCANCODE_LCTRL  && keys_prev[SDL_SCANCODE_RCTRL])  || \
-(key == SDL_SCANCODE_RCTRL  && keys_prev[SDL_SCANCODE_LCTRL])  || \
-(key == SDL_SCANCODE_LSHIFT && keys_prev[SDL_SCANCODE_RSHIFT]) || \
-(key == SDL_SCANCODE_RSHIFT && keys_prev[SDL_SCANCODE_LSHIFT]))
+(key == RICO_SCANCODE_ALT   && (keys_prev[SDL_SCANCODE_LALT]   || keys_prev[SDL_SCANCODE_RALT]))  || \
+(key == RICO_SCANCODE_CTRL  && (keys_prev[SDL_SCANCODE_LCTRL]  || keys_prev[SDL_SCANCODE_RCTRL])) || \
+(key == RICO_SCANCODE_SHIFT && (keys_prev[SDL_SCANCODE_LSHIFT] || keys_prev[SDL_SCANCODE_RSHIFT])))
 
 #define KEY_PRESSED(key)  ( KEY_IS_DOWN(key) && !KEY_WAS_DOWN(key))
 #define KEY_RELEASED(key) (!KEY_IS_DOWN(key) &&  KEY_WAS_DOWN(key))
 
 static inline bool chord_is_down(enum rico_action action)
 {
-    RICO_ASSERT(action_chords[action].k0 ||
-                action_chords[action].k1 ||
-                action_chords[action].k2);
+    RICO_ASSERT(action_chords[action].keys[0] ||
+                action_chords[action].keys[1] ||
+                action_chords[action].keys[2]);
 
     // All keys are down
-    return (KEY_IS_DOWN(action_chords[action].k0) &&
-            KEY_IS_DOWN(action_chords[action].k1) &&
-            KEY_IS_DOWN(action_chords[action].k2));
+    return (KEY_IS_DOWN(action_chords[action].keys[0]) &&
+            KEY_IS_DOWN(action_chords[action].keys[1]) &&
+            KEY_IS_DOWN(action_chords[action].keys[2]));
 }
 static inline bool chord_was_down(enum rico_action action)
 {
-    RICO_ASSERT(action_chords[action].k0 ||
-                action_chords[action].k1 ||
-                action_chords[action].k2);
+    RICO_ASSERT(action_chords[action].keys[0] ||
+                action_chords[action].keys[1] ||
+                action_chords[action].keys[2]);
 
     // All keys were down last frame
-    return (KEY_WAS_DOWN(action_chords[action].k0) &&
-            KEY_WAS_DOWN(action_chords[action].k1) &&
-            KEY_WAS_DOWN(action_chords[action].k2));
+    return (KEY_WAS_DOWN(action_chords[action].keys[0]) &&
+            KEY_WAS_DOWN(action_chords[action].keys[1]) &&
+            KEY_WAS_DOWN(action_chords[action].keys[2]));
 }
 static inline bool chord_pressed(enum rico_action action)
 {
@@ -239,6 +230,14 @@ static inline bool chord_released(enum rico_action action)
 // TODO: Where should these functions go?
 internal int save_file()
 {
+    for (int i = 0; i < 10; ++i) {
+        for (int j = 0; j < 10; ++j) {
+            printf("SAVE ");
+        }
+        printf("\n");
+    }
+    fflush(stdout);
+
     enum rico_error err;
 
     struct rico_chunk *chunk = chunk_active();
@@ -302,11 +301,11 @@ struct state_handlers {
 };
 struct state_handlers state_handlers[STATE_COUNT] = { 0 };
 
-inline enum rico_state state_get()
+internal inline enum rico_state state_get()
 {
     return state;
 }
-inline bool is_edit_state(enum rico_state state)
+internal inline bool is_edit_state(enum rico_state state)
 {
     return (state == STATE_EDIT_TRANSLATE ||
             state == STATE_EDIT_ROTATE ||
@@ -314,7 +313,7 @@ inline bool is_edit_state(enum rico_state state)
             state == STATE_EDIT_TEXTURE ||
             state == STATE_EDIT_MESH);
 }
-inline bool is_paused_state(enum rico_state state)
+internal inline bool is_paused_state(enum rico_state state)
 {
     return state == STATE_MENU_QUIT;
 }
@@ -405,7 +404,7 @@ int state_update()
     keys_prev = keys;
     keys = keys_tmp;
     memcpy(keys, SDL_GetKeyboardState(0), SDL_NUM_SCANCODES);
-    
+
     ///-------------------------------------------------------------------------
     //| State actions
     ///-------------------------------------------------------------------------
@@ -529,9 +528,13 @@ internal int shared_engine_events()
     {
         err = string_init(TRANSIENT, "STR_CONFIRM_QUIT", STR_SLOT_MENU_QUIT,
                           600, 400, COLOR_GREEN, 0, HANDLE_NULL,
-                          "Are you sure you want to quit?\n" \
-                          "                              \n" \
-                          "      Yes (Y) or No (N)       ");
+                          "                       \n" \
+                          "  Save and quit?       \n" \
+                          "                       \n" \
+                          "  [Y] Yes              \n" \
+                          "  [N] No               \n" \
+                          "  [Q] Quit w/o saving  \n" \
+                          "                       ");
         if (err) return err;
         state = STATE_MENU_QUIT;
     }
@@ -1042,6 +1045,16 @@ internal int state_menu_quit()
 
         state = STATE_PLAY_EXPLORE;
     }
+    // [Q]: Exit without saving
+    else if (KEY_PRESSED(SDL_SCANCODE_Q))
+    {
+        struct hnd handle;
+        handle.persist = TRANSIENT;
+        handle.value = STR_SLOT_MENU_QUIT;
+        string_free(handle);
+
+        state = STATE_ENGINE_SHUTDOWN;
+    }
 
     return err;
 }
@@ -1259,7 +1272,7 @@ internal int load_mesh_files()
     err = load_obj_file(TRANSIENT, "mesh/sphere.ric");
     if (err) return err;
 
-    err = mesh_request_by_name(&PRIM_MESH_SPHERE, TRANSIENT, "Sphere");
+    err = mesh_request_by_name(&PRIM_MESH_SPHERE, "Sphere");
     if (err) return err;
 
 #if 0
@@ -1297,9 +1310,9 @@ internal int init_hardcoded_test_chunk()
     // Create materials
     //--------------------------------------------------------------------------
     struct hnd tex_rock;
-    err = texture_request_by_name(&tex_rock, TRANSIENT, "bricks");
+    err = texture_request_by_name(&tex_rock, "bricks");
     if (err) return err;
-    
+
     struct hnd material_rock;
     err = material_init(&material_rock, PERSISTENT, "Rock", tex_rock,
                         RICO_DEFAULT_TEXTURE_SPEC, 0.5f);
@@ -1412,7 +1425,7 @@ internal int rico_init()
         uid_init(&tmp_chunk.uid, RICO_UID_CHUNK, "CHUNK_LOADING", false);
 
         struct rico_chunk *chunk_ptr = &tmp_chunk;
-        err = rico_deserialize(&chunk_ptr, &file);
+        err = rico_deserialize((void *)&chunk_ptr, &file);
         rico_file_close(&file);
         if (err) return err;
 
@@ -1491,7 +1504,7 @@ internal int rico_init()
     printf("----------------------------------------------------------\n");
     err = load_mesh_files();
     if (err) return err;
-    
+
     printf("----------------------------------------------------------\n");
     printf("[MAIN][init] Initializing game world\n");
     printf("----------------------------------------------------------\n");
@@ -1533,12 +1546,11 @@ internal int state_engine_init()
     // TODO: Load from config file?
     // Initialize key map
 
-#define CHORD_3(action, k0, k1, k2) action_chords[action] = \
-(struct rico_keychord) { k0, k1, k2 }
-#define CHORD_2(action, k0, k1)     action_chords[action] = \
-(struct rico_keychord) { k0, k1, 0 }
-#define CHORD_1(action, k0)         action_chords[action] = \
-(struct rico_keychord) { k0, 0, 0 }
+    //struct rico_keychord blah = (struct rico_keychord) { 1, 2, 3 }
+
+#define CHORD_3(action, k0, k1, k2) action_chords[action] = CHORD3(k0, k1, k2)
+#define CHORD_2(action, k0, k1)     action_chords[action] = CHORD2(k0, k1)
+#define CHORD_1(action, k0)         action_chords[action] = CHORD1(k0)
 
     // Engine
     CHORD_1(ACTION_ENGINE_DEBUG_LIGHTING_TOGGLE,    SDL_SCANCODE_L);
@@ -1547,7 +1559,7 @@ internal int state_engine_init()
     CHORD_1(ACTION_ENGINE_FPS_TOGGLE,               SDL_SCANCODE_2);
     CHORD_1(ACTION_ENGINE_MOUSE_LOCK_TOGGLE,        SDL_SCANCODE_M);
     CHORD_1(ACTION_ENGINE_QUIT,                     SDL_SCANCODE_ESCAPE);
-    
+
     // Camera
     CHORD_1(ACTION_CAMERA_SLOW_TOGGLE,              SDL_SCANCODE_R);
     CHORD_1(ACTION_CAMERA_RESET,                    SDL_SCANCODE_F);
@@ -1561,15 +1573,15 @@ internal int state_engine_init()
     CHORD_1(ACTION_MOVE_DOWN,                       SDL_SCANCODE_Q);
     CHORD_1(ACTION_MOVE_FORWARD,                    SDL_SCANCODE_W);
     CHORD_1(ACTION_MOVE_BACKWARD,                   SDL_SCANCODE_S);
-    CHORD_1(ACTION_MOVE_SPRINT,                     SDL_SCANCODE_LSHIFT);
+    CHORD_1(ACTION_MOVE_SPRINT,                     RICO_SCANCODE_SHIFT);
 
     // Editor
-    CHORD_2(ACTION_EDIT_SAVE,                       SDL_SCANCODE_LCTRL,   SDL_SCANCODE_S);
-    CHORD_2(ACTION_EDIT_CYCLE_REVERSE,              SDL_SCANCODE_LSHIFT,  SDL_SCANCODE_TAB);
-    CHORD_1(ACTION_EDIT_CYCLE,                      SDL_SCANCODE_TAB);    
-    CHORD_2(ACTION_EDIT_BBOX_RECALCULATE,           SDL_SCANCODE_LSHIFT,  SDL_SCANCODE_B);
+    CHORD_2(ACTION_EDIT_SAVE,                       RICO_SCANCODE_CTRL,   SDL_SCANCODE_S);
+    CHORD_2(ACTION_EDIT_CYCLE_REVERSE,              RICO_SCANCODE_SHIFT,  SDL_SCANCODE_TAB);
+    CHORD_1(ACTION_EDIT_CYCLE,                      SDL_SCANCODE_TAB);
+    CHORD_2(ACTION_EDIT_BBOX_RECALCULATE,           RICO_SCANCODE_SHIFT,  SDL_SCANCODE_B);
     CHORD_1(ACTION_EDIT_CREATE_OBJECT,              SDL_SCANCODE_INSERT);
-    CHORD_2(ACTION_EDIT_SELECTED_DUPLICATE,         SDL_SCANCODE_LCTRL,   SDL_SCANCODE_D);
+    CHORD_2(ACTION_EDIT_SELECTED_DUPLICATE,         RICO_SCANCODE_CTRL,   SDL_SCANCODE_D);
     CHORD_1(ACTION_EDIT_SELECTED_DELETE,            SDL_SCANCODE_DELETE);
     CHORD_1(ACTION_EDIT_MODE_PREVIOUS,              SDL_SCANCODE_KP_PERIOD);
     CHORD_1(ACTION_EDIT_MODE_NEXT,                  SDL_SCANCODE_KP_0);
@@ -1631,7 +1643,7 @@ void init_rico_engine()
     state_handlers[STATE_MENU_QUIT]      .run = &state_menu_quit;
 
     state_handlers[STATE_PLAY_EXPLORE]   .run = &state_play_explore;
-                                             
+
     state_handlers[STATE_EDIT_TRANSLATE]     .run = &state_edit_translate;
     state_handlers[STATE_EDIT_ROTATE]        .run = &state_edit_rotate;
     state_handlers[STATE_EDIT_SCALE]         .run = &state_edit_scale;

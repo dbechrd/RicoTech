@@ -1,11 +1,11 @@
-inline hash_key hashgen_str(const char *str)
+static inline hash_key hashgen_str(const char *str)
 {
     hash_key key;
     MurmurHash3_x86_32(str, strlen(str), &key);
     return key;
 }
 
-inline hash_key hashgen_strlen(const char *str, int len)
+static inline hash_key hashgen_strlen(const char *str, int len)
 {
     hash_key key;
     MurmurHash3_x86_32(str, len, &key);
@@ -24,7 +24,7 @@ void hashtable_free(struct hash_table *table)
     free(table->slots);
 }
 
-inline u32 hash_code(struct hash_table *table, hash_key key)
+static inline u32 hash_code(struct hash_table *table, hash_key key)
 {
     return key % table->count;
 }
@@ -46,7 +46,8 @@ struct hnd hashtable_search(struct hash_table *table, hash_key key)
             return table->slots[index].handle;
 
         // Next slot
-        index = ++index % table->count;
+		index++;
+        index %= table->count;
 
         // Empty slot or back at start; not found
         if (!table->slots[index].handle.value || index == start_index)
@@ -55,7 +56,7 @@ struct hnd hashtable_search(struct hash_table *table, hash_key key)
 }
 
 struct hnd hashtable_search_by_name(struct hash_table *table,
-                                       const char *name)
+                                    const char *name)
 {
     hash_key key = hashgen_str(name);
     struct hnd handle = hashtable_search(table, key);
@@ -72,7 +73,8 @@ int hashtable_insert(struct hash_table *table, hash_key key,
     while (table->slots[index].handle.value && table->slots[index].key != key)
     {
         // Next slot
-        index = ++index % table->count;
+        index++;
+		index %= table->count;
 
         // Back at start; hash table full
         if (index == start_index)
@@ -116,7 +118,8 @@ bool hashtable_delete(struct hash_table *table, hash_key key)
         }
 
         // Next slot
-        index = ++index % table->count;
+		index++;
+        index %= table->count;
 
         // Empty slot or back at start; not found
         if (!table->slots[index].handle.value || index == start_index)

@@ -233,27 +233,21 @@ enum rico_error rico_fatal_print(const char *file, int line,
 #define UNUSED(x) (void)(x)
 #define sizeof_member(type, member) sizeof(((type *)0)->member)
 
-/****************/ #if RICO_DEBUG /*****************************************/
+#if RICO_DEBUG
+    #define FILE_LOC __FILE__, __LINE__
+    #define RICO_ASSERT(exp) if(!(exp)) {*(u8*)0=0;}
+    #define RICO_FATAL(err, desc, ...) rico_fatal_print(FILE_LOC, err, desc, ##__VA_ARGS__)
 
-#define RICO_ASSERT(exp) if(!(exp)) {*(int*)0=0;}
-
-#define FILE_LOC __FILE__, __LINE__
-
-#define RICO_FATAL(err, desc, ...) rico_fatal_print(FILE_LOC, err, desc, __VA_ARGS__)
-
-#if RICO_DEBUG_ALL_ERRORS_FATAL
-    #define RICO_ERROR(err, desc, ...) RICO_FATAL(err, desc, __VA_ARGS__)
+    #if RICO_DEBUG_ALL_ERRORS_FATAL
+      #define RICO_ERROR(err, desc, ...) RICO_FATAL(err, desc, ##__VA_ARGS__)
+    #else
+      #define RICO_ERROR(err, desc, ...) rico_error_print(FILE_LOC, err, desc)
+    #endif
 #else
-    #define RICO_ERROR(err, desc, ...) rico_error_print(FILE_LOC, err, desc)
+    #define RICO_ASSERT(exp)
+    #define RICO_FATAL(err, desc, ...) err
+    #define RICO_ERROR(err, desc, ...) err
 #endif
-
-/****************/ #else /*****************************************************/
-
-#define RICO_ASSERT(exp)
-#define RICO_FATAL(err, desc, ...) err
-#define RICO_ERROR(err, desc, ...) err
-
-/****************/ #endif /****************************************************/
 
 //------------------------------------------------------------------------------
 

@@ -139,6 +139,7 @@ void prim_draw_bbox_color(const struct bbox *bbox,
 
     // TODO: Use per-bbox color instead of rainbowgasm
     //glUniform4f(program->u_col, color->r, color->g, color->b, color->a);
+	UNUSED(color);
     glUniform4f(program->u_col, 1.0f, 1.0f, 1.0f, 0.5f);
 
     mesh_render(PRIM_MESH_BBOX);

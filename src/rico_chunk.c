@@ -1,6 +1,3 @@
-#define ADD_BYTES(ptr, offset) ((u8 *)ptr += offset)
-#define PTR_SUBTRACT(a, b) ((u8 *)a - (u8 *)b)
-
 // TODO: Is a global chunk the best way to keep track of the pools?
 global struct rico_chunk *global_chunk;
 
@@ -14,7 +11,7 @@ int chunk_init(struct rico_chunk **_chunk, const char *name,
 #endif
 
     u32 chunk_size = sizeof(struct rico_chunk);
-    
+
     // Calculate pool sizes
     u32 pool_sizes[POOL_COUNT];
     u32 poolhouse_size = 0;
@@ -44,22 +41,21 @@ int chunk_init(struct rico_chunk **_chunk, const char *name,
     memcpy(&chunk->pool_counts, pool_counts, sizeof(chunk->pool_counts));
 
     // Initialize pools
-    u8 *offset = (u8 *)chunk;
-    ADD_BYTES(offset, chunk_size);
+    u8 *ptr = (u8 *)chunk;
+    u32 offset = 0;
+    offset += chunk_size;
     for (enum rico_persist persist = 0; persist < PERSIST_COUNT; ++persist)
     {
         for (int i = 0; i < POOL_COUNT; ++i)
         {
-            chunk->pools[persist][i] = (struct rico_pool *)offset;
-            ADD_BYTES(offset, pool_sizes[i]);
+            chunk->pools[persist][i] = (struct rico_pool *)(ptr + offset);
+            offset += pool_sizes[i];
 #if 0
             char dbg[32] = { 0 };
             snprintf(dbg, sizeof(dbg), "%d %d %d\n", persist, i, (int)offset - (int)chunk);
             OutputDebugStringA(dbg);
 #endif
             char pool_name[32] = { 0 };
-            const char *itemtype = rico_pool_itemtype_string[i];
-            const char *persisttype = rico_persist_string[persist];
             snprintf(pool_name, sizeof(pool_name), "%s_%s",
                      rico_pool_itemtype_string[i], rico_persist_string[persist]);
 
@@ -69,8 +65,7 @@ int chunk_init(struct rico_chunk **_chunk, const char *name,
         }
     }
 
-    u32 offset_delta = PTR_SUBTRACT(offset, chunk);
-    RICO_ASSERT(offset_delta == chunk->total_size);
+    RICO_ASSERT(offset == chunk->total_size);
 
 #if RICO_DEBUG_CHUNK
     chunk_print(chunk);
@@ -98,8 +93,8 @@ SERIAL(chunk_serialize_0)
 
     // Write chunk to file
     u32 skip = sizeof(chunk->uid);
+    u8 *seek = (u8 *)chunk + skip;
     u32 bytes = chunk->cereal_size - skip;
-    u8 *seek = (u8 *)chunk; ADD_BYTES(seek, skip);
 
     // TODO: Don't write entire pools. Write pool header (w/ size) and then only
     //       the handles in use. No point writing empty pool slots to disk. How
@@ -145,10 +140,11 @@ DESERIAL(chunk_deserialize_0)
     memcpy(chunk, tmp_chunk, sizeof(struct rico_chunk));
 
     // Read chunk from file
+    u8 *ptr = (u8 *)chunk;
     u32 skip = sizeof(chunk->uid) + sizeof(chunk->total_size) +
                sizeof(chunk->cereal_size);
+    u8 *seek = ptr + skip;
     u32 bytes = chunk->cereal_size - skip;
-    u8 *seek = (u8 *)chunk; ADD_BYTES(seek, skip);
 
     // TODO: Check fread success
     fread(seek, bytes, 1, file->fs);
@@ -162,14 +158,14 @@ DESERIAL(chunk_deserialize_0)
     }
 
     // Fix pool pointers
-    u8 *offset = (u8 *)chunk;
-    ADD_BYTES(offset, sizeof(struct rico_chunk));
+    u32 offset = 0;
+    offset += sizeof(struct rico_chunk);
     for (enum rico_persist persist = 0; persist < PERSIST_COUNT; ++persist)
     {
         for (int i = 0; i < POOL_COUNT; ++i)
         {
-            chunk->pools[persist][i] = (struct rico_pool *)offset;
-            ADD_BYTES(offset, pool_sizes[i]);
+            chunk->pools[persist][i] = (struct rico_pool *)(ptr + offset);
+            offset += pool_sizes[i];
 #if 0
             char dbg[32] = { 0 };
             snprintf(dbg, sizeof(dbg), "%d %d %d\n", persist, i, (int)offset - (int)chunk);
@@ -194,7 +190,8 @@ DESERIAL(chunk_deserialize_0)
             }
         }
     }
-    RICO_ASSERT(PTR_SUBTRACT(offset, chunk) == chunk->total_size);
+
+    RICO_ASSERT(offset == chunk->total_size);
 
 #if RICO_DEBUG_CHUNK
     chunk_print(chunk);

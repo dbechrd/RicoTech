@@ -14,8 +14,8 @@ struct hash_table {
     struct hash_keyval *slots;
 };
 
-inline hash_key hashgen_str(const char *str);
-inline hash_key hashgen_strlen(const char *str, int len);
+internal inline hash_key hashgen_str(const char *str);
+internal inline hash_key hashgen_strlen(const char *str, int len);
 
 void hashtable_init(struct hash_table *table, const char *name, u32 count);
 void hashtable_free(struct hash_table *table);

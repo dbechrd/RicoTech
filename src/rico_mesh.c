@@ -44,8 +44,7 @@ struct hnd mesh_request(struct hnd handle)
     return handle;
 }
 
-int mesh_request_by_name(struct hnd *_handle, enum rico_persist persist,
-                         const char *name)
+int mesh_request_by_name(struct hnd *_handle, const char *name)
 {
     struct hnd handle = hashtable_search_by_name(&global_meshes, name);
     if (!handle.value)
@@ -118,7 +117,7 @@ int mesh_load(struct hnd *_handle, enum rico_persist persist, const char *name,
 
     struct hnd handle;
     struct rico_mesh *mesh;
-    err = pool_handle_alloc(mesh_pool_ptr(persist), &handle, &mesh);
+    err = pool_handle_alloc(mesh_pool_ptr(persist), &handle, (void *)&mesh);
     if (err) return err;
 
     // Note: If we want to serialize mesh data we have to store the vertex data

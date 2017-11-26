@@ -88,14 +88,14 @@ struct hnd pool_handle_prev(struct rico_pool *pool, struct hnd handle);
 //SERIAL(pool_serialize_0);
 //DESERIAL(pool_deserialize_0);
 
-inline void pool_fixup(struct rico_pool *pool)
+static inline void pool_fixup(struct rico_pool *pool)
 {
     // TODO: Could clean this up with PTR_ADD_BYTE macro
     pool->handles = (struct hnd *)((u8 *)pool + POOL_OFFSET_HANDLES());
     pool->data = (u8 *)pool + POOL_OFFSET_DATA(pool->count);
 }
 
-inline void *pool_read(const struct rico_pool *pool, u32 value)
+static inline void *pool_read(const struct rico_pool *pool, u32 value)
 {
     RICO_ASSERT(pool);
     RICO_ASSERT(value > 0);

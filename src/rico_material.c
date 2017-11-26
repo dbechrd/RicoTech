@@ -37,8 +37,7 @@ struct hnd material_request(struct hnd handle)
     return handle;
 }
 
-int material_request_by_name(struct hnd *_handle, enum rico_persist persist,
-                             const char *name)
+int material_request_by_name(struct hnd *_handle, const char *name)
 {
     struct hnd handle = hashtable_search_by_name(&global_materials, name);
     if (!handle.value)
@@ -63,7 +62,7 @@ int material_init(struct hnd *_handle, enum rico_persist persist,
 
     struct hnd handle;
     struct rico_material *material;
-    err = pool_handle_alloc(material_pool_ptr(persist), &handle, &material);
+    err = pool_handle_alloc(material_pool_ptr(persist), &handle, (void *)&material);
     if (err) return err;
 
     uid_init(&material->uid, RICO_UID_MATERIAL, name, true);
@@ -113,13 +112,13 @@ void material_free(struct hnd handle)
     pool_handle_free(material_pool(handle.persist), handle);
 }
 
-inline const char *material_name(struct hnd handle)
+internal inline const char *material_name(struct hnd handle)
 {
     struct rico_material *material = material_find(handle);
     return material->uid.name;
 }
 
-inline float material_shiny(struct hnd handle)
+internal inline float material_shiny(struct hnd handle)
 {
     struct rico_material *material = material_find(handle);
     return material->shiny;

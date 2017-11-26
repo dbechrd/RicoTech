@@ -20,8 +20,7 @@ extern struct hnd RICO_DEFAULT_TEXTURE_DIFF;
 extern struct hnd RICO_DEFAULT_TEXTURE_SPEC;
 
 struct hnd texture_request(struct hnd handle);
-int texture_request_by_name(struct hnd *_handle, enum rico_persist persist,
-                            const char *name);
+int texture_request_by_name(struct hnd *_handle, const char *name);
 int texture_load_file(struct hnd *_handle, enum rico_persist persist,
                       const char *name, GLenum target, const char *filename,
                       u32 bpp);

@@ -1,4 +1,4 @@
-#include "CacheLineSize.h"
+#include "3rdparty/CacheLineSize.h"
 
 #if defined(__APPLE__)
 
@@ -14,6 +14,7 @@ size_t CacheLineSize() {
 
 #include <stdlib.h>
 #include <windows.h>
+#include <winnt.h>
 size_t CacheLineSize() {
     size_t lineSize = 0;
     DWORD bufferSize = 0;

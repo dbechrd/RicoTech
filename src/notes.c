@@ -85,7 +85,7 @@ void notes_casey()
     //  1:32:00 Use #define for global constants (e.g. VEC3_UP, VEC3_ZERO, etc.)
 
 	// Day 043: Player motion:
-
+	//
 	//			Position = 1/2at^2 + vt + p
 	//			Velocity = at + p
 	//			Acceleration = 10 // From d-pad
@@ -101,20 +101,20 @@ void notes_casey()
 	// Coefficient of restitution = how much energy to absorb during collision.
 
 	// Day 045: Collision via nearest walkable point
-
+	//
 	//			49:35 For a bounding box, clip would-be destination point to 
 	//			bounding volume to find the closest point in this particular
 	//			space.
 
     // Day 055:
-    
+	//
     //      Modulus by power of two:
     //          HashValue % ArrayCount(HashTable)
     //          HashValue & (ArrayCount(HashTable) - 1)
     //
     //          Subtracting 1 from a power of two gives us a bit mask to perform
     //          a perfect modulus operation.
-
+	//
     //      Array indexing with pointer arithmetic:
     //          Item *item = HashTable[HashSlot]
     //          Item *item = HashTable + HashSlot
@@ -124,9 +124,38 @@ void notes_casey()
     //          "bands" of empty->filled(+data)->empty->filled(+data)->etc..
 
     // Day 060:
-
+	//
     //      Alpha destination buffer:
     //          Allows rendering translucent objects front-to-back??
+
+	// Day 134:
+	//
+	//	1:14:22 - 1:22:06 Switching from OOP to data-oriented /
+	//					  compression-oriented
+
+	// Day 237:
+	//
+	//  1:32:00 glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	//  GL_MODULATE, GL_DECAL, GL_BLEND, GL_REPLACE
+
+	// Day 242:
+	//
+	//  19:00
+	//  char *Vendor, Renderer, Version, ShadingLanguageVersion, Extensions
+	//  glGetString(xxx):
+	//		GL_VENDOR
+	//		GL_RENDERER
+	//		GL_VERSION
+	//		GL_SHADING_LANGUAGE_VERSION
+	//		GL_EXTENSIONS
+
+	// Day 243:
+	//
+	//  Asynchronous texture loading:
+	//		Create multiple GL contexts, one of which has the sole job of
+	//		uploading textures to the GPU.
+	//
+	//	1:26:50 Allocate/Deallocate textures (w/ tex params)
 
 
 

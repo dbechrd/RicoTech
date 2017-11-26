@@ -31,8 +31,7 @@ internal inline struct rico_string *string_find_slot(enum rico_persist persist,
     return string;
 }
 
-int string_request_by_name(struct hnd *_handle, enum rico_persist persist,
-                           const char *name)
+int string_request_by_name(struct hnd *_handle, const char *name)
 {
     struct hnd handle = hashtable_search_by_name(&global_strings, name);
     if (!handle.value)
@@ -74,7 +73,7 @@ int string_init(enum rico_persist persist, const char *name,
     if (slot == STR_SLOT_DYNAMIC)
     {
         struct hnd handle;
-        err = pool_handle_alloc(string_pool_ptr(persist), &handle, &str);
+        err = pool_handle_alloc(string_pool_ptr(persist), &handle, (void *)&str);
         if (err) return err;
     }
     else

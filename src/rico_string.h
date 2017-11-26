@@ -24,8 +24,7 @@ enum rico_string_slot {
 };
 extern const char *rico_string_slot_string[];
 
-int string_request_by_name(struct hnd *_handle, enum rico_persist persist,
-                           const char *name);
+int string_request_by_name(struct hnd *_handle, const char *name);
 int string_init(enum rico_persist persist, const char *name,
                 enum rico_string_slot slot, float x, float y, struct col4 color,
                 u32 lifespan, struct hnd font, const char *text);

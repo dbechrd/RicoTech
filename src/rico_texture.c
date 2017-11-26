@@ -41,8 +41,7 @@ struct hnd texture_request(struct hnd handle)
     return handle;
 }
 
-int texture_request_by_name(struct hnd *_handle, enum rico_persist persist,
-                            const char *name)
+int texture_request_by_name(struct hnd *_handle, const char *name)
 {
     struct hnd handle = hashtable_search_by_name(&global_textures, name);
     if (!handle.value)
@@ -95,7 +94,7 @@ int texture_load_pixels(struct hnd *_handle, enum rico_persist persist,
 
     struct hnd handle;
     struct rico_texture *tex;
-    err = pool_handle_alloc(texture_pool_ptr(persist), &handle, &tex);
+    err = pool_handle_alloc(texture_pool_ptr(persist), &handle, (void *)&tex);
     if (err) return err;
 
     // Note: If we want to serialize texture data we have to store the filename
@@ -113,7 +112,7 @@ int texture_load_pixels(struct hnd *_handle, enum rico_persist persist,
     hash_key key = hashgen_str(tex->uid.name);
     err = hashtable_insert(&global_textures, key, handle);
     if (err) return err;
-    
+
     if(_handle) *_handle = handle;
     return err;
 }

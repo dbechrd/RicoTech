@@ -11,8 +11,8 @@ global struct program_default *prog_default;
 global struct program_primitive *prog_primitive;
 
 //global u32 font;
-global u32 tex_font_test;
-global u32 mesh_font_test;
+//global u32 tex_font_test;
+//global u32 mesh_font_test;
 //global u32 tex_grass;
 //global u32 tex_rock;
 //global u32 tex_hello;

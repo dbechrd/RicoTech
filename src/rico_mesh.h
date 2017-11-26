@@ -1,6 +1,16 @@
 #ifndef RICO_MESH_H
 #define RICO_MESH_H
 
+#define RICO_MESH_TYPES(f)  \
+    f(MESH_NULL)            \
+    f(MESH_OBJ_WORLD)       \
+    f(MESH_STRING_SCREEN)
+
+enum rico_mesh_type {
+    RICO_MESH_TYPES(GEN_LIST)
+};
+extern const char *rico_mesh_type_string[];
+
 // IMPORTANT: *DO NOT* add pointers in this struct, it will break cereal!
 struct rico_mesh {
     struct rico_uid uid;
@@ -31,30 +41,10 @@ enum rico_mesh_slot {
 extern const char *rico_mesh_slot_string[];
 */
 
-#define RICO_MESH_TYPES(f)  \
-    f(MESH_NULL)            \
-    f(MESH_OBJ_WORLD)       \
-    f(MESH_STRING_SCREEN)
-
-enum rico_mesh_type {
-    RICO_MESH_TYPES(GEN_LIST)
-};
-extern const char *rico_mesh_type_string[];
-
-struct mesh_vertex {
-    struct vec3 pos;
-    struct col4 col;
-    struct vec3 normal;
-    struct tex2 uv;
-    //GLfloat shininess;
-    //GLubyte specular[4];
-};
-
 extern struct hnd RICO_DEFAULT_MESH;
 
 struct hnd mesh_request(struct hnd handle);
-int mesh_request_by_name(struct hnd *_handle, enum rico_persist persist,
-                         const char *name);
+int mesh_request_by_name(struct hnd *_handle, const char *name);
 struct hnd mesh_next(struct hnd handle);
 struct hnd mesh_prev(struct hnd handle);
 int mesh_load(struct hnd *_handle, enum rico_persist persist, const char *name,

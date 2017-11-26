@@ -16,10 +16,12 @@ BIN_DIR := bin
 
 BIN_EXE := $(BIN_DIR)/RicoTech.exe
 
-SOURCES := $(wildcard $(SRC_DIR)/*.c)
-SOURCES := $(filter-out $(SRC_DIR)/main_nuke.c, $(SOURCES))
-SOURCES := $(filter-out $(SRC_DIR)/notes.c, $(SOURCES))
-OBJECTS := $(patsubst $(SRC_DIR)/%,$(OBJ_DIR)/%,$(SOURCES:.c=.o))
+#SOURCES := $(wildcard $(SRC_DIR)/*.c)
+#SOURCES := $(filter-out $(SRC_DIR)/main_nuke.c, $(SOURCES))
+#SOURCES := $(filter-out $(SRC_DIR)/notes.c, $(SOURCES))
+SOURCES := $(SRC_DIR)/main.c
+#OBJECTS := $(patsubst $(SRC_DIR)/%,$(OBJ_DIR)/%,$(SOURCES:.c=.o))
+OBJECTS := $(patsubst $(SOURCES),$(OBJ_DIR)/%,$(SOURCES:.c=.o))
 DLLS := $(wildcard $(DLL_DIR)/*.dll)
 BIN_DLLS := $(patsubst $(DLL_DIR)/%,$(BIN_DIR)/%,$(DLLS))
 
@@ -41,7 +43,7 @@ LIBS  := -L$(LIB_DIR) $(_LIBS)
 
 # Compiler & flags
 CC = gcc
-CFLAGS = -Wall -Wextra -Werror -Wno-unused-function -O0 # -Og
+CFLAGS = -Wall -Wextra -Werror -Wno-unused-function -fmax-errors=1 -O0 #-Og
 LDFLAGS = # None
 
 default: prebuild build postbuild
@@ -56,16 +58,16 @@ postbuild-copydlls: copydlls-banner $(BIN_DLLS)
 postbuild-copyres: copyres-banner make-res-dirs $(BIN_RESOURCES)
 postbuild: postbuild-copydlls postbuild-copyres
 
-$(info ====================================================================)
-$(info #             ______            _______        _                   #)
-$(info #             |  __ \ O        |__   __|      | |                  #)
-$(info #             | |__| |_  ___ ___  | | ___  ___| |__                #)
-$(info #             |  _  /| |/ __/ _ \ | |/ _ \/ __| '_ \               #)
-$(info #             | | \ \| | |_| (_) || |  __/ |__| | | |              #)
-$(info #             |_|  \_\_|\___\___/ |_|\___|\___|_| |_|              #)
-$(info #                                                                  #)
-$(info #                   Copyright 2017 Dan Bechard                     #)
-$(info ====================================================================)
+#$(info ====================================================================)
+#$(info #             ______            _______        _                   #)
+#$(info #             |  __ \ O        |__   __|      | |                  #)
+#$(info #             | |__| |_  ___ ___  | | ___  ___| |__                #)
+#$(info #             |  _  /| |/ __/ _ \ | |/ _ \/ __| '_ \               #)
+#$(info #             | | \ \| | |_| (_) || |  __/ |__| | | |              #)
+#$(info #             |_|  \_\_|\___\___/ |_|\___|\___|_| |_|              #)
+#$(info #                                                                  #)
+#$(info #                   Copyright 2017 Dan Bechard                     #)
+#$(info ====================================================================)
 
 compile-banner:
 	$(info )
@@ -82,19 +84,22 @@ copyres-banner:
 
 # Link executable
 $(BIN_EXE): $(OBJECTS)
-	$(foreach O,$(OBJECTS),$(info [OBJ] ${O}))
 	$(info [EXECUTABLE] $@)
+	$(foreach O,$(OBJECTS),$(info ..[OBJ] ${O}))
 	@$(CC) -o $@ $(OBJECTS) $(LIBS)
 
 # Compile C files into OBJ files and generate dependencies
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	$(info [SRC] $<)
+#$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c #%.c
+$(OBJECTS): $(SOURCES)
+	$(info [OBJECT] $@)
+	$(foreach S,$(SOURCES),$(info ..[SRC] ${S}))
 	@$(CC) -g -MMD $(CFLAGS) $(INCLUDE_DIRS) -o $@ -c $<
 
 # Copy DLLs
-$(BIN_DIR)/%.dll: $(DLL_DIR)/%.dll
+#$(BIN_DIR)/%.dll: $(DLL_DIR)/%.dll
+$(BIN_DLLS): $(DLLS)
 #	$(foreach O,$^,$(info [DLL] ${O}))
-	$(info [OBJ] $^)
+	$(info [DLL] $^)
 	@cp $^ $@
 
 # Make resource directories
@@ -132,4 +137,5 @@ clean:
 #|  %  Wildcard, can be neighbored by prefix, suffix, or both
 ################################################################################
 
+# Note: To use this, run e.g. `make print-SOURCES`
 print-%  : ; @echo $* = $($*)

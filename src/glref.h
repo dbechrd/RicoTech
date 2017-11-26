@@ -2,7 +2,7 @@
 #define GLREF_H
 
 int init_glref();
-int init_hardcoded_test_chunk();
+internal int init_hardcoded_test_chunk();
 int create_obj();
 void recalculate_all_bbox();
 void select_obj(struct hnd handle);

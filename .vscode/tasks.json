@@ -4,9 +4,8 @@
     "version": "0.1.0",
     "command": "make",
     "args": [],
-    "echoCommand": true,
     "showOutput": "always",
-    "suppressTaskName": true,
+    "isShellCommand": true,
     "tasks": [
         {
             "taskName": "make",

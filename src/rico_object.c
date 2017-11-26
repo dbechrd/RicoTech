@@ -6,7 +6,7 @@ struct hnd RICO_DEFAULT_OBJECT = { 0 };
 
 internal void update_transform(struct rico_object *obj);
 
-internal inline struct rico_pool **object_pool_ptr(enum rico_persistence persist)
+internal inline struct rico_pool **object_pool_ptr(enum rico_persist persist)
 {
     struct rico_chunk *chunk = chunk_active();
     RICO_ASSERT(chunk);
@@ -14,7 +14,7 @@ internal inline struct rico_pool **object_pool_ptr(enum rico_persistence persist
     return &chunk->pools[persist][POOL_OBJECTS];
 }
 
-internal inline struct rico_pool *object_pool(enum rico_persistence persist)
+internal inline struct rico_pool *object_pool(enum rico_persist persist)
 {
     return *object_pool_ptr(persist);
 }
@@ -27,8 +27,7 @@ internal inline struct rico_object *object_find(struct hnd handle)
     return object;
 }
 
-int object_request_by_name(struct hnd *_handle, enum rico_persist persist,
-                           const char *name)
+int object_request_by_name(struct hnd *_handle, const char *name)
 {
     struct hnd handle = hashtable_search_by_name(&global_objects, name);
     if (!handle.value)
@@ -54,7 +53,7 @@ int object_create(struct hnd *_handle, enum rico_persist persist,
 
     struct hnd handle;
     struct rico_object *obj;
-    err = pool_handle_alloc(object_pool_ptr(persist), &handle, &obj);
+    err = pool_handle_alloc(object_pool_ptr(persist), &handle, (void *)&obj);
     if (err) return err;
 
     uid_init(&obj->uid, RICO_UID_OBJECT, name, serialize);

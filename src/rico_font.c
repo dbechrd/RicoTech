@@ -40,8 +40,7 @@ internal inline struct rico_font *font_find(struct hnd handle)
     return font;
 }
 
-int font_request_by_name(struct hnd *_handle, enum rico_persist persist,
-                         const char *name)
+int font_request_by_name(struct hnd *_handle, const char *name)
 {
     struct hnd handle = hashtable_search_by_name(&global_fonts, name);
     if (!handle.value)
@@ -64,7 +63,7 @@ int font_init(struct hnd *_handle, enum rico_persist persist,
 
     struct hnd handle;
     struct rico_font *font;
-    err = pool_handle_alloc(font_pool_ptr(persist), &handle, &font);
+    err = pool_handle_alloc(font_pool_ptr(persist), &handle, (void *)&font);
     if (err) return err;
 
     uid_init(&font->uid, RICO_UID_FONT, filename, false);
@@ -289,7 +288,7 @@ int font_render(struct hnd *_mesh, struct hnd *_texture,
     err = mesh_load(&mesh_handle, handle.persist, mesh_name, type, idx_vertex,
                     vertices, idx_element, elements, GL_STATIC_DRAW);
     if (err) goto cleanup;
-    
+
     *_mesh = mesh_handle;
     *_texture = font->texture;
 
