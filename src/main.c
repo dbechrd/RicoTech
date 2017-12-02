@@ -124,7 +124,7 @@ internal void init_opengl()
     if (glDebugMessageCallback != NULL)
     {
         fprintf(stdout, "Registered glDebugMessageCallback.\n");
-        
+
         // TODO: OpenGL DebugMessageCallback format header, useful? Where should
         //       this be written?
         fprintf(stderr, "[TYPE][SEVERITY][ID] MESSAGE\n");
@@ -210,23 +210,32 @@ cleanup:
     printf("------------------------------------------------------------\n");
     if (context) SDL_GL_DeleteContext(context);
     if (window) SDL_DestroyWindow(window);
+
     SDL_Quit();
     return err;
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
-    UNUSED(argc);
-    UNUSED(argv);
+    enum rico_error err;
 
-    // Don't report fatal errors again when ALL_ERRORS_FATAL flag is set
+    if (argc > 1)
+    {
+        err = rico_convert(argc, argv);
+    }
+    else
+    {
+// Don't report fatal errors again when ALL_ERRORS_FATAL flag is set
 #if RICO_DEBUG_ALL_ERRORS_FATAL
-    enum rico_error err = mymain();
+        err = mymain();
 #else
-    enum rico_error err = RICO_FATAL(mymain(), "Top-level generic error");
+        err = RICO_FATAL(mymain(), "Top-level generic error");
 #endif
+    }
+
+    if (err) printf("Error: %s", rico_error_string[err]);
 
     // Hack: SDL_main is stupid and ignores my return value, force exit code
     if (err) exit(err);
-    return 0;
+    return err;
 }

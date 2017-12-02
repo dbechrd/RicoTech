@@ -28,6 +28,7 @@
 #include "program.h"
 #include "regularpoly.h"
 #include "rico_chunk.h"
+#include "rico_convert.h"
 #include "rico_collision.h"
 #include "rico_font.h"
 #include "rico_light.h"

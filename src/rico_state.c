@@ -1521,7 +1521,7 @@ internal int state_engine_init()
 {
     enum rico_error err;
 
-    printf("----------------------------------------------------------\n");
+    printf("==========================================================\n");
     printf("#        ______            _______        _              #\n");
     printf("#        |  __ \\ O        |__   __|      | |             #\n");
     printf("#        | |__| |_  ___ ___  | | ___  ___| |__           #\n");
@@ -1530,7 +1530,7 @@ internal int state_engine_init()
     printf("#        |_|  \\_\\_|\\___\\___/ |_|\\___|\\___|_| |_|         #\n");
     printf("#                                                        #\n");
     printf("#              Copyright 2017 Dan Bechard                #\n");
-    printf("----------------------------------------------------------\n");
+    printf("==========================================================\n");
 
     // TODO: Where does this belong? Needs access to "mouse_lock".
     SDL_SetRelativeMouseMode(mouse_lock);

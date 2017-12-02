@@ -22,6 +22,7 @@
 #include "regularpoly.c"
 #include "rico_chunk.c"
 #include "rico_collision.c"
+#include "rico_convert.c"
 #include "rico_file.c"
 #include "rico_font.c"
 //#include "rico_light.c"

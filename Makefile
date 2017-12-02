@@ -21,16 +21,16 @@ BIN_EXE := $(BIN_DIR)/RicoTech.exe
 #SOURCES := $(filter-out $(SRC_DIR)/notes.c, $(SOURCES))
 SOURCES := $(SRC_DIR)/main.c
 #OBJECTS := $(patsubst $(SRC_DIR)/%,$(OBJ_DIR)/%,$(SOURCES:.c=.o))
-OBJECTS := $(patsubst $(SOURCES),$(OBJ_DIR)/%,$(SOURCES:.c=.o))
+OBJECTS := $(subst $(SRC_DIR)/,$(OBJ_DIR)/,$(SOURCES:.c=.o))
 DLLS := $(wildcard $(DLL_DIR)/*.dll)
-BIN_DLLS := $(patsubst $(DLL_DIR)/%,$(BIN_DIR)/%,$(DLLS))
+BIN_DLLS := $(subst $(DLL_DIR)/,$(BIN_DIR)/,$(DLLS))
 
 RESOURCES := $(wildcard $(RES_DIR)/chunks/*.bin)
 RESOURCES += $(wildcard $(RES_DIR)/font/*.bff)
 RESOURCES += $(wildcard $(RES_DIR)/shader/*.glsl)
 RESOURCES += $(wildcard $(RES_DIR)/mesh/*.ric)
 RESOURCES += $(wildcard $(RES_DIR)/texture/*.tga)
-BIN_RESOURCES := $(patsubst $(RES_DIR)/%,$(BIN_DIR)/%,$(RESOURCES))
+BIN_RESOURCES := $(subst $(RES_DIR)/,$(BIN_DIR)/,$(RESOURCES))
 
 INCLUDE_DIRS := $(INC_DIR:%=-I%)
 RESOURCE_DIRS := $(RES_SUBDIRS:%=$(BIN_DIR)/%)
@@ -43,31 +43,22 @@ LIBS  := -L$(LIB_DIR) $(_LIBS)
 
 # Compiler & flags
 CC = gcc
-CFLAGS = -Wall -Wextra -Werror -Wno-unused-function -fmax-errors=1 -O0 #-Og
+CFLAGS = -g -MMD -Wall -Wextra -Werror -Wno-unused-function -fmax-errors=5 -O0 #-Og
 LDFLAGS = # None
 
 default: prebuild build postbuild
 
 prebuild:
-
-build-compile: compile-banner $(OBJECTS)
-build-link: link-banner $(BIN_EXE)
-build: build-compile build-link
-
-postbuild-copydlls: copydlls-banner $(BIN_DLLS)
-postbuild-copyres: copyres-banner make-res-dirs $(BIN_RESOURCES)
-postbuild: postbuild-copydlls postbuild-copyres
-
-#$(info ====================================================================)
-#$(info #             ______            _______        _                   #)
-#$(info #             |  __ \ O        |__   __|      | |                  #)
-#$(info #             | |__| |_  ___ ___  | | ___  ___| |__                #)
-#$(info #             |  _  /| |/ __/ _ \ | |/ _ \/ __| '_ \               #)
-#$(info #             | | \ \| | |_| (_) || |  __/ |__| | | |              #)
-#$(info #             |_|  \_\_|\___\___/ |_|\___|\___|_| |_|              #)
-#$(info #                                                                  #)
-#$(info #                   Copyright 2017 Dan Bechard                     #)
-#$(info ====================================================================)
+	$(info =========================================================)
+	$(info #        ______            _______        _             #)
+	$(info #        |  __ \ O        |__   __|      | |            #)
+	$(info #        | |__| |_  ___ ___  | | ___  ___| |__          #)
+	$(info #        |  _  /| |/ __/ _ \ | |/ _ \/ __| `_ \         #)
+	${info #        | | \ \| | |_| (_) || |  __/ |__| | | |        #}
+	$(info #        |_|  \_\_|\___\___/ |_|\___|\___|_| |_|        #)
+	$(info #                                                       #)
+	$(info #              Copyright 2017 Dan Bechard               #)
+	$(info =========================================================)
 
 compile-banner:
 	$(info )
@@ -82,24 +73,29 @@ copyres-banner:
 	$(info )
 	$(info ---- Copy resources [postbuild-copyres] ----------------------------)
 
+build-compile: compile-banner $(OBJECTS)
+build-link: link-banner $(BIN_EXE)
+build: build-compile build-link
+
+postbuild-copydlls: copydlls-banner $(BIN_DLLS)
+postbuild-copyres: copyres-banner make-res-dirs $(BIN_RESOURCES)
+postbuild: postbuild-copydlls postbuild-copyres
+
 # Link executable
 $(BIN_EXE): $(OBJECTS)
-	$(info [EXECUTABLE] $@)
-	$(foreach O,$(OBJECTS),$(info ..[OBJ] ${O}))
+	$(foreach O,$^,$(info +  [OBJ] ${O}))
+	$(info [EXE] $@)
 	@$(CC) -o $@ $(OBJECTS) $(LIBS)
 
 # Compile C files into OBJ files and generate dependencies
-#$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c #%.c
 $(OBJECTS): $(SOURCES)
-	$(info [OBJECT] $@)
-	$(foreach S,$(SOURCES),$(info ..[SRC] ${S}))
-	@$(CC) -g -MMD $(CFLAGS) $(INCLUDE_DIRS) -o $@ -c $<
+	$(foreach S,$^,$(info +  [SRC] ${S}))
+	$(info [OBJ] $@)
+	@$(CC) $(CFLAGS) $(INCLUDE_DIRS) -o $@ -c $<
 
 # Copy DLLs
-#$(BIN_DIR)/%.dll: $(DLL_DIR)/%.dll
 $(BIN_DLLS): $(DLLS)
-#	$(foreach O,$^,$(info [DLL] ${O}))
-	$(info [DLL] $^)
+	$(foreach O,$^,$(info -> [DLL] ${O}))
 	@cp $^ $@
 
 # Make resource directories

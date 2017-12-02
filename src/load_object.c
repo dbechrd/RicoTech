@@ -1,5 +1,6 @@
 #define MESH_VERTICES_MAX 200000
 
+/*
 enum OBJ_LINE_TYPE {
     OBJ_IGNORE,
     OBJ_MESH,
@@ -16,36 +17,8 @@ struct OBJ_FACE {
 };
 
 enum OBJ_LINE_TYPE line_type(const char *line);
-//bool load_mesh(const char *line, struct rico_mesh *mesh);
-
-internal inline char *strsep(char **stringp, const char delim)
-{
-    char *start = *stringp;
-
-    while (**stringp)
-    {
-        if (**stringp == delim)
-        {
-            **stringp = '\0';
-            (*stringp)++;
-            break;
-        }
-        (*stringp)++;
-    }
-
-    return start;
-}
-
-internal inline long fast_atol(const char *str)
-{
-    if (!str) return 0;
-
-    long val = 0;
-    while(*str) {
-        val = val*10 + (*str++ - '0');
-    }
-    return val;
-}
+bool load_mesh(const char *line, struct rico_mesh *mesh);
+*/
 
 int load_obj_file(enum rico_persist persist, const char *filename)
 {

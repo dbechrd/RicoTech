@@ -207,6 +207,8 @@ enum rico_vbo {
     f(ERR_FONT_INVALID_NAME)        \
     f(ERR_HASH_TABLE_FULL)          \
     f(ERR_HASH_INVALID_KEY)         \
+    f(ERR_INVALID_PARAMS)           \
+    f(ERR_OBJ_PARSE_FAILED)         \
     f(ERR_COUNT)
 
 enum rico_error {
