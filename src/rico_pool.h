@@ -3,32 +3,8 @@
 
 //#include "rico_uid.h"
 
-#if 0
-struct handle {
-    union {
-        u32 hnd;
-        struct {
-            u32 persist : 1;
-            u32 middle : 15;
-            u32 value : 16;
-        };
-    };
-};
-#else
-// NOTE: The *only* reason this isn't called "handle" is because Visual Studio's
-//       watch window is retarded and doesn't differentiate between structures
-//       and local variables. Since I had "struct handle handle" it was
-//       impossible to debug pool handle tables. Eventually, I might just
-//       replace handles altogether with rico_uid.
-struct hnd {
-    u32 persist : 1;
-    u32 value : 31;
-};
-#endif
-const struct hnd HANDLE_NULL = { 0 };
-
 struct rico_pool {
-    struct rico_uid uid;
+    struct hnd hnd;
     u32 count;            // number of elements
     u32 size;             // size of each element
     u32 fixed_count;      // number of fixed elements
@@ -37,7 +13,7 @@ struct rico_pool {
     u8 *data;             // element pool
 };
 
-typedef void(destructor)(struct hnd handle);
+typedef void(destructor)(struct hnd *handle);
 
 #define RICO_PERSIST_TYPES(f)  \
     f(PERSISTENT) \
@@ -79,12 +55,11 @@ extern u32 pool_item_fixed_counts[POOL_COUNT];
 int pool_init(void *mem_block, enum rico_persist persist, const char *name,
               u32 count, u32 size, u32 fixed_count);
 void pool_free(struct rico_pool *pool, destructor *destruct);
-int pool_handle_alloc(struct rico_pool **pool_ptr, struct hnd *_handle,
-                      void **_item);
-int pool_handle_free(struct rico_pool *pool, struct hnd handle);
+int pool_handle_alloc(struct rico_pool *pool, struct hnd *_handle, void **_item);
+int pool_handle_free(struct rico_pool *pool, struct hnd *handle);
 struct hnd pool_handle_first(struct rico_pool *pool);
-struct hnd pool_handle_next(struct rico_pool *pool, struct hnd handle);
-struct hnd pool_handle_prev(struct rico_pool *pool, struct hnd handle);
+struct hnd pool_handle_next(struct rico_pool *pool, struct hnd *handle);
+struct hnd pool_handle_prev(struct rico_pool *pool, struct hnd *handle);
 //SERIAL(pool_serialize_0);
 //DESERIAL(pool_deserialize_0);
 

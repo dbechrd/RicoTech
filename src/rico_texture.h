@@ -3,9 +3,12 @@
 
 // IMPORTANT: *DO NOT* add pointers in this struct, it will break cereal!
 struct rico_texture {
-    struct rico_uid uid;
+    struct hnd hnd;
     u32 ref_count;
 
+    // TODO: Save filename (is this hnd->name? might get truncated.. we need
+    //                      the whole thing for lookups on load, right?)
+    // TODO: Clear gl_id before saving to file
     GLuint gl_id;
     GLenum gl_target;
 
@@ -16,10 +19,10 @@ struct rico_texture {
 };
 extern const u32 RICO_TEXTURE_SIZE;
 
-extern struct hnd RICO_DEFAULT_TEXTURE_DIFF;
-extern struct hnd RICO_DEFAULT_TEXTURE_SPEC;
+extern struct hnd *RICO_DEFAULT_TEXTURE_DIFF;
+extern struct hnd *RICO_DEFAULT_TEXTURE_SPEC;
 
-struct hnd texture_request(struct hnd handle);
+struct hnd texture_request_by_uid(uid uid);
 int texture_request_by_name(struct hnd *_handle, const char *name);
 int texture_load_file(struct hnd *_handle, enum rico_persist persist,
                       const char *name, GLenum target, const char *filename,
@@ -27,13 +30,13 @@ int texture_load_file(struct hnd *_handle, enum rico_persist persist,
 int texture_load_pixels(struct hnd *_handle, enum rico_persist persist,
                         const char *name, GLenum target, u32 width, u32 height,
                         u32 bpp, const void *pixels);
-void texture_free(struct hnd handle);
-const char *texture_name(struct hnd handle);
-void texture_bind(struct hnd handle, GLenum texture_unit);
-void texture_unbind(struct hnd handle, GLenum texture_unit);
-void texture_bind_diff(struct hnd handle);
-void texture_bind_spec(struct hnd handle);
-void texture_unbind_diff(struct hnd handle);
-void texture_unbind_spec(struct hnd handle);
+void texture_free(struct hnd *handle);
+const char *texture_name(struct hnd *handle);
+void texture_bind(struct hnd *handle, GLenum texture_unit);
+void texture_unbind(struct hnd *handle, GLenum texture_unit);
+void texture_bind_diff(struct hnd *handle);
+void texture_bind_spec(struct hnd *handle);
+void texture_unbind_diff(struct hnd *handle);
+void texture_unbind_spec(struct hnd *handle);
 
 #endif // RICO_TEXTURE_H

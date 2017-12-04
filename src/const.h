@@ -17,7 +17,7 @@
 #define RICO_DEBUG_ALL_ERRORS_FATAL RICO_DEBUG && 1
 #define RICO_DEBUG_WARN             RICO_DEBUG && 1
 #define RICO_DEBUG_INFO             RICO_DEBUG && 1
-#define RICO_DEBUG_UID              RICO_DEBUG && 0
+#define RICO_DEBUG_HND              RICO_DEBUG && 0
 #define RICO_DEBUG_POOL             RICO_DEBUG && 1
 #define RICO_DEBUG_CHUNK            RICO_DEBUG && 0
 #define RICO_DEBUG_TEXTURE          RICO_DEBUG && 0
@@ -169,8 +169,9 @@ typedef real64 f64;
 // Enums
 //------------------------------------------------------------------------------
 // Used to generate enums
-#define GEN_LIST(val) val,
-#define GEN_STRING(val) #val,
+#define GEN_LIST(e, ...) e,
+#define GEN_STRING(e, ...) #e,
+#define GEN_VALUE(e, str) str,
 
 enum rico_vbo {
     VBO_VERTEX,
@@ -233,6 +234,8 @@ enum rico_error rico_fatal_print(const char *file, int line,
 // Macros
 //------------------------------------------------------------------------------
 #define UNUSED(x) (void)(x)
+#define MIN(a, b) ((a < b) ? a : b)
+#define MAX(a, b) ((a > b) ? a : b)
 #define sizeof_member(type, member) sizeof(((type *)0)->member)
 
 #if RICO_DEBUG

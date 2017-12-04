@@ -1,37 +1,38 @@
 #ifndef UID_H
 #define UID_H
 
-#define RICO_UID_TYPES(f)   \
-    f(RICO_UID_NULL)        \
-    f(RICO_UID_OBJECT)      \
-    f(RICO_UID_TEXTURE)     \
-    f(RICO_UID_MESH)        \
-    f(RICO_UID_CHUNK)       \
-    f(RICO_UID_POOL)        \
-    f(RICO_UID_BBOX)        \
-    f(RICO_UID_FONT)        \
-    f(RICO_UID_STRING)      \
-    f(RICO_UID_MATERIAL)    \
-    f(RICO_UID_HASHTABLE)   \
-    f(RICO_UID_COUNT)
+#define RICO_HND_TYPES(f)   \
+    f(RICO_HND_NULL)        \
+    f(RICO_HND_OBJECT)      \
+    f(RICO_HND_TEXTURE)     \
+    f(RICO_HND_MESH)        \
+    f(RICO_HND_CHUNK)       \
+    f(RICO_HND_POOL)        \
+    f(RICO_HND_BBOX)        \
+    f(RICO_HND_FONT)        \
+    f(RICO_HND_STRING)      \
+    f(RICO_HND_MATERIAL)    \
+    f(RICO_HND_HASHTABLE)   \
+    f(RICO_HND_COUNT)
 
-enum rico_uid_type {
-    RICO_UID_TYPES(GEN_LIST)
+enum rico_hnd_type {
+    RICO_HND_TYPES(GEN_LIST)
 };
-//extern const char *rico_uid_type_string[];
+//extern const char *rico_hnd_type_string[];
 
-struct rico_uid {
-    enum rico_uid_type type;
-    u32 uid;
+typedef u32 uid;
+struct hnd {
+    enum rico_hnd_type type;
+    uid uid;
     char name[32];
     bool serialize;
 };
 #define UID_NULL 0
 #define UID_BASE 1000
 
-void uid_init(struct rico_uid *_uid, enum rico_uid_type type, const char *name,
+void hnd_init(struct hnd *_hnd, enum rico_hnd_type type, const char *name,
               bool serialize);
-SERIAL(uid_serialize);
-DESERIAL(uid_deserialize);
+SERIAL(hnd_serialize);
+DESERIAL(hnd_deserialize);
 
 #endif // UID_H

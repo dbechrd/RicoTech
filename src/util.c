@@ -36,9 +36,8 @@ void APIENTRY openglCallbackFunction(GLenum source, GLenum type, GLuint id,
                                      const GLchar *message,
                                      const void *userParam)
 {
-    //HACK: Get rid of warning-as-error for unused parameters
-    (void)length;
-    (void)userParam;
+    UNUSED(length);
+    UNUSED(userParam);
 
     char *sourceStr, *typeStr, *severityStr;
 

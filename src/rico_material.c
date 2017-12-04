@@ -2,22 +2,10 @@ const u32 RICO_MATERIAL_SIZE = sizeof(struct rico_material);
 
 struct hnd RICO_DEFAULT_MATERIAL = { 0 };
 
-internal inline struct rico_pool **material_pool_ptr(enum rico_persist persist)
-{
-    struct rico_chunk *chunk = chunk_active();
-    RICO_ASSERT(chunk);
-    RICO_ASSERT(chunk->pools[persist][POOL_MATERIALS]);
-    return &chunk->pools[persist][POOL_MATERIALS];
-}
-
-internal inline struct rico_pool *material_pool(enum rico_persist persist)
-{
-    return *material_pool_ptr(persist);
-}
-
 internal inline struct rico_material *material_find(struct hnd handle)
 {
-    struct rico_material *material = pool_read(material_pool(handle.persist),
+    struct rico_chunk *chunk = chunk_active();
+    struct rico_material *material = pool_read(chunk_pool(chunk, handle.persist, POOL_MATERIALS),
                                                handle.value);
     RICO_ASSERT(material->uid.uid);
     return material;

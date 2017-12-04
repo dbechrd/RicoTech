@@ -37,7 +37,7 @@ int rico_file_open_write(struct rico_file *_file, const char *filename,
                           "Unsupported file version %d while writing file %s",
                           version, filename);
     }
-    
+
     _file->version = version;
     _file->filename = filename;
     _file->cereal_index = version - RICO_FILE_VERSION_MINIMUM_SUPPORTED;
@@ -108,7 +108,7 @@ int rico_file_open_read(struct rico_file *_file, const char *filename)
                           "Unsupported file version %d in file %s",
                           _file->version, filename);
     }
-    
+
     // Next available uid
     fread(&_file->next_uid, sizeof(_file->next_uid), 1, _file->fs);
 

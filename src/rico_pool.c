@@ -43,8 +43,11 @@ int pool_init(void *mem_block, enum rico_persist persist, const char *name,
     // Pointer fix-up
     pool_fixup(pool);
 
-    // TODO: Should I use UIDs for handles instead of e.g. 1-100?
-    //       Pools would need hash table to map uid->index
+    // TODO: Use (struct *hnd) for handles instead of e.g. 1-100?
+    // TODO: If handles are pointers directly to object, do we even need
+    //       indexed pools anymore?? I don't think so.. we can just return
+    //       the next available handle which is an already allocated object.
+    // TODO: E.g. pool_init(RICO_HND_MESH, 30)
     // Initialize free list
     for (u32 i = 0; i < count; i++)
     {
@@ -86,8 +89,7 @@ void pool_free(struct rico_pool *pool, destructor *destruct)
     pool->uid.uid = UID_NULL;
 }
 
-int pool_handle_alloc(struct rico_pool **pool_ptr, struct hnd *_handle,
-                      void **_item)
+int pool_handle_alloc(struct hnd *hnd, struct hnd *_handle, void **_item)
 {
     enum rico_error err = SUCCESS;
 
@@ -112,7 +114,7 @@ int pool_handle_alloc(struct rico_pool **pool_ptr, struct hnd *_handle,
                    pool->uid.name, pool->count);
             pool_print_handles(pool);
 #endif
-            
+
             return RICO_FATAL(ERR_POOL_OUT_OF_MEMORY, "%s pool is full",
                               pool->uid.name);
         }
@@ -218,7 +220,7 @@ struct hnd pool_handle_next(struct rico_pool *pool, struct hnd handle)
     // Nothing or last item selected, return first item in pool
     if (!handle.value || handle.value >= pool->active)
         return pool->handles[0];
-    
+
     // Return next item
     return pool->handles[handle.value];
 }
@@ -234,7 +236,7 @@ struct hnd pool_handle_prev(struct rico_pool *pool, struct hnd handle)
     // Nothing or first item selected, return last item in pool
     if (handle.value <= 1)
         return pool->handles[pool->active - 1];
-    
+
     // Return previous item
     return pool->handles[handle.value - 2];
 }

@@ -1,15 +1,15 @@
-static inline hash_key hashgen_str(const char *str)
-{
-    hash_key key;
-    MurmurHash3_x86_32(str, strlen(str), &key);
-    return key;
-}
+typedef u32 hash;
 
-static inline hash_key hashgen_strlen(const char *str, int len)
+// "dog" -> struct *texture
+struct hash_kv {
+    u32 len; // 4
+    void *key;   // ['d', 'o', 'g', '\0']
+    void *val; // 0x8b1453a3
+};
+
+internal inline bool keys_equal(struct hash_kv *kv, void *key, u32 len)
 {
-    hash_key key;
-    MurmurHash3_x86_32(str, len, &key);
-    return key;
+    return kv->len == len && memcmp(kv->key, key, len) == 0;
 }
 
 void hashtable_init(struct hash_table *table, const char *name, u32 count)
@@ -24,67 +24,59 @@ void hashtable_free(struct hash_table *table)
     free(table->slots);
 }
 
-static inline u32 hash_code(struct hash_table *table, hash_key key)
+void *hashtable_search(struct hash_table *table, void *key, u32 len)
 {
-    return key % table->count;
-}
+    hash hash;
+    MurmurHash3_x86_32(key, len, &hash);
 
-// TODO: Replace linear search/insert with quadratic if necessary
-struct hnd hashtable_search(struct hash_table *table, hash_key key)
-{
-    u32 start_index = hash_code(table, key);
-    u32 index = start_index;
+    u32 start = hash % table->count;
+    u32 index = start;
 
-    // Initial check to keep loop clean
-    if (!table->slots[index].handle.value)
-        return HANDLE_NULL;
-
-    while (1)
+    do
     {
-        // Compare key; return if match
-        if (table->slots[index].key == key)
-            return table->slots[index].handle;
+        if (!table->slots[index].val)
+            break;
+
+        // Compare keys; return if match
+        if (keys_equal(&table->slots[index], key, len))
+            return table->slots[index].val;
 
         // Next slot
 		index++;
         index %= table->count;
+    } while (index != start);
 
-        // Empty slot or back at start; not found
-        if (!table->slots[index].handle.value || index == start_index)
-            return HANDLE_NULL;
-    }
-}
-
-struct hnd hashtable_search_by_name(struct hash_table *table,
-                                    const char *name)
-{
-    hash_key key = hashgen_str(name);
-    struct hnd handle = hashtable_search(table, key);
-    return handle;
+    // Back at start; not found
+    return 0;
 }
 
 // TODO: Replace linear search/insert with quadratic if necessary
-int hashtable_insert(struct hash_table *table, hash_key key,
-                     struct hnd handle)
+int hashtable_insert(struct hash_table *table, void *key, u32 len, void *val)
 {
-    u32 start_index = hash_code(table, key);
-    u32 index = start_index;
+    hash hash;
+    MurmurHash3_x86_32(key, len, &hash);
 
-    while (table->slots[index].handle.value && table->slots[index].key != key)
+    u32 start = hash % table->count;
+    u32 index = start;
+
+    while (table->slots[index].val &&
+           !keys_equal(&table->slots[index], key, len))
     {
         // Next slot
         index++;
 		index %= table->count;
 
         // Back at start; hash table full
-        if (index == start_index)
+        if (index == start)
+        {
             return RICO_ERROR(ERR_HASH_TABLE_FULL,
                               "Failed to insert into full hash table %s",
                               table->uid.name);
+        }
     }
 
 #if RICO_DEBUG_HASH
-    if (table->slots[index].key == key)
+    if (keys_equal(&table->slots[index].key, key, len))
     {
         printf("[hash][WARN] uid=%d name=%s key=%d Overwriting existing key\n",
                table->uid.uid, table->uid.name, key);
@@ -92,39 +84,42 @@ int hashtable_insert(struct hash_table *table, hash_key key,
 #endif
 
     // Empty slot found; insert
+    table->slots[index].len = len;
     table->slots[index].key = key;
-    table->slots[index].handle = handle;
+    table->slots[index].val = val;
 
     return SUCCESS;
 }
 
-bool hashtable_delete(struct hash_table *table, hash_key key)
+bool hashtable_delete(struct hash_table *table, void *key, u32 len)
 {
-    u32 start_index = hash_code(table, key);
-    u32 index = start_index;
+    hash hash;
+    MurmurHash3_x86_32(key, len, &hash);
 
-    // Initial check to keep loop clean
-    if (!table->slots[index].handle.value)
-        return false;
+    u32 start = hash % table->count;
+    u32 index = start;
 
-    while (1)
+    do
     {
-        // Compare key; delete if match
-        if (table->slots[index].key == key)
+        if (!table->slots[index].val)
+            break;
+
+        // Compare keys; return if match
+        if (keys_equal(&table->slots[index], key, len))
         {
+            table->slots[index].len = 0;
             table->slots[index].key = 0;
-            table->slots[index].handle = HANDLE_NULL;
+            table->slots[index].val = 0;
             return true;
         }
 
         // Next slot
 		index++;
         index %= table->count;
+    } while (index != start);
 
-        // Empty slot or back at start; not found
-        if (!table->slots[index].handle.value || index == start_index)
-            return false;
-    }
+    // Back at start; not found
+    return false;
 }
 
 ///|////////////////////////////////////////////////////////////////////////////

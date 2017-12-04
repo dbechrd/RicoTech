@@ -8,7 +8,7 @@
 
 // IMPORTANT: *DO NOT* add pointers in this struct, it will break cereal!
 struct rico_font {
-    struct rico_uid uid;
+    struct hnd hnd;
     int CellX, CellY, YOffset, RowPitch;
     char Base;
     char Width[256];
@@ -16,16 +16,16 @@ struct rico_font {
     int RenderStyle;
     bool InvertYAxis;
 
-    struct hnd texture;
+    struct rico_texture *texture;
 };
 extern const u32 RICO_FONT_SIZE;
 
-extern struct hnd RICO_DEFAULT_FONT;
+extern struct hnd *RICO_DEFAULT_FONT;
 
-int font_init(struct hnd *_handle, enum rico_persist persist, const char *filename);
-void font_free(struct hnd handle);
-int font_render(struct hnd *_mesh, struct hnd *_texture,
-                struct hnd handle, int x, int y, struct col4 bg,
+int font_init(struct rico_font *_font, enum rico_persist persist, const char *filename);
+void font_free(struct rico_font *font);
+int font_render(struct rico_mesh *_mesh, struct rico_texture *_texture,
+                struct rico_font *font, int x, int y, struct col4 bg,
                 const char *text, const char *mesh_name,
                 enum rico_mesh_type type);
 

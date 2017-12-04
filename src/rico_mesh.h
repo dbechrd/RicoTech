@@ -13,7 +13,7 @@ extern const char *rico_mesh_type_string[];
 
 // IMPORTANT: *DO NOT* add pointers in this struct, it will break cereal!
 struct rico_mesh {
-    struct rico_uid uid;
+    struct hnd hnd;
     enum rico_mesh_type type;
     u32 ref_count;
 
@@ -41,20 +41,20 @@ enum rico_mesh_slot {
 extern const char *rico_mesh_slot_string[];
 */
 
-extern struct hnd RICO_DEFAULT_MESH;
+extern struct hnd *RICO_DEFAULT_MESH;
 
-struct hnd mesh_request(struct hnd handle);
-int mesh_request_by_name(struct hnd *_handle, const char *name);
-struct hnd mesh_next(struct hnd handle);
-struct hnd mesh_prev(struct hnd handle);
-int mesh_load(struct hnd *_handle, enum rico_persist persist, const char *name,
+struct rico_mesh *mesh_request(struct rico_mesh *mesh);
+int mesh_request_by_name(struct rico_mesh *_mesh, const char *name);
+struct rico_mesh *mesh_next(struct rico_mesh *mesh);
+struct rico_mesh *mesh_prev(struct rico_mesh *mesh);
+int mesh_load(struct rico_mesh *_mesh, enum rico_persist persist, const char *name,
               enum rico_mesh_type type, u32 vertex_count,
               const struct mesh_vertex *vertex_data, u32 element_count,
               const GLuint *element_data, GLenum hint);
-void mesh_free(struct hnd handle);
-const char *mesh_name(struct hnd handle);
-const struct bbox *mesh_bbox(struct hnd handle);
-void mesh_update(struct hnd handle);
-void mesh_render(struct hnd handle);
+void mesh_free(struct rico_mesh *mesh);
+const char *mesh_name(struct rico_mesh *mesh);
+const struct bbox *mesh_bbox(struct rico_mesh *mesh);
+void mesh_update(struct rico_mesh *mesh);
+void mesh_render(struct rico_mesh *mesh);
 
 #endif // RICO_MESH_H

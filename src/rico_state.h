@@ -1,4 +1,3 @@
-
 #ifndef RICO_STATE_H
 #define RICO_STATE_H
 

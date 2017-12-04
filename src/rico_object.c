@@ -443,7 +443,6 @@ void object_render(struct hnd handle, const struct camera *camera)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
-
     // Bind material and render mesh
     material_bind(obj->material);
     mesh_render(obj->mesh);

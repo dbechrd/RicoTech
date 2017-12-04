@@ -48,30 +48,24 @@ enum __attribute__ ((__packed__)) obj_token_type { OBJ_TOKEN_TYPES(GEN_LIST) };
 const char *obj_token_type_string[] = { OBJ_TOKEN_TYPES(GEN_STRING) };
 
 #define OBJ_KEYWORD_TYPES(f) \
-    f(OBJ_KW_INVALID)        \
-    f(OBJ_KW_IGNORED)        \
-    /* Keywords I give a shit about                      */ \
-    f(OBJ_KW_VERTEX)          /* [v]  geometric vertices */ \
-    f(OBJ_KW_UVCOORD)         /* [vt] texture vertices   */ \
-    f(OBJ_KW_NORMAL)          /* [vn] vertex normals     */ \
-    f(OBJ_KW_FACE)            /* [f]                     */ \
-    f(OBJ_KW_GROUP_NAME)      /* [g]                     */ \
-    f(OBJ_KW_OBJECT_NAME)     /* [o]                     */ \
-    f(OBJ_KW_MATERIAL_NAME)   /* [usemtl]                */ \
-    f(OBJ_KW_MATERIAL_LIB)    /* [mtllib]                */ \
-    /* Keywords I don't give a shit about                */ \
-    f(OBJ_KW_SMOOTHING_GROUP) /* [s]                     */ \
-    f(OBJ_KW_COUNT)
+    f(OBJ_KW_INVALID,        "\0") \
+    f(OBJ_KW_IGNORED,        "\0") \
+    /* Used */ \
+    f(OBJ_KW_VERTEX,         "v")      /* [v]  geometric vertices */ \
+    f(OBJ_KW_UVCOORD,        "vt")     /* [vt] texture vertices   */ \
+    f(OBJ_KW_NORMAL,         "vn")     /* [vn] vertex normals     */ \
+    f(OBJ_KW_FACE,           "f")      /* [f]                     */ \
+    f(OBJ_KW_GROUP_NAME,     "g")      /* [g]                     */ \
+    f(OBJ_KW_OBJECT_NAME,    "o")      /* [o]                     */ \
+    f(OBJ_KW_MATERIAL_NAME,  "usemtl") /* [usemtl]                */ \
+    f(OBJ_KW_MATERIAL_LIB,   "mtllib") /* [mtllib]                */ \
+    /* Ignored */ \
+    f(OBJ_KW_SMOOTHING_GROUP, "s")     /* [s]                     */ \
+    f(OBJ_KW_COUNT, "\0")
 
 enum __attribute__ ((__packed__)) obj_keyword_type { OBJ_KEYWORD_TYPES(GEN_LIST) };
 const char *obj_keyword_type_string[] = { OBJ_KEYWORD_TYPES(GEN_STRING) };
-
-internal const char *obj_keyword_value[OBJ_KW_COUNT - OBJ_KW_VERTEX] = {
-    // Keywords I give a shit about
-    "v", "vt", "vn", "f", "g", "o", "usemtl", "mtllib",
-    // Keywords I don't give a shit about
-    "s"
-};
+internal const char *obj_keyword_values[] = { OBJ_KEYWORD_TYPES(GEN_VALUE) };
 
 struct obj_token {
     enum obj_token_type type;
@@ -135,13 +129,12 @@ int load_obj_file_new(const char *filename)
             while (*bp && *bp != ' ') bp++;
             u32 len = bp - value;
 
-            for (int kw = OBJ_KW_VERTEX; kw < OBJ_KW_COUNT; ++kw)
+            for (int kw = 0; kw < OBJ_KW_COUNT; ++kw)
             {
-                int kw_idx = kw - OBJ_KW_VERTEX;
-                if (strlen(obj_keyword_value[kw_idx]) != len) continue;
+                if (strlen(obj_keyword_values[kw]) != len) continue;
 
                 u32 c = 0;
-                while (value[c] == obj_keyword_value[kw_idx][c]) c++;
+                while (value[c] == obj_keyword_values[kw][c]) c++;
 
                 if (c == len)
                 {
@@ -156,8 +149,8 @@ int load_obj_file_new(const char *filename)
             {
                 err = RICO_ERROR(
                     ERR_OBJ_PARSE_FAILED,
-                    "Expected comment or keyword at beginning of line %d\n",
-                    line_number
+                    "Expected comment or keyword at beginning of line %d. Found: %.*s\n",
+                    line_number, len, value
                 );
                 goto cleanup;
             }
@@ -274,17 +267,17 @@ int load_obj_file_new(const char *filename)
 #endif
 
 cleanup:
-    printf("Press [enter] to kill tokens\n");
-    fflush(stdout);
-    getchar();
+    //printf("Press [enter] to kill tokens\n");
+    //fflush(stdout);
+    //getchar();
     if (file.tokens) free(file.tokens);
-    printf("Press [enter] to kill buffer\n");
-    fflush(stdout);
-    getchar();
+    //printf("Press [enter] to kill buffer\n");
+    //fflush(stdout);
+    //getchar();
     if (buffer) free(buffer);
-    printf("Press [enter] to exit program\n");
-    fflush(stdout);
-    getchar();
+    //printf("Press [enter] to exit program\n");
+    //fflush(stdout);
+    //getchar();
     return err;
 }
 

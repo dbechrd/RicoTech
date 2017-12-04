@@ -10,7 +10,7 @@
 
 // IMPORTANT: *DO NOT* add pointers in this struct, it will break cereal!
 struct bbox {
-    struct rico_uid uid;
+    struct hnd hnd;
 
     //GLuint vao;
     //GLuint vbos[2];

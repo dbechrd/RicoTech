@@ -5,7 +5,7 @@ int init_glref();
 internal int init_hardcoded_test_chunk();
 int create_obj();
 void recalculate_all_bbox();
-void select_obj(struct hnd handle);
+void select_obj(struct rico_object *obj);
 void select_next_obj();
 void select_prev_obj();
 void selected_print();

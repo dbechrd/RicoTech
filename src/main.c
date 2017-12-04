@@ -178,7 +178,8 @@ int mymain()
     init_rico_engine();
 
     //test_geom();
-    //test_hashtable();
+    test_hashtable();
+    return 0;
 
     while (!SDL_QuitRequested())
     {

@@ -1,10 +1,11 @@
 #ifndef RICO_STRING_H
 #define RICO_STRING_H
 
-// IMPORTANT: *DO NOT* add pointers in this struct, it will break cereal!
 struct rico_string {
-    struct rico_uid uid;
-    struct hnd object;
+    struct hnd hnd;
+
+    // TODO: Good grief.. what even is this?
+    struct rico_object *object;
     u32 lifespan;
 };
 extern const u32 RICO_STRING_SIZE;
@@ -24,11 +25,11 @@ enum rico_string_slot {
 };
 extern const char *rico_string_slot_string[];
 
-int string_request_by_name(struct hnd *_handle, const char *name);
+int string_request_by_name(struct rico_string *_str, const char *name);
 int string_init(enum rico_persist persist, const char *name,
                 enum rico_string_slot slot, float x, float y, struct col4 color,
-                u32 lifespan, struct hnd font, const char *text);
-int string_free(struct hnd handle);
+                u32 lifespan, struct rico_font *font, const char *text);
+int string_free(struct rico_string *str);
 int string_update(r64 dt);
 
 #endif // RICO_STRING_H
