@@ -1,5 +1,8 @@
 // TODO: Is a global chunk the best way to keep track of the pools?
-global struct rico_chunk *global_chunk;
+//       No.. duh. Get rid of this! Or at very least make it an array/pool.
+//global struct rico_chunk *RICO_DEFAULT_CHUNK;
+global struct rico_chunk *chunk_active;
+global struct rico_chunk *chunk_transient;
 
 internal void chunk_print(struct rico_chunk *chunk);
 
@@ -13,9 +16,9 @@ int chunk_init(struct rico_chunk **_chunk, const char *name,
     u32 chunk_size = sizeof(struct rico_chunk);
 
     // Calculate pool sizes
-    u32 pool_sizes[POOL_COUNT];
+    u32 pool_sizes[RICO_HND_CEREAL_COUNT];
     u32 poolhouse_size = 0;
-    for (int i = 0; i < POOL_COUNT; ++i)
+    for (int i = 1; i < RICO_HND_CEREAL_COUNT; ++i)
     {
         u32 pool_size = POOL_SIZE((*pool_counts)[i], pool_item_sizes[i]);
         pool_sizes[i] = pool_size;
@@ -44,25 +47,21 @@ int chunk_init(struct rico_chunk **_chunk, const char *name,
     u8 *ptr = (u8 *)chunk;
     u32 offset = 0;
     offset += chunk_size;
-    for (enum rico_persist persist = 0; persist < PERSIST_COUNT; ++persist)
+    for (int i = 0; i < RICO_HND_CEREAL_COUNT; ++i)
     {
-        for (int i = 0; i < POOL_COUNT; ++i)
-        {
-            chunk->pools[persist][i] = (struct rico_pool *)(ptr + offset);
-            offset += pool_sizes[i];
+        chunk->pools[i] = (struct rico_pool *)(ptr + offset);
+        offset += pool_sizes[i];
 #if 0
-            char dbg[32] = { 0 };
-            snprintf(dbg, sizeof(dbg), "%d %d %d\n", persist, i, (int)offset - (int)chunk);
-            OutputDebugStringA(dbg);
+        char dbg[32] = { 0 };
+        snprintf(dbg, sizeof(dbg), "%d %d\n", i, (int)offset - (int)chunk);
+        OutputDebugStringA(dbg);
 #endif
-            char pool_name[32] = { 0 };
-            snprintf(pool_name, sizeof(pool_name), "%s_%s",
-                     rico_pool_itemtype_string[i], rico_persist_string[persist]);
+        char pool_name[32] = { 0 };
+        snprintf(pool_name, sizeof(pool_name), "%s",
+                 rico_pool_itemtype_string[i]);
 
-            pool_init(chunk->pools[persist][i], persist, pool_name,
-                      chunk->pool_counts[i], pool_item_sizes[i],
-                      pool_item_fixed_counts[i]);
-        }
+        pool_init(chunk->pools[i], pool_name, chunk->pool_counts[i],
+                  pool_item_sizes[i], pool_item_fixed_counts[i]);
     }
 
     RICO_ASSERT(offset == chunk->total_size);
@@ -75,14 +74,12 @@ int chunk_init(struct rico_chunk **_chunk, const char *name,
     return SUCCESS;
 }
 
-void chunk_active_set(struct rico_chunk *chunk)
+int chunk_alloc(struct rico_chunk *chunk, enum rico_hnd_type type,
+                struct hnd **_handle)
 {
-    global_chunk = chunk;
-}
-
-struct rico_chunk *chunk_active()
-{
-    return global_chunk;
+    RICO_ASSERT(type > 0 && type < RICO_HND_CEREAL_COUNT);
+    struct rico_pool *pool = chunk->pools[type - 1];
+    pool_handle_alloc(pool, _handle);
 }
 
 //int chunk_serialize_0(const void *handle, const struct rico_file *file)
@@ -150,8 +147,8 @@ DESERIAL(chunk_deserialize_0)
     fread(seek, bytes, 1, file->fs);
 
     // Calculate pool sizes
-    u32 pool_sizes[POOL_COUNT];
-    for (int i = 0; i < POOL_COUNT; ++i)
+    u32 pool_sizes[RICO_HND_CEREAL_COUNT];
+    for (int i = 0; i < RICO_HND_CEREAL_COUNT; ++i)
     {
         u32 pool_size = POOL_SIZE(chunk->pool_counts[i], pool_item_sizes[i]);
         pool_sizes[i] = pool_size;
@@ -160,35 +157,32 @@ DESERIAL(chunk_deserialize_0)
     // Fix pool pointers
     u32 offset = 0;
     offset += sizeof(struct rico_chunk);
-    for (enum rico_persist persist = 0; persist < PERSIST_COUNT; ++persist)
+    for (int i = 0; i < RICO_HND_CEREAL_COUNT; ++i)
     {
-        for (int i = 0; i < POOL_COUNT; ++i)
-        {
-            chunk->pools[persist][i] = (struct rico_pool *)(ptr + offset);
-            offset += pool_sizes[i];
+        chunk->pools[i] = (struct rico_pool *)(ptr + offset);
+        offset += pool_sizes[i];
 #if 0
-            char dbg[32] = { 0 };
-            snprintf(dbg, sizeof(dbg), "%d %d %d\n", persist, i, (int)offset - (int)chunk);
-            OutputDebugStringA(dbg);
+        char dbg[32] = { 0 };
+        snprintf(dbg, sizeof(dbg), "%d %d\n", i, (int)offset - (int)chunk);
+        OutputDebugStringA(dbg);
 #endif
-            if (persist == PERSISTENT)
-            {
-                // Fix member pointers
-                pool_fixup(chunk->pools[persist][i]);
-            }
-            else if (persist == TRANSIENT)
-            {
-                // Reinitialize transient pools, which aren't stored in save files
-                char pool_name[32];
-                snprintf(pool_name, sizeof(pool_name), "%s_%s",
-                         rico_pool_itemtype_string[i],
-                         rico_persist_string[persist]);
+        // Fix member pointers
+        pool_fixup(chunk->pools[i]);
+#if 0
+        // Cleanup: These should be in a memory arena, not in a chunk!
+        else if (persist == TRANSIENT)
+        {
+            // Reinitialize transient pools, which aren't stored in save files
+            char pool_name[32];
+            snprintf(pool_name, sizeof(pool_name), "%s_%s",
+                     rico_pool_itemtype_string[i],
+                     rico_persist_string[persist]);
 
-                pool_init(chunk->pools[persist][i], persist, pool_name,
-                          chunk->pool_counts[i], pool_item_sizes[i],
-                          pool_item_fixed_counts[i]);
-            }
+            pool_init(chunk->pools[persist][i], persist, pool_name,
+                      chunk->pool_counts[i], pool_item_sizes[i],
+                      pool_item_fixed_counts[i]);
         }
+#endif
     }
 
     RICO_ASSERT(offset == chunk->total_size);
@@ -209,14 +203,10 @@ internal void chunk_print(struct rico_chunk *chunk)
            chunk->uid.uid, chunk->uid.name, chunk->total_size,
            chunk->cereal_size);
 
-    for (int i = 0; i < POOL_COUNT; ++i)
+    for (int i = 0; i < RICO_HND_CEREAL_COUNT; ++i)
     {
-        for (int type = 0; type < PERSIST_COUNT; ++type)
-        {
-            printf("             %s = %d\n",
-                   chunk->pools[type][i]->uid.name,
-                   chunk->pool_counts[i]);
-        }
+        printf("             %s = %d\n", chunk->pools[i]->uid.name,
+               chunk->pool_counts[i]);
     }
 }
 #endif

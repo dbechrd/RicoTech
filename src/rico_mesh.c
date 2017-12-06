@@ -11,65 +11,9 @@ internal int build_mesh(struct rico_mesh *mesh, u32 vertex_count,
                         u32 element_count, const GLuint *element_data,
                         GLenum hint);
 
-internal inline struct rico_pool **mesh_pool_ptr(enum rico_persist persist)
-{
-    struct rico_chunk *chunk = chunk_active();
-    RICO_ASSERT(chunk);
-    RICO_ASSERT(chunk->pools[persist][POOL_MESHES]);
-    return &chunk->pools[persist][POOL_MESHES];
-}
-
-internal inline struct rico_pool *mesh_pool(enum rico_persist persist)
-{
-    return *mesh_pool_ptr(persist);
-}
-
-internal inline struct rico_mesh *mesh_find(struct hnd handle)
-{
-    struct rico_mesh *mesh = pool_read(mesh_pool(handle.persist), handle.value);
-    RICO_ASSERT(mesh->uid.uid);
-    return mesh;
-}
-
-struct hnd mesh_request(struct hnd handle)
-{
-    struct rico_mesh *mesh = mesh_find(handle);
-    mesh->ref_count++;
-
-#if RICO_DEBUG_MESH
-    printf("[mesh][rqst] uid=%d ref=%d name=%s\n", mesh->uid.uid,
-           mesh->ref_count, mesh->uid.name);
-#endif
-
-    return handle;
-}
-
-int mesh_request_by_name(struct hnd *_handle, const char *name)
-{
-    struct hnd handle = hashtable_search_by_name(&global_meshes, name);
-    if (!handle.value)
-    {
-        return RICO_ERROR(ERR_MESH_INVALID_NAME, "Mesh not found: %s", name);
-    }
-
-    *_handle = mesh_request(handle);
-    return SUCCESS;
-}
-
-enum rico_mesh_type mesh_type_get(struct hnd handle)
-{
-    if (!handle.value)
-        return MESH_NULL;
-
-    struct rico_mesh *mesh = mesh_find(handle);
-    return mesh->type;
-}
-
 bool mesh_selectable(struct hnd handle)
 {
-    enum rico_mesh_type type = mesh_type_get(handle);
-    return (type != MESH_NULL &&
-            type != MESH_STRING_SCREEN);
+    return (mesh->type != MESH_STRING_SCREEN);
 }
 
 struct hnd mesh_next(struct hnd handle)
@@ -104,10 +48,10 @@ struct hnd mesh_prev(struct hnd handle)
     return HANDLE_NULL;
 }
 
-int mesh_load(struct hnd *_handle, enum rico_persist persist, const char *name,
+int mesh_init(struct rico_mesh *_mesh, const char *name,
               enum rico_mesh_type type, u32 vertex_count,
               const struct mesh_vertex *vertex_data, u32 element_count,
-              const GLuint *element_data, GLenum hint)
+              const GLuint *element_data, GLenum hint);
 {
 #if RICO_DEBUG_MESH
     printf("[mesh][init] name=%s vertices=%d\n", name, vertex_count);
@@ -246,18 +190,6 @@ void mesh_free(struct hnd handle)
 
     mesh->uid.uid = UID_NULL;
     pool_handle_free(mesh_pool(handle.persist), handle);
-}
-
-const char *mesh_name(struct hnd handle)
-{
-    struct rico_mesh *mesh = mesh_find(handle);
-    return mesh->uid.name;
-}
-
-const struct bbox *mesh_bbox(struct hnd handle)
-{
-    struct rico_mesh *mesh = mesh_find(handle);
-    return &mesh->bbox;
 }
 
 void mesh_update(struct hnd handle)

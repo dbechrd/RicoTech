@@ -1,61 +1,12 @@
 const u32 RICO_TEXTURE_SIZE = sizeof(struct rico_texture);
 
-struct hnd RICO_DEFAULT_TEXTURE_DIFF = { 0 };
-struct hnd RICO_DEFAULT_TEXTURE_SPEC = { 0 };
-
-internal inline struct rico_pool **texture_pool_ptr(enum rico_persist persist)
-{
-    struct rico_chunk *chunk = chunk_active();
-    RICO_ASSERT(chunk);
-    RICO_ASSERT(chunk->pools[persist][POOL_TEXTURES]);
-    return &chunk->pools[persist][POOL_TEXTURES];
-}
-
-internal inline struct rico_pool *texture_pool(enum rico_persist persist)
-{
-    return *texture_pool_ptr(persist);
-}
-
-internal inline struct rico_texture *texture_find(struct hnd handle)
-{
-    struct rico_texture *texture = pool_read(texture_pool(handle.persist),
-                                             handle.value);
-    RICO_ASSERT(texture->uid.uid);
-    return texture;
-}
+global struct rico_texture *RICO_DEFAULT_TEXTURE_DIFF;
+global struct rico_texture *RICO_DEFAULT_TEXTURE_SPEC;
 
 internal int build_texture(struct rico_texture *tex, const void *pixels);
 
-// TODO: Do proper reference counting, this function is stupid. Need to save
-//       filename for that to work (how to track load_pixels calls?)
-struct hnd texture_request(struct hnd handle)
-{
-    struct rico_texture *tex = texture_find(handle);
-    tex->ref_count++;
-
-#if RICO_DEBUG_TEXTURE
-    printf("[ tex][rqst] uid=%d ref=%d name=%s\n", tex->uid.uid, tex->ref_count,
-           tex->uid.name);
-#endif
-
-    return handle;
-}
-
-int texture_request_by_name(struct hnd *_handle, const char *name)
-{
-    struct hnd handle = hashtable_search_by_name(&global_textures, name);
-    if (!handle.value)
-    {
-        return RICO_ERROR(ERR_TEXTURE_INVALID_NAME, "Texture not found: %s.",
-                          name);
-    }
-
-    *_handle = texture_request(handle);
-    return SUCCESS;
-}
-
-int texture_load_file(struct hnd *_handle, enum rico_persist persist, const char *name,
-                      GLenum target, const char *filename, u32 bpp)
+int texture_load_file(struct hnd *_handle, const char *name, GLenum target,
+                      const char *filename, u32 bpp)
 {
 #if RICO_DEBUG_TEXTURE
     printf("[ tex][load] filename=%s\n", filename);
@@ -74,17 +25,16 @@ int texture_load_file(struct hnd *_handle, enum rico_persist persist, const char
     }
 
     // Load pixels
-    err = texture_load_pixels(_handle, persist, name, target, width, height,
-                              bpp, pixels);
+    err = texture_load_pixels(_handle, name, target, width, height, bpp,
+                              pixels);
 
 cleanup:
     stbi_image_free(pixels);
     return err;
 }
 
-int texture_load_pixels(struct hnd *_handle, enum rico_persist persist,
-                        const char *name, GLenum target, u32 width, u32 height,
-                        u32 bpp, const void *pixels)
+int texture_load_pixels(struct hnd *_handle, const char *name, GLenum target,
+                        u32 width, u32 height, u32 bpp, const void *pixels)
 {
     enum rico_error err;
 

@@ -6,6 +6,7 @@
 #include <stdio.h>
 //#include <stdlib.h>
 #include "3rdparty/GL/gl3w.h"
+#include "3rdparty/SDL/SDL.h"
 
 #include "const.h"
 #include <math.h>
@@ -21,7 +22,6 @@
 #include "rico_mesh.h"
 #include "rico_hash.h"
 #include "camera.h"
-#include "glref.h"
 #include "load_object.h"
 #include "3rdparty/MurmurHash3.h"
 #include "primitives.h"
@@ -39,6 +39,7 @@
 #include "rico_state.h"
 #include "rico_texture.h"
 #include "shader.h"
+#include "glref.h"
 
 #ifdef __APPLE__
 #define __gl_h_
@@ -53,6 +54,5 @@
 #include "3rdparty/stb_image.h"
 #include "3rdparty/tinyobjloader.h"
 #include "3rdparty/MurmurHash3.h"
-#include "3rdparty/SDL/SDL.h"
 
 #endif // RICO_H

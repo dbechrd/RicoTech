@@ -42,8 +42,10 @@ _LIBS = -lSDL2main -lSDL2 -lopengl32 #-mwindows
 LIBS  := -L$(LIB_DIR) $(_LIBS)
 
 # Compiler & flags
+GCC_FLAGS = -fmax-errors=3
+CLANG_FLAGS = -ferror-limit=3 -fcolor-diagnostics
 CC = gcc
-CFLAGS = -g -MMD -Wall -Wextra -Werror -Wno-unused-function -fmax-errors=5 -O0 #-Og
+CFLAGS = $(GCC_FLAGS) -g -MMD -Wall -Wextra -Werror -Wno-unused-function -O0 #-Og
 LDFLAGS = # None
 
 default: prebuild build postbuild

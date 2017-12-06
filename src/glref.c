@@ -5,7 +5,7 @@
 //global GLuint vao;
 //global GLuint vbos[2];
 
-global struct hnd selected_handle = { 0 };
+global struct rico_object *selected_obj;
 
 global struct program_default *prog_default;
 global struct program_primitive *prog_primitive;
@@ -103,11 +103,13 @@ int create_obj()
 
     // TODO: Prompt user for object name
     const char *name = "new_obj";
-    struct hnd new_obj;
+    struct rico_object *new_obj;
 
     // Create new object with default properties
-    err = object_create(&new_obj, PERSISTENT, name, OBJ_STATIC,
-                        RICO_DEFAULT_MESH, RICO_DEFAULT_MATERIAL, NULL, true);
+    err = chunk_alloc(chunk_active, RICO_HND_OBJECT, (struct hnd **)&new_obj);
+    if (err) return err;
+    err = object_init(new_obj, name, OBJ_STATIC, RICO_DEFAULT_MESH,
+                      RICO_DEFAULT_MATERIAL, NULL);
     if (err) return err;
 
     // Select new object
@@ -117,146 +119,149 @@ int create_obj()
 
 void recalculate_all_bbox()
 {
-    object_bbox_recalculate_all(PERSISTENT);
+    object_bbox_recalculate_all();
 
     // Reselect current object
-    if (selected_handle.value)
-        object_select(selected_handle);
+    if (selected_obj)
+        object_select(selected_obj);
 }
 
-void select_obj(struct hnd handle)
+void select_obj(struct rico_object *object)
 {
-    if (selected_handle.value == handle.value)
+    if (selected_obj == object)
         return;
 
     // Deselect current object
-    if (selected_handle.value)
-        object_deselect(selected_handle);
+    if (selected_obj)
+        object_deselect(selected_obj);
 
     // Select requested object
-    selected_handle = handle;
-    if (selected_handle.value)
-        object_select(selected_handle);
+    selected_obj = object;
+    if (selected_obj)
+        object_select(selected_obj);
 
     selected_print();
 }
 
 void select_next_obj()
 {
-    select_obj(object_next(selected_handle));
+    select_obj(object_next(selected_obj));
 }
 
 void select_prev_obj()
 {
-    select_obj(object_prev(selected_handle));
+    select_obj(object_prev(selected_obj));
 }
 
 void selected_print()
 {
     // Print select object's properties
-    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
+    object_print(selected_obj, STR_SLOT_SELECTED_OBJ);
 }
 
 void selected_translate(struct camera *camera, const struct vec3 *offset)
 {
-    if (!selected_handle.value)
+    if (!selected_obj)
         return;
 
-    enum rico_obj_type selected_type = object_type_get(selected_handle);
+    bool selectable = object_selectable(selected_obj);
 
     if (v3_equals(offset, &VEC3_ZERO))
     {
-        if (camera->locked && selected_type != OBJ_STRING_SCREEN)
+        if (camera->locked && selectable)
         {
             camera->position = VEC3_ZERO;
         }
-        object_trans_set(selected_handle, &VEC3_ZERO);
+        object_trans_set(selected_obj, &VEC3_ZERO);
     }
     else
     {
-        if (camera->locked && selected_type != OBJ_STRING_SCREEN)
+        if (camera->locked && selectable)
         {
             camera_translate_world(camera, offset);
         }
-        object_trans(selected_handle, offset);
+        object_trans(selected_obj, offset);
     }
 
-    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
+    object_print(selected_obj, STR_SLOT_SELECTED_OBJ);
 }
 
 void selected_rotate(const struct vec3 *offset)
 {
-    if (!selected_handle.value)
+    if (!selected_obj)
         return;
 
     if (v3_equals(offset, &VEC3_ZERO))
     {
-        object_rot_set(selected_handle, &VEC3_ZERO);
+        object_rot_set(selected_obj, &VEC3_ZERO);
     }
     else
     {
-        object_rot(selected_handle, offset);
+        object_rot(selected_obj, offset);
     }
 
-    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
+    object_print(selected_obj, STR_SLOT_SELECTED_OBJ);
 }
 
 void selected_scale(const struct vec3 *offset)
 {
-    if (!selected_handle.value)
+    if (!selected_obj)
         return;
 
     if (v3_equals(offset, &VEC3_ZERO))
     {
-        object_scale_set(selected_handle, &VEC3_ONE);
+        object_scale_set(selected_obj, &VEC3_ONE);
     }
     else
     {
-        object_scale(selected_handle, offset);
+        object_scale(selected_obj, offset);
     }
 
-    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
+    object_print(selected_obj, STR_SLOT_SELECTED_OBJ);
 }
 
 void selected_mesh_next()
 {
-    if (!selected_handle.value)
+    if (!selected_obj)
         return;
 
-    object_mesh_next(selected_handle);
-    object_select(selected_handle);
-    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
+    object_mesh_next(selected_obj);
+    object_select(selected_obj);
+    object_print(selected_obj, STR_SLOT_SELECTED_OBJ);
 }
 
 void selected_mesh_prev()
 {
-    if (!selected_handle.value)
+    if (!selected_obj)
         return;
 
-    object_mesh_prev(selected_handle);
-    object_select(selected_handle);
-    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
+    object_mesh_prev(selected_obj);
+    object_select(selected_obj);
+    object_print(selected_obj, STR_SLOT_SELECTED_OBJ);
 }
 
 void selected_bbox_reset()
 {
-    if (!selected_handle.value)
+    if (!selected_obj)
         return;
 
-    object_bbox_set(selected_handle, NULL);
-    object_select(selected_handle);
-    object_print(selected_handle, STR_SLOT_SELECTED_OBJ);
+    object_bbox_set(selected_obj, NULL);
+    object_select(selected_obj);
+    object_print(selected_obj, STR_SLOT_SELECTED_OBJ);
 }
 
 int selected_duplicate()
 {
-    if (!selected_handle.value)
+    if (!selected_obj)
         return SUCCESS;
 
     enum rico_error err;
 
-    struct hnd new_obj;
-    err = object_copy(&new_obj, selected_handle, "Duplicate");
+    struct rico_object *new_obj;
+    err = chunk_alloc(chunk_active, RICO_HND_OBJECT,
+                      (struct hnd **)&new_obj->hnd);
+    if (err) return err;
+    err = object_copy(new_obj, selected_obj, "Duplicate");
     if (err) return err;
 
     select_obj(new_obj);
@@ -265,20 +270,18 @@ int selected_duplicate()
 
 void selected_delete()
 {
-    if (!selected_handle.value)
+    if (!selected_obj)
         return;
 
-    enum rico_obj_type selected_type = object_type_get(selected_handle);
-    if (selected_type == OBJ_NULL ||
-        selected_type == OBJ_STRING_SCREEN)
+    if (!object_selectable(selected_obj))
         return;
 
-    struct hnd prev = object_prev(selected_handle);
-    if (prev.value == selected_handle.value)
-        prev = HANDLE_NULL;
+    struct rico_object *prev = object_prev(selected_obj);
+    if (prev == selected_obj)
+        prev = NULL;
 
-    object_free(selected_handle);
-    selected_handle = HANDLE_NULL;
+    object_free(selected_obj);
+    selected_obj = NULL;
     select_obj(prev);
 }
 
@@ -303,7 +306,7 @@ void glref_render(struct camera *camera)
     //--------------------------------------------------------------------------
     // Axes labels (bboxes)
     //--------------------------------------------------------------------------
-    RICO_ASSERT(axis_bbox.uid.uid != UID_NULL);
+    RICO_ASSERT(axis_bbox.hnd.uid != UID_NULL);
     prim_draw_bbox_color(&axis_bbox, &x_axis_transform, &COLOR_RED);
     prim_draw_bbox_color(&axis_bbox, &y_axis_transform, &COLOR_GREEN);
     prim_draw_bbox_color(&axis_bbox, &z_axis_transform, &COLOR_BLUE);

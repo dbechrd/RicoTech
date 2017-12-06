@@ -10,8 +10,9 @@ struct rico_string {
 };
 extern const u32 RICO_STRING_SIZE;
 
+// Cleanup: Shouldn't needs these anymore
+#if 0
 #define RICO_STRING_SLOTS(f)    \
-    f(STR_SLOT_NULL)            \
     f(STR_SLOT_DEBUG)           \
     f(STR_SLOT_SELECTED_OBJ)    \
     f(STR_SLOT_EDIT_INFO)       \
@@ -19,15 +20,10 @@ extern const u32 RICO_STRING_SIZE;
     f(STR_SLOT_MENU_QUIT)       \
     f(STR_SLOT_COUNT)           \
     f(STR_SLOT_DYNAMIC)
-
-enum rico_string_slot {
-    RICO_STRING_SLOTS(GEN_LIST)
-};
-extern const char *rico_string_slot_string[];
+#endif
 
 int string_request_by_name(struct rico_string *_str, const char *name);
-int string_init(enum rico_persist persist, const char *name,
-                enum rico_string_slot slot, float x, float y, struct col4 color,
+int string_init(const char *name, float x, float y, struct col4 color,
                 u32 lifespan, struct rico_font *font, const char *text);
 int string_free(struct rico_string *str);
 int string_update(r64 dt);

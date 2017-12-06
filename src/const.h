@@ -28,14 +28,15 @@
 #define RICO_DEBUG_FONT             RICO_DEBUG && 0
 #define RICO_DEBUG_HASH             RICO_DEBUG && 0
 
+// TODO: Get rid of this crap, use realloc when necessary
 // Memory pools
-#define RICO_POOL_SIZE_STRING           32
-#define RICO_POOL_SIZE_FONT             4
-#define RICO_POOL_SIZE_TEXTURE          128
-#define RICO_POOL_SIZE_MATERIAL         128
-#define RICO_POOL_SIZE_MESH             128
 #define RICO_POOL_SIZE_OBJECT           128
-#define RICO_POOL_SIZE_OBJECT_TRANSIENT 128
+#define RICO_POOL_SIZE_TEXTURE          128
+#define RICO_POOL_SIZE_MESH             128
+#define RICO_POOL_SIZE_BBOX             128
+#define RICO_POOL_SIZE_FONT             4
+#define RICO_POOL_SIZE_STRING           32
+#define RICO_POOL_SIZE_MATERIAL         128
 
 #if 0
 // Handle section flags
@@ -209,8 +210,7 @@ enum rico_vbo {
     f(ERR_HASH_TABLE_FULL)          \
     f(ERR_HASH_INVALID_KEY)         \
     f(ERR_INVALID_PARAMS)           \
-    f(ERR_OBJ_PARSE_FAILED)         \
-    f(ERR_COUNT)
+    f(ERR_OBJ_PARSE_FAILED)
 
 enum rico_error {
     RICO_ERRORS(GEN_LIST)
@@ -233,14 +233,15 @@ enum rico_error rico_fatal_print(const char *file, int line,
 //------------------------------------------------------------------------------
 // Macros
 //------------------------------------------------------------------------------
-#define UNUSED(x) (void)(x)
+#define UNUSED(x) ((void)sizeof(x))
 #define MIN(a, b) ((a < b) ? a : b)
 #define MAX(a, b) ((a > b) ? a : b)
 #define sizeof_member(type, member) sizeof(((type *)0)->member)
+#define HALT() SDL_TriggerBreakpoint()
 
 #if RICO_DEBUG
     #define FILE_LOC __FILE__, __LINE__
-    #define RICO_ASSERT(exp) if(!(exp)) {*(u8*)0=0;}
+    #define RICO_ASSERT(exp) do { if(!(exp)) HALT(); } while(0)
     #define RICO_FATAL(err, desc, ...) rico_fatal_print(FILE_LOC, err, desc, ##__VA_ARGS__)
 
     #if RICO_DEBUG_ALL_ERRORS_FATAL
@@ -249,7 +250,7 @@ enum rico_error rico_fatal_print(const char *file, int line,
       #define RICO_ERROR(err, desc, ...) rico_error_print(FILE_LOC, err, desc)
     #endif
 #else
-    #define RICO_ASSERT(exp)
+    #define RICO_ASSERT(exp) UNUSED(exp)
     #define RICO_FATAL(err, desc, ...) err
     #define RICO_ERROR(err, desc, ...) err
 #endif

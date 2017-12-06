@@ -18,25 +18,20 @@ struct rico_texture {
     GLsizei bpp;
 };
 extern const u32 RICO_TEXTURE_SIZE;
+global struct rico_texture *RICO_DEFAULT_TEXTURE_DIFF;
+global struct rico_texture *RICO_DEFAULT_TEXTURE_SPEC;
 
-extern struct hnd *RICO_DEFAULT_TEXTURE_DIFF;
-extern struct hnd *RICO_DEFAULT_TEXTURE_SPEC;
-
-struct hnd texture_request_by_uid(uid uid);
-int texture_request_by_name(struct hnd *_handle, const char *name);
-int texture_load_file(struct hnd *_handle, enum rico_persist persist,
-                      const char *name, GLenum target, const char *filename,
-                      u32 bpp);
-int texture_load_pixels(struct hnd *_handle, enum rico_persist persist,
-                        const char *name, GLenum target, u32 width, u32 height,
-                        u32 bpp, const void *pixels);
-void texture_free(struct hnd *handle);
-const char *texture_name(struct hnd *handle);
-void texture_bind(struct hnd *handle, GLenum texture_unit);
-void texture_unbind(struct hnd *handle, GLenum texture_unit);
-void texture_bind_diff(struct hnd *handle);
-void texture_bind_spec(struct hnd *handle);
-void texture_unbind_diff(struct hnd *handle);
-void texture_unbind_spec(struct hnd *handle);
+int texture_load_file(struct rico_texture *_handle, const char *name,
+                      GLenum target, const char *filename, u32 bpp);
+int texture_load_pixels(struct rico_texture *_handle, char *name,
+                        GLenum target, u32 width, u32 height, u32 bpp, const void *pixels);
+void texture_free(struct rico_texture *texture);
+const char *texture_name(struct rico_texture *texture);
+void texture_bind(struct rico_texture *texture, GLenum texture_unit);
+void texture_unbind(struct rico_texture *texture, GLenum texture_unit);
+void texture_bind_diff(struct rico_texture *texture);
+void texture_bind_spec(struct rico_texture *texture);
+void texture_unbind_diff(struct rico_texture *texture);
+void texture_unbind_spec(struct rico_texture *texture);
 
 #endif // RICO_TEXTURE_H

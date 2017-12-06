@@ -14,7 +14,7 @@ internal inline bool keys_equal(struct hash_kv *kv, void *key, u32 len)
 
 void hashtable_init(struct hash_table *table, const char *name, u32 count)
 {
-    uid_init(&table->uid, RICO_UID_HASHTABLE, name, false);
+    hnd_init(&table->hnd, RICO_HND_HASHTABLE, name);
     table->count = count;
     table->slots = calloc(count, sizeof(table->slots[0]));
 }
@@ -71,7 +71,7 @@ int hashtable_insert(struct hash_table *table, void *key, u32 len, void *val)
         {
             return RICO_ERROR(ERR_HASH_TABLE_FULL,
                               "Failed to insert into full hash table %s",
-                              table->uid.name);
+                              table->hnd.name);
         }
     }
 
@@ -79,7 +79,7 @@ int hashtable_insert(struct hash_table *table, void *key, u32 len, void *val)
     if (keys_equal(&table->slots[index].key, key, len))
     {
         printf("[hash][WARN] uid=%d name=%s key=%d Overwriting existing key\n",
-               table->uid.uid, table->uid.name, key);
+               table->hnd.uid, table->hnd.name, key);
     }
 #endif
 

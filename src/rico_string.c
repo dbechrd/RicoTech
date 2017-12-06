@@ -1,49 +1,3 @@
-const char *rico_string_slot_string[] = {
-    RICO_STRING_SLOTS(GEN_STRING)
-};
-
-internal inline struct rico_pool **string_pool_ptr(enum rico_persist persist)
-{
-    struct rico_chunk *chunk = chunk_active();
-    RICO_ASSERT(chunk);
-    RICO_ASSERT(chunk->pools[persist][POOL_STRINGS]);
-    return &chunk->pools[persist][POOL_STRINGS];
-}
-
-internal inline struct rico_pool *string_pool(enum rico_persist persist)
-{
-    return *string_pool_ptr(persist);
-}
-
-internal inline struct rico_string *string_find(struct hnd handle)
-{
-    struct rico_string *string = pool_read(string_pool(handle.persist),
-                                           handle.value);
-    RICO_ASSERT(string->uid.uid);
-    return string;
-}
-
-internal inline struct rico_string *string_find_slot(enum rico_persist persist,
-                                                     u32 slot)
-{
-    struct rico_string *string = pool_read(string_pool(persist), slot);
-    RICO_ASSERT(string->uid.uid);
-    return string;
-}
-
-int string_request_by_name(struct hnd *_handle, const char *name)
-{
-    struct hnd handle = hashtable_search_by_name(&global_strings, name);
-    if (!handle.value)
-    {
-        return RICO_ERROR(ERR_STRING_INVALID_NAME, "String not found: %s.",
-                          name);
-    }
-
-    *_handle = handle;
-    return SUCCESS;
-}
-
 int string_init(enum rico_persist persist, const char *name,
                 enum rico_string_slot slot, float x, float y, struct col4 color,
                 u32 lifespan, struct hnd font, const char *text)
@@ -135,6 +89,9 @@ int string_free(struct hnd handle)
     return err;
 }
 
+// TODO: Lifespan objects shouldn't be string-specific; refactor this logic out
+//       into something more relevant, e.g. an object delete queue, sorted by
+//       time to delete in ms, soonest first.
 int string_update(r64 dt)
 {
     enum rico_error err;

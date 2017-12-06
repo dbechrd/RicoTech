@@ -22,7 +22,7 @@ extern const u32 RICO_FONT_SIZE;
 
 extern struct hnd *RICO_DEFAULT_FONT;
 
-int font_init(struct rico_font *_font, enum rico_persist persist, const char *filename);
+int font_init(struct rico_font *_font, const char *filename);
 void font_free(struct rico_font *font);
 int font_render(struct rico_mesh *_mesh, struct rico_texture *_texture,
                 struct rico_font *font, int x, int y, struct col4 bg,

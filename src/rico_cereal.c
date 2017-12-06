@@ -1,18 +1,18 @@
-struct rico_cereal rico_cereals[RICO_UID_COUNT] = { 0 };
+struct rico_cereal rico_cereals[RICO_HND_COUNT] = { 0 };
 
 //int rico_serialize(const void *handle, const struct rico_file *file)
 SERIAL(rico_serialize)
 {
     enum rico_error err;
 
-    err = uid_serialize(handle, file);
+    err = hnd_serialize(handle, file);
     if (err) return err;
 
-    const enum rico_uid_type *type = handle;
+    const enum rico_hnd_type *type = handle;
 
     if (!rico_cereals[*type].save[file->cereal_index])
         return RICO_ERROR(ERR_SERIALIZER_NULL, "Serializer null for type %s",
-                          rico_uid_type_string[*type]);
+                          rico_hnd_type_string[*type]);
 
     return rico_cereals[*type].save[file->cereal_index](handle, file);
 }
@@ -22,15 +22,15 @@ DESERIAL(rico_deserialize)
 {
     enum rico_error err;
 
-    err = uid_deserialize(_handle, file);
+    err = hnd_deserialize(_handle, file);
     if (err) return err;
 
-    enum rico_uid_type *type = *_handle;
+    enum rico_hnd_type *type = *_handle;
 
     if (!rico_cereals[*type].load[file->cereal_index])
         return RICO_ERROR(ERR_DESERIALIZER_NULL,
                           "Deserializer null for type %s",
-                          rico_uid_type_string[*type]);
+                          rico_hnd_type_string[*type]);
 
     err = rico_cereals[*type].load[file->cereal_index](_handle, file);
     return err;

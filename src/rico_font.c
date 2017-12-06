@@ -20,40 +20,7 @@ struct bff_header
 
 struct hnd RICO_DEFAULT_FONT = { 0 };
 
-internal inline struct rico_pool **font_pool_ptr(enum rico_persist persist)
-{
-    struct rico_chunk *chunk = chunk_active();
-    RICO_ASSERT(chunk);
-    RICO_ASSERT(chunk->pools[persist][POOL_FONTS]);
-    return &chunk->pools[persist][POOL_FONTS];
-}
-
-internal inline struct rico_pool *font_pool(enum rico_persist persist)
-{
-    return *font_pool_ptr(persist);
-}
-
-internal inline struct rico_font *font_find(struct hnd handle)
-{
-    struct rico_font *font = pool_read(font_pool(handle.persist), handle.value);
-    RICO_ASSERT(font->uid.uid);
-    return font;
-}
-
-int font_request_by_name(struct hnd *_handle, const char *name)
-{
-    struct hnd handle = hashtable_search_by_name(&global_fonts, name);
-    if (!handle.value)
-    {
-        return RICO_ERROR(ERR_FONT_INVALID_NAME, "Font not found: %s.", name);
-    }
-
-    *_handle = handle;
-    return SUCCESS;
-}
-
-int font_init(struct hnd *_handle, enum rico_persist persist,
-              const char *filename)
+int font_init(struct hnd *_handle, const char *filename)
 {
     enum rico_error err;
 

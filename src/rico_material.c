@@ -1,46 +1,24 @@
 const u32 RICO_MATERIAL_SIZE = sizeof(struct rico_material);
 
-struct hnd RICO_DEFAULT_MATERIAL = { 0 };
+global struct rico_material *RICO_DEFAULT_MATERIAL;
 
-internal inline struct rico_material *material_find(struct hnd handle)
+struct rico_material *material_request(struct rico_material *material)
 {
-    struct rico_chunk *chunk = chunk_active();
-    struct rico_material *material = pool_read(chunk_pool(chunk, handle.persist, POOL_MATERIALS),
-                                               handle.value);
-    RICO_ASSERT(material->uid.uid);
-    return material;
-}
-
-// TODO: Do proper reference counting, this function is stupid.
-struct hnd material_request(struct hnd handle)
-{
-    struct rico_material *material = material_find(handle);
+    // TODO: Do proper reference counting, this function is stupid.
+    RICO_ASSERT(0);
     material->ref_count++;
 
 #if RICO_DEBUG_MATERIAL
-    printf("[ mtl][rqst] uid=%d ref=%d name=%s\n", material->uid.uid,
-           material->ref_count, material->uid.name);
+    printf("[ mtl][rqst] uid=%d ref=%d name=%s\n", material->hnd.uid,
+           material->ref_count, material->hnd.name);
 #endif
 
-    return handle;
+    return material;
 }
 
-int material_request_by_name(struct hnd *_handle, const char *name)
-{
-    struct hnd handle = hashtable_search_by_name(&global_materials, name);
-    if (!handle.value)
-    {
-        return RICO_ERROR(ERR_MATERIAL_INVALID_NAME, "Material not found: %s.",
-                          name);
-    }
-
-    *_handle = material_request(handle);
-    return SUCCESS;
-}
-
-int material_init(struct hnd *_handle, enum rico_persist persist,
-                  const char *name, struct hnd tex_diffuse,
-                  struct hnd tex_specular, float shiny)
+int material_init(struct rico_material *material, const char *name,
+                  struct rico_texture *tex_diffuse,
+                  struct rico_texture *tex_specular, float shiny)
 {
     enum rico_error err;
 
@@ -48,34 +26,28 @@ int material_init(struct hnd *_handle, enum rico_persist persist,
     printf("[ mtl][init] name=%s\n", name);
 #endif
 
-    struct hnd handle;
-    struct rico_material *material;
-    err = pool_handle_alloc(material_pool_ptr(persist), &handle, (void *)&material);
-    if (err) return err;
-
-    uid_init(&material->uid, RICO_UID_MATERIAL, name, true);
-    material->tex_diffuse = texture_request(tex_diffuse);
-    material->tex_specular = texture_request(tex_specular);
+    hnd_init(&material->hnd, RICO_HND_MATERIAL, name);
+    material->tex_diffuse = tex_diffuse;
+    tex_diffuse->ref_count++;
+    material->tex_specular = tex_specular;
+    tex_specular->ref_count++;
     material->shiny = shiny;
 
     // Store in global hash table
-    hash_key key = hashgen_str(material->uid.name);
-    err = hashtable_insert(&global_materials, key, handle);
-    if (err) return err;
+    err = hashtable_insert(&global_materials, material->hnd.name,
+                           material->hnd.len, material);
 
-    if(_handle) *_handle = handle;
     return err;
 }
 
-void material_free(struct hnd handle)
+void material_free(struct rico_material *material)
 {
-    struct rico_material *material = material_find(handle);
     if (material->ref_count > 0)
         material->ref_count--;
 
 #if RICO_DEBUG_MATERIAL
-    printf("[ mtl][ rls] uid=%d ref=%d name=%s\n", material->uid.uid,
-           material->ref_count, material->uid.name);
+    printf("[ mtl][ rls] uid=%d ref=%d name=%s\n", material->hnd.uid,
+           material->ref_count, material->hnd.name);
 #endif
 
     if (material->ref_count > 0)
@@ -86,46 +58,40 @@ void material_free(struct hnd handle)
     //    return;
 
 #if RICO_DEBUG_MATERIAL
-    printf("[ mtl][free] uid=%d name=%s\n", material->uid.uid,
-           material->uid.name);
+    printf("[ mtl][free] uid=%d name=%s\n", material->hnd.uid,
+           material->hnd.name);
 #endif
 
-    hash_key key = hashgen_str(material->uid.name);
-    hashtable_delete(&global_materials, key);
+    hashtable_delete(&global_materials, material->hnd.name, material->hnd.len);
 
     texture_free(material->tex_diffuse);
     texture_free(material->tex_specular);
 
-    material->uid.uid = UID_NULL;
-    pool_handle_free(material_pool(handle.persist), handle);
+    material->hnd.uid = UID_NULL;
+    struct rico_pool *pool = chunk_pool(chunk_active, RICO_HND_MATERIAL);
+    pool_handle_free(pool, &material->hnd);
 }
 
-internal inline const char *material_name(struct hnd handle)
+// TODO: Deprecate pointless accessors like this
+internal inline const char *material_name(struct rico_material *material)
 {
-    struct rico_material *material = material_find(handle);
-    return material->uid.name;
+    return material->hnd.name;
 }
 
-internal inline float material_shiny(struct hnd handle)
+// TODO: Deprecate pointless accessors like this
+internal inline float material_shiny(struct rico_material *material)
 {
-    struct rico_material *material = material_find(handle);
     return material->shiny;
 }
 
-void material_bind(struct hnd handle)
+void material_bind(struct rico_material *material)
 {
-    struct rico_material *material = material_find(handle);
-    RICO_ASSERT(material->uid.uid != UID_NULL);
-
     texture_bind_diff(material->tex_diffuse);
     texture_bind_spec(material->tex_specular);
 }
 
-void material_unbind(struct hnd handle)
+void material_unbind(struct rico_material *material)
 {
-    struct rico_material *material = material_find(handle);
-    RICO_ASSERT(material->uid.uid != UID_NULL);
-
     texture_unbind_diff(material->tex_diffuse);
     texture_unbind_spec(material->tex_specular);
 }

@@ -20,7 +20,7 @@ enum OBJ_LINE_TYPE line_type(const char *line);
 bool load_mesh(const char *line, struct rico_mesh *mesh);
 */
 
-int load_obj_file(enum rico_persist persist, const char *filename)
+int load_obj_file(const char *filename)
 {
     enum rico_error err;
 
@@ -61,7 +61,7 @@ int load_obj_file(enum rico_persist persist, const char *filename)
         {
             if (idx_vertex > 0)
             {
-                err = mesh_load(NULL, persist, name, MESH_OBJ_WORLD, idx_vertex,
+                err = mesh_load(NULL, name, MESH_OBJ_WORLD, idx_vertex,
                                 vertices, idx_element, elements,
                                 GL_STATIC_DRAW);
                 if (err) goto cleanup;

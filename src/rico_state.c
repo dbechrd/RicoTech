@@ -1,5 +1,4 @@
-global const bool load_save_file = true;
-global struct rico_chunk *RICO_DEFAULT_CHUNK;
+#define LOAD_SAVE_FILE true
 
 ///|////////////////////////////////////////////////////////////////////////////
 const char *rico_state_string[] = {
@@ -1111,17 +1110,58 @@ internal int rico_init_chunks()
     //       can't be loaded from the save file.
 
     chunk_pool_counts pool_counts;
-    pool_counts[POOL_STRINGS]   = RICO_POOL_SIZE_STRING;
-    pool_counts[POOL_FONTS]     = RICO_POOL_SIZE_FONT;
-    pool_counts[POOL_TEXTURES]  = RICO_POOL_SIZE_TEXTURE;
-    pool_counts[POOL_MATERIALS] = RICO_POOL_SIZE_MATERIAL;
-    pool_counts[POOL_MESHES]    = RICO_POOL_SIZE_MESH;
-    pool_counts[POOL_OBJECTS]   = RICO_POOL_SIZE_OBJECT;
+    pool_counts[RICO_HND_OBJECT]   = RICO_POOL_SIZE_OBJECT;
+    pool_counts[RICO_HND_TEXTURE]  = RICO_POOL_SIZE_TEXTURE;
+    pool_counts[RICO_HND_MESH]     = RICO_POOL_SIZE_MESH;
+    pool_counts[RICO_HND_BBOX]     = RICO_POOL_SIZE_BBOX;
+    pool_counts[RICO_HND_FONT]     = RICO_POOL_SIZE_FONT;
+    pool_counts[RICO_HND_STRING]   = RICO_POOL_SIZE_STRING;
+    pool_counts[RICO_HND_MATERIAL] = RICO_POOL_SIZE_MATERIAL;
 
-    err = chunk_init(&RICO_DEFAULT_CHUNK, "RICO_CHUNK_DEFAULT", &pool_counts);
+    // Special chunk used to store transient object pools
+    err = chunk_init(&chunk_transient, "[Transient]", &pool_counts);
     if (err) return err;
 
-    chunk_active_set(RICO_DEFAULT_CHUNK);
+    if (LOAD_SAVE_FILE)
+    {
+        printf("----------------------------------------------------------\n");
+        printf("[MAIN][init] Loading chunks\n");
+        printf("----------------------------------------------------------\n");
+        struct rico_file file;
+        err = rico_file_open_read(&file, "chunks/cereal.bin");
+        if (err) return err;
+
+        RICO_ASSERT(next_uid < UID_BASE);
+        RICO_ASSERT(next_uid < file.next_uid);
+        next_uid = file.next_uid;
+
+        // HACK: This is only here because rico_deserialize needs to know the
+        //       RICO_UID_CHUNK uid type to decide which deserializer to call.
+        //       Is there a better way to do this?
+        struct rico_chunk tmp_chunk = { 0 };
+        uid_init(&tmp_chunk.uid, RICO_UID_CHUNK, "CHUNK_LOADING", false);
+
+        chunk_active = &tmp_chunk;
+        err = rico_deserialize((void *)&chunk_active, &file);
+        rico_file_close(&file);
+        if (err) return err;
+    }
+    else
+    {
+        RICO_ASSERT(next_uid < UID_BASE);
+        next_uid = UID_BASE;
+
+        err = chunk_init(&chunk_active, "Default", &pool_counts);
+        if (err) return err;
+
+        printf("----------------------------------------------------------\n");
+        printf("[MAIN][init] Loading hard-coded test chunk\n");
+        printf("----------------------------------------------------------\n");
+        err = init_hardcoded_test_chunk(chunk_active);
+        if (err) return err;
+
+        chunk_active = RICO_DEFAULT_CHUNK;
+    }
 
     return err;
 }
@@ -1181,8 +1221,10 @@ internal int rico_init_materials()
 {
     enum rico_error err;
 
-    // TODO: Use fixed slots to allocate default resources
-    err = material_init(&RICO_DEFAULT_MATERIAL, TRANSIENT, "MATERIAL_DEFAULT",
+    err = chunk_alloc(chunk_active, RICO_HND_MATERIAL, &RICO_DEFAULT_MATERIAL);
+    if (err) return err;
+
+    err = material_init(&RICO_DEFAULT_MATERIAL, "MATERIAL_DEFAULT",
                         RICO_DEFAULT_TEXTURE_DIFF, RICO_DEFAULT_TEXTURE_SPEC,
                         0.5f);
     return err;
@@ -1253,10 +1295,15 @@ internal int rico_init_meshes()
         4, 5, 1, 1, 0, 4
     };
 
-    // TODO: Use fixed slot for default mesh (do this for all other defaults as
-    //       well).
-    err = mesh_load(&RICO_DEFAULT_MESH, TRANSIENT, "BBox", MESH_OBJ_WORLD,
-                    8, default_vertices, 36, elements, GL_STATIC_DRAW);
+    // TODO: Don't store BBoxes in active chunk; create a transient_chunk
+    //       that everyone shares to store transient objects in memory.
+    //       This has the added benefit of being extremely easy to serialize
+    //       should the need ever arise.
+    err = chunk_alloc(chunk_active, RICO_HND_MESH, &RICO_DEFAULT_MESH);
+    if (err) return err;
+
+    err = mesh_load(&RICO_DEFAULT_MESH, "BBox", MESH_OBJ_WORLD, 8,
+                    default_vertices, 36, elements, GL_STATIC_DRAW);
     if (err) return err;
 
     PRIM_MESH_BBOX = RICO_DEFAULT_MESH;
@@ -1302,7 +1349,7 @@ internal int load_mesh_files()
 
     return err;
 }
-internal int init_hardcoded_test_chunk()
+internal int init_hardcoded_test_chunk(struct rico_chunk *chunk)
 {
     enum rico_error err;
 
@@ -1322,8 +1369,12 @@ internal int init_hardcoded_test_chunk()
     // Create world objects
     //--------------------------------------------------------------------------
 
+
     // Ground
-    struct hnd obj_ground;
+    struct rico_object *obj_ground;
+    // TODO: mem_arena_push(arena, RICO_HND_OBJECT, &obj_ground)
+    err = chunk_alloc(chunk_active, RICO_HND_OBJECT, &obj_ground);
+    if (err) return err;
     err = object_create(&obj_ground, PERSISTENT, "Ground", OBJ_STATIC,
                         RICO_DEFAULT_MESH, material_rock, NULL, true);
     if (err) return err;
@@ -1408,60 +1459,11 @@ internal int rico_init()
     printf("----------------------------------------------------------\n");
     rico_init_cereal();
 
-    if (load_save_file)
-    {
-        printf("----------------------------------------------------------\n");
-        printf("[MAIN][init] Loading chunks\n");
-        printf("----------------------------------------------------------\n");
-        struct rico_file file;
-        err = rico_file_open_read(&file, "chunks/cereal.bin");
-        if (err) return err;
-
-        RICO_ASSERT(next_uid < UID_BASE);
-        RICO_ASSERT(next_uid < file.next_uid);
-        next_uid = file.next_uid;
-
-        struct rico_chunk tmp_chunk = { 0 };
-        uid_init(&tmp_chunk.uid, RICO_UID_CHUNK, "CHUNK_LOADING", false);
-
-        struct rico_chunk *chunk_ptr = &tmp_chunk;
-        err = rico_deserialize((void *)&chunk_ptr, &file);
-        rico_file_close(&file);
-        if (err) return err;
-
-        // TODO: Fix the default settings below
-        //RICO_ASSERT(0);
-#if 0
-        // TODO: Use fixed slots, or find by name and load if don't exist?
-        RICO_DEFAULT_FONT = 1;
-        RICO_DEFAULT_TEXTURE_DIFF = 1;
-        RICO_DEFAULT_TEXTURE_SPEC = 2;
-        RICO_DEFAULT_MATERIAL = 1;
-        RICO_DEFAULT_MESH = 1;
-        RICO_DEFAULT_OBJECT = 1;
-#endif
-
-        chunk_active_set(chunk_ptr);
-    }
-    else
-    {
-        printf("----------------------------------------------------------\n");
-        printf("[MAIN][init] Initializing chunks\n");
-        printf("----------------------------------------------------------\n");
-        err = rico_init_chunks();
-        if (err) return err;
-
-        RICO_ASSERT(next_uid < UID_BASE);
-        next_uid = UID_BASE;
-
-        printf("----------------------------------------------------------\n");
-        printf("[MAIN][init] Loading hard-coded test chunk\n");
-        printf("----------------------------------------------------------\n");
-        err = init_hardcoded_test_chunk();
-        if (err) return err;
-
-        chunk_active_set(RICO_DEFAULT_CHUNK);
-    }
+    printf("----------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing chunks\n");
+    printf("----------------------------------------------------------\n");
+    err = rico_init_chunks();
+    if (err) return err;
 
     printf("----------------------------------------------------------\n");
     printf("[MAIN][init] Initializing shaders\n");
