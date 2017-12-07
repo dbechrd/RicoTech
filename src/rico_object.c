@@ -2,7 +2,7 @@ const char *rico_obj_type_string[] = {
     RICO_OBJ_TYPES(GEN_STRING)
 };
 
-global struct rico_object *RICO_DEFAULT_OBJECT;
+struct rico_object *RICO_DEFAULT_OBJECT;
 
 internal void update_transform(struct rico_object *obj);
 
@@ -30,7 +30,7 @@ int object_init(struct rico_object *object, const char *name,
     mesh->ref_count++;
     object->material = material;
     material->ref_count++;
-    object->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(object->mesh);
+    object->bbox = (bbox != NULL) ? *bbox : object->mesh->bbox;
 
     update_transform(object);
 
@@ -95,7 +95,7 @@ void object_bbox_recalculate_all()
 void object_bbox_set(struct rico_object *object,
                      const struct bbox *bbox)
 {
-    object->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(object->mesh);
+    object->bbox = (bbox != NULL) ? *bbox : object->mesh->bbox;
 }
 
 void object_mesh_set(struct rico_object *object, struct rico_mesh *mesh,
@@ -104,7 +104,7 @@ void object_mesh_set(struct rico_object *object, struct rico_mesh *mesh,
     mesh_free(object->mesh);
     object->mesh = mesh;
     mesh->ref_count++;
-    object->bbox = (bbox != NULL) ? *bbox : *mesh_bbox(object->mesh);
+    object->bbox = (bbox != NULL) ? *bbox : object->mesh->bbox;
 }
 
 void object_mesh_next(struct rico_object *object)
@@ -116,7 +116,7 @@ void object_mesh_next(struct rico_object *object)
     mesh_free(object->mesh);
     object->mesh = next_mesh;
     next_mesh->ref_count++;
-    object->bbox = *mesh_bbox(next_mesh);
+    object->bbox = next_mesh->bbox;
 }
 
 void object_mesh_prev(struct rico_object *object)
@@ -128,7 +128,7 @@ void object_mesh_prev(struct rico_object *object)
     mesh_free(object->mesh);
     object->mesh = prev_mesh;
     prev_mesh->ref_count++;
-    object->bbox = *mesh_bbox(prev_mesh);
+    object->bbox = prev_mesh->bbox;
 }
 
 void object_material_set(struct rico_object *object, struct rico_material *material)
@@ -490,11 +490,13 @@ int object_print(struct rico_object *object)
 {
     enum rico_error err;
 
+    // TODO: Free previous "[object_print]" string, look up by name
+
     // Print to screen
     char buf[256] = { 0 };
     object_to_string(object, buf, sizeof(buf));
-    err = string_init(TRANSIENT, rico_string_slot_string[slot], slot, 0,
-                      FONT_HEIGHT, COLOR_GRAY_HIGHLIGHT, 0, NULL, buf);
+    err = string_init("[object_print]", STR_SLOT_SELECTED_OBJ, 0, FONT_HEIGHT, COLOR_GRAY_HIGHLIGHT, 0,
+                      NULL, buf);
     return err;
 }
 

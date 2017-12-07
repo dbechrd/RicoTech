@@ -5,11 +5,11 @@
     f(RICO_HND_OBJECT)       \
     f(RICO_HND_TEXTURE)      \
     f(RICO_HND_MESH)         \
-    f(RICO_HND_BBOX)         \
     f(RICO_HND_FONT)         \
     f(RICO_HND_STRING)       \
     f(RICO_HND_MATERIAL)     \
     f(RICO_HND_CEREAL_COUNT) \
+    f(RICO_HND_BBOX)         \
     f(RICO_HND_CHUNK)        \
     f(RICO_HND_POOL)         \
     f(RICO_HND_HASHTABLE)    \
@@ -18,7 +18,7 @@
 enum rico_hnd_type {
     RICO_HND_TYPES(GEN_LIST)
 };
-//extern const char *rico_hnd_type_string[];
+extern const char *rico_hnd_type_string[];
 
 typedef u32 uid;
 struct hnd {
@@ -30,7 +30,7 @@ struct hnd {
 #define UID_NULL 0
 #define UID_BASE 1000
 
-void hnd_init(struct hnd *_hnd, enum rico_hnd_type type, const char *name);
+void hnd_init(struct hnd *hnd, enum rico_hnd_type type, const char *name);
 SERIAL(hnd_serialize);
 DESERIAL(hnd_deserialize);
 

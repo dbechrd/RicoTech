@@ -1,12 +1,16 @@
 #ifndef RICO_CHUNK_H
 #define RICO_CHUNK_H
 
-#define CHUNK_POOL_COUNT RICO_HND_CEREAL_COUNT
-typedef u32 chunk_pool_counts[CHUNK_POOL_COUNT];
+typedef u32 chunk_pool_counts[RICO_HND_CEREAL_COUNT];
 
-// TODO: Make this a global hash table (RICO_HND_TYPE -> u32 size)
-u32 size_by_handle[RICO_HND_CEREAL_COUNT] = {
-
+// TODO: Should this be a global hash table (RICO_HND_TYPE -> u32 size)?
+const chunk_pool_counts size_by_handle = {
+    sizeof(struct rico_object),   // RICO_HND_OBJECT
+    sizeof(struct rico_texture),  // RICO_HND_TEXTURE
+    sizeof(struct rico_mesh),     // RICO_HND_MESH
+    sizeof(struct rico_font),     // RICO_HND_FONT
+    sizeof(struct rico_string),   // RICO_HND_STRING
+    sizeof(struct rico_material)  // RICO_HND_MATERIAL
 };
 
 struct rico_chunk {
@@ -22,10 +26,13 @@ struct rico_chunk {
     // mem_arena_save(&persistent);
     // mem_arena_load(&persistent, "chunk.bin");
     // mem_arena_push(mem_pool_init(HND_MESH, 30));
-    struct rico_pool *pools[CHUNK_POOL_COUNT];
+
+    // TODO: Make this **pools to allow dynamically allocating new pools
+    //       as necessary?? Or have a non-pool heap in the chunk?
+    struct rico_pool *pools[RICO_HND_CEREAL_COUNT];
 };
-global struct rico_chunk *chunk_active;
-global struct rico_chunk *chunk_transient;
+extern struct rico_chunk *chunk_active;
+extern struct rico_chunk *chunk_transient;
 
 int chunk_init(struct rico_chunk **_chunk, const char *name,
                const chunk_pool_counts *pool_counts);

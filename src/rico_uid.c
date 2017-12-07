@@ -4,9 +4,9 @@ const char *rico_hnd_type_string[] = {
     RICO_HND_TYPES(GEN_STRING)
 };
 
-void hnd_init(struct hnd *_hnd, enum rico_hnd_type type, const char *name)
+void hnd_init(struct hnd *hnd, enum rico_hnd_type type, const char *name)
 {
-    _hnd->type = type;
+    hnd->type = type;
 
     // HACK: Don't assign ID numbers to objects which are rapidly created and
     //       destroyed. Fix this by reusing font meshes and bounding boxes.
@@ -21,17 +21,17 @@ void hnd_init(struct hnd *_hnd, enum rico_hnd_type type, const char *name)
     //     _hnd->uid = next_uid++;
     // }
 
-    _hnd->uid = next_uid++;
+    hnd->uid = next_uid++;
 
-    strncpy(_hnd->name, name, sizeof(_hnd->name) - 1);
+    strncpy(hnd->name, name, sizeof(hnd->name) - 1);
     u32 name_len = strlen(name);
-    _hnd->len = MIN(name_len, sizeof(_hnd->name) - 1);
+    hnd->len = MIN(name_len, sizeof(hnd->name) - 1);
 
 #if RICO_DEBUG_HND
-    printf("[ hnd][init] uid=%d type=%s name=%s", _hnd->uid,
-           rico_hnd_type_string[_hnd->type], _hnd->name);
+    printf("[ hnd][init] uid=%d type=%s name=%s", hnd->uid,
+           rico_hnd_type_string[hnd->type], hnd->name);
 
-    if (name_len > sizeof(_hnd->name) - 1)
+    if (name_len > sizeof(hnd->name) - 1)
         printf("...");
     printf("\n");
 

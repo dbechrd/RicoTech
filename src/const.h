@@ -30,13 +30,13 @@
 
 // TODO: Get rid of this crap, use realloc when necessary
 // Memory pools
-#define RICO_POOL_SIZE_OBJECT           128
-#define RICO_POOL_SIZE_TEXTURE          128
-#define RICO_POOL_SIZE_MESH             128
-#define RICO_POOL_SIZE_BBOX             128
-#define RICO_POOL_SIZE_FONT             4
-#define RICO_POOL_SIZE_STRING           32
-#define RICO_POOL_SIZE_MATERIAL         128
+//#define RICO_POOL_SIZE_OBJECT           128
+//#define RICO_POOL_SIZE_TEXTURE          128
+//#define RICO_POOL_SIZE_MESH             128
+//#define RICO_POOL_SIZE_BBOX             128
+//#define RICO_POOL_SIZE_FONT             4
+//#define RICO_POOL_SIZE_STRING           32
+//#define RICO_POOL_SIZE_MATERIAL         128
 
 #if 0
 // Handle section flags

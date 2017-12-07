@@ -2,8 +2,8 @@ const char *rico_prim_string[] = {
     RICO_PRIMITIVES(GEN_STRING)
 };
 
-global struct rico_mesh *PRIM_MESH_BBOX;
-global struct rico_mesh *PRIM_MESH_SPHERE;
+struct rico_mesh *PRIM_MESH_BBOX;
+struct rico_mesh *PRIM_MESH_SPHERE;
 
 global GLuint vaos[PRIM_COUNT];
 global GLuint vbos[PRIM_COUNT][VBO_COUNT];

@@ -1,20 +1,4 @@
-const u32 RICO_MATERIAL_SIZE = sizeof(struct rico_material);
-
-global struct rico_material *RICO_DEFAULT_MATERIAL;
-
-struct rico_material *material_request(struct rico_material *material)
-{
-    // TODO: Do proper reference counting, this function is stupid.
-    RICO_ASSERT(0);
-    material->ref_count++;
-
-#if RICO_DEBUG_MATERIAL
-    printf("[ mtl][rqst] uid=%d ref=%d name=%s\n", material->hnd.uid,
-           material->ref_count, material->hnd.name);
-#endif
-
-    return material;
-}
+struct rico_material *RICO_DEFAULT_MATERIAL;
 
 int material_init(struct rico_material *material, const char *name,
                   struct rico_texture *tex_diffuse,
@@ -36,7 +20,6 @@ int material_init(struct rico_material *material, const char *name,
     // Store in global hash table
     err = hashtable_insert(&global_materials, material->hnd.name,
                            material->hnd.len, material);
-
     return err;
 }
 
@@ -86,14 +69,37 @@ internal inline float material_shiny(struct rico_material *material)
 
 void material_bind(struct rico_material *material)
 {
-    texture_bind_diff(material->tex_diffuse);
-    texture_bind_spec(material->tex_specular);
+    if (material->tex_diffuse)
+    {
+        texture_bind(material->tex_diffuse, GL_TEXTURE0);
+    }
+    else
+    {
+#if RICO_DEBUG_MATERIAL
+        printf("[ mtl][warn] uid=%d name=%s No diffuse texture, using default\n", material->hnd.uid,
+               material->hnd.name);
+        texture_bind(RICO_DEFAULT_TEXTURE_DIFF, GL_TEXTURE0);
+#endif
+    }
+
+    if (material->tex_specular)
+    {
+        texture_bind(material->tex_specular, GL_TEXTURE1);
+    }
+    else
+    {
+#if RICO_DEBUG_MATERIAL
+        printf("[ mtl][warn] uid=%d name=%s No specular texture, using default\n", material->hnd.uid,
+               material->hnd.name);
+        texture_bind(RICO_DEFAULT_TEXTURE_SPEC, GL_TEXTURE1);
+#endif
+    }
 }
 
 void material_unbind(struct rico_material *material)
 {
-    texture_unbind_diff(material->tex_diffuse);
-    texture_unbind_spec(material->tex_specular);
+    texture_unbind(material->tex_diffuse, GL_TEXTURE0);
+    texture_unbind(material->tex_specular, GL_TEXTURE1);
 }
 
 #if 0

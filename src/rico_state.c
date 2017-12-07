@@ -239,9 +239,9 @@ internal int save_file()
 
     enum rico_error err;
 
-    struct rico_chunk *chunk = chunk_active();
+    struct rico_chunk *chunk = chunk_active;
 
-    if (chunk->uid.uid == UID_NULL)
+    if (chunk->hnd.uid == UID_NULL)
         return RICO_ERROR(ERR_CHUNK_NULL, "Failed to save NULL chunk");
 
     struct rico_file file;
@@ -277,7 +277,7 @@ internal int save_file()
 }
 internal void select_first_obj()
 {
-    struct hnd obj_collided = { 0 };
+    struct rico_object *obj_collided = { 0 };
     float dist;
 
     // Camera forward ray v. scene
@@ -353,7 +353,7 @@ void temp_camera_update(r64 dt)
     string_truncate(buf, sizeof(buf), len);
 
     err = string_init(RICO_TRANSIENT, "STR_VEL", STR_SLOT_DEBUG, 0,
-                      -FONT_HEIGHT, COLOR_DARK_RED_HIGHLIGHT, 0, HANDLE_NULL,
+                      -FONT_HEIGHT, COLOR_DARK_RED_HIGHLIGHT, 0, NULL,
                       buf);
     if (err) return err;
 #endif
@@ -385,6 +385,18 @@ void temp_camera_update(r64 dt)
     }
 
     camera_update(&cam_player);
+}
+
+internal void clear_slot_string(enum rico_string_slot slot)
+{
+    // TODO: How to make this more logical? Maybe STR_SLOT_* should be handles?
+    const char *slot_name = rico_string_slot_string[slot];
+    struct rico_string *str;
+    str = hashtable_search(&global_strings, (void *)slot_name,
+                           strlen(slot_name));
+    string_free(str);
+    hashtable_delete(&global_strings, (void *)slot_name,
+                     strlen(slot_name));
 }
 
 int state_update()
@@ -435,8 +447,8 @@ int state_update()
                            rico_state_string[state]);
         string_truncate(buf, sizeof(buf), len);
 
-        err = string_init(TRANSIENT, "STR_STATE", STR_SLOT_EDIT_INFO, 0, 0,
-                          COLOR_DARK_RED_HIGHLIGHT, 0, HANDLE_NULL, buf);
+        err = string_init("STR_STATE", STR_SLOT_EDIT_INFO, 0, 0,
+                          COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
         if (err) return err;
     }
 
@@ -470,9 +482,8 @@ int state_update()
                            ms, mcyc);
         string_truncate(buf, sizeof(buf), len);
 
-        err = string_init(TRANSIENT, "STR_FPS", STR_SLOT_FPS,
-                          -(FONT_WIDTH * len), 0, COLOR_DARK_RED_HIGHLIGHT, 0,
-                          HANDLE_NULL, buf);
+        err = string_init("STR_FPS", STR_SLOT_FPS, -(FONT_WIDTH * len), 0,
+                          COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
         if (err) return err;
         fps_last_render = last_perfs;
     }
@@ -515,18 +526,14 @@ internal int shared_engine_events()
         fps_render = !fps_render;
         if (!fps_render)
         {
-            // TODO: How to make this more logical? Maybe STR_SLOT_* should be handles?
-            struct hnd handle;
-            handle.persist = TRANSIENT;
-            handle.value = STR_SLOT_FPS;
-            string_free(handle);
+            clear_slot_string(STR_SLOT_FPS);
         }
     }
     // Save and exit
     else if (chord_pressed(ACTION_ENGINE_QUIT))
     {
-        err = string_init(TRANSIENT, "STR_CONFIRM_QUIT", STR_SLOT_MENU_QUIT,
-                          600, 400, COLOR_GREEN, 0, HANDLE_NULL,
+        err = string_init("STR_CONFIRM_QUIT", STR_SLOT_MENU_QUIT, 600, 400,
+                          COLOR_GREEN, 0, NULL,
                           "                       \n" \
                           "  Save and quit?       \n" \
                           "                       \n" \
@@ -713,12 +720,7 @@ internal int state_edit_cleanup()
 
     if (!is_edit_state(state))
     {
-        // TODO: How to make this more logical? Should STR_SLOT_* be handles?
-        struct hnd handle;
-        handle.persist = TRANSIENT;
-        handle.value = STR_SLOT_SELECTED_OBJ;
-        err = string_free(handle);
-        if (err) return err;
+        clear_slot_string(STR_SLOT_SELECTED_OBJ);
     }
 
     return err;
@@ -793,9 +795,8 @@ internal int state_edit_translate()
         int len = snprintf(buf, sizeof(buf), "Trans Delta: %f", trans_delta);
         string_truncate(buf, sizeof(buf), len);
 
-        err = string_init(TRANSIENT, "STR_EDIT_TRANS_DELTA", STR_SLOT_EDIT_INFO,
-                          0, 0, COLOR_DARK_BLUE_HIGHLIGHT, 1000, HANDLE_NULL,
-                          buf);
+        err = string_init("STR_EDIT_TRANS_DELTA", STR_SLOT_EDIT_INFO, 0, 0,
+                          COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL, buf);
         if (err) return err;
     }
 
@@ -879,9 +880,8 @@ internal int state_edit_rotate()
         int len = snprintf(buf, sizeof(buf), "Rot Delta: %f", rot_delta);
         string_truncate(buf, sizeof(buf), len);
 
-        err = string_init(TRANSIENT, "STR_EDIT_ROT_DELTA", STR_SLOT_EDIT_INFO,
-                          0, 0, COLOR_DARK_BLUE_HIGHLIGHT, 1000, HANDLE_NULL,
-                          buf);
+        err = string_init("STR_EDIT_ROT_DELTA", STR_SLOT_EDIT_INFO, 0, 0,
+                          COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL, buf);
         if (err) return err;
     }
 
@@ -971,9 +971,8 @@ internal int state_edit_scale()
         int len = snprintf(buf, sizeof(buf), "Scale Delta: %f", scale_delta);
         string_truncate(buf, sizeof(buf), len);
 
-        err = string_init(TRANSIENT, "STR_EDIT_SCALE_DELTA", STR_SLOT_EDIT_INFO,
-                          0, 0, COLOR_DARK_BLUE_HIGHLIGHT, 1000, HANDLE_NULL,
-                          buf);
+        err = string_init("STR_EDIT_SCALE_DELTA", STR_SLOT_EDIT_INFO, 0, 0,
+                          COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL, buf);
         if (err) return err;
     }
 
@@ -1024,34 +1023,20 @@ internal int state_menu_quit()
     // [Y] / [Return]: Save and exit
     if (KEY_PRESSED(SDL_SCANCODE_Y) || KEY_PRESSED(SDL_SCANCODE_RETURN))
     {
-        // TODO: How to make this more logical? Maybe STR_SLOT_* should be handles?
-        struct hnd handle;
-        handle.persist = TRANSIENT;
-        handle.value = STR_SLOT_MENU_QUIT;
-        string_free(handle);
+        clear_slot_string(STR_SLOT_MENU_QUIT);
         save_file();
-
         state = STATE_ENGINE_SHUTDOWN;
     }
     // [N] / [Escape]: Return to play mode
     else if (KEY_PRESSED(SDL_SCANCODE_N) || KEY_PRESSED(SDL_SCANCODE_ESCAPE))
     {
-        // TODO: How to make this more logical? Should STR_SLOT_* be handles?
-        struct hnd handle;
-        handle.persist = TRANSIENT;
-        handle.value = STR_SLOT_MENU_QUIT;
-        string_free(handle);
-
+        clear_slot_string(STR_SLOT_MENU_QUIT);
         state = STATE_PLAY_EXPLORE;
     }
     // [Q]: Exit without saving
     else if (KEY_PRESSED(SDL_SCANCODE_Q))
     {
-        struct hnd handle;
-        handle.persist = TRANSIENT;
-        handle.value = STR_SLOT_MENU_QUIT;
-        string_free(handle);
-
+        clear_slot_string(STR_SLOT_MENU_QUIT);
         state = STATE_ENGINE_SHUTDOWN;
     }
 
@@ -1084,22 +1069,22 @@ internal int rico_init_shaders()
 internal void rico_init_cereal()
 {
     // Custom serialiers
-    rico_cereals[RICO_UID_CHUNK].save[0] = &chunk_serialize_0;
-    rico_cereals[RICO_UID_CHUNK].load[0] = &chunk_deserialize_0;
+    rico_cereals[RICO_HND_CHUNK].save[0] = &chunk_serialize_0;
+    rico_cereals[RICO_HND_CHUNK].load[0] = &chunk_deserialize_0;
 
     // Cleanup: Old serializiation methods
 #if 0
-    rico_cereals[RICO_UID_POOL].save[0] = &pool_serialize_0;
-    rico_cereals[RICO_UID_POOL].load[0] = &pool_deserialize_0;
+    rico_cereals[RICO_HND_POOL].save[0] = &pool_serialize_0;
+    rico_cereals[RICO_HND_POOL].load[0] = &pool_deserialize_0;
 
-    rico_cereals[RICO_UID_OBJECT].save[0] = &object_serialize_0;
-    rico_cereals[RICO_UID_OBJECT].load[0] = &object_deserialize_0;
+    rico_cereals[RICO_HND_OBJECT].save[0] = &object_serialize_0;
+    rico_cereals[RICO_HND_OBJECT].load[0] = &object_deserialize_0;
 
-    rico_cereals[RICO_UID_MATERIAL].save[0] = &material_serialize_0;
-    rico_cereals[RICO_UID_MATERIAL].load[0] = &material_deserialize_0;
+    rico_cereals[RICO_HND_MATERIAL].save[0] = &material_serialize_0;
+    rico_cereals[RICO_HND_MATERIAL].load[0] = &material_deserialize_0;
 
-    rico_cereals[RICO_UID_BBOX].save[0] = &bbox_serialize_0;
-    rico_cereals[RICO_UID_BBOX].load[0] = &bbox_deserialize_0;
+    rico_cereals[RICO_HND_BBOX].save[0] = &bbox_serialize_0;
+    rico_cereals[RICO_HND_BBOX].load[0] = &bbox_deserialize_0;
 #endif
 }
 internal int rico_init_chunks()
@@ -1109,14 +1094,15 @@ internal int rico_init_chunks()
     // TODO: Create a hard-coded test chunk that gets loaded if the real chunk
     //       can't be loaded from the save file.
 
-    chunk_pool_counts pool_counts;
-    pool_counts[RICO_HND_OBJECT]   = RICO_POOL_SIZE_OBJECT;
-    pool_counts[RICO_HND_TEXTURE]  = RICO_POOL_SIZE_TEXTURE;
-    pool_counts[RICO_HND_MESH]     = RICO_POOL_SIZE_MESH;
-    pool_counts[RICO_HND_BBOX]     = RICO_POOL_SIZE_BBOX;
-    pool_counts[RICO_HND_FONT]     = RICO_POOL_SIZE_FONT;
-    pool_counts[RICO_HND_STRING]   = RICO_POOL_SIZE_STRING;
-    pool_counts[RICO_HND_MATERIAL] = RICO_POOL_SIZE_MATERIAL;
+    // TODO: Sane defaults, but use realloc when necessary
+    const chunk_pool_counts pool_counts = {
+        128,  // RICO_HND_OBJECT
+        128,  // RICO_HND_TEXTURE
+        128,  // RICO_HND_MESH
+          4,  // RICO_HND_FONT
+         32,  // RICO_HND_STRING
+        128   // RICO_HND_MATERIAL
+    };
 
     // Special chunk used to store transient object pools
     err = chunk_init(&chunk_transient, "[Transient]", &pool_counts);
@@ -1136,12 +1122,12 @@ internal int rico_init_chunks()
         next_uid = file.next_uid;
 
         // HACK: This is only here because rico_deserialize needs to know the
-        //       RICO_UID_CHUNK uid type to decide which deserializer to call.
+        //       RICO_HND_CHUNK uid type to decide which deserializer to call.
         //       Is there a better way to do this?
-        struct rico_chunk tmp_chunk = { 0 };
-        uid_init(&tmp_chunk.uid, RICO_UID_CHUNK, "CHUNK_LOADING", false);
+        struct rico_chunk *tmp_chunk;
+        hnd_init(&tmp_chunk->hnd, RICO_HND_CHUNK, "CHUNK_LOADING");
 
-        chunk_active = &tmp_chunk;
+        chunk_active = tmp_chunk;
         err = rico_deserialize((void *)&chunk_active, &file);
         rico_file_close(&file);
         if (err) return err;
@@ -1159,8 +1145,6 @@ internal int rico_init_chunks()
         printf("----------------------------------------------------------\n");
         err = init_hardcoded_test_chunk(chunk_active);
         if (err) return err;
-
-        chunk_active = RICO_DEFAULT_CHUNK;
     }
 
     return err;
@@ -1170,8 +1154,7 @@ internal int rico_init_fonts()
     enum rico_error err;
 
     // TODO: Use fixed slots to allocate default resources
-    err = font_init(&RICO_DEFAULT_FONT, TRANSIENT,
-                    "font/courier_new.bff");
+    err = font_init(&RICO_DEFAULT_FONT, "font/courier_new.bff");
     return err;
 }
 internal int rico_init_textures()
@@ -1179,12 +1162,12 @@ internal int rico_init_textures()
     enum rico_error err;
 
     // TODO: Use fixed slots to allocate default resources
-    err = texture_load_file(&RICO_DEFAULT_TEXTURE_DIFF, TRANSIENT,
+    err = texture_load_file(&RICO_DEFAULT_TEXTURE_DIFF,
                             "TEXTURE_DEFAULT_DIFF", GL_TEXTURE_2D,
                             "texture/basic_diff.tga", 32);
     if (err) return err;
 
-    err = texture_load_file(&RICO_DEFAULT_TEXTURE_SPEC, TRANSIENT,
+    err = texture_load_file(&RICO_DEFAULT_TEXTURE_SPEC,
                             "TEXTURE_DEFAULT_SPEC", GL_TEXTURE_2D,
                             "texture/basic_spec.tga", 32);
     if (err) return err;
@@ -1192,16 +1175,15 @@ internal int rico_init_textures()
     //--------------------------------------------------------------------------
     // Create textures
     //--------------------------------------------------------------------------
-    struct hnd handle;
+    struct rico_texture *tex;
 
-    // TODO: Load TRANSIENT handles into hash table?
 #if 0
     err = texture_load_file(&handle, TRANSIENT, "grass", GL_TEXTURE_2D,
                             "texture/grass.tga", 32);
     if (err) return err;
 #endif
 
-    err = texture_load_file(&handle, TRANSIENT, "bricks", GL_TEXTURE_2D,
+    err = texture_load_file(&tex, "bricks", GL_TEXTURE_2D,
                             "texture/clean_bricks.tga", 32);
     if (err) return err;
 

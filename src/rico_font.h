@@ -18,13 +18,11 @@ struct rico_font {
 
     struct rico_texture *texture;
 };
-extern const u32 RICO_FONT_SIZE;
+extern struct rico_font *RICO_DEFAULT_FONT;
 
-extern struct hnd *RICO_DEFAULT_FONT;
-
-int font_init(struct rico_font *_font, const char *filename);
+int font_init(struct rico_font *font, const char *filename);
 void font_free(struct rico_font *font);
-int font_render(struct rico_mesh *_mesh, struct rico_texture *_texture,
+int font_render(struct rico_mesh **_mesh, struct rico_texture **_texture,
                 struct rico_font *font, int x, int y, struct col4 bg,
                 const char *text, const char *mesh_name,
                 enum rico_mesh_type type);

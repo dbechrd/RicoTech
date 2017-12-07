@@ -11,9 +11,7 @@ struct rico_material {
 
     float shiny;
 };
-extern const u32 RICO_MATERIAL_SIZE;
-
-global struct rico_material *RICO_DEFAULT_MATERIAL;
+extern struct rico_material *RICO_DEFAULT_MATERIAL;
 
 int material_init(struct rico_material *material, const char *name,
                   struct rico_texture *tex_diffuse,

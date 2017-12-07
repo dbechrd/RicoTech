@@ -1,5 +1,3 @@
-const u32 RICO_FONT_SIZE = sizeof(struct rico_font);
-
 #define BFG_RS_NONE  0x0  // Blend flags
 #define BFG_RS_ALPHA 0x1
 #define BFG_RS_RGB   0x2
@@ -10,6 +8,8 @@ const u32 RICO_FONT_SIZE = sizeof(struct rico_font);
 #define WIDTH_DATA_OFFSET  20  // Offset to width data with BFF file
 #define MAP_DATA_OFFSET   276  // Offset to texture image data with BFF file
 
+struct rico_font *RICO_DEFAULT_FONT;
+
 struct bff_header
 {
     unsigned char ID1, ID2;
@@ -18,9 +18,7 @@ struct bff_header
     unsigned char StartPoint;
 };
 
-struct hnd RICO_DEFAULT_FONT = { 0 };
-
-int font_init(struct hnd *_handle, const char *filename)
+int font_init(struct rico_font *font, const char *filename)
 {
     enum rico_error err;
 
@@ -28,12 +26,7 @@ int font_init(struct hnd *_handle, const char *filename)
     printf("[font][init] filename=%s\n", filename);
 #endif
 
-    struct hnd handle;
-    struct rico_font *font;
-    err = pool_handle_alloc(font_pool_ptr(persist), &handle, (void *)&font);
-    if (err) return err;
-
-    uid_init(&font->uid, RICO_UID_FONT, filename, false);
+    hnd_init(&font->hnd, RICO_HND_FONT, filename);
 	font->InvertYAxis = false;
 
     // Read font file
@@ -85,35 +78,31 @@ int font_init(struct hnd *_handle, const char *filename)
     // Store character widths
     memcpy(font->Width, &buffer[WIDTH_DATA_OFFSET], 256);
 
-    struct hnd tex_handle;
-    err = texture_load_pixels(&tex_handle, persist, filename, GL_TEXTURE_2D,
-                              width, height, bpp, &buffer[MAP_DATA_OFFSET]);
+    struct rico_texture *tex;
+    err = chunk_alloc(chunk_transient, RICO_HND_FONT, (struct hnd **)&tex);
     if (err) goto cleanup;
-    font->texture = texture_request(tex_handle);
-
-    if (_handle) *_handle = handle;
+    err = texture_load_pixels(tex, filename, GL_TEXTURE_2D, width, height, bpp,
+                              &buffer[MAP_DATA_OFFSET]);
+    if (err) goto cleanup;
+    font->texture = tex;
+    tex->ref_count++;
 
 cleanup:
     free(buffer);
     return err;
 }
 
-void font_free(struct hnd handle)
+void font_free(struct rico_font *font)
 {
-    struct rico_font *font = font_find(handle);
-
-    // Cleanup: Use fixed pool slots
-    //if (handle == RICO_DEFAULT_FONT)
-    //    return;
-
 #if RICO_DEBUG_FONT
-    printf("[font][free] uid=%d name=%s\n", font->uid.uid, font->uid.name);
+    printf("[font][free] uid=%d name=%s\n", font->hnd.uid, font->hnd.name);
 #endif
 
     texture_free(font->texture);
 
-    font->uid.uid = UID_NULL;
-    pool_handle_free(font_pool(handle.persist), handle);
+    font->hnd.uid = UID_NULL;
+    struct rico_pool *pool = chunk_pool(chunk_active, RICO_HND_FONT);
+    pool_handle_free(pool, &font->hnd);
 }
 
 internal void font_setblend(const struct rico_font *font)
@@ -135,8 +124,8 @@ internal void font_setblend(const struct rico_font *font)
 	}
 }
 
-int font_render(struct hnd *_mesh, struct hnd *_texture,
-                struct hnd handle, int x, int y, struct col4 bg,
+int font_render(struct rico_mesh **_mesh, struct rico_texture **_texture,
+                struct rico_font *font, int x, int y, struct col4 bg,
                 const char *text, const char *mesh_name,
                 enum rico_mesh_type type)
 {
@@ -150,10 +139,7 @@ int font_render(struct hnd *_mesh, struct hnd *_texture,
 
     enum rico_error err;
 
-    if (!handle.value) handle = RICO_DEFAULT_FONT;
-
-    struct rico_font *font = font_find(handle);
-    RICO_ASSERT(font->uid.uid != UID_NULL);
+    if (!font) font = RICO_DEFAULT_FONT;
 
     //font_setblend(font);
 
@@ -251,12 +237,14 @@ int font_render(struct hnd *_mesh, struct hnd *_texture,
         cur_x += xOffset;
     }
 
-    struct hnd mesh_handle;
-    err = mesh_load(&mesh_handle, handle.persist, mesh_name, type, idx_vertex,
-                    vertices, idx_element, elements, GL_STATIC_DRAW);
+    struct rico_mesh *mesh;
+    err = chunk_alloc(chunk_active, RICO_HND_MESH, (struct hnd **)&mesh);
+    if (err) goto cleanup;
+    err = mesh_init(mesh, mesh_name, type, idx_vertex, vertices, idx_element,
+                    elements, GL_STATIC_DRAW);
     if (err) goto cleanup;
 
-    *_mesh = mesh_handle;
+    *_mesh = mesh;
     *_texture = font->texture;
 
 cleanup:

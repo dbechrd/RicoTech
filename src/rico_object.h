@@ -32,8 +32,7 @@ struct rico_object {
 
     struct bbox bbox;
 };
-const u32 RICO_OBJECT_SIZE = sizeof(struct rico_object);
-global struct rico_object *RICO_DEFAULT_OBJECT;
+extern struct rico_object *RICO_DEFAULT_OBJECT;
 
 int object_request_by_name(struct rico_object **_object, const char *name);
 int object_init(struct rico_object *object, const char *name,

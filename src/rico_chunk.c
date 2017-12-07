@@ -1,8 +1,7 @@
 // TODO: Is a global chunk the best way to keep track of the pools?
 //       No.. duh. Get rid of this! Or at very least make it an array/pool.
-//global struct rico_chunk *RICO_DEFAULT_CHUNK;
-global struct rico_chunk *chunk_active;
-global struct rico_chunk *chunk_transient;
+struct rico_chunk *chunk_active;
+struct rico_chunk *chunk_transient;
 
 internal void chunk_print(struct rico_chunk *chunk);
 
@@ -20,7 +19,7 @@ int chunk_init(struct rico_chunk **_chunk, const char *name,
     u32 poolhouse_size = 0;
     for (int i = 1; i < RICO_HND_CEREAL_COUNT; ++i)
     {
-        u32 pool_size = POOL_SIZE((*pool_counts)[i], pool_item_sizes[i]);
+        u32 pool_size = POOL_SIZE((*pool_counts)[i], size_by_handle[i]);
         pool_sizes[i] = pool_size;
         poolhouse_size += pool_size;
     }
@@ -38,7 +37,7 @@ int chunk_init(struct rico_chunk **_chunk, const char *name,
 
     // Initialize chunk
     struct rico_chunk *chunk = (struct rico_chunk *)mem_block;
-    uid_init(&chunk->uid, RICO_UID_CHUNK, name, true);
+    hnd_init(&chunk->hnd, RICO_HND_CHUNK, name);
     chunk->total_size = total_size;
     chunk->cereal_size = cereal_size;
     memcpy(&chunk->pool_counts, pool_counts, sizeof(chunk->pool_counts));
@@ -58,10 +57,10 @@ int chunk_init(struct rico_chunk **_chunk, const char *name,
 #endif
         char pool_name[32] = { 0 };
         snprintf(pool_name, sizeof(pool_name), "%s",
-                 rico_pool_itemtype_string[i]);
+                 rico_hnd_type_string[i]);
 
         pool_init(chunk->pools[i], pool_name, chunk->pool_counts[i],
-                  pool_item_sizes[i], pool_item_fixed_counts[i]);
+                  size_by_handle[i]);
     }
 
     RICO_ASSERT(offset == chunk->total_size);
@@ -89,7 +88,7 @@ SERIAL(chunk_serialize_0)
     const struct rico_chunk *chunk = handle;
 
     // Write chunk to file
-    u32 skip = sizeof(chunk->uid);
+    u32 skip = sizeof(chunk->hnd);
     u8 *seek = (u8 *)chunk + skip;
     u32 bytes = chunk->cereal_size - skip;
 
@@ -103,7 +102,7 @@ SERIAL(chunk_serialize_0)
 
     #if RICO_DEBUG_CHUNK
         printf("[chnk][save] uid=%d name=%s filename=%s total_size=%d cereal_size=%d\n",
-               chunk->uid.uid, chunk->uid.name, file->filename,
+               chunk->hnd.uid, chunk->hnd.name, file->filename,
                chunk->total_size, chunk->cereal_size);
     #endif
 
@@ -130,7 +129,7 @@ DESERIAL(chunk_deserialize_0)
     if (!mem_block)
     {
         return RICO_ERROR(ERR_BAD_ALLOC, "Failed to alloc memory for chunk %s",
-                          tmp_chunk->uid.name);
+                          tmp_chunk->hnd.name);
     }
 
     struct rico_chunk *chunk = mem_block;
@@ -138,7 +137,7 @@ DESERIAL(chunk_deserialize_0)
 
     // Read chunk from file
     u8 *ptr = (u8 *)chunk;
-    u32 skip = sizeof(chunk->uid) + sizeof(chunk->total_size) +
+    u32 skip = sizeof(chunk->hnd) + sizeof(chunk->total_size) +
                sizeof(chunk->cereal_size);
     u8 *seek = ptr + skip;
     u32 bytes = chunk->cereal_size - skip;
@@ -150,7 +149,7 @@ DESERIAL(chunk_deserialize_0)
     u32 pool_sizes[RICO_HND_CEREAL_COUNT];
     for (int i = 0; i < RICO_HND_CEREAL_COUNT; ++i)
     {
-        u32 pool_size = POOL_SIZE(chunk->pool_counts[i], pool_item_sizes[i]);
+        u32 pool_size = POOL_SIZE(chunk->pool_counts[i], size_by_handle[i]);
         pool_sizes[i] = pool_size;
     }
 
@@ -179,8 +178,7 @@ DESERIAL(chunk_deserialize_0)
                      rico_persist_string[persist]);
 
             pool_init(chunk->pools[persist][i], persist, pool_name,
-                      chunk->pool_counts[i], pool_item_sizes[i],
-                      pool_item_fixed_counts[i]);
+                      chunk->pool_counts[i], size_by_handle[i]);
         }
 #endif
     }
@@ -200,12 +198,12 @@ internal void chunk_print(struct rico_chunk *chunk)
 {
     // Print information about chunk and pool sizes
     printf("[chnk][show] uid=%d name=%s total_size=%d cereal_size=%d\n",
-           chunk->uid.uid, chunk->uid.name, chunk->total_size,
+           chunk->hnd.uid, chunk->hnd.name, chunk->total_size,
            chunk->cereal_size);
 
     for (int i = 0; i < RICO_HND_CEREAL_COUNT; ++i)
     {
-        printf("             %s = %d\n", chunk->pools[i]->uid.name,
+        printf("             %s = %d\n", chunk->pools[i]->hnd.name,
                chunk->pool_counts[i]);
     }
 }

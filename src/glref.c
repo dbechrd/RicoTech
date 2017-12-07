@@ -156,7 +156,7 @@ void select_prev_obj()
 void selected_print()
 {
     // Print select object's properties
-    object_print(selected_obj, STR_SLOT_SELECTED_OBJ);
+    object_print(selected_obj);
 }
 
 void selected_translate(struct camera *camera, const struct vec3 *offset)
@@ -183,7 +183,7 @@ void selected_translate(struct camera *camera, const struct vec3 *offset)
         object_trans(selected_obj, offset);
     }
 
-    object_print(selected_obj, STR_SLOT_SELECTED_OBJ);
+    object_print(selected_obj);
 }
 
 void selected_rotate(const struct vec3 *offset)
@@ -200,7 +200,7 @@ void selected_rotate(const struct vec3 *offset)
         object_rot(selected_obj, offset);
     }
 
-    object_print(selected_obj, STR_SLOT_SELECTED_OBJ);
+    object_print(selected_obj);
 }
 
 void selected_scale(const struct vec3 *offset)
@@ -217,7 +217,7 @@ void selected_scale(const struct vec3 *offset)
         object_scale(selected_obj, offset);
     }
 
-    object_print(selected_obj, STR_SLOT_SELECTED_OBJ);
+    object_print(selected_obj);
 }
 
 void selected_mesh_next()
@@ -227,7 +227,7 @@ void selected_mesh_next()
 
     object_mesh_next(selected_obj);
     object_select(selected_obj);
-    object_print(selected_obj, STR_SLOT_SELECTED_OBJ);
+    object_print(selected_obj);
 }
 
 void selected_mesh_prev()
@@ -237,7 +237,7 @@ void selected_mesh_prev()
 
     object_mesh_prev(selected_obj);
     object_select(selected_obj);
-    object_print(selected_obj, STR_SLOT_SELECTED_OBJ);
+    object_print(selected_obj);
 }
 
 void selected_bbox_reset()
@@ -247,7 +247,7 @@ void selected_bbox_reset()
 
     object_bbox_set(selected_obj, NULL);
     object_select(selected_obj);
-    object_print(selected_obj, STR_SLOT_SELECTED_OBJ);
+    object_print(selected_obj);
 }
 
 int selected_duplicate()
@@ -319,8 +319,7 @@ void free_glref()
     // Clean up
     //--------------------------------------------------------------------------
     // Free all game objects
-    object_free_all(PERSISTENT);
-    object_free_all(TRANSIENT);
+    object_free_all();
 
     //TODO: Free all meshes
 

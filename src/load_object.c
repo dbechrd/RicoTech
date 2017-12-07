@@ -20,7 +20,7 @@ enum OBJ_LINE_TYPE line_type(const char *line);
 bool load_mesh(const char *line, struct rico_mesh *mesh);
 */
 
-int load_obj_file(const char *filename)
+int load_obj_file(struct rico_chunk *chunk, const char *filename)
 {
     enum rico_error err;
 
@@ -45,6 +45,7 @@ int load_obj_file(const char *filename)
     int length;
     char *buffer;
     char *tok;
+    struct rico_mesh *new_mesh;
 
     printf("[ obj][load] filename=%s\n", filename);
     err = file_contents(filename, &length, &buffer);
@@ -61,7 +62,10 @@ int load_obj_file(const char *filename)
         {
             if (idx_vertex > 0)
             {
-                err = mesh_load(NULL, name, MESH_OBJ_WORLD, idx_vertex,
+                err = chunk_alloc(chunk, RICO_HND_MESH,
+                                  (struct hnd **)&new_mesh);
+                if (err) goto cleanup;
+                err = mesh_init(new_mesh, name, MESH_OBJ_WORLD, idx_vertex,
                                 vertices, idx_element, elements,
                                 GL_STATIC_DRAW);
                 if (err) goto cleanup;
@@ -153,7 +157,9 @@ int load_obj_file(const char *filename)
 
     if (idx_vertex > 0)
     {
-        err = mesh_load(NULL, persist, name, MESH_OBJ_WORLD, idx_vertex,
+        err = chunk_alloc(chunk, RICO_HND_MESH, (struct hnd **)&new_mesh);
+        if (err) goto cleanup;
+        err = mesh_init(new_mesh, name, MESH_OBJ_WORLD, idx_vertex,
                         vertices, idx_element, elements, GL_STATIC_DRAW);
         if (err) goto cleanup;
         idx_mesh++;

@@ -1,57 +1,61 @@
-const u32 RICO_MESH_SIZE = sizeof(struct rico_mesh);
-
 const char *rico_mesh_type_string[] = {
     RICO_MESH_TYPES(GEN_STRING)
 };
 
-struct hnd RICO_DEFAULT_MESH = { 0 };
+struct rico_mesh *RICO_DEFAULT_MESH;
 
 internal int build_mesh(struct rico_mesh *mesh, u32 vertex_count,
                         const struct mesh_vertex *vertex_data,
                         u32 element_count, const GLuint *element_data,
                         GLenum hint);
 
-bool mesh_selectable(struct hnd handle)
+bool mesh_selectable(struct rico_mesh *mesh)
 {
     return (mesh->type != MESH_STRING_SCREEN);
 }
 
-struct hnd mesh_next(struct hnd handle)
+struct rico_mesh *mesh_next(struct rico_mesh *mesh)
 {
-    struct hnd start = pool_handle_next(mesh_pool(handle.persist), handle);
-    struct hnd next = start;
+    struct rico_pool *pool = chunk_pool(chunk_active, RICO_HND_MESH);
+    struct hnd *start = pool_handle_next(pool, &mesh->hnd);
+    struct hnd *next = start;
 
+    struct rico_mesh *m;
     do
     {
-        if (mesh_selectable(next))
-            return next;
+        m = (struct rico_mesh *)next;
+        if (mesh_selectable(m))
+            return m;
 
-        next = pool_handle_next(mesh_pool(handle.persist), next);
-    } while (next.value != start.value);
+        next = pool_handle_next(pool, next);
+    } while (next->uid != start->uid);
 
-    return HANDLE_NULL;
+    return NULL;
 }
 
-struct hnd mesh_prev(struct hnd handle)
+struct rico_mesh *mesh_prev(struct rico_mesh *mesh)
 {
-    struct hnd start = pool_handle_prev(mesh_pool(handle.persist), handle);
-    struct hnd prev = start;
+    struct rico_pool *pool = chunk_pool(chunk_active, RICO_HND_MESH);
+    struct hnd *start = pool_handle_prev(pool, &mesh->hnd);
+    struct hnd *prev = start;
 
+    struct rico_mesh *m;
     do
     {
-        if (mesh_selectable(prev))
-            return prev;
+        m = (struct rico_mesh *)prev;
+        if (mesh_selectable(m))
+            return m;
 
-        prev = pool_handle_prev(mesh_pool(handle.persist), prev);
-    } while (prev.value != start.value);
+        prev = pool_handle_prev(pool, prev);
+    } while (prev->uid != start->uid);
 
-    return HANDLE_NULL;
+    return NULL;
 }
 
-int mesh_init(struct rico_mesh *_mesh, const char *name,
+int mesh_init(struct rico_mesh *mesh, const char *name,
               enum rico_mesh_type type, u32 vertex_count,
               const struct mesh_vertex *vertex_data, u32 element_count,
-              const GLuint *element_data, GLenum hint);
+              const GLuint *element_data, GLenum hint)
 {
 #if RICO_DEBUG_MESH
     printf("[mesh][init] name=%s vertices=%d\n", name, vertex_count);
@@ -59,14 +63,9 @@ int mesh_init(struct rico_mesh *_mesh, const char *name,
 
     enum rico_error err;
 
-    struct hnd handle;
-    struct rico_mesh *mesh;
-    err = pool_handle_alloc(mesh_pool_ptr(persist), &handle, (void *)&mesh);
-    if (err) return err;
-
     // Note: If we want to serialize mesh data we have to store the vertex data
     //       and element array in the struct.
-    uid_init(&mesh->uid, RICO_UID_MESH, name, false);
+    hnd_init(&mesh->hnd, RICO_HND_MESH, name);
     mesh->type = type;
 
     err = build_mesh(mesh, vertex_count, vertex_data, element_count,
@@ -78,11 +77,8 @@ int mesh_init(struct rico_mesh *_mesh, const char *name,
     if (err) return err;
 
     // Store in global hash table
-    hash_key key = hashgen_str(mesh->uid.name);
-    err = hashtable_insert(&global_meshes, key, handle);
-    if (err) return err;
-
-    if (_handle) *_handle = handle;
+    err = hashtable_insert(&global_meshes, mesh->hnd.name, mesh->hnd.len,
+                           mesh);
     return err;
 }
 
@@ -146,15 +142,14 @@ internal int build_mesh(struct rico_mesh *mesh, u32 vertex_count,
     return SUCCESS;
 }
 
-void mesh_free(struct hnd handle)
+void mesh_free(struct rico_mesh *mesh)
 {
-    struct rico_mesh *mesh = mesh_find(handle);
     if (mesh->ref_count > 0)
         mesh->ref_count--;
 
 #if RICO_DEBUG_MESH
-    printf("[mesh][ rls] uid=%d ref=%d name=%s\n", mesh->uid.uid,
-           mesh->ref_count, mesh->uid.name);
+    printf("[mesh][ rls] uid=%d ref=%d name=%s\n", mesh->hnd.uid,
+           mesh->ref_count, mesh->hnd.name);
 #endif
 
     if (mesh->ref_count > 0)
@@ -171,37 +166,35 @@ void mesh_free(struct hnd handle)
     {
 #if RICO_DEBUG_MESH
         printf("[mesh][WARN] uid=%d name=%s Disabled .RIC mesh free.\n",
-               mesh->uid.uid, mesh->uid.name);
+               mesh->hnd.uid, mesh->hnd.name);
 #endif
         return;
     }
 
 #if RICO_DEBUG_MESH
-    printf("[mesh][free] uid=%d name=%s\n", mesh->uid.uid, mesh->uid.name);
+    printf("[mesh][free] uid=%d name=%s\n", mesh->hnd.uid, mesh->hnd.name);
 #endif
 
-    hash_key key = hashgen_str(mesh->uid.name);
-    hashtable_delete(&global_meshes, key);
+    hashtable_delete(&global_meshes, mesh->hnd.name, mesh->hnd.len);
 
     //bbox_free_mesh(&mesh->bbox);
 
     glDeleteBuffers(2, mesh->vbos);
     glDeleteVertexArrays(1, &mesh->vao);
 
-    mesh->uid.uid = UID_NULL;
-    pool_handle_free(mesh_pool(handle.persist), handle);
+    mesh->hnd.uid = UID_NULL;
+    struct rico_pool *pool = chunk_pool(chunk_active, RICO_HND_MESH);
+    pool_handle_free(pool, &mesh->hnd);
 }
 
-void mesh_update(struct hnd handle)
+void mesh_update(struct rico_mesh *mesh)
 {
-    UNUSED(handle);
+    UNUSED(mesh);
     //TODO: Animate the mesh.
 }
 
-void mesh_render(struct hnd handle)
+void mesh_render(struct rico_mesh *mesh)
 {
-    struct rico_mesh *mesh = mesh_find(handle);
-
     // Draw
     glBindVertexArray(mesh->vao);
     glDrawElements(GL_TRIANGLES, mesh->element_count, GL_UNSIGNED_INT, 0);

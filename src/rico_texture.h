@@ -17,21 +17,17 @@ struct rico_texture {
     GLsizei height;
     GLsizei bpp;
 };
-extern const u32 RICO_TEXTURE_SIZE;
-global struct rico_texture *RICO_DEFAULT_TEXTURE_DIFF;
-global struct rico_texture *RICO_DEFAULT_TEXTURE_SPEC;
+extern struct rico_texture *RICO_DEFAULT_TEXTURE_DIFF;
+extern struct rico_texture *RICO_DEFAULT_TEXTURE_SPEC;
 
-int texture_load_file(struct rico_texture *_handle, const char *name,
+int texture_load_file(struct rico_texture *texture, const char *name,
                       GLenum target, const char *filename, u32 bpp);
-int texture_load_pixels(struct rico_texture *_handle, char *name,
-                        GLenum target, u32 width, u32 height, u32 bpp, const void *pixels);
+int texture_load_pixels(struct rico_texture *texture, const char *name,
+                        GLenum target, u32 width, u32 height, u32 bpp,
+                        const void *pixels);
 void texture_free(struct rico_texture *texture);
 const char *texture_name(struct rico_texture *texture);
 void texture_bind(struct rico_texture *texture, GLenum texture_unit);
 void texture_unbind(struct rico_texture *texture, GLenum texture_unit);
-void texture_bind_diff(struct rico_texture *texture);
-void texture_bind_spec(struct rico_texture *texture);
-void texture_unbind_diff(struct rico_texture *texture);
-void texture_unbind_spec(struct rico_texture *texture);
 
 #endif // RICO_TEXTURE_H

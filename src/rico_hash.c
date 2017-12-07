@@ -134,12 +134,10 @@ struct hash_table global_objects;
 
 void rico_hashtable_init()
 {
-    //struct rico_chunk *chunk = chunk_active();
-    //hashtable_init(&global_hash_textures, "Textures", chunk->count_textures);
-    hashtable_init(&global_strings,   "Strings",   2 * RICO_POOL_SIZE_STRING);
-    hashtable_init(&global_fonts,     "Fonts",     2 * RICO_POOL_SIZE_FONT);
-    hashtable_init(&global_textures,  "Textures",  2 * RICO_POOL_SIZE_TEXTURE);
-    hashtable_init(&global_materials, "Materials", 2 * RICO_POOL_SIZE_MATERIAL);
-    hashtable_init(&global_meshes,    "Meshes",    2 * RICO_POOL_SIZE_MESH);
-    hashtable_init(&global_objects,   "Objects",   2 * RICO_POOL_SIZE_OBJECT);
+    hashtable_init(&global_strings,   "Strings",   256);
+    hashtable_init(&global_fonts,     "Fonts",     256);
+    hashtable_init(&global_textures,  "Textures",  256);
+    hashtable_init(&global_materials, "Materials", 256);
+    hashtable_init(&global_meshes,    "Meshes",    256);
+    hashtable_init(&global_objects,   "Objects",   256);
 }

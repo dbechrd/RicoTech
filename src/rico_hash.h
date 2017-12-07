@@ -8,6 +8,13 @@ struct hash_table {
     struct hash_kv *slots;
 };
 
+extern struct hash_table global_strings;
+extern struct hash_table global_fonts;
+extern struct hash_table global_textures;
+extern struct hash_table global_materials;
+extern struct hash_table global_meshes;
+extern struct hash_table global_objects;
+
 void hashtable_init(struct hash_table *table, const char *name, u32 count);
 void hashtable_free(struct hash_table *table);
 void *hashtable_search(struct hash_table *table, void *key, u32 len);
