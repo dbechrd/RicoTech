@@ -99,7 +99,7 @@ void font_free(struct rico_font *font)
 #endif
 
     texture_free(font->texture);
-    chunk_free(chunk_active, &font->hnd);
+    chunk_free(font->hnd.chunk, &font->hnd);
 }
 
 internal void font_setblend(const struct rico_font *font)

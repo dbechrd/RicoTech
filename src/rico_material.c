@@ -48,7 +48,7 @@ void material_free(struct rico_material *material)
 
     texture_free(material->tex_diffuse);
     texture_free(material->tex_specular);
-    chunk_free(chunk_active, &material->hnd);
+    chunk_free(material->hnd.chunk, &material->hnd);
 }
 
 // TODO: Deprecate pointless accessors like this

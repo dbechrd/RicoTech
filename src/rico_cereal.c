@@ -5,16 +5,17 @@ SERIAL(rico_serialize)
 {
     enum rico_error err;
 
+    struct hnd *hnd = (struct hnd *)handle;
+    RICO_ASSERT(hnd->uid);
+
     err = hnd_serialize(handle, file);
     if (err) return err;
 
-    const enum rico_hnd_type *type = handle;
-
-    if (!rico_cereals[*type].save[file->cereal_index])
+    if (!rico_cereals[hnd->type].save[file->cereal_index])
         return RICO_ERROR(ERR_SERIALIZER_NULL, "Serializer null for type %s",
-                          rico_hnd_type_string[*type]);
+                          rico_hnd_type_string[hnd->type]);
 
-    return rico_cereals[*type].save[file->cereal_index](handle, file);
+    return rico_cereals[hnd->type].save[file->cereal_index](handle, file);
 }
 
 //int rico_deserialize(void *_handle, const struct rico_file *file)

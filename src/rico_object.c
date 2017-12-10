@@ -68,21 +68,21 @@ void object_free(struct rico_object *object)
 
     mesh_free(object->mesh);
     material_free(object->material);
-    chunk_free(chunk_active, &object->hnd);
+    chunk_free(object->hnd.chunk, &object->hnd);
 }
 
-void object_free_all()
+void object_free_all(struct rico_chunk *chunk)
 {
-    struct rico_pool *pool = chunk_pool(chunk_active, RICO_HND_OBJECT);
+    struct rico_pool *pool = chunk_pool(chunk, RICO_HND_OBJECT);
     for (int i = pool->active - 1; i >= 0; --i)
     {
         object_free((struct rico_object *)pool->handles[i]);
     }
 }
 
-void object_bbox_recalculate_all()
+void object_bbox_recalculate_all(struct rico_chunk *chunk)
 {
-    struct rico_pool *pool = chunk_pool(chunk_active, RICO_HND_OBJECT);
+    struct rico_pool *pool = chunk_pool(chunk, RICO_HND_OBJECT);
     for (u32 i = 0; i < pool->active; ++i)
     {
         object_bbox_set((struct rico_object *)pool->handles[i], NULL);
@@ -128,7 +128,8 @@ void object_mesh_prev(struct rico_object *object)
     object->bbox = prev_mesh->bbox;
 }
 
-void object_material_set(struct rico_object *object, struct rico_material *material)
+void object_material_set(struct rico_object *object,
+                         struct rico_material *material)
 {
     material_free(object->material);
     object->material = material;
@@ -145,7 +146,7 @@ bool object_selectable(struct rico_object *object)
 //       handle.
 struct rico_object *object_next(struct rico_object *object)
 {
-    struct rico_pool *pool = chunk_pool(chunk_active, RICO_HND_OBJECT);
+    struct rico_pool *pool = chunk_pool(object->hnd.chunk, RICO_HND_OBJECT);
     struct hnd *start = pool_handle_next(pool, &object->hnd);
     struct hnd *next = start;
 
@@ -164,7 +165,7 @@ struct rico_object *object_next(struct rico_object *object)
 
 struct rico_object *object_prev(struct rico_object *object)
 {
-    struct rico_pool *pool = chunk_pool(chunk_active, RICO_HND_OBJECT);
+    struct rico_pool *pool = chunk_pool(object->hnd.chunk, RICO_HND_OBJECT);
     struct hnd *start = pool_handle_prev(pool, &object->hnd);
     struct hnd *prev = start;
 
@@ -327,14 +328,15 @@ bool object_collide_ray(float *_dist, struct rico_object *object,
                            &object->transform_inverse);
 }
 
-bool object_collide_ray_type(struct rico_object **_object, float *_dist,
+bool object_collide_ray_type(struct rico_chunk *chunk,
+                             struct rico_object **_object, float *_dist,
                              enum rico_obj_type type, const struct ray *ray)
 {
     bool collided = false;
     float distance;
     *_dist = Z_FAR; // Track closest object
 
-    struct rico_pool *pool = chunk_pool(chunk_active, RICO_HND_OBJECT);
+    struct rico_pool *pool = chunk_pool(chunk, RICO_HND_OBJECT);
     struct rico_object *obj;
     for (u32 i = 0; i < pool->active; ++i)
     {
@@ -377,7 +379,7 @@ void object_render(struct rico_object *object, const struct camera *camera)
     material_unbind(object->material);
 }
 
-void object_render_type(enum rico_obj_type type,
+void object_render_type(struct rico_chunk *chunk, enum rico_obj_type type,
                         const struct program_default *prog,
                         const struct camera *camera)
 {
@@ -436,7 +438,7 @@ void object_render_type(enum rico_obj_type type,
     glUniform1f(prog->u_light_kl, light.kl);
     glUniform1f(prog->u_light_kq, light.kq);
 
-    struct rico_pool *pool = chunk_pool(chunk_active, RICO_HND_OBJECT);
+    struct rico_pool *pool = chunk_pool(chunk, RICO_HND_OBJECT);
     struct rico_object *obj;
     for (u32 i = 0; i < pool->active; ++i)
     {
@@ -495,8 +497,9 @@ int object_print(struct rico_object *object)
     struct rico_string *str;
     err = chunk_alloc(chunk_transient, RICO_HND_STRING, (struct hnd **)&str);
     if (err) return err;
-    err = string_init(str, "[OBJECT_PRINT]", STR_SLOT_SELECTED_OBJ, 0,
-                      FONT_HEIGHT, COLOR_GRAY_HIGHLIGHT, 0, NULL, buf);
+    err = string_init(str, rico_string_slot_string[STR_SLOT_SELECTED_OBJ],
+                      STR_SLOT_SELECTED_OBJ, 0, FONT_HEIGHT,
+                      COLOR_GRAY_HIGHLIGHT, 0, NULL, buf);
     return err;
 }
 

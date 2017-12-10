@@ -34,15 +34,14 @@ struct rico_object {
 };
 extern struct rico_object *RICO_DEFAULT_OBJECT;
 
-int object_request_by_name(struct rico_object **_object, const char *name);
 int object_init(struct rico_object *object, const char *name,
                 enum rico_obj_type type, struct rico_mesh *mesh,
                 struct rico_material *material, const struct bbox *bbox);
 int object_copy(struct rico_object *object, struct rico_object *other,
                 const char *name);
 void object_free(struct rico_object *object);
-void object_free_all();
-void object_bbox_recalculate_all();
+void object_free_all(struct rico_chunk *chunk);
+void object_bbox_recalculate_all(struct rico_chunk *chunk);
 void object_bbox_set(struct rico_object *object, const struct bbox *bbox);
 void object_mesh_set(struct rico_object *object, struct rico_mesh *mesh,
                      const struct bbox *bbox);
@@ -73,10 +72,11 @@ const struct vec3 *object_scale_get(struct rico_object *object);
 const struct mat4 *object_transform_get(struct rico_object *object);
 bool object_collide_ray(float *_dist, struct rico_object *object,
                         const struct ray *ray);
-bool object_collide_ray_type(struct rico_object **_object, float *_dist,
+bool object_collide_ray_type(struct rico_chunk *chunk,
+                             struct rico_object **_object, float *_dist,
                              enum rico_obj_type type, const struct ray *ray);
 void object_render(struct rico_object *object, const struct camera *camera);
-void object_render_type(enum rico_obj_type type,
+void object_render_type(struct rico_chunk *chunk, enum rico_obj_type type,
                         const struct program_default *prog,
                         const struct camera *camera);
 int object_print(struct rico_object *object);

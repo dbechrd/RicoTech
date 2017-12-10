@@ -74,13 +74,20 @@ int chunk_alloc(struct rico_chunk *chunk, enum rico_hnd_type type,
                 struct hnd **_handle)
 {
     RICO_ASSERT(type < RICO_HND_CEREAL_COUNT);
+    enum rico_error err;
+
     struct rico_pool *pool = chunk->pools[type];
-    return pool_handle_alloc(pool, _handle);
+    err = pool_handle_alloc(pool, _handle);
+    if (err) return err;
+
+    (*_handle)->chunk = chunk;
+    return err;
 }
 
 int chunk_free(struct rico_chunk *chunk, struct hnd *handle)
 {
     RICO_ASSERT(handle);
+    handle->chunk = NULL;
     struct rico_pool *pool = chunk->pools[handle->type];
     return pool_handle_free(pool, handle);
 }

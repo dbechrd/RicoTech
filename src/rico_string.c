@@ -56,6 +56,8 @@ int string_init(struct rico_string *str, const char *name,
         if (old_str)
         {
             hashtable_delete_str(&global_string_slots, slot_name);
+
+            RICO_ASSERT(old_str->hnd.uid);
             string_free(old_str);
         }
 
@@ -81,7 +83,7 @@ int string_free(struct rico_string *str)
 
     object_free(str->object);
     str->hnd.uid = UID_NULL;
-    return chunk_free(chunk_transient, &str->hnd);
+    return chunk_free(str->hnd.chunk, &str->hnd);
 }
 
 // TODO: Lifespan objects shouldn't be string-specific; refactor this logic out

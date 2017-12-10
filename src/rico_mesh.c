@@ -16,7 +16,7 @@ bool mesh_selectable(struct rico_mesh *mesh)
 
 struct rico_mesh *mesh_next(struct rico_mesh *mesh)
 {
-    struct rico_pool *pool = chunk_pool(chunk_active, RICO_HND_MESH);
+    struct rico_pool *pool = chunk_pool(mesh->hnd.chunk, RICO_HND_MESH);
     struct hnd *start = pool_handle_next(pool, &mesh->hnd);
     struct hnd *next = start;
 
@@ -35,7 +35,7 @@ struct rico_mesh *mesh_next(struct rico_mesh *mesh)
 
 struct rico_mesh *mesh_prev(struct rico_mesh *mesh)
 {
-    struct rico_pool *pool = chunk_pool(chunk_active, RICO_HND_MESH);
+    struct rico_pool *pool = chunk_pool(mesh->hnd.chunk, RICO_HND_MESH);
     struct hnd *start = pool_handle_prev(pool, &mesh->hnd);
     struct hnd *prev = start;
 
@@ -180,7 +180,7 @@ void mesh_free(struct rico_mesh *mesh)
 
     glDeleteBuffers(2, mesh->vbos);
     glDeleteVertexArrays(1, &mesh->vao);
-    chunk_free(chunk_active, &mesh->hnd);
+    chunk_free(mesh->hnd.chunk, &mesh->hnd);
 }
 
 void mesh_update(struct rico_mesh *mesh)

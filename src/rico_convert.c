@@ -44,7 +44,7 @@ int rico_convert_obj(const char *filename)
     f(OBJ_TOK_NEWLINE)         /* [ ]               */ \
     f(OBJ_TOK_COUNT)
 
-enum __attribute__ ((__packed__)) obj_token_type { OBJ_TOKEN_TYPES(GEN_LIST) };
+enum obj_token_type { OBJ_TOKEN_TYPES(GEN_LIST) };
 const char *obj_token_type_string[] = { OBJ_TOKEN_TYPES(GEN_STRING) };
 
 #define OBJ_KEYWORD_TYPES(f) \
@@ -63,7 +63,7 @@ const char *obj_token_type_string[] = { OBJ_TOKEN_TYPES(GEN_STRING) };
     f(OBJ_KW_SMOOTHING_GROUP, "s")     /* [s]                     */ \
     f(OBJ_KW_COUNT, "\0")
 
-enum __attribute__ ((__packed__)) obj_keyword_type { OBJ_KEYWORD_TYPES(GEN_LIST) };
+enum obj_keyword_type { OBJ_KEYWORD_TYPES(GEN_LIST) };
 const char *obj_keyword_type_string[] = { OBJ_KEYWORD_TYPES(GEN_STRING) };
 internal const char *obj_keyword_values[] = { OBJ_KEYWORD_TYPES(GEN_VALUE) };
 

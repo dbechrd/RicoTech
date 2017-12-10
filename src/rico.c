@@ -6,7 +6,7 @@
 #include "util.c"
 #include "rico_hash.c"
 
-#include "rico_uid.c"
+#include "rico_hnd.c"
 #include "shader.c"
 #include "program.c"
 #include "camera.c"

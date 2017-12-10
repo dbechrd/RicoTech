@@ -196,9 +196,6 @@
     <ClCompile Include="src\rico_texture.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
-    <ClCompile Include="src\rico_uid.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
     <ClCompile Include="src\shader.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
@@ -209,6 +206,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\tests.c">
+      <Filter>Source Files\rico</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico_hnd.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
   </ItemGroup>

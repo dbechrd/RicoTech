@@ -283,7 +283,8 @@ internal void select_first_obj()
     // Camera forward ray v. scene
     struct ray cam_fwd;
     camera_fwd(&cam_fwd, &cam_player);
-    object_collide_ray_type(&obj_collided, &dist, OBJ_STATIC, &cam_fwd);
+    object_collide_ray_type(chunk_active, &obj_collided, &dist, OBJ_STATIC,
+                            &cam_fwd);
     select_obj(obj_collided);
 }
 
@@ -396,8 +397,11 @@ internal void clear_slot_string(enum rico_string_slot slot)
     const char *slot_name = rico_string_slot_string[slot];
     struct rico_string *str;
     str = hashtable_search_str(&global_strings, slot_name);
-    string_free(str);
-    hashtable_delete_str(&global_strings, slot_name);
+    if (str)
+    {
+        string_free(str);
+        hashtable_delete_str(&global_strings, slot_name);
+    }
 }
 
 int state_update()
@@ -451,8 +455,9 @@ int state_update()
         struct rico_string *str;
         err = chunk_alloc(chunk_transient, RICO_HND_STRING, (struct hnd **)&str);
         if (err) return err;
-        err = string_init(str, "STR_STATE", STR_SLOT_EDIT_INFO, 0, 0,
-                          COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
+        err = string_init(str, rico_string_slot_string[STR_SLOT_EDIT_INFO],
+                          STR_SLOT_EDIT_INFO, 0, 0, COLOR_DARK_RED_HIGHLIGHT, 0,
+                          NULL, buf);
         if (err) return err;
     }
 
@@ -490,7 +495,8 @@ int state_update()
         err = chunk_alloc(chunk_transient, RICO_HND_STRING,
                           (struct hnd **)&str);
         if (err) return err;
-        err = string_init(str, "STR_FPS", STR_SLOT_FPS, -(FONT_WIDTH * len), 0,
+        err = string_init(str, rico_string_slot_string[STR_SLOT_FPS],
+                          STR_SLOT_FPS, -(FONT_WIDTH * len), 0,
                           COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
         if (err) return err;
         fps_last_render = last_perfs;
@@ -544,8 +550,8 @@ internal int shared_engine_events()
         err = chunk_alloc(chunk_transient, RICO_HND_STRING,
                           (struct hnd **)&str);
         if (err) return err;
-        err = string_init(str, "STR_CONFIRM_QUIT", STR_SLOT_MENU_QUIT, 600,
-                          400, COLOR_GREEN, 0, NULL,
+        err = string_init(str, rico_string_slot_string[STR_SLOT_MENU_QUIT],
+                          STR_SLOT_MENU_QUIT, 600, 400, COLOR_GREEN, 0, NULL,
                           "                       \n" \
                           "  Save and quit?       \n" \
                           "                       \n" \
@@ -579,7 +585,6 @@ internal int shared_engine_events()
 
     return err;
 }
-
 internal int shared_camera_events()
 {
     enum rico_error err = SUCCESS;
@@ -616,7 +621,6 @@ internal int shared_camera_events()
 
     return err;
 }
-
 internal int shared_edit_events()
 {
     RICO_ASSERT(is_edit_state(state));
@@ -811,8 +815,9 @@ internal int state_edit_translate()
         err = chunk_alloc(chunk_transient, RICO_HND_STRING,
                           (struct hnd **)&str);
         if (err) return err;
-        err = string_init(str, "STR_EDIT_TRANS_DELTA", STR_SLOT_EDIT_INFO, 0, 0,
-                          COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL, buf);
+        err = string_init(str, rico_string_slot_string[STR_SLOT_EDIT_INFO],
+                          STR_SLOT_EDIT_INFO, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
+                          1000, NULL, buf);
         if (err) return err;
     }
 
@@ -900,8 +905,9 @@ internal int state_edit_rotate()
         err = chunk_alloc(chunk_transient, RICO_HND_STRING,
                           (struct hnd **)&str);
         if (err) return err;
-        err = string_init(str, "STR_EDIT_ROT_DELTA", STR_SLOT_EDIT_INFO, 0, 0,
-                          COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL, buf);
+        err = string_init(str, rico_string_slot_string[STR_SLOT_EDIT_INFO],
+                          STR_SLOT_EDIT_INFO, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
+                          1000, NULL, buf);
         if (err) return err;
     }
 
@@ -995,8 +1001,9 @@ internal int state_edit_scale()
         err = chunk_alloc(chunk_transient, RICO_HND_STRING,
                           (struct hnd **)&str);
         if (err) return err;
-        err = string_init(str, "STR_EDIT_SCALE_DELTA", STR_SLOT_EDIT_INFO, 0, 0,
-                          COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL, buf);
+        err = string_init(str, rico_string_slot_string[STR_SLOT_EDIT_INFO],
+                          STR_SLOT_EDIT_INFO, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
+                          1000, NULL, buf);
         if (err) return err;
     }
 
@@ -1395,8 +1402,7 @@ internal int init_active_chunk()
         next_uid = file.next_uid;
 
         err = rico_cereals[RICO_HND_CHUNK].load[file.cereal_index](
-            (void *)&chunk_active, &file
-        );
+            (void *)&chunk_active, &file);
         rico_file_close(&file);
         return err;
     }

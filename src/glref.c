@@ -119,7 +119,7 @@ int create_obj()
 
 void recalculate_all_bbox()
 {
-    object_bbox_recalculate_all();
+    object_bbox_recalculate_all(chunk_active);
 
     // Reselect current object
     if (selected_obj)
@@ -299,8 +299,10 @@ void glref_render(struct camera *camera)
     //--------------------------------------------------------------------------
     // Render objects
     //--------------------------------------------------------------------------
-    object_render_type(OBJ_STATIC, prog_default, camera);
-    object_render_type(OBJ_STRING_WORLD, prog_default, camera);
+    object_render_type(chunk_active,    OBJ_STATIC, prog_default, camera);
+    object_render_type(chunk_transient, OBJ_STATIC, prog_default, camera);
+    object_render_type(chunk_active,    OBJ_STRING_WORLD, prog_default, camera);
+    object_render_type(chunk_transient, OBJ_STRING_WORLD, prog_default, camera);
 
     //--------------------------------------------------------------------------
     // Axes labels (bboxes)
@@ -310,7 +312,8 @@ void glref_render(struct camera *camera)
     prim_draw_bbox_color(&axis_bbox, &y_axis_transform, &COLOR_GREEN);
     prim_draw_bbox_color(&axis_bbox, &z_axis_transform, &COLOR_BLUE);
 
-    object_render_type(OBJ_STRING_SCREEN, prog_default, camera);
+    object_render_type(chunk_active,    OBJ_STRING_SCREEN, prog_default, camera);
+    object_render_type(chunk_transient, OBJ_STRING_SCREEN, prog_default, camera);
 }
 void free_glref()
 {
@@ -318,7 +321,8 @@ void free_glref()
     // Clean up
     //--------------------------------------------------------------------------
     // Free all game objects
-    object_free_all();
+    object_free_all(chunk_active);
+    object_free_all(chunk_transient);
 
     //TODO: Free all meshes
 

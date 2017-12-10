@@ -1,7 +1,7 @@
 #ifndef RICO_H
 #define RICO_H
 
-#include <x86intrin.h>
+//#include <x86intrin.h>
 #include <stdint.h>
 #include <stdio.h>
 //#include <stdlib.h>
@@ -15,7 +15,7 @@
 #include "util.h"
 #include "rico_file.h"
 #include "rico_cereal.h"
-#include "rico_uid.h"
+#include "rico_hnd.h"
 #include "mesh_vertex.h"
 #include "rico_hash.h"
 
