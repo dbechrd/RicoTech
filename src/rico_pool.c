@@ -56,18 +56,9 @@ void pool_free(struct rico_pool *pool, destructor *destruct)
     pool->hnd.uid = UID_NULL;
 }
 
-int pool_handle_alloc(struct rico_pool *pool, struct hnd **_handle)
+#if 0
+internal int pool_grow(struct rico_pool *pool)
 {
-    RICO_ASSERT(pool);
-
-    enum rico_error err = SUCCESS;
-
-#if RICO_DEBUG_POOL
-    printf("[pool][aloc] uid=%d name=%s ", pool->hnd.uid,
-           pool->hnd.name);
-    pool_print_handles(pool);
-#endif
-
     ////////////////////////////////////////////////////////////////////////////
     // NOTE: Cannot auto-extend pool without updating the corresponding counts
     //       in the chunk.
@@ -107,6 +98,15 @@ int pool_handle_alloc(struct rico_pool *pool, struct hnd **_handle)
     }
     */
     ////////////////////////////////////////////////////////////////////////////
+}
+#endif
+
+int pool_handle_alloc(struct rico_pool *pool, struct hnd **_handle)
+{
+    RICO_ASSERT(pool);
+
+    enum rico_error err = SUCCESS;
+
     if (pool->active == pool->count)
     {
 #if RICO_DEBUG_POOL
@@ -118,10 +118,15 @@ int pool_handle_alloc(struct rico_pool *pool, struct hnd **_handle)
         return RICO_FATAL(ERR_POOL_OUT_OF_MEMORY, "%s pool is full",
                           pool->hnd.name);
     }
-    ////////////////////////////////////////////////////////////////////////////
 
     *_handle = pool->handles[pool->active];
     pool->active++;
+
+#if RICO_DEBUG_POOL
+    printf("[pool][aloc] uid=%d name=%s ", pool->hnd.uid,
+           pool->hnd.name);
+    pool_print_handles(pool);
+#endif
 
     return err;
 }
@@ -139,12 +144,6 @@ int pool_handle_free(struct rico_pool *pool, struct hnd *handle)
     if (pool->handles[i] != handle)
         return RICO_ERROR(ERR_POOL_INVALID_HANDLE, "Pool handle not found.");
 
-#if RICO_DEBUG_POOL
-    printf("[pool][free] uid=%d name=%s ", pool->hnd.uid,
-           pool->hnd.name);
-    pool_print_handles(pool);
-#endif
-
     handle->uid = UID_NULL;
 
     // Move deleted handle to free list
@@ -157,6 +156,12 @@ int pool_handle_free(struct rico_pool *pool, struct hnd *handle)
         pool->handles[i] = pool->handles[pool->active];
         pool->handles[pool->active] = handle;
     }
+
+#if RICO_DEBUG_POOL
+    printf("[pool][free] uid=%d name=%s ", pool->hnd.uid,
+           pool->hnd.name);
+    pool_print_handles(pool);
+#endif
 
     return SUCCESS;
 }
@@ -314,7 +319,7 @@ internal void pool_print_handles(struct rico_pool *pool)
     //     return;
     // }
 
-    printf("status=\n");
+    printf("handles= ");
 
     if (pool->active == 0)
     {
@@ -323,11 +328,14 @@ internal void pool_print_handles(struct rico_pool *pool)
     }
 
     // Print pool
-    printf("USED:\n");
     for (u32 i = 0; i < pool->active; i++)
     {
-        printf("\t%s\n", pool->handles[i]->name);
+        printf("%p", pool->handles[i]);
+        if (i < pool->active - 1)
+            printf(", ");
     }
+    printf("\n");
+    fflush(stdout);
 #else
     UNUSED(pool);
 #endif

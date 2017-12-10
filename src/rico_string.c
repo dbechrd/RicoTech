@@ -12,6 +12,20 @@ int string_init(struct rico_string *str, const char *name,
     printf("[strg][init] name=%s\n", name);
 #endif
 
+    const char *slot_name = rico_string_slot_string[slot];
+
+    if (slot != STR_SLOT_DYNAMIC)
+    {
+        // Look for previous slot string and delete it
+        struct rico_string *old_str =
+            hashtable_search_str(&global_string_slots, slot_name);
+        if (old_str)
+        {
+            RICO_ASSERT(old_str->hnd.uid);
+            string_free(old_str);
+        }
+    }
+
     // TODO: Reuse mesh and material if they are the same
     // Generate font mesh and get texture handle
     struct rico_mesh *mesh;
@@ -48,20 +62,6 @@ int string_init(struct rico_string *str, const char *name,
     // Store in slot table if not dynamic
     if (slot != STR_SLOT_DYNAMIC)
     {
-        const char *slot_name = rico_string_slot_string[slot];
-
-        // Look for previous slot string and delete it
-        struct rico_string *old_str =
-            hashtable_search_str(&global_string_slots, slot_name);
-        if (old_str)
-        {
-            hashtable_delete_str(&global_string_slots, slot_name);
-
-            RICO_ASSERT(old_str->hnd.uid);
-            string_free(old_str);
-        }
-
-        // Insert new string in string slot hash
         hashtable_insert_str(&global_string_slots, slot_name, str);
     }
 
@@ -77,12 +77,12 @@ int string_free(struct rico_string *str)
     if (str->slot != STR_SLOT_DYNAMIC)
     {
         // Look for slot string and delete it
-        hashtable_delete_str(&global_strings,
+        hashtable_delete_str(&global_string_slots,
                              rico_string_slot_string[str->slot]);
     }
 
     object_free(str->object);
-    str->hnd.uid = UID_NULL;
+    hashtable_delete_hnd(&global_strings, &str->hnd);
     return chunk_free(str->hnd.chunk, &str->hnd);
 }
 

@@ -1,6 +1,6 @@
 # Blender v2.77 (sub 0) OBJ File: 'sphere.blend'
 # www.blender.org
-o PRIM_SPHERE
+o [PRIM_MESH_SPHERE]
 v -0.195090 0.980785 0.000000
 v -0.382683 0.923880 0.000000
 v -0.555570 0.831470 0.000000

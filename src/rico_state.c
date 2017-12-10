@@ -455,8 +455,8 @@ int state_update()
         struct rico_string *str;
         err = chunk_alloc(chunk_transient, RICO_HND_STRING, (struct hnd **)&str);
         if (err) return err;
-        err = string_init(str, rico_string_slot_string[STR_SLOT_EDIT_INFO],
-                          STR_SLOT_EDIT_INFO, 0, 0, COLOR_DARK_RED_HIGHLIGHT, 0,
+        err = string_init(str, rico_string_slot_string[STR_SLOT_STATE],
+                          STR_SLOT_STATE, 0, 0, COLOR_DARK_RED_HIGHLIGHT, 0,
                           NULL, buf);
         if (err) return err;
     }
@@ -815,8 +815,8 @@ internal int state_edit_translate()
         err = chunk_alloc(chunk_transient, RICO_HND_STRING,
                           (struct hnd **)&str);
         if (err) return err;
-        err = string_init(str, rico_string_slot_string[STR_SLOT_EDIT_INFO],
-                          STR_SLOT_EDIT_INFO, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
+        err = string_init(str, rico_string_slot_string[STR_SLOT_STATE],
+                          STR_SLOT_STATE, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
                           1000, NULL, buf);
         if (err) return err;
     }
@@ -905,8 +905,8 @@ internal int state_edit_rotate()
         err = chunk_alloc(chunk_transient, RICO_HND_STRING,
                           (struct hnd **)&str);
         if (err) return err;
-        err = string_init(str, rico_string_slot_string[STR_SLOT_EDIT_INFO],
-                          STR_SLOT_EDIT_INFO, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
+        err = string_init(str, rico_string_slot_string[STR_SLOT_STATE],
+                          STR_SLOT_STATE, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
                           1000, NULL, buf);
         if (err) return err;
     }
@@ -1001,8 +1001,8 @@ internal int state_edit_scale()
         err = chunk_alloc(chunk_transient, RICO_HND_STRING,
                           (struct hnd **)&str);
         if (err) return err;
-        err = string_init(str, rico_string_slot_string[STR_SLOT_EDIT_INFO],
-                          STR_SLOT_EDIT_INFO, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
+        err = string_init(str, rico_string_slot_string[STR_SLOT_STATE],
+                          STR_SLOT_STATE, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
                           1000, NULL, buf);
         if (err) return err;
     }

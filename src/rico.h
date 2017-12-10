@@ -1,7 +1,10 @@
 #ifndef RICO_H
 #define RICO_H
 
-//#include <x86intrin.h>
+#if defined(__GNUC__) || defined(__clang__)
+#include <x86intrin.h>
+#endif
+
 #include <stdint.h>
 #include <stdio.h>
 //#include <stdlib.h>
