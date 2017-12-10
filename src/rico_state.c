@@ -1,4 +1,4 @@
-#define LOAD_SAVE_FILE true
+#define LOAD_SAVE_FILE false
 
 ///|////////////////////////////////////////////////////////////////////////////
 const char *rico_state_string[] = {
@@ -352,7 +352,10 @@ void temp_camera_update(r64 dt)
                        view_vel.y, view_vel.z);
     string_truncate(buf, sizeof(buf), len);
 
-    err = string_init(RICO_TRANSIENT, "STR_VEL", STR_SLOT_DEBUG, 0,
+    struct rico_string *str;
+    err = chunk_alloc(chunk_transient, RICO_HND_STRING, (struct hnd **)&str);
+    if (err) return err;
+    err = string_init(str, RICO_TRANSIENT, "STR_VEL", STR_SLOT_DEBUG, 0,
                       -FONT_HEIGHT, COLOR_DARK_RED_HIGHLIGHT, 0, NULL,
                       buf);
     if (err) return err;
@@ -445,7 +448,10 @@ int state_update()
                            rico_state_string[state]);
         string_truncate(buf, sizeof(buf), len);
 
-        err = string_init("STR_STATE", STR_SLOT_EDIT_INFO, 0, 0,
+        struct rico_string *str;
+        err = chunk_alloc(chunk_transient, RICO_HND_STRING, (struct hnd **)&str);
+        if (err) return err;
+        err = string_init(str, "STR_STATE", STR_SLOT_EDIT_INFO, 0, 0,
                           COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
         if (err) return err;
     }
@@ -480,7 +486,11 @@ int state_update()
                            ms, mcyc);
         string_truncate(buf, sizeof(buf), len);
 
-        err = string_init("STR_FPS", STR_SLOT_FPS, -(FONT_WIDTH * len), 0,
+        struct rico_string *str;
+        err = chunk_alloc(chunk_transient, RICO_HND_STRING,
+                          (struct hnd **)&str);
+        if (err) return err;
+        err = string_init(str, "STR_FPS", STR_SLOT_FPS, -(FONT_WIDTH * len), 0,
                           COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
         if (err) return err;
         fps_last_render = last_perfs;
@@ -530,8 +540,12 @@ internal int shared_engine_events()
     // Save and exit
     else if (chord_pressed(ACTION_ENGINE_QUIT))
     {
-        err = string_init("STR_CONFIRM_QUIT", STR_SLOT_MENU_QUIT, 600, 400,
-                          COLOR_GREEN, 0, NULL,
+        struct rico_string *str;
+        err = chunk_alloc(chunk_transient, RICO_HND_STRING,
+                          (struct hnd **)&str);
+        if (err) return err;
+        err = string_init(str, "STR_CONFIRM_QUIT", STR_SLOT_MENU_QUIT, 600,
+                          400, COLOR_GREEN, 0, NULL,
                           "                       \n" \
                           "  Save and quit?       \n" \
                           "                       \n" \
@@ -793,7 +807,11 @@ internal int state_edit_translate()
         int len = snprintf(buf, sizeof(buf), "Trans Delta: %f", trans_delta);
         string_truncate(buf, sizeof(buf), len);
 
-        err = string_init("STR_EDIT_TRANS_DELTA", STR_SLOT_EDIT_INFO, 0, 0,
+        struct rico_string *str;
+        err = chunk_alloc(chunk_transient, RICO_HND_STRING,
+                          (struct hnd **)&str);
+        if (err) return err;
+        err = string_init(str, "STR_EDIT_TRANS_DELTA", STR_SLOT_EDIT_INFO, 0, 0,
                           COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL, buf);
         if (err) return err;
     }
@@ -878,7 +896,11 @@ internal int state_edit_rotate()
         int len = snprintf(buf, sizeof(buf), "Rot Delta: %f", rot_delta);
         string_truncate(buf, sizeof(buf), len);
 
-        err = string_init("STR_EDIT_ROT_DELTA", STR_SLOT_EDIT_INFO, 0, 0,
+        struct rico_string *str;
+        err = chunk_alloc(chunk_transient, RICO_HND_STRING,
+                          (struct hnd **)&str);
+        if (err) return err;
+        err = string_init(str, "STR_EDIT_ROT_DELTA", STR_SLOT_EDIT_INFO, 0, 0,
                           COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL, buf);
         if (err) return err;
     }
@@ -969,7 +991,11 @@ internal int state_edit_scale()
         int len = snprintf(buf, sizeof(buf), "Scale Delta: %f", scale_delta);
         string_truncate(buf, sizeof(buf), len);
 
-        err = string_init("STR_EDIT_SCALE_DELTA", STR_SLOT_EDIT_INFO, 0, 0,
+        struct rico_string *str;
+        err = chunk_alloc(chunk_transient, RICO_HND_STRING,
+                          (struct hnd **)&str);
+        if (err) return err;
+        err = string_init(str, "STR_EDIT_SCALE_DELTA", STR_SLOT_EDIT_INFO, 0, 0,
                           COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL, buf);
         if (err) return err;
     }
@@ -1085,14 +1111,12 @@ internal void rico_init_cereal()
     rico_cereals[RICO_HND_BBOX].load[0] = &bbox_deserialize_0;
 #endif
 }
-internal int rico_init_chunks()
+internal int rico_init_transient_chunk()
 {
     enum rico_error err;
 
-    // TODO: Create a hard-coded test chunk that gets loaded if the real chunk
-    //       can't be loaded from the save file.
-
-    // TODO: Sane defaults, but use realloc when necessary
+    // TODO: Hard code defaults that make sense based on how many transient
+    //       objects there actually are.
     const chunk_pool_counts pool_counts = {
         128,  // RICO_HND_OBJECT
         128,  // RICO_HND_TEXTURE
@@ -1103,43 +1127,7 @@ internal int rico_init_chunks()
     };
 
     // Special chunk used to store transient object pools
-    err = chunk_init(&chunk_transient, "[Transient]", &pool_counts);
-    if (err) return err;
-
-    if (LOAD_SAVE_FILE)
-    {
-        printf("----------------------------------------------------------\n");
-        printf("[MAIN][init] Loading chunks\n");
-        printf("----------------------------------------------------------\n");
-        struct rico_file file;
-        err = rico_file_open_read(&file, "chunks/cereal.bin");
-        if (err) return err;
-
-        RICO_ASSERT(next_uid < UID_BASE);
-        RICO_ASSERT(next_uid < file.next_uid);
-        next_uid = file.next_uid;
-
-        err = rico_cereals[RICO_HND_CHUNK].load[file.cereal_index](
-            (void *)&chunk_active, &file
-        );
-        rico_file_close(&file);
-        if (err) return err;
-    }
-    else
-    {
-        RICO_ASSERT(next_uid < UID_BASE);
-        next_uid = UID_BASE;
-
-        err = chunk_init(&chunk_active, "Default", &pool_counts);
-        if (err) return err;
-
-        printf("----------------------------------------------------------\n");
-        printf("[MAIN][init] Loading hard-coded test chunk\n");
-        printf("----------------------------------------------------------\n");
-        err = init_hardcoded_test_chunk(chunk_active);
-        if (err) return err;
-    }
-
+    err = chunk_init(&chunk_transient, "[CHUNK_TRANSIENT]", &pool_counts);
     return err;
 }
 internal int rico_init_fonts()
@@ -1160,7 +1148,7 @@ internal int rico_init_textures()
                       (struct hnd **)&RICO_DEFAULT_TEXTURE_DIFF);
     if (err) return err;
     err = texture_load_file(RICO_DEFAULT_TEXTURE_DIFF,
-                            "TEXTURE_DEFAULT_DIFF", GL_TEXTURE_2D,
+                            "[TEXTURE_DEFAULT_DIFF]", GL_TEXTURE_2D,
                             "texture/basic_diff.tga", 32);
     if (err) return err;
 
@@ -1168,7 +1156,7 @@ internal int rico_init_textures()
                       (struct hnd **)&RICO_DEFAULT_TEXTURE_SPEC);
     if (err) return err;
     err = texture_load_file(RICO_DEFAULT_TEXTURE_SPEC,
-                            "TEXTURE_DEFAULT_SPEC", GL_TEXTURE_2D,
+                            "[TEXTURE_DEFAULT_SPEC]", GL_TEXTURE_2D,
                             "texture/basic_spec.tga", 32);
     if (err) return err;
 
@@ -1195,11 +1183,11 @@ internal int rico_init_materials()
 {
     enum rico_error err;
 
-    err = chunk_alloc(chunk_active, RICO_HND_MATERIAL,
+    err = chunk_alloc(chunk_transient, RICO_HND_MATERIAL,
                       (struct hnd **)&RICO_DEFAULT_MATERIAL);
     if (err) return err;
 
-    err = material_init(RICO_DEFAULT_MATERIAL, "MATERIAL_DEFAULT",
+    err = material_init(RICO_DEFAULT_MATERIAL, "[MATERIAL_DEFAULT]",
                         RICO_DEFAULT_TEXTURE_DIFF, RICO_DEFAULT_TEXTURE_SPEC,
                         0.5f);
     return err;
@@ -1270,19 +1258,15 @@ internal int rico_init_meshes()
         4, 5, 1, 1, 0, 4
     };
 
-    // TODO: Don't store BBoxes in active chunk; create a transient_chunk
-    //       that everyone shares to store transient objects in memory.
-    //       This has the added benefit of being extremely easy to serialize
-    //       should the need ever arise.
-    err = chunk_alloc(chunk_active, RICO_HND_MESH,
-                      (struct hnd **)&RICO_DEFAULT_MESH);
+    err = chunk_alloc(chunk_transient, RICO_HND_MESH,
+                      (struct hnd **)&PRIM_MESH_BBOX);
     if (err) return err;
 
-    err = mesh_init(RICO_DEFAULT_MESH, "BBox", MESH_OBJ_WORLD, 8,
+    err = mesh_init(PRIM_MESH_BBOX, "[PRIM_MESH_BBOX]", MESH_OBJ_WORLD, 8,
                     default_vertices, 36, elements, GL_STATIC_DRAW);
     if (err) return err;
 
-    PRIM_MESH_BBOX = RICO_DEFAULT_MESH;
+    RICO_DEFAULT_MESH = PRIM_MESH_BBOX;
     return err;
 }
 
@@ -1295,7 +1279,7 @@ internal int load_mesh_files()
     err = load_obj_file(chunk_transient, "mesh/prim_sphere.ric");
     if (err) return err;
 
-    PRIM_MESH_SPHERE = hashtable_search_str(&global_meshes, "PRIM_SPHERE");
+    PRIM_MESH_SPHERE = hashtable_search_str(&global_meshes, "[PRIM_MESH_SPHERE]");
     if (err) return err;
 
 #if 0
@@ -1312,10 +1296,10 @@ internal int load_mesh_files()
     if (err) return err;
 #endif
 
-    err = load_obj_file(chunk_active, "mesh/sphere.ric");
+    err = load_obj_file(chunk_transient, "mesh/sphere.ric");
     if (err) return err;
 
-    err = load_obj_file(chunk_active, "mesh/wall_cornertest.ric");
+    err = load_obj_file(chunk_transient, "mesh/wall_cornertest.ric");
     if (err) return err;
 
 #if 0
@@ -1328,9 +1312,26 @@ internal int load_mesh_files()
 
     return err;
 }
-internal int init_hardcoded_test_chunk(struct rico_chunk *chunk)
+internal int init_hardcoded_test_chunk(struct rico_chunk **chunk)
 {
     enum rico_error err;
+
+    //--------------------------------------------------------------------------
+    // Create chunk
+    //--------------------------------------------------------------------------
+    // TODO: Sane defaults, but use realloc when necessary
+    const chunk_pool_counts pool_counts = {
+        128,  // RICO_HND_OBJECT
+        128,  // RICO_HND_TEXTURE
+        128,  // RICO_HND_MESH
+          4,  // RICO_HND_FONT
+         32,  // RICO_HND_STRING
+        128   // RICO_HND_MATERIAL
+    };
+
+    err = chunk_init(chunk, "[CHUNK_DEFAULT]", &pool_counts);
+    if (err) return err;
+    RICO_ASSERT(*chunk);
 
     //--------------------------------------------------------------------------
     // Create materials
@@ -1341,7 +1342,7 @@ internal int init_hardcoded_test_chunk(struct rico_chunk *chunk)
     RICO_ASSERT(tex_rock);
 
     struct rico_material *material_rock;
-    err = chunk_alloc(chunk, RICO_HND_MATERIAL, (struct hnd **)&material_rock);
+    err = chunk_alloc(*chunk, RICO_HND_MATERIAL, (struct hnd **)&material_rock);
     if (err) return err;
     err = material_init(material_rock, "Rock", tex_rock,
                         RICO_DEFAULT_TEXTURE_SPEC, 0.5f);
@@ -1354,7 +1355,7 @@ internal int init_hardcoded_test_chunk(struct rico_chunk *chunk)
     // Ground
     struct rico_object *obj_ground;
     // TODO: mem_arena_push(arena, RICO_HND_OBJECT, &obj_ground)
-    err = chunk_alloc(chunk_active, RICO_HND_OBJECT,
+    err = chunk_alloc(*chunk, RICO_HND_OBJECT,
                       (struct hnd **)&obj_ground);
     if (err) return err;
     err = object_init(obj_ground, "Ground", OBJ_STATIC, RICO_DEFAULT_MESH,
@@ -1379,6 +1380,36 @@ internal int init_hardcoded_test_chunk(struct rico_chunk *chunk)
 
     return err;
 }
+internal int init_active_chunk()
+{
+    enum rico_error err;
+
+    if (LOAD_SAVE_FILE)
+    {
+        struct rico_file file;
+        err = rico_file_open_read(&file, "chunks/cereal.bin");
+        if (err) return err;
+
+        RICO_ASSERT(next_uid < UID_BASE);
+        RICO_ASSERT(next_uid < file.next_uid);
+        next_uid = file.next_uid;
+
+        err = rico_cereals[RICO_HND_CHUNK].load[file.cereal_index](
+            (void *)&chunk_active, &file
+        );
+        rico_file_close(&file);
+        return err;
+    }
+    else
+    {
+        RICO_ASSERT(next_uid < UID_BASE);
+        next_uid = UID_BASE;
+
+        printf("Loading hard-coded test chunk\n");
+        err = init_hardcoded_test_chunk(&chunk_active);
+        return err;
+    }
+}
 
 internal int rico_init()
 {
@@ -1395,9 +1426,9 @@ internal int rico_init()
     rico_init_cereal();
 
     printf("----------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing chunks\n");
+    printf("[MAIN][init] Initializing transient chunk\n");
     printf("----------------------------------------------------------\n");
-    err = rico_init_chunks();
+    err = rico_init_transient_chunk();
     if (err) return err;
 
     printf("----------------------------------------------------------\n");
@@ -1440,6 +1471,12 @@ internal int rico_init()
     printf("[MAIN][init] Loading meshes from resource files\n");
     printf("----------------------------------------------------------\n");
     err = load_mesh_files();
+    if (err) return err;
+
+    printf("----------------------------------------------------------\n");
+    printf("[MAIN][init] Loading chunks\n");
+    printf("----------------------------------------------------------\n");
+    err = init_active_chunk();
     if (err) return err;
 
     printf("----------------------------------------------------------\n");

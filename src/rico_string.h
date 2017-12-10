@@ -21,9 +21,9 @@ struct rico_string {
     u32 lifespan;
 };
 
-int string_init(const char *name, enum rico_string_slot slot, float x, float y,
-                struct col4 color, u32 lifespan, struct rico_font *font,
-                const char *text);
+int string_init(struct rico_string *str, const char *name,
+                enum rico_string_slot slot, float x, float y, struct col4 color,
+                u32 lifespan, struct rico_font *font, const char *text);
 int string_free(struct rico_string *str);
 int string_update(r64 dt);
 

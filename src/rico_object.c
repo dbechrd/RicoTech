@@ -68,8 +68,6 @@ void object_free(struct rico_object *object)
 
     mesh_free(object->mesh);
     material_free(object->material);
-
-    object->hnd.uid = UID_NULL;
     chunk_free(chunk_active, &object->hnd);
 }
 
@@ -494,8 +492,11 @@ int object_print(struct rico_object *object)
     // Print to screen
     char buf[256] = { 0 };
     object_to_string(object, buf, sizeof(buf));
-    err = string_init("[object_print]", STR_SLOT_SELECTED_OBJ, 0, FONT_HEIGHT, COLOR_GRAY_HIGHLIGHT, 0,
-                      NULL, buf);
+    struct rico_string *str;
+    err = chunk_alloc(chunk_transient, RICO_HND_STRING, (struct hnd **)&str);
+    if (err) return err;
+    err = string_init(str, "[OBJECT_PRINT]", STR_SLOT_SELECTED_OBJ, 0,
+                      FONT_HEIGHT, COLOR_GRAY_HIGHLIGHT, 0, NULL, buf);
     return err;
 }
 

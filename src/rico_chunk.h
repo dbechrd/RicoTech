@@ -16,7 +16,6 @@ const chunk_pool_counts size_by_handle = {
 struct rico_chunk {
     struct hnd hnd;
     u32 total_size;
-    u32 cereal_size;
     chunk_pool_counts pool_counts;
 
     // TODO: All pools in chunk are persistent, transient pools should exist

@@ -203,8 +203,6 @@ void texture_free(struct rico_texture *texture)
     hashtable_delete_hnd(&global_textures, &texture->hnd);
 
     glDeleteTextures(1, &texture->gl_id);
-
-    texture->hnd.uid = UID_NULL;
     chunk_free(chunk_active, &texture->hnd);
 }
 

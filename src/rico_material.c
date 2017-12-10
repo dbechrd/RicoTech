@@ -48,8 +48,6 @@ void material_free(struct rico_material *material)
 
     texture_free(material->tex_diffuse);
     texture_free(material->tex_specular);
-
-    material->hnd.uid = UID_NULL;
     chunk_free(chunk_active, &material->hnd);
 }
 

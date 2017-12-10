@@ -17,15 +17,13 @@ int chunk_init(struct rico_chunk **_chunk, const char *name,
     // Calculate pool sizes
     u32 pool_sizes[RICO_HND_CEREAL_COUNT];
     u32 poolhouse_size = 0;
-    for (int i = 1; i < RICO_HND_CEREAL_COUNT; ++i)
+    for (int i = 0; i < RICO_HND_CEREAL_COUNT; ++i)
     {
         u32 pool_size = POOL_SIZE((*pool_counts)[i], size_by_handle[i]);
         pool_sizes[i] = pool_size;
         poolhouse_size += pool_size;
     }
-    u32 cereal_size = chunk_size + poolhouse_size;
-    u32 transient_size = poolhouse_size;
-    u32 total_size = cereal_size + transient_size;
+    u32 total_size = chunk_size + poolhouse_size;
 
     // TODO: Memory management
     void *mem_block = calloc(1, total_size);
@@ -39,7 +37,6 @@ int chunk_init(struct rico_chunk **_chunk, const char *name,
     struct rico_chunk *chunk = (struct rico_chunk *)mem_block;
     hnd_init(&chunk->hnd, RICO_HND_CHUNK, name);
     chunk->total_size = total_size;
-    chunk->cereal_size = cereal_size;
     memcpy(&chunk->pool_counts, pool_counts, sizeof(chunk->pool_counts));
 
     // Initialize pools
@@ -97,7 +94,7 @@ SERIAL(chunk_serialize_0)
     // Write chunk to file
     u32 skip = sizeof(chunk->hnd);
     u8 *seek = (u8 *)chunk + skip;
-    u32 bytes = chunk->cereal_size - skip;
+    u32 bytes = chunk->total_size - skip;
 
     // TODO: Don't write entire pools. Write pool header (w/ size) and then only
     //       the handles in use. No point writing empty pool slots to disk. How
@@ -108,9 +105,9 @@ SERIAL(chunk_serialize_0)
     fwrite(seek, bytes, 1, file->fs);
 
     #if RICO_DEBUG_CHUNK
-        printf("[chnk][save] uid=%d name=%s filename=%s total_size=%d cereal_size=%d\n",
+        printf("[chnk][save] uid=%d name=%s filename=%s total_size=%d\n",
                chunk->hnd.uid, chunk->hnd.name, file->filename,
-               chunk->total_size, chunk->cereal_size);
+               chunk->total_size);
     #endif
 
     return err;
@@ -129,7 +126,6 @@ DESERIAL(chunk_deserialize_0)
     // Read chunk size from file so we know how much to allocate, then
     // initialize the chunk properly before calling fread().
     fread(&tmp_chunk->total_size,  sizeof(tmp_chunk->total_size),  1, file->fs);
-    fread(&tmp_chunk->cereal_size, sizeof(tmp_chunk->cereal_size), 1, file->fs);
 
     // TODO: Memory management
     void *mem_block = calloc(1, tmp_chunk->total_size);
@@ -144,10 +140,9 @@ DESERIAL(chunk_deserialize_0)
 
     // Read chunk from file
     u8 *ptr = (u8 *)chunk;
-    u32 skip = sizeof(chunk->hnd) + sizeof(chunk->total_size) +
-               sizeof(chunk->cereal_size);
+    u32 skip = sizeof(chunk->hnd) + sizeof(chunk->total_size);
     u8 *seek = ptr + skip;
-    u32 bytes = chunk->cereal_size - skip;
+    u32 bytes = chunk->total_size - skip;
 
     // TODO: Check fread success
     fread(seek, bytes, 1, file->fs);
@@ -204,9 +199,8 @@ DESERIAL(chunk_deserialize_0)
 internal void chunk_print(struct rico_chunk *chunk)
 {
     // Print information about chunk and pool sizes
-    printf("[chnk][show] uid=%d name=%s total_size=%d cereal_size=%d\n",
-           chunk->hnd.uid, chunk->hnd.name, chunk->total_size,
-           chunk->cereal_size);
+    printf("[chnk][show] uid=%d name=%s total_size=%d\n",
+           chunk->hnd.uid, chunk->hnd.name, chunk->total_size);
 
     for (int i = 0; i < RICO_HND_CEREAL_COUNT; ++i)
     {

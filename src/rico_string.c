@@ -2,22 +2,15 @@ const char *rico_string_slot_string[] = {
     RICO_STRING_SLOTS(GEN_STRING)
 };
 
-int string_init(const char *name, enum rico_string_slot slot, float x, float y,
-                struct col4 color, u32 lifespan, struct rico_font *font,
-                const char *text)
+int string_init(struct rico_string *str, const char *name,
+                enum rico_string_slot slot, float x, float y, struct col4 color,
+                u32 lifespan, struct rico_font *font, const char *text)
 {
     enum rico_error err;
 
 #if RICO_DEBUG_STRING
     printf("[strg][init] name=%s\n", name);
 #endif
-
-    // Generate dynamic string object or update existing fixed string
-    struct rico_string *str;
-
-    // Allocate new string
-    err = chunk_alloc(chunk_transient, RICO_HND_STRING, (struct hnd **)&str);
-    if (err) return err;
 
     // TODO: Reuse mesh and material if they are the same
     // Generate font mesh and get texture handle
@@ -33,6 +26,21 @@ int string_init(const char *name, enum rico_string_slot slot, float x, float y,
     if (err) return err;
     err = material_init(material, name, tex, RICO_DEFAULT_TEXTURE_SPEC, 0.5f);
     if (err) return err;
+
+    hnd_init(&str->hnd, RICO_HND_STRING, name);
+
+    // Create string object
+    str->slot = slot;
+    err = chunk_alloc(chunk_transient, RICO_HND_OBJECT,
+                      (struct hnd **)&str->object);
+    if (err) return err;
+    err = object_init(str->object, name, OBJ_STRING_SCREEN, mesh, material,
+                      NULL);
+    if (err) return err;
+
+    str->lifespan = lifespan;
+    object_trans_set(str->object,
+                     &(struct vec3) { SCREEN_X(x), SCREEN_Y(y), -1.0f });
 
     // Store in global hash table
     err = hashtable_insert_hnd(&global_strings, &str->hnd, str);
@@ -54,21 +62,6 @@ int string_init(const char *name, enum rico_string_slot slot, float x, float y,
         // Insert new string in string slot hash
         hashtable_insert_str(&global_string_slots, slot_name, str);
     }
-
-    hnd_init(&str->hnd, RICO_HND_STRING, name);
-
-    // Create string object
-    str->slot = slot;
-    err = chunk_alloc(chunk_transient, RICO_HND_OBJECT,
-                      (struct hnd **)&str->object);
-    if (err) return err;
-    err = object_init(str->object, name, OBJ_STRING_SCREEN, mesh, material,
-                      NULL);
-    if (err) return err;
-
-    str->lifespan = lifespan;
-    object_trans_set(str->object,
-                     &(struct vec3) { SCREEN_X(x), SCREEN_Y(y), -1.0f });
 
     return err;
 }

@@ -180,8 +180,6 @@ void mesh_free(struct rico_mesh *mesh)
 
     glDeleteBuffers(2, mesh->vbos);
     glDeleteVertexArrays(1, &mesh->vao);
-
-    mesh->hnd.uid = UID_NULL;
     chunk_free(chunk_active, &mesh->hnd);
 }
 

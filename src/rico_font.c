@@ -79,7 +79,7 @@ int font_init(struct rico_font *font, const char *filename)
     memcpy(font->Width, &buffer[WIDTH_DATA_OFFSET], 256);
 
     struct rico_texture *tex;
-    err = chunk_alloc(chunk_transient, RICO_HND_FONT, (struct hnd **)&tex);
+    err = chunk_alloc(chunk_transient, RICO_HND_TEXTURE, (struct hnd **)&tex);
     if (err) goto cleanup;
     err = texture_load_pixels(tex, filename, GL_TEXTURE_2D, width, height, bpp,
                               &buffer[MAP_DATA_OFFSET]);
@@ -99,8 +99,6 @@ void font_free(struct rico_font *font)
 #endif
 
     texture_free(font->texture);
-
-    font->hnd.uid = UID_NULL;
     chunk_free(chunk_active, &font->hnd);
 }
 
@@ -237,7 +235,7 @@ int font_render(struct rico_mesh **_mesh, struct rico_texture **_texture,
     }
 
     struct rico_mesh *mesh;
-    err = chunk_alloc(chunk_active, RICO_HND_MESH, (struct hnd **)&mesh);
+    err = chunk_alloc(chunk_transient, RICO_HND_MESH, (struct hnd **)&mesh);
     if (err) goto cleanup;
     err = mesh_init(mesh, mesh_name, type, idx_vertex, vertices, idx_element,
                     elements, GL_STATIC_DRAW);
