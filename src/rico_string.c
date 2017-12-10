@@ -14,19 +14,6 @@ int string_init(const char *name, enum rico_string_slot slot, float x, float y,
 
     // Generate dynamic string object or update existing fixed string
     struct rico_string *str;
-    if (slot != STR_SLOT_DYNAMIC)
-    {
-        // Look for previous slot string and delete it
-        const char *slot_name = rico_string_slot_string[slot];
-        str = (struct rico_string *)hashtable_search(&global_strings, slot_name,
-                                                     strlen(slot_name));
-        if (str)
-        {
-            hashtable_delete(&global_strings, slot_name, strlen(slot_name));
-            string_free(str);
-            str = NULL;
-        }
-    }
 
     // Allocate new string
     err = chunk_alloc(chunk_transient, RICO_HND_STRING, (struct hnd **)&str);
@@ -34,26 +21,49 @@ int string_init(const char *name, enum rico_string_slot slot, float x, float y,
 
     // TODO: Reuse mesh and material if they are the same
     // Generate font mesh and get texture handle
-    struct rico_texture *text_mesh;
-    struct rico_texture *text_tex;
-    err = font_render(&text_mesh, &text_tex, font, 0, 0, color, text, name,
+    struct rico_mesh *mesh;
+    struct rico_texture *tex;
+    err = font_render(&mesh, &tex, font, 0, 0, color, text, name,
                       MESH_STRING_SCREEN);
     if (err) return err;
 
-    struct rico_material *text_material;
-    err = material_init(&text_material, name, text_tex,
-                        RICO_DEFAULT_TEXTURE_SPEC, 0.5f);
+    struct rico_material *material;
+    err = chunk_alloc(chunk_transient, RICO_HND_MATERIAL,
+                      (struct hnd **)&material);
+    if (err) return err;
+    err = material_init(material, name, tex, RICO_DEFAULT_TEXTURE_SPEC, 0.5f);
     if (err) return err;
 
     // Store in global hash table
-    err = hashtable_insert(&global_strings, str->hnd.name,
-                           str->hnd.len, str);
+    err = hashtable_insert_hnd(&global_strings, &str->hnd, str);
 
-    uid_init(&str->uid, RICO_UID_STRING, name, false);
+    // Store in slot table if not dynamic
+    if (slot != STR_SLOT_DYNAMIC)
+    {
+        const char *slot_name = rico_string_slot_string[slot];
+
+        // Look for previous slot string and delete it
+        struct rico_string *old_str =
+            hashtable_search_str(&global_string_slots, slot_name);
+        if (old_str)
+        {
+            hashtable_delete_str(&global_string_slots, slot_name);
+            string_free(old_str);
+        }
+
+        // Insert new string in string slot hash
+        hashtable_insert_str(&global_string_slots, slot_name, str);
+    }
+
+    hnd_init(&str->hnd, RICO_HND_STRING, name);
 
     // Create string object
-    err = object_init(&str->object, name, OBJ_STRING_SCREEN, text_mesh,
-                      text_material, NULL);
+    str->slot = slot;
+    err = chunk_alloc(chunk_transient, RICO_HND_OBJECT,
+                      (struct hnd **)&str->object);
+    if (err) return err;
+    err = object_init(str->object, name, OBJ_STRING_SCREEN, mesh, material,
+                      NULL);
     if (err) return err;
 
     str->lifespan = lifespan;
@@ -65,28 +75,20 @@ int string_init(const char *name, enum rico_string_slot slot, float x, float y,
 
 int string_free(struct rico_string *str)
 {
-    // // Preserve fixed string slots
-    // if (handle < STR_SLOT_COUNT)
-    //     return SUCCESS;
-
 #if RICO_DEBUG_STRING
     printf("[strg][free] uid=%d name=%s\n", str->hnd.uid, str->hnd.name);
 #endif
 
-    if (handle.value < STR_SLOT_COUNT && str->hnd.uid == UID_NULL)
+    if (str->slot != STR_SLOT_DYNAMIC)
     {
-#if RICO_DEBUG_WARN
-        printf("[strg][WARN] uid=%d handle=%d Static string already freed\n",
-               str->hnd.uid, handle.value);
-#endif
-        return SUCCESS;
+        // Look for slot string and delete it
+        hashtable_delete_str(&global_strings,
+                             rico_string_slot_string[str->slot]);
     }
 
     object_free(str->object);
     str->hnd.uid = UID_NULL;
-    struct rico_pool *pool = chunk_pool(chunk_transient, RICO_HND_STRING);
-    pool_handle_free(pool, &str->hnd);
-    return err;
+    return chunk_free(chunk_transient, &str->hnd);
 }
 
 // TODO: Lifespan objects shouldn't be string-specific; refactor this logic out

@@ -258,8 +258,7 @@ int selected_duplicate()
     enum rico_error err;
 
     struct rico_object *new_obj;
-    err = chunk_alloc(chunk_active, RICO_HND_OBJECT,
-                      (struct hnd **)&new_obj->hnd);
+    err = chunk_alloc(chunk_active, RICO_HND_OBJECT, (struct hnd **)&new_obj);
     if (err) return err;
     err = object_copy(new_obj, selected_obj, "Duplicate");
     if (err) return err;

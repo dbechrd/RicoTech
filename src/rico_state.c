@@ -392,11 +392,9 @@ internal void clear_slot_string(enum rico_string_slot slot)
     // TODO: How to make this more logical? Maybe STR_SLOT_* should be handles?
     const char *slot_name = rico_string_slot_string[slot];
     struct rico_string *str;
-    str = hashtable_search(&global_strings, (void *)slot_name,
-                           strlen(slot_name));
+    str = hashtable_search_str(&global_strings, slot_name);
     string_free(str);
-    hashtable_delete(&global_strings, (void *)slot_name,
-                     strlen(slot_name));
+    hashtable_delete_str(&global_strings, slot_name);
 }
 
 int state_update()
@@ -1121,14 +1119,9 @@ internal int rico_init_chunks()
         RICO_ASSERT(next_uid < file.next_uid);
         next_uid = file.next_uid;
 
-        // HACK: This is only here because rico_deserialize needs to know the
-        //       RICO_HND_CHUNK uid type to decide which deserializer to call.
-        //       Is there a better way to do this?
-        struct rico_chunk *tmp_chunk;
-        hnd_init(&tmp_chunk->hnd, RICO_HND_CHUNK, "CHUNK_LOADING");
-
-        chunk_active = tmp_chunk;
-        err = rico_deserialize((void *)&chunk_active, &file);
+        err = rico_cereals[RICO_HND_CHUNK].load[file.cereal_index](
+            (void *)&chunk_active, &file
+        );
         rico_file_close(&file);
         if (err) return err;
     }
@@ -1153,21 +1146,28 @@ internal int rico_init_fonts()
 {
     enum rico_error err;
 
-    // TODO: Use fixed slots to allocate default resources
-    err = font_init(&RICO_DEFAULT_FONT, "font/courier_new.bff");
+    err = chunk_alloc(chunk_transient, RICO_HND_FONT,
+                      (struct hnd **)&RICO_DEFAULT_FONT);
+    if (err) return err;
+    err = font_init(RICO_DEFAULT_FONT, "font/courier_new.bff");
     return err;
 }
 internal int rico_init_textures()
 {
     enum rico_error err;
 
-    // TODO: Use fixed slots to allocate default resources
-    err = texture_load_file(&RICO_DEFAULT_TEXTURE_DIFF,
+    err = chunk_alloc(chunk_transient, RICO_HND_TEXTURE,
+                      (struct hnd **)&RICO_DEFAULT_TEXTURE_DIFF);
+    if (err) return err;
+    err = texture_load_file(RICO_DEFAULT_TEXTURE_DIFF,
                             "TEXTURE_DEFAULT_DIFF", GL_TEXTURE_2D,
                             "texture/basic_diff.tga", 32);
     if (err) return err;
 
-    err = texture_load_file(&RICO_DEFAULT_TEXTURE_SPEC,
+    err = chunk_alloc(chunk_transient, RICO_HND_TEXTURE,
+                      (struct hnd **)&RICO_DEFAULT_TEXTURE_SPEC);
+    if (err) return err;
+    err = texture_load_file(RICO_DEFAULT_TEXTURE_SPEC,
                             "TEXTURE_DEFAULT_SPEC", GL_TEXTURE_2D,
                             "texture/basic_spec.tga", 32);
     if (err) return err;
@@ -1178,24 +1178,16 @@ internal int rico_init_textures()
     struct rico_texture *tex;
 
 #if 0
-    err = texture_load_file(&handle, TRANSIENT, "grass", GL_TEXTURE_2D,
-                            "texture/grass.tga", 32);
-    if (err) return err;
+    "texture/grass.tga"
+    "texture/hello.tga"
+    "texture/fake_yellow.tga"
 #endif
 
-    err = texture_load_file(&tex, "bricks", GL_TEXTURE_2D,
+    err = chunk_alloc(chunk_transient, RICO_HND_TEXTURE, (struct hnd **)&tex);
+    if (err) return err;
+    err = texture_load_file(tex, "bricks", GL_TEXTURE_2D,
                             "texture/clean_bricks.tga", 32);
     if (err) return err;
-
-#if 0
-    err = texture_load_file(&handle, TRANSIENT, "hello", GL_TEXTURE_2D,
-                            "texture/hello.tga", 32);
-    if (err) return err;
-
-    err = texture_load_file(&handle, TRANSIENT, "yellow", GL_TEXTURE_2D,
-                            "texture/fake_yellow.tga", 32);
-    if (err) return err;
-#endif
 
     return err;
 }
@@ -1203,10 +1195,11 @@ internal int rico_init_materials()
 {
     enum rico_error err;
 
-    err = chunk_alloc(chunk_active, RICO_HND_MATERIAL, &RICO_DEFAULT_MATERIAL);
+    err = chunk_alloc(chunk_active, RICO_HND_MATERIAL,
+                      (struct hnd **)&RICO_DEFAULT_MATERIAL);
     if (err) return err;
 
-    err = material_init(&RICO_DEFAULT_MATERIAL, "MATERIAL_DEFAULT",
+    err = material_init(RICO_DEFAULT_MATERIAL, "MATERIAL_DEFAULT",
                         RICO_DEFAULT_TEXTURE_DIFF, RICO_DEFAULT_TEXTURE_SPEC,
                         0.5f);
     return err;
@@ -1281,10 +1274,11 @@ internal int rico_init_meshes()
     //       that everyone shares to store transient objects in memory.
     //       This has the added benefit of being extremely easy to serialize
     //       should the need ever arise.
-    err = chunk_alloc(chunk_active, RICO_HND_MESH, &RICO_DEFAULT_MESH);
+    err = chunk_alloc(chunk_active, RICO_HND_MESH,
+                      (struct hnd **)&RICO_DEFAULT_MESH);
     if (err) return err;
 
-    err = mesh_load(&RICO_DEFAULT_MESH, "BBox", MESH_OBJ_WORLD, 8,
+    err = mesh_init(RICO_DEFAULT_MESH, "BBox", MESH_OBJ_WORLD, 8,
                     default_vertices, 36, elements, GL_STATIC_DRAW);
     if (err) return err;
 
@@ -1298,10 +1292,10 @@ internal int load_mesh_files()
 
     u32 ticks = SDL_GetTicks();
 
-    err = load_obj_file(TRANSIENT, "mesh/sphere.ric");
+    err = load_obj_file(chunk_transient, "mesh/prim_sphere.ric");
     if (err) return err;
 
-    err = mesh_request_by_name(&PRIM_MESH_SPHERE, "Sphere");
+    PRIM_MESH_SPHERE = hashtable_search_str(&global_meshes, "PRIM_SPHERE");
     if (err) return err;
 
 #if 0
@@ -1318,7 +1312,10 @@ internal int load_mesh_files()
     if (err) return err;
 #endif
 
-    err = load_obj_file(TRANSIENT, "mesh/wall_cornertest.ric");
+    err = load_obj_file(chunk_active, "mesh/sphere.ric");
+    if (err) return err;
+
+    err = load_obj_file(chunk_active, "mesh/wall_cornertest.ric");
     if (err) return err;
 
 #if 0
@@ -1338,12 +1335,15 @@ internal int init_hardcoded_test_chunk(struct rico_chunk *chunk)
     //--------------------------------------------------------------------------
     // Create materials
     //--------------------------------------------------------------------------
-    struct hnd tex_rock;
-    err = texture_request_by_name(&tex_rock, "bricks");
-    if (err) return err;
+    struct rico_texture *tex_rock;
 
-    struct hnd material_rock;
-    err = material_init(&material_rock, PERSISTENT, "Rock", tex_rock,
+    tex_rock = hashtable_search_str(&global_textures, "bricks");
+    RICO_ASSERT(tex_rock);
+
+    struct rico_material *material_rock;
+    err = chunk_alloc(chunk, RICO_HND_MATERIAL, (struct hnd **)&material_rock);
+    if (err) return err;
+    err = material_init(material_rock, "Rock", tex_rock,
                         RICO_DEFAULT_TEXTURE_SPEC, 0.5f);
     if (err) return err;
 
@@ -1351,78 +1351,31 @@ internal int init_hardcoded_test_chunk(struct rico_chunk *chunk)
     // Create world objects
     //--------------------------------------------------------------------------
 
-
     // Ground
     struct rico_object *obj_ground;
     // TODO: mem_arena_push(arena, RICO_HND_OBJECT, &obj_ground)
-    err = chunk_alloc(chunk_active, RICO_HND_OBJECT, &obj_ground);
+    err = chunk_alloc(chunk_active, RICO_HND_OBJECT,
+                      (struct hnd **)&obj_ground);
     if (err) return err;
-    err = object_create(&obj_ground, PERSISTENT, "Ground", OBJ_STATIC,
-                        RICO_DEFAULT_MESH, material_rock, NULL, true);
+    err = object_init(obj_ground, "Ground", OBJ_STATIC, RICO_DEFAULT_MESH,
+                      material_rock, NULL);
     if (err) return err;
     object_rot_x(obj_ground, -90.0f);
     object_scale(obj_ground, &(struct vec3) { 64.0f, 64.0f, 0.001f });
     object_trans(obj_ground, &(struct vec3) { 0.0f, -1.0f, 0.0f });
 
-    // TEST: Create test object for each mesh / primitive
-    {
-        struct hnd arr_objects[RICO_POOL_SIZE_MESH] = { 0 };
-        u32 i = 0;
-
-        /*
-        // Cleanup: Could use mesh_pool_get_unsafe(), but what's really the
-        //          the point of this code?
-        // Create test object for each loaded mesh
-        for (; i < mesh_count; i++)
-        {
-        err = object_create(&arr_objects[i], mesh_name(meshes[i]),
-        OBJ_STATIC, meshes[i], RICO_MATERIAL_DEFAULT,
-        mesh_bbox(meshes[i]), true);
-        if (err) return err;
-
-        // HACK: Don't z-fight ground plane
-        object_trans_set(arr_objects[i],
-        &(struct vec3) { 0.0f, EPSILON, 0.0f });
-
-        // HACK: Scale scene 1/10 (for conference room test)
-        // object_scale_set(arr_objects[i],
-        //                  &(struct vec3) { 0.1f, 0.1f, 0.1f });
-        }
-        */
-
-        // Create test object for each primitive
-        err = object_create(&arr_objects[i], PERSISTENT,
-                            mesh_name(PRIM_MESH_SPHERE), OBJ_STATIC,
-                            PRIM_MESH_SPHERE, RICO_DEFAULT_MATERIAL,
-                            mesh_bbox(PRIM_MESH_SPHERE), true);
-        i++;
-        if (err) return err;
-
-        // HACK: Don't z-fight ground plane
-        //object_trans_set(arr_objects[i],
-        //                 &(struct vec3) { 0.0f, EPSILON, 0.0f });
-    }
-
+#if 0
     //--------------------------------------------------------------------------
     // Save manual chunk
     //--------------------------------------------------------------------------
-    //err = chunk_init("my_first_chunk", 1,
-    //                 RICO_STRING_POOL_SIZE,
-    //                 RICO_FONT_POOL_SIZE,
-    //                 RICO_TEXTURE_POOL_SIZE,
-    //                 RICO_MATERIAL_POOL_SIZE,
-    //                 RICO_MESH_POOL_SIZE,
-    //                 RICO_OBJECT_POOL_SIZE,
-    //                 &chunk_home);
-    //if (err) return err;
-
-    /*   struct rico_file file;
+    struct rico_file file;
     err = rico_file_open_write(&file, "chunks/cereal.bin",
     RICO_FILE_VERSION_CURRENT);
     if (err) return err;
 
     err = rico_serialize(chunk_home, &file);
-    rico_file_close(&file);*/
+    rico_file_close(&file);
+#endif
 
     return err;
 }

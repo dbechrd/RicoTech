@@ -77,8 +77,7 @@ int mesh_init(struct rico_mesh *mesh, const char *name,
     if (err) return err;
 
     // Store in global hash table
-    err = hashtable_insert(&global_meshes, mesh->hnd.name, mesh->hnd.len,
-                           mesh);
+    err = hashtable_insert_hnd(&global_meshes, &mesh->hnd, mesh);
     return err;
 }
 
@@ -175,7 +174,7 @@ void mesh_free(struct rico_mesh *mesh)
     printf("[mesh][free] uid=%d name=%s\n", mesh->hnd.uid, mesh->hnd.name);
 #endif
 
-    hashtable_delete(&global_meshes, mesh->hnd.name, mesh->hnd.len);
+    hashtable_delete_hnd(&global_meshes, &mesh->hnd);
 
     //bbox_free_mesh(&mesh->bbox);
 
@@ -183,8 +182,7 @@ void mesh_free(struct rico_mesh *mesh)
     glDeleteVertexArrays(1, &mesh->vao);
 
     mesh->hnd.uid = UID_NULL;
-    struct rico_pool *pool = chunk_pool(chunk_active, RICO_HND_MESH);
-    pool_handle_free(pool, &mesh->hnd);
+    chunk_free(chunk_active, &mesh->hnd);
 }
 
 void mesh_update(struct rico_mesh *mesh)

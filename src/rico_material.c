@@ -18,8 +18,7 @@ int material_init(struct rico_material *material, const char *name,
     material->shiny = shiny;
 
     // Store in global hash table
-    err = hashtable_insert(&global_materials, material->hnd.name,
-                           material->hnd.len, material);
+    err = hashtable_insert_hnd(&global_materials, &material->hnd, material);
     return err;
 }
 
@@ -45,14 +44,13 @@ void material_free(struct rico_material *material)
            material->hnd.name);
 #endif
 
-    hashtable_delete(&global_materials, material->hnd.name, material->hnd.len);
+    hashtable_delete_hnd(&global_materials, &material->hnd);
 
     texture_free(material->tex_diffuse);
     texture_free(material->tex_specular);
 
     material->hnd.uid = UID_NULL;
-    struct rico_pool *pool = chunk_pool(chunk_active, RICO_HND_MATERIAL);
-    pool_handle_free(pool, &material->hnd);
+    chunk_free(chunk_active, &material->hnd);
 }
 
 // TODO: Deprecate pointless accessors like this

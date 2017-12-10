@@ -76,9 +76,16 @@ int chunk_init(struct rico_chunk **_chunk, const char *name,
 int chunk_alloc(struct rico_chunk *chunk, enum rico_hnd_type type,
                 struct hnd **_handle)
 {
-    RICO_ASSERT(type > 0 && type < RICO_HND_CEREAL_COUNT);
-    struct rico_pool *pool = chunk->pools[type - 1];
-    pool_handle_alloc(pool, _handle);
+    RICO_ASSERT(type < RICO_HND_CEREAL_COUNT);
+    struct rico_pool *pool = chunk->pools[type];
+    return pool_handle_alloc(pool, _handle);
+}
+
+int chunk_free(struct rico_chunk *chunk, struct hnd *handle)
+{
+    RICO_ASSERT(handle);
+    struct rico_pool *pool = chunk->pools[handle->type];
+    return pool_handle_free(pool, handle);
 }
 
 //int chunk_serialize_0(const void *handle, const struct rico_file *file)

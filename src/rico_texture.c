@@ -43,18 +43,17 @@ int texture_load_pixels(struct rico_texture *texture, const char *name,
 
     // Note: If we want to serialize texture data we have to store the filename
     //       or the pixel data in the struct.
-    hnd_init(&tex->hnd, RICO_UID_TEXTURE, name);
-    tex->gl_target = target;
-    tex->width = width;
-    tex->height = height;
-    tex->bpp = bpp;
+    hnd_init(&texture->hnd, RICO_HND_TEXTURE, name);
+    texture->gl_target = target;
+    texture->width = width;
+    texture->height = height;
+    texture->bpp = bpp;
 
-    err = build_texture(tex, pixels);
+    err = build_texture(texture, pixels);
     if (err) return err;
 
     // Store in global hash table
-    err = hashtable_insert(&global_textures, texture->hnd.name,
-                           texture->hnd.len, texture);
+    err = hashtable_insert_hnd(&global_textures, &texture->hnd, texture);
     return err;
 }
 
@@ -201,13 +200,12 @@ void texture_free(struct rico_texture *texture)
            texture->hnd.name);
 #endif
 
-    hashtable_delete(&global_textures, texture->hnd.name, texture->hnd.len);
+    hashtable_delete_hnd(&global_textures, &texture->hnd);
 
     glDeleteTextures(1, &texture->gl_id);
 
     texture->hnd.uid = UID_NULL;
-    struct rico_pool *pool = chunk_pool(chunk_active, RICO_HND_TEXTURE);
-    pool_handle_free(pool, &texture->hnd);
+    chunk_free(chunk_active, &texture->hnd);
 }
 
 void texture_bind(struct rico_texture *texture, GLenum texture_unit)

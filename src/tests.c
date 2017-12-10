@@ -38,30 +38,26 @@ void test_geom()
 
 void test_hashtable()
 {
-    struct hnd blah1 = { TRANSIENT, 123 };
-    struct hnd blah2 = { TRANSIENT, 456 };
-    struct hnd blah3 = { TRANSIENT, 789 };
-
-    const char bleh1[] = "blah blah";
-    const char bleh2[] = "foo foo";
-    const char bleh3[] = "this is really great!";
-
-    hash_key key1 = hashgen_strlen(bleh1, sizeof(bleh1));
-    hash_key key2 = hashgen_strlen(bleh2, sizeof(bleh2));
-    hash_key key3 = hashgen_strlen(bleh3, sizeof(bleh3));
-
+    rico_hashtable_init();
     struct hash_table *table = &global_textures;
 
-    rico_hashtable_init();
-    hashtable_insert(table, key1, blah1);
-    hashtable_insert(table, key2, blah2);
-    hashtable_insert(table, key3, blah3);
+    int data1 = 123;
+    int data2 = 456;
+    int data3 = 789;
 
-    struct hnd lookup1 = hashtable_search(table, key1);
-    struct hnd lookup2 = hashtable_search(table, key2);
-    struct hnd lookup3 = hashtable_search(table, key3);
+    const char key1[] = "blah blah";
+    const char key2[] = "foo foo";
+    const char key3[] = "this is really great!";
 
-    RICO_ASSERT(lookup1.value == blah1.value);
-    RICO_ASSERT(lookup2.value == blah2.value);
-    RICO_ASSERT(lookup3.value == blah3.value);
+    hashtable_insert_str(table, key1, &data1);
+    hashtable_insert_str(table, key2, &data2);
+    hashtable_insert_str(table, key3, &data3);
+
+    int *lookup1 = hashtable_search_str(table, key1);
+    int *lookup2 = hashtable_search_str(table, key2);
+    int *lookup3 = hashtable_search_str(table, key3);
+
+    RICO_ASSERT(*lookup1 == data1);
+    RICO_ASSERT(*lookup2 == data2);
+    RICO_ASSERT(*lookup3 == data3);
 }

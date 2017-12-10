@@ -10,7 +10,7 @@ int object_init(struct rico_object *object, const char *name,
                 enum rico_obj_type type, struct rico_mesh *mesh,
                 struct rico_material *material, const struct bbox *bbox)
 {
-    enum rico_error err;
+    enum rico_error err = SUCCESS;
 
 #if RICO_DEBUG_OBJECT
     printf("[ obj][init] name=%s\n", name);
@@ -70,8 +70,7 @@ void object_free(struct rico_object *object)
     material_free(object->material);
 
     object->hnd.uid = UID_NULL;
-    struct rico_pool *pool = chunk_pool(chunk_active, RICO_HND_OBJECT);
-    pool_handle_free(pool, &object->hnd);
+    chunk_free(chunk_active, &object->hnd);
 }
 
 void object_free_all()

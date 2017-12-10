@@ -101,8 +101,7 @@ void font_free(struct rico_font *font)
     texture_free(font->texture);
 
     font->hnd.uid = UID_NULL;
-    struct rico_pool *pool = chunk_pool(chunk_active, RICO_HND_FONT);
-    pool_handle_free(pool, &font->hnd);
+    chunk_free(chunk_active, &font->hnd);
 }
 
 internal void font_setblend(const struct rico_font *font)

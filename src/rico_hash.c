@@ -2,12 +2,12 @@ typedef u32 hash;
 
 // "dog" -> struct *texture
 struct hash_kv {
-    u32 len; // 4
-    void *key;   // ['d', 'o', 'g', '\0']
-    void *val; // 0x8b1453a3
+    u32 len;         // 4
+    const void *key; // ['d', 'o', 'g', '\0']
+    void *val;       // 0x8b1453a3
 };
 
-internal inline bool keys_equal(struct hash_kv *kv, void *key, u32 len)
+internal inline bool keys_equal(struct hash_kv *kv, const void *key, u32 len)
 {
     return kv->len == len && memcmp(kv->key, key, len) == 0;
 }
@@ -24,7 +24,7 @@ void hashtable_free(struct hash_table *table)
     free(table->slots);
 }
 
-void *hashtable_search(struct hash_table *table, void *key, u32 len)
+void *hashtable_search(struct hash_table *table, const void *key, u32 len)
 {
     hash hash;
     MurmurHash3_x86_32(key, len, &hash);
@@ -50,8 +50,20 @@ void *hashtable_search(struct hash_table *table, void *key, u32 len)
     return 0;
 }
 
-// TODO: Replace linear search/insert with quadratic if necessary
-int hashtable_insert(struct hash_table *table, void *key, u32 len, void *val)
+void *hashtable_search_str(struct hash_table *table, const char *str)
+{
+    return hashtable_search(table, str, strlen(str));
+}
+
+void *hashtable_search_hnd(struct hash_table *table, struct hnd *hnd)
+{
+    return hashtable_search(table, hnd->name, hnd->len);
+}
+
+// TODO: Replace linear search/insert with quadratic if necessary, or use
+//       external chaining.
+int hashtable_insert(struct hash_table *table, const void *key, u32 len,
+                     void *val)
 {
     hash hash;
     MurmurHash3_x86_32(key, len, &hash);
@@ -91,7 +103,17 @@ int hashtable_insert(struct hash_table *table, void *key, u32 len, void *val)
     return SUCCESS;
 }
 
-bool hashtable_delete(struct hash_table *table, void *key, u32 len)
+int hashtable_insert_str(struct hash_table *table, const char *str, void *val)
+{
+    return hashtable_insert(table, str, strlen(str), val);
+}
+
+int hashtable_insert_hnd(struct hash_table *table, struct hnd *hnd, void *val)
+{
+    return hashtable_insert(table, hnd->name, hnd->len, val);
+}
+
+bool hashtable_delete(struct hash_table *table, const void *key, u32 len)
 {
     hash hash;
     MurmurHash3_x86_32(key, len, &hash);
@@ -122,6 +144,16 @@ bool hashtable_delete(struct hash_table *table, void *key, u32 len)
     return false;
 }
 
+bool hashtable_delete_str(struct hash_table *table, const char *str)
+{
+    return hashtable_delete(table, str, strlen(str));
+}
+
+bool hashtable_delete_hnd(struct hash_table *table, struct hnd *hnd)
+{
+    return hashtable_delete(table, hnd->name, hnd->len);
+}
+
 ///|////////////////////////////////////////////////////////////////////////////
 
 // TODO: Where should global hash tables actually live?
@@ -131,6 +163,7 @@ struct hash_table global_textures;
 struct hash_table global_materials;
 struct hash_table global_meshes;
 struct hash_table global_objects;
+struct hash_table global_string_slots;
 
 void rico_hashtable_init()
 {
@@ -140,4 +173,5 @@ void rico_hashtable_init()
     hashtable_init(&global_materials, "Materials", 256);
     hashtable_init(&global_meshes,    "Meshes",    256);
     hashtable_init(&global_objects,   "Objects",   256);
+    hashtable_init(&global_string_slots, "String Slots", 16);
 }
