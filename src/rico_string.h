@@ -16,10 +16,15 @@ extern const char *rico_string_slot_string[];
 struct rico_string {
     struct hnd hnd;
     enum rico_string_slot slot;
-    // TODO: Good grief.. what even is this?
+    uid object_uid;
     struct rico_object *object;
     u32 lifespan;
 };
+
+inline void string_fixup(struct rico_string *str)
+{
+    str->object = hashtable_search_uid(&global_uids, str->object_uid);
+}
 
 int string_init(struct rico_string *str, const char *name,
                 enum rico_string_slot slot, float x, float y, struct col4 color,

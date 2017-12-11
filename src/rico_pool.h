@@ -24,6 +24,10 @@ typedef void(destructor)(struct hnd *handle);
 #define POOL_OFFSET_DATA(count) (POOL_OFFSET_HANDLES() + \
                                  POOL_SIZE_HANDLES(count))
 
+static inline void pool_fixup(struct rico_pool *pool);
+static inline void pool_fixup_handles(struct rico_pool *pool,
+                                      struct rico_chunk *chunk,
+                                      enum rico_hnd_type type);
 int pool_init(void *mem_block, const char *name, u32 count, u32 size);
 void pool_free(struct rico_pool *pool, destructor *destruct);
 int pool_handle_alloc(struct rico_pool *pool, struct hnd **_handle);
@@ -34,13 +38,6 @@ struct hnd *pool_handle_next(struct rico_pool *pool, struct hnd *handle);
 struct hnd *pool_handle_prev(struct rico_pool *pool, struct hnd *handle);
 //SERIAL(pool_serialize_0);
 //DESERIAL(pool_deserialize_0);
-
-static inline void pool_fixup(struct rico_pool *pool)
-{
-    // TODO: Could clean this up with PTR_ADD_BYTE macro
-    pool->handles = (struct hnd **)((u8 *)pool + POOL_OFFSET_HANDLES());
-    pool->data = (u8 *)pool + POOL_OFFSET_DATA(pool->count);
-}
 
 #if 0
 static inline void *pool_read(const struct rico_pool *pool, u32 value)

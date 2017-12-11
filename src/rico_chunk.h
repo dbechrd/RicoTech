@@ -38,8 +38,9 @@ int chunk_init(struct rico_chunk **_chunk, const char *name,
 int chunk_alloc(struct rico_chunk *chunk, enum rico_hnd_type type,
                 struct hnd **_handle);
 int chunk_free(struct rico_chunk *chunk, struct hnd *handle);
-SERIAL(chunk_serialize_0);
-DESERIAL(chunk_deserialize_0);
+int chunk_serialize(const struct rico_chunk *chunk,
+                    const struct rico_file *file);
+int chunk_deserialize(struct rico_chunk **_chunk, const struct rico_file *file);
 
 static inline struct rico_pool *chunk_pool(struct rico_chunk *chunk,
                                            enum rico_hnd_type type)

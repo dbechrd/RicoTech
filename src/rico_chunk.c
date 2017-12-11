@@ -12,8 +12,6 @@ int chunk_init(struct rico_chunk **_chunk, const char *name,
     printf("[chnk][init] name=%s\n", name);
 #endif
 
-    u32 chunk_size = sizeof(struct rico_chunk);
-
     // Calculate pool sizes
     u32 pool_sizes[RICO_HND_CEREAL_COUNT];
     u32 poolhouse_size = 0;
@@ -23,7 +21,7 @@ int chunk_init(struct rico_chunk **_chunk, const char *name,
         pool_sizes[i] = pool_size;
         poolhouse_size += pool_size;
     }
-    u32 total_size = chunk_size + poolhouse_size;
+    u32 total_size = sizeof(struct rico_chunk) + poolhouse_size;
 
     // TODO: Memory management
     void *mem_block = calloc(1, total_size);
@@ -42,7 +40,7 @@ int chunk_init(struct rico_chunk **_chunk, const char *name,
     // Initialize pools
     u8 *ptr = (u8 *)chunk;
     u32 offset = 0;
-    offset += chunk_size;
+    offset += sizeof(struct rico_chunk);
     for (int i = 0; i < RICO_HND_CEREAL_COUNT; ++i)
     {
         chunk->pools[i] = (struct rico_pool *)(ptr + offset);
@@ -87,21 +85,22 @@ int chunk_alloc(struct rico_chunk *chunk, enum rico_hnd_type type,
 int chunk_free(struct rico_chunk *chunk, struct hnd *handle)
 {
     RICO_ASSERT(handle);
+
+    hashtable_delete_uid(&global_uids, handle->uid);
+
     handle->chunk = NULL;
     struct rico_pool *pool = chunk->pools[handle->type];
     return pool_handle_free(pool, handle);
 }
 
-//int chunk_serialize_0(const void *handle, const struct rico_file *file)
-SERIAL(chunk_serialize_0)
+int chunk_serialize(const struct rico_chunk *chunk,
+                    const struct rico_file *file)
 {
     enum rico_error err = SUCCESS;
-    const struct rico_chunk *chunk = handle;
 
     // Write chunk to file
-    u32 skip = sizeof(chunk->hnd);
-    u8 *seek = (u8 *)chunk + skip;
-    u32 bytes = chunk->total_size - skip;
+    u8 *seek = (u8 *)chunk;
+    u32 bytes = chunk->total_size;
 
     // TODO: Don't write entire pools. Write pool header (w/ size) and then only
     //       the handles in use. No point writing empty pool slots to disk. How
@@ -120,11 +119,9 @@ SERIAL(chunk_serialize_0)
     return err;
 }
 
-//int chunk_deserialize_0(void *_handle, const struct rico_file *file)
-DESERIAL(chunk_deserialize_0)
+int chunk_deserialize(struct rico_chunk **_chunk, const struct rico_file *file)
 {
     enum rico_error err = SUCCESS;
-    struct rico_chunk *tmp_chunk = *_handle;
 
 #if RICO_DEBUG_CHUNK
     printf("[chnk][load] filename=%s\n", file->filename);
@@ -132,22 +129,23 @@ DESERIAL(chunk_deserialize_0)
 
     // Read chunk size from file so we know how much to allocate, then
     // initialize the chunk properly before calling fread().
-    fread(&tmp_chunk->total_size,  sizeof(tmp_chunk->total_size),  1, file->fs);
+    struct rico_chunk tmp_chunk = { 0 };
+    fread(&tmp_chunk, sizeof(struct rico_chunk), 1, file->fs);
 
     // TODO: Memory management
-    void *mem_block = calloc(1, tmp_chunk->total_size);
+    void *mem_block = calloc(1, tmp_chunk.total_size);
     if (!mem_block)
     {
         return RICO_ERROR(ERR_BAD_ALLOC, "Failed to alloc memory for chunk %s",
-                          tmp_chunk->hnd.name);
+                          tmp_chunk.hnd.name);
     }
 
     struct rico_chunk *chunk = mem_block;
-    memcpy(chunk, tmp_chunk, sizeof(struct rico_chunk));
+    memcpy(chunk, &tmp_chunk, sizeof(struct rico_chunk));
 
     // Read chunk from file
     u8 *ptr = (u8 *)chunk;
-    u32 skip = sizeof(chunk->hnd) + sizeof(chunk->total_size);
+    u32 skip = sizeof(struct rico_chunk);
     u8 *seek = ptr + skip;
     u32 bytes = chunk->total_size - skip;
 
@@ -174,31 +172,23 @@ DESERIAL(chunk_deserialize_0)
         snprintf(dbg, sizeof(dbg), "%d %d\n", i, (int)offset - (int)chunk);
         OutputDebugStringA(dbg);
 #endif
-        // Fix member pointers
+        // Fix pool pointers (and collect UIDs)
         pool_fixup(chunk->pools[i]);
-#if 0
-        // Cleanup: These should be in a memory arena, not in a chunk!
-        else if (persist == TRANSIENT)
-        {
-            // Reinitialize transient pools, which aren't stored in save files
-            char pool_name[32];
-            snprintf(pool_name, sizeof(pool_name), "%s_%s",
-                     rico_pool_itemtype_string[i],
-                     rico_persist_string[persist]);
-
-            pool_init(chunk->pools[persist][i], persist, pool_name,
-                      chunk->pool_counts[i], size_by_handle[i]);
-        }
-#endif
     }
 
     RICO_ASSERT(offset == chunk->total_size);
+
+    for (int i = 0; i < RICO_HND_CEREAL_COUNT; ++i)
+    {
+        // Fix handle pointers
+        pool_fixup_handles(chunk->pools[i], chunk, i);
+    }
 
 #if RICO_DEBUG_CHUNK
     chunk_print(chunk);
 #endif
 
-    *_handle = chunk;
+    *_chunk = chunk;
     return err;
 }
 

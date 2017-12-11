@@ -1,5 +1,58 @@
 internal void pool_print_handles(struct rico_pool *pool);
 
+static inline void pool_fixup(struct rico_pool *pool)
+{
+    // TODO: Could clean this up with PTR_ADD_BYTE macro
+    pool->handles = (struct hnd **)((u8 *)pool + POOL_OFFSET_HANDLES());
+    pool->data = (u8 *)pool + POOL_OFFSET_DATA(pool->count);
+
+    // Fix handle pointers to point to this pool's data block
+    u8 *ptr = (u8 *)pool->data;
+    for (u32 i = 0; i < pool->count; i++)
+    {
+        struct hnd *hnd = (struct hnd *)ptr;
+        if (i < pool->active)
+            hashtable_insert_uid(&global_uids, hnd->uid, hnd);
+
+        pool->handles[i] = hnd;
+        ptr += pool->size;
+    }
+}
+
+static inline void pool_fixup_handles(struct rico_pool *pool,
+                                      struct rico_chunk *chunk,
+                                      enum rico_hnd_type type)
+{
+    for (u32 i = 0; i < pool->active; i++)
+    {
+        struct hnd *hnd = pool->handles[i];
+        hnd->chunk = chunk;
+
+        if (chunk)
+        {
+            switch (type)
+            {
+            case RICO_HND_OBJECT:
+                object_fixup((struct rico_object *)hnd);
+                break;
+            case RICO_HND_TEXTURE:
+                break;
+            case RICO_HND_MESH:
+                break;
+            case RICO_HND_FONT:
+                font_fixup((struct rico_font *)hnd);
+                break;
+            case RICO_HND_STRING:
+                string_fixup((struct rico_string *)hnd);
+                break;
+            case RICO_HND_MATERIAL:
+                material_fixup((struct rico_material *)hnd);
+                break;
+            }
+        }
+    }
+}
+
 // TODO: Allocate from heap pool, don't keep calling calloc
 int pool_init(void *mem_block, const char *name, u32 count, u32 size)
 {
@@ -15,14 +68,6 @@ int pool_init(void *mem_block, const char *name, u32 count, u32 size)
 
     // Pointer fix-up
     pool_fixup(pool);
-
-    // Initialize free list
-    u8 *ptr = (u8 *)pool->data;
-    for (u32 i = 0; i < count; i++)
-    {
-        pool->handles[i] = (struct hnd *)ptr;
-        ptr += pool->size;
-    }
 
 #if RICO_DEBUG_POOL
     printf("[pool][init] name=%s\n", pool->hnd.name);

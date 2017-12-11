@@ -22,6 +22,8 @@ void hnd_init(struct hnd *hnd, enum rico_hnd_type type, const char *name)
     // }
 
     hnd->uid = next_uid++;
+    if (type < RICO_HND_CEREAL_COUNT)
+        hashtable_insert_uid(&global_uids, hnd->uid, hnd);
 
     strncpy(hnd->name, name, sizeof(hnd->name) - 1);
     u32 name_len = strlen(name);
@@ -38,6 +40,7 @@ void hnd_init(struct hnd *hnd, enum rico_hnd_type type, const char *name)
 #endif
 }
 
+#if 0
 //int hnd_serialize(const void *handle, const struct rico_file *file)
 SERIAL(hnd_serialize)
 {
@@ -50,14 +53,14 @@ SERIAL(hnd_serialize)
     return SUCCESS;
 }
 
-//int hnd_deserialize(void *_handle, const struct rico_file *file)
+//int hnd_deserialize(void *handle, const struct rico_file *file)
 DESERIAL(hnd_deserialize)
 {
     // TODO: Do a single read
-    struct hnd *hnd = *_handle;
-    fread(&hnd->type, sizeof(hnd->type), 1, file->fs);
-    fread(&hnd->uid,  sizeof(hnd->uid), 1, file->fs);
-    fread(&hnd->len,  sizeof(hnd->len), 1, file->fs);
-    fread(&hnd->name, hnd->len,         1, file->fs);
+    fread(&handle->type, sizeof(handle->type), 1, file->fs);
+    fread(&handle->uid,  sizeof(handle->uid),  1, file->fs);
+    fread(&handle->len,  sizeof(handle->len),  1, file->fs);
+    fread(&handle->name, handle->len,          1, file->fs);
     return SUCCESS;
 }
+#endif

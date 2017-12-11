@@ -85,6 +85,7 @@ int font_init(struct rico_font *font, const char *filename)
                               &buffer[MAP_DATA_OFFSET]);
     if (err) goto cleanup;
     font->texture = tex;
+    font->texture_uid = font->texture->hnd.uid;
     tex->ref_count++;
 
 cleanup:

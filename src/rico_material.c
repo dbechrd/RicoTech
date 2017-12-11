@@ -12,9 +12,11 @@ int material_init(struct rico_material *material, const char *name,
 
     hnd_init(&material->hnd, RICO_HND_MATERIAL, name);
     material->tex_diffuse = tex_diffuse;
-    tex_diffuse->ref_count++;
+    material->tex_diffuse_uid = material->tex_diffuse->hnd.uid;
+    material->tex_diffuse->ref_count++;
     material->tex_specular = tex_specular;
-    tex_specular->ref_count++;
+    material->tex_specular_uid = material->tex_specular->hnd.uid;
+    material->tex_specular->ref_count++;
     material->shiny = shiny;
 
     // Store in global hash table
@@ -49,18 +51,6 @@ void material_free(struct rico_material *material)
     texture_free(material->tex_diffuse);
     texture_free(material->tex_specular);
     chunk_free(material->hnd.chunk, &material->hnd);
-}
-
-// TODO: Deprecate pointless accessors like this
-internal inline const char *material_name(struct rico_material *material)
-{
-    return material->hnd.name;
-}
-
-// TODO: Deprecate pointless accessors like this
-internal inline float material_shiny(struct rico_material *material)
-{
-    return material->shiny;
 }
 
 void material_bind(struct rico_material *material)

@@ -51,6 +51,7 @@ int string_init(struct rico_string *str, const char *name,
     err = object_init(str->object, name, OBJ_STRING_SCREEN, mesh, material,
                       NULL);
     if (err) return err;
+    str->object_uid = str->object->hnd.uid;
 
     str->lifespan = lifespan;
     object_trans_set(str->object,

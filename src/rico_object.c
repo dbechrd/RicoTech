@@ -27,9 +27,11 @@ int object_init(struct rico_object *object, const char *name,
     object->transform = MAT4_IDENT;
     object->transform_inverse = MAT4_IDENT;
     object->mesh = mesh;
-    mesh->ref_count++;
+    object->mesh_uid = object->mesh->hnd.uid;
+    object->mesh->ref_count++;
     object->material = material;
-    material->ref_count++;
+    object->material_uid = object->material->hnd.uid;
+    object->material->ref_count++;
     object->bbox = (bbox != NULL) ? *bbox : object->mesh->bbox;
 
     update_transform(object);
@@ -100,6 +102,7 @@ void object_mesh_set(struct rico_object *object, struct rico_mesh *mesh,
 {
     mesh_free(object->mesh);
     object->mesh = mesh;
+    object->mesh_uid = object->mesh->hnd.uid;
     mesh->ref_count++;
     object->bbox = (bbox != NULL) ? *bbox : object->mesh->bbox;
 }
@@ -112,6 +115,7 @@ void object_mesh_next(struct rico_object *object)
 
     mesh_free(object->mesh);
     object->mesh = next_mesh;
+    object->mesh_uid = object->mesh->hnd.uid;
     next_mesh->ref_count++;
     object->bbox = next_mesh->bbox;
 }
@@ -124,6 +128,7 @@ void object_mesh_prev(struct rico_object *object)
 
     mesh_free(object->mesh);
     object->mesh = prev_mesh;
+    object->mesh_uid = object->mesh->hnd.uid;
     prev_mesh->ref_count++;
     object->bbox = prev_mesh->bbox;
 }
@@ -133,6 +138,7 @@ void object_material_set(struct rico_object *object,
 {
     material_free(object->material);
     object->material = material;
+    object->material_uid = object->material->hnd.uid;
     material->ref_count++;
 }
 
@@ -471,7 +477,7 @@ void object_render_type(struct rico_chunk *chunk, enum rico_obj_type type,
         glUniformMatrix4fv(prog->u_model, 1, GL_TRUE, obj->transform.a);
 
         // Model material shiny
-        glUniform1f(prog->u_material_shiny, material_shiny(obj->material));
+        glUniform1f(prog->u_material_shiny, obj->material->shiny);
 
         // Render object
         object_render(obj, camera);

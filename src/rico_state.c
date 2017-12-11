@@ -1,4 +1,4 @@
-#define LOAD_SAVE_FILE false
+#define LOAD_SAVE_FILE true
 
 ///|////////////////////////////////////////////////////////////////////////////
 const char *rico_state_string[] = {
@@ -249,7 +249,7 @@ internal int save_file()
                                RICO_FILE_VERSION_CURRENT);
     if (err) return err;
 
-    err = rico_serialize(chunk, &file);
+    err = chunk_serialize(chunk, &file);
     rico_file_close(&file);
 
 #if RICO_SAVE_BACKUP
@@ -1099,12 +1099,12 @@ internal int rico_init_shaders()
 }
 internal void rico_init_cereal()
 {
-    // Custom serialiers
-    rico_cereals[RICO_HND_CHUNK].save[0] = &chunk_serialize_0;
-    rico_cereals[RICO_HND_CHUNK].load[0] = &chunk_deserialize_0;
-
-    // Cleanup: Old serializiation methods
 #if 0
+    // Cleanup: Old serializiation methods
+    // Custom serialiers
+    rico_cereals[RICO_HND_CHUNK].save[0] = &chunk_serialize;
+    rico_cereals[RICO_HND_CHUNK].load[0] = &chunk_deserialize;
+
     rico_cereals[RICO_HND_POOL].save[0] = &pool_serialize_0;
     rico_cereals[RICO_HND_POOL].load[0] = &pool_deserialize_0;
 
@@ -1401,8 +1401,7 @@ internal int init_active_chunk()
         RICO_ASSERT(next_uid < file.next_uid);
         next_uid = file.next_uid;
 
-        err = rico_cereals[RICO_HND_CHUNK].load[file.cereal_index](
-            (void *)&chunk_active, &file);
+        err = chunk_deserialize(&chunk_active, &file);
         rico_file_close(&file);
         return err;
     }

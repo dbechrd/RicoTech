@@ -12,8 +12,7 @@
     f(RICO_HND_BBOX)         \
     f(RICO_HND_CHUNK)        \
     f(RICO_HND_POOL)         \
-    f(RICO_HND_HASHTABLE)    \
-    f(RICO_HND_COUNT)
+    f(RICO_HND_HASHTABLE)
 
 enum rico_hnd_type {
     RICO_HND_TYPES(GEN_LIST)
@@ -32,7 +31,7 @@ struct hnd {
 #define UID_BASE 1000
 
 void hnd_init(struct hnd *hnd, enum rico_hnd_type type, const char *name);
-SERIAL(hnd_serialize);
-DESERIAL(hnd_deserialize);
+//SERIAL(hnd_serialize);
+//DESERIAL(hnd_deserialize);
 
 #endif // UID_H

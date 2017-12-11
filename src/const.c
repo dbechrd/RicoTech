@@ -65,6 +65,7 @@ enum rico_error rico_fatal_print(const char *file, int line,
                  desc);
         string_truncate(msg, sizeof(msg), len);
 
+        fflush(stdout);
         HALT();
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, msg, NULL);
     }

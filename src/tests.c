@@ -45,19 +45,19 @@ void test_hashtable()
     int data2 = 456;
     int data3 = 789;
 
-    const char key1[] = "blah blah";
-    const char key2[] = "foo foo";
-    const char key3[] = "this is really great!";
+    const char key_str[] = "blah blah";
+    hashtable_insert_str(table, key_str, &data1);
 
-    hashtable_insert_str(table, key1, &data1);
-    hashtable_insert_str(table, key2, &data2);
-    hashtable_insert_str(table, key3, &data3);
+    int *lookup_str = hashtable_search_str(table, key_str);
+    RICO_ASSERT(*lookup_str == data1);
+    RICO_ASSERT(hashtable_delete_str(table, key_str));
 
-    int *lookup1 = hashtable_search_str(table, key1);
-    int *lookup2 = hashtable_search_str(table, key2);
-    int *lookup3 = hashtable_search_str(table, key3);
+    //=================================================
 
-    RICO_ASSERT(*lookup1 == data1);
-    RICO_ASSERT(*lookup2 == data2);
-    RICO_ASSERT(*lookup3 == data3);
+    uid key_uid = 12345;
+    hashtable_insert_uid(table, key_uid, &data1);
+
+    int *lookup_uid = hashtable_search_uid(table, key_uid);
+    RICO_ASSERT(*lookup_uid == data1);
+    RICO_ASSERT(hashtable_delete_uid(table, key_uid));
 }
