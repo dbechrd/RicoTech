@@ -21,7 +21,7 @@ struct rico_string {
     u32 lifespan;
 };
 
-inline void string_fixup(struct rico_string *str)
+void string_fixup(struct rico_string *str)
 {
     str->object = hashtable_search_uid(&global_uids, str->object_uid);
 }

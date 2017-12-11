@@ -21,7 +21,7 @@ struct rico_font {
 };
 extern struct rico_font *RICO_DEFAULT_FONT;
 
-inline void font_fixup(struct rico_font *font)
+void font_fixup(struct rico_font *font)
 {
     font->texture = hashtable_search_uid(&global_uids, font->texture_uid);
 }

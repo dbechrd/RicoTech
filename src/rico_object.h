@@ -35,7 +35,7 @@ struct rico_object {
 };
 extern struct rico_object *RICO_DEFAULT_OBJECT;
 
-inline void object_fixup(struct rico_object *object)
+void object_fixup(struct rico_object *object)
 {
     object->mesh = hashtable_search_uid(&global_uids, object->mesh_uid);
     object->material = hashtable_search_uid(&global_uids, object->material_uid);

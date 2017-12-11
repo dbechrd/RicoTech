@@ -15,7 +15,7 @@ struct rico_material {
 };
 extern struct rico_material *RICO_DEFAULT_MATERIAL;
 
-inline void material_fixup(struct rico_material *material)
+void material_fixup(struct rico_material *material)
 {
     material->tex_diffuse = hashtable_search_uid(&global_uids,
                                                  material->tex_diffuse_uid);

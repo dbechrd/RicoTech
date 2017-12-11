@@ -41,23 +41,21 @@ void test_hashtable()
     rico_hashtable_init();
     struct hash_table *table = &global_textures;
 
-    int data1 = 123;
-    int data2 = 456;
-    int data3 = 789;
+    int data = 123;
 
     const char key_str[] = "blah blah";
-    hashtable_insert_str(table, key_str, &data1);
+    hashtable_insert_str(table, key_str, &data);
 
     int *lookup_str = hashtable_search_str(table, key_str);
-    RICO_ASSERT(*lookup_str == data1);
+    RICO_ASSERT(*lookup_str == data);
     RICO_ASSERT(hashtable_delete_str(table, key_str));
 
     //=================================================
 
     uid key_uid = 12345;
-    hashtable_insert_uid(table, key_uid, &data1);
+    hashtable_insert_uid(table, key_uid, &data);
 
     int *lookup_uid = hashtable_search_uid(table, key_uid);
-    RICO_ASSERT(*lookup_uid == data1);
+    RICO_ASSERT(*lookup_uid == data);
     RICO_ASSERT(hashtable_delete_uid(table, key_uid));
 }

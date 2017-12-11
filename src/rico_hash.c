@@ -1,5 +1,5 @@
 typedef u32 hash;
-typedef u8 hkey[32];
+typedef char hkey[32];
 
 // "dog" -> struct *texture
 struct hash_kv {
@@ -20,14 +20,14 @@ void hashtable_init(struct hash_table *table, const char *name, u32 count)
     table->slots = calloc(count, sizeof(table->slots[0]));
 
 #if RICO_DEBUG_HASH
-    printf("[hash][init] uid=%d name=%s\n", table->hnd.uid, table->hnd.name);
+    printf("[hash][init] %s\n", table->hnd.name);
 #endif
 }
 
 void hashtable_free(struct hash_table *table)
 {
 #if RICO_DEBUG_HASH
-    printf("[hash][free] uid=%d name=%s\n", table->hnd.uid, table->hnd.name);
+    printf("[hash][free] %s\n", table->hnd.name);
 #endif
 
     free(table->slots);
@@ -64,8 +64,8 @@ void *hashtable_search_str(struct hash_table *table, const char *str)
 {
     void *val = hashtable_search(table, str, strlen(str));
 #if RICO_DEBUG_HASH
-    printf("[hash][srch] uid=%d name=%s [%s, %p]\n", table->hnd.uid,
-            table->hnd.name, str, val);
+    printf("[hash][srch] %s\n             [%s, %p]\n",
+           table->hnd.name, str, val);
 #endif
     return val;
 }
@@ -74,7 +74,7 @@ void *hashtable_search_hnd(struct hash_table *table, struct hnd *hnd)
 {
     void *val = hashtable_search(table, hnd->name, hnd->len);
 #if RICO_DEBUG_HASH
-    printf("[hash][srch] uid=%d name=%s [%s, %p]\n", table->hnd.uid,
+    printf("[hash][srch] %s\n             [%s, %p]\n",
            table->hnd.name, hnd->name, val);
 #endif
     return val;
@@ -82,9 +82,9 @@ void *hashtable_search_hnd(struct hash_table *table, struct hnd *hnd)
 
 void *hashtable_search_uid(struct hash_table *table, uid uid)
 {
-    void *val = hashtable_search(table, (u8 *)&uid, sizeof(uid));
+    void *val = hashtable_search(table, (char *)&uid, sizeof(uid));
 #if RICO_DEBUG_HASH
-    printf("[hash][srch] uid=%d name=%s [%d, %p]\n", table->hnd.uid,
+    printf("[hash][srch] %s\n             [%d, %p]\n",
            table->hnd.name, uid, val);
 #endif
     return val;
@@ -121,7 +121,7 @@ int hashtable_insert(struct hash_table *table, const hkey key, u32 len,
     if (table->slots[index].val)
     {
         return RICO_ERROR(ERR_HASH_OVERWRITE, "Overwriting existing key\n");
-        //printf("[hash][WARN] uid=%d name=%s [%.*s] Overwriting existing key\n",
+        //printf("[hash][WARN] %s [%.*s] Overwriting existing key\n",
         //       table->hnd.uid, table->hnd.name, len, (const char *)key);
     }
 #endif
@@ -137,7 +137,7 @@ int hashtable_insert(struct hash_table *table, const hkey key, u32 len,
 int hashtable_insert_str(struct hash_table *table, const char *str, void *val)
 {
 #if RICO_DEBUG_HASH
-    printf("[hash][ins ] uid=%d name=%s [%s, %p]\n", table->hnd.uid,
+    printf("[hash][ins ] %s\n             [%s, %p]\n",
            table->hnd.name, str, val);
 #endif
     return hashtable_insert(table, str, strlen(str), val);
@@ -146,7 +146,7 @@ int hashtable_insert_str(struct hash_table *table, const char *str, void *val)
 int hashtable_insert_hnd(struct hash_table *table, struct hnd *hnd, void *val)
 {
 #if RICO_DEBUG_HASH
-    printf("[hash][ins ] uid=%d name=%s [%s, %p]\n", table->hnd.uid,
+    printf("[hash][ins ] %s\n             [%s, %p]\n",
            table->hnd.name, hnd->name, val);
 #endif
     return hashtable_insert(table, hnd->name, hnd->len, val);
@@ -155,10 +155,10 @@ int hashtable_insert_hnd(struct hash_table *table, struct hnd *hnd, void *val)
 int hashtable_insert_uid(struct hash_table *table, uid uid, void *val)
 {
 #if RICO_DEBUG_HASH
-    printf("[hash][ins ] uid=%d name=%s [%d, %p]\n", table->hnd.uid,
+    printf("[hash][ins ] %s\n             [%d, %p]\n",
            table->hnd.name, uid, val);
 #endif
-    return hashtable_insert(table, (u8 *)&uid, sizeof(uid), val);
+    return hashtable_insert(table, (char *)&uid, sizeof(uid), val);
 }
 
 bool hashtable_delete(struct hash_table *table, const hkey key, u32 len)
@@ -197,7 +197,7 @@ bool hashtable_delete_str(struct hash_table *table, const char *str)
 
     bool success = hashtable_delete(table, str, strlen(str));
 #if RICO_DEBUG_HASH
-    printf("[hash][del ] uid=%d name=%s [%s, %d]\n", table->hnd.uid,
+    printf("[hash][del ] %s\n             [%s, %d]\n",
            table->hnd.name, str, success);
 #endif
     return success;
@@ -207,7 +207,7 @@ bool hashtable_delete_hnd(struct hash_table *table, struct hnd *hnd)
 {
     bool success = hashtable_delete(table, hnd->name, hnd->len);
 #if RICO_DEBUG_HASH
-    printf("[hash][del ] uid=%d name=%s [%s, %d]\n", table->hnd.uid,
+    printf("[hash][del ] %s\n             [%s, %d]\n",
            table->hnd.name, hnd->name, success);
 #endif
     return success;
@@ -215,9 +215,9 @@ bool hashtable_delete_hnd(struct hash_table *table, struct hnd *hnd)
 
 bool hashtable_delete_uid(struct hash_table *table, uid uid)
 {
-    bool success = hashtable_delete(table, (u8 *)&uid, sizeof(uid));
+    bool success = hashtable_delete(table, (char *)&uid, sizeof(uid));
 #if RICO_DEBUG_HASH
-    printf("[hash][del ] uid=%d name=%s [%d, %d]\n", table->hnd.uid,
+    printf("[hash][del ] %s\n             [%d, %d]\n",
            table->hnd.name, uid, success);
 #endif
     return success;
@@ -246,12 +246,12 @@ void rico_hashtable_init()
     const int uids = strings + fonts + textures + materials + meshes + objects;
     const int string_slots = 16;
 
-    hashtable_init(&global_strings,   "String",   strings);
-    hashtable_init(&global_fonts,     "Font",     fonts);
-    hashtable_init(&global_textures,  "Texture",  textures);
-    hashtable_init(&global_materials, "Material", materials);
-    hashtable_init(&global_meshes,    "Mesh",     meshes);
-    hashtable_init(&global_objects,   "Object",   objects);
-    hashtable_init(&global_uids,      "UID",      uids);
-    hashtable_init(&global_string_slots, "String Slot", string_slots);
+    hashtable_init(&global_strings,   "global_strings",   strings);
+    hashtable_init(&global_fonts,     "global_fonts",     fonts);
+    hashtable_init(&global_textures,  "global_textures",  textures);
+    hashtable_init(&global_materials, "global_materials", materials);
+    hashtable_init(&global_meshes,    "global_meshes",    meshes);
+    hashtable_init(&global_objects,   "global_objects",   objects);
+    hashtable_init(&global_uids,      "global_uids",      uids);
+    hashtable_init(&global_string_slots, "global_string_slots", string_slots);
 }
