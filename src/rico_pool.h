@@ -1,41 +1,50 @@
 #ifndef RICO_POOL_H
 #define RICO_POOL_H
 
-//#include "rico_uid.h"
+// TODO: Pack this
+// mark, tag, badge, pin, peg
+struct pool_id {
+    //enum rico_hnd_type type;
+    u32 idx;
+    u32 generation;
+};
+
+struct pool_hnd {
+    union {
+        u32 next;
+        u32 handle;
+    };
+    u32 generation;
+};
 
 struct rico_pool {
-    struct hnd hnd;
-    u32 count;            // number of elements
-    u32 size;             // size of each element
-    u32 active;           // number of elements in use
-    struct hnd **handles; // pool handles
-    u8 *data;             // element pool
+    char name[32];
+    u32 block_count;
+    u32 block_size;
+    u32 blocks_used;
+    u32 free;
+    struct pool_hnd *handles;
+    u8 *buffer;
 };
 
 typedef void(destructor)(struct hnd *handle);
 
-#define POOL_SIZE_HANDLES(count) (count * sizeof(struct hnd *))
-#define POOL_SIZE_DATA(count, size) (count * size)
-#define POOL_SIZE(count, size) (sizeof(struct rico_pool) + \
-                                POOL_SIZE_HANDLES(count) + \
-                                POOL_SIZE_DATA(count, size))
-
+#define POOL_SIZE_HANDLES(block_count) (block_count * sizeof(struct pool_hnd))
+#define POOL_SIZE_DATA(block_count, block_size) (block_count * block_size)
+#define POOL_SIZE(block_count, block_size) (sizeof(struct rico_pool) + \
+    POOL_SIZE_HANDLES(block_count) + POOL_SIZE_DATA(block_count, block_size))
 #define POOL_OFFSET_HANDLES() (sizeof(struct rico_pool))
-#define POOL_OFFSET_DATA(count) (POOL_OFFSET_HANDLES() + \
-                                 POOL_SIZE_HANDLES(count))
+#define POOL_OFFSET_DATA(block_count) (POOL_OFFSET_HANDLES() + \
+                                 POOL_SIZE_HANDLES(block_count))
 
 static inline void pool_fixup(struct rico_pool *pool);
-static inline void pool_fixup_handles(struct rico_pool *pool,
-                                      struct rico_chunk *chunk,
-                                      enum rico_hnd_type type);
-int pool_init(void *mem_block, const char *name, u32 count, u32 size);
-void pool_free(struct rico_pool *pool, destructor *destruct);
-int pool_handle_alloc(struct rico_pool *pool, struct hnd **_handle);
-int pool_handle_free(struct rico_pool *pool, struct hnd *handle);
-struct hnd *pool_handle_first(struct rico_pool *pool);
-struct hnd *pool_handle_last(struct rico_pool *pool);
-struct hnd *pool_handle_next(struct rico_pool *pool, struct hnd *handle);
-struct hnd *pool_handle_prev(struct rico_pool *pool, struct hnd *handle);
+int pool_init(void *buf, const char *name, u32 block_count, u32 block_size);
+int pool_add(struct rico_pool *pool, struct pool_id *_id);
+int pool_remove(struct rico_pool *pool, struct pool_id *id);
+//struct pool_hnd *pool_first(struct rico_pool *pool);
+//struct pool_hnd *pool_last(struct rico_pool *pool);
+//struct pool_hnd *pool_next(struct rico_pool *pool, struct pool_hnd *hnd);
+//struct pool_hnd *pool_prev(struct rico_pool *pool, struct pool_hnd *hnd);
 //SERIAL(pool_serialize_0);
 //DESERIAL(pool_deserialize_0);
 

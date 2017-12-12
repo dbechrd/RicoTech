@@ -76,7 +76,7 @@ void object_free(struct rico_object *object)
 void object_free_all(struct rico_chunk *chunk)
 {
     struct rico_pool *pool = chunk_pool(chunk, RICO_HND_OBJECT);
-    for (int i = pool->active - 1; i >= 0; --i)
+    for (int i = pool->blocks_used - 1; i >= 0; --i)
     {
         object_free((struct rico_object *)pool->handles[i]);
     }
@@ -85,7 +85,7 @@ void object_free_all(struct rico_chunk *chunk)
 void object_bbox_recalculate_all(struct rico_chunk *chunk)
 {
     struct rico_pool *pool = chunk_pool(chunk, RICO_HND_OBJECT);
-    for (u32 i = 0; i < pool->active; ++i)
+    for (u32 i = 0; i < pool->blocks_used; ++i)
     {
         object_bbox_set((struct rico_object *)pool->handles[i], NULL);
     }
@@ -344,7 +344,7 @@ bool object_collide_ray_type(struct rico_chunk *chunk,
 
     struct rico_pool *pool = chunk_pool(chunk, RICO_HND_OBJECT);
     struct rico_object *obj;
-    for (u32 i = 0; i < pool->active; ++i)
+    for (u32 i = 0; i < pool->blocks_used; ++i)
     {
         obj = (struct rico_object *)pool->handles[i];
         if (obj->type == type)
@@ -446,7 +446,7 @@ void object_render_type(struct rico_chunk *chunk, enum rico_obj_type type,
 
     struct rico_pool *pool = chunk_pool(chunk, RICO_HND_OBJECT);
     struct rico_object *obj;
-    for (u32 i = 0; i < pool->active; ++i)
+    for (u32 i = 0; i < pool->blocks_used; ++i)
     {
         obj = (struct rico_object *)pool->handles[i];
         if (obj->type != type)

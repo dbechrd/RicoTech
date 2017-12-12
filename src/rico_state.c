@@ -1,4 +1,4 @@
-#define LOAD_SAVE_FILE true
+#define LOAD_SAVE_FILE false
 
 ///|////////////////////////////////////////////////////////////////////////////
 const char *rico_state_string[] = {

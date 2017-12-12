@@ -14,6 +14,7 @@
 #include "const.h"
 #include <math.h>
 
+#include "dlb_string.h"
 #include "geom.h"
 #include "util.h"
 #include "rico_file.h"

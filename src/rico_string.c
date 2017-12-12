@@ -97,7 +97,7 @@ int string_update(r64 dt)
 
     struct rico_pool *pool = chunk_pool(chunk_transient, RICO_HND_STRING);
     struct rico_string *str;
-    for (u32 i = 0; i < pool->active; ++i)
+    for (u32 i = 0; i < pool->blocks_used; ++i)
     {
         str = (struct rico_string *)pool->handles[i];
         if (str->hnd.uid == UID_NULL || str->lifespan == 0)

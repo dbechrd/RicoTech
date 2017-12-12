@@ -75,7 +75,7 @@ int chunk_alloc(struct rico_chunk *chunk, enum rico_hnd_type type,
     enum rico_error err;
 
     struct rico_pool *pool = chunk->pools[type];
-    err = pool_handle_alloc(pool, _handle);
+    err = pool_add(pool, _handle);
     if (err) return err;
 
     (*_handle)->chunk = chunk;
@@ -90,7 +90,7 @@ int chunk_free(struct rico_chunk *chunk, struct hnd *handle)
 
     handle->chunk = NULL;
     struct rico_pool *pool = chunk->pools[handle->type];
-    return pool_handle_free(pool, handle);
+    return pool_remove(pool, handle);
 }
 
 int chunk_serialize(const struct rico_chunk *chunk,
