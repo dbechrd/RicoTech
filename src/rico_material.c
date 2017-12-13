@@ -50,7 +50,7 @@ void material_free(struct rico_material *material)
 
     texture_free(material->tex_diffuse);
     texture_free(material->tex_specular);
-    chunk_free(material->hnd.chunk, &material->hnd);
+    pool_remove(material->hnd.pool, material->hnd.id);
 }
 
 void material_bind(struct rico_material *material)

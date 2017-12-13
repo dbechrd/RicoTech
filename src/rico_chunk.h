@@ -36,12 +36,14 @@ extern struct rico_chunk *chunk_transient;
 int chunk_init(struct rico_chunk **_chunk, const char *name,
                const chunk_pool_counts *pool_counts);
 int chunk_alloc(struct rico_chunk *chunk, enum rico_hnd_type type,
-                struct hnd **_handle);
-int chunk_free(struct rico_chunk *chunk, struct hnd *handle);
+                struct pool_id *id);
+int chunk_free(struct rico_chunk *chunk, enum rico_hnd_type type,
+               struct pool_id *id);
 int chunk_serialize(const struct rico_chunk *chunk,
                     const struct rico_file *file);
 int chunk_deserialize(struct rico_chunk **_chunk, const struct rico_file *file);
 
+/*
 static inline struct rico_pool *chunk_pool(struct rico_chunk *chunk,
                                            enum rico_hnd_type type)
 {
@@ -49,5 +51,6 @@ static inline struct rico_pool *chunk_pool(struct rico_chunk *chunk,
     RICO_ASSERT(chunk->pools[type]);
     return chunk->pools[type];
 }
+*/
 
 #endif //RICO_CHUNK_H

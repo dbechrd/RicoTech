@@ -52,13 +52,9 @@ void object_bbox_recalculate_all(struct rico_chunk *chunk);
 void object_bbox_set(struct rico_object *object, const struct bbox *bbox);
 void object_mesh_set(struct rico_object *object, struct rico_mesh *mesh,
                      const struct bbox *bbox);
-void object_mesh_next(struct rico_object *object);
-void object_mesh_prev(struct rico_object *object);
 void object_material_set(struct rico_object *object,
                          struct rico_material *material);
 bool object_selectable(struct rico_object *object);
-struct rico_object *object_next(struct rico_object *object);
-struct rico_object *object_prev(struct rico_object *object);
 void object_select(struct rico_object *object);
 void object_deselect(struct rico_object *object);
 void object_trans(struct rico_object *object, const struct vec3 *v);

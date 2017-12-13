@@ -16,40 +16,12 @@ bool mesh_selectable(struct rico_mesh *mesh)
 
 struct rico_mesh *mesh_next(struct rico_mesh *mesh)
 {
-    struct rico_pool *pool = chunk_pool(mesh->hnd.chunk, RICO_HND_MESH);
-    struct hnd *start = pool_handle_next(pool, &mesh->hnd);
-    struct hnd *next = start;
-
-    struct rico_mesh *m;
-    do
-    {
-        m = (struct rico_mesh *)next;
-        if (mesh_selectable(m))
-            return m;
-
-        next = pool_handle_next(pool, next);
-    } while (next->uid != start->uid);
-
-    return NULL;
+    return pool_next(mesh->hnd.pool, mesh);
 }
 
 struct rico_mesh *mesh_prev(struct rico_mesh *mesh)
 {
-    struct rico_pool *pool = chunk_pool(mesh->hnd.chunk, RICO_HND_MESH);
-    struct hnd *start = pool_handle_prev(pool, &mesh->hnd);
-    struct hnd *prev = start;
-
-    struct rico_mesh *m;
-    do
-    {
-        m = (struct rico_mesh *)prev;
-        if (mesh_selectable(m))
-            return m;
-
-        prev = pool_handle_prev(pool, prev);
-    } while (prev->uid != start->uid);
-
-    return NULL;
+    return pool_prev(mesh->hnd.pool, mesh);
 }
 
 int mesh_init(struct rico_mesh *mesh, const char *name,
@@ -180,7 +152,7 @@ void mesh_free(struct rico_mesh *mesh)
 
     glDeleteBuffers(2, mesh->vbos);
     glDeleteVertexArrays(1, &mesh->vao);
-    chunk_free(mesh->hnd.chunk, &mesh->hnd);
+    pool_remove(mesh->hnd.pool, mesh->hnd.id);
 }
 
 void mesh_update(struct rico_mesh *mesh)

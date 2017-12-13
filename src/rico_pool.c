@@ -1,10 +1,18 @@
 internal void pool_print_handles(struct rico_pool *pool);
 
-static inline void pool_fixup(struct rico_pool *pool)
+inline void pool_fixup(struct rico_pool *pool)
 {
     // TODO: Could clean this up with PTR_ADD_BYTE macro
     pool->tags = (struct block_tag *)((u8 *)pool + POOL_OFFSET_HANDLES());
     pool->blocks = (u8 *)pool + POOL_OFFSET_DATA(pool->block_count);
+    pool->end = pool->blocks + (pool->block_count * pool->block_size);
+    
+    struct hnd *hnd = pool_first(pool);
+    while (hnd)
+    {
+        hnd->pool = pool;
+        hnd = pool_next(pool, hnd);
+    }
 }
 
 // TODO: Allocate from heap pool, don't keep calling calloc
@@ -68,21 +76,21 @@ int pool_add(struct rico_pool *pool, struct pool_id *id)
     return err;
 }
 
-int pool_remove(struct rico_pool *pool, struct pool_id *id)
+int pool_remove(struct rico_pool *pool, struct pool_id id)
 {
     RICO_ASSERT(pool);
 
-    if (pool->tags[id->tag].ref_count == 0)
+    if (pool->tags[id.tag].ref_count == 0)
     {
         return RICO_ERROR(ERR_POOL_INVALID_HANDLE,
                           "Tag ref_count is zero, tag %u already freed!",
-                          id->tag);
+                          id.tag);
     }
-    pool->tags[id->tag].ref_count--;
-    if (pool->tags[id->tag].ref_count > 0)
+    pool->tags[id.tag].ref_count--;
+    if (pool->tags[id.tag].ref_count > 0)
         return SUCCESS;
 
-    u32 block_idx = pool->tags[id->tag].block_idx;
+    u32 block_idx = pool->tags[id.tag].block_idx;
     RICO_ASSERT(block_idx < pool->blocks_used);
     pool->blocks_used--;
 
@@ -103,8 +111,8 @@ int pool_remove(struct rico_pool *pool, struct pool_id *id)
 #endif
     }
 
-    pool->tags[id->tag].next_free = pool->next_free;
-    pool->next_free = id->tag;
+    pool->tags[id.tag].next_free = pool->next_free;
+    pool->next_free = id.tag;
 
 #if RICO_DEBUG_POOL
     printf("[pool][free] %s\n",
@@ -148,7 +156,78 @@ internal void pool_print_handles(struct rico_pool *pool)
 #endif
 }
 
+inline void *pool_first(struct rico_pool *pool)
+{
+    if (pool->blocks_used == 0) return NULL;
+    return pool->blocks;
+}
+
+inline void *pool_last(struct rico_pool *pool)
+{
+    if (pool->blocks_used == 0) return NULL;
+    return pool->end - pool->block_size;
+}
+
+inline void *pool_next(struct rico_pool *pool, void *block)
+{
+    if (block == NULL) return pool_first(pool);
+    if (block == pool->end) return NULL;
+    return (u8 *)block + pool->block_size;
+}
+
+inline void *pool_prev(struct rico_pool *pool, void *block)
+{
+    if (block == NULL) return pool_last(pool);
+    if (block == pool->blocks) return NULL;
+    return (u8 *)block - pool->block_size;
+}
+
+inline void *pool_read(struct rico_pool *pool, struct pool_id id)
+{
+    return pool->blocks + (pool->tags[id.tag].block_idx * pool->block_size);
+}
+
 #if 0
+struct hnd *pool_handle_next(struct rico_pool *pool, u32 idx)
+{
+    RICO_ASSERT(pool);
+
+    // Nothing selected, return first item in pool
+    if (!handle)
+        return pool_handle_first(pool);
+
+    // Find requested handle
+    u32 i = 0;
+    while (pool->handles[i]->uid != handle->uid && i++ < pool->blocks_used) {}
+
+    // Last item selected, return first item in pool
+    if (i == pool->blocks_used)
+        return pool_handle_first(pool);
+
+    // Return next item
+    return pool->handles[i];
+}
+
+struct hnd *pool_handle_prev(struct rico_pool *pool, u32 idx)
+{
+    RICO_ASSERT(pool);
+
+    // Nothing selected, return last item in pool
+    if (!handle)
+        return pool_handle_last(pool);
+
+    // First item selected, return last item in pool
+    if (handle->uid == pool->handles[0]->uid)
+        return pool->handles[pool->blocks_used - 1];
+
+    // Find requested handle
+    u32 i = 0;
+    while (pool->handles[i]->uid != handle->uid && i++ < pool->blocks_used) {}
+
+    // Return previous item
+    return pool->handles[i - 1];
+}
+
 struct hnd *pool_handle_first(struct rico_pool *pool)
 {
     // Pool is empty, return null

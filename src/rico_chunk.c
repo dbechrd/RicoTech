@@ -68,44 +68,39 @@ int chunk_init(struct rico_chunk **_chunk, const char *name,
     return SUCCESS;
 }
 
+/*
 int chunk_alloc(struct rico_chunk *chunk, enum rico_hnd_type type,
-                struct hnd **_handle)
+                struct pool_id *id)
 {
     RICO_ASSERT(type < RICO_HND_CEREAL_COUNT);
     enum rico_error err;
 
     struct rico_pool *pool = chunk->pools[type];
-    err = pool_add(pool, _handle);
-    if (err) return err;
-
-    (*_handle)->chunk = chunk;
+    err = pool_add(pool, id);
     return err;
 }
 
-int chunk_free(struct rico_chunk *chunk, struct hnd *handle)
+int chunk_free(struct rico_chunk *chunk, enum rico_hnd_type type,
+               struct pool_id id)
 {
-    RICO_ASSERT(handle);
+    struct rico_pool *pool = chunk->pools[type];
+    struct hnd *hnd = pool_read(pool, id);
+    hashtable_delete_uid(&global_uids, hnd->uid);
 
-    hashtable_delete_uid(&global_uids, handle->uid);
-
-    handle->chunk = NULL;
-    struct rico_pool *pool = chunk->pools[handle->type];
-    return pool_remove(pool, handle);
+    return pool_remove(pool, id);
 }
+*/
 
 int chunk_serialize(const struct rico_chunk *chunk,
                     const struct rico_file *file)
 {
     enum rico_error err = SUCCESS;
 
+    // TODO: Compress chunk files
+
     // Write chunk to file
     u8 *seek = (u8 *)chunk;
     u32 bytes = chunk->total_size;
-
-    // TODO: Don't write entire pools. Write pool header (w/ size) and then only
-    //       the handles in use. No point writing empty pool slots to disk. How
-    //       different is this from doing compression in RAM before writing to
-    //       disk?
 
     // TODO: Check fwrite success
     fwrite(seek, bytes, 1, file->fs);
@@ -177,12 +172,6 @@ int chunk_deserialize(struct rico_chunk **_chunk, const struct rico_file *file)
     }
 
     RICO_ASSERT(offset == chunk->total_size);
-
-    for (int i = 0; i < RICO_HND_CEREAL_COUNT; ++i)
-    {
-        // Fix handle pointers
-        pool_fixup_handles(chunk->pools[i], chunk, i);
-    }
 
 #if RICO_DEBUG_CHUNK
     chunk_print(chunk);

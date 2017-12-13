@@ -70,24 +70,29 @@ void object_free(struct rico_object *object)
 
     mesh_free(object->mesh);
     material_free(object->material);
-    chunk_free(object->hnd.chunk, &object->hnd);
+    pool_remove(object->hnd.pool, object->hnd.id);
 }
 
 void object_free_all(struct rico_chunk *chunk)
 {
-    struct rico_pool *pool = chunk_pool(chunk, RICO_HND_OBJECT);
-    for (int i = pool->blocks_used - 1; i >= 0; --i)
+    struct rico_pool *pool = chunk->pools[RICO_HND_OBJECT];
+
+    u8 *block = pool_last(pool);
+    while (block)
     {
-        object_free((struct rico_object *)pool->tags[i]);
+        object_free((struct rico_object *)block);
+        block = pool_prev(pool, block);
     }
 }
 
 void object_bbox_recalculate_all(struct rico_chunk *chunk)
 {
-    struct rico_pool *pool = chunk_pool(chunk, RICO_HND_OBJECT);
-    for (u32 i = 0; i < pool->blocks_used; ++i)
+    struct rico_pool *pool = chunk->pools[RICO_HND_OBJECT];
+    struct rico_object *obj = pool_first(pool);
+    while (obj)
     {
-        object_bbox_set((struct rico_object *)pool->tags[i], NULL);
+        object_bbox_set(obj, NULL);
+        obj = pool_next(pool, obj);
     }
 }
 
@@ -100,6 +105,9 @@ void object_bbox_set(struct rico_object *object,
 void object_mesh_set(struct rico_object *object, struct rico_mesh *mesh,
                      const struct bbox *bbox)
 {
+    if (mesh->hnd.uid == object->mesh->hnd.uid)
+        return;
+
     mesh_free(object->mesh);
     object->mesh = mesh;
     object->mesh_uid = object->mesh->hnd.uid;
@@ -107,35 +115,12 @@ void object_mesh_set(struct rico_object *object, struct rico_mesh *mesh,
     object->bbox = (bbox != NULL) ? *bbox : object->mesh->bbox;
 }
 
-void object_mesh_next(struct rico_object *object)
-{
-    struct rico_mesh *next_mesh = mesh_next(object->mesh);
-    if (next_mesh->hnd.uid == object->mesh->hnd.uid)
-        return;
-
-    mesh_free(object->mesh);
-    object->mesh = next_mesh;
-    object->mesh_uid = object->mesh->hnd.uid;
-    next_mesh->ref_count++;
-    object->bbox = next_mesh->bbox;
-}
-
-void object_mesh_prev(struct rico_object *object)
-{
-    struct rico_mesh *prev_mesh = mesh_prev(object->mesh);
-    if (prev_mesh->hnd.uid == object->mesh->hnd.uid)
-        return;
-
-    mesh_free(object->mesh);
-    object->mesh = prev_mesh;
-    object->mesh_uid = object->mesh->hnd.uid;
-    prev_mesh->ref_count++;
-    object->bbox = prev_mesh->bbox;
-}
-
 void object_material_set(struct rico_object *object,
                          struct rico_material *material)
 {
+    if (material->hnd.uid == object->material->hnd.uid)
+        return;
+
     material_free(object->material);
     object->material = material;
     object->material_uid = object->material->hnd.uid;
@@ -145,47 +130,6 @@ void object_material_set(struct rico_object *object,
 bool object_selectable(struct rico_object *object)
 {
     return (object->type != OBJ_STRING_SCREEN);
-}
-
-// TODO: If these _next / _prev functions actually need to exist, we should be
-//       be passing the pool as well, or it should be embedded in the object's
-//       handle.
-struct rico_object *object_next(struct rico_object *object)
-{
-    struct rico_pool *pool = chunk_pool(object->hnd.chunk, RICO_HND_OBJECT);
-    struct hnd *start = pool_handle_next(pool, &object->hnd);
-    struct hnd *next = start;
-
-    struct rico_object *obj;
-    do
-    {
-        obj = (struct rico_object *)next;
-        if (object_selectable(obj))
-            return obj;
-
-        next = pool_handle_next(pool, next);
-    } while (next->uid != start->uid);
-
-    return NULL;
-}
-
-struct rico_object *object_prev(struct rico_object *object)
-{
-    struct rico_pool *pool = chunk_pool(object->hnd.chunk, RICO_HND_OBJECT);
-    struct hnd *start = pool_handle_prev(pool, &object->hnd);
-    struct hnd *prev = start;
-
-    struct rico_object *obj;
-    do
-    {
-        obj = (struct rico_object *)prev;
-        if (object_selectable(obj))
-            return obj;
-
-        prev = pool_handle_prev(pool, prev);
-    } while (prev->uid != start->uid);
-
-    return NULL;
 }
 
 void object_select(struct rico_object *object)
@@ -342,11 +286,10 @@ bool object_collide_ray_type(struct rico_chunk *chunk,
     float distance;
     *_dist = Z_FAR; // Track closest object
 
-    struct rico_pool *pool = chunk_pool(chunk, RICO_HND_OBJECT);
-    struct rico_object *obj;
-    for (u32 i = 0; i < pool->blocks_used; ++i)
+    struct rico_pool *pool = chunk->pools[RICO_HND_OBJECT];
+    struct rico_object *obj = pool_first(pool);
+    while (obj)
     {
-        obj = (struct rico_object *)pool->tags[i];
         if (obj->type == type)
         {
             collided = collide_ray_obb(&distance, ray, &obj->bbox,
@@ -357,10 +300,11 @@ bool object_collide_ray_type(struct rico_chunk *chunk,
             if (collided && distance < *_dist)
             {
                 // Record object handle and distance
-                *_object = (struct rico_object *)pool->tags[i];
+                *_object = obj;
                 *_dist = distance;
             }
         }
+        obj = pool_next(pool, obj);
     }
 
     return collided;
@@ -444,11 +388,10 @@ void object_render_type(struct rico_chunk *chunk, enum rico_obj_type type,
     glUniform1f(prog->u_light_kl, light.kl);
     glUniform1f(prog->u_light_kq, light.kq);
 
-    struct rico_pool *pool = chunk_pool(chunk, RICO_HND_OBJECT);
-    struct rico_object *obj;
-    for (u32 i = 0; i < pool->blocks_used; ++i)
+    struct rico_pool *pool = chunk->pools[RICO_HND_OBJECT];
+    struct rico_object *obj = pool_first(pool);
+    while (obj)
     {
-        obj = (struct rico_object *)pool->tags[i];
         if (obj->type != type)
             continue;
 
@@ -486,6 +429,8 @@ void object_render_type(struct rico_chunk *chunk, enum rico_obj_type type,
         // Render bbox
         if (is_edit_state(state_get()))
             prim_draw_bbox(&obj->bbox, &obj->transform);
+
+        obj = pool_next(pool, obj);
     }
 
     glUseProgram(0);
@@ -500,9 +445,13 @@ int object_print(struct rico_object *object)
     // Print to screen
     char buf[256] = { 0 };
     object_to_string(object, buf, sizeof(buf));
-    struct rico_string *str;
-    err = chunk_alloc(chunk_transient, RICO_HND_STRING, (struct hnd **)&str);
+    
+    struct rico_pool *pool = chunk_transient->pools[RICO_HND_STRING];
+    struct pool_id id;
+    err = pool_add(pool, &id);
     if (err) return err;
+
+    struct rico_string *str = pool_read(pool, id);
     err = string_init(str, rico_string_slot_string[STR_SLOT_SELECTED_OBJ],
                       STR_SLOT_SELECTED_OBJ, 0, FONT_HEIGHT,
                       COLOR_GRAY_HIGHLIGHT, 0, NULL, buf);

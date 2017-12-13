@@ -21,9 +21,10 @@ extern const char *rico_hnd_type_string[];
 
 typedef u32 uid;
 struct hnd {
-    struct rico_chunk *chunk; // TODO: Get rid of this
-    enum rico_hnd_type type;
     uid uid;
+    enum rico_hnd_type type;
+    struct rico_pool *pool;
+    struct pool_id id;
     char name[32];
     u32 len;
 };

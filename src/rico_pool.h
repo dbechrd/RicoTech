@@ -26,6 +26,7 @@ struct rico_pool {
     u32 next_free;
     struct block_tag *tags;
     u8 *blocks;
+    u8 *end;
 };
 
 typedef void(destructor)(struct hnd *handle);
@@ -41,7 +42,12 @@ typedef void(destructor)(struct hnd *handle);
 static inline void pool_fixup(struct rico_pool *pool);
 int pool_init(void *buf, const char *name, u32 block_count, u32 block_size);
 int pool_add(struct rico_pool *pool, struct pool_id *id);
-int pool_remove(struct rico_pool *pool, struct pool_id *id);
+int pool_remove(struct rico_pool *pool, struct pool_id id);
+inline void *pool_first(struct rico_pool *pool);
+inline void *pool_last(struct rico_pool *pool);
+inline void *pool_next(struct rico_pool *pool, void *block);
+inline void *pool_prev(struct rico_pool *pool, void *block);
+inline void *pool_read(struct rico_pool *pool, struct pool_id id);
 //struct pool_hnd *pool_first(struct rico_pool *pool);
 //struct pool_hnd *pool_last(struct rico_pool *pool);
 //struct pool_hnd *pool_next(struct rico_pool *pool, struct pool_hnd *hnd);

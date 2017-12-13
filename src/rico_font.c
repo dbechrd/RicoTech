@@ -78,12 +78,17 @@ int font_init(struct rico_font *font, const char *filename)
     // Store character widths
     memcpy(font->Width, &buffer[WIDTH_DATA_OFFSET], 256);
 
+    struct rico_pool *pool = chunk_transient->pools[RICO_HND_TEXTURE];
+    struct pool_id id;
     struct rico_texture *tex;
-    err = chunk_alloc(chunk_transient, RICO_HND_TEXTURE, (struct hnd **)&tex);
+    err = pool_add(pool, &id);
     if (err) goto cleanup;
+
+    tex = pool_read(pool, id);
     err = texture_load_pixels(tex, filename, GL_TEXTURE_2D, width, height, bpp,
                               &buffer[MAP_DATA_OFFSET]);
     if (err) goto cleanup;
+
     font->texture = tex;
     font->texture_uid = font->texture->hnd.uid;
     tex->ref_count++;
@@ -100,7 +105,7 @@ void font_free(struct rico_font *font)
 #endif
 
     texture_free(font->texture);
-    chunk_free(font->hnd.chunk, &font->hnd);
+    pool_remove(font->hnd.pool, font->hnd.id);
 }
 
 internal void font_setblend(const struct rico_font *font)
@@ -235,9 +240,12 @@ int font_render(struct rico_mesh **_mesh, struct rico_texture **_texture,
         cur_x += xOffset;
     }
 
-    struct rico_mesh *mesh;
-    err = chunk_alloc(chunk_transient, RICO_HND_MESH, (struct hnd **)&mesh);
+    struct rico_pool *pool = chunk_transient->pools[RICO_HND_MESH];
+    struct pool_id id;
+    err = pool_add(pool, &id);
     if (err) goto cleanup;
+
+    struct rico_mesh *mesh = pool_read(pool, id);
     err = mesh_init(mesh, mesh_name, type, idx_vertex, vertices, idx_element,
                     elements, GL_STATIC_DRAW);
     if (err) goto cleanup;

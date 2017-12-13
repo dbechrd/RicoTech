@@ -103,11 +103,14 @@ int create_obj()
 
     // TODO: Prompt user for object name
     const char *name = "new_obj";
-    struct rico_object *new_obj;
 
     // Create new object with default properties
-    err = chunk_alloc(chunk_active, RICO_HND_OBJECT, (struct hnd **)&new_obj);
+    struct rico_pool *pool = chunk_active->pools[RICO_HND_OBJECT];
+    struct pool_id id;
+    err = pool_add(pool, &id);
     if (err) return err;
+
+    struct rico_object *new_obj = pool_read(pool, id);
     err = object_init(new_obj, name, OBJ_STATIC, RICO_DEFAULT_MESH,
                       RICO_DEFAULT_MATERIAL, NULL);
     if (err) return err;
@@ -145,12 +148,12 @@ void select_obj(struct rico_object *object)
 
 void select_next_obj()
 {
-    select_obj(object_next(selected_obj));
+    select_obj(pool_next(selected_obj->hnd.pool, selected_obj));
 }
 
 void select_prev_obj()
 {
-    select_obj(object_prev(selected_obj));
+    select_obj(pool_prev(selected_obj->hnd.pool, selected_obj));
 }
 
 void selected_print()
@@ -225,7 +228,7 @@ void selected_mesh_next()
     if (!selected_obj)
         return;
 
-    object_mesh_next(selected_obj);
+    object_mesh_set(selected_obj, mesh_next(selected_obj->mesh), NULL);
     object_select(selected_obj);
     object_print(selected_obj);
 }
@@ -235,7 +238,7 @@ void selected_mesh_prev()
     if (!selected_obj)
         return;
 
-    object_mesh_prev(selected_obj);
+    object_mesh_set(selected_obj, mesh_prev(selected_obj->mesh), NULL);
     object_select(selected_obj);
     object_print(selected_obj);
 }
@@ -257,9 +260,12 @@ int selected_duplicate()
 
     enum rico_error err;
 
-    struct rico_object *new_obj;
-    err = chunk_alloc(chunk_active, RICO_HND_OBJECT, (struct hnd **)&new_obj);
+    struct rico_pool *pool = chunk_active->pools[RICO_HND_OBJECT];
+    struct pool_id id;
+    err = pool_add(pool, &id);
     if (err) return err;
+    
+    struct rico_object *new_obj = pool_read(pool, id);
     err = object_copy(new_obj, selected_obj, "Duplicate");
     if (err) return err;
 
@@ -269,19 +275,12 @@ int selected_duplicate()
 
 void selected_delete()
 {
-    if (!selected_obj)
-        return;
+    if (!selected_obj) return;
+    if (!object_selectable(selected_obj)) return;
 
-    if (!object_selectable(selected_obj))
-        return;
-
-    struct rico_object *prev = object_prev(selected_obj);
-    if (prev == selected_obj)
-        prev = NULL;
-
-    object_free(selected_obj);
-    selected_obj = NULL;
-    select_obj(prev);
+    struct rico_object *to_delete = selected_obj;
+    select_prev_obj();  // NOTE: This assumes that prev_obj(first) == NULL
+    object_free(to_delete);
 }
 
 void glref_update(r64 dt)
