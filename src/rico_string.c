@@ -99,7 +99,7 @@ int string_update(r64 dt)
     struct rico_string *str;
     for (u32 i = 0; i < pool->blocks_used; ++i)
     {
-        str = (struct rico_string *)pool->handles[i];
+        str = (struct rico_string *)pool->tags[i];
         if (str->hnd.uid == UID_NULL || str->lifespan == 0)
             continue;
 

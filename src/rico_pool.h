@@ -5,16 +5,17 @@
 // mark, tag, badge, pin, peg
 struct pool_id {
     //enum rico_hnd_type type;
-    u32 idx;
-    u32 generation;
+    u32 tag;
+    //u32 generation;
 };
 
-struct pool_hnd {
+struct block_tag {
     union {
-        u32 next;
-        u32 handle;
+        u32 next_free;
+        u32 block_idx;
     };
-    u32 generation;
+    u32 tag_idx;
+    u32 ref_count;
 };
 
 struct rico_pool {
@@ -22,14 +23,14 @@ struct rico_pool {
     u32 block_count;
     u32 block_size;
     u32 blocks_used;
-    u32 free;
-    struct pool_hnd *handles;
-    u8 *buffer;
+    u32 next_free;
+    struct block_tag *tags;
+    u8 *blocks;
 };
 
 typedef void(destructor)(struct hnd *handle);
 
-#define POOL_SIZE_HANDLES(block_count) (block_count * sizeof(struct pool_hnd))
+#define POOL_SIZE_HANDLES(block_count) (block_count * sizeof(struct block_tag))
 #define POOL_SIZE_DATA(block_count, block_size) (block_count * block_size)
 #define POOL_SIZE(block_count, block_size) (sizeof(struct rico_pool) + \
     POOL_SIZE_HANDLES(block_count) + POOL_SIZE_DATA(block_count, block_size))
@@ -39,7 +40,7 @@ typedef void(destructor)(struct hnd *handle);
 
 static inline void pool_fixup(struct rico_pool *pool);
 int pool_init(void *buf, const char *name, u32 block_count, u32 block_size);
-int pool_add(struct rico_pool *pool, struct pool_id *_id);
+int pool_add(struct rico_pool *pool, struct pool_id *id);
 int pool_remove(struct rico_pool *pool, struct pool_id *id);
 //struct pool_hnd *pool_first(struct rico_pool *pool);
 //struct pool_hnd *pool_last(struct rico_pool *pool);
