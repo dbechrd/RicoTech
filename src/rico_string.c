@@ -34,10 +34,13 @@ int string_init(struct rico_string *str, const char *name,
                       MESH_STRING_SCREEN);
     if (err) return err;
 
-    struct rico_material *material;
-    err = chunk_alloc(chunk_transient, RICO_HND_MATERIAL,
-                      (struct hnd **)&material);
+    struct rico_pool *mat_pool = chunk_transient->pools[RICO_HND_MATERIAL];
+    struct rico_pool *obj_pool = chunk_transient->pools[RICO_HND_OBJECT];
+    struct pool_id id;
+
+    err = pool_add(mat_pool, &id);
     if (err) return err;
+    struct rico_material *material = pool_read(mat_pool, id);
     err = material_init(material, name, tex, RICO_DEFAULT_TEXTURE_SPEC, 0.5f);
     if (err) return err;
 
@@ -45,9 +48,9 @@ int string_init(struct rico_string *str, const char *name,
 
     // Create string object
     str->slot = slot;
-    err = chunk_alloc(chunk_transient, RICO_HND_OBJECT,
-                      (struct hnd **)&str->object);
+    err = pool_add(obj_pool, &id);
     if (err) return err;
+    str->object = pool_read(obj_pool, id);
     err = object_init(str->object, name, OBJ_STRING_SCREEN, mesh, material,
                       NULL);
     if (err) return err;
@@ -84,7 +87,7 @@ int string_free(struct rico_string *str)
 
     object_free(str->object);
     hashtable_delete_hnd(&global_strings, &str->hnd);
-    return chunk_free(str->hnd.chunk, &str->hnd);
+    return pool_remove(str->hnd.pool, str->hnd.id);
 }
 
 // TODO: Lifespan objects shouldn't be string-specific; refactor this logic out
@@ -95,24 +98,25 @@ int string_update(r64 dt)
     enum rico_error err;
     u32 delta_ms = (u32)(dt * 1000);
 
-    struct rico_pool *pool = chunk_pool(chunk_transient, RICO_HND_STRING);
-    struct rico_string *str;
-    for (u32 i = 0; i < pool->blocks_used; ++i)
+    struct rico_pool *pool = chunk_transient->pools[RICO_HND_STRING];
+    struct rico_string *str = pool_last(pool);
+    while (str)
     {
-        str = (struct rico_string *)pool->tags[i];
-        if (str->hnd.uid == UID_NULL || str->lifespan == 0)
-            continue;
+        if (str->lifespan > 0)
+        {
+            // Free strings with expired lifespans
+            if (str->lifespan <= delta_ms)
+            {
+                err = string_free(str);
+                if (err) return err;
+            }
+            else
+            {
+                str->lifespan -= delta_ms;
+            }
+        }
 
-        // Free strings with expired lifespans
-        if (str->lifespan <= delta_ms)
-        {
-            err = string_free(str);
-            if (err) return err;
-        }
-        else
-        {
-            str->lifespan -= delta_ms;
-        }
+        str = pool_prev(pool, str);
     }
 
     return SUCCESS;

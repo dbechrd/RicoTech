@@ -454,9 +454,9 @@ int state_update()
 
         struct rico_pool *pool = chunk_transient->pools[RICO_HND_STRING];
         struct pool_id id;
+
         err = pool_add(pool, &id);
         if (err) return err;
-
         struct rico_string *str = pool_read(pool, id);
         err = string_init(str, rico_string_slot_string[STR_SLOT_STATE],
                           STR_SLOT_STATE, 0, 0, COLOR_DARK_RED_HIGHLIGHT, 0,
@@ -496,9 +496,9 @@ int state_update()
 
         struct rico_pool *pool = chunk_transient->pools[RICO_HND_STRING];
         struct pool_id id;
+
         err = pool_add(pool, &id);
         if (err) return err;
-
         struct rico_string *str = pool_read(pool, id);
         err = string_init(str, rico_string_slot_string[STR_SLOT_FPS],
                           STR_SLOT_FPS, -(FONT_WIDTH * len), 0,
@@ -554,9 +554,9 @@ internal int shared_engine_events()
     {
         struct rico_pool *pool = chunk_transient->pools[RICO_HND_STRING];
         struct pool_id id;
+
         err = pool_add(pool, &id);
         if (err) return err;
-
         struct rico_string *str = pool_read(pool, id);
         err = string_init(str, rico_string_slot_string[STR_SLOT_MENU_QUIT],
                           STR_SLOT_MENU_QUIT, 600, 400, COLOR_GREEN, 0, NULL,
@@ -821,9 +821,9 @@ internal int state_edit_translate()
 
         struct rico_pool *pool = chunk_transient->pools[RICO_HND_STRING];
         struct pool_id id;
+
         err = pool_add(pool, &id);
         if (err) return err;
-
         struct rico_string *str = pool_read(pool, id);
         err = string_init(str, rico_string_slot_string[STR_SLOT_STATE],
                           STR_SLOT_STATE, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
@@ -913,9 +913,9 @@ internal int state_edit_rotate()
 
         struct rico_pool *pool = chunk_transient->pools[RICO_HND_STRING];
         struct pool_id id;
+
         err = pool_add(pool, &id);
         if (err) return err;
-
         struct rico_string *str = pool_read(pool, id);
         err = string_init(str, rico_string_slot_string[STR_SLOT_STATE],
                           STR_SLOT_STATE, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
@@ -1011,9 +1011,9 @@ internal int state_edit_scale()
 
         struct rico_pool *pool = chunk_transient->pools[RICO_HND_STRING];
         struct pool_id id;
+
         err = pool_add(pool, &id);
         if (err) return err;
-
         struct rico_string *str = pool_read(pool, id);
         err = string_init(str, rico_string_slot_string[STR_SLOT_STATE],
                           STR_SLOT_STATE, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
@@ -1155,9 +1155,12 @@ internal int rico_init_fonts()
 {
     enum rico_error err;
 
-    err = chunk_alloc(chunk_transient, RICO_HND_FONT,
-                      (struct hnd **)&RICO_DEFAULT_FONT);
+    struct rico_pool *pool = chunk_transient->pools[RICO_HND_FONT];
+    struct pool_id id;
+
+    err = pool_add(pool, &id);
     if (err) return err;
+    RICO_DEFAULT_FONT = pool_read(pool, id);
     err = font_init(RICO_DEFAULT_FONT, "font/courier_new.bff");
     return err;
 }
@@ -1165,17 +1168,20 @@ internal int rico_init_textures()
 {
     enum rico_error err;
 
-    err = chunk_alloc(chunk_transient, RICO_HND_TEXTURE,
-                      (struct hnd **)&RICO_DEFAULT_TEXTURE_DIFF);
+    struct rico_pool *pool = chunk_transient->pools[RICO_HND_TEXTURE];
+    struct pool_id id;
+
+    err = pool_add(pool, &id);
     if (err) return err;
+    RICO_DEFAULT_TEXTURE_DIFF = pool_read(pool, id);
     err = texture_load_file(RICO_DEFAULT_TEXTURE_DIFF,
                             "[TEXTURE_DEFAULT_DIFF]", GL_TEXTURE_2D,
                             "texture/basic_diff.tga", 32);
     if (err) return err;
 
-    err = chunk_alloc(chunk_transient, RICO_HND_TEXTURE,
-                      (struct hnd **)&RICO_DEFAULT_TEXTURE_SPEC);
+    err = pool_add(pool, &id);
     if (err) return err;
+    RICO_DEFAULT_TEXTURE_SPEC = pool_read(pool, id);
     err = texture_load_file(RICO_DEFAULT_TEXTURE_SPEC,
                             "[TEXTURE_DEFAULT_SPEC]", GL_TEXTURE_2D,
                             "texture/basic_spec.tga", 32);
@@ -1186,14 +1192,15 @@ internal int rico_init_textures()
     //--------------------------------------------------------------------------
     struct rico_texture *tex;
 
-#if 0
+/*
     "texture/grass.tga"
     "texture/hello.tga"
     "texture/fake_yellow.tga"
-#endif
+*/
 
-    err = chunk_alloc(chunk_transient, RICO_HND_TEXTURE, (struct hnd **)&tex);
+    err = pool_add(pool, &id);
     if (err) return err;
+    tex = pool_read(pool, id);
     err = texture_load_file(tex, "bricks", GL_TEXTURE_2D,
                             "texture/clean_bricks.tga", 32);
     if (err) return err;
@@ -1204,10 +1211,12 @@ internal int rico_init_materials()
 {
     enum rico_error err;
 
-    err = chunk_alloc(chunk_transient, RICO_HND_MATERIAL,
-                      (struct hnd **)&RICO_DEFAULT_MATERIAL);
-    if (err) return err;
+    struct rico_pool *pool = chunk_transient->pools[RICO_HND_MATERIAL];
+    struct pool_id id;
 
+    err = pool_add(pool, &id);
+    if (err) return err;
+    RICO_DEFAULT_MATERIAL = pool_read(pool, id);
     err = material_init(RICO_DEFAULT_MATERIAL, "[MATERIAL_DEFAULT]",
                         RICO_DEFAULT_TEXTURE_DIFF, RICO_DEFAULT_TEXTURE_SPEC,
                         0.5f);
@@ -1279,10 +1288,12 @@ internal int rico_init_meshes()
         4, 5, 1, 1, 0, 4
     };
 
-    err = chunk_alloc(chunk_transient, RICO_HND_MESH,
-                      (struct hnd **)&PRIM_MESH_BBOX);
-    if (err) return err;
+    struct rico_pool *pool = chunk_transient->pools[RICO_HND_MESH];
+    struct pool_id id;
 
+    err = pool_add(pool, &id);
+    if (err) return err;
+    PRIM_MESH_BBOX = pool_read(pool, id);
     err = mesh_init(PRIM_MESH_BBOX, "[PRIM_MESH_BBOX]", MESH_OBJ_WORLD, 8,
                     default_vertices, 36, elements, GL_STATIC_DRAW);
     if (err) return err;
@@ -1357,14 +1368,17 @@ internal int init_hardcoded_test_chunk(struct rico_chunk **chunk)
     //--------------------------------------------------------------------------
     // Create materials
     //--------------------------------------------------------------------------
-    struct rico_texture *tex_rock;
-
-    tex_rock = hashtable_search_str(&global_textures, "bricks");
+    struct rico_texture *tex_rock = hashtable_search_str(&global_textures,
+                                                         "bricks");
     RICO_ASSERT(tex_rock);
 
-    struct rico_material *material_rock;
-    err = chunk_alloc(*chunk, RICO_HND_MATERIAL, (struct hnd **)&material_rock);
+    struct rico_pool *mat_pool = chunk_transient->pools[RICO_HND_MATERIAL];
+    struct rico_pool *obj_pool = chunk_transient->pools[RICO_HND_OBJECT];
+    struct pool_id id;
+
+    err = pool_add(mat_pool, &id);
     if (err) return err;
+    struct rico_material *material_rock = pool_read(mat_pool, id);
     err = material_init(material_rock, "Rock", tex_rock,
                         RICO_DEFAULT_TEXTURE_SPEC, 0.5f);
     if (err) return err;
@@ -1374,11 +1388,9 @@ internal int init_hardcoded_test_chunk(struct rico_chunk **chunk)
     //--------------------------------------------------------------------------
 
     // Ground
-    struct rico_object *obj_ground;
-    // TODO: mem_arena_push(arena, RICO_HND_OBJECT, &obj_ground)
-    err = chunk_alloc(*chunk, RICO_HND_OBJECT,
-                      (struct hnd **)&obj_ground);
+    err = pool_add(obj_pool, &id);
     if (err) return err;
+    struct rico_object *obj_ground = pool_read(obj_pool, id);
     err = object_init(obj_ground, "Ground", OBJ_STATIC, RICO_DEFAULT_MESH,
                       material_rock, NULL);
     if (err) return err;

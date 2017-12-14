@@ -185,6 +185,7 @@ enum rico_vbo {
     f(ERR_BAD_ALLOC)               \
     f(ERR_POOL_OUT_OF_MEMORY)      \
     f(ERR_POOL_INVALID_HANDLE)     \
+    f(ERR_POOL_BAD_FREE)           \
     f(ERR_FILE_WRITE)              \
     f(ERR_FILE_READ)               \
     f(ERR_FILE_SIGNATURE)          \

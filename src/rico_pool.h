@@ -6,7 +6,7 @@
 struct pool_id {
     //enum rico_hnd_type type;
     u32 tag;
-    //u32 generation;
+    u32 generation;
 };
 
 struct block_tag {
@@ -16,6 +16,7 @@ struct block_tag {
     };
     u32 tag_idx;
     u32 ref_count;
+    u32 generation;
 };
 
 struct rico_pool {

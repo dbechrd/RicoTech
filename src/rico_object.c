@@ -393,7 +393,10 @@ void object_render_type(struct rico_chunk *chunk, enum rico_obj_type type,
     while (obj)
     {
         if (obj->type != type)
+        {
+            obj = pool_next(pool, obj);
             continue;
+        }
 
         glUseProgram(prog->prog_id);
 
