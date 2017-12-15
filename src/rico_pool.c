@@ -63,9 +63,12 @@ int pool_add(struct rico_pool *pool, struct pool_id *id)
     }
 
     id->tag = pool->next_free;
-    pool->next_free = pool->tags[id->tag].next_free;
-
     id->generation = pool->tags[id->tag].generation;
+    struct hnd *hnd = (struct hnd *)(pool->blocks +
+        (pool->tags[id->tag].block_idx * pool->block_size));
+    hnd->pool = pool;
+
+    pool->next_free = pool->tags[id->tag].next_free;
     pool->tags[id->tag].ref_count = 1;
     pool->tags[id->tag].block_idx = pool->blocks_used;
     pool->tags[pool->tags[id->tag].block_idx].tag_idx = id->tag;
@@ -116,20 +119,20 @@ int pool_remove(struct rico_pool *pool, struct pool_id id)
 
         // Update tag index for the block that we moved
         pool->tags[block_idx].tag_idx = pool->tags[pool->blocks_used].tag_idx;
+        pool->tags[pool->blocks_used].block_idx = block_idx;
+    }
 
 #if RICO_DEBUG
-        // Zero memory block to force out-of-bounds errors while debugging
-        memset(pool->blocks + (pool->blocks_used * pool->block_size),
-               0, pool->block_size);
+    // Zero memory block to force out-of-bounds errors while debugging
+    memset(pool->blocks + (pool->blocks_used * pool->block_size),
+           0, pool->block_size);
 #endif
-    }
 
     pool->tags[id.tag].next_free = pool->next_free;
     pool->next_free = id.tag;
 
 #if RICO_DEBUG_POOL
-    printf("[pool][free] %s\n",
-           pool->name);
+    printf("[pool][free] %s\n", pool->name);
     pool_print_handles(pool);
 #endif
 

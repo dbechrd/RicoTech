@@ -38,7 +38,6 @@ void test_geom()
 
 void test_hashtable()
 {
-    rico_hashtable_init();
     struct hash_table *table = &global_textures;
 
     int data = 123;
@@ -58,4 +57,60 @@ void test_hashtable()
     int *lookup_uid = hashtable_search_uid(table, key_uid);
     RICO_ASSERT(*lookup_uid == data);
     RICO_ASSERT(hashtable_delete_uid(table, key_uid));
+}
+
+void test_pool()
+{
+    u32 block_count = 8;
+    u32 block_size = sizeof(struct rico_texture);
+    u32 pool_size = POOL_SIZE(block_count, block_size);
+
+    void *mem_block = calloc(1, pool_size);
+    if (!mem_block) RICO_ERROR(ERR_BAD_ALLOC, "Failed to alloc for test pool");
+
+    struct rico_pool *pool = mem_block;
+    pool_init(pool, "Test pool", block_count, block_size);
+
+    struct pool_id id1, id2;
+    struct rico_texture *tex;
+
+    printf("============================================================\n"
+           " ADD ID 1\n"
+           "============================================================\n");
+    pool_add(pool, &id1);
+    tex = pool_read(pool, id1);
+    hnd_init(&tex->hnd, RICO_HND_TEXTURE, "Test 1");
+    tex->bpp = 16;
+    tex->gl_id = 1;
+    tex->gl_target = 1;
+    tex->height = 64;
+    tex->width = 64;
+
+    printf("============================================================\n"
+           " ADD ID 2\n"
+           "============================================================\n");
+    pool_add(pool, &id2);
+    tex = pool_read(pool, id2);
+    hnd_init(&tex->hnd, RICO_HND_TEXTURE, "Test 2");
+    tex->bpp = 32;
+    tex->gl_id = 2;
+    tex->gl_target = 2;
+    tex->height = 128;
+    tex->width = 128;
+
+    printf("============================================================\n"
+           " REMOVE ID 1\n"
+           "============================================================\n");
+    pool_remove(pool, id1);
+    printf("============================================================\n"
+           " REMOVE ID 2\n"
+           "============================================================\n");
+    pool_remove(pool, id2);
+}
+
+void run_tests()
+{
+    //test_geom();
+    //test_hashtable();
+    test_pool();
 }

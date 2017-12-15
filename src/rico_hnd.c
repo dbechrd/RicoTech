@@ -22,9 +22,6 @@ void hnd_init(struct hnd *hnd, enum rico_hnd_type type, const char *name)
     // }
 
     hnd->uid = next_uid++;
-    if (type < RICO_HND_CEREAL_COUNT)
-        hashtable_insert_uid(&global_uids, hnd->uid, hnd);
-
     strncpy(hnd->name, name, sizeof(hnd->name) - 1);
     u32 name_len = strlen(name);
     hnd->len = MIN(name_len, sizeof(hnd->name) - 1);

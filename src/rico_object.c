@@ -27,10 +27,8 @@ int object_init(struct rico_object *object, const char *name,
     object->transform = MAT4_IDENT;
     object->transform_inverse = MAT4_IDENT;
     object->mesh = mesh;
-    object->mesh_uid = object->mesh->hnd.uid;
     object->mesh->ref_count++;
     object->material = material;
-    object->material_uid = object->material->hnd.uid;
     object->material->ref_count++;
     object->bbox = (bbox != NULL) ? *bbox : object->mesh->bbox;
 
@@ -110,7 +108,6 @@ void object_mesh_set(struct rico_object *object, struct rico_mesh *mesh,
 
     mesh_free(object->mesh);
     object->mesh = mesh;
-    object->mesh_uid = object->mesh->hnd.uid;
     mesh->ref_count++;
     object->bbox = (bbox != NULL) ? *bbox : object->mesh->bbox;
 }
@@ -123,7 +120,6 @@ void object_material_set(struct rico_object *object,
 
     material_free(object->material);
     object->material = material;
-    object->material_uid = object->material->hnd.uid;
     material->ref_count++;
 }
 
@@ -443,19 +439,11 @@ int object_print(struct rico_object *object)
 {
     enum rico_error err;
 
-    // TODO: Free previous "[object_print]" string, look up by name
-
     // Print to screen
     char buf[256] = { 0 };
     object_to_string(object, buf, sizeof(buf));
-    
-    struct rico_pool *pool = chunk_transient->pools[RICO_HND_STRING];
-    struct pool_id id;
-    err = pool_add(pool, &id);
-    if (err) return err;
-
-    struct rico_string *str = pool_read(pool, id);
-    err = string_init(str, rico_string_slot_string[STR_SLOT_SELECTED_OBJ],
+    err = string_init(chunk_transient,
+                      rico_string_slot_string[STR_SLOT_SELECTED_OBJ],
                       STR_SLOT_SELECTED_OBJ, 0, FONT_HEIGHT,
                       COLOR_GRAY_HIGHLIGHT, 0, NULL, buf);
     return err;

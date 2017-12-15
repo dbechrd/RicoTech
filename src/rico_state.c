@@ -451,14 +451,8 @@ int state_update()
         int len = snprintf(buf, sizeof(buf), "State: %d %s", state,
                            rico_state_string[state]);
         string_truncate(buf, sizeof(buf), len);
-
-        struct rico_pool *pool = chunk_transient->pools[RICO_HND_STRING];
-        struct pool_id id;
-
-        err = pool_add(pool, &id);
-        if (err) return err;
-        struct rico_string *str = pool_read(pool, id);
-        err = string_init(str, rico_string_slot_string[STR_SLOT_STATE],
+        err = string_init(chunk_transient,
+                          rico_string_slot_string[STR_SLOT_STATE],
                           STR_SLOT_STATE, 0, 0, COLOR_DARK_RED_HIGHLIGHT, 0,
                           NULL, buf);
         if (err) return err;
@@ -493,14 +487,8 @@ int state_update()
         int len = snprintf(buf, sizeof(buf), "%.f fps %.2f ms %.2f mcyc", fps,
                            ms, mcyc);
         string_truncate(buf, sizeof(buf), len);
-
-        struct rico_pool *pool = chunk_transient->pools[RICO_HND_STRING];
-        struct pool_id id;
-
-        err = pool_add(pool, &id);
-        if (err) return err;
-        struct rico_string *str = pool_read(pool, id);
-        err = string_init(str, rico_string_slot_string[STR_SLOT_FPS],
+        err = string_init(chunk_transient,
+                          rico_string_slot_string[STR_SLOT_FPS],
                           STR_SLOT_FPS, -(FONT_WIDTH * len), 0,
                           COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
         if (err) return err;
@@ -552,13 +540,8 @@ internal int shared_engine_events()
     // Save and exit
     else if (chord_pressed(ACTION_ENGINE_QUIT))
     {
-        struct rico_pool *pool = chunk_transient->pools[RICO_HND_STRING];
-        struct pool_id id;
-
-        err = pool_add(pool, &id);
-        if (err) return err;
-        struct rico_string *str = pool_read(pool, id);
-        err = string_init(str, rico_string_slot_string[STR_SLOT_MENU_QUIT],
+        err = string_init(chunk_transient,
+                          rico_string_slot_string[STR_SLOT_MENU_QUIT],
                           STR_SLOT_MENU_QUIT, 600, 400, COLOR_GREEN, 0, NULL,
                           "                       \n" \
                           "  Save and quit?       \n" \
@@ -818,14 +801,8 @@ internal int state_edit_translate()
         char buf[32] = { 0 };
         int len = snprintf(buf, sizeof(buf), "Trans Delta: %f", trans_delta);
         string_truncate(buf, sizeof(buf), len);
-
-        struct rico_pool *pool = chunk_transient->pools[RICO_HND_STRING];
-        struct pool_id id;
-
-        err = pool_add(pool, &id);
-        if (err) return err;
-        struct rico_string *str = pool_read(pool, id);
-        err = string_init(str, rico_string_slot_string[STR_SLOT_STATE],
+        err = string_init(chunk_transient,
+                          rico_string_slot_string[STR_SLOT_STATE],
                           STR_SLOT_STATE, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
                           1000, NULL, buf);
         if (err) return err;
@@ -910,14 +887,8 @@ internal int state_edit_rotate()
         char buf[32] = { 0 };
         int len = snprintf(buf, sizeof(buf), "Rot Delta: %f", rot_delta);
         string_truncate(buf, sizeof(buf), len);
-
-        struct rico_pool *pool = chunk_transient->pools[RICO_HND_STRING];
-        struct pool_id id;
-
-        err = pool_add(pool, &id);
-        if (err) return err;
-        struct rico_string *str = pool_read(pool, id);
-        err = string_init(str, rico_string_slot_string[STR_SLOT_STATE],
+        err = string_init(chunk_transient,
+                          rico_string_slot_string[STR_SLOT_STATE],
                           STR_SLOT_STATE, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
                           1000, NULL, buf);
         if (err) return err;
@@ -1008,14 +979,8 @@ internal int state_edit_scale()
         char buf[32] = { 0 };
         int len = snprintf(buf, sizeof(buf), "Scale Delta: %f", scale_delta);
         string_truncate(buf, sizeof(buf), len);
-
-        struct rico_pool *pool = chunk_transient->pools[RICO_HND_STRING];
-        struct pool_id id;
-
-        err = pool_add(pool, &id);
-        if (err) return err;
-        struct rico_string *str = pool_read(pool, id);
-        err = string_init(str, rico_string_slot_string[STR_SLOT_STATE],
+        err = string_init(chunk_transient,
+                          rico_string_slot_string[STR_SLOT_STATE],
                           STR_SLOT_STATE, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
                           1000, NULL, buf);
         if (err) return err;

@@ -90,7 +90,6 @@ int font_init(struct rico_font *font, const char *filename)
     if (err) goto cleanup;
 
     font->texture = tex;
-    font->texture_uid = font->texture->hnd.uid;
     tex->ref_count++;
 
 cleanup:
@@ -127,10 +126,10 @@ internal void font_setblend(const struct rico_font *font)
 	}
 }
 
-int font_render(struct rico_mesh **_mesh, struct rico_texture **_texture,
-                struct rico_font *font, int x, int y, struct col4 bg,
-                const char *text, const char *mesh_name,
-                enum rico_mesh_type type)
+int font_render(struct rico_chunk *chunk, struct rico_font *font,
+                int x, int y, struct col4 bg, const char *text,
+                const char *mesh_name, enum rico_mesh_type type,
+                struct rico_mesh **_mesh, struct rico_texture **_texture)
 {
     // Persistent buffers for font rendering
     local struct mesh_vertex vertices[BFG_MAXSTRING * 4];
@@ -240,7 +239,7 @@ int font_render(struct rico_mesh **_mesh, struct rico_texture **_texture,
         cur_x += xOffset;
     }
 
-    struct rico_pool *pool = chunk_transient->pools[RICO_HND_MESH];
+    struct rico_pool *pool = chunk->pools[RICO_HND_MESH];
     struct pool_id id;
     err = pool_add(pool, &id);
     if (err) goto cleanup;

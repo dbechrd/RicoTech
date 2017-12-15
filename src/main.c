@@ -177,8 +177,9 @@ int mymain()
     init_opengl();
     init_rico_engine();
 
-    //test_geom();
-    test_hashtable();
+#if RICO_DEBUG
+    run_tests();
+#endif
 
     while (!SDL_QuitRequested())
     {

@@ -14,7 +14,7 @@ extern struct hash_table global_textures;
 extern struct hash_table global_materials;
 extern struct hash_table global_meshes;
 extern struct hash_table global_objects;
-extern struct hash_table global_uids;
+//extern struct hash_table global_uids;
 extern struct hash_table global_string_slots;
 
 void hashtable_init(struct hash_table *table, const char *name, u32 count);

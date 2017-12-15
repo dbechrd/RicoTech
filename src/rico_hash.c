@@ -232,7 +232,7 @@ struct hash_table global_textures;
 struct hash_table global_materials;
 struct hash_table global_meshes;
 struct hash_table global_objects;
-struct hash_table global_uids;
+//struct hash_table global_uids;
 struct hash_table global_string_slots;
 
 void rico_hashtable_init()
@@ -243,7 +243,7 @@ void rico_hashtable_init()
     const int materials = 256;
     const int meshes    = 256;
     const int objects   = 256;
-    const int uids = strings + fonts + textures + materials + meshes + objects;
+    //const int uids = strings + fonts + textures + materials + meshes + objects;
     const int string_slots = 16;
 
     hashtable_init(&global_strings,   "global_strings",   strings);
@@ -252,6 +252,6 @@ void rico_hashtable_init()
     hashtable_init(&global_materials, "global_materials", materials);
     hashtable_init(&global_meshes,    "global_meshes",    meshes);
     hashtable_init(&global_objects,   "global_objects",   objects);
-    hashtable_init(&global_uids,      "global_uids",      uids);
+    //hashtable_init(&global_uids,      "global_uids",      uids);
     hashtable_init(&global_string_slots, "global_string_slots", string_slots);
 }

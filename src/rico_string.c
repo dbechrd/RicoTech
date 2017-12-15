@@ -2,7 +2,7 @@ const char *rico_string_slot_string[] = {
     RICO_STRING_SLOTS(GEN_STRING)
 };
 
-int string_init(struct rico_string *str, const char *name,
+int string_init(struct rico_chunk *chunk, const char *name,
                 enum rico_string_slot slot, float x, float y, struct col4 color,
                 u32 lifespan, struct rico_font *font, const char *text)
 {
@@ -26,17 +26,18 @@ int string_init(struct rico_string *str, const char *name,
         }
     }
 
+    struct rico_pool *str_pool = chunk->pools[RICO_HND_STRING];
+    struct rico_pool *mat_pool = chunk->pools[RICO_HND_MATERIAL];
+    struct rico_pool *obj_pool = chunk->pools[RICO_HND_OBJECT];
+    struct pool_id id;
+
     // TODO: Reuse mesh and material if they are the same
     // Generate font mesh and get texture handle
     struct rico_mesh *mesh;
     struct rico_texture *tex;
-    err = font_render(&mesh, &tex, font, 0, 0, color, text, name,
-                      MESH_STRING_SCREEN);
+    err = font_render(chunk, font, 0, 0, color, text, name,
+                      MESH_STRING_SCREEN, &mesh, &tex);
     if (err) return err;
-
-    struct rico_pool *mat_pool = chunk_transient->pools[RICO_HND_MATERIAL];
-    struct rico_pool *obj_pool = chunk_transient->pools[RICO_HND_OBJECT];
-    struct pool_id id;
 
     err = pool_add(mat_pool, &id);
     if (err) return err;
@@ -44,6 +45,9 @@ int string_init(struct rico_string *str, const char *name,
     err = material_init(material, name, tex, RICO_DEFAULT_TEXTURE_SPEC, 0.5f);
     if (err) return err;
 
+    err = pool_add(str_pool, &id);
+    if (err) return err;
+    struct rico_string *str = pool_read(str_pool, id);
     hnd_init(&str->hnd, RICO_HND_STRING, name);
 
     // Create string object
@@ -54,7 +58,6 @@ int string_init(struct rico_string *str, const char *name,
     err = object_init(str->object, name, OBJ_STRING_SCREEN, mesh, material,
                       NULL);
     if (err) return err;
-    str->object_uid = str->object->hnd.uid;
 
     str->lifespan = lifespan;
     object_trans_set(str->object,

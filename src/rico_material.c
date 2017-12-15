@@ -12,10 +12,8 @@ int material_init(struct rico_material *material, const char *name,
 
     hnd_init(&material->hnd, RICO_HND_MATERIAL, name);
     material->tex_diffuse = tex_diffuse;
-    material->tex_diffuse_uid = material->tex_diffuse->hnd.uid;
     material->tex_diffuse->ref_count++;
     material->tex_specular = tex_specular;
-    material->tex_specular_uid = material->tex_specular->hnd.uid;
     material->tex_specular->ref_count++;
     material->shiny = shiny;
 

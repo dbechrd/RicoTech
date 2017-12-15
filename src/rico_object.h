@@ -26,20 +26,12 @@ struct rico_object {
     // TODO: Support multiple meshes and textures
     // TODO: Cache; don't serialize/overwrite when loading
     // TODO: Overwrite *mesh with mesh->uid on save?
-    uid mesh_uid;
-    uid material_uid;
     struct rico_mesh *mesh;
     struct rico_material *material;
 
     struct bbox bbox;
 };
 extern struct rico_object *RICO_DEFAULT_OBJECT;
-
-void object_fixup(struct rico_object *object)
-{
-    object->mesh = hashtable_search_uid(&global_uids, object->mesh_uid);
-    object->material = hashtable_search_uid(&global_uids, object->material_uid);
-}
 
 int object_init(struct rico_object *object, const char *name,
                 enum rico_obj_type type, struct rico_mesh *mesh,
