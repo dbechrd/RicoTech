@@ -68,28 +68,84 @@ int chunk_init(struct rico_chunk **_chunk, const char *name,
     return SUCCESS;
 }
 
-/*
-int chunk_alloc(struct rico_chunk *chunk, enum rico_hnd_type type,
-                struct pool_id *id)
+int chunk_alloc(void **block, struct rico_chunk *chunk, struct pool_id *id,
+                enum rico_hnd_type type)
 {
     RICO_ASSERT(type < RICO_HND_CEREAL_COUNT);
     enum rico_error err;
 
-    struct rico_pool *pool = chunk->pools[type];
-    err = pool_add(pool, id);
+    err = pool_add(block, chunk->pools[type], id);
+    if (err) return err;
+    ((struct hnd *)block)->chunk = chunk;
     return err;
 }
 
-int chunk_free(struct rico_chunk *chunk, enum rico_hnd_type type,
-               struct pool_id id)
+int chunk_free(struct rico_chunk *chunk, struct pool_id id)
 {
-    struct rico_pool *pool = chunk->pools[type];
-    struct hnd *hnd = pool_read(pool, id);
-    hashtable_delete_uid(&global_uids, hnd->uid);
+    RICO_ASSERT(id.type < RICO_HND_CEREAL_COUNT);
+    enum rico_error err;
 
-    return pool_remove(pool, id);
+    void *block = pool_read(chunk->pools[id.type], id);
+
+    switch (id.type) {
+    case RICO_HND_OBJECT:
+    {
+        err = object_free(block);
+        break;
+    }
+    case RICO_HND_TEXTURE:
+    {
+        err = texture_free(block);
+        break;
+    }
+    case RICO_HND_MESH:
+    {
+        err = mesh_free(block);
+        break;
+    }
+    case RICO_HND_FONT:
+    {
+        err = font_free(block);
+        break;
+    }
+    case RICO_HND_STRING:
+    {
+        err = string_free(block);
+        break;
+    }
+    case RICO_HND_MATERIAL:
+    {
+        err = material_free(block);
+        break;
+    }
+    default:
+    {
+        err = RICO_ERROR(ERR_CHUNK_FREE_FAILED, "Unknown pool type");
+    }}
+
+    return err;
 }
-*/
+
+inline void *chunk_read(struct rico_chunk *chunk, struct pool_id id)
+{
+    return pool_read(chunk->pools[id.type], id);
+}
+
+inline struct pool_id chunk_next_id(struct rico_chunk *chunk, struct pool_id id)
+{
+    return pool_next_id(chunk->pools[id.type], id);
+}
+
+inline struct pool_id chunk_prev_id(struct rico_chunk *chunk, struct pool_id id)
+{
+    return pool_prev_id(chunk->pools[id.type], id);
+}
+
+inline struct pool_id chunk_dupe(struct rico_chunk *chunk, struct pool_id id)
+{
+    pool_request(chunk->pools[id.type], id);
+    return id;
+}
 
 int chunk_serialize(const struct rico_chunk *chunk,
                     const struct rico_file *file)

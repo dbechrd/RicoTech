@@ -2,13 +2,13 @@ const char *rico_obj_type_string[] = {
     RICO_OBJ_TYPES(GEN_STRING)
 };
 
-struct rico_object *RICO_DEFAULT_OBJECT;
+struct pool_id RICO_DEFAULT_OBJECT;
 
 internal void update_transform(struct rico_object *obj);
 
 int object_init(struct rico_object *object, const char *name,
-                enum rico_obj_type type, struct rico_mesh *mesh,
-                struct rico_material *material, const struct bbox *bbox)
+                enum rico_obj_type type, struct pool_id mesh_id,
+                struct pool_id material_id, const struct bbox *bbox)
 {
     enum rico_error err = SUCCESS;
 
@@ -26,11 +26,9 @@ int object_init(struct rico_object *object, const char *name,
         object->scale = VEC3_ONE;
     object->transform = MAT4_IDENT;
     object->transform_inverse = MAT4_IDENT;
-    object->mesh = mesh;
-    object->mesh->ref_count++;
-    object->material = material;
-    object->material->ref_count++;
-    object->bbox = (bbox != NULL) ? *bbox : object->mesh->bbox;
+    object->mesh_id = chunk_dupe(object->hnd.chunk, mesh_id);
+    object->material_id = chunk_dupe(object->hnd.chunk, material_id);
+    if (bbox) object->bbox = *bbox;
 
     update_transform(object);
 
@@ -43,8 +41,8 @@ int object_copy(struct rico_object *object, struct rico_object *other,
     enum rico_error err;
 
     // Create new object with same mesh / texture
-    err = object_init(object, name, other->type, other->mesh, other->material,
-                      NULL);
+    err = object_init(object, name, other->type, other->mesh_id,
+                      other->material_id, &other->bbox);
     if (err) return err;
 
     // TODO: Make transform one property and add optional param to object_init
@@ -56,19 +54,20 @@ int object_copy(struct rico_object *object, struct rico_object *other,
     return err;
 }
 
-void object_free(struct rico_object *object)
+int object_free(struct rico_object *object)
 {
-    // Cleanup: Use fixed pool slots
-    //if (handle.value == RICO_DEFAULT_OBJECT)
-    //    return;
+    enum rico_error err;
 
 #if RICO_DEBUG_OBJECT
     printf("[ obj][free] uid=%d name=%s\n", object->hnd.uid, object->hnd.name);
 #endif
 
-    mesh_free(object->mesh);
-    material_free(object->material);
-    pool_remove(object->hnd.pool, object->hnd.id);
+    err = chunk_free(object->hnd.chunk, object->mesh_id);
+    if (err) return err;
+    err = chunk_free(object->hnd.chunk, object->material_id);
+    if (err) return err;
+    err = pool_remove(object->hnd.pool, object->hnd.id);
+    return err;
 }
 
 void object_free_all(struct rico_chunk *chunk)
@@ -89,38 +88,34 @@ void object_bbox_recalculate_all(struct rico_chunk *chunk)
     struct rico_object *obj = pool_first(pool);
     while (obj)
     {
-        object_bbox_set(obj, NULL);
+        struct rico_mesh *mesh = chunk_read(obj->hnd.chunk, obj->mesh_id);
+        obj->bbox = mesh->bbox;
         obj = pool_next(pool, obj);
     }
 }
 
-void object_bbox_set(struct rico_object *object,
-                     const struct bbox *bbox)
+void object_bbox_set(struct rico_object *object, const struct bbox *bbox)
 {
-    object->bbox = (bbox != NULL) ? *bbox : object->mesh->bbox;
+    RICO_ASSERT(bbox);
+    object->bbox = *bbox;
 }
 
-void object_mesh_set(struct rico_object *object, struct rico_mesh *mesh,
-                     const struct bbox *bbox)
+void object_mesh_set(struct rico_object *object, struct pool_id mesh_id)
 {
-    if (mesh->hnd.uid == object->mesh->hnd.uid)
+    if (mesh_id.tag == object->mesh_id.tag)
         return;
 
-    mesh_free(object->mesh);
-    object->mesh = mesh;
-    mesh->ref_count++;
-    object->bbox = (bbox != NULL) ? *bbox : object->mesh->bbox;
+    chunk_free(object->hnd.chunk, mesh_id);
+    object->mesh_id = chunk_dupe(object->hnd.chunk, mesh_id);
 }
 
-void object_material_set(struct rico_object *object,
-                         struct rico_material *material)
+void object_material_set(struct rico_object *object, struct pool_id material_id)
 {
-    if (material->hnd.uid == object->material->hnd.uid)
+    if (material_id.tag == object->material_id.tag)
         return;
 
-    material_free(object->material);
-    object->material = material;
-    material->ref_count++;
+    chunk_free(object->hnd.chunk, object->material_id);
+    object->material_id = chunk_dupe(object->hnd.chunk, material_id);
 }
 
 bool object_selectable(struct rico_object *object)
@@ -306,25 +301,6 @@ bool object_collide_ray_type(struct rico_chunk *chunk,
     return collided;
 }
 
-void object_render(struct rico_object *object, const struct camera *camera)
-{
-    if (object->type == OBJ_STATIC)
-    {
-        glPolygonMode(GL_FRONT_AND_BACK, camera->fill_mode);
-    }
-    else
-    {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    }
-
-    // Bind material and render mesh
-    material_bind(object->material);
-    mesh_render(object->mesh);
-
-    // Clean up
-    material_unbind(object->material);
-}
-
 void object_render_type(struct rico_chunk *chunk, enum rico_obj_type type,
                         const struct program_default *prog,
                         const struct camera *camera)
@@ -386,6 +362,7 @@ void object_render_type(struct rico_chunk *chunk, enum rico_obj_type type,
 
     struct rico_pool *pool = chunk->pools[RICO_HND_OBJECT];
     struct rico_object *obj = pool_first(pool);
+    struct rico_material *material;
     while (obj)
     {
         if (obj->type != type)
@@ -394,11 +371,22 @@ void object_render_type(struct rico_chunk *chunk, enum rico_obj_type type,
             continue;
         }
 
+        // Bind material
+        material = chunk_read(obj->hnd.chunk, obj->material_id);
+        material_bind(material);
+
+        if (obj->type == OBJ_STATIC)
+        {
+            glPolygonMode(GL_FRONT_AND_BACK, camera->fill_mode);
+        }
+        else
+        {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
+
         glUseProgram(prog->prog_id);
 
-        ////////////////////////////////////////////////////////////////////
         // Set object-specific uniform values
-        ////////////////////////////////////////////////////////////////////
 
         // UV-coord scale
         // HACK: This only works when object is uniformly scaled on X/Y
@@ -417,12 +405,12 @@ void object_render_type(struct rico_chunk *chunk, enum rico_obj_type type,
 
         // Model matrix
         glUniformMatrix4fv(prog->u_model, 1, GL_TRUE, obj->transform.a);
+        glUniform1f(prog->u_material_shiny, material->shiny);
 
-        // Model material shiny
-        glUniform1f(prog->u_material_shiny, obj->material->shiny);
+        mesh_render(chunk_read(obj->hnd.chunk, obj->mesh_id));
 
-        // Render object
-        object_render(obj, camera);
+        // Clean up
+        material_unbind(material);
 
         // TODO: Batch bounding boxes
         // Render bbox
@@ -442,8 +430,11 @@ int object_print(struct rico_object *object)
     // Print to screen
     char buf[256] = { 0 };
     object_to_string(object, buf, sizeof(buf));
-    err = string_init(chunk_transient,
-                      rico_string_slot_string[STR_SLOT_SELECTED_OBJ],
+
+    struct rico_string *str;
+    err = chunk_alloc(&str, chunk_transient, NULL, RICO_HND_STRING);
+    if (err) return err;
+    err = string_init(str, rico_string_slot_string[STR_SLOT_SELECTED_OBJ],
                       STR_SLOT_SELECTED_OBJ, 0, FONT_HEIGHT,
                       COLOR_GRAY_HIGHLIGHT, 0, NULL, buf);
     return err;
@@ -469,6 +460,9 @@ void object_to_string(struct rico_object *object, char *buf, int buf_count)
     }
     else
     {
+        struct rico_mesh *mesh = chunk_read(object->hnd.chunk, object->mesh_id);
+        struct rico_mesh *material = chunk_read(object->hnd.chunk,
+                                                object->material_id);
         len = snprintf(buf, buf_count,
             "     UID: %d\n"       \
             "    Name: %s\n"       \
@@ -484,8 +478,8 @@ void object_to_string(struct rico_object *object, char *buf, int buf_count)
             object->trans.x, object->trans.y, object->trans.z,
             object->rot.x,   object->rot.y,   object->rot.z,
             object->scale.x, object->scale.y, object->scale.z,
-            object->mesh->hnd.uid,     object->mesh->hnd.name,
-            object->material->hnd.uid, object->material->hnd.name
+            mesh->hnd.uid,     mesh->hnd.name,
+            material->hnd.uid, material->hnd.name
         );
     }
 

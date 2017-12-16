@@ -3,12 +3,14 @@ internal void pool_print_handles(struct rico_pool *pool);
 inline void pool_fixup(struct rico_pool *pool)
 {
     // TODO: Could clean this up with PTR_ADD_BYTE macro
-    pool->tags = (struct block_tag *)((u8 *)pool + POOL_OFFSET_HANDLES());
-    pool->blocks = (u8 *)pool + POOL_OFFSET_DATA(pool->block_count);
+    pool->block_tags = (u32 *)pool + POOL_BLOCK_TAGS_OFFSET();
+    pool->tags = (struct pool_tag *)((u8 *)pool +
+                                     POOL_TAGS_OFFSET(pool->block_count));
+    pool->blocks = (u8 *)pool + POOL_BLOCKS_OFFSET(pool->block_count);
     pool->end = pool->blocks + (pool->blocks_used * pool->block_size);
     
     struct hnd *hnd;
-    for (u32 i = 0; i < pool->block_count - 1; ++i)
+    for (u32 i = 0; i < pool->blocks_used; ++i)
     {
         hnd = (struct hnd *)(pool->blocks + (i * pool->block_size));
         hnd->pool = pool;
@@ -31,9 +33,10 @@ int pool_init(void *buf, const char *name, u32 block_count, u32 block_size)
     // Pointer fix-up
     pool_fixup(pool);
 
-    // Initialize handles
+    // Initialize block_tags and tags
     for (u32 i = 0; i < pool->block_count - 1; ++i)
     {
+        pool->block_tags[i] = i;
         pool->tags[i].next_free = i + 1;
     }
 
@@ -44,7 +47,7 @@ int pool_init(void *buf, const char *name, u32 block_count, u32 block_size)
     return SUCCESS;
 }
 
-int pool_add(struct rico_pool *pool, struct pool_id *id)
+int pool_add(void **block, struct rico_pool *pool, struct pool_id *id)
 {
     RICO_ASSERT(pool);
 
@@ -62,18 +65,33 @@ int pool_add(struct rico_pool *pool, struct pool_id *id)
                           pool->name);
     }
 
-    id->tag = pool->next_free;
-    id->generation = pool->tags[id->tag].generation;
-    struct hnd *hnd = (struct hnd *)(pool->blocks +
-        (pool->tags[id->tag].block_idx * pool->block_size));
-    hnd->pool = pool;
+    struct pool_id new_id;
+    new_id.tag = pool->next_free;
+    pool->next_free = pool->tags[new_id.tag].next_free;
 
-    pool->next_free = pool->tags[id->tag].next_free;
-    pool->tags[id->tag].ref_count = 1;
-    pool->tags[id->tag].block_idx = pool->blocks_used;
-    pool->tags[pool->tags[id->tag].block_idx].tag_idx = id->tag;
+    pool->tags[new_id.tag].generation++;
+    new_id.generation = pool->tags[new_id.tag].generation;
+
+    pool->tags[new_id.tag].block = pool->blocks_used;
+    pool->tags[new_id.tag].ref_count = 1;
+    pool->block_tags[pool->tags[new_id.tag].block] = new_id.tag;
     pool->blocks_used++;
     pool->end = pool->blocks + (pool->blocks_used * pool->block_size);
+
+    void *new_block = pool->blocks +
+                      (pool->tags[new_id.tag].block * pool->block_size);
+    struct hnd *hnd = (struct hnd *)new_block;
+    hnd->pool = pool;
+    hnd->id = *id;
+
+    if (block)
+    {
+        *block = new_block;
+    }
+    if (id)
+    {
+        *id = new_id;
+    }
 
 #if RICO_DEBUG_POOL
     printf("[pool][aloc] %s\n", pool->name);
@@ -93,7 +111,6 @@ int pool_remove(struct rico_pool *pool, struct pool_id id)
                           "Tag generation mismatch, tag %u already freed!",
                           id.tag);
     }
-    pool->tags[id.tag].generation++;
 
     if (pool->tags[id.tag].ref_count == 0)
     {
@@ -105,7 +122,7 @@ int pool_remove(struct rico_pool *pool, struct pool_id id)
     if (pool->tags[id.tag].ref_count > 0)
         return SUCCESS;
 
-    u32 block_idx = pool->tags[id.tag].block_idx;
+    u32 block_idx = pool->tags[id.tag].block;
     RICO_ASSERT(block_idx < pool->blocks_used);
     pool->blocks_used--;
     pool->end = pool->blocks + (pool->blocks_used * pool->block_size);
@@ -117,9 +134,10 @@ int pool_remove(struct rico_pool *pool, struct pool_id id)
                pool->blocks + (pool->blocks_used * pool->block_size),
                pool->block_size);
 
-        // Update tag index for the block that we moved
-        pool->tags[block_idx].tag_idx = pool->tags[pool->blocks_used].tag_idx;
-        pool->tags[pool->blocks_used].block_idx = block_idx;
+        // Update block index for the block that we moved
+        u32 moved_tag = pool->block_tags[pool->blocks_used];
+        pool->block_tags[block_idx] = moved_tag;
+        pool->tags[moved_tag].block = block_idx;
     }
 
 #if RICO_DEBUG
@@ -137,6 +155,11 @@ int pool_remove(struct rico_pool *pool, struct pool_id id)
 #endif
 
     return SUCCESS;
+}
+
+inline void pool_request(struct rico_pool *pool, struct pool_id id)
+{
+    pool->tags[id.tag].ref_count++;
 }
 
 internal void pool_print_handles(struct rico_pool *pool)
@@ -160,7 +183,7 @@ internal void pool_print_handles(struct rico_pool *pool)
             continue;
         }
 
-        printf("%u", pool->tags[i].block_idx);
+        printf("%u", pool->tags[i].block);
         count++;
         if (count == pool->blocks_used) break;
         printf(" ");
@@ -199,7 +222,41 @@ inline void *pool_prev(struct rico_pool *pool, void *block)
 
 inline void *pool_read(struct rico_pool *pool, struct pool_id id)
 {
-    return pool->blocks + (pool->tags[id.tag].block_idx * pool->block_size);
+    return pool->blocks + (pool->tags[id.tag].block * pool->block_size);
+}
+
+inline struct pool_id pool_next_id(struct rico_pool *pool, struct pool_id id)
+{
+    RICO_ASSERT(pool->blocks_used);
+    
+    u32 block = pool->tags[id.tag].block;
+    if (block == pool->blocks_used - 1)
+        block = 0;
+    else
+        block++;
+
+    struct pool_id new_id;
+    new_id.type = id.type;
+    new_id.tag = pool->block_tags[block];
+    new_id.generation = pool->tags[new_id.tag].generation;
+    return id;
+}
+
+inline struct pool_id pool_prev_id(struct rico_pool *pool, struct pool_id id)
+{
+    RICO_ASSERT(pool->blocks_used);
+
+    u32 block = pool->tags[id.tag].block;
+    if (block == 0)
+        block = pool->blocks_used - 1;
+    else
+        block--;
+
+    struct pool_id new_id;
+    new_id.type = id.type;
+    new_id.tag = pool->block_tags[block];
+    new_id.generation = pool->tags[new_id.tag].generation;
+    return id;
 }
 
 #if 0

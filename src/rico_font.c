@@ -8,7 +8,7 @@
 #define WIDTH_DATA_OFFSET  20  // Offset to width data with BFF file
 #define MAP_DATA_OFFSET   276  // Offset to texture image data with BFF file
 
-struct rico_font *RICO_DEFAULT_FONT;
+struct pool_id RICO_DEFAULT_FONT;
 
 struct bff_header
 {
@@ -78,33 +78,30 @@ int font_init(struct rico_font *font, const char *filename)
     // Store character widths
     memcpy(font->Width, &buffer[WIDTH_DATA_OFFSET], 256);
 
-    struct rico_pool *pool = chunk_transient->pools[RICO_HND_TEXTURE];
-    struct pool_id id;
     struct rico_texture *tex;
-    err = pool_add(pool, &id);
+    err = chunk_alloc(&tex, font->hnd.chunk, &font->texture_id, RICO_HND_TEXTURE);
     if (err) goto cleanup;
-
-    tex = pool_read(pool, id);
     err = texture_load_pixels(tex, filename, GL_TEXTURE_2D, width, height, bpp,
                               &buffer[MAP_DATA_OFFSET]);
     if (err) goto cleanup;
-
-    font->texture = tex;
-    tex->ref_count++;
 
 cleanup:
     free(buffer);
     return err;
 }
 
-void font_free(struct rico_font *font)
+int font_free(struct rico_font *font)
 {
+    enum rico_error err;
+
 #if RICO_DEBUG_FONT
     printf("[font][free] uid=%d name=%s\n", font->hnd.uid, font->hnd.name);
 #endif
 
-    texture_free(font->texture);
-    pool_remove(font->hnd.pool, font->hnd.id);
+    err = chunk_free(font->hnd.chunk, font->texture_id);
+    if (err) return err;
+    err = pool_remove(font->hnd.pool, font->hnd.id);
+    return err;
 }
 
 internal void font_setblend(const struct rico_font *font)
@@ -126,11 +123,13 @@ internal void font_setblend(const struct rico_font *font)
 	}
 }
 
-int font_render(struct rico_chunk *chunk, struct rico_font *font,
-                int x, int y, struct col4 bg, const char *text,
-                const char *mesh_name, enum rico_mesh_type type,
-                struct rico_mesh **_mesh, struct rico_texture **_texture)
+int font_render(struct pool_id *mesh_id, struct pool_id *texture_id,
+                struct rico_font *font, int x, int y, struct col4 bg,
+                const char *text, const char *mesh_name,
+                enum rico_mesh_type type)
 {
+    enum rico_error err;
+
     // Persistent buffers for font rendering
     local struct mesh_vertex vertices[BFG_MAXSTRING * 4];
     local GLuint elements[BFG_MAXSTRING * 6];
@@ -139,9 +138,10 @@ int font_render(struct rico_chunk *chunk, struct rico_font *font,
     memset(vertices, 0, sizeof(vertices));
     memset(elements, 0, sizeof(elements));
 
-    enum rico_error err;
-
-    if (!font) font = RICO_DEFAULT_FONT;
+    if (!font)
+    {
+        font = chunk_read(chunk_transient, RICO_DEFAULT_FONT);
+    }
 
     //font_setblend(font);
 
@@ -239,18 +239,14 @@ int font_render(struct rico_chunk *chunk, struct rico_font *font,
         cur_x += xOffset;
     }
 
-    struct rico_pool *pool = chunk->pools[RICO_HND_MESH];
-    struct pool_id id;
-    err = pool_add(pool, &id);
+    struct rico_mesh *mesh;
+    err = chunk_alloc(&mesh, font->hnd.chunk, mesh_id, RICO_HND_MESH);
     if (err) goto cleanup;
-
-    struct rico_mesh *mesh = pool_read(pool, id);
     err = mesh_init(mesh, mesh_name, type, idx_vertex, vertices, idx_element,
                     elements, GL_STATIC_DRAW);
     if (err) goto cleanup;
 
-    *_mesh = mesh;
-    *_texture = font->texture;
+    *texture_id = font->texture_id;
 
 cleanup:
     //free(vertices);

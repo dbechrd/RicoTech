@@ -22,7 +22,7 @@ struct rico_mesh {
 
     struct bbox bbox;
 };
-extern struct rico_mesh *RICO_DEFAULT_MESH;
+extern struct pool_id RICO_DEFAULT_MESH;
 
 struct rico_mesh *mesh_next(struct rico_mesh *mesh);
 struct rico_mesh *mesh_prev(struct rico_mesh *mesh);
@@ -30,7 +30,7 @@ int mesh_init(struct rico_mesh *mesh, const char *name,
               enum rico_mesh_type type, u32 vertex_count,
               const struct mesh_vertex *vertex_data, u32 element_count,
               const GLuint *element_data, GLenum hint);
-void mesh_free(struct rico_mesh *mesh);
+int mesh_free(struct rico_mesh *mesh);
 void mesh_update(struct rico_mesh *mesh);
 void mesh_render(struct rico_mesh *mesh);
 

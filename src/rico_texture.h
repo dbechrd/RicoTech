@@ -4,7 +4,6 @@
 // IMPORTANT: *DO NOT* add pointers in this struct, it will break cereal!
 struct rico_texture {
     struct hnd hnd;
-    u32 ref_count;
 
     // TODO: Save filename (is this hnd->name? might get truncated.. we need
     //                      the whole thing for lookups on load, right?)
@@ -25,7 +24,7 @@ int texture_load_file(struct rico_texture *texture, const char *name,
 int texture_load_pixels(struct rico_texture *texture, const char *name,
                         GLenum target, u32 width, u32 height, u32 bpp,
                         const void *pixels);
-void texture_free(struct rico_texture *texture);
+int texture_free(struct rico_texture *texture);
 const char *texture_name(struct rico_texture *texture);
 void texture_bind(struct rico_texture *texture, GLenum texture_unit);
 void texture_unbind(struct rico_texture *texture, GLenum texture_unit);

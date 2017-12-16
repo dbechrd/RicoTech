@@ -2,7 +2,7 @@ const char *rico_mesh_type_string[] = {
     RICO_MESH_TYPES(GEN_STRING)
 };
 
-struct rico_mesh *RICO_DEFAULT_MESH;
+struct pool_id RICO_DEFAULT_MESH;
 
 internal int build_mesh(struct rico_mesh *mesh, u32 vertex_count,
                         const struct mesh_vertex *vertex_data,
@@ -113,23 +113,8 @@ internal int build_mesh(struct rico_mesh *mesh, u32 vertex_count,
     return SUCCESS;
 }
 
-void mesh_free(struct rico_mesh *mesh)
+int mesh_free(struct rico_mesh *mesh)
 {
-    if (mesh->ref_count > 0)
-        mesh->ref_count--;
-
-#if RICO_DEBUG_MESH
-    printf("[mesh][ rls] uid=%d ref=%d name=%s\n", mesh->hnd.uid,
-           mesh->ref_count, mesh->hnd.name);
-#endif
-
-    if (mesh->ref_count > 0)
-        return;
-
-    // TODO: Use fixed pool slots or request and never release at initialize
-    //if (handle == RICO_DEFAULT_MESH)
-    //    return;
-
     // HACK: For now, don't ever delete meshes loaded from *.ric files.
     //       Eventually, there should be an unload_obj_file method or some
     //       other mesh cleanup process.
@@ -139,7 +124,7 @@ void mesh_free(struct rico_mesh *mesh)
         printf("[mesh][WARN] uid=%d name=%s Disabled .RIC mesh free.\n",
                mesh->hnd.uid, mesh->hnd.name);
 #endif
-        return;
+        return SUCCESS;
     }
 
 #if RICO_DEBUG_MESH
@@ -148,11 +133,9 @@ void mesh_free(struct rico_mesh *mesh)
 
     hashtable_delete_hnd(&global_meshes, &mesh->hnd);
 
-    //bbox_free_mesh(&mesh->bbox);
-
     glDeleteBuffers(2, mesh->vbos);
     glDeleteVertexArrays(1, &mesh->vao);
-    pool_remove(mesh->hnd.pool, mesh->hnd.id);
+    return pool_remove(mesh->hnd.pool, mesh->hnd.id);
 }
 
 void mesh_update(struct rico_mesh *mesh)

@@ -2,7 +2,7 @@ const char *rico_string_slot_string[] = {
     RICO_STRING_SLOTS(GEN_STRING)
 };
 
-int string_init(struct rico_chunk *chunk, const char *name,
+int string_init(struct rico_string *str, const char *name,
                 enum rico_string_slot slot, float x, float y, struct col4 color,
                 u32 lifespan, struct rico_font *font, const char *text)
 {
@@ -26,42 +26,40 @@ int string_init(struct rico_chunk *chunk, const char *name,
         }
     }
 
-    struct rico_pool *str_pool = chunk->pools[RICO_HND_STRING];
-    struct rico_pool *mat_pool = chunk->pools[RICO_HND_MATERIAL];
-    struct rico_pool *obj_pool = chunk->pools[RICO_HND_OBJECT];
-    struct pool_id id;
-
     // TODO: Reuse mesh and material if they are the same
     // Generate font mesh and get texture handle
-    struct rico_mesh *mesh;
-    struct rico_texture *tex;
-    err = font_render(chunk, font, 0, 0, color, text, name,
-                      MESH_STRING_SCREEN, &mesh, &tex);
+    struct pool_id font_mesh_id;
+    struct pool_id font_tex_id;
+    struct pool_id font_id;
+    struct rico_font *font;
+    err = chunk_alloc(&font, str->hnd.chunk, &font_id, RICO_HND_FONT);
+    if (err) return err;
+    err = font_render(&font_mesh_id, &font_tex_id, font, 0, 0, color,
+                      text, name, MESH_STRING_SCREEN);
     if (err) return err;
 
-    err = pool_add(mat_pool, &id);
+    struct pool_id font_material_id;
+    struct rico_material *material;
+    err = pool_add(&material, str->hnd.chunk->pools[RICO_HND_MATERIAL],
+                   &font_material_id);
     if (err) return err;
-    struct rico_material *material = pool_read(mat_pool, id);
-    err = material_init(material, name, tex, RICO_DEFAULT_TEXTURE_SPEC, 0.5f);
+    err = material_init(material, name, font_tex_id, RICO_DEFAULT_TEXTURE_SPEC,
+                        0.5f);
     if (err) return err;
 
-    err = pool_add(str_pool, &id);
-    if (err) return err;
-    struct rico_string *str = pool_read(str_pool, id);
+    // Init string
     hnd_init(&str->hnd, RICO_HND_STRING, name);
-
-    // Create string object
     str->slot = slot;
-    err = pool_add(obj_pool, &id);
+
+    struct rico_object *str_obj;
+    err = pool_add(&str_obj, str->hnd.chunk->pools[RICO_HND_OBJECT], &str->object_id);
     if (err) return err;
-    str->object = pool_read(obj_pool, id);
-    err = object_init(str->object, name, OBJ_STRING_SCREEN, mesh, material,
-                      NULL);
+    err = object_init(str_obj, name, OBJ_STRING_SCREEN, font_mesh_id,
+                      font_material_id, NULL);
     if (err) return err;
 
     str->lifespan = lifespan;
-    object_trans_set(str->object,
-                     &(struct vec3) { SCREEN_X(x), SCREEN_Y(y), -1.0f });
+    object_trans_set(str_obj, &(struct vec3) { SCREEN_X(x), SCREEN_Y(y), -1.0f });
 
     // Store in global hash table
     err = hashtable_insert_hnd(&global_strings, &str->hnd, str);
@@ -88,7 +86,7 @@ int string_free(struct rico_string *str)
                              rico_string_slot_string[str->slot]);
     }
 
-    object_free(str->object);
+    chunk_free(str->hnd.chunk, str->object_id);
     hashtable_delete_hnd(&global_strings, &str->hnd);
     return pool_remove(str->hnd.pool, str->hnd.id);
 }

@@ -1,5 +1,5 @@
-struct rico_texture *RICO_DEFAULT_TEXTURE_DIFF;
-struct rico_texture *RICO_DEFAULT_TEXTURE_SPEC;
+struct pool_id RICO_DEFAULT_TEXTURE_DIFF;
+struct pool_id RICO_DEFAULT_TEXTURE_SPEC;
 
 internal int build_texture(struct rico_texture *texture, const void *pixels);
 
@@ -176,25 +176,8 @@ internal int build_texture(struct rico_texture *texture, const void *pixels)
     return SUCCESS;
 }
 
-void texture_free(struct rico_texture *texture)
+int texture_free(struct rico_texture *texture)
 {
-    if (texture->ref_count > 0)
-        texture->ref_count--;
-
-#if RICO_DEBUG_TEXTURE
-    printf("[ tex][ rls] uid=%d ref=%d name=%s\n", texture->hnd.uid,
-           texture->ref_count, texture->hnd.name);
-#endif
-
-    if (texture->ref_count > 0)
-        return;
-
-    // TODO: Use fixed pool slots or request and never release at initialize
-    //if (handle == RICO_DEFAULT_TEXTURE_DIFF)
-    //    return;
-    //if (handle == RICO_DEFAULT_TEXTURE_SPEC)
-    //    return;
-
 #if RICO_DEBUG_TEXTURE
     printf("[ tex][free] uid=%d name=%s\n", texture->hnd.uid,
            texture->hnd.name);
@@ -203,7 +186,7 @@ void texture_free(struct rico_texture *texture)
     hashtable_delete_hnd(&global_textures, &texture->hnd);
 
     glDeleteTextures(1, &texture->gl_id);
-    pool_remove(texture->hnd.pool, texture->hnd.id);
+    return pool_remove(texture->hnd.pool, texture->hnd.id);
 }
 
 void texture_bind(struct rico_texture *texture, GLenum texture_unit)

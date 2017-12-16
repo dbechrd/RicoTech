@@ -45,8 +45,6 @@ int load_obj_file(struct rico_chunk *chunk, const char *filename)
     int length;
     char *buffer;
     char *tok;
-    struct rico_pool *pool = chunk->pools[RICO_HND_MESH];
-    struct pool_id id;
     struct rico_mesh *new_mesh;
 
     printf("[ obj][load] filename=%s\n", filename);
@@ -64,10 +62,8 @@ int load_obj_file(struct rico_chunk *chunk, const char *filename)
         {
             if (idx_vertex > 0)
             {
-                err = pool_add(pool, &id);
+                err = chunk_alloc(&new_mesh, chunk, NULL, RICO_HND_MESH);
                 if (err) goto cleanup;
-
-                new_mesh = pool_read(pool, id);
                 err = mesh_init(new_mesh, name, MESH_OBJ_WORLD, idx_vertex,
                                 vertices, idx_element, elements,
                                 GL_STATIC_DRAW);
@@ -161,10 +157,8 @@ int load_obj_file(struct rico_chunk *chunk, const char *filename)
 
     if (idx_vertex > 0)
     {
-        err = pool_add(pool, &id);
+        err = chunk_alloc(&new_mesh, chunk, NULL, RICO_HND_MESH);
         if (err) goto cleanup;
-
-        new_mesh = pool_read(pool, id);
         err = mesh_init(new_mesh, name, MESH_OBJ_WORLD, idx_vertex,
                         vertices, idx_element, elements, GL_STATIC_DRAW);
         if (err) goto cleanup;

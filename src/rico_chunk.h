@@ -35,10 +35,15 @@ extern struct rico_chunk *chunk_transient;
 
 int chunk_init(struct rico_chunk **_chunk, const char *name,
                const chunk_pool_counts *pool_counts);
-int chunk_alloc(struct rico_chunk *chunk, enum rico_hnd_type type,
-                struct pool_id *id);
-int chunk_free(struct rico_chunk *chunk, enum rico_hnd_type type,
-               struct pool_id *id);
+int chunk_alloc(void **block, struct rico_chunk *chunk, struct pool_id *id,
+                enum rico_hnd_type type);
+int chunk_free(struct rico_chunk *chunk, struct pool_id id);
+inline void *chunk_read(struct rico_chunk *chunk, struct pool_id id);
+inline struct pool_id chunk_next_id(struct rico_chunk *chunk,
+                                    struct pool_id id);
+inline struct pool_id chunk_prev_id(struct rico_chunk *chunk,
+                                    struct pool_id id);
+inline struct pool_id chunk_dupe(struct rico_chunk *chunk, struct pool_id id);
 int chunk_serialize(const struct rico_chunk *chunk,
                     const struct rico_file *file);
 int chunk_deserialize(struct rico_chunk **_chunk, const struct rico_file *file);

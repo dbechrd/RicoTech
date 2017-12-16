@@ -16,15 +16,15 @@ struct rico_font {
     int RenderStyle;
     bool InvertYAxis;
 
-    struct rico_texture *texture;
+    struct pool_id texture_id;
 };
-extern struct rico_font *RICO_DEFAULT_FONT;
+extern struct pool_id RICO_DEFAULT_FONT;
 
 int font_init(struct rico_font *font, const char *filename);
-void font_free(struct rico_font *font);
-int font_render(struct rico_chunk *chunk, struct rico_font *font,
-                int x, int y, struct col4 bg, const char *text,
-                const char *mesh_name, enum rico_mesh_type type,
-                struct rico_mesh **_mesh, struct rico_texture **_texture);
+int font_free(struct rico_font *font);
+int font_render(struct pool_id *mesh_id, struct pool_id *texture_id,
+                struct rico_font *font, int x, int y, struct col4 bg,
+                const char *text, const char *mesh_name,
+                enum rico_mesh_type type);
 
 #endif // RICO_FONT_H

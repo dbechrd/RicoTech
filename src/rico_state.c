@@ -451,6 +451,7 @@ int state_update()
         int len = snprintf(buf, sizeof(buf), "State: %d %s", state,
                            rico_state_string[state]);
         string_truncate(buf, sizeof(buf), len);
+
         err = string_init(chunk_transient,
                           rico_string_slot_string[STR_SLOT_STATE],
                           STR_SLOT_STATE, 0, 0, COLOR_DARK_RED_HIGHLIGHT, 0,
@@ -1120,35 +1121,31 @@ internal int rico_init_fonts()
 {
     enum rico_error err;
 
-    struct rico_pool *pool = chunk_transient->pools[RICO_HND_FONT];
-    struct pool_id id;
-
-    err = pool_add(pool, &id);
+    struct rico_font *font;
+    err = chunk_alloc(&font, chunk_transient, &RICO_DEFAULT_FONT,
+                      RICO_HND_FONT);
     if (err) return err;
-    RICO_DEFAULT_FONT = pool_read(pool, id);
-    err = font_init(RICO_DEFAULT_FONT, "font/courier_new.bff");
+    err = font_init(font, "font/courier_new.bff");
     return err;
 }
 internal int rico_init_textures()
 {
     enum rico_error err;
 
-    struct rico_pool *pool = chunk_transient->pools[RICO_HND_TEXTURE];
-    struct pool_id id;
+    struct rico_texture *tex_diff;
+    struct rico_texture *tex_spec;
 
-    err = pool_add(pool, &id);
+    err = chunk_alloc(&tex_diff, chunk_transient, &RICO_DEFAULT_TEXTURE_DIFF,
+                      RICO_HND_TEXTURE);
     if (err) return err;
-    RICO_DEFAULT_TEXTURE_DIFF = pool_read(pool, id);
-    err = texture_load_file(RICO_DEFAULT_TEXTURE_DIFF,
-                            "[TEXTURE_DEFAULT_DIFF]", GL_TEXTURE_2D,
+    err = texture_load_file(tex_diff, "[TEXTURE_DEFAULT_DIFF]", GL_TEXTURE_2D,
                             "texture/basic_diff.tga", 32);
     if (err) return err;
 
-    err = pool_add(pool, &id);
+    err = chunk_alloc(&tex_diff, chunk_transient, &RICO_DEFAULT_TEXTURE_SPEC,
+                      RICO_HND_TEXTURE);
     if (err) return err;
-    RICO_DEFAULT_TEXTURE_SPEC = pool_read(pool, id);
-    err = texture_load_file(RICO_DEFAULT_TEXTURE_SPEC,
-                            "[TEXTURE_DEFAULT_SPEC]", GL_TEXTURE_2D,
+    err = texture_load_file(tex_spec, "[TEXTURE_DEFAULT_SPEC]", GL_TEXTURE_2D,
                             "texture/basic_spec.tga", 32);
     if (err) return err;
 
@@ -1163,26 +1160,21 @@ internal int rico_init_textures()
     "texture/fake_yellow.tga"
 */
 
-    err = pool_add(pool, &id);
+    err = chunk_alloc(&tex, chunk_transient, NULL, RICO_HND_TEXTURE);
     if (err) return err;
-    tex = pool_read(pool, id);
     err = texture_load_file(tex, "bricks", GL_TEXTURE_2D,
                             "texture/clean_bricks.tga", 32);
-    if (err) return err;
-
     return err;
 }
 internal int rico_init_materials()
 {
     enum rico_error err;
 
-    struct rico_pool *pool = chunk_transient->pools[RICO_HND_MATERIAL];
-    struct pool_id id;
-
-    err = pool_add(pool, &id);
+    struct rico_material *material;
+    err = chunk_alloc(&material, chunk_transient, &RICO_DEFAULT_MATERIAL,
+                      RICO_HND_MATERIAL);
     if (err) return err;
-    RICO_DEFAULT_MATERIAL = pool_read(pool, id);
-    err = material_init(RICO_DEFAULT_MATERIAL, "[MATERIAL_DEFAULT]",
+    err = material_init(material, "[MATERIAL_DEFAULT]",
                         RICO_DEFAULT_TEXTURE_DIFF, RICO_DEFAULT_TEXTURE_SPEC,
                         0.5f);
     return err;
@@ -1253,13 +1245,10 @@ internal int rico_init_meshes()
         4, 5, 1, 1, 0, 4
     };
 
-    struct rico_pool *pool = chunk_transient->pools[RICO_HND_MESH];
-    struct pool_id id;
-
-    err = pool_add(pool, &id);
+    struct rico_mesh *mesh;
+    err = chunk_alloc(&mesh, chunk_transient, &PRIM_MESH_BBOX, RICO_HND_MESH);
     if (err) return err;
-    PRIM_MESH_BBOX = pool_read(pool, id);
-    err = mesh_init(PRIM_MESH_BBOX, "[PRIM_MESH_BBOX]", MESH_OBJ_WORLD, 8,
+    err = mesh_init(mesh, "[PRIM_MESH_BBOX]", MESH_OBJ_WORLD, 8,
                     default_vertices, 36, elements, GL_STATIC_DRAW);
     if (err) return err;
 
@@ -1273,10 +1262,12 @@ internal int load_mesh_files()
 
     u32 ticks = SDL_GetTicks();
 
-    err = load_obj_file(chunk_transient, "mesh/prim_sphere.ric");
+    err = load_obj_file(chunk_active, "mesh/prim_sphere.ric");
     if (err) return err;
 
-    PRIM_MESH_SPHERE = hashtable_search_str(&global_meshes, "[PRIM_MESH_SPHERE]");
+    struct rico_mesh *prim_mesh_sphere =
+        hashtable_search_str(&global_meshes, "[PRIM_MESH_SPHERE]");
+    PRIM_MESH_SPHERE = prim_mesh_sphere->hnd.id;
     if (err) return err;
 
 #if 0
@@ -1293,10 +1284,10 @@ internal int load_mesh_files()
     if (err) return err;
 #endif
 
-    err = load_obj_file(chunk_transient, "mesh/sphere.ric");
+    err = load_obj_file(chunk_active, "mesh/sphere.ric");
     if (err) return err;
 
-    err = load_obj_file(chunk_transient, "mesh/wall_cornertest.ric");
+    err = load_obj_file(chunk_active, "mesh/wall_cornertest.ric");
     if (err) return err;
 
 #if 0
@@ -1337,14 +1328,12 @@ internal int init_hardcoded_test_chunk(struct rico_chunk **chunk)
                                                          "bricks");
     RICO_ASSERT(tex_rock);
 
-    struct rico_pool *mat_pool = chunk_transient->pools[RICO_HND_MATERIAL];
-    struct rico_pool *obj_pool = chunk_transient->pools[RICO_HND_OBJECT];
-    struct pool_id id;
-
-    err = pool_add(mat_pool, &id);
+    struct rico_material *material_rock;
+    struct pool_id material_rock_id;
+    err = chunk_alloc(&material_rock, chunk, &material_rock_id,
+                      RICO_HND_MATERIAL);
     if (err) return err;
-    struct rico_material *material_rock = pool_read(mat_pool, id);
-    err = material_init(material_rock, "Rock", tex_rock,
+    err = material_init(material_rock, "Rock", tex_rock->hnd.id,
                         RICO_DEFAULT_TEXTURE_SPEC, 0.5f);
     if (err) return err;
 
@@ -1353,11 +1342,11 @@ internal int init_hardcoded_test_chunk(struct rico_chunk **chunk)
     //--------------------------------------------------------------------------
 
     // Ground
-    err = pool_add(obj_pool, &id);
+    struct rico_object *obj_ground;
+    err = chunk_alloc(&obj_ground, chunk, NULL, RICO_HND_OBJECT);
     if (err) return err;
-    struct rico_object *obj_ground = pool_read(obj_pool, id);
     err = object_init(obj_ground, "Ground", OBJ_STATIC, RICO_DEFAULT_MESH,
-                      material_rock, NULL);
+                      material_rock_id, NULL);
     if (err) return err;
     object_rot_x(obj_ground, -90.0f);
     object_scale(obj_ground, &(struct vec3) { 64.0f, 64.0f, 0.001f });

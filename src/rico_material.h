@@ -6,17 +6,17 @@ struct rico_material {
     struct hnd hnd;
     u32 ref_count;
 
-    struct rico_texture *tex_diffuse;
-    struct rico_texture *tex_specular;
+    struct pool_id tex_diffuse_id;
+    struct pool_id tex_specular_id;
 
     float shiny;
 };
-extern struct rico_material *RICO_DEFAULT_MATERIAL;
+extern struct pool_id RICO_DEFAULT_MATERIAL;
 
 int material_init(struct rico_material *material, const char *name,
-                  struct rico_texture *tex_diffuse,
-                  struct rico_texture *tex_specular, float shiny);
-void material_free(struct rico_material *material);
+                  struct pool_id tex_diffuse_id, struct pool_id tex_specular_id,
+                  float shiny);
+int material_free(struct rico_material *material);
 void material_bind(struct rico_material *material);
 void material_unbind(struct rico_material *material);
 //SERIAL(material_serialize_0);

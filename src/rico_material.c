@@ -1,8 +1,8 @@
-struct rico_material *RICO_DEFAULT_MATERIAL;
+struct pool_id RICO_DEFAULT_MATERIAL;
 
 int material_init(struct rico_material *material, const char *name,
-                  struct rico_texture *tex_diffuse,
-                  struct rico_texture *tex_specular, float shiny)
+                  struct pool_id tex_diffuse_id, struct pool_id tex_specular_id,
+                  float shiny)
 {
     enum rico_error err;
 
@@ -11,10 +11,9 @@ int material_init(struct rico_material *material, const char *name,
 #endif
 
     hnd_init(&material->hnd, RICO_HND_MATERIAL, name);
-    material->tex_diffuse = tex_diffuse;
-    material->tex_diffuse->ref_count++;
-    material->tex_specular = tex_specular;
-    material->tex_specular->ref_count++;
+    material->tex_diffuse_id = chunk_dupe(material->hnd.chunk, tex_diffuse_id);
+    material->tex_specular_id = chunk_dupe(material->hnd.chunk,
+                                           tex_specular_id);
     material->shiny = shiny;
 
     // Store in global hash table
@@ -22,23 +21,8 @@ int material_init(struct rico_material *material, const char *name,
     return err;
 }
 
-void material_free(struct rico_material *material)
+int material_free(struct rico_material *material)
 {
-    if (material->ref_count > 0)
-        material->ref_count--;
-
-#if RICO_DEBUG_MATERIAL
-    printf("[ mtl][ rls] uid=%d ref=%d name=%s\n", material->hnd.uid,
-           material->ref_count, material->hnd.name);
-#endif
-
-    if (material->ref_count > 0)
-        return;
-
-    // Cleanup: Use fixed pool slots
-    //if (handle == RICO_DEFAULT_MATERIAL)
-    //    return;
-
 #if RICO_DEBUG_MATERIAL
     printf("[ mtl][free] uid=%d name=%s\n", material->hnd.uid,
            material->hnd.name);
@@ -46,44 +30,29 @@ void material_free(struct rico_material *material)
 
     hashtable_delete_hnd(&global_materials, &material->hnd);
 
-    texture_free(material->tex_diffuse);
-    texture_free(material->tex_specular);
+    chunk_free(material->hnd.chunk, material->tex_diffuse_id);
+    chunk_free(material->hnd.chunk, material->tex_specular_id);
     pool_remove(material->hnd.pool, material->hnd.id);
 }
 
 void material_bind(struct rico_material *material)
 {
-    if (material->tex_diffuse)
-    {
-        texture_bind(material->tex_diffuse, GL_TEXTURE0);
-    }
-    else
-    {
-#if RICO_DEBUG_MATERIAL
-        printf("[ mtl][warn] uid=%d name=%s No diffuse texture, using default\n", material->hnd.uid,
-               material->hnd.name);
-        texture_bind(RICO_DEFAULT_TEXTURE_DIFF, GL_TEXTURE0);
-#endif
-    }
-
-    if (material->tex_specular)
-    {
-        texture_bind(material->tex_specular, GL_TEXTURE1);
-    }
-    else
-    {
-#if RICO_DEBUG_MATERIAL
-        printf("[ mtl][warn] uid=%d name=%s No specular texture, using default\n", material->hnd.uid,
-               material->hnd.name);
-        texture_bind(RICO_DEFAULT_TEXTURE_SPEC, GL_TEXTURE1);
-#endif
-    }
+    struct rico_texture *tex_diffuse = chunk_read(material->hnd.chunk,
+                                                  material->tex_diffuse_id);
+    struct rico_texture *tex_specular = chunk_read(material->hnd.chunk,
+                                                   material->tex_specular_id);
+    texture_bind(tex_diffuse, GL_TEXTURE0);
+    texture_bind(tex_specular, GL_TEXTURE1);
 }
 
 void material_unbind(struct rico_material *material)
 {
-    texture_unbind(material->tex_diffuse, GL_TEXTURE0);
-    texture_unbind(material->tex_specular, GL_TEXTURE1);
+    struct rico_texture *tex_diffuse = chunk_read(material->hnd.chunk,
+                                                  material->tex_diffuse_id);
+    struct rico_texture *tex_specular = chunk_read(material->hnd.chunk,
+                                                   material->tex_specular_id);
+    texture_unbind(tex_diffuse, GL_TEXTURE0);
+    texture_unbind(tex_specular, GL_TEXTURE1);
 }
 
 #if 0

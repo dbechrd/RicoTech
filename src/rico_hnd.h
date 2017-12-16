@@ -23,6 +23,7 @@ typedef u32 uid;
 struct hnd {
     uid uid;
     enum rico_hnd_type type;
+    struct rico_chunk *chunk;
     struct rico_pool *pool;
     struct pool_id id;
     char name[32];

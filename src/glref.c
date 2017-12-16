@@ -105,12 +105,9 @@ int create_obj()
     const char *name = "new_obj";
 
     // Create new object with default properties
-    struct rico_pool *pool = chunk_active->pools[RICO_HND_OBJECT];
-    struct pool_id id;
-    err = pool_add(pool, &id);
+    struct rico_object *new_obj;
+    err = pool_add(&new_obj, chunk_active->pools[RICO_HND_OBJECT], NULL);
     if (err) return err;
-
-    struct rico_object *new_obj = pool_read(pool, id);
     err = object_init(new_obj, name, OBJ_STATIC, RICO_DEFAULT_MESH,
                       RICO_DEFAULT_MATERIAL, NULL);
     if (err) return err;
@@ -228,7 +225,8 @@ void selected_mesh_next()
     if (!selected_obj)
         return;
 
-    object_mesh_set(selected_obj, mesh_next(selected_obj->mesh), NULL);
+    object_mesh_set(selected_obj, chunk_next_id(selected_obj->hnd.chunk,
+                                                selected_obj->mesh_id));
     object_select(selected_obj);
     object_print(selected_obj);
 }
@@ -238,7 +236,8 @@ void selected_mesh_prev()
     if (!selected_obj)
         return;
 
-    object_mesh_set(selected_obj, mesh_prev(selected_obj->mesh), NULL);
+    object_mesh_set(selected_obj, chunk_prev_id(selected_obj->hnd.chunk,
+                                                selected_obj->mesh_id));
     object_select(selected_obj);
     object_print(selected_obj);
 }
@@ -260,12 +259,9 @@ int selected_duplicate()
 
     enum rico_error err;
 
-    struct rico_pool *pool = chunk_active->pools[RICO_HND_OBJECT];
-    struct pool_id id;
-    err = pool_add(pool, &id);
+    struct rico_object *new_obj;
+    err = chunk_alloc(&new_obj, chunk_active, NULL, RICO_HND_OBJECT);
     if (err) return err;
-    
-    struct rico_object *new_obj = pool_read(pool, id);
     err = object_copy(new_obj, selected_obj, "Duplicate");
     if (err) return err;
 

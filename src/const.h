@@ -212,6 +212,7 @@ enum rico_vbo {
     f(ERR_HASH_INVALID_KEY)        \
     f(ERR_HASH_OVERWRITE)          \
     f(ERR_INVALID_PARAMS)          \
+    f(ERR_CHUNK_FREE_FAILED)       \
     f(ERR_OBJ_PARSE_FAILED)
 
 enum rico_error {
