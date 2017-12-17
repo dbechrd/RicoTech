@@ -9,23 +9,22 @@ const struct vec3 CAMERA_POS_INITIAL = {
 #define CAMERA_FOV_DEG 60.0f
 #define QUAT_SCALE_HACK 100.0f
 
-void camera_init(struct camera *_camera, struct vec3 position,
-                 struct quat view, float fov_deg)
+void camera_init(struct camera *camera, struct vec3 position, struct quat view,
+                 float fov_deg)
 {
-    _camera->position = position;
-    _camera->view = view;
-    _camera->fov_deg = fov_deg;
+    camera->position = position;
+    camera->view = view;
+    camera->fov_deg = fov_deg;
 
-    _camera->fill_mode = GL_FILL;
-    _camera->locked = false;
-    _camera->need_update = true;
+    camera->fill_mode = GL_FILL;
+    camera->locked = false;
+    camera->need_update = true;
 
-    bbox_init(&_camera->bbox, "camera_bbox",
-              (struct vec3) { -0.5f, -0.5f, -0.5f },
-              (struct vec3) {  0.5f,  0.5f,  0.5f },
+    bbox_init(&camera->bbox, (struct vec3) { -0.5f, -0.5f, -0.5f },
+                             (struct vec3) {  0.5f,  0.5f,  0.5f },
               COLOR_WHITE);
 
-    _camera->proj_matrix = mat4_init_perspective(SCREEN_W, SCREEN_H, Z_NEAR,
+    camera->proj_matrix = mat4_init_perspective(SCREEN_W, SCREEN_H, Z_NEAR,
                                                  Z_FAR, fov_deg);
 }
 

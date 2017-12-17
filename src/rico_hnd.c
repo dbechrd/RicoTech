@@ -1,9 +1,5 @@
 global u32 next_uid = 1;
 
-const char *rico_hnd_type_string[] = {
-    RICO_HND_TYPES(GEN_STRING)
-};
-
 void hnd_init(struct hnd *hnd, enum rico_hnd_type type, const char *name)
 {
     hnd->type = type;
@@ -21,7 +17,7 @@ void hnd_init(struct hnd *hnd, enum rico_hnd_type type, const char *name)
     //     _hnd->uid = next_uid++;
     // }
 
-    hnd->uid = next_uid++;
+    hnd->uid = (hnd->chunk == chunk_transient) ? UID_NULL : next_uid++;
     strncpy(hnd->name, name, sizeof(hnd->name) - 1);
     u32 name_len = strlen(name);
     hnd->len = MIN(name_len, sizeof(hnd->name) - 1);

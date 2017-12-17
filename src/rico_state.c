@@ -1,4 +1,4 @@
-#define LOAD_SAVE_FILE false
+#define LOAD_SAVE_FILE true
 
 ///|////////////////////////////////////////////////////////////////////////////
 const char *rico_state_string[] = {
@@ -446,7 +446,7 @@ int state_update()
 
         string_free_slot(STR_SLOT_STATE);
         struct rico_string *str;
-        err = chunk_alloc(&str, chunk_transient, RICO_HND_STRING);
+        err = chunk_alloc((void **)&str, chunk_transient, RICO_HND_STRING);
         if (err) return err;
         err = string_init(str, rico_string_slot_string[STR_SLOT_STATE],
                           STR_SLOT_STATE, 0, 0, COLOR_DARK_RED_HIGHLIGHT, 0,
@@ -486,7 +486,7 @@ int state_update()
 
         string_free_slot(STR_SLOT_FPS);
         struct rico_string *str;
-        err = chunk_alloc(&str, chunk_transient, RICO_HND_STRING);
+        err = chunk_alloc((void **)&str, chunk_transient, RICO_HND_STRING);
         if (err) return err;
         err = string_init(str, rico_string_slot_string[STR_SLOT_FPS],
                           STR_SLOT_FPS, -(FONT_WIDTH * len), 0,
@@ -542,7 +542,7 @@ internal int shared_engine_events()
     {
         string_free_slot(STR_SLOT_MENU_QUIT);
         struct rico_string *str;
-        err = chunk_alloc(&str, chunk_transient, RICO_HND_STRING);
+        err = chunk_alloc((void **)&str, chunk_transient, RICO_HND_STRING);
         if (err) return err;
         err = string_init(str, rico_string_slot_string[STR_SLOT_MENU_QUIT],
                           STR_SLOT_MENU_QUIT, 600, 400, COLOR_GREEN, 0, NULL,
@@ -807,7 +807,7 @@ internal int state_edit_translate()
 
         string_free_slot(STR_SLOT_STATE);
         struct rico_string *str;
-        err = chunk_alloc(&str, chunk_transient, RICO_HND_STRING);
+        err = chunk_alloc((void **)&str, chunk_transient, RICO_HND_STRING);
         if (err) return err;
         err = string_init(str, rico_string_slot_string[STR_SLOT_STATE],
                           STR_SLOT_STATE, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
@@ -897,7 +897,7 @@ internal int state_edit_rotate()
 
         string_free_slot(STR_SLOT_STATE);
         struct rico_string *str;
-        err = chunk_alloc(&str, chunk_transient, RICO_HND_STRING);
+        err = chunk_alloc((void **)&str, chunk_transient, RICO_HND_STRING);
         if (err) return err;
         err = string_init(str, rico_string_slot_string[STR_SLOT_STATE],
                           STR_SLOT_STATE, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
@@ -993,7 +993,7 @@ internal int state_edit_scale()
 
         string_free_slot(STR_SLOT_STATE);
         struct rico_string *str;
-        err = chunk_alloc(&str, chunk_transient, RICO_HND_STRING);
+        err = chunk_alloc((void **)&str, chunk_transient, RICO_HND_STRING);
         if (err) return err;
         err = string_init(str, rico_string_slot_string[STR_SLOT_STATE],
                           STR_SLOT_STATE, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
@@ -1137,7 +1137,7 @@ internal int rico_init_fonts()
     enum rico_error err;
 
     struct rico_font *font;
-    err = chunk_alloc(&font, chunk_transient, RICO_HND_FONT);
+    err = chunk_alloc((void **)&font, chunk_transient, RICO_HND_FONT);
     if (err) return err;
     err = font_init(font, "font/courier_new.bff");
     if (err) return err;
@@ -1152,13 +1152,13 @@ internal int rico_init_textures()
     struct rico_texture *tex_diff;
     struct rico_texture *tex_spec;
 
-    err = chunk_alloc(&tex_diff, chunk_transient, RICO_HND_TEXTURE);
+    err = chunk_alloc((void **)&tex_diff, chunk_transient, RICO_HND_TEXTURE);
     if (err) return err;
     err = texture_load_file(tex_diff, "[TEXTURE_DEFAULT_DIFF]", GL_TEXTURE_2D,
                             "texture/basic_diff.tga", 32);
     if (err) return err;
 
-    err = chunk_alloc(&tex_spec, chunk_transient, RICO_HND_TEXTURE);
+    err = chunk_alloc((void **)&tex_spec, chunk_transient, RICO_HND_TEXTURE);
     if (err) return err;
     err = texture_load_file(tex_spec, "[TEXTURE_DEFAULT_SPEC]", GL_TEXTURE_2D,
                             "texture/basic_spec.tga", 32);
@@ -1173,7 +1173,7 @@ internal int rico_init_materials()
     enum rico_error err;
 
     struct rico_material *material;
-    err = chunk_alloc(&material, chunk_transient, RICO_HND_MATERIAL);
+    err = chunk_alloc((void **)&material, chunk_transient, RICO_HND_MATERIAL);
     if (err) return err;
     err = material_init(material, "[MATERIAL_DEFAULT]",
                         RICO_DEFAULT_TEXTURE_DIFF, RICO_DEFAULT_TEXTURE_SPEC,
@@ -1250,7 +1250,7 @@ internal int rico_init_meshes()
     };
 
     struct rico_mesh *prim_mesh_bbox;
-    err = chunk_alloc(&prim_mesh_bbox, chunk_transient, RICO_HND_MESH);
+    err = chunk_alloc((void **)&prim_mesh_bbox, chunk_transient, RICO_HND_MESH);
     if (err) return err;
     err = mesh_init(prim_mesh_bbox, "[PRIM_MESH_BBOX]", MESH_OBJ_WORLD, 8,
                     default_vertices, 36, elements, GL_STATIC_DRAW);
@@ -1337,7 +1337,7 @@ internal int init_hardcoded_test_chunk(struct rico_chunk **chunk)
     "texture/fake_yellow.tga"
     */
 
-    err = chunk_alloc(&tex, *chunk, RICO_HND_TEXTURE);
+    err = chunk_alloc((void **)&tex, *chunk, RICO_HND_TEXTURE);
     if (err) return err;
     err = texture_load_file(tex, "bricks", GL_TEXTURE_2D,
                             "texture/clean_bricks.tga", 32);
@@ -1350,7 +1350,7 @@ internal int init_hardcoded_test_chunk(struct rico_chunk **chunk)
     RICO_ASSERT(tex_rock_id->type);
 
     struct rico_material *material_rock;
-    err = chunk_alloc(&material_rock, *chunk, RICO_HND_MATERIAL);
+    err = chunk_alloc((void **)&material_rock, *chunk, RICO_HND_MATERIAL);
     if (err) return err;
     err = material_init(material_rock, "Rock", *tex_rock_id, ID_NULL, 0.5f);
     if (err) return err;
@@ -1361,7 +1361,7 @@ internal int init_hardcoded_test_chunk(struct rico_chunk **chunk)
 
     // Ground
     struct rico_object *obj_ground;
-    err = chunk_alloc(&obj_ground, *chunk, RICO_HND_OBJECT);
+    err = chunk_alloc((void **)&obj_ground, *chunk, RICO_HND_OBJECT);
     if (err) return err;
     err = object_init(obj_ground, "Ground", OBJ_STATIC, ID_NULL,
                       material_rock->hnd.id, NULL);

@@ -321,7 +321,7 @@ void object_render_type(struct rico_chunk *chunk, enum rico_obj_type type,
     light.color    = (struct vec3) { 1.0f, 0.9f, 0.6f };
     light.position = (struct vec3) { light_pos_x, 3.0f, light_pos_z};
     //light.ambient  = (struct vec3) { 0.17f, 0.17f, 0.19f };
-    light.ambient  = (struct vec3){ 0.01f, 0.01f, 0.01f };
+    light.ambient  = (struct vec3){ 0.10f, 0.09f, 0.11f };
     light.kc = 1.0f;
     light.kl = 0.05f;
     light.kq = 0.001f;
@@ -439,7 +439,7 @@ int object_print(struct rico_object *object)
 
     string_free_slot(STR_SLOT_SELECTED_OBJ);
     struct rico_string *str;
-    err = chunk_alloc(&str, chunk_transient, RICO_HND_STRING);
+    err = chunk_alloc((void **)&str, chunk_transient, RICO_HND_STRING);
     if (err) return err;
     err = string_init(str, rico_string_slot_string[STR_SLOT_SELECTED_OBJ],
                       STR_SLOT_SELECTED_OBJ, 0, FONT_HEIGHT,

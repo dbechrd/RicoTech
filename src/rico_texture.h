@@ -25,7 +25,6 @@ int texture_load_pixels(struct rico_texture *texture, const char *name,
                         GLenum target, u32 width, u32 height, u32 bpp,
                         const void *pixels);
 int texture_free(struct rico_texture *texture);
-const char *texture_name(struct rico_texture *texture);
 void texture_bind(struct rico_texture *texture, GLenum texture_unit);
 void texture_unbind(struct rico_texture *texture, GLenum texture_unit);
 

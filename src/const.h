@@ -220,6 +220,25 @@ enum rico_error {
 };
 //extern const char *rico_error_string[];
 
+#define RICO_HND_TYPES(f)    \
+    f(RICO_HND_NULL)         \
+    f(RICO_HND_OBJECT)       \
+    f(RICO_HND_TEXTURE)      \
+    f(RICO_HND_MESH)         \
+    f(RICO_HND_FONT)         \
+    f(RICO_HND_STRING)       \
+    f(RICO_HND_MATERIAL)     \
+    f(RICO_HND_CEREAL_COUNT) \
+    f(RICO_HND_BBOX)         \
+    f(RICO_HND_CHUNK)        \
+    f(RICO_HND_POOL)         \
+    f(RICO_HND_HASHTABLE)
+
+enum rico_hnd_type {
+    RICO_HND_TYPES(GEN_LIST)
+};
+extern const char *rico_hnd_type_string[];
+
 //------------------------------------------------------------------------------
 // Global functions
 //------------------------------------------------------------------------------

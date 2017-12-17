@@ -1,6 +1,6 @@
 internal void pool_print_handles(struct rico_pool *pool);
 
-inline void pool_fixup(struct rico_pool *pool)
+inline void pool_fixup(struct rico_pool *pool, struct rico_chunk *chunk)
 {
     // TODO: Could clean this up with PTR_ADD_BYTE macro
     pool->block_tags = (u32 *)
@@ -10,10 +10,14 @@ inline void pool_fixup(struct rico_pool *pool)
     pool->blocks = (u8 *)pool + POOL_BLOCKS_OFFSET(pool->block_count);
     pool->end = pool->blocks + (pool->blocks_used * pool->block_size);
     
+    // MUST set chunk when fixing up handles in use
+    RICO_ASSERT(pool->blocks_used == 0 || chunk);
+
     struct hnd *hnd;
     for (u32 i = 0; i < pool->blocks_used; ++i)
     {
         hnd = (struct hnd *)(pool->blocks + (i * pool->block_size));
+        hnd->chunk = chunk;
         hnd->pool = pool;
     }
 }
@@ -34,7 +38,7 @@ int pool_init(void *buf, const char *name, u32 block_count, u32 block_size)
     pool->next_free = 0;
 
     // Pointer fix-up
-    pool_fixup(pool);
+    pool_fixup(pool, NULL);
 
     // Initialize block_tags and tags
     for (u32 i = 0; i < pool->block_count - 1; ++i)

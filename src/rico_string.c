@@ -21,7 +21,8 @@ int string_init(struct rico_string *str, const char *name,
     if (err) return err;
 
     struct rico_material *font_material;
-    err = chunk_alloc(&font_material, str->hnd.chunk, RICO_HND_MATERIAL);
+    err = chunk_alloc((void **)&font_material, str->hnd.chunk,
+                      RICO_HND_MATERIAL);
     if (err) return err;
     err = material_init(font_material, name, font_tex_id, ID_NULL, 0.5f);
     if (err) return err;
@@ -31,7 +32,7 @@ int string_init(struct rico_string *str, const char *name,
     str->slot = slot;
 
     struct rico_object *str_obj;
-    err = chunk_alloc(&str_obj, str->hnd.chunk, RICO_HND_OBJECT);
+    err = chunk_alloc((void **)&str_obj, str->hnd.chunk, RICO_HND_OBJECT);
     if (err) return err;
     err = object_init(str_obj, name, OBJ_STRING_SCREEN, font_mesh_id,
                       font_material->hnd.id, NULL);

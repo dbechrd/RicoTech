@@ -251,7 +251,7 @@ int chunk_deserialize(struct rico_chunk **_chunk, const struct rico_file *file)
         OutputDebugStringA(dbg);
 #endif
         // Fix pool pointers (and collect UIDs)
-        pool_fixup(chunk->pools[i]);
+        pool_fixup(chunk->pools[i], chunk);
     }
 
     RICO_ASSERT(offset == chunk->total_size);

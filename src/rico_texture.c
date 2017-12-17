@@ -11,10 +11,10 @@ int texture_load_file(struct rico_texture *texture, const char *name,
 #endif
 
     enum rico_error err;
-    int width, height, depth;
+    int width, height;
 
     // Load raw texture data
-    unsigned char* pixels = stbi_load(filename, &width, &height, &depth, 4);
+    unsigned char* pixels = stbi_load(filename, &width, &height, NULL, 4);
     if (!pixels)
     {
         err = RICO_ERROR(ERR_TEXTURE_LOAD, "Failed to load texture file: %s",
@@ -193,7 +193,7 @@ int texture_free(struct rico_texture *texture)
 void texture_bind(struct rico_texture *texture, GLenum texture_unit)
 {
     RICO_ASSERT(texture);
-    RICO_ASSERT(texture->hnd.uid);
+    RICO_ASSERT(texture->gl_id);
 
     glActiveTexture(texture_unit);
     glBindTexture(texture->gl_target, texture->gl_id);
@@ -202,7 +202,7 @@ void texture_bind(struct rico_texture *texture, GLenum texture_unit)
 void texture_unbind(struct rico_texture *texture, GLenum texture_unit)
 {
     RICO_ASSERT(texture);
-    RICO_ASSERT(texture->hnd.uid);
+    RICO_ASSERT(texture->gl_id);
 
     glActiveTexture(texture_unit);
     glBindTexture(texture->gl_target, 0);

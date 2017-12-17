@@ -44,7 +44,7 @@ int mesh_init(struct rico_mesh *mesh, const char *name,
                      element_data, hint);
     if (err) return err;
 
-    err = bbox_init_mesh(&mesh->bbox, name, vertex_data, vertex_count,
+    err = bbox_init_mesh(&mesh->bbox, vertex_data, vertex_count,
                          COLOR_WHITE_HIGHLIGHT);
     if (err) return err;
 

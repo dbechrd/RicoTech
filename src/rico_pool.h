@@ -1,6 +1,9 @@
 #ifndef RICO_POOL_H
 #define RICO_POOL_H
 
+struct hnd;
+struct rico_chunk;
+
 // TODO: Pack this
 // mark, tag, badge, pin, peg
 struct pool_id {
@@ -31,8 +34,6 @@ struct rico_pool {
     u8 *end;
 };
 
-typedef void(destructor)(struct hnd *handle);
-
 #define POOL_BLOCK_TAGS_SIZE(block_count) \
     (block_count * sizeof(u32))
 #define POOL_TAGS_SIZE(block_count) \
@@ -54,22 +55,19 @@ typedef void(destructor)(struct hnd *handle);
     (POOL_TAGS_OFFSET(block_count) + \
     POOL_TAGS_SIZE(block_count))
 
-static inline void pool_fixup(struct rico_pool *pool);
+extern inline void pool_fixup(struct rico_pool *pool, struct rico_chunk *chunk);
 int pool_init(void *buf, const char *name, u32 block_count, u32 block_size);
 int pool_add(struct hnd **handle, struct rico_pool *pool);
 int pool_remove(struct rico_pool *pool, struct pool_id id);
-//inline void pool_request(struct rico_pool *pool, struct pool_id id);
-inline void *pool_first(struct rico_pool *pool);
-inline void *pool_last(struct rico_pool *pool);
-inline void *pool_next(struct rico_pool *pool, void *block);
-inline void *pool_prev(struct rico_pool *pool, void *block);
-inline void *pool_read(struct rico_pool *pool, struct pool_id id);
-inline struct pool_id pool_next_id(struct rico_pool *pool, struct pool_id id);
-inline struct pool_id pool_prev_id(struct rico_pool *pool, struct pool_id id);
-//struct pool_hnd *pool_first(struct rico_pool *pool);
-//struct pool_hnd *pool_last(struct rico_pool *pool);
-//struct pool_hnd *pool_next(struct rico_pool *pool, struct pool_hnd *hnd);
-//struct pool_hnd *pool_prev(struct rico_pool *pool, struct pool_hnd *hnd);
+extern inline void *pool_first(struct rico_pool *pool);
+extern inline void *pool_last(struct rico_pool *pool);
+extern inline void *pool_next(struct rico_pool *pool, void *block);
+extern inline void *pool_prev(struct rico_pool *pool, void *block);
+extern inline void *pool_read(struct rico_pool *pool, struct pool_id id);
+extern inline struct pool_id pool_next_id(struct rico_pool *pool,
+                                          struct pool_id id);
+extern inline struct pool_id pool_prev_id(struct rico_pool *pool,
+                                          struct pool_id id);
 //SERIAL(pool_serialize_0);
 //DESERIAL(pool_deserialize_0);
 

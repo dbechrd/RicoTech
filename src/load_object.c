@@ -62,7 +62,7 @@ int load_obj_file(struct rico_chunk *chunk, const char *filename)
         {
             if (idx_vertex > 0)
             {
-                err = chunk_alloc(&new_mesh, chunk, RICO_HND_MESH);
+                err = chunk_alloc((void **)&new_mesh, chunk, RICO_HND_MESH);
                 if (err) goto cleanup;
                 err = mesh_init(new_mesh, name, MESH_OBJ_WORLD, idx_vertex,
                                 vertices, idx_element, elements,
@@ -157,7 +157,7 @@ int load_obj_file(struct rico_chunk *chunk, const char *filename)
 
     if (idx_vertex > 0)
     {
-        err = chunk_alloc(&new_mesh, chunk, RICO_HND_MESH);
+        err = chunk_alloc((void **)&new_mesh, chunk, RICO_HND_MESH);
         if (err) goto cleanup;
         err = mesh_init(new_mesh, name, MESH_OBJ_WORLD, idx_vertex,
                         vertices, idx_element, elements, GL_STATIC_DRAW);

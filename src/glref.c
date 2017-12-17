@@ -74,9 +74,9 @@ int init_glref()
     //--------------------------------------------------------------------------
     // Create axis label bboxes
     //--------------------------------------------------------------------------
-    err = bbox_init(&axis_bbox, "Axis BBox",
-                    (struct vec3) { -0.5f, -0.5f, -0.5f },
-                    (struct vec3) {  0.5f,  0.5f,  0.5f }, COLOR_WHITE);
+    err = bbox_init(&axis_bbox, (struct vec3) { -0.5f, -0.5f, -0.5f },
+                                (struct vec3) {  0.5f,  0.5f,  0.5f },
+                    COLOR_WHITE);
     if (err) return err;
 
     // X-axis label
@@ -106,7 +106,7 @@ int create_obj()
 
     // Create new object with default properties
     struct rico_object *new_obj;
-    err = chunk_alloc(&new_obj, chunk_active, RICO_HND_OBJECT);
+    err = chunk_alloc((void **)&new_obj, chunk_active, RICO_HND_OBJECT);
     if (err) return err;
     err = object_init(new_obj, name, OBJ_STATIC, ID_NULL, ID_NULL, NULL);
     if (err) return err;
@@ -259,7 +259,7 @@ int selected_duplicate()
     enum rico_error err;
 
     struct rico_object *new_obj;
-    err = chunk_alloc(&new_obj, chunk_active, RICO_HND_OBJECT);
+    err = chunk_alloc((void **)&new_obj, chunk_active, RICO_HND_OBJECT);
     if (err) return err;
     err = object_copy(new_obj, selected_obj, "Duplicate");
     if (err) return err;
