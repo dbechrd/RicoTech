@@ -49,7 +49,8 @@ int mesh_init(struct rico_mesh *mesh, const char *name,
     if (err) return err;
 
     // Store in global hash table
-    err = hashtable_insert_hnd(&global_meshes, &mesh->hnd, mesh);
+    err = hashtable_insert_hnd(&global_meshes, &mesh->hnd, &mesh->hnd.id,
+                               sizeof(mesh->hnd.id));
     return err;
 }
 

@@ -43,7 +43,7 @@ void test_hashtable()
     int data = 123;
 
     const char key_str[] = "blah blah";
-    hashtable_insert_str(table, key_str, &data);
+    hashtable_insert_str(table, key_str, &data, sizeof(data));
 
     int *lookup_str = hashtable_search_str(table, key_str);
     RICO_ASSERT(*lookup_str == data);
@@ -52,24 +52,49 @@ void test_hashtable()
     //=================================================
 
     uid key_uid = 12345;
-    hashtable_insert_uid(table, key_uid, &data);
+    hashtable_insert_uid(table, key_uid, &data, sizeof(data));
 
     int *lookup_uid = hashtable_search_uid(table, key_uid);
     RICO_ASSERT(*lookup_uid == data);
     RICO_ASSERT(hashtable_delete_uid(table, key_uid));
 }
 
-void test_pool()
+int test_pool()
 {
+    enum rico_error err;
+
     u32 block_count = 8;
     u32 block_size = sizeof(struct rico_texture);
     u32 pool_size = POOL_SIZE(block_count, block_size);
+
+    u32 pool_block_tags_sz = POOL_BLOCK_TAGS_SIZE(8);
+    u32 pool_tags_sz = POOL_TAGS_SIZE(8);
+    u32 pool_blocks_sz = POOL_BLOCKS_SIZE(8, block_size);
+    u32 pool_sz = POOL_SIZE(block_count, block_size);
+
+    RICO_ASSERT(pool_block_tags_sz == 32);
+    RICO_ASSERT(pool_tags_sz == 8 * sizeof(struct pool_tag));
+    RICO_ASSERT(pool_blocks_sz == 8 * block_size);
+    RICO_ASSERT(pool_sz == sizeof(struct rico_pool) +
+                32 +
+                8 * sizeof(struct pool_tag) +
+                8 * block_size);
+
+    u32 pool_block_tags_offs = POOL_BLOCK_TAGS_OFFSET();
+    u32 pool_tags_offs = POOL_TAGS_OFFSET(8);
+    u32 pool_blocks_offs = POOL_BLOCKS_OFFSET(8);
+
+    RICO_ASSERT(pool_block_tags_offs == sizeof(struct rico_pool));
+    RICO_ASSERT(pool_tags_offs == sizeof(struct rico_pool) + 32);
+    RICO_ASSERT(pool_blocks_offs == sizeof(struct rico_pool) + 32 +
+                8 * sizeof(struct pool_tag));
 
     void *mem_block = calloc(1, pool_size);
     if (!mem_block) RICO_ERROR(ERR_BAD_ALLOC, "Failed to alloc for test pool");
 
     struct rico_pool *pool = mem_block;
-    pool_init(pool, "Test pool", block_count, block_size);
+    err = pool_init(pool, "Test pool", block_count, block_size);
+    if (err) return err;
 
     struct pool_id id1, id2;
     struct rico_texture *tex;
@@ -77,8 +102,10 @@ void test_pool()
     printf("============================================================\n"
            " ADD ID 1\n"
            "============================================================\n");
-    pool_add(pool, &id1);
-    tex = pool_read(pool, id1);
+    err = pool_add((struct hnd **)&tex, pool);
+    if (err) return err;
+    id1 = tex->hnd.id;
+
     hnd_init(&tex->hnd, RICO_HND_TEXTURE, "Test 1");
     tex->bpp = 16;
     tex->gl_id = 1;
@@ -89,8 +116,10 @@ void test_pool()
     printf("============================================================\n"
            " ADD ID 2\n"
            "============================================================\n");
-    pool_add(pool, &id2);
-    tex = pool_read(pool, id2);
+    err = pool_add((struct hnd **)&tex, pool);
+    if (err) return err;
+    id2 = tex->hnd.id;
+
     hnd_init(&tex->hnd, RICO_HND_TEXTURE, "Test 2");
     tex->bpp = 32;
     tex->gl_id = 2;
@@ -101,11 +130,13 @@ void test_pool()
     printf("============================================================\n"
            " REMOVE ID 1\n"
            "============================================================\n");
-    pool_remove(pool, id1);
+    err = pool_remove(pool, id1);
+    if (err) return err;
     printf("============================================================\n"
            " REMOVE ID 2\n"
            "============================================================\n");
-    pool_remove(pool, id2);
+    err = pool_remove(pool, id2);
+    return err;
 }
 
 void run_tests()

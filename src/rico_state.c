@@ -229,19 +229,9 @@ static inline bool chord_released(enum rico_action action)
 // TODO: Where should these functions go?
 internal int save_file()
 {
-    for (int i = 0; i < 10; ++i) {
-        for (int j = 0; j < 10; ++j) {
-            printf("SAVE ");
-        }
-        printf("\n");
-    }
-    fflush(stdout);
-
     enum rico_error err;
 
-    struct rico_chunk *chunk = chunk_active;
-
-    if (chunk->hnd.uid == UID_NULL)
+    if (chunk_active->uid == UID_NULL)
         return RICO_ERROR(ERR_CHUNK_NULL, "Failed to save NULL chunk");
 
     struct rico_file file;
@@ -249,7 +239,7 @@ internal int save_file()
                                RICO_FILE_VERSION_CURRENT);
     if (err) return err;
 
-    err = chunk_serialize(chunk, &file);
+    err = chunk_serialize(chunk_active, &file);
     rico_file_close(&file);
 
 #if RICO_SAVE_BACKUP
@@ -391,6 +381,7 @@ void temp_camera_update(r64 dt)
     camera_update(&cam_player);
 }
 
+/*
 internal void clear_slot_string(enum rico_string_slot slot)
 {
     // TODO: How to make this more logical? Maybe STR_SLOT_* should be handles?
@@ -403,6 +394,7 @@ internal void clear_slot_string(enum rico_string_slot slot)
         hashtable_delete_str(&global_strings, slot_name);
     }
 }
+*/
 
 int state_update()
 {
@@ -452,8 +444,11 @@ int state_update()
                            rico_state_string[state]);
         string_truncate(buf, sizeof(buf), len);
 
-        err = string_init(chunk_transient,
-                          rico_string_slot_string[STR_SLOT_STATE],
+        string_free_slot(STR_SLOT_STATE);
+        struct rico_string *str;
+        err = chunk_alloc(&str, chunk_transient, RICO_HND_STRING);
+        if (err) return err;
+        err = string_init(str, rico_string_slot_string[STR_SLOT_STATE],
                           STR_SLOT_STATE, 0, 0, COLOR_DARK_RED_HIGHLIGHT, 0,
                           NULL, buf);
         if (err) return err;
@@ -488,8 +483,12 @@ int state_update()
         int len = snprintf(buf, sizeof(buf), "%.f fps %.2f ms %.2f mcyc", fps,
                            ms, mcyc);
         string_truncate(buf, sizeof(buf), len);
-        err = string_init(chunk_transient,
-                          rico_string_slot_string[STR_SLOT_FPS],
+
+        string_free_slot(STR_SLOT_FPS);
+        struct rico_string *str;
+        err = chunk_alloc(&str, chunk_transient, RICO_HND_STRING);
+        if (err) return err;
+        err = string_init(str, rico_string_slot_string[STR_SLOT_FPS],
                           STR_SLOT_FPS, -(FONT_WIDTH * len), 0,
                           COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
         if (err) return err;
@@ -535,14 +534,17 @@ internal int shared_engine_events()
         fps_render = !fps_render;
         if (!fps_render)
         {
-            clear_slot_string(STR_SLOT_FPS);
+            string_free_slot(STR_SLOT_FPS);
         }
     }
     // Save and exit
     else if (chord_pressed(ACTION_ENGINE_QUIT))
     {
-        err = string_init(chunk_transient,
-                          rico_string_slot_string[STR_SLOT_MENU_QUIT],
+        string_free_slot(STR_SLOT_MENU_QUIT);
+        struct rico_string *str;
+        err = chunk_alloc(&str, chunk_transient, RICO_HND_STRING);
+        if (err) return err;
+        err = string_init(str, rico_string_slot_string[STR_SLOT_MENU_QUIT],
                           STR_SLOT_MENU_QUIT, 600, 400, COLOR_GREEN, 0, NULL,
                           "                       \n" \
                           "  Save and quit?       \n" \
@@ -728,7 +730,7 @@ internal int state_edit_cleanup()
 
     if (!is_edit_state(state))
     {
-        clear_slot_string(STR_SLOT_SELECTED_OBJ);
+        string_free_slot(STR_SLOT_SELECTED_OBJ);
     }
 
     return err;
@@ -802,8 +804,12 @@ internal int state_edit_translate()
         char buf[32] = { 0 };
         int len = snprintf(buf, sizeof(buf), "Trans Delta: %f", trans_delta);
         string_truncate(buf, sizeof(buf), len);
-        err = string_init(chunk_transient,
-                          rico_string_slot_string[STR_SLOT_STATE],
+
+        string_free_slot(STR_SLOT_STATE);
+        struct rico_string *str;
+        err = chunk_alloc(&str, chunk_transient, RICO_HND_STRING);
+        if (err) return err;
+        err = string_init(str, rico_string_slot_string[STR_SLOT_STATE],
                           STR_SLOT_STATE, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
                           1000, NULL, buf);
         if (err) return err;
@@ -888,8 +894,12 @@ internal int state_edit_rotate()
         char buf[32] = { 0 };
         int len = snprintf(buf, sizeof(buf), "Rot Delta: %f", rot_delta);
         string_truncate(buf, sizeof(buf), len);
-        err = string_init(chunk_transient,
-                          rico_string_slot_string[STR_SLOT_STATE],
+
+        string_free_slot(STR_SLOT_STATE);
+        struct rico_string *str;
+        err = chunk_alloc(&str, chunk_transient, RICO_HND_STRING);
+        if (err) return err;
+        err = string_init(str, rico_string_slot_string[STR_SLOT_STATE],
                           STR_SLOT_STATE, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
                           1000, NULL, buf);
         if (err) return err;
@@ -980,8 +990,12 @@ internal int state_edit_scale()
         char buf[32] = { 0 };
         int len = snprintf(buf, sizeof(buf), "Scale Delta: %f", scale_delta);
         string_truncate(buf, sizeof(buf), len);
-        err = string_init(chunk_transient,
-                          rico_string_slot_string[STR_SLOT_STATE],
+
+        string_free_slot(STR_SLOT_STATE);
+        struct rico_string *str;
+        err = chunk_alloc(&str, chunk_transient, RICO_HND_STRING);
+        if (err) return err;
+        err = string_init(str, rico_string_slot_string[STR_SLOT_STATE],
                           STR_SLOT_STATE, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
                           1000, NULL, buf);
         if (err) return err;
@@ -1034,20 +1048,20 @@ internal int state_menu_quit()
     // [Y] / [Return]: Save and exit
     if (KEY_PRESSED(SDL_SCANCODE_Y) || KEY_PRESSED(SDL_SCANCODE_RETURN))
     {
-        clear_slot_string(STR_SLOT_MENU_QUIT);
+        string_free_slot(STR_SLOT_MENU_QUIT);
         save_file();
         state = STATE_ENGINE_SHUTDOWN;
     }
     // [N] / [Escape]: Return to play mode
     else if (KEY_PRESSED(SDL_SCANCODE_N) || KEY_PRESSED(SDL_SCANCODE_ESCAPE))
     {
-        clear_slot_string(STR_SLOT_MENU_QUIT);
+        string_free_slot(STR_SLOT_MENU_QUIT);
         state = STATE_PLAY_EXPLORE;
     }
     // [Q]: Exit without saving
     else if (KEY_PRESSED(SDL_SCANCODE_Q))
     {
-        clear_slot_string(STR_SLOT_MENU_QUIT);
+        string_free_slot(STR_SLOT_MENU_QUIT);
         state = STATE_ENGINE_SHUTDOWN;
     }
 
@@ -1105,6 +1119,7 @@ internal int rico_init_transient_chunk()
     // TODO: Hard code defaults that make sense based on how many transient
     //       objects there actually are.
     const chunk_pool_counts pool_counts = {
+          0,  // RICO_HND_NULL
         128,  // RICO_HND_OBJECT
         128,  // RICO_HND_TEXTURE
         128,  // RICO_HND_MESH
@@ -1122,10 +1137,12 @@ internal int rico_init_fonts()
     enum rico_error err;
 
     struct rico_font *font;
-    err = chunk_alloc(&font, chunk_transient, &RICO_DEFAULT_FONT,
-                      RICO_HND_FONT);
+    err = chunk_alloc(&font, chunk_transient, RICO_HND_FONT);
     if (err) return err;
     err = font_init(font, "font/courier_new.bff");
+    if (err) return err;
+
+    RICO_DEFAULT_FONT = font->hnd.id;
     return err;
 }
 internal int rico_init_textures()
@@ -1135,35 +1152,20 @@ internal int rico_init_textures()
     struct rico_texture *tex_diff;
     struct rico_texture *tex_spec;
 
-    err = chunk_alloc(&tex_diff, chunk_transient, &RICO_DEFAULT_TEXTURE_DIFF,
-                      RICO_HND_TEXTURE);
+    err = chunk_alloc(&tex_diff, chunk_transient, RICO_HND_TEXTURE);
     if (err) return err;
     err = texture_load_file(tex_diff, "[TEXTURE_DEFAULT_DIFF]", GL_TEXTURE_2D,
                             "texture/basic_diff.tga", 32);
     if (err) return err;
 
-    err = chunk_alloc(&tex_diff, chunk_transient, &RICO_DEFAULT_TEXTURE_SPEC,
-                      RICO_HND_TEXTURE);
+    err = chunk_alloc(&tex_spec, chunk_transient, RICO_HND_TEXTURE);
     if (err) return err;
     err = texture_load_file(tex_spec, "[TEXTURE_DEFAULT_SPEC]", GL_TEXTURE_2D,
                             "texture/basic_spec.tga", 32);
     if (err) return err;
 
-    //--------------------------------------------------------------------------
-    // Create textures
-    //--------------------------------------------------------------------------
-    struct rico_texture *tex;
-
-/*
-    "texture/grass.tga"
-    "texture/hello.tga"
-    "texture/fake_yellow.tga"
-*/
-
-    err = chunk_alloc(&tex, chunk_transient, NULL, RICO_HND_TEXTURE);
-    if (err) return err;
-    err = texture_load_file(tex, "bricks", GL_TEXTURE_2D,
-                            "texture/clean_bricks.tga", 32);
+    RICO_DEFAULT_TEXTURE_DIFF = tex_diff->hnd.id;
+    RICO_DEFAULT_TEXTURE_SPEC = tex_spec->hnd.id;
     return err;
 }
 internal int rico_init_materials()
@@ -1171,12 +1173,14 @@ internal int rico_init_materials()
     enum rico_error err;
 
     struct rico_material *material;
-    err = chunk_alloc(&material, chunk_transient, &RICO_DEFAULT_MATERIAL,
-                      RICO_HND_MATERIAL);
+    err = chunk_alloc(&material, chunk_transient, RICO_HND_MATERIAL);
     if (err) return err;
     err = material_init(material, "[MATERIAL_DEFAULT]",
                         RICO_DEFAULT_TEXTURE_DIFF, RICO_DEFAULT_TEXTURE_SPEC,
                         0.5f);
+    if (err) return err;
+
+    RICO_DEFAULT_MATERIAL = material->hnd.id;
     return err;
 }
 internal int rico_init_meshes()
@@ -1245,13 +1249,14 @@ internal int rico_init_meshes()
         4, 5, 1, 1, 0, 4
     };
 
-    struct rico_mesh *mesh;
-    err = chunk_alloc(&mesh, chunk_transient, &PRIM_MESH_BBOX, RICO_HND_MESH);
+    struct rico_mesh *prim_mesh_bbox;
+    err = chunk_alloc(&prim_mesh_bbox, chunk_transient, RICO_HND_MESH);
     if (err) return err;
-    err = mesh_init(mesh, "[PRIM_MESH_BBOX]", MESH_OBJ_WORLD, 8,
+    err = mesh_init(prim_mesh_bbox, "[PRIM_MESH_BBOX]", MESH_OBJ_WORLD, 8,
                     default_vertices, 36, elements, GL_STATIC_DRAW);
     if (err) return err;
 
+    PRIM_MESH_BBOX = prim_mesh_bbox->hnd.id;
     RICO_DEFAULT_MESH = PRIM_MESH_BBOX;
     return err;
 }
@@ -1262,12 +1267,11 @@ internal int load_mesh_files()
 
     u32 ticks = SDL_GetTicks();
 
-    err = load_obj_file(chunk_active, "mesh/prim_sphere.ric");
+    err = load_obj_file(chunk_transient, "mesh/prim_sphere.ric");
     if (err) return err;
 
-    struct rico_mesh *prim_mesh_sphere =
-        hashtable_search_str(&global_meshes, "[PRIM_MESH_SPHERE]");
-    PRIM_MESH_SPHERE = prim_mesh_sphere->hnd.id;
+    PRIM_MESH_SPHERE = *(struct pool_id *)hashtable_search_str(
+        &global_meshes, "[PRIM_MESH_SPHERE]");
     if (err) return err;
 
 #if 0
@@ -1284,10 +1288,10 @@ internal int load_mesh_files()
     if (err) return err;
 #endif
 
-    err = load_obj_file(chunk_active, "mesh/sphere.ric");
+    err = load_obj_file(chunk_transient, "mesh/sphere.ric");
     if (err) return err;
 
-    err = load_obj_file(chunk_active, "mesh/wall_cornertest.ric");
+    err = load_obj_file(chunk_transient, "mesh/wall_cornertest.ric");
     if (err) return err;
 
 #if 0
@@ -1309,6 +1313,7 @@ internal int init_hardcoded_test_chunk(struct rico_chunk **chunk)
     //--------------------------------------------------------------------------
     // TODO: Sane defaults, but use realloc when necessary
     const chunk_pool_counts pool_counts = {
+          0,  // RICO_HND_NULL
         128,  // RICO_HND_OBJECT
         128,  // RICO_HND_TEXTURE
         128,  // RICO_HND_MESH
@@ -1322,19 +1327,32 @@ internal int init_hardcoded_test_chunk(struct rico_chunk **chunk)
     RICO_ASSERT(*chunk);
 
     //--------------------------------------------------------------------------
+    // Create textures
+    //--------------------------------------------------------------------------
+    struct rico_texture *tex;
+
+    /*
+    "texture/grass.tga"
+    "texture/hello.tga"
+    "texture/fake_yellow.tga"
+    */
+
+    err = chunk_alloc(&tex, *chunk, RICO_HND_TEXTURE);
+    if (err) return err;
+    err = texture_load_file(tex, "bricks", GL_TEXTURE_2D,
+                            "texture/clean_bricks.tga", 32);
+
+    //--------------------------------------------------------------------------
     // Create materials
     //--------------------------------------------------------------------------
-    struct rico_texture *tex_rock = hashtable_search_str(&global_textures,
-                                                         "bricks");
-    RICO_ASSERT(tex_rock);
+    struct pool_id *tex_rock_id = hashtable_search_str(&global_textures,
+                                                       "bricks");
+    RICO_ASSERT(tex_rock_id->type);
 
     struct rico_material *material_rock;
-    struct pool_id material_rock_id;
-    err = chunk_alloc(&material_rock, chunk, &material_rock_id,
-                      RICO_HND_MATERIAL);
+    err = chunk_alloc(&material_rock, *chunk, RICO_HND_MATERIAL);
     if (err) return err;
-    err = material_init(material_rock, "Rock", tex_rock->hnd.id,
-                        RICO_DEFAULT_TEXTURE_SPEC, 0.5f);
+    err = material_init(material_rock, "Rock", *tex_rock_id, ID_NULL, 0.5f);
     if (err) return err;
 
     //--------------------------------------------------------------------------
@@ -1343,10 +1361,10 @@ internal int init_hardcoded_test_chunk(struct rico_chunk **chunk)
 
     // Ground
     struct rico_object *obj_ground;
-    err = chunk_alloc(&obj_ground, chunk, NULL, RICO_HND_OBJECT);
+    err = chunk_alloc(&obj_ground, *chunk, RICO_HND_OBJECT);
     if (err) return err;
-    err = object_init(obj_ground, "Ground", OBJ_STATIC, RICO_DEFAULT_MESH,
-                      material_rock_id, NULL);
+    err = object_init(obj_ground, "Ground", OBJ_STATIC, ID_NULL,
+                      material_rock->hnd.id, NULL);
     if (err) return err;
     object_rot_x(obj_ground, -90.0f);
     object_scale(obj_ground, &(struct vec3) { 64.0f, 64.0f, 0.001f });

@@ -12,39 +12,18 @@ int string_init(struct rico_string *str, const char *name,
     printf("[strg][init] name=%s\n", name);
 #endif
 
-    const char *slot_name = rico_string_slot_string[slot];
-
-    if (slot != STR_SLOT_DYNAMIC)
-    {
-        // Look for previous slot string and delete it
-        struct rico_string *old_str =
-            hashtable_search_str(&global_string_slots, slot_name);
-        if (old_str)
-        {
-            RICO_ASSERT(old_str->hnd.uid);
-            string_free(old_str);
-        }
-    }
-
     // TODO: Reuse mesh and material if they are the same
     // Generate font mesh and get texture handle
     struct pool_id font_mesh_id;
     struct pool_id font_tex_id;
-    struct pool_id font_id;
-    struct rico_font *font;
-    err = chunk_alloc(&font, str->hnd.chunk, &font_id, RICO_HND_FONT);
-    if (err) return err;
     err = font_render(&font_mesh_id, &font_tex_id, font, 0, 0, color,
                       text, name, MESH_STRING_SCREEN);
     if (err) return err;
 
-    struct pool_id font_material_id;
-    struct rico_material *material;
-    err = pool_add(&material, str->hnd.chunk->pools[RICO_HND_MATERIAL],
-                   &font_material_id);
+    struct rico_material *font_material;
+    err = chunk_alloc(&font_material, str->hnd.chunk, RICO_HND_MATERIAL);
     if (err) return err;
-    err = material_init(material, name, font_tex_id, RICO_DEFAULT_TEXTURE_SPEC,
-                        0.5f);
+    err = material_init(font_material, name, font_tex_id, ID_NULL, 0.5f);
     if (err) return err;
 
     // Init string
@@ -52,22 +31,27 @@ int string_init(struct rico_string *str, const char *name,
     str->slot = slot;
 
     struct rico_object *str_obj;
-    err = pool_add(&str_obj, str->hnd.chunk->pools[RICO_HND_OBJECT], &str->object_id);
+    err = chunk_alloc(&str_obj, str->hnd.chunk, RICO_HND_OBJECT);
     if (err) return err;
     err = object_init(str_obj, name, OBJ_STRING_SCREEN, font_mesh_id,
-                      font_material_id, NULL);
+                      font_material->hnd.id, NULL);
     if (err) return err;
+    str->object_id = chunk_dupe(str->hnd.chunk, str_obj->hnd.id);
 
     str->lifespan = lifespan;
-    object_trans_set(str_obj, &(struct vec3) { SCREEN_X(x), SCREEN_Y(y), -1.0f });
+    object_trans_set(str_obj,
+                     &(struct vec3) { SCREEN_X(x), SCREEN_Y(y), -1.0f });
 
     // Store in global hash table
-    err = hashtable_insert_hnd(&global_strings, &str->hnd, str);
+    err = hashtable_insert_hnd(&global_strings, &str->hnd, &str->hnd.id,
+                               sizeof(str->hnd.id));
 
     // Store in slot table if not dynamic
     if (slot != STR_SLOT_DYNAMIC)
     {
-        hashtable_insert_str(&global_string_slots, slot_name, str);
+        const char *slot_name = rico_string_slot_string[slot];
+        hashtable_insert_str(&global_string_slots, slot_name, &str->hnd.id,
+                             sizeof(str->hnd.id));
     }
 
     return err;
@@ -89,6 +73,25 @@ int string_free(struct rico_string *str)
     chunk_free(str->hnd.chunk, str->object_id);
     hashtable_delete_hnd(&global_strings, &str->hnd);
     return pool_remove(str->hnd.pool, str->hnd.id);
+}
+
+int string_free_slot(enum rico_string_slot slot)
+{
+    if (slot != STR_SLOT_DYNAMIC)
+    {
+        // Look for previous slot string and delete it
+        struct pool_id *old_str_id =
+            hashtable_search_str(&global_string_slots,
+                                 rico_string_slot_string[slot]);
+        if (old_str_id)
+        {
+            struct rico_string *old_str = chunk_read(chunk_transient,
+                                                     *old_str_id);
+            return string_free(old_str);
+        }
+    }
+
+    return SUCCESS;
 }
 
 // TODO: Lifespan objects shouldn't be string-specific; refactor this logic out

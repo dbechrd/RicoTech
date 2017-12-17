@@ -17,12 +17,15 @@ int material_init(struct rico_material *material, const char *name,
     material->shiny = shiny;
 
     // Store in global hash table
-    err = hashtable_insert_hnd(&global_materials, &material->hnd, material);
+    err = hashtable_insert_hnd(&global_materials, &material->hnd,
+                               &material->hnd.id, sizeof(material->hnd.id));
     return err;
 }
 
 int material_free(struct rico_material *material)
 {
+    enum rico_error err;
+
 #if RICO_DEBUG_MATERIAL
     printf("[ mtl][free] uid=%d name=%s\n", material->hnd.uid,
            material->hnd.name);
@@ -30,27 +33,44 @@ int material_free(struct rico_material *material)
 
     hashtable_delete_hnd(&global_materials, &material->hnd);
 
-    chunk_free(material->hnd.chunk, material->tex_diffuse_id);
-    chunk_free(material->hnd.chunk, material->tex_specular_id);
-    pool_remove(material->hnd.pool, material->hnd.id);
+    err = chunk_free(material->hnd.chunk, material->tex_diffuse_id);
+    if (err) return err;
+    err = chunk_free(material->hnd.chunk, material->tex_specular_id);
+    if (err) return err;
+    err = pool_remove(material->hnd.pool, material->hnd.id);
+    return err;
 }
 
 void material_bind(struct rico_material *material)
 {
-    struct rico_texture *tex_diffuse = chunk_read(material->hnd.chunk,
-                                                  material->tex_diffuse_id);
-    struct rico_texture *tex_specular = chunk_read(material->hnd.chunk,
-                                                   material->tex_specular_id);
+    struct rico_texture *tex_diffuse;
+    struct rico_texture *tex_specular;
+
+    tex_diffuse = (material->tex_diffuse_id.type)
+        ? chunk_read(material->hnd.chunk, material->tex_diffuse_id)
+        : chunk_read(chunk_transient, RICO_DEFAULT_TEXTURE_DIFF);
+
+    tex_specular = (material->tex_specular_id.type)
+        ? chunk_read(material->hnd.chunk, material->tex_specular_id)
+        : chunk_read(chunk_transient, RICO_DEFAULT_TEXTURE_SPEC);
+
     texture_bind(tex_diffuse, GL_TEXTURE0);
     texture_bind(tex_specular, GL_TEXTURE1);
 }
 
 void material_unbind(struct rico_material *material)
 {
-    struct rico_texture *tex_diffuse = chunk_read(material->hnd.chunk,
-                                                  material->tex_diffuse_id);
-    struct rico_texture *tex_specular = chunk_read(material->hnd.chunk,
-                                                   material->tex_specular_id);
+    struct rico_texture *tex_diffuse;
+    struct rico_texture *tex_specular;
+
+    tex_diffuse = (material->tex_diffuse_id.type)
+        ? chunk_read(material->hnd.chunk, material->tex_diffuse_id)
+        : chunk_read(chunk_transient, RICO_DEFAULT_TEXTURE_DIFF);
+
+    tex_specular = (material->tex_specular_id.type)
+        ? chunk_read(material->hnd.chunk, material->tex_specular_id)
+        : chunk_read(chunk_transient, RICO_DEFAULT_TEXTURE_SPEC);
+
     texture_unbind(tex_diffuse, GL_TEXTURE0);
     texture_unbind(tex_specular, GL_TEXTURE1);
 }

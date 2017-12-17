@@ -13,9 +13,9 @@ int chunk_init(struct rico_chunk **_chunk, const char *name,
 #endif
 
     // Calculate pool sizes
-    u32 pool_sizes[RICO_HND_CEREAL_COUNT];
+    u32 pool_sizes[RICO_HND_CEREAL_COUNT] = { 0 };
     u32 poolhouse_size = 0;
-    for (int i = 0; i < RICO_HND_CEREAL_COUNT; ++i)
+    for (int i = 1; i < RICO_HND_CEREAL_COUNT; ++i)
     {
         u32 pool_size = POOL_SIZE((*pool_counts)[i], size_by_handle[i]);
         pool_sizes[i] = pool_size;
@@ -33,7 +33,9 @@ int chunk_init(struct rico_chunk **_chunk, const char *name,
 
     // Initialize chunk
     struct rico_chunk *chunk = (struct rico_chunk *)mem_block;
-    hnd_init(&chunk->hnd, RICO_HND_CHUNK, name);
+    chunk->uid = next_uid;
+    next_uid++;
+    strncpy(chunk->name, name, sizeof(chunk->name) - 1);
     chunk->total_size = total_size;
     memcpy(&chunk->pool_counts, pool_counts, sizeof(chunk->pool_counts));
 
@@ -41,7 +43,7 @@ int chunk_init(struct rico_chunk **_chunk, const char *name,
     u8 *ptr = (u8 *)chunk;
     u32 offset = 0;
     offset += sizeof(struct rico_chunk);
-    for (int i = 0; i < RICO_HND_CEREAL_COUNT; ++i)
+    for (int i = 1; i < RICO_HND_CEREAL_COUNT; ++i)
     {
         chunk->pools[i] = (struct rico_pool *)(ptr + offset);
         offset += pool_sizes[i];
@@ -68,15 +70,17 @@ int chunk_init(struct rico_chunk **_chunk, const char *name,
     return SUCCESS;
 }
 
-int chunk_alloc(void **block, struct rico_chunk *chunk, struct pool_id *id,
-                enum rico_hnd_type type)
+int chunk_alloc(void **block, struct rico_chunk *chunk, enum rico_hnd_type type)
 {
-    RICO_ASSERT(type < RICO_HND_CEREAL_COUNT);
+    RICO_ASSERT(type > RICO_HND_NULL && type < RICO_HND_CEREAL_COUNT);
     enum rico_error err;
 
-    err = pool_add(block, chunk->pools[type], id);
+    struct hnd *hnd;
+    err = pool_add(&hnd, chunk->pools[type]);
     if (err) return err;
-    ((struct hnd *)block)->chunk = chunk;
+    hnd->chunk = chunk;
+    hnd->id.type = type;
+    *block = hnd;
     return err;
 }
 
@@ -85,8 +89,26 @@ int chunk_free(struct rico_chunk *chunk, struct pool_id id)
     RICO_ASSERT(id.type < RICO_HND_CEREAL_COUNT);
     enum rico_error err;
 
+    // Allow NOP free on ID_NULL
+    if (!id.type)
+        return SUCCESS;
+
     void *block = pool_read(chunk->pools[id.type], id);
 
+    // Reference counting
+    struct hnd *hnd = block;
+    if (hnd->ref_count == 0)
+    {
+        return RICO_ERROR(ERR_CHUNK_FREE_FAILED, "Double free, ref_count = 0");
+    }
+    else
+    {
+        hnd->ref_count--;
+        if (hnd->ref_count > 0)
+            return SUCCESS;
+    }
+
+    // Delegate resource clean up
     switch (id.type) {
     case RICO_HND_OBJECT:
     {
@@ -120,7 +142,7 @@ int chunk_free(struct rico_chunk *chunk, struct pool_id id)
     }
     default:
     {
-        err = RICO_ERROR(ERR_CHUNK_FREE_FAILED, "Unknown pool type");
+        return RICO_ERROR(ERR_CHUNK_FREE_FAILED, "Unknown pool type");
     }}
 
     return err;
@@ -128,22 +150,27 @@ int chunk_free(struct rico_chunk *chunk, struct pool_id id)
 
 inline void *chunk_read(struct rico_chunk *chunk, struct pool_id id)
 {
+    if (!id.type) return NULL;
     return pool_read(chunk->pools[id.type], id);
 }
 
 inline struct pool_id chunk_next_id(struct rico_chunk *chunk, struct pool_id id)
 {
+    RICO_ASSERT(id.type > RICO_HND_NULL && id.type < RICO_HND_CEREAL_COUNT);
     return pool_next_id(chunk->pools[id.type], id);
 }
 
 inline struct pool_id chunk_prev_id(struct rico_chunk *chunk, struct pool_id id)
 {
+    RICO_ASSERT(id.type > RICO_HND_NULL && id.type < RICO_HND_CEREAL_COUNT);
     return pool_prev_id(chunk->pools[id.type], id);
 }
 
 inline struct pool_id chunk_dupe(struct rico_chunk *chunk, struct pool_id id)
 {
-    pool_request(chunk->pools[id.type], id);
+    if (!id.type) return ID_NULL;
+    struct hnd *hnd = pool_read(chunk->pools[id.type], id);
+    hnd->ref_count++;
     return id;
 }
 
@@ -188,7 +215,7 @@ int chunk_deserialize(struct rico_chunk **_chunk, const struct rico_file *file)
     if (!mem_block)
     {
         return RICO_ERROR(ERR_BAD_ALLOC, "Failed to alloc memory for chunk %s",
-                          tmp_chunk.hnd.name);
+                          tmp_chunk.name);
     }
 
     struct rico_chunk *chunk = mem_block;
@@ -204,8 +231,8 @@ int chunk_deserialize(struct rico_chunk **_chunk, const struct rico_file *file)
     fread(seek, bytes, 1, file->fs);
 
     // Calculate pool sizes
-    u32 pool_sizes[RICO_HND_CEREAL_COUNT];
-    for (int i = 0; i < RICO_HND_CEREAL_COUNT; ++i)
+    u32 pool_sizes[RICO_HND_CEREAL_COUNT] = { 0 };
+    for (int i = 1; i < RICO_HND_CEREAL_COUNT; ++i)
     {
         u32 pool_size = POOL_SIZE(chunk->pool_counts[i], size_by_handle[i]);
         pool_sizes[i] = pool_size;

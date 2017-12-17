@@ -7,16 +7,19 @@ struct pool_id {
     enum rico_hnd_type type;
     u32 tag;
     u32 generation;
+    u32 pool_uid;
 };
+struct pool_id ID_NULL = { 0 };
 
 struct pool_tag {
     u32 block;
     u32 generation;
-    u32 ref_count;
+    //u32 ref_count;
     u32 next_free;
 };
 
 struct rico_pool {
+    u32 uid;
     char name[32];
     u32 block_count;
     u32 block_size;
@@ -53,9 +56,9 @@ typedef void(destructor)(struct hnd *handle);
 
 static inline void pool_fixup(struct rico_pool *pool);
 int pool_init(void *buf, const char *name, u32 block_count, u32 block_size);
-int pool_add(void **block, struct rico_pool *pool, struct pool_id *id);
+int pool_add(struct hnd **handle, struct rico_pool *pool);
 int pool_remove(struct rico_pool *pool, struct pool_id id);
-inline void pool_request(struct rico_pool *pool, struct pool_id id);
+//inline void pool_request(struct rico_pool *pool, struct pool_id id);
 inline void *pool_first(struct rico_pool *pool);
 inline void *pool_last(struct rico_pool *pool);
 inline void *pool_next(struct rico_pool *pool, void *block);

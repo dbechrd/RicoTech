@@ -5,6 +5,7 @@ typedef u32 chunk_pool_counts[RICO_HND_CEREAL_COUNT];
 
 // TODO: Should this be a global hash table (RICO_HND_TYPE -> u32 size)?
 const chunk_pool_counts size_by_handle = {
+    0,                            // RICO_HND_NULL
     sizeof(struct rico_object),   // RICO_HND_OBJECT
     sizeof(struct rico_texture),  // RICO_HND_TEXTURE
     sizeof(struct rico_mesh),     // RICO_HND_MESH
@@ -14,7 +15,8 @@ const chunk_pool_counts size_by_handle = {
 };
 
 struct rico_chunk {
-    struct hnd hnd;
+    u32 uid;
+    char name[32];
     u32 total_size;
     chunk_pool_counts pool_counts;
 
@@ -35,7 +37,7 @@ extern struct rico_chunk *chunk_transient;
 
 int chunk_init(struct rico_chunk **_chunk, const char *name,
                const chunk_pool_counts *pool_counts);
-int chunk_alloc(void **block, struct rico_chunk *chunk, struct pool_id *id,
+int chunk_alloc(void **block, struct rico_chunk *chunk,
                 enum rico_hnd_type type);
 int chunk_free(struct rico_chunk *chunk, struct pool_id id);
 inline void *chunk_read(struct rico_chunk *chunk, struct pool_id id);

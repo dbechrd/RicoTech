@@ -363,6 +363,7 @@ void object_render_type(struct rico_chunk *chunk, enum rico_obj_type type,
     struct rico_pool *pool = chunk->pools[RICO_HND_OBJECT];
     struct rico_object *obj = pool_first(pool);
     struct rico_material *material;
+    struct rico_mesh *mesh;
     while (obj)
     {
         if (obj->type != type)
@@ -373,6 +374,8 @@ void object_render_type(struct rico_chunk *chunk, enum rico_obj_type type,
 
         // Bind material
         material = chunk_read(obj->hnd.chunk, obj->material_id);
+        if (!material)
+            material = chunk_read(chunk_transient, RICO_DEFAULT_MATERIAL);
         material_bind(material);
 
         if (obj->type == OBJ_STATIC)
@@ -407,7 +410,10 @@ void object_render_type(struct rico_chunk *chunk, enum rico_obj_type type,
         glUniformMatrix4fv(prog->u_model, 1, GL_TRUE, obj->transform.a);
         glUniform1f(prog->u_material_shiny, material->shiny);
 
-        mesh_render(chunk_read(obj->hnd.chunk, obj->mesh_id));
+        mesh = chunk_read(obj->hnd.chunk, obj->mesh_id);
+        if (!mesh)
+            mesh = chunk_read(chunk_transient, RICO_DEFAULT_MESH);
+        mesh_render(mesh);
 
         // Clean up
         material_unbind(material);
@@ -431,8 +437,9 @@ int object_print(struct rico_object *object)
     char buf[256] = { 0 };
     object_to_string(object, buf, sizeof(buf));
 
+    string_free_slot(STR_SLOT_SELECTED_OBJ);
     struct rico_string *str;
-    err = chunk_alloc(&str, chunk_transient, NULL, RICO_HND_STRING);
+    err = chunk_alloc(&str, chunk_transient, RICO_HND_STRING);
     if (err) return err;
     err = string_init(str, rico_string_slot_string[STR_SLOT_SELECTED_OBJ],
                       STR_SLOT_SELECTED_OBJ, 0, FONT_HEIGHT,
@@ -478,8 +485,10 @@ void object_to_string(struct rico_object *object, char *buf, int buf_count)
             object->trans.x, object->trans.y, object->trans.z,
             object->rot.x,   object->rot.y,   object->rot.z,
             object->scale.x, object->scale.y, object->scale.z,
-            mesh->hnd.uid,     mesh->hnd.name,
-            material->hnd.uid, material->hnd.name
+            (mesh) ? mesh->hnd.uid : 0,
+            (mesh) ? mesh->hnd.name : "ID_NULL",
+            (material) ? material->hnd.uid : 0,
+            (material) ? material->hnd.name : "ID_NULL"
         );
     }
 

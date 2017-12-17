@@ -53,7 +53,8 @@ int texture_load_pixels(struct rico_texture *texture, const char *name,
     if (err) return err;
 
     // Store in global hash table
-    err = hashtable_insert_hnd(&global_textures, &texture->hnd, texture);
+    err = hashtable_insert_hnd(&global_textures, &texture->hnd,
+                               &texture->hnd.id, sizeof(texture->hnd.id));
     return err;
 }
 
@@ -191,13 +192,17 @@ int texture_free(struct rico_texture *texture)
 
 void texture_bind(struct rico_texture *texture, GLenum texture_unit)
 {
+    RICO_ASSERT(texture);
+    RICO_ASSERT(texture->hnd.uid);
+
     glActiveTexture(texture_unit);
     glBindTexture(texture->gl_target, texture->gl_id);
 }
 
 void texture_unbind(struct rico_texture *texture, GLenum texture_unit)
 {
-    if (!texture) return;
+    RICO_ASSERT(texture);
+    RICO_ASSERT(texture->hnd.uid);
 
     glActiveTexture(texture_unit);
     glBindTexture(texture->gl_target, 0);

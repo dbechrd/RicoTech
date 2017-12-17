@@ -22,9 +22,12 @@ void hashtable_free(struct hash_table *table);
 void *hashtable_search_str(struct hash_table *table, const char *str);
 void *hashtable_search_hnd(struct hash_table *table, struct hnd *hnd);
 void *hashtable_search_uid(struct hash_table *table, uid uid);
-int hashtable_insert_str(struct hash_table *table, const char *str, void *val);
-int hashtable_insert_hnd(struct hash_table *table, struct hnd *hnd, void *val);
-int hashtable_insert_uid(struct hash_table *table, uid uid, void *val);
+int hashtable_insert_str(struct hash_table *table, const char *str, void *val,
+                         u32 len);
+int hashtable_insert_hnd(struct hash_table *table, struct hnd *hnd, void *val,
+                         u32 len);
+int hashtable_insert_uid(struct hash_table *table, uid uid, void *val,
+                         u32 len);
 bool hashtable_delete_str(struct hash_table *table, const char *str);
 bool hashtable_delete_hnd(struct hash_table *table, struct hnd *hnd);
 bool hashtable_delete_uid(struct hash_table *table, uid uid);

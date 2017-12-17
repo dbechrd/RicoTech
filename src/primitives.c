@@ -142,7 +142,7 @@ void prim_draw_bbox_color(const struct bbox *bbox,
 	UNUSED(color);
     glUniform4f(program->u_col, 1.0f, 1.0f, 1.0f, 0.5f);
 
-    mesh_render(chunk_read(bbox->hnd.chunk, PRIM_MESH_BBOX));
+    mesh_render(chunk_read(chunk_transient, PRIM_MESH_BBOX));
 
     // Clean up
     glUseProgram(0);

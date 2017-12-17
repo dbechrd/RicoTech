@@ -16,8 +16,8 @@ struct rico_texture {
     GLsizei height;
     GLsizei bpp;
 };
-extern struct rico_texture *RICO_DEFAULT_TEXTURE_DIFF;
-extern struct rico_texture *RICO_DEFAULT_TEXTURE_SPEC;
+extern struct pool_id RICO_DEFAULT_TEXTURE_DIFF;
+extern struct pool_id RICO_DEFAULT_TEXTURE_SPEC;
 
 int texture_load_file(struct rico_texture *texture, const char *name,
                       GLenum target, const char *filename, u32 bpp);

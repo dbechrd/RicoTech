@@ -79,11 +79,12 @@ int font_init(struct rico_font *font, const char *filename)
     memcpy(font->Width, &buffer[WIDTH_DATA_OFFSET], 256);
 
     struct rico_texture *tex;
-    err = chunk_alloc(&tex, font->hnd.chunk, &font->texture_id, RICO_HND_TEXTURE);
+    err = chunk_alloc(&tex, font->hnd.chunk, RICO_HND_TEXTURE);
     if (err) goto cleanup;
     err = texture_load_pixels(tex, filename, GL_TEXTURE_2D, width, height, bpp,
                               &buffer[MAP_DATA_OFFSET]);
     if (err) goto cleanup;
+    font->texture_id = tex->hnd.id;
 
 cleanup:
     free(buffer);
@@ -131,12 +132,8 @@ int font_render(struct pool_id *mesh_id, struct pool_id *texture_id,
     enum rico_error err;
 
     // Persistent buffers for font rendering
-    local struct mesh_vertex vertices[BFG_MAXSTRING * 4];
-    local GLuint elements[BFG_MAXSTRING * 6];
-
-    // Cleanup: Debug code
-    memset(vertices, 0, sizeof(vertices));
-    memset(elements, 0, sizeof(elements));
+    local struct mesh_vertex vertices[BFG_MAXSTRING * 4] = { 0 };
+    local GLuint elements[BFG_MAXSTRING * 6] = { 0 };
 
     if (!font)
     {
@@ -240,13 +237,14 @@ int font_render(struct pool_id *mesh_id, struct pool_id *texture_id,
     }
 
     struct rico_mesh *mesh;
-    err = chunk_alloc(&mesh, font->hnd.chunk, mesh_id, RICO_HND_MESH);
+    err = chunk_alloc(&mesh, font->hnd.chunk, RICO_HND_MESH);
     if (err) goto cleanup;
     err = mesh_init(mesh, mesh_name, type, idx_vertex, vertices, idx_element,
                     elements, GL_STATIC_DRAW);
     if (err) goto cleanup;
+    *mesh_id = mesh->hnd.id;
 
-    *texture_id = font->texture_id;
+    *texture_id = chunk_dupe(font->hnd.chunk, font->texture_id);
 
 cleanup:
     //free(vertices);

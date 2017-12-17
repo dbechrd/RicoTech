@@ -8,7 +8,7 @@
 int bbox_init(struct bbox *bbox, const char *name, struct vec3 p0,
               struct vec3 p1, struct col4 color)
 {
-    hnd_init(&bbox->hnd, RICO_HND_BBOX, name);
+    //hnd_init(&bbox->hnd, RICO_HND_BBOX, name);
     bbox->p[0] = p0;
     bbox->p[1] = p1;
     bbox->color = color;

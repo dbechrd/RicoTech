@@ -106,10 +106,9 @@ int create_obj()
 
     // Create new object with default properties
     struct rico_object *new_obj;
-    err = pool_add(&new_obj, chunk_active->pools[RICO_HND_OBJECT], NULL);
+    err = chunk_alloc(&new_obj, chunk_active, RICO_HND_OBJECT);
     if (err) return err;
-    err = object_init(new_obj, name, OBJ_STATIC, RICO_DEFAULT_MESH,
-                      RICO_DEFAULT_MATERIAL, NULL);
+    err = object_init(new_obj, name, OBJ_STATIC, ID_NULL, ID_NULL, NULL);
     if (err) return err;
 
     // Select new object
@@ -145,12 +144,12 @@ void select_obj(struct rico_object *object)
 
 void select_next_obj()
 {
-    select_obj(pool_next(selected_obj->hnd.pool, selected_obj));
+    select_obj(pool_next(chunk_active->pools[RICO_HND_OBJECT], selected_obj));
 }
 
 void select_prev_obj()
 {
-    select_obj(pool_prev(selected_obj->hnd.pool, selected_obj));
+    select_obj(pool_prev(chunk_active->pools[RICO_HND_OBJECT], selected_obj));
 }
 
 void selected_print()
@@ -260,7 +259,7 @@ int selected_duplicate()
     enum rico_error err;
 
     struct rico_object *new_obj;
-    err = chunk_alloc(&new_obj, chunk_active, NULL, RICO_HND_OBJECT);
+    err = chunk_alloc(&new_obj, chunk_active, RICO_HND_OBJECT);
     if (err) return err;
     err = object_copy(new_obj, selected_obj, "Duplicate");
     if (err) return err;
@@ -302,13 +301,15 @@ void glref_render(struct camera *camera)
     //--------------------------------------------------------------------------
     // Axes labels (bboxes)
     //--------------------------------------------------------------------------
-    RICO_ASSERT(axis_bbox.hnd.uid != UID_NULL);
+    //RICO_ASSERT(axis_bbox.hnd.uid != UID_NULL);
     prim_draw_bbox_color(&axis_bbox, &x_axis_transform, &COLOR_RED);
     prim_draw_bbox_color(&axis_bbox, &y_axis_transform, &COLOR_GREEN);
     prim_draw_bbox_color(&axis_bbox, &z_axis_transform, &COLOR_BLUE);
 
-    object_render_type(chunk_active,    OBJ_STRING_SCREEN, prog_default, camera);
-    object_render_type(chunk_transient, OBJ_STRING_SCREEN, prog_default, camera);
+    object_render_type(chunk_active, OBJ_STRING_SCREEN, prog_default,
+                       camera);
+    object_render_type(chunk_transient, OBJ_STRING_SCREEN, prog_default,
+                       camera);
 }
 void free_glref()
 {
