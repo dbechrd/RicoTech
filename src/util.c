@@ -121,6 +121,7 @@ void show_info_log(GLuint object,
     log = malloc(log_length);
     glGet__InfoLog(object, log_length, NULL, log);
     fprintf(stderr, "%s", log);
+    RICO_ERROR(ERR_SHADER_COMPILE, "GL Info Log: '%s'", log);
     free(log);
 };
 

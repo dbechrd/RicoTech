@@ -333,8 +333,9 @@ void object_render_type(struct rico_chunk *chunk, enum rico_obj_type type,
         proj_matrix = MAT4_IDENT;
         view_matrix = MAT4_IDENT;
 
-        light.color   = VEC3_ONE;
-        light.ambient = VEC3_ONE;
+        light.color    = VEC3_ONE;
+        light.position = VEC3_ZERO;
+        light.ambient  = VEC3_ONE;
 
         light.kc = 1.0f;
         light.kl = 0.0f;
@@ -443,7 +444,7 @@ int object_print(struct rico_object *object)
     if (err) return err;
     err = string_init(str, rico_string_slot_string[STR_SLOT_SELECTED_OBJ],
                       STR_SLOT_SELECTED_OBJ, 0, FONT_HEIGHT,
-                      COLOR_GRAY_HIGHLIGHT, 0, NULL, buf);
+                      COLOR_DARK_GRAY_HIGHLIGHT, 0, NULL, buf);
     return err;
 }
 

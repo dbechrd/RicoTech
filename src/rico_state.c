@@ -1,4 +1,4 @@
-#define LOAD_SAVE_FILE true
+#define LOAD_SAVE_FILE false
 
 ///|////////////////////////////////////////////////////////////////////////////
 const char *rico_state_string[] = {
@@ -545,7 +545,8 @@ internal int shared_engine_events()
         err = chunk_alloc((void **)&str, chunk_transient, RICO_HND_STRING);
         if (err) return err;
         err = string_init(str, rico_string_slot_string[STR_SLOT_MENU_QUIT],
-                          STR_SLOT_MENU_QUIT, 600, 400, COLOR_GREEN, 0, NULL,
+                          STR_SLOT_MENU_QUIT, 600, 400,
+                          COLOR_DARK_GREEN_HIGHLIGHT, 0, NULL,
                           "                       \n" \
                           "  Save and quit?       \n" \
                           "                       \n" \
@@ -805,12 +806,12 @@ internal int state_edit_translate()
         int len = snprintf(buf, sizeof(buf), "Trans Delta: %f", trans_delta);
         string_truncate(buf, sizeof(buf), len);
 
-        string_free_slot(STR_SLOT_STATE);
+        string_free_slot(STR_SLOT_DELTA);
         struct rico_string *str;
         err = chunk_alloc((void **)&str, chunk_transient, RICO_HND_STRING);
         if (err) return err;
-        err = string_init(str, rico_string_slot_string[STR_SLOT_STATE],
-                          STR_SLOT_STATE, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
+        err = string_init(str, rico_string_slot_string[STR_SLOT_DELTA],
+                          STR_SLOT_DELTA, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
                           1000, NULL, buf);
         if (err) return err;
     }
@@ -895,12 +896,12 @@ internal int state_edit_rotate()
         int len = snprintf(buf, sizeof(buf), "Rot Delta: %f", rot_delta);
         string_truncate(buf, sizeof(buf), len);
 
-        string_free_slot(STR_SLOT_STATE);
+        string_free_slot(STR_SLOT_DELTA);
         struct rico_string *str;
         err = chunk_alloc((void **)&str, chunk_transient, RICO_HND_STRING);
         if (err) return err;
-        err = string_init(str, rico_string_slot_string[STR_SLOT_STATE],
-                          STR_SLOT_STATE, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
+        err = string_init(str, rico_string_slot_string[STR_SLOT_DELTA],
+                          STR_SLOT_DELTA, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
                           1000, NULL, buf);
         if (err) return err;
     }
@@ -991,12 +992,12 @@ internal int state_edit_scale()
         int len = snprintf(buf, sizeof(buf), "Scale Delta: %f", scale_delta);
         string_truncate(buf, sizeof(buf), len);
 
-        string_free_slot(STR_SLOT_STATE);
+        string_free_slot(STR_SLOT_DELTA);
         struct rico_string *str;
         err = chunk_alloc((void **)&str, chunk_transient, RICO_HND_STRING);
         if (err) return err;
-        err = string_init(str, rico_string_slot_string[STR_SLOT_STATE],
-                          STR_SLOT_STATE, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
+        err = string_init(str, rico_string_slot_string[STR_SLOT_DELTA],
+                          STR_SLOT_DELTA, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
                           1000, NULL, buf);
         if (err) return err;
     }
@@ -1192,10 +1193,10 @@ internal int rico_init_meshes()
     //--------------------------------------------------------------------------
     const struct mesh_vertex default_vertices[] = {
         {
-            { -1.0f, -1.0f, 1.0f },    //Position
-            COLOR_BLACK,                //Color
-            { 0.0f, 0.0f, 1.0f },       //Normal
-            { 0.0f, 0.0f }              //UV-coords
+            { -1.0f, -1.0f, 1.0f }, // Position
+            COLOR_BLACK,            // Color
+            { 0.0f, 0.0f, 1.0f },   // Normal
+            { 0.0f, 0.0f }          // UV-coords
         },
         {
             { 1.0f, -1.0f, 1.0f },

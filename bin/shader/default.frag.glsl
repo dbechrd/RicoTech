@@ -39,20 +39,24 @@ void main()
     vec4 texel_diffuse = texture(u_material.diff, vtx.uv);
     vec4 texel_specular = texture(u_material.spec, vtx.uv);
 
-    vec3 mat_diffuse = texel_diffuse.rgb;
+    vec4 mat_diffuse = texel_diffuse;
+    if (texel_diffuse.a == 0)
+    {
+        mat_diffuse = vtx.col;
+    }
     vec3 mat_specular = texel_specular.rgb;
 
-    vec3 ambient = u_light.ambient * mat_diffuse;
+    vec4 ambient = vec4(u_light.ambient, 1.0) * mat_diffuse;
 
     vec3 norm = normalize(vtx.normal);
-
     vec3 light_vec = u_light.position - vtx.frag_pos;
     float light_dist = length(light_vec);
     vec3 light_dir = normalize(light_vec);
-    float diff = max(dot(norm, light_dir), 0.0);
-    vec3 diffuse = u_light.color * mat_diffuse * diff;
 
-    vec3 specular;
+    float diff = max(dot(norm, light_dir), 0.0);
+    vec4 diffuse = vec4(u_light.color, 1.0) * mat_diffuse * diff;
+
+    vec4 specular = vec4(0);
     if (diff > 0.0)
     {
         vec3 eye_dir = normalize(u_view_pos - vtx.frag_pos);
@@ -75,12 +79,8 @@ void main()
         spec *= fresnel;
 
         // Light decides specular color? How to handle metallic reflections?
-        specular = u_light.color * mat_specular * spec;
+        specular = vec4(u_light.color, 1.0) * vec4(mat_specular, 1.0) * spec;
         // specular = mat_specular * spec;
-    }
-    else
-    {
-        specular = vec3(0, 0, 0);
     }
 
     float attenuation = 1.0 / (u_light.kc +
@@ -90,8 +90,8 @@ void main()
     // Ambient based on distance from light?
     //color.xyz = (ambient + diffuse + specular) * attenuation;
     // Ambient constant
-    color.xyz = ambient + (diffuse + specular) * attenuation;
+    color = ambient + (diffuse + specular) * attenuation;
 
     // What is the point of this??
-    color.a = 1.0 + (vtx.normal.x * 0.0000001); //texel_diffuse.a;
+    //color.a = 1.0 + (vtx.normal.x * 0.0000001); //texel_diffuse.a;
 }
