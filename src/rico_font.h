@@ -6,6 +6,8 @@
 #define FONT_WIDTH 12.5f
 #define FONT_HEIGHT 25.0f
 
+#define BFG_MAXSTRING 511  // Maximum string length
+
 // IMPORTANT: *DO NOT* add pointers in this struct, it will break cereal!
 struct rico_font {
     struct hnd hnd;

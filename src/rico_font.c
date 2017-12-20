@@ -3,8 +3,6 @@
 #define BFG_RS_RGB   0x2
 #define BFG_RS_RGBA  0x4
 
-#define BFG_MAXSTRING 255  // Maximum string length
-
 #define WIDTH_DATA_OFFSET  20  // Offset to width data with BFF file
 #define MAP_DATA_OFFSET   276  // Offset to texture image data with BFF file
 

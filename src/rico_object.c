@@ -28,8 +28,8 @@ int object_init(struct rico_object *object, const char *name,
     object->transform_inverse = MAT4_IDENT;
     object->mesh_id = chunk_dupe(object->hnd.chunk, mesh_id);
     object->material_id = chunk_dupe(object->hnd.chunk, material_id);
-    if (bbox) object->bbox = *bbox;
-
+    if (bbox)
+        object->bbox = *bbox;
     update_transform(object);
 
     return err;
@@ -88,7 +88,11 @@ void object_bbox_recalculate_all(struct rico_chunk *chunk)
     struct rico_object *obj = pool_first(pool);
     while (obj)
     {
-        struct rico_mesh *mesh = chunk_read(obj->hnd.chunk, obj->mesh_id);
+        struct rico_mesh *mesh;
+        if (obj->mesh_id.type)
+            mesh = chunk_read(obj->hnd.chunk, obj->mesh_id);
+        else
+            mesh = chunk_read(chunk_transient, RICO_DEFAULT_MESH);
         obj->bbox = mesh->bbox;
         obj = pool_next(pool, obj);
     }
@@ -434,27 +438,48 @@ int object_print(struct rico_object *object)
 {
     enum rico_error err;
 
-    // Print to screen
-    char buf[256] = { 0 };
-    object_to_string(object, buf, sizeof(buf));
-
-    string_free_slot(STR_SLOT_SELECTED_OBJ);
-    struct rico_string *str;
-    err = chunk_alloc((void **)&str, chunk_transient, RICO_HND_STRING);
+    err = string_free_slot(STR_SLOT_SELECTED_OBJ);
     if (err) return err;
-    err = string_init(str, rico_string_slot_string[STR_SLOT_SELECTED_OBJ],
-                      STR_SLOT_SELECTED_OBJ, 0, FONT_HEIGHT,
-                      COLOR_DARK_GRAY_HIGHLIGHT, 0, NULL, buf);
-    return err;
-}
 
-void object_to_string(struct rico_object *object, char *buf, int buf_count)
-{
     int len;
+    char buf[BFG_MAXSTRING + 1] = { 0 };
 
-    if (!object)
+    if (object)
     {
-        len = snprintf(buf, buf_count,
+        struct rico_mesh *mesh = chunk_read(object->hnd.chunk, object->mesh_id);
+        struct rico_mesh *material = chunk_read(object->hnd.chunk,
+                                                object->material_id);
+        len = snprintf(buf, sizeof(buf),
+            "     UID: %d\n"       \
+            "    Name: %s\n"       \
+            "    Type: %s\n"       \
+            "   Trans: %f %f %f\n" \
+            "     Rot: %f %f %f\n" \
+            "   Scale: %f %f %f\n" \
+            "    Mesh: %d %s\n"    \
+            "    BBox: %f %f %f\n" \
+            "          %f %f %f\n" \
+            "Material: %d %s\n",
+            object->hnd.uid,
+            object->hnd.name,
+            rico_obj_type_string[object->type],
+            object->trans.x, object->trans.y, object->trans.z,
+
+            object->rot.x,   object->rot.y,   object->rot.z,
+            object->scale.x, object->scale.y, object->scale.z,
+            (mesh) ? mesh->hnd.uid : 0,
+            (mesh) ? mesh->hnd.name : "ID_NULL",
+            object->bbox.p[0].x, object->bbox.p[0].y, object->bbox.p[0].z,
+            object->bbox.p[1].x, object->bbox.p[1].y, object->bbox.p[1].z,
+            (material) ? material->hnd.uid : 0,
+            (material) ? material->hnd.name : "ID_NULL"
+        );
+    }
+    else
+    {
+        len = snprintf(buf, sizeof(buf), "No object selected");
+        /*
+        len = snprintf(buf, sizeof(buf),
             "     UID: %d\n" \
             "    Name: --\n" \
             "    Type: --\n" \
@@ -465,35 +490,18 @@ void object_to_string(struct rico_object *object, char *buf, int buf_count)
             "Material: --\n",
             UID_NULL
         );
-    }
-    else
-    {
-        struct rico_mesh *mesh = chunk_read(object->hnd.chunk, object->mesh_id);
-        struct rico_mesh *material = chunk_read(object->hnd.chunk,
-                                                object->material_id);
-        len = snprintf(buf, buf_count,
-            "     UID: %d\n"       \
-            "    Name: %s\n"       \
-            "    Type: %s\n"       \
-            "   Trans: %f %f %f\n" \
-            "     Rot: %f %f %f\n" \
-            "   Scale: %f %f %f\n" \
-            "    Mesh: %d %s\n"    \
-            "Material: %d %s\n",
-            object->hnd.uid,
-            object->hnd.name,
-            rico_obj_type_string[object->type],
-            object->trans.x, object->trans.y, object->trans.z,
-            object->rot.x,   object->rot.y,   object->rot.z,
-            object->scale.x, object->scale.y, object->scale.z,
-            (mesh) ? mesh->hnd.uid : 0,
-            (mesh) ? mesh->hnd.name : "ID_NULL",
-            (material) ? material->hnd.uid : 0,
-            (material) ? material->hnd.name : "ID_NULL"
-        );
+        */
     }
 
-    string_truncate(buf, buf_count, len);
+    string_truncate(buf, sizeof(buf), len);
+
+    struct rico_string *str;
+    err = chunk_alloc((void **)&str, chunk_transient, RICO_HND_STRING);
+    if (err) return err;
+    err = string_init(str, rico_string_slot_string[STR_SLOT_SELECTED_OBJ],
+                      STR_SLOT_SELECTED_OBJ, 0, FONT_HEIGHT,
+                      COLOR_DARK_GRAY_HIGHLIGHT, 0, NULL, buf);
+    return err;
 }
 
 #if 0

@@ -74,6 +74,5 @@ void object_render_type(struct rico_chunk *chunk, enum rico_obj_type type,
                         const struct program_default *prog,
                         const struct camera *camera);
 int object_print(struct rico_object *object);
-void object_to_string(struct rico_object *object, char *buf, int buf_count);
 
 #endif // RICO_OBJECT_H
