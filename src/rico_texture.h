@@ -1,20 +1,17 @@
 #ifndef RICO_TEXTURE_H
 #define RICO_TEXTURE_H
 
-// IMPORTANT: *DO NOT* add pointers in this struct, it will break cereal!
 struct rico_texture {
     struct hnd hnd;
+    u32 width;
+    u32 height;
+    u32 bpp;
+    u8 *pixels;
 
-    // TODO: Save filename (is this hnd->name? might get truncated.. we need
-    //                      the whole thing for lookups on load, right?)
-    // TODO: Clear gl_id before saving to file
+    // TODO: Store these in hash table when loaded, map UID -> gl id or
+    //       track which texture is currently loaded on GPU some other way.
     GLuint gl_id;
     GLenum gl_target;
-
-    //TODO: What's the point of saving this if we don't also save pixel data?
-    GLsizei width;
-    GLsizei height;
-    GLsizei bpp;
 };
 extern struct pool_id RICO_DEFAULT_TEXTURE_DIFF;
 extern struct pool_id RICO_DEFAULT_TEXTURE_SPEC;

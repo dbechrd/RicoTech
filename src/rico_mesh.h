@@ -10,22 +10,22 @@ enum rico_mesh_type {
 };
 extern const char *rico_mesh_type_string[];
 
-// IMPORTANT: *DO NOT* add pointers in this struct, it will break cereal!
 struct rico_mesh {
     struct hnd hnd;
     enum rico_mesh_type type;
-    u32 ref_count;
 
     GLuint vao;
     GLuint vbos[2];
+
+    GLsizei vertex_count;
     GLsizei element_count;
+    struct mesh_vertex *vertices;
+    u32 *elements;
 
     struct bbox bbox;
 };
 extern struct pool_id RICO_DEFAULT_MESH;
 
-struct rico_mesh *mesh_next(struct rico_mesh *mesh);
-struct rico_mesh *mesh_prev(struct rico_mesh *mesh);
 int mesh_init(struct rico_mesh *mesh, const char *name,
               enum rico_mesh_type type, u32 vertex_count,
               const struct mesh_vertex *vertex_data, u32 element_count,

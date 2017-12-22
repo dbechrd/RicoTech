@@ -14,16 +14,6 @@ bool mesh_selectable(struct rico_mesh *mesh)
     return (mesh->type != MESH_STRING_SCREEN);
 }
 
-struct rico_mesh *mesh_next(struct rico_mesh *mesh)
-{
-    return pool_next(mesh->hnd.pool, mesh);
-}
-
-struct rico_mesh *mesh_prev(struct rico_mesh *mesh)
-{
-    return pool_prev(mesh->hnd.pool, mesh);
-}
-
 int mesh_init(struct rico_mesh *mesh, const char *name,
               enum rico_mesh_type type, u32 vertex_count,
               const struct mesh_vertex *vertex_data, u32 element_count,
@@ -59,6 +49,7 @@ internal int build_mesh(struct rico_mesh *mesh, u32 vertex_count,
                         u32 element_count, const GLuint *element_data,
                         GLenum hint)
 {
+    mesh->vertex_count = vertex_count;
     mesh->element_count = element_count;
 
     //--------------------------------------------------------------------------
@@ -78,15 +69,16 @@ internal int build_mesh(struct rico_mesh *mesh, u32 vertex_count,
     //--------------------------------------------------------------------------
     // Element buffer
     //--------------------------------------------------------------------------
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->vbos[VBO_ELEMENT]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, element_count * sizeof(GLuint),
-                 element_data, hint);
+    if (element_count)
+    {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->vbos[VBO_ELEMENT]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, element_count * sizeof(GLuint),
+                     element_data, hint);
+    }
 
     //--------------------------------------------------------------------------
     // Shader attribute pointers
     //--------------------------------------------------------------------------
-    // TODO: How to get size of mesh_vertex.pos dynamically? Why doesn't
-    //       sizeof_member work?
     glVertexAttribPointer(RICO_SHADER_POS_LOC, 4, GL_FLOAT, GL_FALSE,
                           sizeof(struct mesh_vertex),
                           (GLvoid *)offsetof(struct mesh_vertex, pos));
@@ -149,6 +141,9 @@ void mesh_render(struct rico_mesh *mesh)
 {
     // Draw
     glBindVertexArray(mesh->vao);
-    glDrawElements(GL_TRIANGLES, mesh->element_count, GL_UNSIGNED_INT, 0);
+    if (mesh->element_count)
+        glDrawElements(GL_TRIANGLES, mesh->element_count, GL_UNSIGNED_INT, 0);
+    else
+        glDrawArrays(GL_TRIANGLES, 0, mesh->vertex_count);
     glBindVertexArray(0);
 }

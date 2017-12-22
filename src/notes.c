@@ -107,17 +107,54 @@ void notes_casey()
 	//			space.
 
     // Day 055:
-	//
-    //      Modulus by power of two:
-    //          HashValue % ArrayCount(HashTable)
-    //          HashValue & (ArrayCount(HashTable) - 1)
-    //
-    //          Subtracting 1 from a power of two gives us a bit mask to perform
-    //          a perfect modulus operation.
-	//
-    //      Array indexing with pointer arithmetic:
-    //          Item *item = HashTable[HashSlot]
-    //          Item *item = HashTable + HashSlot
+
+    // Modulus by power of two:
+    // Subtracting 1 from a power of two gives us a bit mask to perform
+    // a perfect modulus operation.
+    // (16 - 1) & value == (0b10000 - 1) & value ==
+    //       15 & value ==       0b01111 & value ==
+    //       value % 16 ==       value % 0b10000
+    HashValue % ArrayCount(HashTable);
+    HashValue & (ArrayCount(HashTable) - 1);
+
+    // Array indexing with pointer arithmetic:
+    Item *item = HashTable[HashSlot];
+    Item *item = HashTable + HashSlot;
+
+    // In-place hash tables:
+    struct tree
+    {
+        u32 x;
+        u32 y;
+
+        struct thing *hash_next;
+    };
+
+    struct forest
+    {
+        char *name;
+        
+        struct tree hash_trees[4096]; // TODO: Prime number for avalanche
+    };
+
+    // Get tree from sparse forest using hash
+    struct tree *get_tree(struct forest *forest, u32 x, u32 y)
+    {
+        // Use proper hash function!
+        u32 hash = 17*x + 13*y;
+        u32 slot = hash % ArrayCount(forest->hash_trees);
+
+        struct tree *tree = forest->hash_trees + slot;
+        do
+        {
+            if (tree->x == x && tree->y == y)
+                break;
+
+            tree = tree->hash_next
+        } while (tree);
+
+        return tree;
+    }
 
     //  1:22:40 Refactoring hash map out of specific struct use-case
     //  1:36:00 Run-length encoding (RLE) for tile chunks. Split chunks into
@@ -132,6 +169,70 @@ void notes_casey()
 	//
 	//	1:14:22 - 1:22:06 Switching from OOP to data-oriented /
 	//					  compression-oriented
+
+    // Day 146:
+    //
+    //  41:30
+    struct hha_header
+    {
+        u32 magic;
+        u32 version;
+
+        u32 tag_count;
+        u32 asset_count;
+        u32 asset_type_count;
+
+        u64 tags_offset;
+        u64 assets_offset;
+        u64 asset_types_offset;
+    };
+    struct hha_tag
+    {
+        u32 id;
+        r32 value;
+    };
+    struct hha_asset_type
+    {
+        u32 type_id;
+        u32 first_asset_idx;
+        u32 asset_count;
+    };
+
+    struct hha_bitmap
+    {
+        u32 size[2];
+    };
+    struct hha_sound
+    {
+        u32 sample_count;
+        u32 next_sound_to_play;
+    };
+    struct hha_asset
+    {
+        u64 data_offset;
+        u32 first_tag_idx;
+        u32 tag_count;
+        union {
+            struct hha_bitmap bitmap;
+            struct hha_sound sound;
+        };
+    };
+
+    struct game_assets
+    {
+
+    };
+
+    struct game_assets assets = { 0 };
+    // Populate assets
+
+    FILE *out = fopen("casey.hha", "wb");
+    if (out)
+    {
+        hha_header header = { 0 };
+        header.magic = MAGIC;
+        header.version = VERSION;
+    }
 
 	// Day 237:
 	//
