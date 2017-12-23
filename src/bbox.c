@@ -1,23 +1,15 @@
 #define BBOX_EPSILON 0.01f
 
-//internal int init_gl(struct bbox *bbox);
-
-//void bbox_render_color(const struct bbox *box, const struct mat4 *model_matrix,
-//                       const struct col4 color);
-
-int bbox_init(struct bbox *bbox, struct vec3 p0, struct vec3 p1,
-              struct col4 color)
+void bbox_init(struct bbox *bbox, struct vec3 p0, struct vec3 p1,
+               struct col4 color)
 {
-    //hnd_init(&bbox->hnd, RICO_HND_BBOX, name);
     bbox->p[0] = p0;
     bbox->p[1] = p1;
     bbox->color = color;
     bbox->wireframe = true;
-
-    return SUCCESS; //init_gl(bbox);
 }
 
-int bbox_init_mesh(struct bbox *bbox,  const struct mesh_vertex *verts,
+void bbox_init_mesh(struct bbox *bbox,  const struct rico_vertex *verts,
                    int count, struct col4 color)
 {
     struct vec3 p0 = (struct vec3) { 9999.0f, 9999.0f, 9999.0f };
@@ -50,7 +42,7 @@ int bbox_init_mesh(struct bbox *bbox,  const struct mesh_vertex *verts,
     p0.z -= BBOX_EPSILON;
     p1.z += BBOX_EPSILON;
 
-    return bbox_init(bbox, p0, p1, color);
+    bbox_init(bbox, p0, p1, color);
 }
 
 #if 0

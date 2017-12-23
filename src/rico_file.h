@@ -1,9 +1,6 @@
 #ifndef RICO_FILE_H
 #define RICO_FILE_H
 
-//#include "const.h"
-//#include <stdio.h>
-
 #define RICO_FILE_VERSION_CURRENT 1
 #define RICO_FILE_VERSION_MINIMUM_SUPPORTED 1
 #define RICO_FILE_VERSION_MAXIMUM_SUPPORTED RICO_FILE_VERSION_CURRENT
@@ -14,7 +11,6 @@ struct rico_file {
     FILE *fs;
     u32 version;
     u32 next_uid;
-    u32 cereal_index;
     const char *filename;
 };
 

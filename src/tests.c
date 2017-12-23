@@ -97,35 +97,25 @@ int test_pool()
     if (err) return err;
 
     struct pool_id id1, id2;
-    struct rico_texture *tex;
+    struct rico_object *obj;
 
     printf("============================================================\n"
            " ADD ID 1\n"
            "============================================================\n");
-    err = pool_add((struct hnd **)&tex, pool);
+    err = pool_add((struct hnd **)&obj, pool);
     if (err) return err;
-    id1 = tex->hnd.id;
+    id1 = obj->hnd.id;
 
-    hnd_init(&tex->hnd, RICO_HND_TEXTURE, "Test 1");
-    tex->bpp = 16;
-    tex->gl_id = 1;
-    tex->gl_target = 1;
-    tex->height = 64;
-    tex->width = 64;
+    hnd_init(&obj->hnd, RICO_HND_OBJECT, "Test 1");
 
     printf("============================================================\n"
            " ADD ID 2\n"
            "============================================================\n");
-    err = pool_add((struct hnd **)&tex, pool);
+    err = pool_add((struct hnd **)&obj, pool);
     if (err) return err;
-    id2 = tex->hnd.id;
+    id2 = obj->hnd.id;
 
-    hnd_init(&tex->hnd, RICO_HND_TEXTURE, "Test 2");
-    tex->bpp = 32;
-    tex->gl_id = 2;
-    tex->gl_target = 2;
-    tex->height = 128;
-    tex->width = 128;
+    hnd_init(&obj->hnd, RICO_HND_OBJECT, "Test 2");
 
     printf("============================================================\n"
            " REMOVE ID 1\n"

@@ -26,25 +26,21 @@ struct rico_object {
     // TODO: Support multiple meshes and textures
     // TODO: Cache; don't serialize/overwrite when loading
     // TODO: Overwrite *mesh with mesh->uid on save?
-    struct pool_id mesh_id;
-    struct pool_id material_id;
+    u32 mesh_id;
+    u32 material_id;
 
     struct bbox bbox;
 };
 extern struct pool_id RICO_DEFAULT_OBJECT;
 
 int object_init(struct rico_object *object, const char *name,
-                enum rico_obj_type type, struct pool_id mesh_id,
-                struct pool_id material_id, const struct bbox *bbox);
+                enum rico_obj_type type, u32 mesh_id, u32 material_id,
+                const struct bbox *bbox);
 int object_copy(struct rico_object *object, struct rico_object *other,
                 const char *name);
 int object_free(struct rico_object *object);
 void object_free_all(struct rico_chunk *chunk);
 void object_bbox_recalculate_all(struct rico_chunk *chunk);
-void object_bbox_set(struct rico_object *object, const struct bbox *bbox);
-void object_mesh_set(struct rico_object *object, struct pool_id mesh_id);
-void object_material_set(struct rico_object *object,
-                         struct pool_id material_id);
 bool object_selectable(struct rico_object *object);
 void object_select(struct rico_object *object);
 void object_deselect(struct rico_object *object);

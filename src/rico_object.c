@@ -7,8 +7,8 @@ struct pool_id RICO_DEFAULT_OBJECT;
 internal void update_transform(struct rico_object *obj);
 
 int object_init(struct rico_object *object, const char *name,
-                enum rico_obj_type type, struct pool_id mesh_id,
-                struct pool_id material_id, const struct bbox *bbox)
+                enum rico_obj_type type, u32 mesh_id, u32 material_id,
+                const struct bbox *bbox)
 {
     enum rico_error err = SUCCESS;
 
@@ -26,8 +26,8 @@ int object_init(struct rico_object *object, const char *name,
         object->scale = VEC3_ONE;
     object->transform = MAT4_IDENT;
     object->transform_inverse = MAT4_IDENT;
-    object->mesh_id = chunk_dupe(object->hnd.chunk, mesh_id);
-    object->material_id = chunk_dupe(object->hnd.chunk, material_id);
+    object->mesh_id = mesh_id;
+    object->material_id = material_id;
     if (bbox)
         object->bbox = *bbox;
     update_transform(object);
@@ -62,10 +62,6 @@ int object_free(struct rico_object *object)
     printf("[ obj][free] uid=%d name=%s\n", object->hnd.uid, object->hnd.name);
 #endif
 
-    err = chunk_free(object->hnd.chunk, object->mesh_id);
-    if (err) return err;
-    err = chunk_free(object->hnd.chunk, object->material_id);
-    if (err) return err;
     err = pool_remove(object->hnd.pool, object->hnd.id);
     return err;
 }
@@ -88,38 +84,10 @@ void object_bbox_recalculate_all(struct rico_chunk *chunk)
     struct rico_object *obj = pool_first(pool);
     while (obj)
     {
-        struct rico_mesh *mesh;
-        if (obj->mesh_id.type)
-            mesh = chunk_read(obj->hnd.chunk, obj->mesh_id);
-        else
-            mesh = chunk_read(chunk_transient, RICO_DEFAULT_MESH);
+        struct rico_mesh *mesh = pack_read(pack_active, obj->mesh_id);
         obj->bbox = mesh->bbox;
         obj = pool_next(pool, obj);
     }
-}
-
-void object_bbox_set(struct rico_object *object, const struct bbox *bbox)
-{
-    RICO_ASSERT(bbox);
-    object->bbox = *bbox;
-}
-
-void object_mesh_set(struct rico_object *object, struct pool_id mesh_id)
-{
-    if (mesh_id.tag == object->mesh_id.tag)
-        return;
-
-    chunk_free(object->hnd.chunk, mesh_id);
-    object->mesh_id = chunk_dupe(object->hnd.chunk, mesh_id);
-}
-
-void object_material_set(struct rico_object *object, struct pool_id material_id)
-{
-    if (material_id.tag == object->material_id.tag)
-        return;
-
-    chunk_free(object->hnd.chunk, object->material_id);
-    object->material_id = chunk_dupe(object->hnd.chunk, material_id);
 }
 
 bool object_selectable(struct rico_object *object)
@@ -378,9 +346,7 @@ void object_render_type(struct rico_chunk *chunk, enum rico_obj_type type,
         }
 
         // Bind material
-        material = chunk_read(obj->hnd.chunk, obj->material_id);
-        if (!material)
-            material = chunk_read(chunk_transient, RICO_DEFAULT_MATERIAL);
+        material = pack_read(pack_active, obj->material_id);
         material_bind(material);
 
         if (obj->type == OBJ_STATIC)
@@ -415,9 +381,7 @@ void object_render_type(struct rico_chunk *chunk, enum rico_obj_type type,
         glUniformMatrix4fv(prog->u_model, 1, GL_TRUE, obj->transform.a);
         glUniform1f(prog->u_material_shiny, material->shiny);
 
-        mesh = chunk_read(obj->hnd.chunk, obj->mesh_id);
-        if (!mesh)
-            mesh = chunk_read(chunk_transient, RICO_DEFAULT_MESH);
+        mesh = pack_read(pack_active, obj->mesh_id);
         mesh_render(mesh);
 
         // Clean up
@@ -446,9 +410,11 @@ int object_print(struct rico_object *object)
 
     if (object)
     {
-        struct rico_mesh *mesh = chunk_read(object->hnd.chunk, object->mesh_id);
-        struct rico_mesh *material = chunk_read(object->hnd.chunk,
-                                                object->material_id);
+        
+        struct rico_mesh *mesh = pack_read(pack_active, object->mesh_id);
+        struct rico_material *material = pack_read(pack_active,
+                                                   object->material_id);
+
         len = snprintf(buf, sizeof(buf),
             "     UID: %d\n"       \
             "    Name: %s\n"       \
@@ -467,12 +433,12 @@ int object_print(struct rico_object *object)
 
             object->rot.x,   object->rot.y,   object->rot.z,
             object->scale.x, object->scale.y, object->scale.z,
-            (mesh) ? mesh->hnd.uid : 0,
-            (mesh) ? mesh->hnd.name : "ID_NULL",
+            (mesh) ? 777 : 0,
+            (mesh) ? mesh_name(mesh) : "ID_NULL",
             object->bbox.p[0].x, object->bbox.p[0].y, object->bbox.p[0].z,
             object->bbox.p[1].x, object->bbox.p[1].y, object->bbox.p[1].z,
-            (material) ? material->hnd.uid : 0,
-            (material) ? material->hnd.name : "ID_NULL"
+            (material) ? 777 : 0,
+            (material) ? material_name(material) : "ID_NULL"
         );
     }
     else

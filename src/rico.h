@@ -21,8 +21,8 @@
 #include "rico_cereal.h"
 #include "rico_pool.h"
 #include "rico_hnd.h"
-#include "mesh_vertex.h"
 #include "rico_hash.h"
+#include "pack_builder.h"
 
 #include "bbox.h"
 #include "camera.h"
@@ -36,7 +36,6 @@
 #include "rico_material.h"
 #include "rico_chunk.h"
 
-#include "load_object.h"
 #include "3rdparty/MurmurHash3.h"
 #include "primitives.h"
 #include "regularpoly.h"

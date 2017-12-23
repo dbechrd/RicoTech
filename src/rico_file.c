@@ -1,6 +1,3 @@
-#define SIGNATURE_SIZE 4
-global const char SIGNATURE[SIGNATURE_SIZE] = { 'R', '1', 'C', '0' };
-
 int rico_file_open_write(struct rico_file *_file, const char *filename,
                          u32 version)
 {
@@ -40,7 +37,6 @@ int rico_file_open_write(struct rico_file *_file, const char *filename,
 
     _file->version = version;
     _file->filename = filename;
-    _file->cereal_index = version - RICO_FILE_VERSION_MINIMUM_SUPPORTED;
     _file->next_uid = next_uid;
 
     // TODO: Separate dynamic data from static data. Textures, meshes, and
@@ -49,7 +45,7 @@ int rico_file_open_write(struct rico_file *_file, const char *filename,
     //       override static objects' positions, states, etc.
 
     // File signature and version
-    fwrite(SIGNATURE,        SIGNATURE_SIZE,          1, _file->fs);
+    fwrite(&PACK_SIGNATURE,  sizeof(PACK_SIGNATURE),  1, _file->fs);
     fwrite(&_file->version,  sizeof(_file->version),  1, _file->fs);
     fwrite(&_file->next_uid, sizeof(_file->next_uid), 1, _file->fs);
 
@@ -75,15 +71,15 @@ int rico_file_open_read(struct rico_file *_file, const char *filename)
     //       for EOF with feof() or error with ferror().
 
     // File signature
-    char SIGNATURE_BUFFER[SIGNATURE_SIZE];
-    fread(&SIGNATURE_BUFFER, SIGNATURE_SIZE, 1, _file->fs);
-    if (strncmp(SIGNATURE_BUFFER, SIGNATURE, SIGNATURE_SIZE))
+    u32 signature = 0;
+    fread(&signature, sizeof(signature), 1, _file->fs);
+    if (signature != PACK_SIGNATURE)
     {
         rico_file_close(_file);
-        fprintf(stderr, "Invalid file signature: %s\n", SIGNATURE_BUFFER);
+        fprintf(stderr, "Invalid file signature: %d\n", signature);
         return RICO_ERROR(ERR_FILE_SIGNATURE,
-                          "Invalid file signature %s in file %s",
-                          SIGNATURE_BUFFER, filename);
+                          "Invalid file signature %d in file %s",
+                          signature, filename);
     }
 
     // File version
@@ -112,7 +108,6 @@ int rico_file_open_read(struct rico_file *_file, const char *filename)
     // Next available uid
     fread(&_file->next_uid, sizeof(_file->next_uid), 1, _file->fs);
 
-    _file->cereal_index = _file->version - RICO_FILE_VERSION_MINIMUM_SUPPORTED;
     _file->filename = filename;
     return err;
 }

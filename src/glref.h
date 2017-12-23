@@ -1,7 +1,7 @@
 #ifndef GLREF_H
 #define GLREF_H
 
-int init_glref();
+void init_glref();
 internal int init_hardcoded_test_chunk();
 int create_obj();
 void recalculate_all_bbox();

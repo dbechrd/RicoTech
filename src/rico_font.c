@@ -1,11 +1,3 @@
-#define BFG_RS_NONE  0x0  // Blend flags
-#define BFG_RS_ALPHA 0x1
-#define BFG_RS_RGB   0x2
-#define BFG_RS_RGBA  0x4
-
-#define WIDTH_DATA_OFFSET  20  // Offset to width data with BFF file
-#define MAP_DATA_OFFSET   276  // Offset to texture image data with BFF file
-
 struct pool_id RICO_DEFAULT_FONT;
 
 struct bff_header
@@ -16,79 +8,16 @@ struct bff_header
     unsigned char StartPoint;
 };
 
-int font_init(struct rico_font *font, const char *filename)
+global const char *font_name(struct rico_font *font)
 {
-    enum rico_error err;
-
-#if RICO_DEBUG_FONT
-    printf("[font][init] filename=%s\n", filename);
-#endif
-
-    hnd_init(&font->hnd, RICO_HND_FONT, filename);
-	font->InvertYAxis = false;
-
-    // Read font file
-    char *buffer = NULL;
-    int length;
-    err = file_contents(filename, &length, &buffer);
-    if (err) goto cleanup;
-
-    // Check file signature
-    if ((u8)buffer[0] != 0xBF || (u8)buffer[1] != 0xF2)
-        goto cleanup;
-
-    // Read bff header
-    int width, height, bpp;
-    memcpy(&width, &buffer[2], sizeof(int));
-    memcpy(&height, &buffer[6], sizeof(int));
-    memcpy(&font->CellX, &buffer[10], sizeof(int));
-    memcpy(&font->CellY, &buffer[14], sizeof(int));
-
-    bpp = buffer[18];
-    font->Base = buffer[19];
-
-    // Check filesize
-    if (length != (MAP_DATA_OFFSET + (width * height * bpp / 8)))
-        goto cleanup;
-
-    // Calculate font params
-    font->RowPitch = width / font->CellX;
-    font->ColFactor = (float)font->CellX / width;
-    font->RowFactor = (float)font->CellY / height;
-    font->YOffset = font->CellY;
-
-    // Determine blending options based on BPP
-    switch (bpp)
-    {
-    case 8: // Greyscale
-        font->RenderStyle = BFG_RS_ALPHA;
-        break;
-    case 24: // RGB
-        font->RenderStyle = BFG_RS_RGB;
-        break;
-    case 32: // RGBA
-        font->RenderStyle = BFG_RS_RGBA;
-        break;
-    default: // Unsupported BPP
-        goto cleanup;
-    }
-
-    // Store character widths
-    memcpy(font->Width, &buffer[WIDTH_DATA_OFFSET], 256);
-
-    struct rico_texture *tex;
-    err = chunk_alloc((void **)&tex, font->hnd.chunk, RICO_HND_TEXTURE);
-    if (err) goto cleanup;
-    err = texture_load_pixels(tex, filename, GL_TEXTURE_2D, width, height, bpp,
-                              &buffer[MAP_DATA_OFFSET]);
-    if (err) goto cleanup;
-    font->texture_id = tex->hnd.id;
-
-cleanup:
-    free(buffer);
-    return err;
+    return (u8 *)font + font->name_offset;
+}
+internal struct rico_texture *font_texture(struct rico_font *font)
+{
+    return (struct rico_texture *)((u8 *)font + font->texture_offset);
 }
 
+#if 0
 int font_free(struct rico_font *font)
 {
     enum rico_error err;
@@ -97,11 +26,12 @@ int font_free(struct rico_font *font)
     printf("[font][free] uid=%d name=%s\n", font->hnd.uid, font->hnd.name);
 #endif
 
-    err = chunk_free(font->hnd.chunk, font->texture_id);
+    err = chunk_free(font->hnd.chunk, font->texture_offset);
     if (err) return err;
     err = pool_remove(font->hnd.pool, font->hnd.id);
     return err;
 }
+#endif
 
 internal void font_setblend(const struct rico_font *font)
 {
@@ -122,15 +52,15 @@ internal void font_setblend(const struct rico_font *font)
 	}
 }
 
-int font_render(struct pool_id *mesh_id, struct pool_id *texture_id,
-                struct rico_font *font, int x, int y, struct col4 bg,
-                const char *text, const char *mesh_name,
-                enum rico_mesh_type type)
+void font_render(struct rico_mesh **mesh, struct rico_texture **texture,
+                 struct rico_font *font, int x, int y, struct col4 bg,
+                 const char *text, const char *mesh_name,
+                 enum rico_mesh_type type)
 {
-    enum rico_error err;
-
+    // TODO: Push/pop these on arena instead of using local stack? Does it
+    //       matter?
     // Persistent buffers for font rendering
-    local struct mesh_vertex vertices[BFG_MAXSTRING * 4] = { 0 };
+    local struct rico_vertex vertices[BFG_MAXSTRING * 4] = { 0 };
     local GLuint elements[BFG_MAXSTRING * 6] = { 0 };
 
     if (!font)
@@ -175,7 +105,7 @@ int font_render(struct pool_id *mesh_id, struct pool_id *texture_id,
         //xOffset = font->CellX;
 
         // Vertices for this character's quad
-        vertices[idx_vertex++] = (struct mesh_vertex) {
+        vertices[idx_vertex++] = (struct rico_vertex) {
             (struct vec3) {
                 cur_x / 64.0f,
                 cur_y / 64.0f,
@@ -185,7 +115,7 @@ int font_render(struct pool_id *mesh_id, struct pool_id *texture_id,
             (struct vec3) { 1.0f, 1.0f, 1.0f },
             (struct tex2) { u0, v1 }
         };
-        vertices[idx_vertex++] = (struct mesh_vertex) {
+        vertices[idx_vertex++] = (struct rico_vertex) {
             (struct vec3) {
                 (cur_x + xOffset) / 64.0f,
                 cur_y / 64.0f,
@@ -195,7 +125,7 @@ int font_render(struct pool_id *mesh_id, struct pool_id *texture_id,
             (struct vec3) { 1.0f, 1.0f, 1.0f },
             (struct tex2) { u1, v1 }
         };
-        vertices[idx_vertex++] = (struct mesh_vertex) {
+        vertices[idx_vertex++] = (struct rico_vertex) {
             (struct vec3) {
                 (cur_x + xOffset) / 64.0f,
                 (cur_y + font->YOffset) / 64.0f,
@@ -205,7 +135,7 @@ int font_render(struct pool_id *mesh_id, struct pool_id *texture_id,
             (struct vec3) { 1.0f, 1.0f, 1.0f },
             (struct tex2) { u1, v0 }
         };
-        vertices[idx_vertex++] = (struct mesh_vertex) {
+        vertices[idx_vertex++] = (struct rico_vertex) {
             (struct vec3) {
                 cur_x / 64.0f,
                 (cur_y + font->YOffset) / 64.0f,
@@ -234,20 +164,12 @@ int font_render(struct pool_id *mesh_id, struct pool_id *texture_id,
         cur_x += xOffset;
     }
 
-    struct rico_mesh *mesh;
-    err = chunk_alloc((void **)&mesh, font->hnd.chunk, RICO_HND_MESH);
-    if (err) goto cleanup;
-    err = mesh_init(mesh, mesh_name, type, idx_vertex, vertices, idx_element,
-                    elements, GL_STATIC_DRAW);
-    if (err) goto cleanup;
-    *mesh_id = mesh->hnd.id;
-
-    *texture_id = chunk_dupe(font->hnd.chunk, font->texture_id);
-
-cleanup:
-    //free(vertices);
-    //free(elements);
-    return err;
+    // TODO: This stuff is severely broken, need to figure out where these
+    //       dynamic-at-runtime meshes will go for e.g. screen strings.
+    u32 mesh_id = load_mesh(pack_frame, mesh_name, idx_vertex, vertices,
+                            idx_element, elements);
+    *mesh = pack_read(pack_frame, mesh_id);
+    *texture = font_texture(font);
 }
 
 /*

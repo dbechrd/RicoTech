@@ -1,65 +1,23 @@
 struct pool_id RICO_DEFAULT_TEXTURE_DIFF;
 struct pool_id RICO_DEFAULT_TEXTURE_SPEC;
 
-internal int build_texture(struct rico_texture *texture, const void *pixels);
-
-int texture_load_file(struct rico_texture *texture, const char *name,
-                      GLenum target, const char *filename, u32 bpp)
+global const char *texture_name(struct rico_texture *tex)
 {
-#if RICO_DEBUG_TEXTURE
-    printf("[ tex][load] filename=%s\n", filename);
-#endif
-
-    enum rico_error err;
-    int width, height;
-
-    // Load raw texture data
-    unsigned char* pixels = stbi_load(filename, &width, &height, NULL, 4);
-    if (!pixels)
-    {
-        err = RICO_ERROR(ERR_TEXTURE_LOAD, "Failed to load texture file: %s",
-                         filename);
-        goto cleanup;
-    }
-
-    // Load pixels
-    err = texture_load_pixels(texture, name, target, width, height, bpp,
-                              pixels);
-
-cleanup:
-    stbi_image_free(pixels);
-    return err;
+    return (u8 *)tex + tex->name_offset;
+}
+internal u8 *texture_pixels(struct rico_texture *tex)
+{
+    return (u8 *)tex + tex->pixels_offset;
 }
 
-int texture_load_pixels(struct rico_texture *texture, const char *name,
-                        GLenum target, u32 width, u32 height, u32 bpp,
-                        const void *pixels)
+internal int texture_upload(struct rico_texture *texture)
 {
-    enum rico_error err;
+    enum rico_error err = SUCCESS;
 
 #if RICO_DEBUG_TEXTURE
-    printf("[ tex][init] name=%s\n", name);
+    printf("[ tex][upld] name=%s\n", texture_name(texture));
 #endif
 
-    // Note: If we want to serialize texture data we have to store the filename
-    //       or the pixel data in the struct.
-    hnd_init(&texture->hnd, RICO_HND_TEXTURE, name);
-    texture->gl_target = target;
-    texture->width = width;
-    texture->height = height;
-    texture->bpp = bpp;
-
-    err = build_texture(texture, pixels);
-    if (err) return err;
-
-    // Store in global hash table
-    err = hashtable_insert_hnd(&global_textures, &texture->hnd,
-                               &texture->hnd.id, sizeof(texture->hnd.id));
-    return err;
-}
-
-internal int build_texture(struct rico_texture *texture, const void *pixels)
-{
     //--------------------------------------------------------------------------
     // Generate textures
     //--------------------------------------------------------------------------
@@ -162,7 +120,8 @@ internal int build_texture(struct rico_texture *texture, const void *pixels)
     }
 
     glTexImage2D(texture->gl_target, 0, format_internal, texture->width,
-                 texture->height, 0, format, GL_UNSIGNED_BYTE, pixels);
+                 texture->height, 0, format, GL_UNSIGNED_BYTE,
+                 texture_pixels(texture));
 
     //--------------------------------------------------------------------------
     // Generate mipmaps
@@ -174,26 +133,30 @@ internal int build_texture(struct rico_texture *texture, const void *pixels)
     //--------------------------------------------------------------------------
     // Unbind the texture
     glBindTexture(texture->gl_target, 0);
-    return SUCCESS;
+
+    return err;
 }
 
-int texture_free(struct rico_texture *texture)
+void texture_delete(struct rico_texture *texture)
 {
 #if RICO_DEBUG_TEXTURE
-    printf("[ tex][free] uid=%d name=%s\n", texture->hnd.uid,
-           texture->hnd.name);
+    printf("[ tex][ del] name=%s\n", texture_name(texture));
 #endif
 
-    hashtable_delete_hnd(&global_textures, &texture->hnd);
-
     glDeleteTextures(1, &texture->gl_id);
-    return pool_remove(texture->hnd.pool, texture->hnd.id);
 }
 
 void texture_bind(struct rico_texture *texture, GLenum texture_unit)
 {
+#if RICO_DEBUG_TEXTURE
+    printf("[ tex][bind] name=%s\n", texture_name(texture));
+#endif
+
     RICO_ASSERT(texture);
-    RICO_ASSERT(texture->gl_id);
+    if (texture->gl_id)
+    {
+        texture_upload(texture);
+    }
 
     glActiveTexture(texture_unit);
     glBindTexture(texture->gl_target, texture->gl_id);
@@ -201,6 +164,10 @@ void texture_bind(struct rico_texture *texture, GLenum texture_unit)
 
 void texture_unbind(struct rico_texture *texture, GLenum texture_unit)
 {
+#if RICO_DEBUG_TEXTURE
+    printf("[ tex][unbd] name=%s\n", texture_name(texture));
+#endif
+
     RICO_ASSERT(texture);
     RICO_ASSERT(texture->gl_id);
 

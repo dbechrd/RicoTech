@@ -1133,182 +1133,11 @@ internal int rico_init_transient_chunk()
     err = chunk_init(&chunk_transient, "[CHUNK_TRANSIENT]", &pool_counts);
     return err;
 }
-internal int rico_init_fonts()
-{
-    enum rico_error err;
-
-    struct rico_font *font;
-    err = chunk_alloc((void **)&font, chunk_transient, RICO_HND_FONT);
-    if (err) return err;
-    err = font_init(font, "font/courier_new.bff");
-    if (err) return err;
-
-    RICO_DEFAULT_FONT = font->hnd.id;
-    return err;
-}
-internal int rico_init_textures()
-{
-    enum rico_error err;
-
-    struct rico_texture *tex_diff;
-    struct rico_texture *tex_spec;
-
-    err = chunk_alloc((void **)&tex_diff, chunk_transient, RICO_HND_TEXTURE);
-    if (err) return err;
-    err = texture_load_file(tex_diff, "[TEXTURE_DEFAULT_DIFF]", GL_TEXTURE_2D,
-                            "texture/basic_diff.tga", 32);
-    if (err) return err;
-
-    err = chunk_alloc((void **)&tex_spec, chunk_transient, RICO_HND_TEXTURE);
-    if (err) return err;
-    err = texture_load_file(tex_spec, "[TEXTURE_DEFAULT_SPEC]", GL_TEXTURE_2D,
-                            "texture/basic_spec.tga", 32);
-    if (err) return err;
-
-    RICO_DEFAULT_TEXTURE_DIFF = tex_diff->hnd.id;
-    RICO_DEFAULT_TEXTURE_SPEC = tex_spec->hnd.id;
-    return err;
-}
-internal int rico_init_materials()
-{
-    enum rico_error err;
-
-    struct rico_material *material;
-    err = chunk_alloc((void **)&material, chunk_transient, RICO_HND_MATERIAL);
-    if (err) return err;
-    err = material_init(material, "[MATERIAL_DEFAULT]",
-                        RICO_DEFAULT_TEXTURE_DIFF, RICO_DEFAULT_TEXTURE_SPEC,
-                        0.5f);
-    if (err) return err;
-
-    RICO_DEFAULT_MATERIAL = material->hnd.id;
-    return err;
-}
-internal int rico_init_meshes()
-{
-    enum rico_error err;
-
-    //--------------------------------------------------------------------------
-    // Create default mesh (white rect)
-    //--------------------------------------------------------------------------
-    const struct mesh_vertex default_vertices[] = {
-        {
-            { -1.0f, -1.0f, 1.0f }, // Position
-            COLOR_BLACK,            // Color
-            { 0.0f, 0.0f, 1.0f },   // Normal
-            { 0.0f, 0.0f }          // UV-coords
-        },
-        {
-            { 1.0f, -1.0f, 1.0f },
-            COLOR_RED,
-            { 0.0f, 0.0f, 1.0f },
-            { 1.0f, 0.0f }
-        },
-        {
-            { 1.0f, 1.0f, 1.0f },
-            COLOR_YELLOW,
-            { 0.0f, 0.0f, 1.0f },
-            { 1.0f, 1.0f }
-        },
-        {
-            { -1.0f, 1.0f, 1.0f },
-            COLOR_GREEN,
-            { 0.0f, 0.0f, 1.0f },
-            { 0.0f, 1.0f }
-        },
-        {
-            { -1.0f, -1.0f, -1.0f },
-            COLOR_BLUE,
-            { 0.0f, 0.0f, 1.0f },
-            { 0.0f, 0.0f }
-        },
-        {
-            { 1.0f, -1.0f, -1.0f },
-            COLOR_MAGENTA,
-            { 0.0f, 0.0f, 1.0f },
-            { 1.0f, 0.0f }
-        },
-        {
-            { 1.0f, 1.0f, -1.0f },
-            COLOR_WHITE,
-            { 0.0f, 0.0f, 1.0f },
-            { 1.0f, 1.0f }
-        },
-        {
-            { -1.0f, 1.0f, -1.0f },
-            COLOR_CYAN,
-            { 0.0f, 0.0f, 1.0f },
-            { 0.0f, 1.0f }
-        }
-    };
-    const GLuint elements[] = {
-        0, 1, 2, 2, 3, 0,
-        4, 0, 3, 3, 7, 4,
-        5, 4, 7, 7, 6, 5,
-        1, 5, 6, 6, 2, 1,
-        3, 2, 6, 6, 7, 3,
-        4, 5, 1, 1, 0, 4
-    };
-
-    struct rico_mesh *prim_mesh_bbox;
-    err = chunk_alloc((void **)&prim_mesh_bbox, chunk_transient, RICO_HND_MESH);
-    if (err) return err;
-    err = mesh_init(prim_mesh_bbox, "[PRIM_MESH_BBOX]", MESH_OBJ_WORLD, 8,
-                    default_vertices, 36, elements, GL_STATIC_DRAW);
-    if (err) return err;
-
-    PRIM_MESH_BBOX = prim_mesh_bbox->hnd.id;
-    RICO_DEFAULT_MESH = PRIM_MESH_BBOX;
-    return err;
-}
-
-internal int load_mesh_files()
-{
-    enum rico_error err;
-
-    u32 ticks = SDL_GetTicks();
-
-    err = load_obj_file(chunk_transient, "mesh/prim_sphere.ric");
-    if (err) return err;
-
-    PRIM_MESH_SPHERE = *(struct pool_id *)hashtable_search_str(
-        &global_meshes, "[PRIM_MESH_SPHERE]");
-    if (err) return err;
-
-#if 0
-    err = load_obj_file(TRANSIENT, "mesh/conference.ric");
-    if (err) return err;
-
-    err = load_obj_file(TRANSIENT, "mesh/spawn.ric");
-    if (err) return err;
-
-    err = load_obj_file(TRANSIENT, "mesh/door.ric");
-    if (err) return err;
-
-    err = load_obj_file(TRANSIENT, "mesh/welcome_floor.ric");
-    if (err) return err;
-#endif
-
-    err = load_obj_file(chunk_transient, "mesh/sphere.ric");
-    if (err) return err;
-
-    err = load_obj_file(chunk_transient, "mesh/wall_cornertest.ric");
-    if (err) return err;
-
-#if 0
-    err = load_obj_file(TRANSIENT, "mesh/grass.ric");
-    if (err) return err;
-#endif
-
-    u32 ticks2 = SDL_GetTicks();
-    printf("[PERF][mesh] Meshes loaded in: %d ticks\n", ticks2 - ticks);
-
-    return err;
-}
 internal int init_hardcoded_test_chunk(struct rico_chunk **chunk)
 {
-    enum rico_error err;
+    enum rico_error err = SUCCESS;
 
+#if 0
     //--------------------------------------------------------------------------
     // Create chunk
     //--------------------------------------------------------------------------
@@ -1383,6 +1212,7 @@ internal int init_hardcoded_test_chunk(struct rico_chunk **chunk)
     err = rico_serialize(chunk_home, &file);
     rico_file_close(&file);
 #endif
+#endif
 
     return err;
 }
@@ -1447,6 +1277,7 @@ internal int rico_init()
     prim_init(PRIM_SEGMENT);
     prim_init(PRIM_RAY);
 
+#if 0
     printf("----------------------------------------------------------\n");
     printf("[MAIN][init] Initializing fonts\n");
     printf("----------------------------------------------------------\n");
@@ -1476,6 +1307,7 @@ internal int rico_init()
     printf("----------------------------------------------------------\n");
     err = load_mesh_files();
     if (err) return err;
+#endif 
 
     printf("----------------------------------------------------------\n");
     printf("[MAIN][init] Loading chunks\n");
@@ -1486,8 +1318,7 @@ internal int rico_init()
     printf("----------------------------------------------------------\n");
     printf("[MAIN][init] Initializing game world\n");
     printf("----------------------------------------------------------\n");
-    err = init_glref();
-    if (err) return err;
+    init_glref();
 
     printf("----------------------------------------------------------\n");
     printf("[MAIN][init] Initializing camera\n");

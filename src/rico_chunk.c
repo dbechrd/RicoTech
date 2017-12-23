@@ -117,17 +117,17 @@ int chunk_free(struct rico_chunk *chunk, struct pool_id id)
     }
     case RICO_HND_TEXTURE:
     {
-        err = texture_free(block);
+        //err = texture_free(block);
         break;
     }
     case RICO_HND_MESH:
     {
-        err = mesh_free(block);
+        //err = mesh_free(block);
         break;
     }
     case RICO_HND_FONT:
     {
-        err = font_free(block);
+        //err = font_free(block);
         break;
     }
     case RICO_HND_STRING:
@@ -137,7 +137,7 @@ int chunk_free(struct rico_chunk *chunk, struct pool_id id)
     }
     case RICO_HND_MATERIAL:
     {
-        err = material_free(block);
+        //err = material_free(block);
         break;
     }
     default:

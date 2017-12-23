@@ -10,28 +10,37 @@ enum rico_mesh_type {
 };
 extern const char *rico_mesh_type_string[];
 
-struct rico_mesh {
-    struct hnd hnd;
-    enum rico_mesh_type type;
+struct rico_vertex {
+    struct vec3 pos;
+    struct col4 col;
+    struct vec3 normal;
+    struct tex2 uv;
+};
 
+struct rico_mesh {
+    u32 id;
+    u32 vertex_count;
+    u32 element_count;
+    struct bbox bbox;
+
+    // TODO: Helper functions
+    //const char *name;
+    //struct rico_vertex *vertices;
+    //u32 *elements;
+    u32 name_offset;
+    u32 vertices_offset;
+    u32 elements_offset;
+
+    // TODO: Store these in hash table when loaded, map UID -> gl id or
+    //       track which meshes are currently loaded on GPU some other way.
     GLuint vao;
     GLuint vbos[2];
-
-    GLsizei vertex_count;
-    GLsizei element_count;
-    struct mesh_vertex *vertices;
-    u32 *elements;
-
-    struct bbox bbox;
 };
 extern struct pool_id RICO_DEFAULT_MESH;
 
-int mesh_init(struct rico_mesh *mesh, const char *name,
-              enum rico_mesh_type type, u32 vertex_count,
-              const struct mesh_vertex *vertex_data, u32 element_count,
-              const GLuint *element_data, GLenum hint);
-int mesh_free(struct rico_mesh *mesh);
-void mesh_update(struct rico_mesh *mesh);
+global const char *mesh_name(struct rico_mesh *mesh);
+void mesh_upload(struct rico_mesh *mesh, GLenum hint);
+void mesh_delete(struct rico_mesh *mesh);
 void mesh_render(struct rico_mesh *mesh);
 
 #endif // RICO_MESH_H

@@ -14,18 +14,12 @@ int string_init(struct rico_string *str, const char *name,
 
     // TODO: Reuse mesh and material if they are the same
     // Generate font mesh and get texture handle
-    struct pool_id font_mesh_id;
-    struct pool_id font_tex_id;
-    err = font_render(&font_mesh_id, &font_tex_id, font, 0, 0, color,
-                      text, name, MESH_STRING_SCREEN);
-    if (err) return err;
+    struct rico_mesh *font_mesh;
+    struct rico_texture *font_tex;
+    font_render(&font_mesh, &font_tex, font, 0, 0, color, text, name,
+                MESH_STRING_SCREEN);
 
-    struct rico_material *font_material;
-    err = chunk_alloc((void **)&font_material, str->hnd.chunk,
-                      RICO_HND_MATERIAL);
-    if (err) return err;
-    err = material_init(font_material, name, font_tex_id, ID_NULL, 0.5f);
-    if (err) return err;
+    u32 font_mat_id = load_material(pack_frame, name, font_tex->id, 0, 0.5f);
 
     // Init string
     hnd_init(&str->hnd, RICO_HND_STRING, name);
@@ -34,8 +28,8 @@ int string_init(struct rico_string *str, const char *name,
     struct rico_object *str_obj;
     err = chunk_alloc((void **)&str_obj, str->hnd.chunk, RICO_HND_OBJECT);
     if (err) return err;
-    err = object_init(str_obj, name, OBJ_STRING_SCREEN, font_mesh_id,
-                      font_material->hnd.id, NULL);
+    err = object_init(str_obj, name, OBJ_STRING_SCREEN, font_mesh->id,
+                      font_mat_id, NULL);
     if (err) return err;
     str->object_id = chunk_dupe(str->hnd.chunk, str_obj->hnd.id);
 

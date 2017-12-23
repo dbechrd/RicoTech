@@ -24,10 +24,8 @@ global struct mat4 x_axis_transform;
 global struct mat4 y_axis_transform;
 global struct mat4 z_axis_transform;
 
-int init_glref()
+void init_glref()
 {
-    enum rico_error err;
-
     //--------------------------------------------------------------------------
     // Initialize fonts
     //--------------------------------------------------------------------------
@@ -74,10 +72,8 @@ int init_glref()
     //--------------------------------------------------------------------------
     // Create axis label bboxes
     //--------------------------------------------------------------------------
-    err = bbox_init(&axis_bbox, (struct vec3) { -0.5f, -0.5f, -0.5f },
-                                (struct vec3) {  0.5f,  0.5f,  0.5f },
-                    COLOR_WHITE);
-    if (err) return err;
+    bbox_init(&axis_bbox, (struct vec3) { -0.5f, -0.5f, -0.5f },
+                          (struct vec3) {  0.5f,  0.5f,  0.5f }, COLOR_WHITE);
 
     // X-axis label
     x_axis_transform = MAT4_IDENT;
@@ -93,8 +89,6 @@ int init_glref()
     z_axis_transform = MAT4_IDENT;
     mat4_scale(&z_axis_transform, &(struct vec3) { 0.01f, 0.01f, 1.0f });
     mat4_translate(&z_axis_transform, &(struct vec3) { 0.0f, 0.0f, 0.5f });
-
-    return err;
 }
 
 int create_obj()
@@ -108,7 +102,7 @@ int create_obj()
     struct rico_object *new_obj;
     err = chunk_alloc((void **)&new_obj, chunk_active, RICO_HND_OBJECT);
     if (err) return err;
-    err = object_init(new_obj, name, OBJ_STATIC, ID_NULL, ID_NULL, NULL);
+    err = object_init(new_obj, name, OBJ_STATIC, 0, 0, NULL);
     if (err) return err;
 
     // Select new object
@@ -221,6 +215,7 @@ void selected_scale(const struct vec3 *offset)
 
 void selected_mesh_next()
 {
+#if 0
     if (!selected_obj)
         return;
 
@@ -228,10 +223,12 @@ void selected_mesh_next()
                                                 selected_obj->mesh_id));
     object_select(selected_obj);
     object_print(selected_obj);
+#endif
 }
 
 void selected_mesh_prev()
 {
+#if 0
     if (!selected_obj)
         return;
 
@@ -239,6 +236,7 @@ void selected_mesh_prev()
                                                 selected_obj->mesh_id));
     object_select(selected_obj);
     object_print(selected_obj);
+#endif
 }
 
 void selected_bbox_reset()
@@ -246,7 +244,9 @@ void selected_bbox_reset()
     if (!selected_obj)
         return;
 
-    object_bbox_set(selected_obj, NULL);
+    struct rico_mesh *mesh = pack_read(pack_active, selected_obj->mesh_id);
+    selected_obj->bbox = mesh->bbox;
+
     object_select(selected_obj);
     object_print(selected_obj);
 }

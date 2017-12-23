@@ -139,9 +139,6 @@
     <ClCompile Include="src\glref.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
-    <ClCompile Include="src\load_object.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
     <ClCompile Include="src\main.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
