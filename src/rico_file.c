@@ -71,12 +71,12 @@ int rico_file_open_read(struct rico_file *_file, const char *filename)
     //       for EOF with feof() or error with ferror().
 
     // File signature
-    u32 signature = 0;
+    u8 signature[4] = { 0 };
     fread(&signature, sizeof(signature), 1, _file->fs);
     if (signature != PACK_SIGNATURE)
     {
         rico_file_close(_file);
-        fprintf(stderr, "Invalid file signature: %d\n", signature);
+        fprintf(stderr, "Invalid file signature: %s\n", signature);
         return RICO_ERROR(ERR_FILE_SIGNATURE,
                           "Invalid file signature %d in file %s",
                           signature, filename);

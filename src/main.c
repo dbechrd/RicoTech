@@ -170,6 +170,12 @@ int mymain()
     //printf("Cache line size: %d bytes\n", cacheSize);
     init_stb();
     init_murmurhash3();
+
+    const char *pack_name = "packs/alpha.pak";
+    err = pack_build(pack_name);
+    if (err) goto cleanup;
+    err = pack_load(pack_name, &pack_active);
+
     err = init_sdl();
     if (err) goto cleanup;
     err = init_gl3w(GL_VERSION_MAJOR, GL_VERSION_MINOR);

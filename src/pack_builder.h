@@ -15,7 +15,7 @@ struct pack_entry
 // u8 data[data_size];
 struct pack
 {
-    u32 magic;
+    u8 magic[4];
     u32 version;
     u32 blob_count;
     u32 buffer_size;
@@ -37,9 +37,23 @@ inline void *pack_push(struct pack *pack, u32 size)
     pack->buffer_used += size;
     return ptr;
 }
+inline void *pack_push_data(struct pack *pack, const void *data, u32 size)
+{
+    void *ptr = pack_push(pack, size);
+    memcpy(ptr, data, size);
+    return ptr;
+}
+inline void *pack_push_str(struct pack *pack, const char *str)
+{
+    u32 size = strlen(str) + 1;
+    void *ptr = pack_push(pack, size);
+    memcpy(ptr, str, size);
+    return ptr;
+}
 #define push_struct(pack, type) ((type *)pack_push(pack, sizeof(type)))
-#define push_string(pack, str) (pack_push(pack, strlen(str) + 1))
 #define push_bytes(pack, bytes) (pack_push(pack, bytes))
+#define push_string(pack, str) (pack_push_str(pack, str))
+#define push_data(pack, data, size) (pack_push_data(pack, data, size))
 #define array_count(arr) (sizeof(arr) / sizeof(arr[0]))
 
 inline u32 pack_offset(struct pack *pack, u32 start)
@@ -68,5 +82,6 @@ inline void *pack_read(struct pack *pack, u32 id)
 }
 
 int pack_build(const char *filename);
+int pack_load(const char *filename, struct pack **_pack);
 
 #endif

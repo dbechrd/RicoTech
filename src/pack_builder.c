@@ -10,8 +10,9 @@
 #define MAX_PACK_ENTRIES 1024
 #define MAX_PACK_SIZE 1024 * 1024 * 512 // 512 MB
 
-internal const u32 PACK_SIGNATURE =
-    ((u32)'R' << 24) | ((u32)'I' << 16) | ((u32)'C' << 8) | ((u32)'O');
+internal const u8 PACK_SIGNATURE[4] = { 'R', 'I', 'C', 'O' };
+//internal const u32 PACK_SIGNATURE =
+//    ((u32)'R' << 24) | ((u32)'I' << 16) | ((u32)'C' << 8) | ((u32)'O');
 
 struct pack *pack_active = 0;
 struct pack *pack_frame = 0;
@@ -30,7 +31,6 @@ internal inline void blob_end(struct pack *pack)
 {
     u32 size = blob_offset(pack);
     pack->index[pack->blob_count].size = size;
-    pack->buffer_used += size;
     pack->blob_count++;
 }
 internal inline void blob_error(struct pack *pack, u32 *pack_idx)
@@ -42,7 +42,7 @@ internal inline void blob_error(struct pack *pack, u32 *pack_idx)
 internal u32 load_texture(struct pack *pack, const char *name,
                           const char *filename)
 {
-    enum rico_error err;
+    enum rico_error err = SUCCESS;
 
     u32 blob_idx = blob_start(pack, RICO_HND_TEXTURE);
     struct rico_texture *tex = push_bytes(pack, sizeof(*tex));
@@ -62,9 +62,7 @@ internal u32 load_texture(struct pack *pack, const char *name,
     push_string(pack, name);
 
     tex->pixels_offset = blob_offset(pack);
-    u32 data_size = tex->width * tex->height * (tex->bpp / 8);
-    void *tex_pixels = push_bytes(pack, data_size);
-    memcpy(tex_pixels, pixels, data_size);
+    push_data(pack, pixels, tex->width * tex->height * (tex->bpp / 8));
 
     blob_end(pack);
 
@@ -144,8 +142,7 @@ internal u32 load_font(struct pack *pack, const char *name,
 
     // Store pixels
     tex->pixels_offset = blob_offset(pack);
-    void *tex_pixels = push_bytes(pack, data_size);
-    memcpy(tex_pixels, &buffer[MAP_DATA_OFFSET], data_size);
+    push_data(pack, &buffer[MAP_DATA_OFFSET], data_size);
 
     blob_end(pack);
 
@@ -187,9 +184,9 @@ internal u32 load_mesh(struct pack *pack, const char *name, u32 vertex_count,
     mesh->name_offset = blob_offset(pack);
     push_string(pack, name);
     mesh->vertices_offset = blob_offset(pack);
-    push_bytes(pack, vertex_count * sizeof(*vertex_data));
+    push_data(pack, vertex_data, vertex_count * sizeof(*vertex_data));
     mesh->elements_offset = blob_offset(pack);
-    push_bytes(pack, element_count * sizeof(*element_data));
+    push_data(pack, element_data, element_count * sizeof(*element_data));
     
     blob_end(pack);
     return blob_idx;
@@ -289,7 +286,6 @@ int load_obj_file(struct pack *pack, const char *filename)
     char *buffer;
     char *tok;
 
-    printf("[ obj][load] filename=%s\n", filename);
     err = file_contents(filename, &length, &buffer);
     if (err) goto cleanup;
 
@@ -418,14 +414,11 @@ internal u32 null_blob(struct pack *pack)
 
 int pack_build(const char *filename)
 {
-    UNUSED(filename);
-    enum rico_error err;
-    
-
+    enum rico_error err = SUCCESS;
     u32 tick_start = SDL_GetTicks();
 
     struct pack pack = { 0 };
-    pack.magic = PACK_SIGNATURE;
+    memcpy(pack.magic, PACK_SIGNATURE, sizeof(pack.magic));
     pack.version = RICO_FILE_VERSION_CURRENT;
     pack.index = calloc(1024, sizeof(*pack.index));
     pack.buffer_size = 1024 * 1024 * 512; // 512 MB
@@ -455,18 +448,22 @@ int pack_build(const char *filename)
     pack.data_offset = pack.index_offset +
                        pack.blob_count * sizeof(struct pack_entry);
 
-    // TODO: Write pack, index, data to disk.
-    FILE *pack_file = fopen("packs/alpha.ric", "wb");
+    // Write pack file to disk
+    FILE *pack_file = fopen(filename, "wb");
     if (pack_file)
     {
-        fwrite(&pack, 1, sizeof(pack), pack_file);
-        fwrite(pack.index, 1, pack.blob_count * sizeof(*pack.index), pack_file);
-        fwrite(pack.buffer, 1, pack.buffer_used, pack_file);
+        u32 bytes_written = 0;
+        bytes_written += fwrite(&pack, 1, sizeof(pack), pack_file);
+        bytes_written += fwrite(pack.index, 1, pack.blob_count * sizeof(*pack.index), pack_file);
+        bytes_written += fwrite(pack.buffer, 1, pack.buffer_used, pack_file);
         fclose(pack_file);
+        RICO_ASSERT(bytes_written == pack.data_offset + pack.buffer_used);
     }
     else
     {
-        err = RICO_ERROR(ERR_FILE_WRITE, "Error: Cannot open pack file.\n");
+        err = RICO_ERROR(ERR_FILE_WRITE,
+                         "Error: Cannot open pack file [%s] for read.\n",
+                         filename);
         goto cleanup;
     }
 
@@ -479,13 +476,48 @@ cleanup:
     return err;
 }
 
-int pack_load(const char *filename)
+int pack_load(const char *filename, struct pack **_pack)
 {
     UNUSED(filename);
     enum rico_error err = SUCCESS;
+    u32 tick_start = SDL_GetTicks();
+
     //struct pack *pack; // = load_entire_file()
     // TODO: Load pack directly into memory from file, fix pointers using
     //       offsets.
     // NOTE: Fix pack.buffer_size to be w/e size is actually allocated
+
+
+    // Read pack file from disk
+    FILE *pack_file = fopen(filename, "rb");
+    if (pack_file)
+    {
+        struct pack tmp_pack = { 0 };
+        fread(&tmp_pack, 1, sizeof(tmp_pack), pack_file);
+        u32 pack_size = tmp_pack.data_offset + tmp_pack.buffer_used;
+        fseek(pack_file, 0, SEEK_SET);
+
+        struct pack *pack = calloc(1, pack_size);
+        u32 bytes_read = fread(pack, 1, pack_size, pack_file);
+        fclose(pack_file);
+        RICO_ASSERT(bytes_read == pack_size);
+
+        pack->buffer_size = pack->buffer_used;
+        pack->index = (struct pack_entry *)((u8 *)pack + pack->index_offset);
+        pack->buffer = (u8 *)pack + pack->data_offset;
+        *_pack = pack;
+    }
+    else
+    {
+        err = RICO_ERROR(ERR_FILE_WRITE,
+                         "Error: Cannot open pack file [%s] for write.\n",
+                         filename);
+        goto cleanup;
+    }
+
+    u32 tick_end = SDL_GetTicks();
+    printf("[PERF][pack] Pack read in: %d ticks\n", tick_end - tick_start);
+
+cleanup:
     return err;
 }
