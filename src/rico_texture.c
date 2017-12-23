@@ -1,6 +1,3 @@
-struct pool_id RICO_DEFAULT_TEXTURE_DIFF;
-struct pool_id RICO_DEFAULT_TEXTURE_SPEC;
-
 global const char *texture_name(struct rico_texture *tex)
 {
     return (u8 *)tex + tex->name_offset;

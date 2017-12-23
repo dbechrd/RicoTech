@@ -171,10 +171,9 @@ int mymain()
     init_stb();
     init_murmurhash3();
 
-    const char *pack_name = "packs/alpha.pak";
-    err = pack_build(pack_name);
-    if (err) goto cleanup;
-    err = pack_load(pack_name, &pack_active);
+    pack_build_all();
+    err = pack_load("packs/default.pak", &pack_default);
+    err = pack_load("packs/alpha.pak", &pack_active);
 
     err = init_sdl();
     if (err) goto cleanup;

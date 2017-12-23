@@ -1,5 +1,3 @@
-struct pool_id RICO_DEFAULT_FONT;
-
 struct bff_header
 {
     unsigned char ID1, ID2;
@@ -65,7 +63,7 @@ void font_render(struct rico_mesh **mesh, struct rico_texture **texture,
 
     if (!font)
     {
-        font = chunk_read(chunk_transient, RICO_DEFAULT_FONT);
+        font = pack_read(pack_default, RICO_DEFAULT_FONT);
     }
 
     //font_setblend(font);

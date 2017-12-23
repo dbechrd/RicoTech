@@ -14,6 +14,7 @@ internal const u8 PACK_SIGNATURE[4] = { 'R', 'I', 'C', 'O' };
 //internal const u32 PACK_SIGNATURE =
 //    ((u32)'R' << 24) | ((u32)'I' << 16) | ((u32)'C' << 8) | ((u32)'O');
 
+struct pack *pack_default = 0;
 struct pack *pack_active = 0;
 struct pack *pack_frame = 0;
 
@@ -192,7 +193,7 @@ internal u32 load_mesh(struct pack *pack, const char *name, u32 vertex_count,
     return blob_idx;
 }
 
-internal u32 default_mesh(struct pack *pack)
+internal u32 default_mesh(struct pack *pack, const char *name)
 {
     //--------------------------------------------------------------------------
     // Create default mesh (rainbow cube)
@@ -256,7 +257,7 @@ internal u32 default_mesh(struct pack *pack)
         4, 5, 1, 1, 0, 4
     };
 
-    return load_mesh(pack, "[PRIM_MESH_BBOX]", array_count(verts), verts,
+    return load_mesh(pack, name, array_count(verts), verts,
                      array_count(elements), elements);
 }
 
@@ -412,29 +413,92 @@ internal u32 null_blob(struct pack *pack)
     return blob_idx;
 }
 
-int pack_build(const char *filename)
-{
-    enum rico_error err = SUCCESS;
-    u32 tick_start = SDL_GetTicks();
+internal u32 perf_pack_tick_start;
+internal u32 perf_pack_tick_end;
 
-    struct pack pack = { 0 };
-    memcpy(pack.magic, PACK_SIGNATURE, sizeof(pack.magic));
-    pack.version = RICO_FILE_VERSION_CURRENT;
-    pack.index = calloc(1024, sizeof(*pack.index));
-    pack.buffer_size = 1024 * 1024 * 512; // 512 MB
-    pack.buffer = calloc(1, pack.buffer_size);
+void pack_start(struct pack *pack)
+{
+    perf_pack_tick_start = SDL_GetTicks();
+
+    memcpy(pack->magic, PACK_SIGNATURE, sizeof(pack->magic));
+    pack->version = RICO_FILE_VERSION_CURRENT;
+    pack->index = calloc(1024, sizeof(*pack->index));
+    pack->buffer_size = 1024 * 1024 * 512; // 512 MB
+    pack->buffer = calloc(1, pack->buffer_size);
 
     // First blob in pack must be the null blob
-    null_blob(&pack);
+    null_blob(pack);
+}
 
-    // Load assets
-    load_font(&pack, "[FONT_DEFAULT]", "font/courier_new.bff");
+int pack_end(struct pack *pack, const char *filename)
+{
+    enum rico_error err = SUCCESS;
 
+    pack->index_offset = sizeof(struct pack);
+    pack->data_offset = pack->index_offset +
+                        pack->blob_count * sizeof(*pack->index);
+
+    // Write pack file to disk
+    FILE *pack_file = fopen(filename, "wb");
+    if (pack_file)
+    {
+        u32 pack_size = pack->data_offset + pack->buffer_used;
+
+        u32 bytes_written = 0;
+        bytes_written += fwrite(pack, 1, sizeof(*pack), pack_file);
+        bytes_written += fwrite(pack->index, 1,
+                                pack->blob_count * sizeof(*pack->index),
+                                pack_file);
+        bytes_written += fwrite(pack->buffer, 1, pack->buffer_used, pack_file);
+        fclose(pack_file);
+        RICO_ASSERT(bytes_written == pack_size);
+    }
+    else
+    {
+        err = RICO_ERROR(ERR_FILE_WRITE,
+                         "Error: Cannot open pack file [%s] for read.\n",
+                         filename);
+    }
+
+    free(pack->index);
+    free(pack->buffer);
+
+    perf_pack_tick_end = SDL_GetTicks();
+    printf("[PERF][pack] '%s' built in: %u ticks\n", filename,
+           perf_pack_tick_end - perf_pack_tick_start);
+    perf_pack_tick_start = perf_pack_tick_end = 0;
+    return err;
+}
+
+void pack_build_default()
+{
+    // TODO: This entire pack could be embedded as binary data in the .exe once
+    //       the contents are finalized. This would allow the engine to run even
+    //       when the data directory is missing.
+    const char *filename = "packs/default.pak";
+    struct pack pack = { 0 };
+
+    pack_start(&pack);
+    u32 font = load_font(&pack, "[FONT_DEFAULT]", "font/courier_new.bff");
     u32 diff = load_texture(&pack, "[TEX_DIFF_DEFAULT]", "texture/basic_diff.tga");
     u32 spec = load_texture(&pack, "[TEX_SPEC_DEFAULT]", "texture/basic_spec.tga");
-    load_material(&pack, "[MATERIAL_DEFAULT]", diff, spec, 0.5f);
+    u32 mat = load_material(&pack, "[MATERIAL_DEFAULT]", diff, spec, 0.5f);
+    u32 mesh = default_mesh(&pack, "[PRIM_MESH_BBOX]");
+    pack_end(&pack, filename);
 
-    default_mesh(&pack);
+    RICO_ASSERT(font == RICO_DEFAULT_FONT);
+    RICO_ASSERT(diff == RICO_DEFAULT_TEXTURE_DIFF);
+    RICO_ASSERT(spec == RICO_DEFAULT_TEXTURE_SPEC);
+    RICO_ASSERT(mat == RICO_DEFAULT_MATERIAL);
+    RICO_ASSERT(mesh == RICO_DEFAULT_MESH);
+}
+
+void pack_build_alpha()
+{
+    const char *filename = "packs/alpha.pak";
+    struct pack pack = { 0 };
+
+    pack_start(&pack);
     load_obj_file(&pack, "mesh/prim_sphere.ric");
     load_obj_file(&pack, "mesh/sphere.ric");
     load_obj_file(&pack, "mesh/wall_cornertest.ric");
@@ -443,37 +507,13 @@ int pack_build(const char *filename)
     //load_obj_file(&pack, "mesh/door.ric");
     //load_obj_file(&pack, "mesh/welcome_floor.ric");
     //load_obj_file(&pack, "mesh/grass.ric");
+    pack_end(&pack, filename);
+}
 
-    pack.index_offset = sizeof(struct pack);
-    pack.data_offset = pack.index_offset +
-                       pack.blob_count * sizeof(struct pack_entry);
-
-    // Write pack file to disk
-    FILE *pack_file = fopen(filename, "wb");
-    if (pack_file)
-    {
-        u32 bytes_written = 0;
-        bytes_written += fwrite(&pack, 1, sizeof(pack), pack_file);
-        bytes_written += fwrite(pack.index, 1, pack.blob_count * sizeof(*pack.index), pack_file);
-        bytes_written += fwrite(pack.buffer, 1, pack.buffer_used, pack_file);
-        fclose(pack_file);
-        RICO_ASSERT(bytes_written == pack.data_offset + pack.buffer_used);
-    }
-    else
-    {
-        err = RICO_ERROR(ERR_FILE_WRITE,
-                         "Error: Cannot open pack file [%s] for read.\n",
-                         filename);
-        goto cleanup;
-    }
-
-    u32 tick_end = SDL_GetTicks();
-    printf("[PERF][pack] Pack written in: %d ticks\n", tick_end - tick_start);
-
-cleanup:
-    free(pack.index);
-    free(pack.buffer);
-    return err;
+void pack_build_all()
+{
+    pack_build_default();
+    pack_build_alpha();
 }
 
 int pack_load(const char *filename, struct pack **_pack)
@@ -481,12 +521,6 @@ int pack_load(const char *filename, struct pack **_pack)
     UNUSED(filename);
     enum rico_error err = SUCCESS;
     u32 tick_start = SDL_GetTicks();
-
-    //struct pack *pack; // = load_entire_file()
-    // TODO: Load pack directly into memory from file, fix pointers using
-    //       offsets.
-    // NOTE: Fix pack.buffer_size to be w/e size is actually allocated
-
 
     // Read pack file from disk
     FILE *pack_file = fopen(filename, "rb");

@@ -9,7 +9,6 @@ struct rico_material {
 
     u32 name_offset;
 };
-extern struct pool_id RICO_DEFAULT_MATERIAL;
 
 global const char *material_name(struct rico_material *material);
 void material_bind(struct rico_material *material);

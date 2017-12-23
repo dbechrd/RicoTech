@@ -1,6 +1,12 @@
 #ifndef PACK_BUILDER_H
 #define PACK_BUILDER_H
 
+const u32 RICO_DEFAULT_FONT = 1;
+const u32 RICO_DEFAULT_TEXTURE_DIFF = 2;
+const u32 RICO_DEFAULT_TEXTURE_SPEC = 3;
+const u32 RICO_DEFAULT_MATERIAL = 4;
+const u32 RICO_DEFAULT_MESH = 5;
+
 struct pack_entry
 {
     enum rico_hnd_type type;
@@ -81,7 +87,7 @@ inline void *pack_read(struct pack *pack, u32 id)
     return pack->buffer + pack->index[id].offset;
 }
 
-int pack_build(const char *filename);
+void pack_build_all();
 int pack_load(const char *filename, struct pack **_pack);
 
 #endif

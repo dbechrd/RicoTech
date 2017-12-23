@@ -20,7 +20,6 @@ struct rico_font {
     u32 name_offset;
     u32 texture_offset;
 };
-extern struct pool_id RICO_DEFAULT_FONT;
 
 global const char *font_name(struct rico_font *font);
 void font_render(struct rico_mesh **mesh, struct rico_texture **texture,

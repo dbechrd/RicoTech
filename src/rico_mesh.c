@@ -2,8 +2,6 @@ const char *rico_mesh_type_string[] = {
     RICO_MESH_TYPES(GEN_STRING)
 };
 
-struct pool_id RICO_DEFAULT_MESH;
-
 global const char *mesh_name(struct rico_mesh *mesh)
 {
     return (u8 *)mesh + mesh->name_offset;

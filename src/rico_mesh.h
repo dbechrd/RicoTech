@@ -36,7 +36,6 @@ struct rico_mesh {
     GLuint vao;
     GLuint vbos[2];
 };
-extern struct pool_id RICO_DEFAULT_MESH;
 
 global const char *mesh_name(struct rico_mesh *mesh);
 void mesh_upload(struct rico_mesh *mesh, GLenum hint);

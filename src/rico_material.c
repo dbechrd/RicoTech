@@ -1,5 +1,3 @@
-struct pool_id RICO_DEFAULT_MATERIAL;
-
 global const char *material_name(struct rico_material *material)
 {
     return (u8 *)material + material->name_offset;

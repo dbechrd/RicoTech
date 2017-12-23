@@ -18,8 +18,6 @@ struct rico_texture {
     GLuint gl_id;
     GLenum gl_target;
 };
-extern struct pool_id RICO_DEFAULT_TEXTURE_DIFF;
-extern struct pool_id RICO_DEFAULT_TEXTURE_SPEC;
 
 global const char *texture_name(struct rico_texture *tex);
 void texture_bind(struct rico_texture *texture, GLenum texture_unit);
