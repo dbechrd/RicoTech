@@ -112,8 +112,8 @@ int chunk_free(struct rico_chunk *chunk, struct pool_id id)
     switch (id.type) {
     case RICO_HND_OBJECT:
     {
-        //err = object_free(block);
         RICO_ASSERT(0);
+        //err = object_free(block);
         break;
     }
     case RICO_HND_TEXTURE:

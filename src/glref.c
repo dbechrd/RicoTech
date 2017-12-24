@@ -288,8 +288,10 @@ void glref_render(struct camera *camera)
     // Render objects
     //--------------------------------------------------------------------------
     object_render_type(pack_active, OBJ_STATIC, prog_default, camera);
+    object_render_type(pack_short, OBJ_STATIC, prog_default, camera);
     object_render_type(pack_frame, OBJ_STATIC, prog_default, camera);
     object_render_type(pack_active, OBJ_STRING_WORLD, prog_default, camera);
+    object_render_type(pack_short, OBJ_STRING_WORLD, prog_default, camera);
     object_render_type(pack_frame, OBJ_STRING_WORLD, prog_default, camera);
 
     //--------------------------------------------------------------------------
@@ -301,6 +303,7 @@ void glref_render(struct camera *camera)
     prim_draw_bbox_color(&axis_bbox, &z_axis_transform, &COLOR_BLUE);
 
     object_render_type(pack_active, OBJ_STRING_SCREEN, prog_default, camera);
+    object_render_type(pack_short, OBJ_STRING_SCREEN, prog_default, camera);
     object_render_type(pack_frame, OBJ_STRING_SCREEN, prog_default, camera);
 }
 void free_glref()
@@ -313,10 +316,10 @@ void free_glref()
     // TODO: What are chunks used for now? How/when do we need to free them?
     //chunk_free(chunk_active);
     //chunk_free(chunk_transient);
-
     free(pack_frame);
-    free(pack_default);
+    free(pack_short);
     free(pack_active);
+    free(pack_default);
 
     //TODO: Free all meshes
 

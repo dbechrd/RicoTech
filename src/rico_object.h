@@ -38,10 +38,6 @@ global const char *object_name(struct rico_object *obj);
 global struct rico_object *object_copy(struct pack *pack,
                                        struct rico_object *other,
                                        const char *name);
-#if 0
-int object_free(struct rico_object *object);
-void object_free_all(struct rico_chunk *chunk);
-#endif
 void object_bbox_recalculate_all(struct pack *pack);
 bool object_selectable(struct rico_object *object);
 void object_select(struct rico_object *object);
@@ -68,7 +64,6 @@ bool object_collide_ray(float *_dist, struct rico_object *object,
 bool object_collide_ray_type(struct rico_chunk *chunk,
                              struct rico_object **_object, float *_dist,
                              enum rico_obj_type type, const struct ray *ray);
-void object_render(struct rico_object *object, const struct camera *camera);
 void object_render_type(struct pack *pack, enum rico_obj_type type,
                         const struct program_default *prog,
                         const struct camera *camera);

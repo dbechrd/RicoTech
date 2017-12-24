@@ -2,17 +2,20 @@
 #define PACK_BUILDER_H
 
 const u32 FONT_DEFAULT = 1;
+const u32 FONT_DEFAULT_TEX_DIFF = 2;
 const u32 TEXTURE_DEFAULT_DIFF = 3;
 const u32 TEXTURE_DEFAULT_SPEC = 4;
 const u32 MATERIAL_DEFAULT = 5;
-const u32 MESH_DEFAULT_BBOX = 6;
-const u32 MESH_DEFAULT_SPHERE = 7;
+const u32 FONT_DEFAULT_MATERIAL = 6;
+const u32 MESH_DEFAULT_BBOX = 7;
+const u32 MESH_DEFAULT_SPHERE = 8;
 
 struct blob_index
 {
     enum rico_hnd_type type;
     u32 offset;
     u32 size;
+    u8 deleted;
 };
 
 // Memory layout
@@ -88,7 +91,16 @@ inline void *pack_read(struct pack *pack, u32 id)
     // TODO: If id == 0, return default resource of requested type
     RICO_ASSERT(id > 0);
     RICO_ASSERT(id < pack->blob_count);
+    RICO_ASSERT(!pack->index[id].deleted);
     return pack->buffer + pack->index[id].offset;
+}
+
+inline void pack_delete(struct pack *pack, u32 id)
+{
+    if (!id) return;
+    RICO_ASSERT(id < pack->blob_count);
+    pack->index[id].type = RICO_HND_NULL;
+    pack->index[id].deleted = true;
 }
 
 void pack_build_all();

@@ -4,6 +4,7 @@ const char *rico_obj_type_string[] = {
 
 global const char *object_name(struct rico_object *obj)
 {
+    RICO_ASSERT(obj->name_offset);
     return (u8 *)obj + obj->name_offset;
 }
 
@@ -249,10 +250,19 @@ bool object_collide_ray_type(struct rico_chunk *chunk,
     return collided;
 }
 
-void object_render_type(struct pack *pack, enum rico_obj_type type,
-                        const struct program_default *prog,
-                        const struct camera *camera)
+void object_render_setup(enum rico_obj_type type,
+                         const struct program_default *prog,
+                         const struct camera *camera)
 {
+    if (type == OBJ_STATIC)
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, camera->fill_mode);
+    }
+    else
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+
     glUseProgram(prog->prog_id);
 
     // Model transform
@@ -266,10 +276,10 @@ void object_render_type(struct pack *pack, enum rico_obj_type type,
     float light_pos_z = sinf((float)ticks / 2000.0f) * 16.0f;
 
     struct light_point light;
-    light.color    = (struct vec3) { 1.0f, 0.9f, 0.6f };
-    light.position = (struct vec3) { light_pos_x, 3.0f, light_pos_z};
+    light.color = (struct vec3) { 1.0f, 0.9f, 0.6f };
+    light.position = (struct vec3) { light_pos_x, 3.0f, light_pos_z };
     //light.ambient  = (struct vec3) { 0.17f, 0.17f, 0.19f };
-    light.ambient  = (struct vec3){ 0.10f, 0.09f, 0.11f };
+    light.ambient = (struct vec3) { 0.10f, 0.09f, 0.11f };
     light.kc = 1.0f;
     light.kl = 0.05f;
     light.kq = 0.001f;
@@ -281,9 +291,9 @@ void object_render_type(struct pack *pack, enum rico_obj_type type,
         proj_matrix = MAT4_IDENT;
         view_matrix = MAT4_IDENT;
 
-        light.color    = VEC3_ONE;
+        light.color = VEC3_ONE;
         light.position = VEC3_ZERO;
-        light.ambient  = VEC3_ONE;
+        light.ambient = VEC3_ONE;
 
         light.kc = 1.0f;
         light.kl = 0.0f;
@@ -303,11 +313,20 @@ void object_render_type(struct pack *pack, enum rico_obj_type type,
 
     // Lighting
     glUniform3fv(prog->u_light_position, 1, (const GLfloat *)&light.position);
-    glUniform3fv(prog->u_light_ambient,  1, (const GLfloat *)&light.ambient);
-    glUniform3fv(prog->u_light_color,    1, (const GLfloat *)&light.color);
+    glUniform3fv(prog->u_light_ambient, 1, (const GLfloat *)&light.ambient);
+    glUniform3fv(prog->u_light_color, 1, (const GLfloat *)&light.color);
     glUniform1f(prog->u_light_kc, light.kc);
     glUniform1f(prog->u_light_kl, light.kl);
     glUniform1f(prog->u_light_kq, light.kq);
+
+    glUniform2f(prog->u_scale_uv, 1.0f, 1.0f);
+}
+
+void object_render_type(struct pack *pack, enum rico_obj_type type,
+                        const struct program_default *prog,
+                        const struct camera *camera)
+{
+    object_render_setup(type, prog, camera);
 
     //struct rico_pool *pool = chunk->pools[RICO_HND_OBJECT];
     //struct rico_object *obj = pool_first(pool);
@@ -321,17 +340,6 @@ void object_render_type(struct pack *pack, enum rico_obj_type type,
         if (obj->type != type)
             continue;
 
-        if (obj->type == OBJ_STATIC)
-        {
-            glPolygonMode(GL_FRONT_AND_BACK, camera->fill_mode);
-        }
-        else
-        {
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        }
-
-        glUseProgram(prog->prog_id);
-
         // Set object-specific uniform values
 
         // UV-coord scale
@@ -340,11 +348,7 @@ void object_render_type(struct pack *pack, enum rico_obj_type type,
         // TODO: UV scaling in general only works when object is uniformly
         //       scaled. Maybe I should only allow textured objects to be
         //       uniformly scaled?
-        if (type == OBJ_STRING_WORLD || type == OBJ_STRING_SCREEN)
-        {
-            glUniform2f(prog->u_scale_uv, 1.0f, 1.0f);
-        }
-        else
+        if (!(type == OBJ_STRING_WORLD || type == OBJ_STRING_SCREEN))
         {
             glUniform2f(prog->u_scale_uv, obj->scale.x, obj->scale.y);
         }
@@ -353,13 +357,27 @@ void object_render_type(struct pack *pack, enum rico_obj_type type,
         glUniformMatrix4fv(prog->u_model, 1, GL_TRUE, obj->transform.a);
 
         // Bind material
-        material_bind(pack, obj->material_id, prog->u_material_shiny);
+        struct pack *mat_pack = pack;
+        u32 mat_id = obj->material_id;
+        if (!mat_id)
+        {
+            mat_pack = pack_default;
+            if (type == OBJ_STRING_SCREEN || type == OBJ_STRING_WORLD)
+            {
+                mat_id = FONT_DEFAULT_MATERIAL;
+            }
+            else
+            {
+                mat_id = MATERIAL_DEFAULT;
+            }
+        }
+        material_bind(mat_pack, mat_id, prog->u_material_shiny);
 
         // Render
         mesh_render(pack, obj->mesh_id);
 
         // Clean up
-        material_unbind(pack, obj->material_id);
+        material_unbind(mat_pack, mat_id);
 
         // TODO: Batch bounding boxes
         // Render bbox

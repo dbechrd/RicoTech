@@ -19,19 +19,19 @@ int string_init(struct rico_string *str, const char *name,
     font_render(&font_mesh_id, &font_tex_id, font, 0, 0, color, text, name,
                 MESH_STRING_SCREEN);
 
-    u32 font_mat_id = load_material(pack_frame, name, font_tex_id, 0, 0.5f);
+    u32 font_mat_id = 0; //load_material(pack_transient, name, font_tex_id, 0, 0.5f);
 
     // Init string
     hnd_init(&str->hnd, RICO_HND_STRING, name);
     str->slot = slot;
 
-    str->object_id = load_object(pack_frame, name, OBJ_STRING_SCREEN,
+    str->object_id = load_object(pack_short, name, OBJ_STRING_SCREEN,
                                  font_mesh_id, font_mat_id, NULL);
-    struct rico_object *str_obj = pack_read(pack_frame, str->object_id);
-
-    str->lifespan = lifespan;
+    struct rico_object *str_obj = pack_read(pack_short, str->object_id);
     object_trans_set(str_obj,
                      &(struct vec3) { SCREEN_X(x), SCREEN_Y(y), -1.0f });
+    
+    str->lifespan = lifespan;
 
     // Store in global hash table
     //err = hashtable_insert_hnd(&global_strings, &str->hnd, &str->hnd.id,
@@ -63,6 +63,12 @@ int string_free(struct rico_string *str)
 
     //chunk_free(str->hnd.chunk, str->object_id);
     //hashtable_delete_hnd(&global_strings, &str->hnd);
+
+    struct rico_object *obj = pack_read(pack_short, str->object_id);
+    pack_delete(pack_short, obj->material_id);
+    pack_delete(pack_short, obj->mesh_id);
+    pack_delete(pack_short, str->object_id);
+
     return pool_remove(str->hnd.pool, str->hnd.id);
 }
 

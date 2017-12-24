@@ -16,7 +16,7 @@ struct rico_font {
     u32 row_pitch;
     float col_factor;
     float row_factor;
-    u32 y_offset;
+    s32 y_offset;
     bool y_invert;
     u8 render_style;
     u8 char_widths[256];

@@ -159,8 +159,9 @@ void font_render(u32 *mesh_id, u32 *texture_id, struct rico_font *font, int x,
 
     // TODO: This stuff is severely broken, need to figure out where these
     //       dynamic-at-runtime meshes will go for e.g. screen strings.
-    u32 new_mesh_id = load_mesh(pack_frame, mesh_name, idx_vertex, vertices,
+    u32 new_mesh_id = load_mesh(pack_short, mesh_name, idx_vertex, vertices,
                                 idx_element, elements);
+
     *mesh_id = new_mesh_id;
     *texture_id = font->texture_id;
 }

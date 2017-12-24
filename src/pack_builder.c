@@ -20,6 +20,7 @@ internal const u8 PACK_SIGNATURE[4] = { 'R', 'I', 'C', 'O' };
 
 struct pack *pack_default = 0;
 struct pack *pack_active = 0;
+struct pack *pack_short = 0;
 struct pack *pack_frame = 0;
 
 internal inline u32 blob_start(struct pack *pack, enum rico_hnd_type type)
@@ -51,7 +52,6 @@ internal u32 load_object(struct pack *pack, const char *name,
 {
     u32 blob_idx = blob_start(pack, RICO_HND_OBJECT);
     struct rico_object *obj = push_bytes(pack, sizeof(*obj));
-
     obj->id = blob_idx;
     obj->type = type;
     obj->trans = VEC3_ZERO;
@@ -109,7 +109,7 @@ cleanup:
     return blob_idx;
 }
 internal u32 load_font(struct pack *pack, const char *name,
-                       const char *filename)
+                       const char *filename, u32 *font_tex_diff)
 {
     enum rico_error err;
 
@@ -198,6 +198,7 @@ internal u32 load_font(struct pack *pack, const char *name,
     blob_end(pack);
 
     font->texture_id = tex->id;
+    *font_tex_diff = font->texture_id;
 
 cleanup:
     free(buffer);
@@ -604,12 +605,16 @@ void pack_build_default()
     const char *filename = "packs/default.pak";
 
     struct pack *pack = pack_init(filename, 10, MB(1));
-    u32 font = load_font(pack, "[FONT_DEFAULT]", "font/courier_new.bff");
+    u32 font_tex_diff = 0;
+    u32 font = load_font(pack, "[FONT_DEFAULT]", "font/courier_new.bff",
+                         &font_tex_diff);
     u32 diff = load_texture(pack, "[TEX_DIFF_DEFAULT]",
                             "texture/basic_diff.tga", GL_TEXTURE_2D);
     u32 spec = load_texture(pack, "[TEX_SPEC_DEFAULT]",
                             "texture/basic_spec.tga", GL_TEXTURE_2D);
     u32 mat  = load_material(pack, "[MATERIAL_DEFAULT]", diff, spec, 0.5f);
+    u32 font_mat = load_material(pack, "[FONT_DEFAULT_MATERIAL]", font_tex_diff,
+                                 0, 0.0f);
     u32 bbox = default_mesh(pack, "[PRIM_MESH_BBOX]");
 
     // HACK: This is a bit of a gross way to assert that the obj file only
@@ -621,9 +626,11 @@ void pack_build_default()
     free(pack);
 
     RICO_ASSERT(font == FONT_DEFAULT);
+    RICO_ASSERT(font_tex_diff == FONT_DEFAULT_TEX_DIFF);
     RICO_ASSERT(diff == TEXTURE_DEFAULT_DIFF);
     RICO_ASSERT(spec == TEXTURE_DEFAULT_SPEC);
     RICO_ASSERT(mat  == MATERIAL_DEFAULT);
+    RICO_ASSERT(font_mat == FONT_DEFAULT_MATERIAL);
     RICO_ASSERT(bbox == MESH_DEFAULT_BBOX);
     RICO_ASSERT(sphere == MESH_DEFAULT_SPHERE);
 }
