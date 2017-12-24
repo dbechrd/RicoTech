@@ -65,7 +65,16 @@ internal u32 load_object(struct pack *pack, const char *name,
     obj->mesh_id = mesh_id;
     obj->material_id = material_id;
     if (bbox)
+    {
         obj->bbox = *bbox;
+    }
+    else
+    {
+        struct rico_mesh *mesh = (mesh_id)
+            ? pack_read(pack, mesh_id)
+            : pack_read(pack_default, MESH_DEFAULT_BBOX);
+        obj->bbox = mesh->bbox;
+    }
     object_update_transform(obj);
 
     obj->name_offset = blob_offset(pack);

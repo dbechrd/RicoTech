@@ -130,14 +130,70 @@ void select_obj(struct rico_object *object)
     selected_print();
 }
 
+// TODO: Refactor this out into pack_next(pack, id)
 void select_next_obj()
 {
-    select_obj(pool_next(chunk_active->pools[RICO_HND_OBJECT], selected_obj));
+    if (pack_active->blobs_used == 0)
+        return;
+
+    struct rico_object *obj;
+
+    u32 start = (selected_obj) ? selected_obj->id : 1;
+    u32 blob = start;
+    do
+    {
+        blob++;
+        if (blob == pack_active->blobs_used)
+        {
+            select_obj(NULL);
+            return;
+        }
+
+        if (pack_active->index[blob].type == RICO_HND_OBJECT)
+        {
+            obj = pack_read(pack_active, blob);
+            if (object_selectable(obj))
+            {
+                select_obj(obj);
+                return;
+            }
+        }
+    } while (blob != start);
+
+    select_obj(NULL);
 }
 
+// TODO: Refactor this out into pack_prev(pack, id)
 void select_prev_obj()
 {
-    select_obj(pool_prev(chunk_active->pools[RICO_HND_OBJECT], selected_obj));
+    if (pack_active->blobs_used == 0)
+        return;
+
+    struct rico_object *obj;
+
+    u32 start = (selected_obj) ? selected_obj->id : pack_active->blobs_used;
+    u32 blob = start;
+    do
+    {
+        blob--;
+        if (blob == 0)
+        {
+            select_obj(NULL);
+            return;
+        }
+
+        if (pack_active->index[blob].type == RICO_HND_OBJECT)
+        {
+            obj = pack_read(pack_active, blob);
+            if (object_selectable(obj))
+            {
+                select_obj(obj);
+                return;
+            }
+        }
+    } while (blob != start);
+
+    select_obj(NULL);
 }
 
 void selected_print()

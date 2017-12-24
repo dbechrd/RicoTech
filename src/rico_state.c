@@ -273,7 +273,7 @@ internal void select_first_obj()
     // Camera forward ray v. scene
     struct ray cam_fwd;
     camera_fwd(&cam_fwd, &cam_player);
-    object_collide_ray_type(chunk_active, &obj_collided, &dist, OBJ_STATIC,
+    object_collide_ray_type(pack_active, &obj_collided, &dist, OBJ_STATIC,
                             &cam_fwd);
     select_obj(obj_collided);
 }

@@ -56,7 +56,7 @@ void object_free_all(struct rico_chunk *chunk)
 void object_bbox_recalculate_all(struct pack *pack)
 {
     struct rico_object *obj = 0;
-    for (u32 blob = 1; blob < pack->blob_count; ++blob)
+    for (u32 blob = 1; blob < pack->blobs_used; ++blob)
     {
         if (pack->index[blob].type != OBJ_STATIC)
             continue;
@@ -218,33 +218,34 @@ bool object_collide_ray(float *_dist, struct rico_object *object,
                            &object->transform_inverse);
 }
 
-bool object_collide_ray_type(struct rico_chunk *chunk,
-                             struct rico_object **_object, float *_dist,
-                             enum rico_obj_type type, const struct ray *ray)
+bool object_collide_ray_type(struct pack *pack, struct rico_object **_object,
+                             float *_dist, enum rico_obj_type type,
+                             const struct ray *ray)
 {
     bool collided = false;
     float distance;
     *_dist = Z_FAR; // Track closest object
 
-    struct rico_pool *pool = chunk->pools[RICO_HND_OBJECT];
-    struct rico_object *obj = pool_first(pool);
-    while (obj)
+    struct rico_object *obj = 0;
+    for (u32 blob = 1; blob < pack->blobs_used; ++blob)
     {
-        if (obj->type == type)
-        {
-            collided = collide_ray_obb(&distance, ray, &obj->bbox,
-                                       &obj->transform,
-                                       &obj->transform_inverse);
+        if (pack->index[blob].type != RICO_HND_OBJECT)
+            continue;
 
-            // If closest so far, save info
-            if (collided && distance < *_dist)
-            {
-                // Record object handle and distance
-                *_object = obj;
-                *_dist = distance;
-            }
+        obj = pack_read(pack, blob);
+        if (obj->type != type)
+            continue;
+
+        collided = collide_ray_obb(&distance, ray, &obj->bbox, &obj->transform,
+                                   &obj->transform_inverse);
+
+        // If closest so far, save info
+        if (collided && distance < *_dist)
+        {
+            // Record object handle and distance
+            *_object = obj;
+            *_dist = distance;
         }
-        obj = pool_next(pool, obj);
     }
 
     return collided;
@@ -374,10 +375,27 @@ void object_render_type(struct pack *pack, enum rico_obj_type type,
         material_bind(mat_pack, mat_id, prog->u_material_shiny);
 
         // Render
-        mesh_render(pack, obj->mesh_id);
+        if (obj->mesh_id)
+        {
+            mesh_render(pack, obj->mesh_id);
+        }
+        else
+        {
+            mesh_render(pack_default, MESH_DEFAULT_BBOX);
+        }
 
         // Clean up
         material_unbind(mat_pack, mat_id);
+    }
+
+    for (u32 blob = 1; blob < pack->blobs_used; ++blob)
+    {
+        if (pack->index[blob].type != RICO_HND_OBJECT)
+            continue;
+
+        obj = pack_read(pack, blob);
+        if (obj->type != type)
+            continue;
 
         // TODO: Batch bounding boxes
         // Render bbox
@@ -400,9 +418,12 @@ int object_print(struct rico_object *object)
 
     if (object)
     {
-        struct rico_mesh *mesh = pack_read(pack_active, object->mesh_id);
-        struct rico_material *material = pack_read(pack_active,
-                                                   object->material_id);
+        struct rico_mesh *mesh = (object->mesh_id)
+            ? pack_read(pack_active, object->mesh_id)
+            : NULL;
+        struct rico_material *material = (object->material_id)
+            ? pack_read(pack_active, object->material_id)
+            : NULL;
 
         len = snprintf(buf, sizeof(buf),
             "     UID: %d\n"       \
@@ -411,21 +432,20 @@ int object_print(struct rico_object *object)
             "   Trans: %f %f %f\n" \
             "     Rot: %f %f %f\n" \
             "   Scale: %f %f %f\n" \
-            "    Mesh: %d %s\n"    \
             "    BBox: %f %f %f\n" \
             "          %f %f %f\n" \
+            "    Mesh: %d %s\n"    \
             "Material: %d %s\n",
             object->id,
             object_name(object),
             rico_obj_type_string[object->type],
             object->trans.x, object->trans.y, object->trans.z,
-
             object->rot.x,   object->rot.y,   object->rot.z,
             object->scale.x, object->scale.y, object->scale.z,
-            (mesh) ? 777 : 0,
-            (mesh) ? mesh_name(mesh) : "ID_NULL",
             object->bbox.p[0].x, object->bbox.p[0].y, object->bbox.p[0].z,
             object->bbox.p[1].x, object->bbox.p[1].y, object->bbox.p[1].z,
+            (mesh) ? 777 : 0,
+            (mesh) ? mesh_name(mesh) : "ID_NULL",
             (material) ? 777 : 0,
             (material) ? material_name(material) : "ID_NULL"
         );

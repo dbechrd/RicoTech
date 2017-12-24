@@ -61,9 +61,9 @@ const struct vec3 *object_scale_get(struct rico_object *object);
 const struct mat4 *object_transform_get(struct rico_object *object);
 bool object_collide_ray(float *_dist, struct rico_object *object,
                         const struct ray *ray);
-bool object_collide_ray_type(struct rico_chunk *chunk,
-                             struct rico_object **_object, float *_dist,
-                             enum rico_obj_type type, const struct ray *ray);
+bool object_collide_ray_type(struct pack *pack, struct rico_object **_object,
+                             float *_dist, enum rico_obj_type type,
+                             const struct ray *ray);
 void object_render_type(struct pack *pack, enum rico_obj_type type,
                         const struct program_default *prog,
                         const struct camera *camera);

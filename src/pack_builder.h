@@ -97,6 +97,9 @@ inline void *pack_read(struct pack *pack, u32 id)
 
 inline void pack_delete(struct pack *pack, u32 id)
 {
+    // TODO: Combine adjacent free slots? Or, garbage collect when buffer is
+    //       full. If garbage collect too often, auto-expand buffer. If auto-
+    //       expand > MAX_SIZE, throw error instead.
     if (!id) return;
     RICO_ASSERT(id < pack->blob_count);
     pack->index[id].type = RICO_HND_NULL;
