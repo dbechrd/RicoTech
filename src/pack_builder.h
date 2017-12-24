@@ -1,13 +1,14 @@
 #ifndef PACK_BUILDER_H
 #define PACK_BUILDER_H
 
-const u32 RICO_DEFAULT_FONT = 1;
-const u32 RICO_DEFAULT_TEXTURE_DIFF = 2;
-const u32 RICO_DEFAULT_TEXTURE_SPEC = 3;
-const u32 RICO_DEFAULT_MATERIAL = 4;
-const u32 RICO_DEFAULT_MESH = 5;
+const u32 FONT_DEFAULT = 1;
+const u32 TEXTURE_DEFAULT_DIFF = 3;
+const u32 TEXTURE_DEFAULT_SPEC = 4;
+const u32 MATERIAL_DEFAULT = 5;
+const u32 MESH_DEFAULT_BBOX = 6;
+const u32 MESH_DEFAULT_SPHERE = 7;
 
-struct pack_entry
+struct blob_index
 {
     enum rico_hnd_type type;
     u32 offset;
@@ -23,14 +24,17 @@ struct pack
 {
     u8 magic[4];
     u32 version;
+    u8 name[32];
+
     u32 blob_count;
+    u32 blobs_used;
     u32 buffer_size;
     u32 buffer_used;
 
     u32 index_offset;
     u32 data_offset;
 
-    struct pack_entry *index;
+    struct blob_index *index;
     u8 *buffer;
 };
 

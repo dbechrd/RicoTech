@@ -174,6 +174,7 @@ int mymain()
     pack_build_all();
     err = pack_load("packs/default.pak", &pack_default);
     err = pack_load("packs/alpha.pak", &pack_active);
+    pack_frame = pack_init("pack_frame", 0, 0);
 
     err = init_sdl();
     if (err) goto cleanup;

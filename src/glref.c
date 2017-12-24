@@ -91,28 +91,22 @@ void init_glref()
     mat4_translate(&z_axis_transform, &(struct vec3) { 0.0f, 0.0f, 0.5f });
 }
 
-int create_obj()
+void create_obj()
 {
-    enum rico_error err;
-
     // TODO: Prompt user for object name
     const char *name = "new_obj";
 
     // Create new object with default properties
-    struct rico_object *new_obj;
-    err = chunk_alloc((void **)&new_obj, chunk_active, RICO_HND_OBJECT);
-    if (err) return err;
-    err = object_init(new_obj, name, OBJ_STATIC, 0, 0, NULL);
-    if (err) return err;
+    u32 new_obj_id = load_object(pack_active, name, OBJ_STATIC, 0, 0, NULL);
+    struct rico_object *new_obj = pack_read(pack_active, new_obj_id);
 
     // Select new object
     select_obj(new_obj);
-    return err;
 }
 
 void recalculate_all_bbox()
 {
-    object_bbox_recalculate_all(chunk_active);
+    object_bbox_recalculate_all(pack_active);
 
     // Reselect current object
     if (selected_obj)
@@ -251,21 +245,16 @@ void selected_bbox_reset()
     object_print(selected_obj);
 }
 
-int selected_duplicate()
+void selected_duplicate()
 {
     if (!selected_obj)
-        return SUCCESS;
+        return;
 
-    enum rico_error err;
+    // TODO: Prompt user for name
+    const char *name = "Duplicate";
 
-    struct rico_object *new_obj;
-    err = chunk_alloc((void **)&new_obj, chunk_active, RICO_HND_OBJECT);
-    if (err) return err;
-    err = object_copy(new_obj, selected_obj, "Duplicate");
-    if (err) return err;
-
+    struct rico_object *new_obj = object_copy(pack_active, selected_obj, name);
     select_obj(new_obj);
-    return err;
 }
 
 void selected_delete()
@@ -275,7 +264,12 @@ void selected_delete()
 
     struct rico_object *to_delete = selected_obj;
     select_prev_obj();  // NOTE: This assumes that prev_obj(first) == NULL
-    object_free(to_delete);
+
+    // TODO: There is no way to delete from a pack atm.. hmmm.. Will have to
+    //       add pack_delete(u32 id) that sets index[id].deleted = true, then
+    //       garbage collect / compact the pack whenever it makes sense (e.g.
+    //       when out of memory or saving to disk).
+    //object_free(to_delete);
 }
 
 void glref_update(r64 dt)
@@ -293,10 +287,10 @@ void glref_render(struct camera *camera)
     //--------------------------------------------------------------------------
     // Render objects
     //--------------------------------------------------------------------------
-    object_render_type(chunk_active,    OBJ_STATIC, prog_default, camera);
-    object_render_type(chunk_transient, OBJ_STATIC, prog_default, camera);
-    object_render_type(chunk_active,    OBJ_STRING_WORLD, prog_default, camera);
-    object_render_type(chunk_transient, OBJ_STRING_WORLD, prog_default, camera);
+    object_render_type(pack_active, OBJ_STATIC, prog_default, camera);
+    object_render_type(pack_frame, OBJ_STATIC, prog_default, camera);
+    object_render_type(pack_active, OBJ_STRING_WORLD, prog_default, camera);
+    object_render_type(pack_frame, OBJ_STRING_WORLD, prog_default, camera);
 
     //--------------------------------------------------------------------------
     // Axes labels (bboxes)
@@ -306,10 +300,8 @@ void glref_render(struct camera *camera)
     prim_draw_bbox_color(&axis_bbox, &y_axis_transform, &COLOR_GREEN);
     prim_draw_bbox_color(&axis_bbox, &z_axis_transform, &COLOR_BLUE);
 
-    object_render_type(chunk_active, OBJ_STRING_SCREEN, prog_default,
-                       camera);
-    object_render_type(chunk_transient, OBJ_STRING_SCREEN, prog_default,
-                       camera);
+    object_render_type(pack_active, OBJ_STRING_SCREEN, prog_default, camera);
+    object_render_type(pack_frame, OBJ_STRING_SCREEN, prog_default, camera);
 }
 void free_glref()
 {
@@ -317,8 +309,14 @@ void free_glref()
     // Clean up
     //--------------------------------------------------------------------------
     // Free all game objects
-    object_free_all(chunk_active);
-    object_free_all(chunk_transient);
+
+    // TODO: What are chunks used for now? How/when do we need to free them?
+    //chunk_free(chunk_active);
+    //chunk_free(chunk_transient);
+
+    free(pack_frame);
+    free(pack_default);
+    free(pack_active);
 
     //TODO: Free all meshes
 

@@ -97,25 +97,25 @@ int test_pool()
     if (err) return err;
 
     struct pool_id id1, id2;
-    struct rico_object *obj;
+    struct rico_string *str;
 
     printf("============================================================\n"
            " ADD ID 1\n"
            "============================================================\n");
-    err = pool_add((struct hnd **)&obj, pool);
+    err = pool_add((struct hnd **)&str, pool);
     if (err) return err;
-    id1 = obj->hnd.id;
+    id1 = str->hnd.id;
 
-    hnd_init(&obj->hnd, RICO_HND_OBJECT, "Test 1");
+    hnd_init(&str->hnd, RICO_HND_OBJECT, "Test 1");
 
     printf("============================================================\n"
            " ADD ID 2\n"
            "============================================================\n");
-    err = pool_add((struct hnd **)&obj, pool);
+    err = pool_add((struct hnd **)&str, pool);
     if (err) return err;
-    id2 = obj->hnd.id;
+    id2 = str->hnd.id;
 
-    hnd_init(&obj->hnd, RICO_HND_OBJECT, "Test 2");
+    hnd_init(&str->hnd, RICO_HND_OBJECT, "Test 2");
 
     printf("============================================================\n"
            " REMOVE ID 1\n"

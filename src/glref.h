@@ -3,7 +3,7 @@
 
 void init_glref();
 internal int init_hardcoded_test_chunk();
-int create_obj();
+void create_obj();
 void recalculate_all_bbox();
 void select_obj(struct rico_object *obj);
 void select_next_obj();
@@ -15,7 +15,7 @@ void selected_scale(const struct vec3 *offset);
 void selected_mesh_next();
 void selected_mesh_prev();
 void selected_bbox_reset();
-int selected_duplicate();
+void selected_duplicate();
 void selected_delete();
 void glref_update(r64 dt);
 void glref_render(struct camera *camera);

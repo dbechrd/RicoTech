@@ -33,6 +33,7 @@ struct rico_mesh {
 
     // TODO: Store these in hash table when loaded, map UID -> gl id or
     //       track which meshes are currently loaded on GPU some other way.
+    bool loaded;
     GLuint vao;
     GLuint vbos[2];
 };
@@ -40,6 +41,6 @@ struct rico_mesh {
 global const char *mesh_name(struct rico_mesh *mesh);
 void mesh_upload(struct rico_mesh *mesh, GLenum hint);
 void mesh_delete(struct rico_mesh *mesh);
-void mesh_render(struct rico_mesh *mesh);
+void mesh_render(struct pack *pack, u32 id);
 
 #endif // RICO_MESH_H

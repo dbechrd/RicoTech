@@ -131,26 +131,33 @@ internal int texture_upload(struct rico_texture *texture)
     // Unbind the texture
     glBindTexture(texture->gl_target, 0);
 
+    texture->loaded = true;
     return err;
 }
 
 void texture_delete(struct rico_texture *texture)
 {
+    RICO_ASSERT(texture->loaded);
+
 #if RICO_DEBUG_TEXTURE
     printf("[ tex][ del] name=%s\n", texture_name(texture));
 #endif
 
+    texture->loaded = false;
     glDeleteTextures(1, &texture->gl_id);
 }
 
-void texture_bind(struct rico_texture *texture, GLenum texture_unit)
+void texture_bind(struct pack *pack, u32 id, GLenum texture_unit)
 {
+    RICO_ASSERT(pack);
+    RICO_ASSERT(id < pack->blobs_used);
+
 #if RICO_DEBUG_TEXTURE
     printf("[ tex][bind] name=%s\n", texture_name(texture));
 #endif
 
-    RICO_ASSERT(texture);
-    if (texture->gl_id)
+    struct rico_texture *texture = pack_read(pack, id);
+    if (!texture->loaded)
     {
         texture_upload(texture);
     }
@@ -159,14 +166,17 @@ void texture_bind(struct rico_texture *texture, GLenum texture_unit)
     glBindTexture(texture->gl_target, texture->gl_id);
 }
 
-void texture_unbind(struct rico_texture *texture, GLenum texture_unit)
+void texture_unbind(struct pack *pack, u32 id, GLenum texture_unit)
 {
+    RICO_ASSERT(pack);
+    RICO_ASSERT(id < pack->blobs_used);
+
+    struct rico_texture *texture = pack_read(pack, id);
+    RICO_ASSERT(texture->loaded);
+
 #if RICO_DEBUG_TEXTURE
     printf("[ tex][unbd] name=%s\n", texture_name(texture));
 #endif
-
-    RICO_ASSERT(texture);
-    RICO_ASSERT(texture->gl_id);
 
     glActiveTexture(texture_unit);
     glBindTexture(texture->gl_target, 0);

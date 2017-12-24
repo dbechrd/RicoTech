@@ -6,7 +6,7 @@ int string_init(struct rico_string *str, const char *name,
                 enum rico_string_slot slot, float x, float y, struct col4 color,
                 u32 lifespan, struct rico_font *font, const char *text)
 {
-    enum rico_error err;
+    enum rico_error err = SUCCESS;
 
 #if RICO_DEBUG_STRING
     printf("[strg][init] name=%s\n", name);
@@ -14,39 +14,35 @@ int string_init(struct rico_string *str, const char *name,
 
     // TODO: Reuse mesh and material if they are the same
     // Generate font mesh and get texture handle
-    struct rico_mesh *font_mesh;
-    struct rico_texture *font_tex;
-    font_render(&font_mesh, &font_tex, font, 0, 0, color, text, name,
+    u32 font_mesh_id;
+    u32 font_tex_id;
+    font_render(&font_mesh_id, &font_tex_id, font, 0, 0, color, text, name,
                 MESH_STRING_SCREEN);
 
-    u32 font_mat_id = load_material(pack_frame, name, font_tex->id, 0, 0.5f);
+    u32 font_mat_id = load_material(pack_frame, name, font_tex_id, 0, 0.5f);
 
     // Init string
     hnd_init(&str->hnd, RICO_HND_STRING, name);
     str->slot = slot;
 
-    struct rico_object *str_obj;
-    err = chunk_alloc((void **)&str_obj, str->hnd.chunk, RICO_HND_OBJECT);
-    if (err) return err;
-    err = object_init(str_obj, name, OBJ_STRING_SCREEN, font_mesh->id,
-                      font_mat_id, NULL);
-    if (err) return err;
-    str->object_id = chunk_dupe(str->hnd.chunk, str_obj->hnd.id);
+    str->object_id = load_object(pack_frame, name, OBJ_STRING_SCREEN,
+                                 font_mesh_id, font_mat_id, NULL);
+    struct rico_object *str_obj = pack_read(pack_frame, str->object_id);
 
     str->lifespan = lifespan;
     object_trans_set(str_obj,
                      &(struct vec3) { SCREEN_X(x), SCREEN_Y(y), -1.0f });
 
     // Store in global hash table
-    err = hashtable_insert_hnd(&global_strings, &str->hnd, &str->hnd.id,
-                               sizeof(str->hnd.id));
+    //err = hashtable_insert_hnd(&global_strings, &str->hnd, &str->hnd.id,
+    //                           sizeof(str->hnd.id));
 
     // Store in slot table if not dynamic
     if (slot != STR_SLOT_DYNAMIC)
     {
         const char *slot_name = rico_string_slot_string[slot];
-        hashtable_insert_str(&global_string_slots, slot_name, &str->hnd.id,
-                             sizeof(str->hnd.id));
+        err = hashtable_insert_str(&global_string_slots, slot_name,
+                                   &str->hnd.id, sizeof(str->hnd.id));
     }
 
     return err;
@@ -65,8 +61,8 @@ int string_free(struct rico_string *str)
                              rico_string_slot_string[str->slot]);
     }
 
-    chunk_free(str->hnd.chunk, str->object_id);
-    hashtable_delete_hnd(&global_strings, &str->hnd);
+    //chunk_free(str->hnd.chunk, str->object_id);
+    //hashtable_delete_hnd(&global_strings, &str->hnd);
     return pool_remove(str->hnd.pool, str->hnd.id);
 }
 

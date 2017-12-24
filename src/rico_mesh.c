@@ -74,6 +74,7 @@ void mesh_upload(struct rico_mesh *mesh, GLenum hint)
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    mesh->loaded = true;
 }
 
 void mesh_delete(struct rico_mesh *mesh)
@@ -82,14 +83,18 @@ void mesh_delete(struct rico_mesh *mesh)
     printf("[mesh][ del] name=%s\n", mesh_name(mesh));
 #endif
 
+    mesh->loaded = false;
     glDeleteBuffers(2, mesh->vbos);
     glDeleteVertexArrays(1, &mesh->vao);
 }
 
-void mesh_render(struct rico_mesh *mesh)
+void mesh_render(struct pack *pack, u32 id)
 {
-    // TODO: Is this a good idea?
-    if (!mesh->vao)
+    RICO_ASSERT(pack);
+    RICO_ASSERT(id < pack->blobs_used);
+
+    struct rico_mesh *mesh = pack_read(pack, id);
+    if (!mesh->loaded)
     {
         mesh_upload(mesh, GL_STATIC_DRAW);
     }

@@ -7,8 +7,12 @@
 #define BFG_RS_RGBA  0x4
 
 #define MESH_VERTICES_MAX 200000
-#define MAX_PACK_ENTRIES 1024
-#define MAX_PACK_SIZE 1024 * 1024 * 512 // 512 MB
+
+// TODO: Tune these as necessary
+#define MAX_PACK_BLOBS 4096
+#define MAX_PACK_BUF_SIZE MB(512)
+#define DEFAULT_PACK_BLOBS 128
+#define DEFAULT_PACK_BUF_SIZE MB(4)
 
 internal const u8 PACK_SIGNATURE[4] = { 'R', 'I', 'C', 'O' };
 //internal const u32 PACK_SIGNATURE =
@@ -20,19 +24,20 @@ struct pack *pack_frame = 0;
 
 internal inline u32 blob_start(struct pack *pack, enum rico_hnd_type type)
 {
-    pack->index[pack->blob_count].type = type;
-    pack->index[pack->blob_count].offset = pack->buffer_used;
-    return pack->blob_count;
+    RICO_ASSERT(pack->blobs_used < pack->blob_count);
+    pack->index[pack->blobs_used].type = type;
+    pack->index[pack->blobs_used].offset = pack->buffer_used;
+    return pack->blobs_used;
 }
 internal inline u32 blob_offset(struct pack *pack)
 {
-    return pack_offset(pack, pack->index[pack->blob_count].offset);
+    return pack_offset(pack, pack->index[pack->blobs_used].offset);
 }
 internal inline void blob_end(struct pack *pack)
 {
     u32 size = blob_offset(pack);
-    pack->index[pack->blob_count].size = size;
-    pack->blob_count++;
+    pack->index[pack->blobs_used].size = size;
+    pack->blobs_used++;
 }
 internal inline void blob_error(struct pack *pack, u32 *pack_idx)
 {
@@ -40,8 +45,38 @@ internal inline void blob_error(struct pack *pack, u32 *pack_idx)
     *pack_idx = UINT_MAX;
 }
 
+internal u32 load_object(struct pack *pack, const char *name,
+                         enum rico_obj_type type, u32 mesh_id, u32 material_id,
+                         const struct bbox *bbox)
+{
+    u32 blob_idx = blob_start(pack, RICO_HND_OBJECT);
+    struct rico_object *obj = push_bytes(pack, sizeof(*obj));
+
+    obj->id = blob_idx;
+    obj->type = type;
+    obj->trans = VEC3_ZERO;
+    obj->rot = VEC3_ZERO;
+    if (type == OBJ_STRING_SCREEN)
+        obj->scale = VEC3_SCALE_ASPECT;
+    else
+        obj->scale = VEC3_ONE;
+    obj->transform = MAT4_IDENT;
+    obj->transform_inverse = MAT4_IDENT;
+    obj->mesh_id = mesh_id;
+    obj->material_id = material_id;
+    if (bbox)
+        obj->bbox = *bbox;
+    object_update_transform(obj);
+
+    obj->name_offset = blob_offset(pack);
+    push_string(pack, name);
+
+    blob_end(pack);
+    return blob_idx;
+}
+
 internal u32 load_texture(struct pack *pack, const char *name,
-                          const char *filename)
+                          const char *filename, GLenum target)
 {
     enum rico_error err = SUCCESS;
 
@@ -58,6 +93,7 @@ internal u32 load_texture(struct pack *pack, const char *name,
         goto cleanup;
     }
     tex->bpp = 32;
+    tex->gl_target = target;
 
     tex->name_offset = blob_offset(pack);
     push_string(pack, name);
@@ -89,68 +125,84 @@ internal u32 load_font(struct pack *pack, const char *name,
         err = RICO_ERROR(ERR_FILE_SIGNATURE, "Unexpected file signature");
         goto cleanup;
     }
-    
+
     // Allocate font/texture
-    u32 blob_idx = blob_start(pack, RICO_HND_FONT);
+    u32 font_idx = blob_start(pack, RICO_HND_FONT);
     struct rico_font *font = push_bytes(pack, sizeof(*font));
-    font->id = blob_idx;
+    font->id = font_idx;
 
-    font->name_offset = blob_offset(pack);
-    push_string(pack, name);
-
-    font->texture_offset = blob_offset(pack);
-    struct rico_texture *tex = push_bytes(pack, sizeof(*tex));
-
-    font->InvertYAxis = false;
+    u32 tex_width = 0;
+    u32 tex_height = 0;
+    u32 tex_bpp = 0;
 
     // Read bff header
-    memcpy(&tex->width, &buffer[2], sizeof(int));
-    memcpy(&tex->height, &buffer[6], sizeof(int));
-    memcpy(&font->CellX, &buffer[10], sizeof(int));
-    memcpy(&font->CellY, &buffer[14], sizeof(int));
+    memcpy(&tex_width, &buffer[2], sizeof(u32));
+    memcpy(&tex_height, &buffer[6], sizeof(u32));
+    memcpy(&font->cell_x, &buffer[10], sizeof(u32));
+    memcpy(&font->cell_y, &buffer[14], sizeof(u32));
 
-    tex->bpp = buffer[18];
-    font->Base = buffer[19];
+    tex_bpp = buffer[18];
+    font->base_char = buffer[19];
 
     // Check filesize
-    u32 data_size = tex->width * tex->height * (tex->bpp / 8);
-    RICO_ASSERT(length == MAP_DATA_OFFSET + data_size);
+    u32 pixels_size = tex_width * tex_height * (tex_bpp / 8);
+    RICO_ASSERT(length == MAP_DATA_OFFSET + pixels_size);
 
     // Calculate font params
-    font->RowPitch = tex->width / font->CellX;
-    font->ColFactor = (float)font->CellX / tex->width;
-    font->RowFactor = (float)font->CellY / tex->height;
-    font->YOffset = font->CellY;
+    font->row_pitch = tex_width / font->cell_x;
+    font->col_factor = (float)font->cell_x / tex_width;
+    font->row_factor = (float)font->cell_y / tex_height;
+    font->y_offset = font->cell_y;
+    font->y_invert = false;
 
     // Determine blending options based on BPP
-    switch (tex->bpp)
+    switch (tex_bpp)
     {
     case 8: // Greyscale
-        font->RenderStyle = BFG_RS_ALPHA;
+        font->render_style = BFG_RS_ALPHA;
         break;
     case 24: // RGB
-        font->RenderStyle = BFG_RS_RGB;
+        font->render_style = BFG_RS_RGB;
         break;
     case 32: // RGBA
-        font->RenderStyle = BFG_RS_RGBA;
+        font->render_style = BFG_RS_RGBA;
         break;
     default: // Unsupported BPP
         goto cleanup;
     }
 
     // Store character widths
-    memcpy(font->Width, &buffer[WIDTH_DATA_OFFSET], 256);
+    memcpy(font->char_widths, &buffer[WIDTH_DATA_OFFSET], 256);
 
-    // Store pixels
-    tex->pixels_offset = blob_offset(pack);
-    push_data(pack, &buffer[MAP_DATA_OFFSET], data_size);
+    font->name_offset = blob_offset(pack);
+    push_string(pack, name);
 
     blob_end(pack);
 
+    //------------------------------------------------------------
+
+    u32 tex_idx = blob_start(pack, RICO_HND_TEXTURE);
+    struct rico_texture *tex = push_bytes(pack, sizeof(*tex));
+    tex->id = tex_idx;
+    tex->width = tex_width;
+    tex->height = tex_height;
+    tex->bpp = tex_bpp;
+    tex->gl_target = GL_TEXTURE_2D;  // Fonts are always 2D textures
+
+    tex->name_offset = blob_offset(pack);
+    push_string(pack, name);
+
+    tex->pixels_offset = blob_offset(pack);
+    push_data(pack, &buffer[MAP_DATA_OFFSET], pixels_size);
+
+    blob_end(pack);
+
+    font->texture_id = tex->id;
+
 cleanup:
     free(buffer);
-    if (err) blob_error(pack, &blob_idx);
-    return blob_idx;
+    if (err) blob_error(pack, &font_idx);
+    return font_idx;
 }
 internal u32 load_material(struct pack *pack, const char *name, u32 tex_diff,
                            u32 tex_spec, float shiny)
@@ -416,42 +468,80 @@ internal u32 null_blob(struct pack *pack)
 internal u32 perf_pack_tick_start;
 internal u32 perf_pack_tick_end;
 
-void pack_start(struct pack *pack)
+struct pack *pack_init(const char *name, u32 blob_count, u32 buffer_size)
 {
+    if (!blob_count) blob_count = DEFAULT_PACK_BLOBS;
+    if (!buffer_size) buffer_size = DEFAULT_PACK_BUF_SIZE;
+    RICO_ASSERT(blob_count < MAX_PACK_BLOBS);
+    RICO_ASSERT(buffer_size < MAX_PACK_BUF_SIZE);
+
     perf_pack_tick_start = SDL_GetTicks();
 
+    struct pack *pack = calloc(1,
+        sizeof(struct pack) +
+        blob_count * sizeof(struct blob_index) +
+        buffer_size);
+    
     memcpy(pack->magic, PACK_SIGNATURE, sizeof(pack->magic));
     pack->version = RICO_FILE_VERSION_CURRENT;
-    pack->index = calloc(1024, sizeof(*pack->index));
-    pack->buffer_size = 1024 * 1024 * 512; // 512 MB
-    pack->buffer = calloc(1, pack->buffer_size);
-
-    // First blob in pack must be the null blob
-    null_blob(pack);
-}
-
-int pack_end(struct pack *pack, const char *filename)
-{
-    enum rico_error err = SUCCESS;
-
+    strncpy(pack->name, name, sizeof(pack->name) - 1);
+    pack->blob_count = blob_count;
+    pack->blobs_used = 0;
+    pack->buffer_size = buffer_size;
+    pack->buffer_used = 0;
     pack->index_offset = sizeof(struct pack);
     pack->data_offset = pack->index_offset +
                         pack->blob_count * sizeof(*pack->index);
+    pack->index = (struct blob_index *)((u8 *)pack + pack->index_offset);
+    pack->buffer = (u8 *)pack + pack->data_offset;
+
+    // First blob in pack must be the null blob
+    null_blob(pack);
+
+    return pack;
+}
+
+int pack_save(struct pack *pack, const char *filename, bool compact)
+{
+    enum rico_error err = SUCCESS;
 
     // Write pack file to disk
     FILE *pack_file = fopen(filename, "wb");
     if (pack_file)
     {
-        u32 pack_size = pack->data_offset + pack->buffer_used;
+        u32 blob_count = pack->blob_count;
+        u32 buffer_size = pack->buffer_size;
+        u32 data_offset = pack->data_offset;
+
+        if (compact)
+        {
+            // Remove unused blob entires / buffer space for the save
+            pack->blob_count = pack->blobs_used;
+            pack->buffer_size = pack->buffer_used;
+            pack->data_offset = sizeof(struct pack) +
+                                pack->blob_count * sizeof(struct blob_index);
+        }
+
+        u32 pack_size = sizeof(struct pack) +
+                        pack->blob_count * sizeof(struct blob_index) +
+                        pack->buffer_size;
 
         u32 bytes_written = 0;
         bytes_written += fwrite(pack, 1, sizeof(*pack), pack_file);
         bytes_written += fwrite(pack->index, 1,
                                 pack->blob_count * sizeof(*pack->index),
                                 pack_file);
-        bytes_written += fwrite(pack->buffer, 1, pack->buffer_used, pack_file);
+        bytes_written += fwrite(pack->buffer, 1, pack->buffer_size, pack_file);
         fclose(pack_file);
         RICO_ASSERT(bytes_written == pack_size);
+
+        if (compact)
+        {
+            // Restore actual blob count / buffer size in memory
+            pack->blob_count = blob_count;
+            pack->buffer_size = buffer_size;
+            pack->data_offset = data_offset;
+        }
     }
     else
     {
@@ -460,60 +550,11 @@ int pack_end(struct pack *pack, const char *filename)
                          filename);
     }
 
-    free(pack->index);
-    free(pack->buffer);
-
     perf_pack_tick_end = SDL_GetTicks();
     printf("[PERF][pack] '%s' built in: %u ticks\n", filename,
            perf_pack_tick_end - perf_pack_tick_start);
     perf_pack_tick_start = perf_pack_tick_end = 0;
     return err;
-}
-
-void pack_build_default()
-{
-    // TODO: This entire pack could be embedded as binary data in the .exe once
-    //       the contents are finalized. This would allow the engine to run even
-    //       when the data directory is missing.
-    const char *filename = "packs/default.pak";
-    struct pack pack = { 0 };
-
-    pack_start(&pack);
-    u32 font = load_font(&pack, "[FONT_DEFAULT]", "font/courier_new.bff");
-    u32 diff = load_texture(&pack, "[TEX_DIFF_DEFAULT]", "texture/basic_diff.tga");
-    u32 spec = load_texture(&pack, "[TEX_SPEC_DEFAULT]", "texture/basic_spec.tga");
-    u32 mat = load_material(&pack, "[MATERIAL_DEFAULT]", diff, spec, 0.5f);
-    u32 mesh = default_mesh(&pack, "[PRIM_MESH_BBOX]");
-    pack_end(&pack, filename);
-
-    RICO_ASSERT(font == RICO_DEFAULT_FONT);
-    RICO_ASSERT(diff == RICO_DEFAULT_TEXTURE_DIFF);
-    RICO_ASSERT(spec == RICO_DEFAULT_TEXTURE_SPEC);
-    RICO_ASSERT(mat == RICO_DEFAULT_MATERIAL);
-    RICO_ASSERT(mesh == RICO_DEFAULT_MESH);
-}
-
-void pack_build_alpha()
-{
-    const char *filename = "packs/alpha.pak";
-    struct pack pack = { 0 };
-
-    pack_start(&pack);
-    load_obj_file(&pack, "mesh/prim_sphere.ric");
-    load_obj_file(&pack, "mesh/sphere.ric");
-    load_obj_file(&pack, "mesh/wall_cornertest.ric");
-    //load_obj_file(&pack, "mesh/conference.ric");
-    //load_obj_file(&pack, "mesh/spawn.ric");
-    //load_obj_file(&pack, "mesh/door.ric");
-    //load_obj_file(&pack, "mesh/welcome_floor.ric");
-    //load_obj_file(&pack, "mesh/grass.ric");
-    pack_end(&pack, filename);
-}
-
-void pack_build_all()
-{
-    pack_build_default();
-    pack_build_alpha();
 }
 
 int pack_load(const char *filename, struct pack **_pack)
@@ -528,7 +569,7 @@ int pack_load(const char *filename, struct pack **_pack)
     {
         struct pack tmp_pack = { 0 };
         fread(&tmp_pack, 1, sizeof(tmp_pack), pack_file);
-        u32 pack_size = tmp_pack.data_offset + tmp_pack.buffer_used;
+        u32 pack_size = tmp_pack.data_offset + tmp_pack.buffer_size;
         fseek(pack_file, 0, SEEK_SET);
 
         struct pack *pack = calloc(1, pack_size);
@@ -536,8 +577,7 @@ int pack_load(const char *filename, struct pack **_pack)
         fclose(pack_file);
         RICO_ASSERT(bytes_read == pack_size);
 
-        pack->buffer_size = pack->buffer_used;
-        pack->index = (struct pack_entry *)((u8 *)pack + pack->index_offset);
+        pack->index = (struct blob_index *)((u8 *)pack + pack->index_offset);
         pack->buffer = (u8 *)pack + pack->data_offset;
         *_pack = pack;
     }
@@ -554,4 +594,58 @@ int pack_load(const char *filename, struct pack **_pack)
 
 cleanup:
     return err;
+}
+
+void pack_build_default()
+{
+    // TODO: This entire pack could be embedded as binary data in the .exe once
+    //       the contents are finalized. This would allow the engine to run even
+    //       when the data directory is missing.
+    const char *filename = "packs/default.pak";
+
+    struct pack *pack = pack_init(filename, 10, MB(1));
+    u32 font = load_font(pack, "[FONT_DEFAULT]", "font/courier_new.bff");
+    u32 diff = load_texture(pack, "[TEX_DIFF_DEFAULT]",
+                            "texture/basic_diff.tga", GL_TEXTURE_2D);
+    u32 spec = load_texture(pack, "[TEX_SPEC_DEFAULT]",
+                            "texture/basic_spec.tga", GL_TEXTURE_2D);
+    u32 mat  = load_material(pack, "[MATERIAL_DEFAULT]", diff, spec, 0.5f);
+    u32 bbox = default_mesh(pack, "[PRIM_MESH_BBOX]");
+
+    // HACK: This is a bit of a gross way to assert that the obj file only
+    //       contained a single mesh: the sphere primitive.
+    load_obj_file(pack, "mesh/prim_sphere.ric");
+    u32 sphere = pack->blobs_used - 1;
+
+    pack_save(pack, filename, true);
+    free(pack);
+
+    RICO_ASSERT(font == FONT_DEFAULT);
+    RICO_ASSERT(diff == TEXTURE_DEFAULT_DIFF);
+    RICO_ASSERT(spec == TEXTURE_DEFAULT_SPEC);
+    RICO_ASSERT(mat  == MATERIAL_DEFAULT);
+    RICO_ASSERT(bbox == MESH_DEFAULT_BBOX);
+    RICO_ASSERT(sphere == MESH_DEFAULT_SPHERE);
+}
+
+void pack_build_alpha()
+{
+    const char *filename = "packs/alpha.pak";
+
+    struct pack *pack = pack_init(filename, 16, MB(1));
+    load_obj_file(pack, "mesh/sphere.ric");
+    load_obj_file(pack, "mesh/wall_cornertest.ric");
+    //load_obj_file(&pack, "mesh/conference.ric");
+    //load_obj_file(&pack, "mesh/spawn.ric");
+    //load_obj_file(&pack, "mesh/door.ric");
+    //load_obj_file(&pack, "mesh/welcome_floor.ric");
+    //load_obj_file(&pack, "mesh/grass.ric");
+    pack_save(pack, filename, false);
+    free(pack);
+}
+
+void pack_build_all()
+{
+    pack_build_default();
+    pack_build_alpha();
 }

@@ -112,21 +112,25 @@ int chunk_free(struct rico_chunk *chunk, struct pool_id id)
     switch (id.type) {
     case RICO_HND_OBJECT:
     {
-        err = object_free(block);
+        //err = object_free(block);
+        RICO_ASSERT(0);
         break;
     }
     case RICO_HND_TEXTURE:
     {
+        RICO_ASSERT(0);
         //err = texture_free(block);
         break;
     }
     case RICO_HND_MESH:
     {
+        RICO_ASSERT(0);
         //err = mesh_free(block);
         break;
     }
     case RICO_HND_FONT:
     {
+        RICO_ASSERT(0);
         //err = font_free(block);
         break;
     }
@@ -137,6 +141,7 @@ int chunk_free(struct rico_chunk *chunk, struct pool_id id)
     }
     case RICO_HND_MATERIAL:
     {
+        RICO_ASSERT(0);
         //err = material_free(block);
         break;
     }

@@ -10,10 +10,6 @@ global const char *font_name(struct rico_font *font)
 {
     return (u8 *)font + font->name_offset;
 }
-internal struct rico_texture *font_texture(struct rico_font *font)
-{
-    return (struct rico_texture *)((u8 *)font + font->texture_offset);
-}
 
 #if 0
 int font_free(struct rico_font *font)
@@ -34,7 +30,7 @@ int font_free(struct rico_font *font)
 internal void font_setblend(const struct rico_font *font)
 {
     // TODO: Preserve blend settings before changing
-	switch(font->RenderStyle)
+	switch(font->render_style)
 	{
 	case BFG_RS_ALPHA:
         glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
@@ -50,9 +46,8 @@ internal void font_setblend(const struct rico_font *font)
 	}
 }
 
-void font_render(struct rico_mesh **mesh, struct rico_texture **texture,
-                 struct rico_font *font, int x, int y, struct col4 bg,
-                 const char *text, const char *mesh_name,
+void font_render(u32 *mesh_id, u32 *texture_id, struct rico_font *font, int x,
+                 int y, struct col4 bg, const char *text, const char *mesh_name,
                  enum rico_mesh_type type)
 {
     // TODO: Push/pop these on arena instead of using local stack? Does it
@@ -63,7 +58,7 @@ void font_render(struct rico_mesh **mesh, struct rico_texture **texture,
 
     if (!font)
     {
-        font = pack_read(pack_default, RICO_DEFAULT_FONT);
+        font = pack_read(pack_default, FONT_DEFAULT);
     }
 
     //font_setblend(font);
@@ -78,7 +73,7 @@ void font_render(struct rico_mesh **mesh, struct rico_texture **texture,
     int idx_element = 0;
 
     int cur_x = x;
-    int cur_y = y - font->YOffset;
+    int cur_y = y - font->y_offset;
 
     int row, col;
     GLfloat u0, v0, u1, v1;
@@ -86,20 +81,20 @@ void font_render(struct rico_mesh **mesh, struct rico_texture **texture,
     for (int i = 0; i < text_len; i++)
     {
         if (text[i] == '\n') {
-            cur_y -= font->YOffset;
+            cur_y -= font->y_offset;
             cur_x = x;
             continue;
         }
 
-        row = (text[i] - font->Base) / font->RowPitch;
-        col = (text[i] - font->Base) - (row * font->RowPitch);
+        row = (text[i] - font->base_char) / font->row_pitch;
+        col = (text[i] - font->base_char) - (row * font->row_pitch);
 
-        u0 = col * font->ColFactor;
-        v0 = row * font->RowFactor;
-        u1 = u0 + font->ColFactor;
-        v1 = v0 + font->RowFactor;
+        u0 = col * font->col_factor;
+        v0 = row * font->row_factor;
+        u1 = u0 + font->col_factor;
+        v1 = v0 + font->row_factor;
 
-        xOffset = font->Width[(int)text[i]];
+        xOffset = font->char_widths[(int)text[i]];
         //xOffset = font->CellX;
 
         // Vertices for this character's quad
@@ -126,7 +121,7 @@ void font_render(struct rico_mesh **mesh, struct rico_texture **texture,
         vertices[idx_vertex++] = (struct rico_vertex) {
             (struct vec3) {
                 (cur_x + xOffset) / 64.0f,
-                (cur_y + font->YOffset) / 64.0f,
+                (cur_y + font->y_offset) / 64.0f,
                 0.0f
             },
             bg,
@@ -136,7 +131,7 @@ void font_render(struct rico_mesh **mesh, struct rico_texture **texture,
         vertices[idx_vertex++] = (struct rico_vertex) {
             (struct vec3) {
                 cur_x / 64.0f,
-                (cur_y + font->YOffset) / 64.0f,
+                (cur_y + font->y_offset) / 64.0f,
                 0.0f
             },
             bg,
@@ -164,10 +159,10 @@ void font_render(struct rico_mesh **mesh, struct rico_texture **texture,
 
     // TODO: This stuff is severely broken, need to figure out where these
     //       dynamic-at-runtime meshes will go for e.g. screen strings.
-    u32 mesh_id = load_mesh(pack_frame, mesh_name, idx_vertex, vertices,
-                            idx_element, elements);
-    *mesh = pack_read(pack_frame, mesh_id);
-    *texture = font_texture(font);
+    u32 new_mesh_id = load_mesh(pack_frame, mesh_name, idx_vertex, vertices,
+                                idx_element, elements);
+    *mesh_id = new_mesh_id;
+    *texture_id = font->texture_id;
 }
 
 /*

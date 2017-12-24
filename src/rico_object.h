@@ -12,7 +12,7 @@ enum rico_obj_type {
 extern const char *rico_obj_type_string[];
 
 struct rico_object {
-    struct hnd hnd;
+    u32 id;
     enum rico_obj_type type;
 
     // TODO: Refactor into rico_transform
@@ -23,6 +23,8 @@ struct rico_object {
     struct mat4 transform;
     struct mat4 transform_inverse;
 
+    u32 name_offset;
+
     // TODO: Support multiple meshes and textures
     // TODO: Cache; don't serialize/overwrite when loading
     // TODO: Overwrite *mesh with mesh->uid on save?
@@ -31,19 +33,20 @@ struct rico_object {
 
     struct bbox bbox;
 };
-extern struct pool_id RICO_DEFAULT_OBJECT;
 
-int object_init(struct rico_object *object, const char *name,
-                enum rico_obj_type type, u32 mesh_id, u32 material_id,
-                const struct bbox *bbox);
-int object_copy(struct rico_object *object, struct rico_object *other,
-                const char *name);
+global const char *object_name(struct rico_object *obj);
+global struct rico_object *object_copy(struct pack *pack,
+                                       struct rico_object *other,
+                                       const char *name);
+#if 0
 int object_free(struct rico_object *object);
 void object_free_all(struct rico_chunk *chunk);
-void object_bbox_recalculate_all(struct rico_chunk *chunk);
+#endif
+void object_bbox_recalculate_all(struct pack *pack);
 bool object_selectable(struct rico_object *object);
 void object_select(struct rico_object *object);
 void object_deselect(struct rico_object *object);
+global void object_update_transform(struct rico_object *object);
 void object_trans(struct rico_object *object, const struct vec3 *v);
 void object_trans_set(struct rico_object *object, const struct vec3 *v);
 const struct vec3 *object_trans_get(struct rico_object *object);
@@ -66,7 +69,7 @@ bool object_collide_ray_type(struct rico_chunk *chunk,
                              struct rico_object **_object, float *_dist,
                              enum rico_obj_type type, const struct ray *ray);
 void object_render(struct rico_object *object, const struct camera *camera);
-void object_render_type(struct rico_chunk *chunk, enum rico_obj_type type,
+void object_render_type(struct pack *pack, enum rico_obj_type type,
                         const struct program_default *prog,
                         const struct camera *camera);
 int object_print(struct rico_object *object);

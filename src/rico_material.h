@@ -11,7 +11,7 @@ struct rico_material {
 };
 
 global const char *material_name(struct rico_material *material);
-void material_bind(struct rico_material *material);
-void material_unbind(struct rico_material *material);
+void material_bind(struct pack *pack, u32 id, GLint shiny_loc);
+void material_unbind(struct pack *pack, u32 id);
 
 #endif // RICO_MATERIAL_H
