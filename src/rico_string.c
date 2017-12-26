@@ -16,8 +16,7 @@ int string_init(struct rico_string *str, const char *name,
     // Generate font mesh and get texture handle
     u32 font_mesh_id;
     u32 font_tex_id;
-    font_render(&font_mesh_id, &font_tex_id, font, 0, 0, color, text, name,
-                MESH_STRING_SCREEN);
+    font_render(&font_mesh_id, &font_tex_id, font, 0, 0, color, text, name);
 
     u32 font_mat_id = 0; //load_material(pack_transient, name, font_tex_id, 0, 0.5f);
 
@@ -25,9 +24,11 @@ int string_init(struct rico_string *str, const char *name,
     hnd_init(&str->hnd, RICO_HND_STRING, name);
     str->slot = slot;
 
-    str->object_id = load_object(pack_short, name, OBJ_STRING_SCREEN,
+    static u32 blah = 0;
+    blah = blah + 1;
+    str->object_id = load_object(pack_transient, name, OBJ_STRING_SCREEN,
                                  font_mesh_id, font_mat_id, NULL);
-    struct rico_object *str_obj = pack_read(pack_short, str->object_id);
+    struct rico_object *str_obj = pack_lookup(pack_transient, str->object_id);
     object_trans_set(str_obj,
                      &(struct vec3) { SCREEN_X(x), SCREEN_Y(y), -1.0f });
     
@@ -64,10 +65,12 @@ int string_free(struct rico_string *str)
     //chunk_free(str->hnd.chunk, str->object_id);
     //hashtable_delete_hnd(&global_strings, &str->hnd);
 
-    struct rico_object *obj = pack_read(pack_short, str->object_id);
-    pack_delete(pack_short, obj->material_id);
-    pack_delete(pack_short, obj->mesh_id);
-    pack_delete(pack_short, str->object_id);
+    struct rico_object *obj = pack_lookup(pack_transient, str->object_id);
+    struct rico_mesh *mesh = pack_lookup(pack_transient, obj->mesh_id);
+    mesh_delete(mesh);
+    pack_delete(pack_transient, obj->material_id);
+    pack_delete(pack_transient, obj->mesh_id);
+    pack_delete(pack_transient, str->object_id);
 
     return pool_remove(str->hnd.pool, str->hnd.id);
 }

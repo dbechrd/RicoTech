@@ -1,15 +1,6 @@
 #ifndef RICO_MESH_H
 #define RICO_MESH_H
 
-#define RICO_MESH_TYPES(f)  \
-    f(MESH_OBJ_WORLD)       \
-    f(MESH_STRING_SCREEN)
-
-enum rico_mesh_type {
-    RICO_MESH_TYPES(GEN_LIST)
-};
-extern const char *rico_mesh_type_string[];
-
 struct rico_vertex {
     struct vec3 pos;
     struct col4 col;

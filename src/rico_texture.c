@@ -1,6 +1,7 @@
 global const char *texture_name(struct rico_texture *tex)
 {
-    return (u8 *)tex + tex->name_offset;
+    RICO_ASSERT(tex->name_offset);
+    return (char *)((u8 *)tex + tex->name_offset);
 }
 internal u8 *texture_pixels(struct rico_texture *tex)
 {
@@ -15,10 +16,23 @@ internal int texture_upload(struct rico_texture *texture)
     printf("[ tex][upld] name=%s\n", texture_name(texture));
 #endif
 
-    //--------------------------------------------------------------------------
-    // Generate textures
-    //--------------------------------------------------------------------------
     /*************************************************************************
+    | Frequency of access:
+    |
+    | STREAM  Data store contents modified once and used at most a few times.
+    | STATIC  Data store contents modified once and used many times.
+    | DYNAMIC Data store contents modified repeatedly and used many times.
+    |
+    **************************************************************************
+    | Nature of access:
+    |
+    | DRAW    The data store contents are modified by the application, and used
+    |         as the source for GL drawing and image specification commands.
+    | READ    The data store contents are modified by reading data from the GL,
+    |         and used to return that data when queried by the application.
+    | COPY    DRAW & READ
+    |
+    **************************************************************************
     | Common texture binding targets:
     |
     | GL_TEXTURE_1D         0.0f -> 1.0f (x)
@@ -150,13 +164,12 @@ void texture_delete(struct rico_texture *texture)
 void texture_bind(struct pack *pack, u32 id, GLenum texture_unit)
 {
     RICO_ASSERT(pack);
-    RICO_ASSERT(id < pack->blobs_used);
 
 #if RICO_DEBUG_TEXTURE
     printf("[ tex][bind] name=%s\n", texture_name(texture));
 #endif
 
-    struct rico_texture *texture = pack_read(pack, id);
+    struct rico_texture *texture = pack_lookup(pack, id);
     if (!texture->loaded)
     {
         texture_upload(texture);
@@ -169,9 +182,8 @@ void texture_bind(struct pack *pack, u32 id, GLenum texture_unit)
 void texture_unbind(struct pack *pack, u32 id, GLenum texture_unit)
 {
     RICO_ASSERT(pack);
-    RICO_ASSERT(id < pack->blobs_used);
 
-    struct rico_texture *texture = pack_read(pack, id);
+    struct rico_texture *texture = pack_lookup(pack, id);
     RICO_ASSERT(texture->loaded);
 
 #if RICO_DEBUG_TEXTURE

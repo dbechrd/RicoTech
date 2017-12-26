@@ -8,7 +8,8 @@ struct bff_header
 
 global const char *font_name(struct rico_font *font)
 {
-    return (u8 *)font + font->name_offset;
+    RICO_ASSERT(font->name_offset);
+    return (char *)((u8 *)font + font->name_offset);
 }
 
 #if 0
@@ -47,8 +48,7 @@ internal void font_setblend(const struct rico_font *font)
 }
 
 void font_render(u32 *mesh_id, u32 *texture_id, struct rico_font *font, int x,
-                 int y, struct col4 bg, const char *text, const char *mesh_name,
-                 enum rico_mesh_type type)
+                 int y, struct col4 bg, const char *text, const char *mesh_name)
 {
     // TODO: Push/pop these on arena instead of using local stack? Does it
     //       matter?
@@ -58,7 +58,7 @@ void font_render(u32 *mesh_id, u32 *texture_id, struct rico_font *font, int x,
 
     if (!font)
     {
-        font = pack_read(pack_default, FONT_DEFAULT);
+        font = pack_lookup(pack_default, FONT_DEFAULT);
     }
 
     //font_setblend(font);
@@ -159,7 +159,7 @@ void font_render(u32 *mesh_id, u32 *texture_id, struct rico_font *font, int x,
 
     // TODO: This stuff is severely broken, need to figure out where these
     //       dynamic-at-runtime meshes will go for e.g. screen strings.
-    u32 new_mesh_id = load_mesh(pack_short, mesh_name, idx_vertex, vertices,
+    u32 new_mesh_id = load_mesh(pack_transient, mesh_name, idx_vertex, vertices,
                                 idx_element, elements);
 
     *mesh_id = new_mesh_id;

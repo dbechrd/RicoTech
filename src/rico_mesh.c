@@ -1,10 +1,7 @@
-const char *rico_mesh_type_string[] = {
-    RICO_MESH_TYPES(GEN_STRING)
-};
-
 global const char *mesh_name(struct rico_mesh *mesh)
 {
-    return (u8 *)mesh + mesh->name_offset;
+    RICO_ASSERT(mesh->name_offset);
+    return (char *)((u8 *)mesh + mesh->name_offset);
 }
 internal struct mesh_vertex *mesh_vertices(struct rico_mesh *mesh)
 {
@@ -91,9 +88,8 @@ void mesh_delete(struct rico_mesh *mesh)
 void mesh_render(struct pack *pack, u32 id)
 {
     RICO_ASSERT(pack);
-    RICO_ASSERT(id < pack->blobs_used);
 
-    struct rico_mesh *mesh = pack_read(pack, id);
+    struct rico_mesh *mesh = pack_lookup(pack, id);
     if (!mesh->loaded)
     {
         mesh_upload(mesh, GL_STATIC_DRAW);

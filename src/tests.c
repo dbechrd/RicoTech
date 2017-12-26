@@ -94,38 +94,30 @@ int test_pool()
 
     struct rico_pool *pool = mem_block;
     err = pool_init(pool, "Test pool", block_count, block_size);
-    if (err) return err;
+    if (err) goto cleanup;
 
     struct pool_id id1, id2;
     struct rico_string *str;
 
-    printf("============================================================\n"
-           " ADD ID 1\n"
-           "============================================================\n");
     err = pool_add((struct hnd **)&str, pool);
-    if (err) return err;
+    if (err) goto cleanup;
     id1 = str->hnd.id;
 
     hnd_init(&str->hnd, RICO_HND_OBJECT, "Test 1");
 
-    printf("============================================================\n"
-           " ADD ID 2\n"
-           "============================================================\n");
     err = pool_add((struct hnd **)&str, pool);
-    if (err) return err;
+    if (err) goto cleanup;
     id2 = str->hnd.id;
 
     hnd_init(&str->hnd, RICO_HND_OBJECT, "Test 2");
 
-    printf("============================================================\n"
-           " REMOVE ID 1\n"
-           "============================================================\n");
     err = pool_remove(pool, id1);
-    if (err) return err;
-    printf("============================================================\n"
-           " REMOVE ID 2\n"
-           "============================================================\n");
+    if (err) goto cleanup;
     err = pool_remove(pool, id2);
+    if (err) goto cleanup;
+
+cleanup:
+    free(mem_block);
     return err;
 }
 
@@ -133,5 +125,5 @@ void run_tests()
 {
     //test_geom();
     //test_hashtable();
-    test_pool();
+    //test_pool();
 }

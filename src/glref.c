@@ -26,49 +26,7 @@ global struct mat4 z_axis_transform;
 
 void init_glref()
 {
-    //--------------------------------------------------------------------------
-    // Initialize fonts
-    //--------------------------------------------------------------------------
-    // TODO: Add error handling to make_font()
-    //font_init("font/courier_new.bff", &font);
-
-    /*************************************************************************
-    | Frequency of access:
-    |
-    | STREAM  Data store contents modified once and used at most a few times.
-    | STATIC  Data store contents modified once and used many times.
-    | DYNAMIC Data store contents modified repeatedly and used many times.
-    |
-    **************************************************************************
-    | Nature of access:
-    |
-    | DRAW    The data store contents are modified by the application, and used
-    |         as the source for GL drawing and image specification commands.
-    | READ    The data store contents are modified by reading data from the GL,
-    |         and used to return that data when queried by the application.
-    | COPY    DRAW & READ
-    |
-    *************************************************************************/
-
-    //--------------------------------------------------------------------------
-    // Create textures
-    //--------------------------------------------------------------------------
-    /*err = texture_load_file(&tex_grass, "grass", GL_TEXTURE_2D,
-                            "texture/grass.tga", 32);
-    if (err) return err;
-
-    err = texture_load_file(&tex_rock, "bricks", GL_TEXTURE_2D,
-                            "texture/clean_bricks.tga", 32);
-    if (err) return err;
-
-    err = texture_load_file(&tex_hello, "hello", GL_TEXTURE_2D,
-                            "texture/hello.tga", 32);
-    if (err) return err;
-
-    err = texture_load_file(&tex_yellow, "yellow", GL_TEXTURE_2D,
-                            "texture/fake_yellow.tga", 32);
-    if (err) return err;*/
-
+    // TODO: Find somewhere to put debug/editor draw code that makes sense
     //--------------------------------------------------------------------------
     // Create axis label bboxes
     //--------------------------------------------------------------------------
@@ -98,7 +56,7 @@ void create_obj()
 
     // Create new object with default properties
     u32 new_obj_id = load_object(pack_active, name, OBJ_STATIC, 0, 0, NULL);
-    struct rico_object *new_obj = pack_read(pack_active, new_obj_id);
+    struct rico_object *new_obj = pack_lookup(pack_active, new_obj_id);
 
     // Select new object
     select_obj(new_obj);
@@ -138,27 +96,29 @@ void select_next_obj()
 
     struct rico_object *obj;
 
-    u32 start = (selected_obj) ? selected_obj->id : 1;
-    u32 blob = start;
+    u32 start_index;
+    if (selected_obj)
+        start_index = pack_active->lookup[selected_obj->id];
+    else
+        start_index = 1;
+
+    u32 index = start_index;
     do
     {
-        blob++;
-        if (blob == pack_active->blobs_used)
-        {
-            select_obj(NULL);
-            return;
-        }
+        index++;
+        if (index == pack_active->blobs_used)
+            break;
 
-        if (pack_active->index[blob].type == RICO_HND_OBJECT)
+        if (pack_active->index[index].type == RICO_HND_OBJECT)
         {
-            obj = pack_read(pack_active, blob);
+            obj = pack_read(pack_active, index);
             if (object_selectable(obj))
             {
                 select_obj(obj);
                 return;
             }
         }
-    } while (blob != start);
+    } while (index != start_index);
 
     select_obj(NULL);
 }
@@ -171,27 +131,29 @@ void select_prev_obj()
 
     struct rico_object *obj;
 
-    u32 start = (selected_obj) ? selected_obj->id : pack_active->blobs_used;
-    u32 blob = start;
+    u32 start_index;
+    if (selected_obj)
+        start_index = pack_active->lookup[selected_obj->id];
+    else
+        start_index = pack_active->blobs_used;
+
+    u32 index = start_index;
     do
     {
-        blob--;
-        if (blob == 0)
-        {
-            select_obj(NULL);
-            return;
-        }
+        index--;
+        if (index == 0)
+            break;
 
-        if (pack_active->index[blob].type == RICO_HND_OBJECT)
+        if (pack_active->index[index].type == RICO_HND_OBJECT)
         {
-            obj = pack_read(pack_active, blob);
+            obj = pack_read(pack_active, index);
             if (object_selectable(obj))
             {
                 select_obj(obj);
                 return;
             }
         }
-    } while (blob != start);
+    } while (index != start_index);
 
     select_obj(NULL);
 }
@@ -294,7 +256,7 @@ void selected_bbox_reset()
     if (!selected_obj)
         return;
 
-    struct rico_mesh *mesh = pack_read(pack_active, selected_obj->mesh_id);
+    struct rico_mesh *mesh = pack_lookup(pack_active, selected_obj->mesh_id);
     selected_obj->bbox = mesh->bbox;
 
     object_select(selected_obj);
@@ -315,17 +277,11 @@ void selected_duplicate()
 
 void selected_delete()
 {
-    if (!selected_obj) return;
-    if (!object_selectable(selected_obj)) return;
+    if (!selected_obj)
+        return;
 
-    struct rico_object *to_delete = selected_obj;
-    select_prev_obj();  // NOTE: This assumes that prev_obj(first) == NULL
-
-    // TODO: There is no way to delete from a pack atm.. hmmm.. Will have to
-    //       add pack_delete(u32 id) that sets index[id].deleted = true, then
-    //       garbage collect / compact the pack whenever it makes sense (e.g.
-    //       when out of memory or saving to disk).
-    //object_free(to_delete);
+    pack_delete(pack_active, selected_obj->id);
+    select_prev_obj();
 }
 
 void glref_update(r64 dt)
@@ -344,10 +300,10 @@ void glref_render(struct camera *camera)
     // Render objects
     //--------------------------------------------------------------------------
     object_render_type(pack_active, OBJ_STATIC, prog_default, camera);
-    object_render_type(pack_short, OBJ_STATIC, prog_default, camera);
+    object_render_type(pack_transient, OBJ_STATIC, prog_default, camera);
     object_render_type(pack_frame, OBJ_STATIC, prog_default, camera);
     object_render_type(pack_active, OBJ_STRING_WORLD, prog_default, camera);
-    object_render_type(pack_short, OBJ_STRING_WORLD, prog_default, camera);
+    object_render_type(pack_transient, OBJ_STRING_WORLD, prog_default, camera);
     object_render_type(pack_frame, OBJ_STRING_WORLD, prog_default, camera);
 
     //--------------------------------------------------------------------------
@@ -359,30 +315,20 @@ void glref_render(struct camera *camera)
     prim_draw_bbox_color(&axis_bbox, &z_axis_transform, &COLOR_BLUE);
 
     object_render_type(pack_active, OBJ_STRING_SCREEN, prog_default, camera);
-    object_render_type(pack_short, OBJ_STRING_SCREEN, prog_default, camera);
+    object_render_type(pack_transient, OBJ_STRING_SCREEN, prog_default, camera);
     object_render_type(pack_frame, OBJ_STRING_SCREEN, prog_default, camera);
 }
 void free_glref()
 {
-    //--------------------------------------------------------------------------
-    // Clean up
-    //--------------------------------------------------------------------------
-    // Free all game objects
-
     // TODO: What are chunks used for now? How/when do we need to free them?
-    //chunk_free(chunk_active);
-    //chunk_free(chunk_transient);
     free(pack_frame);
-    free(pack_short);
+    free(pack_transient);
     free(pack_active);
     free(pack_default);
 
-    //TODO: Free all meshes
-
-    //TODO: Free all textures
-    //texture_free(tex_grass);
-    //texture_free(tex_rock);
-    //texture_free(tex_hello);
+    // TODO: Free chunks/pools if still using any
+    //chunk_free(chunk_active);
+    //chunk_free(chunk_transient);
 
     //TODO: Free all programs
     free_program_default(&prog_default);

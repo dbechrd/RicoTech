@@ -164,7 +164,7 @@ global u64 last_cycles;
 
 // FPS UI
 global u64 fps_last_render;
-global u64 fps_render_delta = 200000;  // 200 ms
+global u64 fps_render_delta = 1; //200000;  // 200 ms
 global bool fps_render = false;
 
 ///|////////////////////////////////////////////////////////////////////////////
@@ -229,6 +229,7 @@ static inline bool chord_released(enum rico_action action)
 // TODO: Where should these functions go?
 internal int save_file()
 {
+    RICO_ASSERT(chunk_active);
     enum rico_error err;
 
     if (chunk_active->uid == UID_NULL)
@@ -1136,6 +1137,7 @@ internal int rico_init_transient_chunk()
 internal int init_hardcoded_test_chunk(struct rico_chunk **chunk)
 {
     enum rico_error err = SUCCESS;
+    UNUSED(chunk);
 
 #if 0
     //--------------------------------------------------------------------------
@@ -1447,23 +1449,22 @@ internal int state_engine_shutdown()
 }
 void init_rico_engine()
 {
-    state_handlers[STATE_ENGINE_INIT]    .run = &state_engine_init;
+    state_handlers[STATE_ENGINE_INIT    ].run = &state_engine_init;
     state_handlers[STATE_ENGINE_SHUTDOWN].run = &state_engine_shutdown;
-    state_handlers[STATE_MENU_QUIT]      .run = &state_menu_quit;
+    state_handlers[STATE_MENU_QUIT      ].run = &state_menu_quit;
+    state_handlers[STATE_PLAY_EXPLORE   ].run = &state_play_explore;
+    state_handlers[STATE_EDIT_TRANSLATE ].run = &state_edit_translate;
+    state_handlers[STATE_EDIT_ROTATE    ].run = &state_edit_rotate;
+    state_handlers[STATE_EDIT_SCALE     ].run = &state_edit_scale;
+    state_handlers[STATE_EDIT_TEXTURE   ].run = &state_edit_texture;
+    state_handlers[STATE_EDIT_MESH      ].run = &state_edit_mesh;
+    state_handlers[STATE_TEXT_INPUT     ].run = &state_text_input;
 
-    state_handlers[STATE_PLAY_EXPLORE]   .run = &state_play_explore;
-
-    state_handlers[STATE_EDIT_TRANSLATE]     .run = &state_edit_translate;
-    state_handlers[STATE_EDIT_ROTATE]        .run = &state_edit_rotate;
-    state_handlers[STATE_EDIT_SCALE]         .run = &state_edit_scale;
-    state_handlers[STATE_EDIT_TEXTURE]       .run = &state_edit_texture;
-    state_handlers[STATE_EDIT_MESH]          .run = &state_edit_mesh;
-    state_handlers[STATE_EDIT_TRANSLATE] .cleanup = &state_edit_cleanup;
-    state_handlers[STATE_EDIT_ROTATE]    .cleanup = &state_edit_cleanup;
-    state_handlers[STATE_EDIT_SCALE]     .cleanup = &state_edit_cleanup;
-    state_handlers[STATE_EDIT_TEXTURE]   .cleanup = &state_edit_cleanup;
-    state_handlers[STATE_EDIT_MESH]      .cleanup = &state_edit_cleanup;
-    state_handlers[STATE_TEXT_INPUT]         .run = &state_text_input;
+    state_handlers[STATE_EDIT_TRANSLATE ].cleanup = &state_edit_cleanup;
+    state_handlers[STATE_EDIT_ROTATE    ].cleanup = &state_edit_cleanup;
+    state_handlers[STATE_EDIT_SCALE     ].cleanup = &state_edit_cleanup;
+    state_handlers[STATE_EDIT_TEXTURE   ].cleanup = &state_edit_cleanup;
+    state_handlers[STATE_EDIT_MESH      ].cleanup = &state_edit_cleanup;
 
     state = STATE_ENGINE_INIT;
 }

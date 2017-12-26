@@ -11,7 +11,7 @@ OBJ_DIR := obj
 LIB_DIR := lib
 DLL_DIR := dll
 RES_DIR := res
-RES_SUBDIRS := chunks font shader mesh texture
+RES_SUBDIRS := chunks font shader mesh texture packs
 BIN_DIR := bin
 
 BIN_EXE := $(BIN_DIR)/RicoTech.exe
@@ -30,6 +30,7 @@ RESOURCES += $(wildcard $(RES_DIR)/font/*.bff)
 RESOURCES += $(wildcard $(RES_DIR)/shader/*.glsl)
 RESOURCES += $(wildcard $(RES_DIR)/mesh/*.ric)
 RESOURCES += $(wildcard $(RES_DIR)/texture/*.tga)
+RESOURCES += $(wildcard $(RES_DIR)/packs/*.pak)
 BIN_RESOURCES := $(subst $(RES_DIR)/,$(BIN_DIR)/,$(RESOURCES))
 
 INCLUDE_DIRS := $(INC_DIR:%=-I%)

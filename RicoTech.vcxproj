@@ -242,6 +242,36 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="src\bbox.h" />
+    <ClInclude Include="src\camera.h" />
+    <ClInclude Include="src\const.h" />
+    <ClInclude Include="src\dlb_string.h" />
+    <ClInclude Include="src\geom.h" />
+    <ClInclude Include="src\glref.h" />
+    <ClInclude Include="src\pack_builder.h" />
+    <ClInclude Include="src\primitives.h" />
+    <ClInclude Include="src\program.h" />
+    <ClInclude Include="src\regularpoly.h" />
+    <ClInclude Include="src\rico.h" />
+    <ClInclude Include="src\rico_cereal.h" />
+    <ClInclude Include="src\rico_chunk.h" />
+    <ClInclude Include="src\rico_collision.h" />
+    <ClInclude Include="src\rico_convert.h" />
+    <ClInclude Include="src\rico_file.h" />
+    <ClInclude Include="src\rico_font.h" />
+    <ClInclude Include="src\rico_hash.h" />
+    <ClInclude Include="src\rico_hnd.h" />
+    <ClInclude Include="src\rico_light.h" />
+    <ClInclude Include="src\rico_material.h" />
+    <ClInclude Include="src\rico_mesh.h" />
+    <ClInclude Include="src\rico_object.h" />
+    <ClInclude Include="src\rico_physics.h" />
+    <ClInclude Include="src\rico_pool.h" />
+    <ClInclude Include="src\rico_state.h" />
+    <ClInclude Include="src\rico_string.h" />
+    <ClInclude Include="src\rico_texture.h" />
+    <ClInclude Include="src\shader.h" />
+    <ClInclude Include="src\util.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\3rdparty\CacheLineSize.c">
@@ -288,6 +318,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="src\pack_builder.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="src\primitives.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -315,6 +349,10 @@
     <ClCompile Include="src\rico_collision.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\rico_convert.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\rico_file.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>

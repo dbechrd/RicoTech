@@ -1,16 +1,17 @@
 int make_shader(const GLenum type, const char *filename, GLuint *_shader)
 {
     enum rico_error err;
-    GLint len;
+    u32 len;
     GLchar *source;
     GLuint shader;
     GLint status;
 
     err = file_contents(filename, &len, &source);
     if (err) goto cleanup;
+    RICO_ASSERT(len <= (u32)INT_MAX);
 
     shader = glCreateShader(type);
-    glShaderSource(shader, 1, (const GLchar**)&source, &len);
+    glShaderSource(shader, 1, (const GLchar**)&source, (GLint *)&len);
     glCompileShader(shader);
 
     glGetShaderiv(shader, GL_COMPILE_STATUS, &status);

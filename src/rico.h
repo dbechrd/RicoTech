@@ -6,12 +6,14 @@
 #endif
 
 #include <stdint.h>
-#include <stdio.h>
+#include "const.h"
+
 //#include <stdlib.h>
 #include "3rdparty/GL/gl3w.h"
 #include "3rdparty/SDL/SDL.h"
 
-#include "const.h"
+#include <stdio.h>
+#include <limits.h>
 #include <math.h>
 
 #include "dlb_string.h"

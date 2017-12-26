@@ -5,7 +5,7 @@ const char *rico_obj_type_string[] = {
 global const char *object_name(struct rico_object *obj)
 {
     RICO_ASSERT(obj->name_offset);
-    return (u8 *)obj + obj->name_offset;
+    return (char *)((u8 *)obj + obj->name_offset);
 }
 
 global struct rico_object *object_copy(struct pack *pack,
@@ -15,7 +15,7 @@ global struct rico_object *object_copy(struct pack *pack,
     // Create new object with same mesh / texture
     u32 new_obj_id = load_object(pack, name, other->type, other->mesh_id,
                                  other->material_id, &other->bbox);
-    struct rico_object *new_obj = pack_read(pack, new_obj_id);
+    struct rico_object *new_obj = pack_lookup(pack, new_obj_id);
 
     // TODO: Make transform one property and add optional param to object_init
     // Copy transform
@@ -56,13 +56,16 @@ void object_free_all(struct rico_chunk *chunk)
 void object_bbox_recalculate_all(struct pack *pack)
 {
     struct rico_object *obj = 0;
-    for (u32 blob = 1; blob < pack->blobs_used; ++blob)
+    for (u32 index = 1; index < pack->blobs_used; ++index)
     {
-        if (pack->index[blob].type != OBJ_STATIC)
+        if (pack->index[index].type != RICO_HND_OBJECT)
             continue;
 
-        obj = pack_read(pack, blob);
-        struct rico_mesh *mesh = pack_read(pack, obj->mesh_id);
+        obj = pack_read(pack, index);
+        if (obj->type != OBJ_STATIC)
+            continue;
+
+        struct rico_mesh *mesh = pack_lookup(pack, obj->mesh_id);
         obj->bbox = mesh->bbox;
     }
 }
@@ -227,12 +230,12 @@ bool object_collide_ray_type(struct pack *pack, struct rico_object **_object,
     *_dist = Z_FAR; // Track closest object
 
     struct rico_object *obj = 0;
-    for (u32 blob = 1; blob < pack->blobs_used; ++blob)
+    for (u32 index = 1; index < pack->blobs_used; ++index)
     {
-        if (pack->index[blob].type != RICO_HND_OBJECT)
+        if (pack->index[index].type != RICO_HND_OBJECT)
             continue;
 
-        obj = pack_read(pack, blob);
+        obj = pack_read(pack, index);
         if (obj->type != type)
             continue;
 
@@ -332,12 +335,12 @@ void object_render_type(struct pack *pack, enum rico_obj_type type,
     //struct rico_pool *pool = chunk->pools[RICO_HND_OBJECT];
     //struct rico_object *obj = pool_first(pool);
     struct rico_object *obj = 0;
-    for (u32 blob = 1; blob < pack->blobs_used; ++blob)
+    for (u32 index = 1; index < pack->blobs_used; ++index)
     {
-        if (pack->index[blob].type != RICO_HND_OBJECT)
+        if (pack->index[index].type != RICO_HND_OBJECT)
             continue;
 
-        obj = pack_read(pack, blob);
+        obj = pack_read(pack, index);
         if (obj->type != type)
             continue;
 
@@ -388,17 +391,16 @@ void object_render_type(struct pack *pack, enum rico_obj_type type,
         material_unbind(mat_pack, mat_id);
     }
 
-    for (u32 blob = 1; blob < pack->blobs_used; ++blob)
+    // Render bounding boxes
+    for (u32 index = 1; index < pack->blobs_used; ++index)
     {
-        if (pack->index[blob].type != RICO_HND_OBJECT)
+        if (pack->index[index].type != RICO_HND_OBJECT)
             continue;
 
-        obj = pack_read(pack, blob);
+        obj = pack_read(pack, index);
         if (obj->type != type)
             continue;
 
-        // TODO: Batch bounding boxes
-        // Render bbox
         if (is_edit_state(state_get()))
             prim_draw_bbox(&obj->bbox, &obj->transform);
     }
@@ -419,10 +421,10 @@ int object_print(struct rico_object *object)
     if (object)
     {
         struct rico_mesh *mesh = (object->mesh_id)
-            ? pack_read(pack_active, object->mesh_id)
+            ? pack_lookup(pack_active, object->mesh_id)
             : NULL;
         struct rico_material *material = (object->material_id)
-            ? pack_read(pack_active, object->material_id)
+            ? pack_lookup(pack_active, object->material_id)
             : NULL;
 
         len = snprintf(buf, sizeof(buf),
@@ -444,28 +446,15 @@ int object_print(struct rico_object *object)
             object->scale.x, object->scale.y, object->scale.z,
             object->bbox.p[0].x, object->bbox.p[0].y, object->bbox.p[0].z,
             object->bbox.p[1].x, object->bbox.p[1].y, object->bbox.p[1].z,
-            (mesh) ? 777 : 0,
+            object->mesh_id,
             (mesh) ? mesh_name(mesh) : "ID_NULL",
-            (material) ? 777 : 0,
+            object->material_id,
             (material) ? material_name(material) : "ID_NULL"
         );
     }
     else
     {
         len = snprintf(buf, sizeof(buf), "No object selected");
-        /*
-        len = snprintf(buf, sizeof(buf),
-            "     UID: %d\n" \
-            "    Name: --\n" \
-            "    Type: --\n" \
-            "   Trans: --\n" \
-            "     Rot: --\n" \
-            "   Scale: --\n" \
-            "    Mesh: --\n" \
-            "Material: --\n",
-            UID_NULL
-        );
-        */
     }
 
     string_truncate(buf, sizeof(buf), len);

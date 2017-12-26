@@ -22,6 +22,8 @@ struct bbox {
     bool wireframe;
 };
 
+struct rico_vertex;
+
 void bbox_init(struct bbox *bbox, struct vec3 p0, struct vec3 p1,
                struct col4 color);
 void bbox_init_mesh(struct bbox *bbox, const struct rico_vertex *verts,

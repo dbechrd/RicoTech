@@ -90,7 +90,7 @@ int load_obj_file_new(const char *filename)
 {
     enum rico_error err;
 
-    int length;
+    u32 length;
     char *buffer;
     int line_number = 1;
 

@@ -1,6 +1,6 @@
 // Boring, non-OpenGL-related utility functions
 
-int file_contents(const char *filename, int *_length, char **_buffer)
+int file_contents(const char *filename, u32 *_length, char **_buffer)
 {
     FILE *fs = fopen(filename, "rb");
 

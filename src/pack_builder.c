@@ -11,8 +11,8 @@
 // TODO: Tune these as necessary
 #define MAX_PACK_BLOBS 4096
 #define MAX_PACK_BUF_SIZE MB(512)
-#define DEFAULT_PACK_BLOBS 128
-#define DEFAULT_PACK_BUF_SIZE MB(4)
+#define DEFAULT_PACK_BLOBS 32
+#define DEFAULT_PACK_BUF_SIZE KB(256)
 
 internal const u8 PACK_SIGNATURE[4] = { 'R', 'I', 'C', 'O' };
 //internal const u32 PACK_SIGNATURE =
@@ -20,30 +20,68 @@ internal const u8 PACK_SIGNATURE[4] = { 'R', 'I', 'C', 'O' };
 
 struct pack *pack_default = 0;
 struct pack *pack_active = 0;
-struct pack *pack_short = 0;
+struct pack *pack_transient = 0;
 struct pack *pack_frame = 0;
 
-internal inline u32 blob_start(struct pack *pack, enum rico_hnd_type type)
+internal void pack_expand(struct pack *pack)
 {
-    RICO_ASSERT(pack->blobs_used < pack->blob_count);
-    pack->index[pack->blobs_used].type = type;
-    pack->index[pack->blobs_used].offset = pack->buffer_used;
-    return pack->blobs_used;
+    // TODO: Expand pack by min(size * 2, MAX_EXPAND)
+    UNUSED(pack);
 }
-internal inline u32 blob_offset(struct pack *pack)
+
+// NOTE: This will break all existing pointers
+internal void pack_compact_buffer(struct pack *pack)
 {
-    return pack_offset(pack, pack->index[pack->blobs_used].offset);
-}
-internal inline void blob_end(struct pack *pack)
-{
-    u32 size = blob_offset(pack);
-    pack->index[pack->blobs_used].size = size;
-    pack->blobs_used++;
-}
-internal inline void blob_error(struct pack *pack, u32 *pack_idx)
-{
-    pack_pop(pack, *pack_idx);
-    *pack_idx = UINT_MAX;
+    // Can't rearrange memory in the middle of creating a blob, because it will
+    // break any pointers in the load() functions.
+    RICO_ASSERT(pack->blob_current_id == 0);
+
+    u32 perf_start = SDL_GetTicks();
+
+    // Skip NULL blob
+    u32 offset = pack->index[0].size;
+
+    u32 index = 1;
+    while (index < pack->blob_count && pack->index[index].type)
+    {
+        // Skip free blobs
+        if (!pack->index[index].type)
+            continue;
+
+        // If there's room to compact, move this blob left
+        if (pack->index[index].offset > offset)
+        {
+            memcpy(pack->buffer + offset,
+                   pack->buffer + pack->index[index].offset,
+                   pack->index[index].size);
+            pack->index[index].offset = offset;
+        }
+        offset += pack->index[index].size;
+        index++;
+    }
+    pack->buffer_used = offset;
+
+    // HACK: Compact *must* zero the remaining memory in the buffer after it
+    //       moves things because the load() functions don't set every member;
+    //       they assume that they are given zeroed memory.
+    memset(pack->buffer + pack->buffer_used, 0,
+           pack->buffer_size - pack->buffer_used);
+
+    u32 perf_end = SDL_GetTicks();
+
+#if RICO_DEBUG_PACK
+    printf("[PERF][Pack] Pack %s buffer compacted in %u ticks.\n", pack->name,
+           perf_end - perf_start);
+#endif
+
+    // If pack buffer is more than 50% utilized, expand it
+    if (pack->buffer_size - pack->buffer_used < pack->buffer_used)
+    {
+        pack_expand(pack);
+#if RICO_DEBUG_PACK
+        printf("[PERF][Pack] Pack %s buffer compacted.\n", pack->name);
+#endif
+    }
 }
 
 internal u32 load_object(struct pack *pack, const char *name,
@@ -68,11 +106,9 @@ internal u32 load_object(struct pack *pack, const char *name,
     {
         obj->bbox = *bbox;
     }
-    else
+    else if (mesh_id)
     {
-        struct rico_mesh *mesh = (mesh_id)
-            ? pack_read(pack, mesh_id)
-            : pack_read(pack_default, MESH_DEFAULT_BBOX);
+        struct rico_mesh *mesh = pack_lookup(pack, mesh_id);
         obj->bbox = mesh->bbox;
     }
     object_update_transform(obj);
@@ -94,13 +130,16 @@ internal u32 load_texture(struct pack *pack, const char *name,
     tex->id = blob_idx;
 
     // Load raw texture data
-    u8 *pixels = stbi_load(filename, &tex->width, &tex->height, NULL, 4);
+    int width, height;
+    u8 *pixels = stbi_load(filename, &width, &height, NULL, 4);
     if (!pixels)
     {
         err = RICO_ERROR(ERR_TEXTURE_LOAD, "Failed to load texture file: %s",
                          filename);
         goto cleanup;
     }
+    tex->width = (u32)width;
+    tex->height = (u32)height;
     tex->bpp = 32;
     tex->gl_target = target;
 
@@ -124,7 +163,7 @@ internal u32 load_font(struct pack *pack, const char *name,
 
     // Read font file
     char *buffer = NULL;
-    int length;
+    u32 length;
     err = file_contents(filename, &length, &buffer);
     if (err) goto cleanup;
 
@@ -345,7 +384,7 @@ int load_obj_file(struct pack *pack, const char *filename)
     long vert_tex = 0;
     long vert_norm = 0;
 
-    int length;
+    u32 length;
     char *buffer;
     char *tok;
 
@@ -467,12 +506,11 @@ cleanup:
     return err;
 }
 
-internal u32 null_blob(struct pack *pack)
+internal void null_blob(struct pack *pack)
 {
-    u32 blob_idx = blob_start(pack, RICO_HND_NULL);
     push_string(pack, "[This page intentionally left blank]");
-    blob_end(pack);
-    return blob_idx;
+    pack->index[0].size = pack->buffer_used;
+    pack->blobs_used++;
 }
 
 internal u32 perf_pack_tick_start;
@@ -488,22 +526,29 @@ struct pack *pack_init(const char *name, u32 blob_count, u32 buffer_size)
     perf_pack_tick_start = SDL_GetTicks();
 
     struct pack *pack = calloc(1,
-        sizeof(struct pack) +
-        blob_count * sizeof(struct blob_index) +
+        sizeof(*pack) +
+        blob_count * sizeof(pack->lookup[0]) +
+        blob_count * sizeof(pack->index[0]) +
         buffer_size);
     
     memcpy(pack->magic, PACK_SIGNATURE, sizeof(pack->magic));
     pack->version = RICO_FILE_VERSION_CURRENT;
-    strncpy(pack->name, name, sizeof(pack->name) - 1);
+    strncpy(pack->name, name, (u32)sizeof(pack->name) - 1);
+    pack->blob_current_id = 0;
     pack->blob_count = blob_count;
     pack->blobs_used = 0;
     pack->buffer_size = buffer_size;
     pack->buffer_used = 0;
-    pack->index_offset = sizeof(struct pack);
+    pack->lookup_offset = sizeof(*pack);
+    pack->index_offset = pack->lookup_offset +
+                         pack->blob_count * sizeof(pack->lookup[0]);
     pack->data_offset = pack->index_offset +
-                        pack->blob_count * sizeof(*pack->index);
-    pack->index = (struct blob_index *)((u8 *)pack + pack->index_offset);
-    pack->buffer = (u8 *)pack + pack->data_offset;
+                        pack->blob_count * sizeof(pack->index[0]);
+
+    u8 *base = (u8 *)pack;
+    pack->lookup = (void *)(base + pack->lookup_offset);
+    pack->index = (void *)(base + pack->index_offset);
+    pack->buffer = base + pack->data_offset;
 
     // First blob in pack must be the null blob
     null_blob(pack);
@@ -511,46 +556,45 @@ struct pack *pack_init(const char *name, u32 blob_count, u32 buffer_size)
     return pack;
 }
 
-int pack_save(struct pack *pack, const char *filename, bool compact)
+int pack_save(struct pack *pack, const char *filename, bool shrink)
 {
+    RICO_ASSERT(pack->blob_current_id == 0);
     enum rico_error err = SUCCESS;
+
+    pack_compact_buffer(pack);
 
     // Write pack file to disk
     FILE *pack_file = fopen(filename, "wb");
     if (pack_file)
     {
-        u32 blob_count = pack->blob_count;
         u32 buffer_size = pack->buffer_size;
-        u32 data_offset = pack->data_offset;
 
-        if (compact)
+        if (shrink)
         {
-            // Remove unused blob entires / buffer space for the save
-            pack->blob_count = pack->blobs_used;
             pack->buffer_size = pack->buffer_used;
-            pack->data_offset = sizeof(struct pack) +
-                                pack->blob_count * sizeof(struct blob_index);
         }
 
-        u32 pack_size = sizeof(struct pack) +
-                        pack->blob_count * sizeof(struct blob_index) +
-                        pack->buffer_size;
+        u32 pack_size = sizeof(*pack) +
+                        pack->blob_count * sizeof(pack->lookup[0]) +
+                        pack->blob_count * sizeof(pack->index[0]) +
+                        pack->buffer_used;
 
         u32 bytes_written = 0;
         bytes_written += fwrite(pack, 1, sizeof(*pack), pack_file);
-        bytes_written += fwrite(pack->index, 1,
-                                pack->blob_count * sizeof(*pack->index),
+        bytes_written += fwrite(pack->lookup, 1,
+                                pack->blob_count * sizeof(pack->lookup[0]),
                                 pack_file);
-        bytes_written += fwrite(pack->buffer, 1, pack->buffer_size, pack_file);
+        bytes_written += fwrite(pack->index, 1,
+                                pack->blob_count * sizeof(pack->index[0]),
+                                pack_file);
+        bytes_written += fwrite(pack->buffer, 1, pack->buffer_used, pack_file);
         fclose(pack_file);
         RICO_ASSERT(bytes_written == pack_size);
 
-        if (compact)
+        if (shrink)
         {
             // Restore actual blob count / buffer size in memory
-            pack->blob_count = blob_count;
             pack->buffer_size = buffer_size;
-            pack->data_offset = data_offset;
         }
     }
     else
@@ -579,16 +623,21 @@ int pack_load(const char *filename, struct pack **_pack)
     {
         struct pack tmp_pack = { 0 };
         fread(&tmp_pack, 1, sizeof(tmp_pack), pack_file);
-        u32 pack_size = tmp_pack.data_offset + tmp_pack.buffer_size;
         fseek(pack_file, 0, SEEK_SET);
 
-        struct pack *pack = calloc(1, pack_size);
-        u32 bytes_read = fread(pack, 1, pack_size, pack_file);
-        fclose(pack_file);
-        RICO_ASSERT(bytes_read == pack_size);
+        u32 size = tmp_pack.data_offset + tmp_pack.buffer_size;
+        u32 size_on_disk = tmp_pack.data_offset + tmp_pack.buffer_used;
 
-        pack->index = (struct blob_index *)((u8 *)pack + pack->index_offset);
-        pack->buffer = (u8 *)pack + pack->data_offset;
+        struct pack *pack = calloc(1, size);
+        u32 bytes_read = fread(pack, 1, size, pack_file);
+        fclose(pack_file);
+        RICO_ASSERT(bytes_read == size_on_disk);
+        RICO_ASSERT(pack->blob_current_id == 0); // If not zero, WTF??
+
+        u8 *base = (u8 *)pack;
+        pack->lookup = (void *)(base + pack->lookup_offset);
+        pack->index = (void *)(base + pack->index_offset);
+        pack->buffer = base + pack->data_offset;
         *_pack = pack;
     }
     else
@@ -600,7 +649,8 @@ int pack_load(const char *filename, struct pack **_pack)
     }
 
     u32 tick_end = SDL_GetTicks();
-    printf("[PERF][pack] Pack read in: %d ticks\n", tick_end - tick_start);
+    printf("[PERF][pack] '%s' loaded in: %d ticks\n", (*_pack)->name,
+           tick_end - tick_start);
 
 cleanup:
     return err;
@@ -615,15 +665,11 @@ void pack_build_default()
 
     struct pack *pack = pack_init(filename, 10, MB(1));
     u32 font_tex_diff = 0;
-    u32 font = load_font(pack, "[FONT_DEFAULT]", "font/courier_new.bff",
-                         &font_tex_diff);
-    u32 diff = load_texture(pack, "[TEX_DIFF_DEFAULT]",
-                            "texture/basic_diff.tga", GL_TEXTURE_2D);
-    u32 spec = load_texture(pack, "[TEX_SPEC_DEFAULT]",
-                            "texture/basic_spec.tga", GL_TEXTURE_2D);
+    u32 font = load_font(pack, "[FONT_DEFAULT]", "font/courier_new.bff", &font_tex_diff);
+    u32 diff = load_texture(pack, "[TEX_DIFF_DEFAULT]", "texture/basic_diff.tga", GL_TEXTURE_2D);
+    u32 spec = load_texture(pack, "[TEX_SPEC_DEFAULT]", "texture/basic_spec.tga", GL_TEXTURE_2D);
     u32 mat  = load_material(pack, "[MATERIAL_DEFAULT]", diff, spec, 0.5f);
-    u32 font_mat = load_material(pack, "[FONT_DEFAULT_MATERIAL]", font_tex_diff,
-                                 0, 0.0f);
+    u32 font_mat = load_material(pack, "[FONT_DEFAULT_MATERIAL]", font_tex_diff, 0, 0.0f);
     u32 bbox = default_mesh(pack, "[PRIM_MESH_BBOX]");
 
     // HACK: This is a bit of a gross way to assert that the obj file only
@@ -649,6 +695,9 @@ void pack_build_alpha()
     const char *filename = "packs/alpha.pak";
 
     struct pack *pack = pack_init(filename, 16, MB(1));
+    u32 bricks_tex = load_texture(pack, "Bricks", "texture/clean_bricks.tga", GL_TEXTURE_2D);
+    u32 bricks_mat = load_material(pack, "Bricks", bricks_tex, 0, 0.5f);
+
     load_obj_file(pack, "mesh/sphere.ric");
     load_obj_file(pack, "mesh/wall_cornertest.ric");
     //load_obj_file(&pack, "mesh/conference.ric");
@@ -656,6 +705,13 @@ void pack_build_alpha()
     //load_obj_file(&pack, "mesh/door.ric");
     //load_obj_file(&pack, "mesh/welcome_floor.ric");
     //load_obj_file(&pack, "mesh/grass.ric");
+
+    u32 ground = load_object(pack, "Ground", RICO_HND_OBJECT, 0, bricks_mat, NULL);
+    struct rico_object *ground_obj = pack_lookup(pack, ground);
+    object_rot_x(ground_obj, -90.0f);
+    object_scale(ground_obj, &(struct vec3) { 64.0f, 64.0f, 0.001f });
+    object_trans(ground_obj, &(struct vec3) { 0.0f, -1.0f, 0.0f });
+
     pack_save(pack, filename, false);
     free(pack);
 }

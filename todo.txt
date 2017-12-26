@@ -1,18 +1,6 @@
-================================================================================
-// Up Next
-================================================================================
-[x] Finish keyboard state handling
-[ ] Fix chunk loading by separating OGL ids out of rico_mesh and rico_texture
-
-================================================================================
-// Logs
-================================================================================
-[ ] Fix "Object" [ obj][init]
-[ ] Fix "String" [strg][init]
-
-================================================================================
+========================================
 // Editor
-================================================================================
+========================================
 
 Objects
 -------
@@ -26,9 +14,9 @@ Objects
 [ ] Set mesh
 [-] Rotate around arbitrary point
 
-================================================================================
+========================================
 // Engine
-================================================================================
+========================================
 
 Animation
 ---------
@@ -37,7 +25,7 @@ Animation
 [ ] Change mesh
 [ ] Change type-specific "properties" (e.g. toggle light on/off)
 [-] Global scale?
-[-] Deform mesh
+[n] Deform mesh
 
 Collision
 ---------
@@ -45,10 +33,10 @@ Collision
 [ ] OBB
 [ ] Sphere
 [-] Ellipsoid
+[-] Scene graph (kd-tree, BSP?)
+[-] Frustum culling
 [-] BVH
 [-] Mesh
-[ ] Scene graph (kd-tree, BSP?)
-[ ] Frustum culling
 
 Foliage
 -------
@@ -57,6 +45,8 @@ Foliage
 
 Input
 -----
+[ ] FPS camera? How to lock pitch / yaw with quaternions? Store current pitch /
+    yaw values and convert to quat whenever they change?
 [ ] Better mouse smoothing / accuracy?
     "The Witness needs Raw Input to get good low-level relative mouse movements"
     https://mollyrocket.com/casey/stream_0007.html
@@ -70,70 +60,3 @@ Lighting
 Shaders
 -------
 [ ] Refactor program_bind() / program_uniform_set() out of object_render()
-
-================================================================================
-//
-//                         SPOILERS BELOW THIS SECTION
-//
-================================================================================
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-================================================================================
-// Gameplay
-================================================================================
-
-Level Design
-------------
-[ ] Design levels

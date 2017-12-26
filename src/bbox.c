@@ -9,7 +9,7 @@ void bbox_init(struct bbox *bbox, struct vec3 p0, struct vec3 p1,
     bbox->wireframe = true;
 }
 
-void bbox_init_mesh(struct bbox *bbox,  const struct rico_vertex *verts,
+void bbox_init_mesh(struct bbox *bbox, const struct rico_vertex *verts,
                    int count, struct col4 color)
 {
     struct vec3 p0 = (struct vec3) { 9999.0f, 9999.0f, 9999.0f };
