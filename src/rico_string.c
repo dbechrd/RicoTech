@@ -66,8 +66,6 @@ int string_free(struct rico_string *str)
     //hashtable_delete_hnd(&global_strings, &str->hnd);
 
     struct rico_object *obj = pack_lookup(pack_transient, str->object_id);
-    struct rico_mesh *mesh = pack_lookup(pack_transient, obj->mesh_id);
-    mesh_delete(mesh);
     pack_delete(pack_transient, obj->material_id);
     pack_delete(pack_transient, obj->mesh_id);
     pack_delete(pack_transient, str->object_id);

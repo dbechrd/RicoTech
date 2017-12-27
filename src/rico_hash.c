@@ -1,6 +1,6 @@
 typedef u32 hash;
 typedef u8 hkey[32];
-typedef u8 hval[32];
+typedef u8 hval[64];
 
 // "dog" -> struct *texture
 struct hash_kv {
@@ -95,7 +95,7 @@ void *hashtable_search_uid(struct hash_table *table, uid uid)
 // TODO: Replace linear search/insert with quadratic if necessary, or use
 //       external chaining.
 int hashtable_insert(struct hash_table *table, const hkey key, u32 klen,
-                     void *val, u32 vlen)
+                     const void *val, u32 vlen)
 {
     RICO_ASSERT(klen);
 
@@ -139,8 +139,8 @@ int hashtable_insert(struct hash_table *table, const hkey key, u32 klen,
     return SUCCESS;
 }
 
-int hashtable_insert_str(struct hash_table *table, const char *str, void *val,
-                         u32 vlen)
+int hashtable_insert_str(struct hash_table *table, const char *str,
+                         const void *val, u32 vlen)
 {
 #if RICO_DEBUG_HASH
     printf("[hash][ins ] %s\n             [%s, %p]\n",
@@ -149,8 +149,8 @@ int hashtable_insert_str(struct hash_table *table, const char *str, void *val,
     return hashtable_insert(table, (u8 *)str, strlen(str), val, vlen);
 }
 
-int hashtable_insert_hnd(struct hash_table *table, struct hnd *hnd, void *val,
-                         u32 vlen)
+int hashtable_insert_hnd(struct hash_table *table, struct hnd *hnd,
+                         const void *val, u32 vlen)
 {
 #if RICO_DEBUG_HASH
     printf("[hash][ins ] %s\n             [%s, %p]\n",
@@ -159,7 +159,8 @@ int hashtable_insert_hnd(struct hash_table *table, struct hnd *hnd, void *val,
     return hashtable_insert(table, (u8 *)hnd->name, hnd->len, val, vlen);
 }
 
-int hashtable_insert_uid(struct hash_table *table, uid uid, void *val, u32 vlen)
+int hashtable_insert_uid(struct hash_table *table, uid uid, const void *val,
+                         u32 vlen)
 {
 #if RICO_DEBUG_HASH
     printf("[hash][ins ] %s\n             [%d, %p]\n",

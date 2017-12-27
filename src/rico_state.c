@@ -229,6 +229,9 @@ static inline bool chord_released(enum rico_action action)
 // TODO: Where should these functions go?
 internal int save_file()
 {
+    return pack_save(pack_active, pack_active->name, false);
+
+#if 0
     RICO_ASSERT(chunk_active);
     enum rico_error err;
 
@@ -242,6 +245,8 @@ internal int save_file()
 
     err = chunk_serialize(chunk_active, &file);
     rico_file_close(&file);
+    return err;
+#endif
 
 #if RICO_SAVE_BACKUP
     // Save backup copy
@@ -262,9 +267,8 @@ internal int save_file()
 
     err = rico_serialize(chunk, &backupFile);
     rico_file_close(&backupFile);
-#endif
-
     return err;
+#endif
 }
 internal void select_first_obj()
 {
@@ -276,7 +280,7 @@ internal void select_first_obj()
     camera_fwd(&cam_fwd, &cam_player);
     object_collide_ray_type(pack_active, &obj_collided, &dist, OBJ_STATIC,
                             &cam_fwd);
-    select_obj(obj_collided);
+    select_obj(obj_collided, false);
 }
 
 // Current state

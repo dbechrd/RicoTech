@@ -177,12 +177,6 @@ typedef real64 f64;
 #define GEN_STRING(e, ...) #e,
 #define GEN_VALUE(e, str) str,
 
-enum rico_vbo {
-    VBO_VERTEX,
-    VBO_ELEMENT,
-    VBO_COUNT
-};
-
 #define RICO_ERRORS(f)             \
     f(SUCCESS)                     \
     f(ERR_BAD_ALLOC)               \

@@ -16,6 +16,9 @@ internal int texture_upload(struct rico_texture *texture)
     printf("[ tex][upld] name=%s\n", texture_name(texture));
 #endif
 
+    struct rgl_texture rgl_tex = { 0 };
+    rgl_tex.gl_target = texture->gl_target;
+
     /*************************************************************************
     | Frequency of access:
     |
@@ -51,9 +54,9 @@ internal int texture_upload(struct rico_texture *texture)
     | GL_TEXTURE_CUBE_MAP_ARRAY         v
     |
     *************************************************************************/
-    glCreateTextures(texture->gl_target, 1, &texture->gl_id);
+    glCreateTextures(rgl_tex.gl_target, 1, &rgl_tex.gl_id);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(texture->gl_target, texture->gl_id);
+    glBindTexture(rgl_tex.gl_target, rgl_tex.gl_id);
 
     //--------------------------------------------------------------------------
     // Configure texture wrapping (for uv-coords outside range 0.0f - 1.0f)
@@ -67,8 +70,8 @@ internal int texture_upload(struct rico_texture *texture)
     | GL_CLAMP_TO_BORDER   Clamp to edge of texture (no stretching).
     |
     *************************************************************************/
-    glTexParameteri(texture->gl_target, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(texture->gl_target, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(rgl_tex.gl_target, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(rgl_tex.gl_target, GL_TEXTURE_WRAP_T, GL_REPEAT);
     //glTexParameteri(texture->gl_target, GL_TEXTURE_WRAP_R, GL_REPEAT);
 
     // For GL_CLAMP_TO_BORDER
@@ -91,8 +94,8 @@ internal int texture_upload(struct rico_texture *texture)
     |                           pixels.
     |
     *************************************************************************/
-    glTexParameteri(texture->gl_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(texture->gl_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(rgl_tex.gl_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(rgl_tex.gl_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     /*************************************************************************
     | GLenum    target
@@ -106,90 +109,84 @@ internal int texture_upload(struct rico_texture *texture)
     | const void *pixels
     *************************************************************************/
     // Tex creation params are dependent on BPP
-    GLenum format_internal;
-    GLenum format;
     switch (texture->bpp)
     {
     case 8: // Greyscale (assume not gamma-corrected???)
-        format          = GL_RED;
-        format_internal = GL_RED;
+        rgl_tex.format          = GL_RED;
+        rgl_tex.format_internal = GL_RED;
         break;
     case 24: // RGB
-        format          = GL_RGB;
+        rgl_tex.format          = GL_RGB;
         // TODO: Store processed texture data in linear space and change this
         //       back to GL_RGB.
-        format_internal = GL_SRGB;
+        rgl_tex.format_internal = GL_SRGB;
         break;
     case 32: // RGBA
-        format          = GL_RGBA;
+        rgl_tex.format          = GL_RGBA;
         // TODO: Store processed texture data in linear space and change this
         //       back to GL_RGBA.
-        format_internal = GL_SRGB_ALPHA;
+        rgl_tex.format_internal = GL_SRGB_ALPHA;
         break;
     default: // Unsupported BPP
         return RICO_ERROR(ERR_TEXTURE_UNSUPPORTED_BPP, NULL);
     }
 
-    glTexImage2D(texture->gl_target, 0, format_internal, texture->width,
-                 texture->height, 0, format, GL_UNSIGNED_BYTE,
+    glTexImage2D(rgl_tex.gl_target, 0, rgl_tex.format_internal, texture->width,
+                 texture->height, 0, rgl_tex.format, GL_UNSIGNED_BYTE,
                  texture_pixels(texture));
 
     //--------------------------------------------------------------------------
     // Generate mipmaps
     //--------------------------------------------------------------------------
-    glGenerateMipmap(texture->gl_target);
+    glGenerateMipmap(rgl_tex.gl_target);
 
     //--------------------------------------------------------------------------
     // Clean up
     //--------------------------------------------------------------------------
-    // Unbind the texture
-    glBindTexture(texture->gl_target, 0);
+    glBindTexture(rgl_tex.gl_target, 0);
 
-    texture->loaded = true;
+    // Store in hash table
+    hashtable_insert_uid(&global_textures, texture->id, &rgl_tex,
+                         sizeof(rgl_tex));
     return err;
 }
 
 void texture_delete(struct rico_texture *texture)
 {
-    RICO_ASSERT(texture->loaded);
+    struct rgl_texture *rgl_tex =
+        hashtable_search_uid(&global_textures, texture->id);
+    if (!rgl_tex) return;
 
-#if RICO_DEBUG_TEXTURE
-    printf("[ tex][ del] name=%s\n", texture_name(texture));
-#endif
+    glDeleteTextures(1, &rgl_tex->gl_id);
 
-    texture->loaded = false;
-    glDeleteTextures(1, &texture->gl_id);
+    hashtable_delete_uid(&global_textures, texture->id);
 }
 
 void texture_bind(struct pack *pack, u32 id, GLenum texture_unit)
 {
     RICO_ASSERT(pack);
 
-#if RICO_DEBUG_TEXTURE
-    printf("[ tex][bind] name=%s\n", texture_name(texture));
-#endif
-
-    struct rico_texture *texture = pack_lookup(pack, id);
-    if (!texture->loaded)
+    struct rgl_texture *rgl_tex = hashtable_search_uid(&global_textures, id);
+    if (!rgl_tex)
     {
+        struct rico_texture *texture = pack_lookup(pack, id);
         texture_upload(texture);
+        rgl_tex = hashtable_search_uid(&global_textures, id);
     }
+    RICO_ASSERT(rgl_tex);
+    RICO_ASSERT(rgl_tex->gl_id);
 
     glActiveTexture(texture_unit);
-    glBindTexture(texture->gl_target, texture->gl_id);
+    glBindTexture(rgl_tex->gl_target, rgl_tex->gl_id);
 }
 
 void texture_unbind(struct pack *pack, u32 id, GLenum texture_unit)
 {
     RICO_ASSERT(pack);
 
-    struct rico_texture *texture = pack_lookup(pack, id);
-    RICO_ASSERT(texture->loaded);
-
-#if RICO_DEBUG_TEXTURE
-    printf("[ tex][unbd] name=%s\n", texture_name(texture));
-#endif
+    struct rgl_texture *rgl_tex = hashtable_search_uid(&global_textures, id);
+    RICO_ASSERT(rgl_tex);
 
     glActiveTexture(texture_unit);
-    glBindTexture(texture->gl_target, 0);
+    glBindTexture(rgl_tex->gl_target, 0);
 }

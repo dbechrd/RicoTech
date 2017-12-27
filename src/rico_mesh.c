@@ -18,29 +18,33 @@ void mesh_upload(struct rico_mesh *mesh, GLenum hint)
     printf("[mesh][upld] name=%s\n", mesh_name(mesh));
 #endif
 
+    struct rgl_mesh rgl_mesh = { 0 };
+    rgl_mesh.vertices = mesh->vertex_count;
+    rgl_mesh.elements = mesh->element_count;
+
     //--------------------------------------------------------------------------
     // Generate VAO and buffers
     //--------------------------------------------------------------------------
-    glGenVertexArrays(1, &mesh->vao);
-    glBindVertexArray(mesh->vao);
-    glGenBuffers(2, mesh->vbos);
+    glGenVertexArrays(1, &rgl_mesh.vao);
+    glBindVertexArray(rgl_mesh.vao);
+    glGenBuffers(2, rgl_mesh.vbos);
 
     //--------------------------------------------------------------------------
     // Vertex buffer
     //--------------------------------------------------------------------------
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->vbos[VBO_VERTEX]);
+    glBindBuffer(GL_ARRAY_BUFFER, rgl_mesh.vbos[VBO_VERTEX]);
     glBufferData(GL_ARRAY_BUFFER,
-                 mesh->vertex_count * sizeof(struct rico_vertex),
+                 rgl_mesh.vertices * sizeof(struct rico_vertex),
                  mesh_vertices(mesh), hint);
 
     //--------------------------------------------------------------------------
     // Element buffer
     //--------------------------------------------------------------------------
-    if (mesh->element_count)
+    if (rgl_mesh.elements)
     {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->vbos[VBO_ELEMENT]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rgl_mesh.vbos[VBO_ELEMENT]);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                     mesh->element_count * sizeof(u32),
+                     rgl_mesh.elements * sizeof(u32),
                      mesh_elements(mesh), hint);
     }
 
@@ -67,43 +71,55 @@ void mesh_upload(struct rico_mesh *mesh, GLenum hint)
                           (GLvoid *)offsetof(struct rico_vertex, uv));
     glEnableVertexAttribArray(RICO_SHADER_UV_LOC);
 
+    //--------------------------------------------------------------------------
     // Clean up
+    //--------------------------------------------------------------------------
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    mesh->loaded = true;
+
+    // Store in hash table
+    hashtable_insert_uid(&global_meshes, mesh->id, &rgl_mesh, sizeof(rgl_mesh));
 }
 
 void mesh_delete(struct rico_mesh *mesh)
 {
+    struct rgl_mesh *rgl_mesh = hashtable_search_uid(&global_meshes, mesh->id);
+    if (!rgl_mesh) return;
+
 #if RICO_DEBUG_MESH
     printf("[mesh][ del] name=%s\n", mesh_name(mesh));
 #endif
 
-    mesh->loaded = false;
-    glDeleteBuffers(2, mesh->vbos);
-    glDeleteVertexArrays(1, &mesh->vao);
+    glDeleteBuffers(2, rgl_mesh->vbos);
+    glDeleteVertexArrays(1, &rgl_mesh->vao);
+
+    hashtable_delete_uid(&global_meshes, mesh->id);
 }
 
 void mesh_render(struct pack *pack, u32 id)
 {
     RICO_ASSERT(pack);
 
-    struct rico_mesh *mesh = pack_lookup(pack, id);
-    if (!mesh->loaded)
+    struct rgl_mesh *rgl_mesh = hashtable_search_uid(&global_meshes, id);
+    if (!rgl_mesh)
     {
+        struct rico_mesh *mesh = pack_lookup(pack, id);
         mesh_upload(mesh, GL_STATIC_DRAW);
+        rgl_mesh = hashtable_search_uid(&global_meshes, id);
     }
+    RICO_ASSERT(rgl_mesh);
+    RICO_ASSERT(rgl_mesh->vao);
 
     // Draw
-    glBindVertexArray(mesh->vao);
-    if (mesh->element_count)
+    glBindVertexArray(rgl_mesh->vao);
+    if (rgl_mesh->elements)
     {
-        glDrawElements(GL_TRIANGLES, mesh->element_count, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, rgl_mesh->elements, GL_UNSIGNED_INT, 0);
     }
     else
     {
-        glDrawArrays(GL_TRIANGLES, 0, mesh->vertex_count);
+        glDrawArrays(GL_TRIANGLES, 0, rgl_mesh->vertices);
     }
     glBindVertexArray(0);
 }

@@ -55,7 +55,8 @@ void object_free_all(struct rico_chunk *chunk)
 
 void object_bbox_recalculate_all(struct pack *pack)
 {
-    struct rico_object *obj = 0;
+    struct rico_object *obj;
+    struct rico_mesh *mesh;
     for (u32 index = 1; index < pack->blobs_used; ++index)
     {
         if (pack->index[index].type != RICO_HND_OBJECT)
@@ -65,7 +66,15 @@ void object_bbox_recalculate_all(struct pack *pack)
         if (obj->type != OBJ_STATIC)
             continue;
 
-        struct rico_mesh *mesh = pack_lookup(pack, obj->mesh_id);
+        // Render
+        if (obj->mesh_id)
+        {
+            mesh = pack_lookup(pack, obj->mesh_id);
+        }
+        else
+        {
+            mesh = pack_lookup(pack_default, MESH_DEFAULT_BBOX);
+        }
         obj->bbox = mesh->bbox;
     }
 }
@@ -344,6 +353,10 @@ void object_render_type(struct pack *pack, enum rico_obj_type type,
         if (obj->type != type)
             continue;
 
+#if RICO_DEBUG_OBJECT
+        printf("[ obj][rndr] name=%s\n", object_name(obj));
+#endif
+
         // Set object-specific uniform values
 
         // UV-coord scale
@@ -427,17 +440,54 @@ int object_print(struct rico_object *object)
             ? pack_lookup(pack_active, object->material_id)
             : NULL;
 
-        len = snprintf(buf, sizeof(buf),
-            "     UID: %d\n"       \
-            "    Name: %s\n"       \
-            "    Type: %s\n"       \
-            "   Trans: %f %f %f\n" \
-            "     Rot: %f %f %f\n" \
-            "   Scale: %f %f %f\n" \
-            "    BBox: %f %f %f\n" \
-            "          %f %f %f\n" \
-            "    Mesh: %d %s\n"    \
-            "Material: %d %s\n",
+        const char *mesh_str = "---";
+        u32 mesh_verts = 0;
+        const char *material_str = "---";
+        u32 mat_diff_id = 0;
+        const char *mat_diff_str = "---";
+        u32 mat_spec_id = 0;
+        const char *mat_spec_str = "---";
+
+        if (mesh)
+        {
+            mesh_str = mesh_name(mesh);
+            mesh_verts = mesh->vertex_count;
+        }
+        if (material)
+        {
+            material_str = material_name(material);
+
+            if (material->tex_diffuse_id)
+            {
+                struct rico_texture *tex =
+                    pack_read(pack_active, material->tex_diffuse_id);
+                mat_diff_id = tex->id;
+                mat_diff_str = texture_name(tex);
+            }
+            if (material->tex_specular_id)
+            {
+                struct rico_texture *tex =
+                    pack_read(pack_active, material->tex_specular_id);
+                mat_spec_id = tex->id;
+                mat_spec_str = texture_name(tex);
+            }
+        }
+
+        len = snprintf(
+            buf, sizeof(buf),
+            "     UID: %u\n"             \
+            "    Name: %s\n"             \
+            "    Type: %s\n"             \
+            "   Trans: %f %f %f\n"       \
+            "     Rot: %f %f %f\n"       \
+            "   Scale: %f %f %f\n"       \
+            "    BBox: %f %f %f\n"       \
+            "          %f %f %f\n"       \
+            "    Mesh: %u %s\n"          \
+            "          Verts: %u\n"      \
+            "Material: %u %s\n"          \
+            "           Diffuse: %u %s\n"\
+            "          Specular: %u %s\n",
             object->id,
             object_name(object),
             rico_obj_type_string[object->type],
@@ -446,10 +496,11 @@ int object_print(struct rico_object *object)
             object->scale.x, object->scale.y, object->scale.z,
             object->bbox.p[0].x, object->bbox.p[0].y, object->bbox.p[0].z,
             object->bbox.p[1].x, object->bbox.p[1].y, object->bbox.p[1].z,
-            object->mesh_id,
-            (mesh) ? mesh_name(mesh) : "ID_NULL",
-            object->material_id,
-            (material) ? material_name(material) : "ID_NULL"
+            object->mesh_id, mesh_str,
+            mesh_verts,
+            object->material_id, material_str,
+            mat_diff_id, mat_diff_str,
+            mat_spec_id, mat_spec_str
         );
     }
     else
@@ -467,47 +518,3 @@ int object_print(struct rico_object *object)
                       COLOR_DARK_GRAY_HIGHLIGHT, 0, NULL, buf);
     return err;
 }
-
-#if 0
-//int object_serialize_0(const void *handle, const struct rico_file *file)
-SERIAL(object_serialize_0)
-{
-    const struct rico_object *obj = handle;
-    fwrite(&object->type,     sizeof(object->type),     1, file->fs);
-    fwrite(&object->trans,    sizeof(object->trans),    1, file->fs);
-    fwrite(&object->rot,      sizeof(object->rot),      1, file->fs);
-    fwrite(&object->scale,    sizeof(object->scale),    1, file->fs);
-    fwrite(&object->mesh,     sizeof(object->mesh),     1, file->fs);
-    fwrite(&object->material, sizeof(object->material), 1, file->fs);
-    return rico_serialize(&object->bbox, file);
-}
-
-//int object_deserialize_0(void *_handle, const struct rico_file *file)
-DESERIAL(object_deserialize_0)
-{
-    enum rico_error err;
-    u32 mesh, material;
-
-    struct rico_object *obj = *_handle;
-    fread(&object->type,  sizeof(object->type),     1, file->fs);
-    fread(&object->trans, sizeof(object->trans),    1, file->fs);
-    fread(&object->rot,   sizeof(object->rot),      1, file->fs);
-    fread(&object->scale, sizeof(object->scale),    1, file->fs);
-    fread(&mesh,       sizeof(object->mesh),     1, file->fs);
-    fread(&material,   sizeof(object->material), 1, file->fs);
-
-    update_transform(obj);
-    object->mesh     = mesh_request(mesh);
-    object->material = material_request(material);
-
-    struct bbox *bbox;
-    err = rico_deserialize(&bbox, file);
-    if (err == ERR_SERIALIZE_DISABLED)
-        object->bbox = *mesh_bbox(object->mesh);
-    else
-        object->bbox = *bbox;
-
-    object->bbox.wireframe = true;
-    return err;
-}
-#endif

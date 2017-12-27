@@ -5,7 +5,7 @@
 //global GLuint vao;
 //global GLuint vbos[2];
 
-global struct rico_object *selected_obj;
+global u32 selected_obj_id;
 
 global struct program_default *prog_default;
 global struct program_primitive *prog_primitive;
@@ -54,12 +54,10 @@ void create_obj()
     // TODO: Prompt user for object name
     const char *name = "new_obj";
 
-    // Create new object with default properties
+    // Create new object and select it
     u32 new_obj_id = load_object(pack_active, name, OBJ_STATIC, 0, 0, NULL);
-    struct rico_object *new_obj = pack_lookup(pack_active, new_obj_id);
-
-    // Select new object
-    select_obj(new_obj);
+    struct rico_object *obj = pack_lookup(pack_active, new_obj_id);
+    select_obj(obj, false);
 }
 
 void recalculate_all_bbox()
@@ -67,23 +65,39 @@ void recalculate_all_bbox()
     object_bbox_recalculate_all(pack_active);
 
     // Reselect current object
-    if (selected_obj)
-        object_select(selected_obj);
+    if (selected_obj_id)
+    {
+        struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
+        select_obj(obj, true);
+    }
 }
 
-void select_obj(struct rico_object *object)
+void select_obj(struct rico_object *object, bool force)
 {
-    if (selected_obj == object)
+    // NULL already selected
+    if (!force && !object && !selected_obj_id)
+        return;
+    // Requested object already selected
+    if (!force && object && object->id == selected_obj_id)
         return;
 
     // Deselect current object
-    if (selected_obj)
-        object_deselect(selected_obj);
+    if (selected_obj_id)
+    {
+        struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
+        object_deselect(obj);
+    }
 
     // Select requested object
-    selected_obj = object;
-    if (selected_obj)
-        object_select(selected_obj);
+    if (object)
+    {
+        object_select(object);
+        selected_obj_id = object->id;
+    }
+    else
+    {
+        selected_obj_id = 0;
+    }
 
     selected_print();
 }
@@ -97,8 +111,8 @@ void select_next_obj()
     struct rico_object *obj;
 
     u32 start_index;
-    if (selected_obj)
-        start_index = pack_active->lookup[selected_obj->id];
+    if (selected_obj_id)
+        start_index = pack_active->lookup[selected_obj_id];
     else
         start_index = 1;
 
@@ -114,13 +128,13 @@ void select_next_obj()
             obj = pack_read(pack_active, index);
             if (object_selectable(obj))
             {
-                select_obj(obj);
+                select_obj(obj, false);
                 return;
             }
         }
     } while (index != start_index);
 
-    select_obj(NULL);
+    select_obj(NULL, false);
 }
 
 // TODO: Refactor this out into pack_prev(pack, id)
@@ -132,8 +146,8 @@ void select_prev_obj()
     struct rico_object *obj;
 
     u32 start_index;
-    if (selected_obj)
-        start_index = pack_active->lookup[selected_obj->id];
+    if (selected_obj_id)
+        start_index = pack_active->lookup[selected_obj_id];
     else
         start_index = pack_active->blobs_used;
 
@@ -149,27 +163,30 @@ void select_prev_obj()
             obj = pack_read(pack_active, index);
             if (object_selectable(obj))
             {
-                select_obj(obj);
+                select_obj(obj, false);
                 return;
             }
         }
     } while (index != start_index);
 
-    select_obj(NULL);
+    select_obj(NULL, false);
 }
 
 void selected_print()
 {
-    // Print select object's properties
-    object_print(selected_obj);
+    struct rico_object *obj = NULL;
+    if (selected_obj_id)
+        obj = pack_lookup(pack_active, selected_obj_id);
+    object_print(obj);
 }
 
 void selected_translate(struct camera *camera, const struct vec3 *offset)
 {
-    if (!selected_obj)
+    if (!selected_obj_id)
         return;
 
-    bool selectable = object_selectable(selected_obj);
+    struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
+    bool selectable = object_selectable(obj);
 
     if (v3_equals(offset, &VEC3_ZERO))
     {
@@ -177,7 +194,7 @@ void selected_translate(struct camera *camera, const struct vec3 *offset)
         {
             camera->position = VEC3_ZERO;
         }
-        object_trans_set(selected_obj, &VEC3_ZERO);
+        object_trans_set(obj, &VEC3_ZERO);
     }
     else
     {
@@ -185,44 +202,46 @@ void selected_translate(struct camera *camera, const struct vec3 *offset)
         {
             camera_translate_world(camera, offset);
         }
-        object_trans(selected_obj, offset);
+        object_trans(obj, offset);
     }
 
-    object_print(selected_obj);
+    object_print(obj);
 }
 
 void selected_rotate(const struct vec3 *offset)
 {
-    if (!selected_obj)
+    if (!selected_obj_id)
         return;
 
+    struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
     if (v3_equals(offset, &VEC3_ZERO))
     {
-        object_rot_set(selected_obj, &VEC3_ZERO);
+        object_rot_set(obj, &VEC3_ZERO);
     }
     else
     {
-        object_rot(selected_obj, offset);
+        object_rot(obj, offset);
     }
 
-    object_print(selected_obj);
+    object_print(obj);
 }
 
 void selected_scale(const struct vec3 *offset)
 {
-    if (!selected_obj)
+    if (!selected_obj_id)
         return;
 
+    struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
     if (v3_equals(offset, &VEC3_ZERO))
     {
-        object_scale_set(selected_obj, &VEC3_ONE);
+        object_scale_set(obj, &VEC3_ONE);
     }
     else
     {
-        object_scale(selected_obj, offset);
+        object_scale(obj, offset);
     }
 
-    object_print(selected_obj);
+    object_print(obj);
 }
 
 void selected_mesh_next()
@@ -253,34 +272,36 @@ void selected_mesh_prev()
 
 void selected_bbox_reset()
 {
-    if (!selected_obj)
+    if (!selected_obj_id)
         return;
 
-    struct rico_mesh *mesh = pack_lookup(pack_active, selected_obj->mesh_id);
-    selected_obj->bbox = mesh->bbox;
+    struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
+    struct rico_mesh *mesh = pack_lookup(pack_active, obj->mesh_id);
+    obj->bbox = mesh->bbox;
 
-    object_select(selected_obj);
-    object_print(selected_obj);
+    object_select(obj);
+    object_print(obj);
 }
 
 void selected_duplicate()
 {
-    if (!selected_obj)
+    if (!selected_obj_id)
         return;
 
     // TODO: Prompt user for name
     const char *name = "Duplicate";
 
-    struct rico_object *new_obj = object_copy(pack_active, selected_obj, name);
-    select_obj(new_obj);
+    struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
+    struct rico_object *new_obj = object_copy(pack_active, obj, name);
+    select_obj(new_obj, false);
 }
 
 void selected_delete()
 {
-    if (!selected_obj)
+    if (!selected_obj_id)
         return;
 
-    pack_delete(pack_active, selected_obj->id);
+    pack_delete(pack_active, selected_obj_id);
     select_prev_obj();
 }
 

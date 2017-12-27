@@ -7,13 +7,13 @@ global const char *material_name(struct rico_material *material)
 void material_bind(struct pack *pack, u32 id, GLint shiny_loc)
 {
     RICO_ASSERT(pack);
+    
+    struct rico_material *material = pack_lookup(pack, id);
+    glUniform1f(shiny_loc, material->shiny);
 
 #if RICO_DEBUG_MATERIAL
     printf("[ mtl][bind] name=%s\n", material_name(material));
 #endif
-    
-    struct rico_material *material = pack_lookup(pack, id);
-    glUniform1f(shiny_loc, material->shiny);
 
     // Bind diffuse or default
     if (material->tex_diffuse_id)

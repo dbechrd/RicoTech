@@ -122,38 +122,6 @@ internal inline void *pack_lookup(struct pack *pack, u32 id)
     return pack_read(pack, pack->lookup[id]);
 }
 
-internal inline void pack_delete(struct pack *pack, u32 id)
-{
-    if (id == 0) return;
-    RICO_ASSERT(id < pack->blob_count);
-
-    u32 index = pack->lookup[id];
-    RICO_ASSERT(index > 0);
-    RICO_ASSERT(index < pack->blobs_used);
-    RICO_ASSERT(pack->index[index].type);
-
-    // 7 used, delete 4
-    // 0 1 2 3 4 5 6 7 8 9
-    // a b c d - e f [blob = 4]
-    // a b c d e e f [blob = 5]
-    // a b c d e f f
-
-    // Shift everything after the deleted blob index left
-    for (u32 idx = index; idx < pack->blobs_used - 1; ++idx)
-    {
-        pack->index[idx] = pack->index[idx + 1];
-    }
-    pack->lookup[id] = 0;
-    pack->blobs_used--;
-    pack->index[pack->blobs_used].type = 0;
-
-    // Update lookup table
-    for (u32 i = 1; i < pack->blob_count; ++i)
-    {
-        if (pack->lookup[i] > index)
-            pack->lookup[i]--;
-    }
-}
 
 internal inline u32 blob_start(struct pack *pack, enum rico_hnd_type type)
 {

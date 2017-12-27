@@ -1,6 +1,20 @@
 #ifndef RICO_MESH_H
 #define RICO_MESH_H
 
+enum rico_vbo {
+    VBO_VERTEX,
+    VBO_ELEMENT,
+    VBO_COUNT
+};
+
+// NOTE: Must fit in hash value
+struct rgl_mesh {
+    GLuint vao;
+    GLuint vbos[2];
+    u32 vertices;
+    u32 elements;
+};
+
 struct rico_vertex {
     struct vec3 pos;
     struct col4 col;
@@ -14,19 +28,9 @@ struct rico_mesh {
     u32 element_count;
     struct bbox bbox;
 
-    // TODO: Helper functions
-    //const char *name;
-    //struct rico_vertex *vertices;
-    //u32 *elements;
     u32 name_offset;
     u32 vertices_offset;
     u32 elements_offset;
-
-    // TODO: Store these in hash table when loaded, map UID -> gl id or
-    //       track which meshes are currently loaded on GPU some other way.
-    bool loaded;
-    GLuint vao;
-    GLuint vbos[2];
 };
 
 global const char *mesh_name(struct rico_mesh *mesh);

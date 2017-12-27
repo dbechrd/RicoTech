@@ -36,7 +36,9 @@ internal void pack_compact_buffer(struct pack *pack)
     // break any pointers in the load() functions.
     RICO_ASSERT(pack->blob_current_id == 0);
 
+#if RICO_DEBUG_PACK
     u32 perf_start = SDL_GetTicks();
+#endif
 
     // Skip NULL blob
     u32 offset = pack->index[0].size;
@@ -67,9 +69,8 @@ internal void pack_compact_buffer(struct pack *pack)
     memset(pack->buffer + pack->buffer_used, 0,
            pack->buffer_size - pack->buffer_used);
 
-    u32 perf_end = SDL_GetTicks();
-
 #if RICO_DEBUG_PACK
+    u32 perf_end = SDL_GetTicks();
     printf("[PERF][Pack] Pack %s buffer compacted in %u ticks.\n", pack->name,
            perf_end - perf_start);
 #endif
@@ -81,6 +82,57 @@ internal void pack_compact_buffer(struct pack *pack)
 #if RICO_DEBUG_PACK
         printf("[PERF][Pack] Pack %s buffer compacted.\n", pack->name);
 #endif
+    }
+}
+
+internal void pack_delete(struct pack *pack, u32 id)
+{
+    if (id == 0) return;
+    RICO_ASSERT(id < pack->blob_count);
+
+    u32 index = pack->lookup[id];
+    RICO_ASSERT(index > 0);
+    RICO_ASSERT(index < pack->blobs_used);
+    RICO_ASSERT(pack->index[index].type);
+
+    switch (pack->index[index].type)
+    {
+    case RICO_HND_TEXTURE:
+    {
+        struct rico_texture *tex = pack_lookup(pack, id);
+        texture_delete(tex);
+        break;
+    }
+    case RICO_HND_MESH:
+    {
+        struct rico_mesh *mesh = pack_lookup(pack, id);
+        mesh_delete(mesh);
+        break;
+    }
+    default:
+        break;
+    }
+
+    // 7 used, delete 4
+    // 0 1 2 3 4 5 6 7 8 9
+    // a b c d - e f [blob = 4]
+    // a b c d e e f [blob = 5]
+    // a b c d e f f
+
+    // Shift everything after the deleted blob index left
+    for (u32 idx = index; idx < pack->blobs_used - 1; ++idx)
+    {
+        pack->index[idx] = pack->index[idx + 1];
+    }
+    pack->lookup[id] = 0;
+    pack->blobs_used--;
+    pack->index[pack->blobs_used].type = 0;
+
+    // Update lookup table
+    for (u32 i = 1; i < pack->blob_count; ++i)
+    {
+        if (pack->lookup[i] > index)
+            pack->lookup[i]--;
     }
 }
 
@@ -109,6 +161,11 @@ internal u32 load_object(struct pack *pack, const char *name,
     else if (mesh_id)
     {
         struct rico_mesh *mesh = pack_lookup(pack, mesh_id);
+        obj->bbox = mesh->bbox;
+    }
+    else
+    {
+        struct rico_mesh *mesh = pack_lookup(pack_default, MESH_DEFAULT_BBOX);
         obj->bbox = mesh->bbox;
     }
     object_update_transform(obj);
@@ -656,7 +713,7 @@ cleanup:
     return err;
 }
 
-void pack_build_default()
+struct pack *pack_build_default()
 {
     // TODO: This entire pack could be embedded as binary data in the .exe once
     //       the contents are finalized. This would allow the engine to run even
@@ -670,24 +727,24 @@ void pack_build_default()
     u32 spec = load_texture(pack, "[TEX_SPEC_DEFAULT]", "texture/basic_spec.tga", GL_TEXTURE_2D);
     u32 mat  = load_material(pack, "[MATERIAL_DEFAULT]", diff, spec, 0.5f);
     u32 font_mat = load_material(pack, "[FONT_DEFAULT_MATERIAL]", font_tex_diff, 0, 0.0f);
-    u32 bbox = default_mesh(pack, "[PRIM_MESH_BBOX]");
+    u32 bbox = default_mesh(pack, "[MESH_DEFAULT_BBOX]");
 
     // HACK: This is a bit of a gross way to assert that the obj file only
     //       contained a single mesh: the sphere primitive.
     load_obj_file(pack, "mesh/prim_sphere.ric");
     u32 sphere = pack->blobs_used - 1;
 
-    pack_save(pack, filename, true);
-    free(pack);
-
     RICO_ASSERT(font == FONT_DEFAULT);
     RICO_ASSERT(font_tex_diff == FONT_DEFAULT_TEX_DIFF);
     RICO_ASSERT(diff == TEXTURE_DEFAULT_DIFF);
     RICO_ASSERT(spec == TEXTURE_DEFAULT_SPEC);
-    RICO_ASSERT(mat  == MATERIAL_DEFAULT);
+    RICO_ASSERT(mat == MATERIAL_DEFAULT);
     RICO_ASSERT(font_mat == FONT_DEFAULT_MATERIAL);
     RICO_ASSERT(bbox == MESH_DEFAULT_BBOX);
     RICO_ASSERT(sphere == MESH_DEFAULT_SPHERE);
+
+    pack_save(pack, filename, true);
+    return pack;
 }
 
 void pack_build_alpha()
@@ -706,7 +763,7 @@ void pack_build_alpha()
     //load_obj_file(&pack, "mesh/welcome_floor.ric");
     //load_obj_file(&pack, "mesh/grass.ric");
 
-    u32 ground = load_object(pack, "Ground", RICO_HND_OBJECT, 0, bricks_mat, NULL);
+    u32 ground = load_object(pack, "Ground", OBJ_STATIC, 0, bricks_mat, NULL);
     struct rico_object *ground_obj = pack_lookup(pack, ground);
     object_rot_x(ground_obj, -90.0f);
     object_scale(ground_obj, &(struct vec3) { 64.0f, 64.0f, 0.001f });
@@ -718,6 +775,6 @@ void pack_build_alpha()
 
 void pack_build_all()
 {
-    pack_build_default();
+    pack_default = pack_build_default();
     pack_build_alpha();
 }

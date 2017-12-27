@@ -171,7 +171,7 @@ int mymain()
     init_stb();
     init_murmurhash3();
 
-    pack_build_all();
+    //pack_build_all();
     err = pack_load("packs/default.pak", &pack_default);
     err = pack_load("packs/alpha.pak", &pack_active);
     pack_transient = pack_init("pack_transient", 0, 0);
