@@ -3,9 +3,9 @@ global const char *mesh_name(struct rico_mesh *mesh)
     RICO_ASSERT(mesh->name_offset);
     return (char *)((u8 *)mesh + mesh->name_offset);
 }
-internal struct mesh_vertex *mesh_vertices(struct rico_mesh *mesh)
+global struct rico_vertex *mesh_vertices(struct rico_mesh *mesh)
 {
-    return (struct mesh_vertex *)((u8 *)mesh + mesh->vertices_offset);
+    return (struct rico_vertex *)((u8 *)mesh + mesh->vertices_offset);
 }
 internal u32 *mesh_elements(struct rico_mesh *mesh)
 {

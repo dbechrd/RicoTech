@@ -177,27 +177,15 @@ internal u32 load_object(struct pack *pack, const char *name,
     return blob_idx;
 }
 
-internal u32 load_texture(struct pack *pack, const char *name,
-                          const char *filename, GLenum target)
+internal u32 load_texture(struct pack *pack, const char *name, GLenum target,
+                          u32 width, u32 height, u8 bpp, u8 *pixels)
 {
-    enum rico_error err = SUCCESS;
-
     u32 blob_idx = blob_start(pack, RICO_HND_TEXTURE);
     struct rico_texture *tex = push_bytes(pack, sizeof(*tex));
     tex->id = blob_idx;
-
-    // Load raw texture data
-    int width, height;
-    u8 *pixels = stbi_load(filename, &width, &height, NULL, 4);
-    if (!pixels)
-    {
-        err = RICO_ERROR(ERR_TEXTURE_LOAD, "Failed to load texture file: %s",
-                         filename);
-        goto cleanup;
-    }
-    tex->width = (u32)width;
-    tex->height = (u32)height;
-    tex->bpp = 32;
+    tex->width = width;
+    tex->height = height;
+    tex->bpp = bpp;
     tex->gl_target = target;
 
     tex->name_offset = blob_offset(pack);
@@ -207,11 +195,39 @@ internal u32 load_texture(struct pack *pack, const char *name,
     push_data(pack, pixels, tex->width * tex->height * (tex->bpp / 8));
 
     blob_end(pack);
+    return blob_idx;
+}
+internal u32 load_texture_file(struct pack *pack, const char *name,
+                               const char *filename)
+{
+    enum rico_error err = SUCCESS;
+
+    int width, height;
+    u8 *pixels = stbi_load(filename, &width, &height, NULL, 4);
+    if (!pixels)
+    {
+        err = RICO_ERROR(ERR_TEXTURE_LOAD, "Failed to load texture file: %s",
+                         filename);
+        goto cleanup;
+    }
+
+    u32 blob_idx = load_texture(pack, name, GL_TEXTURE_2D, (u32)width,
+                                (u32)height, 32, pixels);
 
 cleanup:
     stbi_image_free(pixels);
-    if (err) blob_error(pack, &blob_idx);
     return blob_idx;
+}
+internal u32 load_texture_color(struct pack *pack, const char *name,
+                                struct col4 color)
+{
+    u8 rgba[4] = {
+        (u8)(color.r * 255),
+        (u8)(color.g * 255),
+        (u8)(color.b * 255),
+        (u8)(color.a * 255)
+    };
+    return load_texture(pack, name, GL_TEXTURE_2D, 1, 1, 32, rgba);
 }
 internal u32 load_font(struct pack *pack, const char *name,
                        const char *filename, u32 *font_tex_diff)
@@ -337,8 +353,6 @@ internal u32 load_mesh(struct pack *pack, const char *name, u32 vertex_count,
     mesh->id = blob_idx;
     mesh->vertex_count = vertex_count;
     mesh->element_count = element_count;
-    bbox_init_mesh(&mesh->bbox, vertex_data, vertex_count,
-                   COLOR_WHITE_HIGHLIGHT);
 
     mesh->name_offset = blob_offset(pack);
     push_string(pack, name);
@@ -347,6 +361,8 @@ internal u32 load_mesh(struct pack *pack, const char *name, u32 vertex_count,
     mesh->elements_offset = blob_offset(pack);
     push_data(pack, element_data, element_count * sizeof(*element_data));
     
+    bbox_init_mesh(&mesh->bbox, mesh, COLOR_RED_HIGHLIGHT);
+
     blob_end(pack);
     return blob_idx;
 }
@@ -356,53 +372,55 @@ internal u32 default_mesh(struct pack *pack, const char *name)
     //--------------------------------------------------------------------------
     // Create default mesh (rainbow cube)
     //--------------------------------------------------------------------------
+    
+    struct col4 color = { 1.0f, 0.0f, 0.0f, 0.2f };
     const struct rico_vertex verts[] = {
         {
-            { -1.0f, -1.0f, 1.0f }, // Position
-            COLOR_BLACK,            // Color
-            { 0.0f, 0.0f, 1.0f },   // Normal
-            { 0.0f, 0.0f }          // UV-coords
+            { -1.0f, -1.0f, 1.0f },
+            color,
+            { -1.0f, -1.0f, 1.0f },
+            { 0.0f, 0.0f }
         },
         {
             { 1.0f, -1.0f, 1.0f },
-            COLOR_RED,
-            { 0.0f, 0.0f, 1.0f },
+            color,
+            { 1.0f, -1.0f, 1.0f },
             { 1.0f, 0.0f }
         },
         {
             { 1.0f, 1.0f, 1.0f },
-            COLOR_YELLOW,
-            { 0.0f, 0.0f, 1.0f },
+            color,
+            { 1.0f, 1.0f, 1.0f },
             { 1.0f, 1.0f }
         },
         {
             { -1.0f, 1.0f, 1.0f },
-            COLOR_GREEN,
-            { 0.0f, 0.0f, 1.0f },
+            color,
+            { -1.0f, 1.0f, 1.0f },
             { 0.0f, 1.0f }
         },
         {
             { -1.0f, -1.0f, -1.0f },
-            COLOR_BLUE,
-            { 0.0f, 0.0f, 1.0f },
+            color,
+            { -1.0f, -1.0f, -1.0f },
             { 0.0f, 0.0f }
         },
         {
             { 1.0f, -1.0f, -1.0f },
-            COLOR_MAGENTA,
-            { 0.0f, 0.0f, 1.0f },
+            color,
+            { 1.0f, -1.0f, -1.0f },
             { 1.0f, 0.0f }
         },
         {
             { 1.0f, 1.0f, -1.0f },
-            COLOR_WHITE,
-            { 0.0f, 0.0f, 1.0f },
+            color,
+            { 1.0f, 1.0f, -1.0f },
             { 1.0f, 1.0f }
         },
         {
             { -1.0f, 1.0f, -1.0f },
-            COLOR_CYAN,
-            { 0.0f, 0.0f, 1.0f },
+            color,
+            { -1.0f, 1.0f, -1.0f },
             { 0.0f, 1.0f }
         }
     };
@@ -722,11 +740,16 @@ struct pack *pack_build_default()
 
     struct pack *pack = pack_init(filename, 10, MB(1));
     u32 font_tex_diff = 0;
-    u32 font = load_font(pack, "[FONT_DEFAULT]", "font/courier_new.bff", &font_tex_diff);
-    u32 diff = load_texture(pack, "[TEX_DIFF_DEFAULT]", "texture/basic_diff.tga", GL_TEXTURE_2D);
-    u32 spec = load_texture(pack, "[TEX_SPEC_DEFAULT]", "texture/basic_spec.tga", GL_TEXTURE_2D);
+    u32 font =
+        load_font(pack, "[FONT_DEFAULT]", "font/courier_new.bff",
+                         &font_tex_diff);
+    u32 diff = load_texture_file(pack, "[TEX_DIFF_DEFAULT]",
+                                 "texture/basic_diff.tga");
+    u32 spec = load_texture_file(pack, "[TEX_SPEC_DEFAULT]",
+                                 "texture/basic_spec.tga");
     u32 mat  = load_material(pack, "[MATERIAL_DEFAULT]", diff, spec, 0.5f);
-    u32 font_mat = load_material(pack, "[FONT_DEFAULT_MATERIAL]", font_tex_diff, 0, 0.0f);
+    u32 font_mat = load_material(pack, "[FONT_DEFAULT_MATERIAL]", font_tex_diff,
+                                 0, 0.0f);
     u32 bbox = default_mesh(pack, "[MESH_DEFAULT_BBOX]");
 
     // HACK: This is a bit of a gross way to assert that the obj file only
@@ -752,7 +775,7 @@ void pack_build_alpha()
     const char *filename = "packs/alpha.pak";
 
     struct pack *pack = pack_init(filename, 16, MB(1));
-    u32 bricks_tex = load_texture(pack, "Bricks", "texture/clean_bricks.tga", GL_TEXTURE_2D);
+    u32 bricks_tex = load_texture_file(pack, "Bricks", "texture/clean_bricks.tga");
     u32 bricks_mat = load_material(pack, "Bricks", bricks_tex, 0, 0.5f);
 
     load_obj_file(pack, "mesh/sphere.ric");
@@ -763,11 +786,18 @@ void pack_build_alpha()
     //load_obj_file(&pack, "mesh/welcome_floor.ric");
     //load_obj_file(&pack, "mesh/grass.ric");
 
-    u32 ground = load_object(pack, "Ground", OBJ_STATIC, 0, bricks_mat, NULL);
-    struct rico_object *ground_obj = pack_lookup(pack, ground);
-    object_rot_x(ground_obj, -90.0f);
-    object_scale(ground_obj, &(struct vec3) { 64.0f, 64.0f, 0.001f });
-    object_trans(ground_obj, &(struct vec3) { 0.0f, -1.0f, 0.0f });
+    u32 ground_id = load_object(pack, "Ground", OBJ_STATIC, 0, bricks_mat, NULL);
+    struct rico_object *ground = pack_lookup(pack, ground_id);
+    object_rot_x(ground, -90.0f);
+    object_scale(ground, &(struct vec3) { 64.0f, 64.0f, 0.001f });
+    object_trans(ground, &(struct vec3) { 0.0f, -1.0f, 0.0f });
+
+    u32 timmy_diff = load_texture_color(pack, "Timmy", COLOR_YELLOW);
+    u32 timmy_mat = load_material(pack, "Timmy", timmy_diff, 0, 0.5f);
+    u32 timmy_id = load_object(pack, "Timmy", OBJ_STATIC, 0, timmy_mat, NULL);
+    struct rico_object *timmy = pack_lookup(pack, timmy_id);
+    object_rot_x(timmy, 30.0f);
+    object_rot_y(timmy, 30.0f);
 
     pack_save(pack, filename, false);
     free(pack);

@@ -415,7 +415,9 @@ void object_render_type(struct pack *pack, enum rico_obj_type type,
             continue;
 
         if (is_edit_state(state_get()))
+        {
             prim_draw_bbox(&obj->bbox, &obj->transform);
+        }
     }
 
     glUseProgram(0);

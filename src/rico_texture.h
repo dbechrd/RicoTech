@@ -13,7 +13,7 @@ struct rico_texture {
     u32 id;
     u32 width;
     u32 height;
-    u32 bpp;
+    u8 bpp;
     GLenum gl_target;
 
     u32 name_offset;

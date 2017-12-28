@@ -9,14 +9,15 @@ void bbox_init(struct bbox *bbox, struct vec3 p0, struct vec3 p1,
     bbox->wireframe = true;
 }
 
-void bbox_init_mesh(struct bbox *bbox, const struct rico_vertex *verts,
-                   int count, struct col4 color)
+void bbox_init_mesh(struct bbox *bbox, struct rico_mesh *mesh,
+                    struct col4 color)
 {
     struct vec3 p0 = (struct vec3) { 9999.0f, 9999.0f, 9999.0f };
     struct vec3 p1 = (struct vec3) { -9999.0f, -9999.0f, -9999.0f };
 
     // Find bounds of mesh
-    for (int i = 0; i < count; ++i)
+    struct rico_vertex *verts = mesh_vertices(mesh);
+    for (u32 i = 0; i < mesh->vertex_count; ++i)
     {
         if (verts[i].pos.x < p0.x)
             p0.x = verts[i].pos.x;

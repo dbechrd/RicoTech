@@ -34,6 +34,7 @@ struct rico_mesh {
 };
 
 global const char *mesh_name(struct rico_mesh *mesh);
+global struct rico_vertex *mesh_vertices(struct rico_mesh *mesh);
 void mesh_upload(struct rico_mesh *mesh, GLenum hint);
 void mesh_delete(struct rico_mesh *mesh);
 void mesh_render(struct pack *pack, u32 id);

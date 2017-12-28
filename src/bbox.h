@@ -26,8 +26,8 @@ struct rico_vertex;
 
 void bbox_init(struct bbox *bbox, struct vec3 p0, struct vec3 p1,
                struct col4 color);
-void bbox_init_mesh(struct bbox *bbox, const struct rico_vertex *verts,
-                    int count, struct col4 color);
+void bbox_init_mesh(struct bbox *bbox, struct rico_mesh *mesh,
+                    struct col4 color);
 #if 0
 void bbox_free_mesh(struct bbox *bbox);
 void bbox_render(const struct bbox *box, const struct mat4 *model_matrix);
