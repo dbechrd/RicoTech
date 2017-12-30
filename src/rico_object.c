@@ -289,10 +289,10 @@ void object_render_setup(enum rico_obj_type type,
     float light_pos_z = sinf((float)ticks / 2000.0f) * 16.0f;
 
     struct light_point light;
-    light.color = (struct vec3) { 1.0f, 0.9f, 0.6f };
-    light.position = (struct vec3) { light_pos_x, 3.0f, light_pos_z };
-    //light.ambient  = (struct vec3) { 0.17f, 0.17f, 0.19f };
-    light.ambient = (struct vec3) { 0.10f, 0.09f, 0.11f };
+    light.color = VEC3(1.0f, 0.9f, 0.6f);
+    light.position = VEC3(light_pos_x, 3.0f, light_pos_z);
+    //light.ambient = VEC3(0.17f, 0.17f, 0.19f);
+    light.ambient = VEC3(0.10f, 0.09f, 0.11f);
     light.kc = 1.0f;
     light.kl = 0.05f;
     light.kq = 0.001f;
@@ -313,24 +313,24 @@ void object_render_setup(enum rico_obj_type type,
         light.kq = 0.0f;
     }
 
-    glUniformMatrix4fv(prog->u_proj, 1, GL_TRUE, proj_matrix.a);
+    glUniformMatrix4fv(prog->u_projection, 1, GL_TRUE, proj_matrix.a);
     glUniformMatrix4fv(prog->u_view, 1, GL_TRUE, view_matrix.a);
-    glUniform3fv(prog->u_view_pos, 1, (const GLfloat *)&camera->position);
+    glUniform3fv(prog->u_camera.position, 1, (const GLfloat *)&camera->position);
 
     // Material textures
     // Note: We don't have to do this every time as long as we make sure
     //       the correct textures are bound before each draw to the texture
     //       index assumed when the program was initialized.
-    glUniform1i(prog->u_material_diff, 0);
-    glUniform1i(prog->u_material_spec, 1);
+    glUniform1i(prog->u_material.diffuse, 0);
+    glUniform1i(prog->u_material.specular, 1);
 
     // Lighting
-    glUniform3fv(prog->u_light_position, 1, (const GLfloat *)&light.position);
-    glUniform3fv(prog->u_light_ambient, 1, (const GLfloat *)&light.ambient);
-    glUniform3fv(prog->u_light_color, 1, (const GLfloat *)&light.color);
-    glUniform1f(prog->u_light_kc, light.kc);
-    glUniform1f(prog->u_light_kl, light.kl);
-    glUniform1f(prog->u_light_kq, light.kq);
+    glUniform3fv(prog->u_light_point.position, 1, (const GLfloat *)&light.position);
+    glUniform3fv(prog->u_light_point.ambient, 1, (const GLfloat *)&light.ambient);
+    glUniform3fv(prog->u_light_point.color, 1, (const GLfloat *)&light.color);
+    glUniform1f(prog->u_light_point.kc, light.kc);
+    glUniform1f(prog->u_light_point.kl, light.kl);
+    glUniform1f(prog->u_light_point.kq, light.kq);
 
     glUniform2f(prog->u_scale_uv, 1.0f, 1.0f);
 }
@@ -388,7 +388,7 @@ void object_render_type(struct pack *pack, enum rico_obj_type type,
                 mat_id = MATERIAL_DEFAULT;
             }
         }
-        material_bind(mat_pack, mat_id, prog->u_material_shiny);
+        material_bind(mat_pack, mat_id, prog->u_material.shiny);
 
         // Render
         if (obj->mesh_id)

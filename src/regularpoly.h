@@ -1,7 +1,8 @@
 #ifndef REGULARPOLY_H
 #define REGULARPOLY_H
 
-struct regularpoly {
+struct regularpoly
+{
     struct vec3 pos;
     GLfloat radius;
 

@@ -1,8 +1,12 @@
 #version 330 core
 
+struct camera {
+    vec3 position;
+};
+
 struct material {
-    sampler2D diff;
-    sampler2D spec;
+    sampler2D diffuse;
+    sampler2D specular;
     float shiny;
 };
 
@@ -20,46 +24,46 @@ struct light {
     float kq;  // Quadratic
 };
 
-uniform vec3 u_view_pos;
+uniform camera u_camera;
 uniform material u_material;
-uniform light u_light;
+uniform light u_light_point;
 
-in vtx_out {
-    vec4 col;
+in vert_out {
+    vec3 position;
+    vec4 color;
     vec3 normal;
     vec2 uv;
-    vec3 frag_pos;
-} vtx;
+} vert;
 
 out vec4 color;
 
 void main()
 {
     // TODO: Specular texture doesn't need to be GL_RGBA. Use GL_RED.
-    vec4 texel_diffuse = texture(u_material.diff, vtx.uv);
-    vec4 texel_specular = texture(u_material.spec, vtx.uv);
+    vec4 texel_diffuse = texture(u_material.diffuse, vert.uv);
+    vec4 texel_specular = texture(u_material.specular, vert.uv);
 
-    vec4 mat_diffuse = texel_diffuse;
-    if (texel_diffuse.a == 0)
-    {
-        mat_diffuse = vtx.col;
-    }
+    vec3 mat_diffuse = texel_diffuse.rgb;
+    //if (texel_diffuse.a == 0)
+    //{
+    //    mat_diffuse = vert.color.rgb;
+    //}
     vec3 mat_specular = texel_specular.rgb;
 
-    vec4 ambient = vec4(u_light.ambient, 1.0) * mat_diffuse;
+    vec3 ambient = u_light_point.ambient * mat_diffuse;
 
-    vec3 norm = normalize(vtx.normal);
-    vec3 light_vec = u_light.position - vtx.frag_pos;
+    vec3 norm = normalize(vert.normal);
+    vec3 light_vec = u_light_point.position - vert.position;
     float light_dist = length(light_vec);
     vec3 light_dir = normalize(light_vec);
 
     float diff = max(dot(norm, light_dir), 0.0);
-    vec4 diffuse = vec4(u_light.color, 1.0) * mat_diffuse * diff;
+    vec3 diffuse = u_light_point.color * mat_diffuse * diff;
 
-    vec4 specular = vec4(0);
+    vec3 specular = vec3(0);
     if (diff > 0.0)
     {
-        vec3 eye_dir = normalize(u_view_pos - vtx.frag_pos);
+        vec3 eye_dir = normalize(u_camera.position - vert.position);
 
         // Phong specular
         // vec3 reflect_dir = reflect(-light_dir, norm);
@@ -79,19 +83,19 @@ void main()
         spec *= fresnel;
 
         // Light decides specular color? How to handle metallic reflections?
-        specular = vec4(u_light.color, 1.0) * vec4(mat_specular, 1.0) * spec;
+        specular = u_light_point.color * mat_specular * spec;
         // specular = mat_specular * spec;
     }
 
-    float attenuation = 1.0 / (u_light.kc +
-                               u_light.kl * light_dist +
-                               u_light.kq * (light_dist * light_dist));
+    float attenuation = 1.0 / (u_light_point.kc +
+                               u_light_point.kl * light_dist +
+                               u_light_point.kq * (light_dist * light_dist));
 
     // Ambient based on distance from light?
     //color.xyz = (ambient + diffuse + specular) * attenuation;
     // Ambient constant
-    color = ambient + (diffuse + specular) * attenuation;
+    color = vec4(ambient + ((diffuse + specular) * attenuation), 1.0);
 
     // What is the point of this??
-    //color.a = 1.0 + (vtx.normal.x * 0.0000001); //texel_diffuse.a;
+    //color.a = 1.0 + (vert.normal.x * 0.0000001); //texel_diffuse.a;
 }

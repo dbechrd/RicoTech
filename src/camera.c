@@ -2,10 +2,6 @@ struct camera cam_player;
 
 // Note: Height of player's eyes in meters
 #define CAMERA_POS_Y_MIN 1.68f
-const struct vec3 CAMERA_POS_INITIAL = {
-    0.0f, CAMERA_POS_Y_MIN, 1.0f
-};
-
 #define CAMERA_FOV_DEG 60.0f
 #define QUAT_SCALE_HACK 100.0f
 
@@ -20,9 +16,8 @@ void camera_init(struct camera *camera, struct vec3 position, struct quat view,
     camera->locked = false;
     camera->need_update = true;
 
-    bbox_init(&camera->bbox, (struct vec3) { -0.5f, -0.5f, -0.5f },
-                             (struct vec3) {  0.5f,  0.5f,  0.5f },
-              COLOR_WHITE);
+    bbox_init(&camera->bbox, VEC3(-0.5f, -0.5f, -0.5f),
+                             VEC3( 0.5f,  0.5f,  0.5f), COLOR_WHITE);
 
     camera->proj_matrix = mat4_init_perspective(SCREEN_W, SCREEN_H, Z_NEAR,
                                                  Z_FAR, fov_deg);
@@ -30,6 +25,7 @@ void camera_init(struct camera *camera, struct vec3 position, struct quat view,
 
 void camera_reset(struct camera *camera)
 {
+    const struct vec3 CAMERA_POS_INITIAL = VEC3(0.0f, CAMERA_POS_Y_MIN, 1.0f);
     camera_init(camera, CAMERA_POS_INITIAL, QUAT_IDENT, CAMERA_FOV_DEG);
 }
 

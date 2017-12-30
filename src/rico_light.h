@@ -1,16 +1,19 @@
 #ifndef RICO_LIGHT_H
 #define RICO_LIGHT_H
 
-struct light_ambient {
+struct light_ambient
+{
     struct vec3 color;
 };
 
-struct light_directional {
+struct light_directional
+{
     struct vec3 color;
     struct vec3 direction;
 };
 
-struct light_point {
+struct light_point
+{
     struct vec3 color;
     struct vec3 position;
 
@@ -23,7 +26,8 @@ struct light_point {
     float kq;  // Quadratic
 };
 
-struct light_spot {
+struct light_spot
+{
     struct vec3 color;
     struct vec3 position;
     struct vec3 direction;

@@ -3,7 +3,8 @@ typedef u8 hkey[32];
 typedef u8 hval[64];
 
 // "dog" -> struct *texture
-struct hash_kv {
+struct hash_kv
+{
     hkey key; // ['d', 'o', 'g', 'g', 'o', '\0']
     u32 klen; // 6
     hval val; // 0x8b1453a3

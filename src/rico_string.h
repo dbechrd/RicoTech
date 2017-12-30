@@ -9,12 +9,14 @@
     f(STR_SLOT_MENU_QUIT)    \
     f(STR_SLOT_DELTA)        \
     f(STR_SLOT_DYNAMIC)
-enum rico_string_slot {
+enum rico_string_slot
+{
     RICO_STRING_SLOTS(GEN_LIST)
 };
 extern const char *rico_string_slot_string[];
 
-struct rico_string {
+struct rico_string
+{
     struct hnd hnd;
     enum rico_string_slot slot;
     u32 object_id;
@@ -22,7 +24,7 @@ struct rico_string {
 };
 
 int string_init(struct rico_string *str, const char *name,
-                enum rico_string_slot slot, float x, float y, struct col4 color,
+                enum rico_string_slot slot, float x, float y, struct vec4 color,
                 u32 lifespan, struct rico_font *font, const char *text);
 int string_free(struct rico_string *str);
 int string_free_slot(enum rico_string_slot slot);

@@ -8,7 +8,8 @@
 
 #define BFG_MAXSTRING 511  // Maximum string length
 
-struct rico_font {
+struct rico_font
+{
     u32 id;
     u32 cell_x;
     u32 cell_y;
@@ -27,7 +28,7 @@ struct rico_font {
 
 global const char *font_name(struct rico_font *font);
 void font_render(u32 *mesh_id, u32 *texture_id, struct rico_font *font, int x,
-                 int y, struct col4 bg, const char *text,
+                 int y, struct vec4 bg, const char *text,
                  const char *mesh_name);
 
 #endif // RICO_FONT_H

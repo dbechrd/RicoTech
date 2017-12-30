@@ -48,10 +48,9 @@ internal void font_setblend(const struct rico_font *font)
 }
 
 void font_render(u32 *mesh_id, u32 *texture_id, struct rico_font *font, int x,
-                 int y, struct col4 bg, const char *text, const char *mesh_name)
+                 int y, struct vec4 bg, const char *text, const char *mesh_name)
 {
-    // TODO: Push/pop these on arena instead of using local stack? Does it
-    //       matter?
+    // TODO: Use instanced quad?
     // Persistent buffers for font rendering
     local struct rico_vertex vertices[BFG_MAXSTRING * 4] = { 0 };
     local GLuint elements[BFG_MAXSTRING * 6] = { 0 };
@@ -99,44 +98,36 @@ void font_render(u32 *mesh_id, u32 *texture_id, struct rico_font *font, int x,
 
         // Vertices for this character's quad
         vertices[idx_vertex++] = (struct rico_vertex) {
-            (struct vec3) {
-                cur_x / 64.0f,
-                cur_y / 64.0f,
-                0.0f
-            },
+            VEC3(cur_x / 64.0f,
+                 cur_y / 64.0f,
+                 0.0f),
             bg,
-            (struct vec3) { 1.0f, 1.0f, 1.0f },
-            (struct tex2) { u0, v1 }
+            VEC3(1.0f, 1.0f, 1.0f),
+            VEC2(u0, v1)
         };
         vertices[idx_vertex++] = (struct rico_vertex) {
-            (struct vec3) {
-                (cur_x + xOffset) / 64.0f,
-                cur_y / 64.0f,
-                0.0f
-            },
+            VEC3((cur_x + xOffset) / 64.0f,
+                 cur_y / 64.0f,
+                 0.0f),
             bg,
-            (struct vec3) { 1.0f, 1.0f, 1.0f },
-            (struct tex2) { u1, v1 }
+            VEC3(1.0f, 1.0f, 1.0f),
+            VEC2(u1, v1)
         };
         vertices[idx_vertex++] = (struct rico_vertex) {
-            (struct vec3) {
-                (cur_x + xOffset) / 64.0f,
-                (cur_y + font->y_offset) / 64.0f,
-                0.0f
-            },
+            VEC3((cur_x + xOffset) / 64.0f,
+                 (cur_y + font->y_offset) / 64.0f,
+                 0.0f),
             bg,
-            (struct vec3) { 1.0f, 1.0f, 1.0f },
-            (struct tex2) { u1, v0 }
+            VEC3(1.0f, 1.0f, 1.0f),
+            VEC2(u1, v0)
         };
         vertices[idx_vertex++] = (struct rico_vertex) {
-            (struct vec3) {
-                cur_x / 64.0f,
-                (cur_y + font->y_offset) / 64.0f,
-                0.0f
-            },
+            VEC3(cur_x / 64.0f,
+                 (cur_y + font->y_offset) / 64.0f,
+                 0.0f),
             bg,
-            (struct vec3) { 1.0f, 1.0f, 1.0f },
-            (struct tex2) { u0, v0 }
+            VEC3(1.0f, 1.0f, 1.0f),
+            VEC2(u0, v0)
         };
 
         //3  2

@@ -5,7 +5,8 @@ const char *rico_state_string[] = {
     RICO_STATES(GEN_STRING)
 };
 
-enum rico_action {
+enum rico_action
+{
     ACTION_ENGINE_DEBUG_LIGHTING_TOGGLE,
     ACTION_ENGINE_DEBUG_TRIGGER_BREAKPOINT,
     ACTION_ENGINE_EDITOR_TOGGLE,
@@ -76,7 +77,8 @@ enum rico_action {
 
 typedef u8 rico_key;
 
-struct rico_keychord {
+struct rico_keychord
+{
     rico_key keys[3];
 };
 
@@ -85,10 +87,13 @@ struct rico_keychord {
 #define CHORD1(k0)     CHORD3(k0, 0, 0)
 
 #if 0
-struct rico_keysequence {
-    union {
+struct rico_keysequence
+{
+    union
+    {
         struct rico_keychord chords[3];
-        struct {
+        struct
+        {
             struct rico_keychord c0;
             struct rico_keychord c1;
             struct rico_keychord c2;
@@ -105,7 +110,8 @@ struct rico_keyevent
         RICO_KEYEVENT_CHORD,
         RICO_KEYEVENT_SEQUENCE
     } type;
-    union {
+    union
+    {
         rico_key key;
         struct rico_keychord chord;
         struct rico_keysequence sequence;
@@ -289,7 +295,8 @@ global enum rico_state state;
 
 // State change handlers
 typedef int (*state_handler)();
-struct state_handlers {
+struct state_handlers
+{
     state_handler init;
     state_handler run;
     state_handler cleanup;
@@ -1203,8 +1210,8 @@ internal int init_hardcoded_test_chunk(struct rico_chunk **chunk)
                       material_rock->hnd.id, NULL);
     if (err) return err;
     object_rot_x(obj_ground, -90.0f);
-    object_scale(obj_ground, &(struct vec3) { 64.0f, 64.0f, 0.001f });
-    object_trans(obj_ground, &(struct vec3) { 0.0f, -1.0f, 0.0f });
+    object_scale(obj_ground, &VEC3(64.0f, 64.0f, 0.001f));
+    object_trans(obj_ground, &VEC3(0.0f, -1.0f, 0.0f));
 
 #if 0
     //--------------------------------------------------------------------------

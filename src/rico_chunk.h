@@ -14,7 +14,8 @@ const chunk_pool_counts size_by_handle = {
     sizeof(struct rico_material)  // RICO_HND_MATERIAL
 };
 
-struct rico_chunk {
+struct rico_chunk
+{
     u32 uid;
     char name[32];
     u32 total_size;

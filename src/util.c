@@ -135,7 +135,8 @@ internal short le_short(unsigned char *bytes)
 
 void *read_tga(const char *filename, int *width, int *height)
 {
-    struct tga_header {
+    struct tga_header
+    {
         unsigned char  id_length;
         char  color_map_type;
         char  data_type_code;

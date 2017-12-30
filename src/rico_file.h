@@ -7,7 +7,8 @@
 #define RICO_FILE_VERSION_COUNT 1 + (RICO_FILE_VERSION_MAXIMUM_SUPPORTED -\
                                      RICO_FILE_VERSION_MINIMUM_SUPPORTED)
 
-struct rico_file {
+struct rico_file
+{
     FILE *fs;
     u32 version;
     u32 next_uid;

@@ -116,7 +116,8 @@ static GL3WglProc get_proc(const char *proc)
 }
 #endif
 
-static struct {
+static struct
+{
     int major, minor;
 } version;
 

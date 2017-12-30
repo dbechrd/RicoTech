@@ -1,7 +1,8 @@
 #ifndef RICO_MATERIAL_H
 #define RICO_MATERIAL_H
 
-struct rico_material {
+struct rico_material
+{
     u32 id;
     float shiny;
     u32 tex_diffuse_id;

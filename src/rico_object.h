@@ -6,12 +6,14 @@
     f(OBJ_STRING_WORLD)   \
     f(OBJ_STRING_SCREEN)
 
-enum rico_obj_type {
+enum rico_obj_type
+{
     RICO_OBJ_TYPES(GEN_LIST)
 };
 extern const char *rico_obj_type_string[];
 
-struct rico_object {
+struct rico_object
+{
     u32 id;
     enum rico_obj_type type;
 

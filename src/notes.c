@@ -212,7 +212,8 @@ void notes_casey()
         u64 data_offset;
         u32 first_tag_idx;
         u32 tag_count;
-        union {
+        union
+        {
             struct hha_bitmap bitmap;
             struct hha_sound sound;
         };

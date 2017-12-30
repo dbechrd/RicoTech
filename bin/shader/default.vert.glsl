@@ -2,28 +2,28 @@
 
 uniform float u_time;
 uniform vec2 u_scale_uv;
-uniform mat4 u_proj;
+uniform mat4 u_projection;
 uniform mat4 u_view;
 uniform mat4 u_model;
 
-layout(location = 0) in vec3 vert_pos;
-layout(location = 1) in vec4 vert_col;
-layout(location = 2) in vec3 vert_normal;
-layout(location = 3) in vec2 vert_uv;
+layout(location = 0) in vec3 attr_position;
+layout(location = 1) in vec4 attr_color;
+layout(location = 2) in vec3 attr_normal;
+layout(location = 3) in vec2 attr_uv;
 
-out vtx_out {
-    vec4 col;
+out vert_out {
+    vec3 position;
+    vec4 color;
     vec3 normal;
     vec2 uv;
-    vec3 frag_pos;
-} vtx;
+} vert;
 
 void main()
 {
-    vtx.col = vert_col;
-    vtx.normal = (mat3(transpose(inverse(u_model))) * vert_normal).xyz;
-    vtx.uv = u_scale_uv * vert_uv;
-    gl_Position = u_model * vec4(vert_pos, 1.0);
-    vtx.frag_pos = gl_Position.xyz;
-    gl_Position = u_proj * u_view * gl_Position;
+    vert.color = attr_color;
+    vert.normal = (mat3(transpose(inverse(u_model))) * attr_normal).xyz;
+    vert.uv = u_scale_uv * attr_uv;
+    gl_Position = u_model * vec4(attr_position, 1.0);
+    vert.position = gl_Position.xyz;
+    gl_Position = u_projection * u_view * gl_Position;
 }

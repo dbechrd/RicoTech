@@ -1,6 +1,8 @@
 #ifndef BBOX_H
 #define BBOX_H
 
+struct rico_mesh;
+
 ////////////////////////////////////////////////////////////////////////////////
 // TODO: Move this to primitives
 
@@ -9,7 +11,8 @@
 // TODO: Don't serialize vao/vbo!
 
 // IMPORTANT: *DO NOT* add pointers in this struct, it will break cereal!
-struct bbox {
+struct bbox
+{
     //struct hnd hnd;
 
     //GLuint vao;
@@ -17,7 +20,7 @@ struct bbox {
     //struct program_primitive *prog;
 
     struct vec3 p[2];
-    struct col4 color;
+    struct vec4 color;
 
     bool wireframe;
 };
@@ -25,9 +28,9 @@ struct bbox {
 struct rico_vertex;
 
 void bbox_init(struct bbox *bbox, struct vec3 p0, struct vec3 p1,
-               struct col4 color);
+               struct vec4 color);
 void bbox_init_mesh(struct bbox *bbox, struct rico_mesh *mesh,
-                    struct col4 color);
+                    struct vec4 color);
 #if 0
 void bbox_free_mesh(struct bbox *bbox);
 void bbox_render(const struct bbox *box, const struct mat4 *model_matrix);

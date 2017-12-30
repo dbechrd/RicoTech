@@ -5,83 +5,37 @@
 #define MAT4_EPSILON 0.00001f
 #define QUAT_EPSILON 0.00001f
 
-//------------------------------------------------------------------------------
-// RGBA color
-//------------------------------------------------------------------------------
-struct col4 {
-    float r, g, b, a;
+#define VEC2(a, b) ((struct vec2) {{{ a, b }}})
+#define VEC3(a, b, c) ((struct vec3) {{{ a, b, c }}})
+#define VEC4(a, b, c, d) ((struct vec4) {{{ a, b, c, d }}})
+
+struct vec2
+{
+    union
+    {
+        struct { float x, y; };
+        struct { float u, v; };
+    };
 };
 
-////Predefined colors
-//extern const struct col4 COLOR_TRANSPARENT;
-//extern const struct col4 COLOR_BLACK;
-//extern const struct col4 COLOR_RED;
-//extern const struct col4 COLOR_GREEN;
-//extern const struct col4 COLOR_BLUE;
-//extern const struct col4 COLOR_YELLOW;
-//extern const struct col4 COLOR_CYAN;
-//extern const struct col4 COLOR_MAGENTA;
-//extern const struct col4 COLOR_WHITE;
-//extern const struct col4 COLOR_GRAY;
-//
-//extern const struct col4 COLOR_BLACK_HIGHLIGHT;
-//extern const struct col4 COLOR_RED_HIGHLIGHT;
-//extern const struct col4 COLOR_GREEN_HIGHLIGHT;
-//extern const struct col4 COLOR_BLUE_HIGHLIGHT;
-//extern const struct col4 COLOR_YELLOW_HIGHLIGHT;
-//extern const struct col4 COLOR_CYAN_HIGHLIGHT;
-//extern const struct col4 COLOR_MAGENTA_HIGHLIGHT;
-//extern const struct col4 COLOR_WHITE_HIGHLIGHT;
-//extern const struct col4 COLOR_GRAY_HIGHLIGHT;
-//
-//extern const struct col4 COLOR_DARK_RED;
-//extern const struct col4 COLOR_DARK_GREEN;
-//extern const struct col4 COLOR_DARK_BLUE;
-//extern const struct col4 COLOR_DARK_YELLOW;
-//extern const struct col4 COLOR_DARK_CYAN;
-//extern const struct col4 COLOR_DARK_MAGENTA;
-//extern const struct col4 COLOR_DARK_GRAY;
-//
-//extern const struct col4 COLOR_DARK_RED_HIGHLIGHT;
-//extern const struct col4 COLOR_DARK_GREEN_HIGHLIGHT;
-//extern const struct col4 COLOR_DARK_BLUE_HIGHLIGHT;
-//extern const struct col4 COLOR_DARK_YELLOW_HIGHLIGHT;
-//extern const struct col4 COLOR_DARK_CYAN_HIGHLIGHT;
-//extern const struct col4 COLOR_DARK_MAGENTA_HIGHLIGHT;
-//extern const struct col4 COLOR_DARK_GRAY_HIGHLIGHT;
-
-//------------------------------------------------------------------------------
-// 2D Texture coordinates
-//------------------------------------------------------------------------------
-struct tex2 {
-    float u, v;
+struct vec3
+{
+    union
+    {
+        struct { float x, y, z; };
+        struct { float u, v, w; };
+        struct { float r, g, b; };
+    };
 };
 
-//------------------------------------------------------------------------------
-// 3D Vector
-//------------------------------------------------------------------------------
-struct vec3 {
-    float x, y, z;
+struct vec4
+{
+    union
+    {
+        struct { float x, y, z, w; };
+        struct { float r, g, b, a; };
+    };
 };
-
-//------------------------------------------------------------------------------
-// 4D Vector
-//------------------------------------------------------------------------------
-struct vec4 {
-    float x, y, z, w;
-};
-
-//extern const struct vec3 VEC3_ZERO;
-//extern const struct vec3 VEC3_ONE;
-//extern const struct vec3 VEC3_UNIT;
-//extern const struct vec3 VEC3_X;
-//extern const struct vec3 VEC3_Y;
-//extern const struct vec3 VEC3_Z;
-//extern const struct vec3 VEC3_UP;
-//extern const struct vec3 VEC3_FWD;
-//extern const struct vec3 VEC3_RIGHT;
-//extern const struct vec3 VEC3_SMALL;
-//extern const struct vec3 VEC3_SCALE_ASPECT;
 
 #if 1
 internal inline struct vec3 *v3_add(struct vec3 *a, const struct vec3 *b)
@@ -253,11 +207,14 @@ internal inline void v3_print(struct vec3 v)
 //------------------------------------------------------------------------------
 // 4D Matrix
 //------------------------------------------------------------------------------
-struct mat4 {
-    union {
+struct mat4
+{
+    union
+    {
         float a[16];    //Array
         float m[4][4];  //Matrix
-        /*struct {
+        /*struct
+        {
             float m00, m01, m02, m03;
             float m10, m11, m12, m13;
             float m20, m21, m22, m23;
@@ -548,10 +505,13 @@ internal inline void mat4_print(const struct mat4 *m)
 //------------------------------------------------------------------------------
 // Quaternion
 //------------------------------------------------------------------------------
-struct quat {
+struct quat
+{
     float w;
-    union {
-        struct {
+    union
+    {
+        struct
+        {
             float x, y, z;
         };
         struct vec3 v;
@@ -838,7 +798,8 @@ quat quat_between_vec(vec3 a, vec3 b, vec3 fallback) // ????
 //------------------------------------------------------------------------------
 // Ray
 //------------------------------------------------------------------------------
-struct ray {
+struct ray
+{
     struct vec3 orig;
     struct vec3 dir;
 };
@@ -846,7 +807,8 @@ struct ray {
 //------------------------------------------------------------------------------
 // Sphere
 //------------------------------------------------------------------------------
-struct sphere {
+struct sphere
+{
     struct vec3 orig;
     float radius;
 };

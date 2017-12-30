@@ -9,7 +9,8 @@
 typedef SERIAL(serializer);
 typedef DESERIAL(deserializer);
 
-struct rico_cereal {
+struct rico_cereal
+{
     serializer *save[RICO_FILE_VERSION_COUNT];
     deserializer *load[RICO_FILE_VERSION_COUNT];
 };

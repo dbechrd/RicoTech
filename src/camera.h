@@ -16,7 +16,8 @@
 #define Z_NEAR 0.01f
 #define Z_FAR 200.0f
 
-struct camera {
+struct camera
+{
     struct vec3 position;
     struct quat view;
     //struct vec3 up;

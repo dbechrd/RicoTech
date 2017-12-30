@@ -63,7 +63,7 @@ internal int prim_init_gl(enum rico_prim prim)
 //       glUseProgram() call.
 // Render line segment
 void prim_draw_segment(const struct segment *seg,
-                       const struct mat4 *model_matrix, struct col4 color)
+                       const struct mat4 *model_matrix, struct vec4 color)
 {
     if (cam_player.fill_mode != GL_LINE)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -97,7 +97,7 @@ void prim_draw_segment(const struct segment *seg,
 
 // Render ray as line segment
 void prim_draw_ray(const struct ray *ray, const struct mat4 *model_matrix,
-                   struct col4 color)
+                   struct vec4 color)
 {
     struct vec3 ray_end = ray->orig;
     v3_add(&ray_end, &ray->dir);
@@ -116,7 +116,7 @@ void prim_draw_bbox(const struct bbox *bbox, const struct mat4 *model_matrix)
 
 void prim_draw_bbox_color(const struct bbox *bbox,
                           const struct mat4 *model_matrix,
-                          const struct col4 *color)
+                          const struct vec4 *color)
 {
     if (bbox->wireframe && cam_player.fill_mode != GL_LINE)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -151,7 +151,7 @@ void prim_draw_bbox_color(const struct bbox *bbox,
         glPolygonMode(GL_FRONT_AND_BACK, cam_player.fill_mode);
 }
 
-void prim_draw_sphere(const struct sphere *sphere, const struct col4 *color)
+void prim_draw_sphere(const struct sphere *sphere, const struct vec4 *color)
 {
     if (cam_player.fill_mode != GL_LINE)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

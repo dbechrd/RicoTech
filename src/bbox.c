@@ -1,7 +1,7 @@
 #define BBOX_EPSILON 0.01f
 
 void bbox_init(struct bbox *bbox, struct vec3 p0, struct vec3 p1,
-               struct col4 color)
+               struct vec4 color)
 {
     bbox->p[0] = p0;
     bbox->p[1] = p1;
@@ -10,10 +10,10 @@ void bbox_init(struct bbox *bbox, struct vec3 p0, struct vec3 p1,
 }
 
 void bbox_init_mesh(struct bbox *bbox, struct rico_mesh *mesh,
-                    struct col4 color)
+                    struct vec4 color)
 {
-    struct vec3 p0 = (struct vec3) { 9999.0f, 9999.0f, 9999.0f };
-    struct vec3 p1 = (struct vec3) { -9999.0f, -9999.0f, -9999.0f };
+    struct vec3 p0 = VEC3(9999.0f, 9999.0f, 9999.0);
+    struct vec3 p1 = VEC3(-9999.0f, -9999.0f, -9999.0f);
 
     // Find bounds of mesh
     struct rico_vertex *verts = mesh_vertices(mesh);

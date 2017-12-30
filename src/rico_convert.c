@@ -67,21 +67,24 @@ enum obj_keyword_type { OBJ_KEYWORD_TYPES(GEN_LIST) };
 const char *obj_keyword_type_string[] = { OBJ_KEYWORD_TYPES(GEN_STRING) };
 internal const char *obj_keyword_values[] = { OBJ_KEYWORD_TYPES(GEN_VALUE) };
 
-struct obj_token {
+struct obj_token
+{
     enum obj_token_type type;
     enum obj_keyword_type keyword;
     u8 len;
     const char *value; // BE CAREFUL THIS IS *NOT* A NULL-TERMINATED STRING!!!
 };
 
-struct obj_file_header {
+struct obj_file_header
+{
     int vertex_count;
     int uvcoord_count;
     int normal_count;
     int face_count;
     int object_count;
 };
-struct obj_file {
+struct obj_file
+{
     struct obj_file_header header;
     struct obj_token *tokens;
 };
@@ -282,7 +285,8 @@ cleanup:
 }
 
 #if 0
-enum obj_keyword_type {
+enum obj_keyword_type
+{
     OBJ_KW_INVALID,
 
     //-------------------------------------------

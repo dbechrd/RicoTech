@@ -14,7 +14,8 @@
     f(STATE_ENGINE_SHUTDOWN)    \
     f(STATE_COUNT)
 
-enum rico_state {
+enum rico_state
+{
     RICO_STATES(GEN_LIST)
 };
 extern const char *rico_state_string[];

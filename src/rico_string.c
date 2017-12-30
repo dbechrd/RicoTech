@@ -3,7 +3,7 @@ const char *rico_string_slot_string[] = {
 };
 
 int string_init(struct rico_string *str, const char *name,
-                enum rico_string_slot slot, float x, float y, struct col4 color,
+                enum rico_string_slot slot, float x, float y, struct vec4 color,
                 u32 lifespan, struct rico_font *font, const char *text)
 {
     enum rico_error err = SUCCESS;
@@ -29,8 +29,7 @@ int string_init(struct rico_string *str, const char *name,
     str->object_id = load_object(pack_transient, name, OBJ_STRING_SCREEN,
                                  font_mesh_id, font_mat_id, NULL);
     struct rico_object *str_obj = pack_lookup(pack_transient, str->object_id);
-    object_trans_set(str_obj,
-                     &(struct vec3) { SCREEN_X(x), SCREEN_Y(y), -1.0f });
+    object_trans_set(str_obj, &VEC3(SCREEN_X(x), SCREEN_Y(y), -1.0f));
     
     str->lifespan = lifespan;
 

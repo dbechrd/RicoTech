@@ -30,23 +30,23 @@ void init_glref()
     //--------------------------------------------------------------------------
     // Create axis label bboxes
     //--------------------------------------------------------------------------
-    bbox_init(&axis_bbox, (struct vec3) { -0.5f, -0.5f, -0.5f },
-                          (struct vec3) {  0.5f,  0.5f,  0.5f }, COLOR_WHITE);
+    bbox_init(&axis_bbox, VEC3(-0.5f, -0.5f, -0.5f),
+                          VEC3( 0.5f,  0.5f,  0.5f), COLOR_WHITE);
 
     // X-axis label
     x_axis_transform = MAT4_IDENT;
-    mat4_scale(&x_axis_transform, &(struct vec3) { 1.0f, 0.01f, 0.01f });
-    mat4_translate(&x_axis_transform, &(struct vec3) { 0.5f, 0.0f, 0.0f });
+    mat4_scale(&x_axis_transform, &VEC3(1.0f, 0.01f, 0.01f));
+    mat4_translate(&x_axis_transform, &VEC3(0.5f, 0.0f, 0.0f));
 
     // Y-axis label
     y_axis_transform = MAT4_IDENT;
-    mat4_scale(&y_axis_transform, &(struct vec3) { 0.01f, 1.0f, 0.01f });
-    mat4_translate(&y_axis_transform, &(struct vec3) { 0.0f, 0.5f, 0.0f });
+    mat4_scale(&y_axis_transform, &VEC3(0.01f, 1.0f, 0.01f));
+    mat4_translate(&y_axis_transform, &VEC3(0.0f, 0.5f, 0.0f));
 
     // Z-axis label
     z_axis_transform = MAT4_IDENT;
-    mat4_scale(&z_axis_transform, &(struct vec3) { 0.01f, 0.01f, 1.0f });
-    mat4_translate(&z_axis_transform, &(struct vec3) { 0.0f, 0.0f, 0.5f });
+    mat4_scale(&z_axis_transform, &VEC3(0.01f, 0.01f, 1.0f));
+    mat4_translate(&z_axis_transform, &VEC3(0.0f, 0.0f, 0.5f));
 }
 
 void create_obj()

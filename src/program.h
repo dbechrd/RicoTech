@@ -4,36 +4,60 @@
 //--------------------------------------------------------------------------
 // Default program
 //--------------------------------------------------------------------------
-struct program_default {
+struct glsl_attrib
+{
+    GLint position; // vec3
+    GLint normal;   // vec3
+    GLint color;    // vec3
+    GLint uv;       // vec2
+};
+
+struct glsl_camera
+{
+    GLint position; // (vec3)
+};
+
+struct glsl_material
+{
+    GLint diffuse;  // (sampler2D)
+    GLint specular; // (sampler2D)
+    GLint shiny;    // (float)
+};
+
+// Point light
+struct glsl_light_point
+{
+    GLint position; // (vec3)
+
+    // Color
+    GLint ambient;  // (vec3)
+    GLint color;    // (vec3)
+
+    // Attenuation
+    GLint kc;       // (float) Constant
+    GLint kl;       // (float) Linear
+    GLint kq;       // (float) Quadratic
+};
+
+struct program_default
+{
     u32 ref_count;
     GLuint prog_id;
 
     //TODO: Don't set from outside, create wrapper methods to enforce type
     // Vertex shader
-    GLint u_time;     // float
-    GLint u_scale_uv; // vec3
-    GLint u_model;    // mat4
-    GLint u_view;     // mat4
-    GLint u_proj;     // mat4
+    GLint u_time;       // float
+    GLint u_scale_uv;   // vec3
+    GLint u_model;      // mat4
+    GLint u_view;       // mat4
+    GLint u_projection; // mat4
 
-    GLint vert_pos;    // vec3
-    GLint vert_normal; // vec3
-    GLint vert_col;    // vec3
-    GLint vert_uv;     // vec2
+    struct glsl_attrib u_attr;
 
     // Fragment shader
-    GLint u_view_pos; // vec3
-
-    GLint u_material_diff;  // sampler2D
-    GLint u_material_spec;  // sampler2D
-    GLint u_material_shiny; // float
-
-    GLint u_light_position; // vec3
-    GLint u_light_ambient;  // vec3
-    GLint u_light_color;    // vec3
-    GLint u_light_kc;       // float
-    GLint u_light_kl;       // float
-    GLint u_light_kq;       // float
+    struct glsl_camera u_camera;
+    struct glsl_material u_material;
+    struct glsl_light_point u_light_point;
 };
 
 //int make_program_default(struct program_default **_program);
@@ -44,7 +68,8 @@ struct program_default {
 //--------------------------------------------------------------------------
 // Primitive program
 //--------------------------------------------------------------------------
-struct program_primitive {
+struct program_primitive
+{
     GLuint prog_id;
 
     // Vertex shader

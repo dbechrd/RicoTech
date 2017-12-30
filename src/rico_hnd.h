@@ -2,7 +2,8 @@
 #define UID_H
 
 typedef u32 uid;
-struct hnd {
+struct hnd
+{
     uid uid;
     enum rico_hnd_type type;
     struct rico_chunk *chunk;

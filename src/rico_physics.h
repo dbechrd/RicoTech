@@ -3,7 +3,8 @@
 
 //#include "geom.h"
 
-struct rico_physics {
+struct rico_physics
+{
     struct vec3 size;
     struct vec3 pos;
     struct vec3 vel;

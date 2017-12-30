@@ -1,28 +1,32 @@
 #ifndef RICO_MESH_H
 #define RICO_MESH_H
 
-enum rico_vbo {
+enum rico_vbo
+{
     VBO_VERTEX,
     VBO_ELEMENT,
     VBO_COUNT
 };
 
 // NOTE: Must fit in hash value
-struct rgl_mesh {
+struct rgl_mesh
+{
     GLuint vao;
     GLuint vbos[2];
     u32 vertices;
     u32 elements;
 };
 
-struct rico_vertex {
+struct rico_vertex
+{
     struct vec3 pos;
-    struct col4 col;
+    struct vec4 col;
     struct vec3 normal;
-    struct tex2 uv;
+    struct vec2 uv;
 };
 
-struct rico_mesh {
+struct rico_mesh
+{
     u32 id;
     u32 vertex_count;
     u32 element_count;

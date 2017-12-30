@@ -216,10 +216,11 @@ internal u32 load_texture_file(struct pack *pack, const char *name,
 
 cleanup:
     stbi_image_free(pixels);
+    if (err) blob_error(pack, &blob_idx);
     return blob_idx;
 }
 internal u32 load_texture_color(struct pack *pack, const char *name,
-                                struct col4 color)
+                                struct vec4 color)
 {
     u8 rgba[4] = {
         (u8)(color.r * 255),
@@ -373,55 +374,55 @@ internal u32 default_mesh(struct pack *pack, const char *name)
     // Create default mesh (rainbow cube)
     //--------------------------------------------------------------------------
     
-    struct col4 color = { 1.0f, 0.0f, 0.0f, 0.2f };
+    struct vec4 color = VEC4(1.0f, 0.0f, 0.0f, 0.2f);
     const struct rico_vertex verts[] = {
         {
-            { -1.0f, -1.0f, 1.0f },
+            VEC3(-1.0f, -1.0f, 1.0f),
             color,
-            { -1.0f, -1.0f, 1.0f },
-            { 0.0f, 0.0f }
+            VEC3(-1.0f, -1.0f, 1.0f),
+            VEC2(0.0f, 0.0f)
         },
         {
-            { 1.0f, -1.0f, 1.0f },
+            VEC3(1.0f, -1.0f, 1.0f),
             color,
-            { 1.0f, -1.0f, 1.0f },
-            { 1.0f, 0.0f }
+            VEC3(1.0f, -1.0f, 1.0f),
+            VEC2(1.0f, 0.0f)
         },
         {
-            { 1.0f, 1.0f, 1.0f },
+            VEC3(1.0f, 1.0f, 1.0f),
             color,
-            { 1.0f, 1.0f, 1.0f },
-            { 1.0f, 1.0f }
+            VEC3(1.0f, 1.0f, 1.0f),
+            VEC2(1.0f, 1.0f)
         },
         {
-            { -1.0f, 1.0f, 1.0f },
+            VEC3(-1.0f, 1.0f, 1.0f),
             color,
-            { -1.0f, 1.0f, 1.0f },
-            { 0.0f, 1.0f }
+            VEC3(-1.0f, 1.0f, 1.0f),
+            VEC2(0.0f, 1.0f)
         },
         {
-            { -1.0f, -1.0f, -1.0f },
+            VEC3(-1.0f, -1.0f, -1.0f),
             color,
-            { -1.0f, -1.0f, -1.0f },
-            { 0.0f, 0.0f }
+            VEC3(-1.0f, -1.0f, -1.0f),
+            VEC2(0.0f, 0.0f)
         },
         {
-            { 1.0f, -1.0f, -1.0f },
+            VEC3(1.0f, -1.0f, -1.0f),
             color,
-            { 1.0f, -1.0f, -1.0f },
-            { 1.0f, 0.0f }
+            VEC3(1.0f, -1.0f, -1.0f),
+            VEC2(1.0f, 0.0f)
         },
         {
-            { 1.0f, 1.0f, -1.0f },
+            VEC3(1.0f, 1.0f, -1.0f),
             color,
-            { 1.0f, 1.0f, -1.0f },
-            { 1.0f, 1.0f }
+            VEC3(1.0f, 1.0f, -1.0f),
+            VEC2(1.0f, 1.0f)
         },
         {
-            { -1.0f, 1.0f, -1.0f },
+            VEC3(-1.0f, 1.0f, -1.0f),
             color,
-            { -1.0f, 1.0f, -1.0f },
-            { 0.0f, 1.0f }
+            VEC3(-1.0f, 1.0f, -1.0f),
+            VEC2(0.0f, 1.0f)
         }
     };
     const GLuint elements[] = {
@@ -443,7 +444,7 @@ int load_obj_file(struct pack *pack, const char *filename)
 
     // TODO: Colossal waste of memory, just preprocess the file and count them!
     struct vec3 *positions = calloc(MESH_VERTICES_MAX, sizeof(*positions));
-    struct tex2 *texcoords = calloc(MESH_VERTICES_MAX, sizeof(*texcoords));
+    struct vec2 *texcoords = calloc(MESH_VERTICES_MAX, sizeof(*texcoords));
     struct vec3 *normals = calloc(MESH_VERTICES_MAX, sizeof(*normals));
     struct rico_vertex *vertices = calloc(MESH_VERTICES_MAX, sizeof(*vertices));
     GLuint *elements = calloc(MESH_VERTICES_MAX, sizeof(*elements));
@@ -789,8 +790,8 @@ void pack_build_alpha()
     u32 ground_id = load_object(pack, "Ground", OBJ_STATIC, 0, bricks_mat, NULL);
     struct rico_object *ground = pack_lookup(pack, ground_id);
     object_rot_x(ground, -90.0f);
-    object_scale(ground, &(struct vec3) { 64.0f, 64.0f, 0.001f });
-    object_trans(ground, &(struct vec3) { 0.0f, -1.0f, 0.0f });
+    object_scale(ground, &VEC3(64.0f, 64.0f, 0.001f));
+    object_trans(ground, &VEC3(0.0f, -1.0f, 0.0f));
 
     u32 timmy_diff = load_texture_color(pack, "Timmy", COLOR_YELLOW);
     u32 timmy_mat = load_material(pack, "Timmy", timmy_diff, 0, 0.5f);

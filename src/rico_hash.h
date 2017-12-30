@@ -1,7 +1,8 @@
 #ifndef RICO_HASH_H
 #define RICO_HASH_H
 
-struct hash_table {
+struct hash_table
+{
     struct hnd hnd;
     u32 count;
     // TODO: Replace linear search/insert with internal chaining

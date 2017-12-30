@@ -2,7 +2,8 @@
 #ifndef DLB_STRING_H
 #define DLB_STRING_H
 
-struct dlb_string {
+struct dlb_string
+{
     u32 len;
     const char *str;
 };

@@ -73,38 +73,56 @@ internal inline void program_default_get_locations(struct program_default *p)
     p->u_scale_uv = program_get_uniform_location(p->prog_id, "u_scale_uv");
     p->u_model = program_get_uniform_location(p->prog_id, "u_model");
     p->u_view = program_get_uniform_location(p->prog_id, "u_view");
-    p->u_proj = program_get_uniform_location(p->prog_id, "u_proj");
+    p->u_projection = program_get_uniform_location(p->prog_id, "u_projection");
+    
+    //RICO_ASSERT(p->u_time >= 0);
+    RICO_ASSERT(p->u_scale_uv >= 0);
+    RICO_ASSERT(p->u_model >= 0);
+    RICO_ASSERT(p->u_view >= 0);
+    RICO_ASSERT(p->u_projection >= 0);
 
-    p->vert_pos = program_get_attrib_location(p->prog_id, "vert_pos");
-    p->vert_col = program_get_attrib_location(p->prog_id, "vert_col");
-    p->vert_normal = program_get_attrib_location(p->prog_id, "vert_normal");
-    p->vert_uv = program_get_attrib_location(p->prog_id, "vert_uv");
+    p->u_attr.position = program_get_attrib_location(p->prog_id,"attr_position");
+    p->u_attr.color = program_get_attrib_location(p->prog_id, "attr_color");
+    p->u_attr.normal = program_get_attrib_location(p->prog_id, "attr_normal");
+    p->u_attr.uv = program_get_attrib_location(p->prog_id, "attr_uv");
 
-    RICO_ASSERT(p->vert_pos == RICO_SHADER_POS_LOC);
-    // RICO_ASSERT(p->vert_col == RICO_SHADER_COL_LOC);
-    RICO_ASSERT(p->vert_normal == RICO_SHADER_NORMAL_LOC);
-    RICO_ASSERT(p->vert_uv == RICO_SHADER_UV_LOC);
+    RICO_ASSERT(p->u_attr.position == RICO_SHADER_POS_LOC);
+    //RICO_ASSERT(p->u_attr.color == RICO_SHADER_COL_LOC);
+    RICO_ASSERT(p->u_attr.normal == RICO_SHADER_NORMAL_LOC);
+    RICO_ASSERT(p->u_attr.uv == RICO_SHADER_UV_LOC);
 
     // Fragment shader
-    p->u_view_pos = program_get_uniform_location(p->prog_id, "u_view_pos");
-    p->u_material_diff =
-        program_get_uniform_location(p->prog_id, "u_material.diff");
-    p->u_material_spec =
-        program_get_uniform_location(p->prog_id, "u_material.spec");
-    p->u_material_shiny =
+    p->u_camera.position =
+        program_get_uniform_location(p->prog_id, "u_camera.position");
+    p->u_material.diffuse =
+        program_get_uniform_location(p->prog_id, "u_material.diffuse");
+    p->u_material.specular =
+        program_get_uniform_location(p->prog_id, "u_material.specular");
+    p->u_material.shiny =
         program_get_uniform_location(p->prog_id, "u_material.shiny");
-    p->u_light_position =
-        program_get_uniform_location(p->prog_id, "u_light.position");
-    p->u_light_ambient =
-        program_get_uniform_location(p->prog_id, "u_light.ambient");
-    p->u_light_color =
-        program_get_uniform_location(p->prog_id, "u_light.color");
-    p->u_light_kc =
-        program_get_uniform_location(p->prog_id, "u_light.kc");
-    p->u_light_kl =
-        program_get_uniform_location(p->prog_id, "u_light.kl");
-    p->u_light_kq =
-        program_get_uniform_location(p->prog_id, "u_light.kq");
+    p->u_light_point.position =
+        program_get_uniform_location(p->prog_id, "u_light_point.position");
+    p->u_light_point.ambient =
+        program_get_uniform_location(p->prog_id, "u_light_point.ambient");
+    p->u_light_point.color =
+        program_get_uniform_location(p->prog_id, "u_light_point.color");
+    p->u_light_point.kc =
+        program_get_uniform_location(p->prog_id, "u_light_point.kc");
+    p->u_light_point.kl =
+        program_get_uniform_location(p->prog_id, "u_light_point.kl");
+    p->u_light_point.kq =
+        program_get_uniform_location(p->prog_id, "u_light_point.kq");
+
+    RICO_ASSERT(p->u_camera.position >= 0);
+    RICO_ASSERT(p->u_material.diffuse >= 0);
+    RICO_ASSERT(p->u_material.specular >= 0);
+    RICO_ASSERT(p->u_material.shiny >= 0);
+    RICO_ASSERT(p->u_light_point.position >= 0);
+    RICO_ASSERT(p->u_light_point.ambient >= 0);
+    RICO_ASSERT(p->u_light_point.color >= 0);
+    RICO_ASSERT(p->u_light_point.kc >= 0);
+    RICO_ASSERT(p->u_light_point.kl >= 0);
+    RICO_ASSERT(p->u_light_point.kq >= 0);
 }
 
 int make_program_default(struct program_default **_program)
@@ -163,7 +181,7 @@ void program_default_uniform_projection(struct program_default *program,
                                         struct mat4 *proj)
 {
     glUseProgram(program->prog_id);
-    glUniformMatrix4fv(program->u_proj, 1, GL_TRUE, proj->a);
+    glUniformMatrix4fv(program->u_projection, 1, GL_TRUE, proj->a);
     glUseProgram(0);
 }
 

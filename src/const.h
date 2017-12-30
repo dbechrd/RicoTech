@@ -212,7 +212,8 @@ typedef real64 f64;
     f(ERR_CHUNK_FREE_FAILED)       \
     f(ERR_OBJ_PARSE_FAILED)
 
-enum rico_error {
+enum rico_error
+{
     RICO_ERRORS(GEN_LIST)
 };
 //extern const char *rico_error_string[];
@@ -231,7 +232,8 @@ enum rico_error {
     f(RICO_HND_POOL)         \
     f(RICO_HND_HASHTABLE)
 
-enum rico_hnd_type {
+enum rico_hnd_type
+{
     RICO_HND_TYPES(GEN_LIST)
 };
 extern const char *rico_hnd_type_string[];

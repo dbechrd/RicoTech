@@ -2,14 +2,16 @@
 #define RICO_TEXTURE_H
 
 // NOTE: Must fit in hash value
-struct rgl_texture {
+struct rgl_texture
+{
     GLenum gl_target;
     GLuint gl_id;
     GLenum format_internal;
     GLenum format;
 };
 
-struct rico_texture {
+struct rico_texture
+{
     u32 id;
     u32 width;
     u32 height;

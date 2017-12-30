@@ -6,7 +6,8 @@ struct rico_chunk;
 
 // TODO: Pack this
 // mark, tag, badge, pin, peg
-struct pool_id {
+struct pool_id
+{
     enum rico_hnd_type type;
     u32 tag;
     u32 generation;
@@ -14,14 +15,16 @@ struct pool_id {
 };
 struct pool_id ID_NULL = { 0 };
 
-struct pool_tag {
+struct pool_tag
+{
     u32 block;
     u32 generation;
     //u32 ref_count;
     u32 next_free;
 };
 
-struct rico_pool {
+struct rico_pool
+{
     u32 uid;
     char name[32];
     u32 block_count;
