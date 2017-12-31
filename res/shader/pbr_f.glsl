@@ -9,15 +9,18 @@ in vs_out {
 
 out vec4 frag_color;
 
+const float PI = 3.14159265359;
+const float gamma = 1.0;
+
 struct Camera {
     vec3 P;
 };
 
-#define mtl_albedo    texture(material.tex0, vertex.UV).rgb
+#define mtl_albedo    pow(texture(material.tex0, vertex.UV).rgb, vec3(gamma))
 #define mtl_opacity   texture(material.tex0, vertex.UV).a
-#define mtl_metallic  texture(material.tex1, vertex.UV).r
-#define mtl_roughness texture(material.tex1, vertex.UV).g
-#define mtl_ao        texture(material.tex1, vertex.UV).b
+#define mtl_metallic  pow(texture(material.tex1, vertex.UV).r, gamma)
+#define mtl_roughness pow(texture(material.tex1, vertex.UV).g, gamma)
+#define mtl_ao        pow(texture(material.tex1, vertex.UV).b, gamma)
 
 struct Material {
     // rgb: metallic ? specular.rgb : albedo.rgb
@@ -39,8 +42,6 @@ struct PointLight {
 uniform Camera camera;
 uniform Material material;
 uniform PointLight light;
-
-const float PI = 3.14159265359;
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
 {
@@ -115,7 +116,7 @@ void main()
         L0 += (kD * mtl_albedo / PI + specular) * radiance * NdotL;
     }
 
-    vec3 ambient = vec3(0.03) * mtl_albedo * mtl_ao;
+    vec3 ambient = vec3(0.01) * mtl_albedo * mtl_ao;
     vec3 color = ambient + L0;
 
     color = color / (color + vec3(1.0));

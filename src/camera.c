@@ -20,12 +20,16 @@ void camera_init(struct camera *camera, struct vec3 position, struct quat view,
                              VEC3( 0.5f,  0.5f,  0.5f), COLOR_WHITE);
 
     camera->proj_matrix = mat4_init_perspective(SCREEN_W, SCREEN_H, Z_NEAR,
-                                                 Z_FAR, fov_deg);
+                                                Z_FAR, fov_deg);
+
+    camera_translate_local(camera, &VEC3_ZERO);
+    camera_rotate(camera, 0.0f, 0.0f);
+    camera_update(camera);
 }
 
 void camera_reset(struct camera *camera)
 {
-    const struct vec3 CAMERA_POS_INITIAL = VEC3(0.0f, CAMERA_POS_Y_MIN, 1.0f);
+    const struct vec3 CAMERA_POS_INITIAL = VEC3(0.0f, CAMERA_POS_Y_MIN, 3.0f);
     camera_init(camera, CAMERA_POS_INITIAL, QUAT_IDENT, CAMERA_FOV_DEG);
 }
 

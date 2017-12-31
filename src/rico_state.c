@@ -317,7 +317,7 @@ internal inline bool is_edit_state(enum rico_state state)
 }
 internal inline bool is_paused_state(enum rico_state state)
 {
-    return state == STATE_MENU_QUIT;
+    return (state == STATE_MENU_QUIT);
 }
 
 // TODO: Move this to camera file
@@ -1357,15 +1357,17 @@ internal int state_engine_init()
     printf("#              Copyright 2017 Dan Bechard                #\n");
     printf("==========================================================\n");
 
-    // TODO: Where does this belong? Needs access to "mouse_lock".
-    SDL_SetRelativeMouseMode(mouse_lock);
-
     perfs_frequency = SDL_GetPerformanceFrequency();
     last_perfs = SDL_GetPerformanceCounter();
     last_cycles = __rdtsc();
     fps_last_render = last_perfs;
     view_vel = VEC3_ZERO;
     view_acc = VEC3_ZERO;
+
+    // Reset mouse delta after window opens and mouse is locked to screen
+    SDL_SetRelativeMouseMode(mouse_lock);
+    mouse_delta.x = 0;
+    mouse_delta.y = 0;
 
     // TODO: Support multiple SCANCODES at the same time (for e.g. CTRL, SHIFT)
     // TODO: Load from config file?

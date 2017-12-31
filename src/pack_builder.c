@@ -744,9 +744,9 @@ struct pack *pack_build_default()
         load_font(pack, "[FONT_DEFAULT]", "font/courier_new.bff",
                          &font_tex_diff);
     u32 diff = load_texture_file(pack, "[TEX_DIFF_DEFAULT]",
-                                 "texture/basic_diff.tga");
+                                 "texture/pbr_default_0.tga");
     u32 spec = load_texture_file(pack, "[TEX_SPEC_DEFAULT]",
-                                 "texture/basic_spec.tga");
+                                 "texture/pbr_default_1.tga");
     u32 mat  = load_material(pack, "[MATERIAL_DEFAULT]", diff, spec);
     u32 font_mat = load_material(pack, "[FONT_DEFAULT_MATERIAL]", font_tex_diff,
                                  0);
@@ -775,10 +775,12 @@ void pack_build_alpha()
     const char *filename = "packs/alpha.pak";
 
     struct pack *pack = pack_init(filename, 16, MB(1));
-    u32 bricks_tex = load_texture_file(pack, "Bricks", "texture/clean_bricks.tga");
-    u32 bricks_mat = load_material(pack, "Bricks", bricks_tex, 0);
+    u32 bricks_tex0 = load_texture_file(pack, "Bricks_0", "texture/pbr_bricks_0.tga");
+    u32 bricks_tex1 = load_texture_file(pack, "Bricks_1", "texture/pbr_bricks_1.tga");
+    u32 bricks_mat = load_material(pack, "Bricks", bricks_tex0, bricks_tex1);
 
     load_obj_file(pack, "mesh/sphere.ric");
+    u32 sphere = pack->blobs_used - 1;
     load_obj_file(pack, "mesh/wall_cornertest.ric");
     //load_obj_file(&pack, "mesh/conference.ric");
     //load_obj_file(&pack, "mesh/spawn.ric");
@@ -792,12 +794,13 @@ void pack_build_alpha()
     object_scale(ground, &VEC3(64.0f, 64.0f, 0.001f));
     object_trans(ground, &VEC3(0.0f, -1.0f, 0.0f));
 
-    u32 timmy_diff = load_texture_color(pack, "Timmy", COLOR_YELLOW);
-    u32 timmy_mat = load_material(pack, "Timmy", timmy_diff, 0);
-    u32 timmy_id = load_object(pack, "Timmy", OBJ_STATIC, 0, timmy_mat, NULL);
+    //u32 timmy_diff = load_texture_color(pack, "Timmy", COLOR_YELLOW);
+    u32 timmy_mat = load_material(pack, "Timmy", 0, 0);
+    u32 timmy_id = load_object(pack, "Timmy", OBJ_STATIC, sphere, timmy_mat, NULL);
     struct rico_object *timmy = pack_lookup(pack, timmy_id);
     object_rot_x(timmy, 30.0f);
     object_rot_y(timmy, 30.0f);
+    object_trans(timmy, &VEC3(0.0f, 1.0f, 0.0f));
 
     pack_save(pack, filename, false);
     free(pack);

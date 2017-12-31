@@ -285,8 +285,8 @@ void object_render_setup(enum rico_obj_type type,
     // TODO: Get the light out of here!!! It should't be updating its position
     //       in the render function, argh!
     u32 ticks = SDL_GetTicks();
-    float light_pos_x = cosf((float)ticks / 2000.0f) * 16.0f;
-    float light_pos_z = sinf((float)ticks / 2000.0f) * 16.0f;
+    float light_pos_x = cosf((float)ticks / 2000.0f) * 8.0f;
+    float light_pos_z = sinf((float)ticks / 2000.0f) * 8.0f;
 
     struct light_point light;
     light.pos = VEC3(light_pos_x, 3.0f, light_pos_z);

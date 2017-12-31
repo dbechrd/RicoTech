@@ -31,4 +31,14 @@ struct camera
     struct mat4 proj_matrix;
 };
 
+void camera_init(struct camera *camera, struct vec3 position, struct quat view,
+                 float fov_deg);
+void camera_reset(struct camera *camera);
+void camera_translate_world(struct camera *camera, const struct vec3 *v);
+void camera_translate_local(struct camera *camera, const struct vec3 *v);
+void camera_rotate(struct camera *camera, float dx, float dy);
+void camera_update(struct camera *camera);
+void camera_render(struct camera *camera);
+void camera_fwd(struct ray *_ray, struct camera *camera);
+
 #endif // CAMERA_H
