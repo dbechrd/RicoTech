@@ -2,6 +2,62 @@
 #define PROGRAM_H
 
 //--------------------------------------------------------------------------
+// PBR program
+//--------------------------------------------------------------------------
+struct pbr_attrib
+{
+    GLint position; // vec3
+    GLint color;    // vec3
+    GLint normal;   // vec3
+    GLint uv;       // vec2
+};
+
+struct pbr_camera
+{
+    GLint pos; // (vec3)
+};
+
+struct pbr_material
+{
+    // Dielectic: albedo.rgb, a = opacity
+    // Metallic:  specular.rgb, a = UNUSED
+    GLint tex0; // (sampler2D)
+
+    // r: metallic
+    // g: roughness
+    // b: ao
+    // a: UNUSED
+    GLint tex1; // (sampler2D)
+};
+
+struct pbr_light_point
+{
+    GLint pos;   // (vec3)
+    GLint color; // (vec3)
+};
+
+struct program_pbr
+{
+    u32 ref_count;
+    GLuint prog_id;
+
+    //TODO: Don't set from outside, create wrapper methods to enforce type
+    // Vertex shader
+    GLint time;       // float
+    GLint scale_uv;   // vec3
+    GLint model;      // mat4
+    GLint view;       // mat4
+    GLint projection; // mat4
+
+    struct pbr_attrib attrs;
+
+    // Fragment shader
+    struct pbr_camera camera;
+    struct pbr_material material;
+    struct pbr_light_point light;
+};
+
+//--------------------------------------------------------------------------
 // Default program
 //--------------------------------------------------------------------------
 struct glsl_attrib

@@ -63,6 +63,109 @@ internal inline GLint program_get_uniform_location(GLuint program,
 }
 
 //==============================================================================
+// PBR program
+//==============================================================================
+
+internal inline void program_pbr_get_locations(struct program_pbr *p)
+{
+    // Vertex shader
+    p->time = program_get_uniform_location(p->prog_id, "time");
+    p->scale_uv = program_get_uniform_location(p->prog_id, "scale_uv");
+    p->model = program_get_uniform_location(p->prog_id, "model");
+    p->view = program_get_uniform_location(p->prog_id, "view");
+    p->projection = program_get_uniform_location(p->prog_id, "projection");
+    
+    //RICO_ASSERT(p->u_time >= 0);
+    RICO_ASSERT(p->scale_uv >= 0);
+    RICO_ASSERT(p->model >= 0);
+    RICO_ASSERT(p->view >= 0);
+    RICO_ASSERT(p->projection >= 0);
+
+    p->attrs.position = program_get_attrib_location(p->prog_id,"attr_position");
+    p->attrs.color = program_get_attrib_location(p->prog_id, "attr_color");
+    p->attrs.normal = program_get_attrib_location(p->prog_id, "attr_normal");
+    p->attrs.uv = program_get_attrib_location(p->prog_id, "attr_uv");
+
+    RICO_ASSERT(p->attrs.position == RICO_SHADER_POS_LOC);
+    //RICO_ASSERT(p->attrs.color == RICO_SHADER_COL_LOC);
+    RICO_ASSERT(p->attrs.normal == RICO_SHADER_NORMAL_LOC);
+    RICO_ASSERT(p->attrs.uv == RICO_SHADER_UV_LOC);
+
+    // Fragment shader
+    p->camera.pos = program_get_uniform_location(p->prog_id, "camera.P");
+    p->material.tex0 = program_get_uniform_location(p->prog_id, "material.tex0");
+    p->material.tex1 = program_get_uniform_location(p->prog_id, "material.tex1");
+    p->light.pos = program_get_uniform_location(p->prog_id, "light.P");
+    p->light.color = program_get_uniform_location(p->prog_id, "light.color");
+
+    RICO_ASSERT(p->camera.pos >= 0);
+    RICO_ASSERT(p->material.tex0 >= 0);
+    RICO_ASSERT(p->material.tex1 >= 0);
+    RICO_ASSERT(p->light.pos >= 0);
+    RICO_ASSERT(p->light.color >= 0);
+}
+
+int make_program_pbr(struct program_pbr **_program)
+{
+    local struct program_pbr *prog_pbr = NULL;
+    enum rico_error err;
+
+    if (prog_pbr != NULL) {
+        *_program = prog_pbr;
+        return SUCCESS;
+    }
+
+    GLuint vshader = 0;
+    GLuint fshader = 0;
+    GLuint program = 0;
+
+    // Compile shaders
+    err = make_shader(GL_VERTEX_SHADER, "shader/pbr_v.glsl", &vshader);
+    if (err) goto cleanup;
+
+    err = make_shader(GL_FRAGMENT_SHADER, "shader/pbr_f.glsl", &fshader);
+    if (err) goto cleanup;
+
+    // Link shader program
+    err = make_program(vshader, fshader, &program);
+    if (err) goto cleanup;
+
+    // Create program object
+    prog_pbr = calloc(1, sizeof(*prog_pbr));
+    prog_pbr->prog_id = program;
+
+    // Query shader locations
+    program_pbr_get_locations(prog_pbr);
+
+cleanup:
+    free_shader(fshader);
+    free_shader(vshader);
+    *_program = prog_pbr;
+    return err;
+}
+
+void free_program_pbr(struct program_pbr **program)
+{
+    //TODO: Handle error
+    if ((*program)->ref_count > 0) {
+        printf("Cannot delete a program in use!");
+        //TODO: crash;
+    }
+
+    glDeleteProgram((*program)->prog_id);
+    free(*program);
+    *program = NULL;
+}
+
+void program_pbr_uniform_projection(struct program_pbr *program,
+                                    struct mat4 *proj)
+{
+    glUseProgram(program->prog_id);
+    glUniformMatrix4fv(program->projection, 1, GL_TRUE, proj->a);
+    glUseProgram(0);
+}
+
+//==============================================================================
 // Default program
 //==============================================================================
 
@@ -74,14 +177,14 @@ internal inline void program_default_get_locations(struct program_default *p)
     p->u_model = program_get_uniform_location(p->prog_id, "u_model");
     p->u_view = program_get_uniform_location(p->prog_id, "u_view");
     p->u_projection = program_get_uniform_location(p->prog_id, "u_projection");
-    
+
     //RICO_ASSERT(p->u_time >= 0);
     RICO_ASSERT(p->u_scale_uv >= 0);
     RICO_ASSERT(p->u_model >= 0);
     RICO_ASSERT(p->u_view >= 0);
     RICO_ASSERT(p->u_projection >= 0);
 
-    p->u_attr.position = program_get_attrib_location(p->prog_id,"attr_position");
+    p->u_attr.position = program_get_attrib_location(p->prog_id, "attr_position");
     p->u_attr.color = program_get_attrib_location(p->prog_id, "attr_color");
     p->u_attr.normal = program_get_attrib_location(p->prog_id, "attr_normal");
     p->u_attr.uv = program_get_attrib_location(p->prog_id, "attr_uv");
@@ -151,7 +254,7 @@ int make_program_default(struct program_default **_program)
     if (err) goto cleanup;
 
     // Create program object
-    prog_default = calloc(1, sizeof(struct program_default));
+    prog_default = calloc(1, sizeof(*prog_default));
     prog_default->prog_id = program;
 
     // Query shader locations
@@ -232,7 +335,7 @@ int make_program_primitive(struct program_primitive **_program)
     if (err) goto cleanup;
 
     // Create program object
-    prog_primitive = calloc(1, sizeof(struct program_primitive));
+    prog_primitive = calloc(1, sizeof(*prog_primitive));
     prog_primitive->prog_id = program;
 
     // Query shader locations

@@ -327,16 +327,15 @@ cleanup:
     if (err) blob_error(pack, &font_idx);
     return font_idx;
 }
-internal u32 load_material(struct pack *pack, const char *name, u32 tex_diff,
-                           u32 tex_spec, float shiny)
+internal u32 load_material(struct pack *pack, const char *name, u32 tex0,
+                           u32 tex1)
 {
     u32 blob_idx = blob_start(pack, RICO_HND_MATERIAL);
     struct rico_material *mat = push_bytes(pack, sizeof(*mat));
 
     mat->id = blob_idx;
-    mat->shiny = shiny;
-    mat->tex_diffuse_id = tex_diff;
-    mat->tex_specular_id = tex_spec;
+    mat->tex_id[0] = tex0;
+    mat->tex_id[1] = tex1;
 
     mat->name_offset = blob_offset(pack);
     push_string(pack, name);
@@ -748,9 +747,9 @@ struct pack *pack_build_default()
                                  "texture/basic_diff.tga");
     u32 spec = load_texture_file(pack, "[TEX_SPEC_DEFAULT]",
                                  "texture/basic_spec.tga");
-    u32 mat  = load_material(pack, "[MATERIAL_DEFAULT]", diff, spec, 0.5f);
+    u32 mat  = load_material(pack, "[MATERIAL_DEFAULT]", diff, spec);
     u32 font_mat = load_material(pack, "[FONT_DEFAULT_MATERIAL]", font_tex_diff,
-                                 0, 0.0f);
+                                 0);
     u32 bbox = default_mesh(pack, "[MESH_DEFAULT_BBOX]");
 
     // HACK: This is a bit of a gross way to assert that the obj file only
@@ -777,7 +776,7 @@ void pack_build_alpha()
 
     struct pack *pack = pack_init(filename, 16, MB(1));
     u32 bricks_tex = load_texture_file(pack, "Bricks", "texture/clean_bricks.tga");
-    u32 bricks_mat = load_material(pack, "Bricks", bricks_tex, 0, 0.5f);
+    u32 bricks_mat = load_material(pack, "Bricks", bricks_tex, 0);
 
     load_obj_file(pack, "mesh/sphere.ric");
     load_obj_file(pack, "mesh/wall_cornertest.ric");
@@ -794,7 +793,7 @@ void pack_build_alpha()
     object_trans(ground, &VEC3(0.0f, -1.0f, 0.0f));
 
     u32 timmy_diff = load_texture_color(pack, "Timmy", COLOR_YELLOW);
-    u32 timmy_mat = load_material(pack, "Timmy", timmy_diff, 0, 0.5f);
+    u32 timmy_mat = load_material(pack, "Timmy", timmy_diff, 0);
     u32 timmy_id = load_object(pack, "Timmy", OBJ_STATIC, 0, timmy_mat, NULL);
     struct rico_object *timmy = pack_lookup(pack, timmy_id);
     object_rot_x(timmy, 30.0f);

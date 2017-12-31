@@ -67,7 +67,7 @@ bool object_collide_ray_type(struct pack *pack, struct rico_object **_object,
                              float *_dist, enum rico_obj_type type,
                              const struct ray *ray);
 void object_render_type(struct pack *pack, enum rico_obj_type type,
-                        const struct program_default *prog,
+                        const struct program_pbr *prog,
                         const struct camera *camera);
 int object_print(struct rico_object *object);
 

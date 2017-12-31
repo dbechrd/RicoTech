@@ -264,7 +264,7 @@ bool object_collide_ray_type(struct pack *pack, struct rico_object **_object,
 }
 
 void object_render_setup(enum rico_obj_type type,
-                         const struct program_default *prog,
+                         const struct program_pbr *prog,
                          const struct camera *camera)
 {
     if (type == OBJ_STATIC)
@@ -289,10 +289,9 @@ void object_render_setup(enum rico_obj_type type,
     float light_pos_z = sinf((float)ticks / 2000.0f) * 16.0f;
 
     struct light_point light;
+    light.pos = VEC3(light_pos_x, 3.0f, light_pos_z);
     light.color = VEC3(1.0f, 0.9f, 0.6f);
-    light.position = VEC3(light_pos_x, 3.0f, light_pos_z);
-    //light.ambient = VEC3(0.17f, 0.17f, 0.19f);
-    light.ambient = VEC3(0.10f, 0.09f, 0.11f);
+    //light.ambient = VEC3(0.10f, 0.09f, 0.11f);
     light.kc = 1.0f;
     light.kl = 0.05f;
     light.kq = 0.001f;
@@ -304,39 +303,34 @@ void object_render_setup(enum rico_obj_type type,
         proj_matrix = MAT4_IDENT;
         view_matrix = MAT4_IDENT;
 
+        light.pos = VEC3_ZERO;
         light.color = VEC3_ONE;
-        light.position = VEC3_ZERO;
-        light.ambient = VEC3_ONE;
 
         light.kc = 1.0f;
         light.kl = 0.0f;
         light.kq = 0.0f;
     }
 
-    glUniformMatrix4fv(prog->u_projection, 1, GL_TRUE, proj_matrix.a);
-    glUniformMatrix4fv(prog->u_view, 1, GL_TRUE, view_matrix.a);
-    glUniform3fv(prog->u_camera.position, 1, (const GLfloat *)&camera->position);
+    glUniformMatrix4fv(prog->projection, 1, GL_TRUE, proj_matrix.a);
+    glUniformMatrix4fv(prog->view, 1, GL_TRUE, view_matrix.a);
+    glUniform3fv(prog->camera.pos, 1, (const GLfloat *)&camera->position);
 
     // Material textures
     // Note: We don't have to do this every time as long as we make sure
     //       the correct textures are bound before each draw to the texture
     //       index assumed when the program was initialized.
-    glUniform1i(prog->u_material.diffuse, 0);
-    glUniform1i(prog->u_material.specular, 1);
+    glUniform1i(prog->material.tex0, 0);
+    glUniform1i(prog->material.tex1, 1);
 
     // Lighting
-    glUniform3fv(prog->u_light_point.position, 1, (const GLfloat *)&light.position);
-    glUniform3fv(prog->u_light_point.ambient, 1, (const GLfloat *)&light.ambient);
-    glUniform3fv(prog->u_light_point.color, 1, (const GLfloat *)&light.color);
-    glUniform1f(prog->u_light_point.kc, light.kc);
-    glUniform1f(prog->u_light_point.kl, light.kl);
-    glUniform1f(prog->u_light_point.kq, light.kq);
+    glUniform3fv(prog->light.pos, 1, (const GLfloat *)&light.pos);
+    glUniform3fv(prog->light.color, 1, (const GLfloat *)&light.color);
 
-    glUniform2f(prog->u_scale_uv, 1.0f, 1.0f);
+    glUniform2f(prog->scale_uv, 1.0f, 1.0f);
 }
 
 void object_render_type(struct pack *pack, enum rico_obj_type type,
-                        const struct program_default *prog,
+                        const struct program_pbr *prog,
                         const struct camera *camera)
 {
     object_render_setup(type, prog, camera);
@@ -367,11 +361,11 @@ void object_render_type(struct pack *pack, enum rico_obj_type type,
         //       uniformly scaled?
         if (!(type == OBJ_STRING_WORLD || type == OBJ_STRING_SCREEN))
         {
-            glUniform2f(prog->u_scale_uv, obj->scale.x, obj->scale.y);
+            glUniform2f(prog->scale_uv, obj->scale.x, obj->scale.y);
         }
 
         // Model matrix
-        glUniformMatrix4fv(prog->u_model, 1, GL_TRUE, obj->transform.a);
+        glUniformMatrix4fv(prog->model, 1, GL_TRUE, obj->transform.a);
 
         // Bind material
         struct pack *mat_pack = pack;
@@ -388,7 +382,7 @@ void object_render_type(struct pack *pack, enum rico_obj_type type,
                 mat_id = MATERIAL_DEFAULT;
             }
         }
-        material_bind(mat_pack, mat_id, prog->u_material.shiny);
+        material_bind(mat_pack, mat_id);
 
         // Render
         if (obj->mesh_id)
@@ -445,10 +439,10 @@ int object_print(struct rico_object *object)
         const char *mesh_str = "---";
         u32 mesh_verts = 0;
         const char *material_str = "---";
-        u32 mat_diff_id = 0;
-        const char *mat_diff_str = "---";
-        u32 mat_spec_id = 0;
-        const char *mat_spec_str = "---";
+        u32 mat_tex0_id = 0;
+        const char *mat_tex0_str = "---";
+        u32 mat_tex1_id = 0;
+        const char *mat_tex1_str = "---";
 
         if (mesh)
         {
@@ -459,37 +453,37 @@ int object_print(struct rico_object *object)
         {
             material_str = material_name(material);
 
-            if (material->tex_diffuse_id)
+            if (material->tex_id[0])
             {
                 struct rico_texture *tex =
-                    pack_read(pack_active, material->tex_diffuse_id);
-                mat_diff_id = tex->id;
-                mat_diff_str = texture_name(tex);
+                    pack_read(pack_active, material->tex_id[0]);
+                mat_tex0_id = tex->id;
+                mat_tex0_str = texture_name(tex);
             }
-            if (material->tex_specular_id)
+            if (material->tex_id[1])
             {
                 struct rico_texture *tex =
-                    pack_read(pack_active, material->tex_specular_id);
-                mat_spec_id = tex->id;
-                mat_spec_str = texture_name(tex);
+                    pack_read(pack_active, material->tex_id[1]);
+                mat_tex1_id = tex->id;
+                mat_tex1_str = texture_name(tex);
             }
         }
 
         len = snprintf(
             buf, sizeof(buf),
-            "     UID: %u\n"             \
-            "    Name: %s\n"             \
-            "    Type: %s\n"             \
-            "   Trans: %f %f %f\n"       \
-            "     Rot: %f %f %f\n"       \
-            "   Scale: %f %f %f\n"       \
-            "    BBox: %f %f %f\n"       \
-            "          %f %f %f\n"       \
-            "    Mesh: %u %s\n"          \
-            "          Verts: %u\n"      \
-            "Material: %u %s\n"          \
-            "           Diffuse: %u %s\n"\
-            "          Specular: %u %s\n",
+            "     UID: %u\n"           \
+            "    Name: %s\n"           \
+            "    Type: %s\n"           \
+            "   Trans: %f %f %f\n"     \
+            "     Rot: %f %f %f\n"     \
+            "   Scale: %f %f %f\n"     \
+            "    BBox: %f %f %f\n"     \
+            "          %f %f %f\n"     \
+            "    Mesh: %u %s\n"        \
+            "          Verts: %u\n"    \
+            "Material: %u %s\n"        \
+            "          Tex 0: %u %s\n" \
+            "          Tex 1: %u %s\n",
             object->id,
             object_name(object),
             rico_obj_type_string[object->type],
@@ -501,8 +495,8 @@ int object_print(struct rico_object *object)
             object->mesh_id, mesh_str,
             mesh_verts,
             object->material_id, material_str,
-            mat_diff_id, mat_diff_str,
-            mat_spec_id, mat_spec_str
+            mat_tex0_id, mat_tex0_str,
+            mat_tex1_id, mat_tex1_str
         );
     }
     else

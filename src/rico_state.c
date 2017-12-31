@@ -1098,6 +1098,9 @@ internal int rico_init_shaders()
     enum rico_error err;
 
     // Create shader programs
+    err = make_program_pbr(&prog_pbr);
+    if (err) return err;
+
     err = make_program_default(&prog_default);
     if (err) return err;
 

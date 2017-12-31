@@ -44,10 +44,10 @@ void main()
     vec4 texel_specular = texture(u_material.specular, vert.uv);
 
     vec3 mat_diffuse = texel_diffuse.rgb;
-    //if (texel_diffuse.a == 0)
-    //{
-    //    mat_diffuse = vert.color.rgb;
-    //}
+    if (texel_diffuse.a == 0)
+    {
+        mat_diffuse = vert.color.rgb;
+    }
     vec3 mat_specular = texel_specular.rgb;
 
     vec3 ambient = u_light_point.ambient * mat_diffuse;

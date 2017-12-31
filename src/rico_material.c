@@ -4,21 +4,20 @@ global const char *material_name(struct rico_material *material)
     return (char *)((u8 *)material + material->name_offset);
 }
 
-void material_bind(struct pack *pack, u32 id, GLint shiny_loc)
+void material_bind(struct pack *pack, u32 id)
 {
     RICO_ASSERT(pack);
     
     struct rico_material *material = pack_lookup(pack, id);
-    glUniform1f(shiny_loc, material->shiny);
 
 #if RICO_DEBUG_MATERIAL
     printf("[ mtl][bind] name=%s\n", material_name(material));
 #endif
 
     // Bind diffuse or default
-    if (material->tex_diffuse_id)
+    if (material->tex_id[0])
     {
-        texture_bind(pack, material->tex_diffuse_id, GL_TEXTURE0);
+        texture_bind(pack, material->tex_id[0], GL_TEXTURE0);
     }
     else
     {
@@ -26,9 +25,9 @@ void material_bind(struct pack *pack, u32 id, GLint shiny_loc)
     }
 
     // Bind specular or default
-    if (material->tex_specular_id)
+    if (material->tex_id[1])
     {
-        texture_bind(pack, material->tex_specular_id, GL_TEXTURE1);
+        texture_bind(pack, material->tex_id[1], GL_TEXTURE1);
     }
     else
     {
@@ -47,9 +46,9 @@ void material_unbind(struct pack *pack, u32 id)
     struct rico_material *material = pack_lookup(pack, id);
 
     // Bind diffuse or default
-    if (material->tex_diffuse_id)
+    if (material->tex_id[0])
     {
-        texture_unbind(pack, material->tex_diffuse_id, GL_TEXTURE0);
+        texture_unbind(pack, material->tex_id[0], GL_TEXTURE0);
     }
     else
     {
@@ -57,9 +56,9 @@ void material_unbind(struct pack *pack, u32 id)
     }
 
     // Bind specular or default
-    if (material->tex_specular_id)
+    if (material->tex_id[1])
     {
-        texture_unbind(pack, material->tex_specular_id, GL_TEXTURE1);
+        texture_unbind(pack, material->tex_id[1], GL_TEXTURE1);
     }
     else
     {

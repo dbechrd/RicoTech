@@ -15,10 +15,7 @@ struct light_directional
 struct light_point
 {
     struct vec3 color;
-    struct vec3 position;
-
-    // HACK: Per-light ambient w/ fall-off [test]
-    struct vec3 ambient;
+    struct vec3 pos;
 
     // Distance fall-off
     float kc;  // Constant

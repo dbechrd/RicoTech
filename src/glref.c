@@ -7,6 +7,7 @@
 
 global u32 selected_obj_id;
 
+global struct program_pbr *prog_pbr;
 global struct program_default *prog_default;
 global struct program_primitive *prog_primitive;
 
@@ -310,8 +311,8 @@ void glref_update(r64 dt)
     //--------------------------------------------------------------------------
     // Update uniforms
     //--------------------------------------------------------------------------
-    glUseProgram(prog_default->prog_id);
-    glUniform1f(prog_default->u_time, (r32)dt);
+    glUseProgram(prog_pbr->prog_id);
+    glUniform1f(prog_pbr->time, (r32)dt);
     glUseProgram(0);
 }
 
@@ -320,12 +321,12 @@ void glref_render(struct camera *camera)
     //--------------------------------------------------------------------------
     // Render objects
     //--------------------------------------------------------------------------
-    object_render_type(pack_active, OBJ_STATIC, prog_default, camera);
-    object_render_type(pack_transient, OBJ_STATIC, prog_default, camera);
-    object_render_type(pack_frame, OBJ_STATIC, prog_default, camera);
-    object_render_type(pack_active, OBJ_STRING_WORLD, prog_default, camera);
-    object_render_type(pack_transient, OBJ_STRING_WORLD, prog_default, camera);
-    object_render_type(pack_frame, OBJ_STRING_WORLD, prog_default, camera);
+    object_render_type(pack_active, OBJ_STATIC, prog_pbr, camera);
+    object_render_type(pack_transient, OBJ_STATIC, prog_pbr, camera);
+    object_render_type(pack_frame, OBJ_STATIC, prog_pbr, camera);
+    object_render_type(pack_active, OBJ_STRING_WORLD, prog_pbr, camera);
+    object_render_type(pack_transient, OBJ_STRING_WORLD, prog_pbr, camera);
+    object_render_type(pack_frame, OBJ_STRING_WORLD, prog_pbr, camera);
 
     //--------------------------------------------------------------------------
     // Axes labels (bboxes)
@@ -335,9 +336,9 @@ void glref_render(struct camera *camera)
     prim_draw_bbox_color(&axis_bbox, &y_axis_transform, &COLOR_GREEN);
     prim_draw_bbox_color(&axis_bbox, &z_axis_transform, &COLOR_BLUE);
 
-    object_render_type(pack_active, OBJ_STRING_SCREEN, prog_default, camera);
-    object_render_type(pack_transient, OBJ_STRING_SCREEN, prog_default, camera);
-    object_render_type(pack_frame, OBJ_STRING_SCREEN, prog_default, camera);
+    object_render_type(pack_active, OBJ_STRING_SCREEN, prog_pbr, camera);
+    object_render_type(pack_transient, OBJ_STRING_SCREEN, prog_pbr, camera);
+    object_render_type(pack_frame, OBJ_STRING_SCREEN, prog_pbr, camera);
 }
 void free_glref()
 {
@@ -352,5 +353,5 @@ void free_glref()
     //chunk_free(chunk_transient);
 
     //TODO: Free all programs
-    free_program_default(&prog_default);
+    free_program_pbr(&prog_pbr);
 }
