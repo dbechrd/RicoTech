@@ -176,6 +176,11 @@ void texture_bind(struct pack *pack, u32 id, GLenum texture_unit)
     RICO_ASSERT(rgl_tex);
     RICO_ASSERT(rgl_tex->gl_id);
 
+#if RICO_DEBUG_TEXTURE
+    struct rico_texture *texture = pack_lookup(pack, id);
+    printf("[ tex][bind] name=%s\n", texture_name(texture));
+#endif
+
     glActiveTexture(texture_unit);
     glBindTexture(rgl_tex->gl_target, rgl_tex->gl_id);
 }
@@ -186,6 +191,11 @@ void texture_unbind(struct pack *pack, u32 id, GLenum texture_unit)
 
     struct rgl_texture *rgl_tex = hashtable_search_uid(&global_textures, id);
     RICO_ASSERT(rgl_tex);
+
+#if RICO_DEBUG_TEXTURE
+    struct rico_texture *texture = pack_lookup(pack, id);
+    printf("[ tex][unbd] name=%s\n", texture_name(texture));
+#endif
 
     glActiveTexture(texture_unit);
     glBindTexture(rgl_tex->gl_target, 0);

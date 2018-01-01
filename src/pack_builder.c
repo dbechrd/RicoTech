@@ -13,6 +13,7 @@
 #define MAX_PACK_BUF_SIZE MB(512)
 #define DEFAULT_PACK_BLOBS 32
 #define DEFAULT_PACK_BUF_SIZE KB(256)
+#define PACK_ID_BITS 8
 
 internal const u8 PACK_SIGNATURE[4] = { 'R', 'I', 'C', 'O' };
 //internal const u32 PACK_SIGNATURE =
@@ -85,27 +86,36 @@ internal void pack_compact_buffer(struct pack *pack)
     }
 }
 
-internal void pack_delete(struct pack *pack, u32 id)
+internal void pack_delete(struct pack *pack, u32 id, enum rico_hnd_type type)
 {
-    if (id == 0) return;
-    RICO_ASSERT(id < pack->blob_count);
+    u32 pack_id = id & pack->id;
+    u32 blob_id = id ^ pack->id;
+    RICO_ASSERT(blob_id);
+    RICO_ASSERT(blob_id < pack->blob_count);
+    RICO_ASSERT(pack_id);
+    RICO_ASSERT(pack_id == pack->id);
 
-    u32 index = pack->lookup[id];
+    if (blob_id == 0)
+        return;
+    RICO_ASSERT(blob_id < pack->blob_count);
+
+    u32 index = pack->lookup[blob_id];
     RICO_ASSERT(index > 0);
     RICO_ASSERT(index < pack->blobs_used);
     RICO_ASSERT(pack->index[index].type);
+    RICO_ASSERT(pack->index[index].type == type);
 
     switch (pack->index[index].type)
     {
     case RICO_HND_TEXTURE:
     {
-        struct rico_texture *tex = pack_lookup(pack, id);
+        struct rico_texture *tex = pack_read(pack, index);
         texture_delete(tex);
         break;
     }
     case RICO_HND_MESH:
     {
-        struct rico_mesh *mesh = pack_lookup(pack, id);
+        struct rico_mesh *mesh = pack_read(pack, index);
         mesh_delete(mesh);
         break;
     }
@@ -124,7 +134,7 @@ internal void pack_delete(struct pack *pack, u32 id)
     {
         pack->index[idx] = pack->index[idx + 1];
     }
-    pack->lookup[id] = 0;
+    pack->lookup[blob_id] = 0;
     pack->blobs_used--;
     pack->index[pack->blobs_used].type = 0;
 
@@ -140,9 +150,9 @@ internal u32 load_object(struct pack *pack, const char *name,
                          enum rico_obj_type type, u32 mesh_id, u32 material_id,
                          const struct bbox *bbox)
 {
-    u32 blob_idx = blob_start(pack, RICO_HND_OBJECT);
+    u32 obj_id = blob_start(pack, RICO_HND_OBJECT);
     struct rico_object *obj = push_bytes(pack, sizeof(*obj));
-    obj->id = blob_idx;
+    obj->id = obj_id;
     obj->type = type;
     obj->trans = VEC3_ZERO;
     obj->rot = VEC3_ZERO;
@@ -174,15 +184,15 @@ internal u32 load_object(struct pack *pack, const char *name,
     push_string(pack, name);
 
     blob_end(pack);
-    return blob_idx;
+    return obj_id;
 }
 
 internal u32 load_texture(struct pack *pack, const char *name, GLenum target,
                           u32 width, u32 height, u8 bpp, u8 *pixels)
 {
-    u32 blob_idx = blob_start(pack, RICO_HND_TEXTURE);
+    u32 tex_id = blob_start(pack, RICO_HND_TEXTURE);
     struct rico_texture *tex = push_bytes(pack, sizeof(*tex));
-    tex->id = blob_idx;
+    tex->id = tex_id;
     tex->width = width;
     tex->height = height;
     tex->bpp = bpp;
@@ -195,7 +205,7 @@ internal u32 load_texture(struct pack *pack, const char *name, GLenum target,
     push_data(pack, pixels, tex->width * tex->height * (tex->bpp / 8));
 
     blob_end(pack);
-    return blob_idx;
+    return tex_id;
 }
 internal u32 load_texture_file(struct pack *pack, const char *name,
                                const char *filename)
@@ -211,13 +221,13 @@ internal u32 load_texture_file(struct pack *pack, const char *name,
         goto cleanup;
     }
 
-    u32 blob_idx = load_texture(pack, name, GL_TEXTURE_2D, (u32)width,
-                                (u32)height, 32, pixels);
+    u32 tex_id = load_texture(pack, name, GL_TEXTURE_2D, (u32)width,
+                              (u32)height, 32, pixels);
 
 cleanup:
     stbi_image_free(pixels);
-    if (err) blob_error(pack, &blob_idx);
-    return blob_idx;
+    if (err) blob_error(pack, &tex_id);
+    return tex_id;
 }
 internal u32 load_texture_color(struct pack *pack, const char *name,
                                 struct vec4 color)
@@ -230,8 +240,24 @@ internal u32 load_texture_color(struct pack *pack, const char *name,
     };
     return load_texture(pack, name, GL_TEXTURE_2D, 1, 1, 32, rgba);
 }
+internal u32 load_material(struct pack *pack, const char *name, u32 tex0,
+                           u32 tex1)
+{
+    u32 mat_id = blob_start(pack, RICO_HND_MATERIAL);
+    struct rico_material *mat = push_bytes(pack, sizeof(*mat));
+
+    mat->id = mat_id;
+    mat->tex_id[0] = tex0;
+    mat->tex_id[1] = tex1;
+
+    mat->name_offset = blob_offset(pack);
+    push_string(pack, name);
+
+    blob_end(pack);
+    return mat_id;
+}
 internal u32 load_font(struct pack *pack, const char *name,
-                       const char *filename, u32 *font_tex_diff)
+                       const char *filename, u32 *font_mat)
 {
     enum rico_error err;
 
@@ -249,9 +275,9 @@ internal u32 load_font(struct pack *pack, const char *name,
     }
 
     // Allocate font/texture
-    u32 font_idx = blob_start(pack, RICO_HND_FONT);
+    u32 font_id = blob_start(pack, RICO_HND_FONT);
     struct rico_font *font = push_bytes(pack, sizeof(*font));
-    font->id = font_idx;
+    font->id = font_id;
 
     u32 tex_width = 0;
     u32 tex_height = 0;
@@ -302,55 +328,52 @@ internal u32 load_font(struct pack *pack, const char *name,
     blob_end(pack);
 
     //------------------------------------------------------------
+    // Tex 0
+    //------------------------------------------------------------
+    u32 tex0_id = blob_start(pack, RICO_HND_TEXTURE);
+    struct rico_texture *tex0 = push_bytes(pack, sizeof(*tex0));
+    tex0->id = tex0_id;
+    tex0->width = tex_width;
+    tex0->height = tex_height;
+    tex0->bpp = tex_bpp;
+    tex0->gl_target = GL_TEXTURE_2D;  // Fonts are always 2D textures
 
-    u32 tex_idx = blob_start(pack, RICO_HND_TEXTURE);
-    struct rico_texture *tex = push_bytes(pack, sizeof(*tex));
-    tex->id = tex_idx;
-    tex->width = tex_width;
-    tex->height = tex_height;
-    tex->bpp = tex_bpp;
-    tex->gl_target = GL_TEXTURE_2D;  // Fonts are always 2D textures
-
-    tex->name_offset = blob_offset(pack);
+    tex0->name_offset = blob_offset(pack);
     push_string(pack, name);
 
-    tex->pixels_offset = blob_offset(pack);
+    tex0->pixels_offset = blob_offset(pack);
     push_data(pack, &buffer[MAP_DATA_OFFSET], pixels_size);
 
     blob_end(pack);
 
-    font->texture_id = tex->id;
-    *font_tex_diff = font->texture_id;
+    //------------------------------------------------------------
+    // Tex 1
+    //------------------------------------------------------------
+    // metallic = 0, roughness = 1 (no specular), ao = 1 (no occlusion)
+    struct vec4 DIELECTRIC_ROUGH = VEC4(0.0f, 1.0f, 1.0f, 1.0f);
+    u32 tex1_id = load_texture_color(pack, name, DIELECTRIC_ROUGH);
+
+    //------------------------------------------------------------
+    // Font material
+    //------------------------------------------------------------
+    u32 font_mat_id = load_material(pack, name, tex0_id, tex1_id);
+
+    font->material_id = font_mat_id;
+    *font_mat = font->material_id;
 
 cleanup:
     free(buffer);
-    if (err) blob_error(pack, &font_idx);
-    return font_idx;
-}
-internal u32 load_material(struct pack *pack, const char *name, u32 tex0,
-                           u32 tex1)
-{
-    u32 blob_idx = blob_start(pack, RICO_HND_MATERIAL);
-    struct rico_material *mat = push_bytes(pack, sizeof(*mat));
-
-    mat->id = blob_idx;
-    mat->tex_id[0] = tex0;
-    mat->tex_id[1] = tex1;
-
-    mat->name_offset = blob_offset(pack);
-    push_string(pack, name);
-
-    blob_end(pack);
-    return blob_idx;
+    if (err) blob_error(pack, &font_id);
+    return font_id;
 }
 internal u32 load_mesh(struct pack *pack, const char *name, u32 vertex_count,
                        const struct rico_vertex *vertex_data, u32 element_count,
                        const GLuint *element_data)
 {
-    u32 blob_idx = blob_start(pack, RICO_HND_MESH);
+    u32 mesh_id = blob_start(pack, RICO_HND_MESH);
     struct rico_mesh *mesh = push_bytes(pack, sizeof(*mesh));
 
-    mesh->id = blob_idx;
+    mesh->id = mesh_id;
     mesh->vertex_count = vertex_count;
     mesh->element_count = element_count;
 
@@ -364,7 +387,7 @@ internal u32 load_mesh(struct pack *pack, const char *name, u32 vertex_count,
     bbox_init_mesh(&mesh->bbox, mesh, COLOR_RED_HIGHLIGHT);
 
     blob_end(pack);
-    return blob_idx;
+    return mesh_id;
 }
 
 internal u32 default_mesh(struct pack *pack, const char *name)
@@ -437,9 +460,10 @@ internal u32 default_mesh(struct pack *pack, const char *name)
                      array_count(elements), elements);
 }
 
-int load_obj_file(struct pack *pack, const char *filename)
+int load_obj_file(struct pack *pack, const char *filename, u32 *_last_mesh_id)
 {
     enum rico_error err;
+    u32 last_mesh_id = 0;
 
     // TODO: Colossal waste of memory, just preprocess the file and count them!
     struct vec3 *positions = calloc(MESH_VERTICES_MAX, sizeof(*positions));
@@ -477,8 +501,8 @@ int load_obj_file(struct pack *pack, const char *filename)
         {
             if (idx_vertex > 0)
             {
-                load_mesh(pack, name, idx_vertex, vertices, idx_element,
-                          elements);
+                last_mesh_id = load_mesh(pack, name, idx_vertex, vertices,
+                                         idx_element, elements);
                 idx_mesh++;
             }
 
@@ -567,9 +591,13 @@ int load_obj_file(struct pack *pack, const char *filename)
 
     if (idx_vertex > 0)
     {
-        load_mesh(pack, name, idx_vertex, vertices, idx_element, elements);
+        last_mesh_id = load_mesh(pack, name, idx_vertex, vertices, idx_element,
+                                 elements);
         idx_mesh++;
     }
+
+    if (_last_mesh_id)
+        *_last_mesh_id = last_mesh_id;
 
 cleanup:
     if (buffer)     free(buffer);
@@ -606,6 +634,11 @@ struct pack *pack_init(const char *name, u32 blob_count, u32 buffer_size)
         blob_count * sizeof(pack->index[0]) +
         buffer_size);
     
+    static u32 next_pack_id = 1;
+    const u32 pack_id_shift = (sizeof(pack->id) * 8 - PACK_ID_BITS);
+    pack->id = next_pack_id << pack_id_shift;
+    next_pack_id++;
+
     memcpy(pack->magic, PACK_SIGNATURE, sizeof(pack->magic));
     pack->version = RICO_FILE_VERSION_CURRENT;
     strncpy(pack->name, name, (u32)sizeof(pack->name) - 1);
@@ -739,30 +772,25 @@ struct pack *pack_build_default()
     const char *filename = "packs/default.pak";
 
     struct pack *pack = pack_init(filename, 10, MB(1));
-    u32 font_tex_diff = 0;
-    u32 font =
-        load_font(pack, "[FONT_DEFAULT]", "font/courier_new.bff",
-                         &font_tex_diff);
+    u32 font_mat = 0;
+    u32 font = load_font(pack, "[FONT_DEFAULT]", "font/courier_new.bff",
+                         &font_mat);
     u32 diff = load_texture_file(pack, "[TEX_DIFF_DEFAULT]",
                                  "texture/pbr_default_0.tga");
     u32 spec = load_texture_file(pack, "[TEX_SPEC_DEFAULT]",
                                  "texture/pbr_default_1.tga");
     u32 mat  = load_material(pack, "[MATERIAL_DEFAULT]", diff, spec);
-    u32 font_mat = load_material(pack, "[FONT_DEFAULT_MATERIAL]", font_tex_diff,
-                                 0);
     u32 bbox = default_mesh(pack, "[MESH_DEFAULT_BBOX]");
 
-    // HACK: This is a bit of a gross way to assert that the obj file only
-    //       contained a single mesh: the sphere primitive.
-    load_obj_file(pack, "mesh/prim_sphere.ric");
-    u32 sphere = pack->blobs_used - 1;
+    // HACK: This is a bit of a gross way to get the id of the last mesh
+    u32 sphere;
+    load_obj_file(pack, "mesh/prim_sphere.ric", &sphere);
 
     RICO_ASSERT(font == FONT_DEFAULT);
-    RICO_ASSERT(font_tex_diff == FONT_DEFAULT_TEX_DIFF);
+    RICO_ASSERT(font_mat == FONT_DEFAULT_MATERIAL);
     RICO_ASSERT(diff == TEXTURE_DEFAULT_DIFF);
     RICO_ASSERT(spec == TEXTURE_DEFAULT_SPEC);
     RICO_ASSERT(mat == MATERIAL_DEFAULT);
-    RICO_ASSERT(font_mat == FONT_DEFAULT_MATERIAL);
     RICO_ASSERT(bbox == MESH_DEFAULT_BBOX);
     RICO_ASSERT(sphere == MESH_DEFAULT_SPHERE);
 
@@ -779,9 +807,9 @@ void pack_build_alpha()
     u32 bricks_tex1 = load_texture_file(pack, "Bricks_1", "texture/pbr_bricks_1.tga");
     u32 bricks_mat = load_material(pack, "Bricks", bricks_tex0, bricks_tex1);
 
-    load_obj_file(pack, "mesh/sphere.ric");
-    u32 sphere = pack->blobs_used - 1;
-    load_obj_file(pack, "mesh/wall_cornertest.ric");
+    u32 sphere;
+    load_obj_file(pack, "mesh/sphere.ric", &sphere);
+    load_obj_file(pack, "mesh/wall_cornertest.ric", 0);
     //load_obj_file(&pack, "mesh/conference.ric");
     //load_obj_file(&pack, "mesh/spawn.ric");
     //load_obj_file(&pack, "mesh/door.ric");

@@ -1,14 +1,16 @@
 #ifndef PACK_BUILDER_H
 #define PACK_BUILDER_H
 
-#define FONT_DEFAULT 1
-#define FONT_DEFAULT_TEX_DIFF 2
-#define TEXTURE_DEFAULT_DIFF 3
-#define TEXTURE_DEFAULT_SPEC 4
-#define MATERIAL_DEFAULT 5
-#define FONT_DEFAULT_MATERIAL 6
-#define MESH_DEFAULT_BBOX 7
-#define MESH_DEFAULT_SPHERE 8
+enum DEFAULT_IDS
+{
+    FONT_DEFAULT          = 0x01000001,
+    FONT_DEFAULT_MATERIAL = 0x01000004,
+    TEXTURE_DEFAULT_DIFF  = 0x01000005,
+    TEXTURE_DEFAULT_SPEC  = 0x01000006,
+    MATERIAL_DEFAULT      = 0x01000007,
+    MESH_DEFAULT_BBOX     = 0x01000008,
+    MESH_DEFAULT_SPHERE   = 0x01000009
+};
 
 struct blob_index
 {
@@ -27,6 +29,7 @@ struct pack
 {
     char magic[4];
     u32 version;
+    u32 id;
     char name[32];
 
     u32 blob_current_id;
@@ -117,9 +120,13 @@ internal inline void *pack_read(struct pack *pack, u32 index)
 
 internal inline void *pack_lookup(struct pack *pack, u32 id)
 {
-    RICO_ASSERT(id);
-    RICO_ASSERT(id < pack->blob_count);
-    return pack_read(pack, pack->lookup[id]);
+    u32 pack_id = id & pack->id;
+    u32 blob_id = id ^ pack->id;
+    RICO_ASSERT(blob_id);
+    RICO_ASSERT(blob_id < pack->blob_count);
+    RICO_ASSERT(pack_id);
+    RICO_ASSERT(pack_id == pack->id);
+    return pack_read(pack, pack->lookup[blob_id]);
 }
 
 
@@ -142,6 +149,7 @@ internal inline u32 blob_start(struct pack *pack, enum rico_hnd_type type)
     pack->index[pack->blobs_used].offset = pack->buffer_used;
     pack->index[pack->blobs_used].size = 0;
 
+    id = id | pack->id;
     return id;
 }
 internal inline u32 blob_offset(struct pack *pack)

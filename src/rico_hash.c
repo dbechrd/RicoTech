@@ -47,7 +47,7 @@ internal void *hashtable_search(struct hash_table *table, const hkey key,
 
     do
     {
-        if (!table->slots[index].val)
+        if (!table->slots[index].vlen)
             break;
 
         // Compare keys; return if match
@@ -180,7 +180,7 @@ bool hashtable_delete(struct hash_table *table, const hkey key, u32 klen)
 
     do
     {
-        if (!table->slots[index].val)
+        if (!table->slots[index].vlen)
             break;
 
         // Compare keys; return if match

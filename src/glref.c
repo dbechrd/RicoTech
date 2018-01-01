@@ -302,7 +302,7 @@ void selected_delete()
     if (!selected_obj_id)
         return;
 
-    pack_delete(pack_active, selected_obj_id);
+    pack_delete(pack_active, selected_obj_id, RICO_HND_OBJECT);
     select_prev_obj();
 }
 

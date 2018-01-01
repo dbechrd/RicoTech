@@ -47,7 +47,7 @@ internal void font_setblend(const struct rico_font *font)
 	}
 }
 
-void font_render(u32 *mesh_id, u32 *texture_id, struct rico_font *font, int x,
+void font_render(u32 *mesh_id, u32 *material_id, struct rico_font *font, int x,
                  int y, struct vec4 bg, const char *text, const char *mesh_name)
 {
     // TODO: Use instanced quad?
@@ -154,7 +154,7 @@ void font_render(u32 *mesh_id, u32 *texture_id, struct rico_font *font, int x,
                                 idx_element, elements);
 
     *mesh_id = new_mesh_id;
-    *texture_id = font->texture_id;
+    *material_id = font->material_id;
 }
 
 /*

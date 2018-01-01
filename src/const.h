@@ -18,14 +18,14 @@
 #define RICO_DEBUG_HND              RICO_DEBUG && 0
 #define RICO_DEBUG_POOL             RICO_DEBUG && 0
 #define RICO_DEBUG_CHUNK            RICO_DEBUG && 0
-#define RICO_DEBUG_TEXTURE          RICO_DEBUG && 0
+#define RICO_DEBUG_TEXTURE          RICO_DEBUG && 1
 #define RICO_DEBUG_MESH             RICO_DEBUG && 0
 #define RICO_DEBUG_OBJECT           RICO_DEBUG && 0
 #define RICO_DEBUG_STRING           RICO_DEBUG && 0
-#define RICO_DEBUG_MATERIAL         RICO_DEBUG && 0
+#define RICO_DEBUG_MATERIAL         RICO_DEBUG && 1
 #define RICO_DEBUG_FONT             RICO_DEBUG && 0
 #define RICO_DEBUG_HASH             RICO_DEBUG && 0
-#define RICO_DEBUG_PACK             RICO_DEBUG && 1
+#define RICO_DEBUG_PACK             RICO_DEBUG && 0
 
 // TODO: Get rid of this crap, use realloc when necessary
 // Memory pools

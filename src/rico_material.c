@@ -7,7 +7,6 @@ global const char *material_name(struct rico_material *material)
 void material_bind(struct pack *pack, u32 id)
 {
     RICO_ASSERT(pack);
-    
     struct rico_material *material = pack_lookup(pack, id);
 
 #if RICO_DEBUG_MATERIAL
@@ -38,12 +37,11 @@ void material_bind(struct pack *pack, u32 id)
 void material_unbind(struct pack *pack, u32 id)
 {
     RICO_ASSERT(pack);
+    struct rico_material *material = pack_lookup(pack, id);
 
 #if RICO_DEBUG_MATERIAL
     printf("[ mtl][unbd] name=%s\n", material_name(material));
 #endif
-
-    struct rico_material *material = pack_lookup(pack, id);
 
     // Bind diffuse or default
     if (material->tex_id[0])

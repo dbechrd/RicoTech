@@ -73,7 +73,7 @@ int rico_file_open_read(struct rico_file *_file, const char *filename)
     // File signature
     u8 signature[4] = { 0 };
     fread(&signature, sizeof(signature), 1, _file->fs);
-    if (signature != PACK_SIGNATURE)
+    if (memcmp(signature, PACK_SIGNATURE, sizeof(signature)))
     {
         rico_file_close(_file);
         fprintf(stderr, "Invalid file signature: %s\n", signature);

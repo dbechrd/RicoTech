@@ -87,11 +87,11 @@ int chunk_alloc(void **block, struct rico_chunk *chunk, enum rico_hnd_type type)
 int chunk_free(struct rico_chunk *chunk, struct pool_id id)
 {
     RICO_ASSERT(id.type < RICO_HND_CEREAL_COUNT);
-    enum rico_error err;
+    enum rico_error err = SUCCESS;
 
     // Allow NOP free on ID_NULL
     if (!id.type)
-        return SUCCESS;
+        return err;
 
     void *block = pool_read(chunk->pools[id.type], id);
 
@@ -105,7 +105,7 @@ int chunk_free(struct rico_chunk *chunk, struct pool_id id)
     {
         hnd->ref_count--;
         if (hnd->ref_count > 0)
-            return SUCCESS;
+            return err;
     }
 
     // Delegate resource clean up

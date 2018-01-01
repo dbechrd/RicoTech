@@ -370,7 +370,14 @@ void object_render_type(struct pack *pack, enum rico_obj_type type,
         // Bind material
         struct pack *mat_pack = pack;
         u32 mat_id = obj->material_id;
-        if (!mat_id)
+        if (mat_id)
+        {
+            if (type == OBJ_STRING_SCREEN || type == OBJ_STRING_WORLD)
+            {
+                mat_pack = pack_default;
+            }
+        }
+        else
         {
             mat_pack = pack_default;
             if (type == OBJ_STRING_SCREEN || type == OBJ_STRING_WORLD)

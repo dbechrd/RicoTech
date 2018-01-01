@@ -347,7 +347,7 @@ internal inline int mat4_equals(const struct mat4 *a, const struct mat4 *b)
 
 internal inline struct mat4 *mat4_mul(struct mat4 *a, const struct mat4 *b)
 {
-    struct mat4 c = { 0 };
+    struct mat4 c = {{{ 0 }}};
     for (int aj = 0; aj < 4; ++aj)
     {
         for (int bi = 0; bi < 4; ++bi)

@@ -3,6 +3,96 @@
 global SDL_Window *window = NULL;
 global SDL_GLContext context = NULL;
 
+internal inline void init_stb();
+internal inline void init_murmurhash3();
+internal int sdl_gl_attrib(SDL_GLattr attr, int value);
+internal int init_sdl();
+internal int init_gl3w(int major, int minor);
+internal void init_opengl();
+
+int mymain()
+{
+    enum rico_error err;
+
+    printf("------------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing third party\n");
+    printf("------------------------------------------------------------\n");
+    //size_t cacheSize = CacheLineSize();
+    //printf("Cache line size: %d bytes\n", cacheSize);
+    init_stb();
+    init_murmurhash3();
+
+    //pack_build_all();
+    pack_transient = pack_init("pack_transient", 0, 0);
+    pack_frame = pack_init("pack_frame", 0, 0);
+    err = pack_load("packs/default.pak", &pack_default);
+    err = pack_load("packs/alpha.pak", &pack_active);
+
+    err = init_sdl();
+    if (err) goto cleanup;
+    err = init_gl3w(GL_VERSION_MAJOR, GL_VERSION_MINOR);
+    if (err) goto cleanup;
+    init_opengl();
+    init_rico_engine();
+
+#if RICO_DEBUG
+    run_tests();
+#endif
+
+    while (!SDL_QuitRequested())
+    {
+        ////////////////////////////////////////////////////////////////////////
+        // TODO: How do I check for SDL resize window events?
+        ////////////////////////////////////////////////////////////////////////
+        /*
+        // Resize OpenGL viewport
+        else if (event.type == SDL_WINDOWEVENT_SIZE)
+        {
+        glViewport(0, 0, event.window.event.size.width,
+        event.window.event.size.height);
+        *handled = true;
+        }
+        */
+
+        err = state_update();
+        if (err) break;
+
+        if (state_get() == STATE_ENGINE_SHUTDOWN)
+            break;
+
+        SDL_GL_SwapWindow(window);
+    }
+
+cleanup:
+    printf("------------------------------------------------------------\n");
+    printf("[MAIN][term] Clean up\n");
+    printf("------------------------------------------------------------\n");
+    if (context) SDL_GL_DeleteContext(context);
+    if (window) SDL_DestroyWindow(window);
+
+    SDL_Quit();
+    return err;
+}
+
+int main(int argc, char **argv)
+{
+    UNUSED(argc);
+    UNUSED(argv);
+    enum rico_error err;
+
+    // Don't report fatal errors again when ALL_ERRORS_FATAL flag is set
+#if RICO_DEBUG_ALL_ERRORS_FATAL
+    err = mymain();
+#else
+    err = RICO_FATAL(mymain(), "Top-level generic error");
+#endif
+    if (err) printf("Error: %s", rico_error_string[err]);
+
+    // Hack: SDL_main is stupid and ignores my return value, force exit code
+    if (err) exit(err);
+    return err;
+}
+
 internal inline void init_stb()
 {
     stbi_set_flip_vertically_on_load(1);
@@ -46,9 +136,9 @@ internal int init_sdl()
     if (err) return err;
 #endif
 
-    err = sdl_gl_attrib(SDL_GL_RED_SIZE,   8);          if (err) return err;
+    err = sdl_gl_attrib(SDL_GL_RED_SIZE, 8);          if (err) return err;
     err = sdl_gl_attrib(SDL_GL_GREEN_SIZE, 8);          if (err) return err;
-    err = sdl_gl_attrib(SDL_GL_BLUE_SIZE,  8);          if (err) return err;
+    err = sdl_gl_attrib(SDL_GL_BLUE_SIZE, 8);          if (err) return err;
     err = sdl_gl_attrib(SDL_GL_ALPHA_SIZE, 8);          if (err) return err;
 
     err = sdl_gl_attrib(SDL_GL_DOUBLEBUFFER, 1);        if (err) return err;
@@ -146,7 +236,7 @@ internal void init_opengl()
     glDepthFunc(GL_LEQUAL);  // Default GL_LESS.
     glEnable(GL_DEPTH_TEST); // Default off.
 
-    // Backface culling
+                             // Backface culling
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
@@ -157,93 +247,4 @@ internal void init_opengl()
     glBlendEquation(GL_FUNC_ADD);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
-}
-
-int mymain()
-{
-    enum rico_error err;
-
-    printf("------------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing third party\n");
-    printf("------------------------------------------------------------\n");
-    //size_t cacheSize = CacheLineSize();
-    //printf("Cache line size: %d bytes\n", cacheSize);
-    init_stb();
-    init_murmurhash3();
-
-    pack_build_all();
-    err = pack_load("packs/default.pak", &pack_default);
-    err = pack_load("packs/alpha.pak", &pack_active);
-    pack_transient = pack_init("pack_transient", 0, 0);
-    pack_frame = pack_init("pack_frame", 0, 0);
-
-    err = init_sdl();
-    if (err) goto cleanup;
-    err = init_gl3w(GL_VERSION_MAJOR, GL_VERSION_MINOR);
-    if (err) goto cleanup;
-    init_opengl();
-    init_rico_engine();
-
-#if RICO_DEBUG
-    run_tests();
-#endif
-
-    while (!SDL_QuitRequested())
-    {
-        ////////////////////////////////////////////////////////////////////////
-        // TODO: How do I check for SDL resize window events?
-        ////////////////////////////////////////////////////////////////////////
-        /*
-        // Resize OpenGL viewport
-        else if (event.type == SDL_WINDOWEVENT_SIZE)
-        {
-        glViewport(0, 0, event.window.event.size.width,
-        event.window.event.size.height);
-        *handled = true;
-        }
-        */
-
-        err = state_update();
-        if (err) break;
-
-        if (state_get() == STATE_ENGINE_SHUTDOWN)
-            break;
-
-        SDL_GL_SwapWindow(window);
-    }
-
-cleanup:
-    printf("------------------------------------------------------------\n");
-    printf("[MAIN][term] Clean up\n");
-    printf("------------------------------------------------------------\n");
-    if (context) SDL_GL_DeleteContext(context);
-    if (window) SDL_DestroyWindow(window);
-
-    SDL_Quit();
-    return err;
-}
-
-int main(int argc, char **argv)
-{
-    enum rico_error err;
-
-    if (argc > 1)
-    {
-        err = rico_convert(argc, argv);
-    }
-    else
-    {
-// Don't report fatal errors again when ALL_ERRORS_FATAL flag is set
-#if RICO_DEBUG_ALL_ERRORS_FATAL
-        err = mymain();
-#else
-        err = RICO_FATAL(mymain(), "Top-level generic error");
-#endif
-    }
-
-    if (err) printf("Error: %s", rico_error_string[err]);
-
-    // Hack: SDL_main is stupid and ignores my return value, force exit code
-    if (err) exit(err);
-    return err;
 }

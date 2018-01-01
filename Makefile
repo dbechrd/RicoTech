@@ -43,10 +43,16 @@ _LIBS = -lSDL2main -lSDL2 -lopengl32 #-mwindows
 LIBS  := -L$(LIB_DIR) $(_LIBS)
 
 # Compiler & flags
+# Optimization flags:
+# -O0 Disabled
+# -Og Debug
+# -O2 Release
+# -O3 Extreme (Careful, might make EXE bigger or invoke undefined behavior!)
+SHARED_FLAGS = -std=c99 -g -MMD -O0 -Wall -Wextra -Werror -Wno-unused-function #-Wno-missing-field-initializers -Wno-missing-braces -Wno-deprecated-declarations #-Wno-error=incompatible-pointer-types
 GCC_FLAGS = -fmax-errors=3
-CLANG_FLAGS = -ferror-limit=3 -fcolor-diagnostics
-CC = gcc
-CFLAGS = $(GCC_FLAGS) -g -MMD -Wall -Wextra -Werror -Wno-unused-function -O0 #-Og #-Wno-error=incompatible-pointer-types
+CLANG_FLAGS = -ferror-limit=3 -fcolor-diagnostics -Wno-macro-redefined
+CC = gcc #-v
+CFLAGS = $(GCC_FLAGS) $(SHARED_FLAGS)
 LDFLAGS = # None
 
 default: prebuild build postbuild

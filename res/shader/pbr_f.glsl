@@ -16,11 +16,18 @@ struct Camera {
     vec3 P;
 };
 
-#define mtl_albedo    pow(texture(material.tex0, vertex.UV).rgb, vec3(gamma))
+// NOTE: Using SRGB_ALPHA in texture_upload, so don't need this atm
+//#define mtl_albedo    pow(texture(material.tex0, vertex.UV).rgb, vec3(gamma))
+//#define mtl_opacity   texture(material.tex0, vertex.UV).a
+//#define mtl_metallic  pow(texture(material.tex1, vertex.UV).r, gamma)
+//#define mtl_roughness pow(texture(material.tex1, vertex.UV).g, gamma)
+//#define mtl_ao        pow(texture(material.tex1, vertex.UV).b, gamma)
+
+#define mtl_albedo    texture(material.tex0, vertex.UV).rgb
 #define mtl_opacity   texture(material.tex0, vertex.UV).a
-#define mtl_metallic  pow(texture(material.tex1, vertex.UV).r, gamma)
-#define mtl_roughness pow(texture(material.tex1, vertex.UV).g, gamma)
-#define mtl_ao        pow(texture(material.tex1, vertex.UV).b, gamma)
+#define mtl_metallic  texture(material.tex1, vertex.UV).r
+#define mtl_roughness texture(material.tex1, vertex.UV).g
+#define mtl_ao        texture(material.tex1, vertex.UV).b
 
 struct Material {
     // rgb: metallic ? specular.rgb : albedo.rgb
