@@ -121,11 +121,11 @@ internal inline void *pack_read(struct pack *pack, u32 index)
 internal inline void *pack_lookup(struct pack *pack, u32 id)
 {
     u32 pack_id = id & pack->id;
-    u32 blob_id = id ^ pack->id;
-    RICO_ASSERT(blob_id);
-    RICO_ASSERT(blob_id < pack->blob_count);
-    RICO_ASSERT(pack_id);
     RICO_ASSERT(pack_id == pack->id);
+
+    u32 blob_id = id ^ pack->id;
+    RICO_ASSERT(blob_id < pack->blob_count);
+    
     return pack_read(pack, pack->lookup[blob_id]);
 }
 

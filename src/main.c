@@ -22,7 +22,7 @@ int mymain()
     init_stb();
     init_murmurhash3();
 
-    //pack_build_all();
+    pack_build_all();
     pack_transient = pack_init("pack_transient", 0, 0);
     pack_frame = pack_init("pack_frame", 0, 0);
     err = pack_load("packs/default.pak", &pack_default);
