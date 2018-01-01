@@ -523,8 +523,8 @@ int state_update()
     ///-------------------------------------------------------------------------
     //| Render
     ///-------------------------------------------------------------------------
-    //glClearColor(0.1f, 0.1f, 0.3f, 1.0f);
-    glClearColor(0.46f, 0.70f, 1.0f, 1.0f);
+    glClearColor(0.1f, 0.1f, 0.2f, 1.0f);
+    //glClearColor(0.46f, 0.70f, 1.0f, 1.0f);
     //glClearDepth(0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // glPolygonMode(GL_FRONT_AND_BACK, cam_player.fill_mode);

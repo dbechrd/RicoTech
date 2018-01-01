@@ -32,8 +32,9 @@ struct pbr_material
 
 struct pbr_light_point
 {
-    GLint pos;   // (vec3)
-    GLint color; // (vec3)
+    GLint pos;       // (vec3)
+    GLint color;     // (vec3)
+    GLint intensity; // (float)
 };
 
 struct program_pbr

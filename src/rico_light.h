@@ -16,6 +16,7 @@ struct light_point
 {
     struct vec3 color;
     struct vec3 pos;
+    float intensity;
 
     // Distance fall-off
     float kc;  // Constant

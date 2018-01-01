@@ -472,12 +472,12 @@ int load_obj_file(struct pack *pack, const char *filename, u32 *_last_mesh_id)
     struct rico_vertex *vertices = calloc(MESH_VERTICES_MAX, sizeof(*vertices));
     GLuint *elements = calloc(MESH_VERTICES_MAX, sizeof(*elements));
 
-    int idx_pos = 0;
-    int idx_tex = 0;
-    int idx_normal = 0;
-    int idx_vertex = 0;
-    int idx_element = 0;
-    int idx_mesh = 0;
+    u32 idx_pos = 0;
+    u32 idx_tex = 0;
+    u32 idx_normal = 0;
+    u32 idx_vertex = 0;
+    u32 idx_element = 0;
+    u32 idx_mesh = 0;
 
     long vert_pos = 0;
     long vert_tex = 0;
@@ -504,6 +504,8 @@ int load_obj_file(struct pack *pack, const char *filename, u32 *_last_mesh_id)
                 last_mesh_id = load_mesh(pack, name, idx_vertex, vertices,
                                          idx_element, elements);
                 idx_mesh++;
+                if (idx_mesh > 10)
+                    goto cleanup;
             }
 
             idx_vertex = 0;
@@ -596,10 +598,10 @@ int load_obj_file(struct pack *pack, const char *filename, u32 *_last_mesh_id)
         idx_mesh++;
     }
 
+cleanup:
     if (_last_mesh_id)
         *_last_mesh_id = last_mesh_id;
 
-cleanup:
     if (buffer)     free(buffer);
     if (positions)  free(positions);
     if (texcoords)  free(texcoords);
@@ -802,7 +804,7 @@ void pack_build_alpha()
 {
     const char *filename = "packs/alpha.pak";
 
-    struct pack *pack = pack_init(filename, 16, MB(1));
+    struct pack *pack = pack_init(filename, 128, MB(256));
     u32 bricks_tex0 = load_texture_file(pack, "Bricks_0", "texture/pbr_bricks_0.tga");
     u32 bricks_tex1 = load_texture_file(pack, "Bricks_1", "texture/pbr_bricks_1.tga");
     u32 bricks_mat = load_material(pack, "Bricks", bricks_tex0, bricks_tex1);
@@ -810,11 +812,12 @@ void pack_build_alpha()
     u32 sphere;
     load_obj_file(pack, "mesh/sphere.ric", &sphere);
     load_obj_file(pack, "mesh/wall_cornertest.ric", 0);
-    //load_obj_file(&pack, "mesh/conference.ric");
-    //load_obj_file(&pack, "mesh/spawn.ric");
-    //load_obj_file(&pack, "mesh/door.ric");
-    //load_obj_file(&pack, "mesh/welcome_floor.ric");
-    //load_obj_file(&pack, "mesh/grass.ric");
+    load_obj_file(pack, "mesh/door2.ric", &sphere);
+    //sphere = 0x02000023;
+    //load_obj_file(pack, "mesh/spawn.ric");
+    //load_obj_file(pack, "mesh/door.ric");
+    //load_obj_file(pack, "mesh/welcome_floor.ric");
+    //load_obj_file(pack, "mesh/grass.ric");
 
     u32 ground_id = load_object(pack, "Ground", OBJ_STATIC, 0, bricks_mat, NULL);
     struct rico_object *ground = pack_lookup(pack, ground_id);
@@ -826,9 +829,10 @@ void pack_build_alpha()
     u32 timmy_mat = load_material(pack, "Timmy", 0, 0);
     u32 timmy_id = load_object(pack, "Timmy", OBJ_STATIC, sphere, timmy_mat, NULL);
     struct rico_object *timmy = pack_lookup(pack, timmy_id);
-    object_rot_x(timmy, 30.0f);
-    object_rot_y(timmy, 30.0f);
-    object_trans(timmy, &VEC3(0.0f, 1.0f, 0.0f));
+    object_scale(timmy, &VEC3(0.01f, 0.01f, 0.01f));
+    //object_rot_x(timmy, 30.0f);
+    //object_rot_y(timmy, 30.0f);
+    //object_trans(timmy, &VEC3(0.0f, 1.0f, 0.0f));
 
     pack_save(pack, filename, false);
     free(pack);

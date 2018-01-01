@@ -113,7 +113,7 @@ void select_next_obj()
 
     u32 start_index;
     if (selected_obj_id)
-        start_index = pack_active->lookup[selected_obj_id];
+        start_index = pack_active->lookup[pack_active->id ^ selected_obj_id];
     else
         start_index = 1;
 
@@ -148,7 +148,7 @@ void select_prev_obj()
 
     u32 start_index;
     if (selected_obj_id)
-        start_index = pack_active->lookup[selected_obj_id];
+        start_index = pack_active->lookup[pack_active->id ^ selected_obj_id];
     else
         start_index = pack_active->blobs_used;
 

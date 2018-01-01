@@ -285,12 +285,13 @@ void object_render_setup(enum rico_obj_type type,
     // TODO: Get the light out of here!!! It should't be updating its position
     //       in the render function, argh!
     u32 ticks = SDL_GetTicks();
-    float light_pos_x = cosf((float)ticks / 2000.0f) * 8.0f;
-    float light_pos_z = sinf((float)ticks / 2000.0f) * 8.0f;
+    float light_pos_x = cosf((float)ticks / 2000.0f) * 3.0f;
+    float light_pos_z = sinf((float)ticks / 2000.0f) * 3.0f;
 
     struct light_point light;
     light.pos = VEC3(light_pos_x, 3.0f, light_pos_z);
     light.color = VEC3(1.0f, 0.9f, 0.6f);
+    light.intensity = 10.0f;
     //light.ambient = VEC3(0.10f, 0.09f, 0.11f);
     light.kc = 1.0f;
     light.kl = 0.05f;
@@ -305,6 +306,7 @@ void object_render_setup(enum rico_obj_type type,
 
         light.pos = VEC3_ZERO;
         light.color = VEC3_ONE;
+        light.intensity = 10.0f;
 
         light.kc = 1.0f;
         light.kl = 0.0f;
@@ -325,6 +327,7 @@ void object_render_setup(enum rico_obj_type type,
     // Lighting
     glUniform3fv(prog->light.pos, 1, (const GLfloat *)&light.pos);
     glUniform3fv(prog->light.color, 1, (const GLfloat *)&light.color);
+    glUniform1f(prog->light.intensity, light.intensity);
 
     glUniform2f(prog->scale_uv, 1.0f, 1.0f);
 }
@@ -463,14 +466,14 @@ int object_print(struct rico_object *object)
             if (material->tex_id[0])
             {
                 struct rico_texture *tex =
-                    pack_read(pack_active, material->tex_id[0]);
+                    pack_lookup(pack_active, material->tex_id[0]);
                 mat_tex0_id = tex->id;
                 mat_tex0_str = texture_name(tex);
             }
             if (material->tex_id[1])
             {
                 struct rico_texture *tex =
-                    pack_read(pack_active, material->tex_id[1]);
+                    pack_lookup(pack_active, material->tex_id[1]);
                 mat_tex1_id = tex->id;
                 mat_tex1_str = texture_name(tex);
             }

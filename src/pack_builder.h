@@ -114,7 +114,7 @@ internal inline void *pack_read(struct pack *pack, u32 index)
     RICO_ASSERT(index > 0);
     RICO_ASSERT(index < pack->blobs_used);
     RICO_ASSERT(pack->index[index].type);
-    RICO_ASSERT(pack->index[index].size < 500000);
+    RICO_ASSERT(pack->index[index].size < 0x00FFFFFF);
     return pack->buffer + pack->index[index].offset;
 }
 

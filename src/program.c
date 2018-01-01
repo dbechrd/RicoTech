@@ -97,12 +97,14 @@ internal inline void program_pbr_get_locations(struct program_pbr *p)
     p->material.tex1 = program_get_uniform_location(p->prog_id, "material.tex1");
     p->light.pos = program_get_uniform_location(p->prog_id, "light.P");
     p->light.color = program_get_uniform_location(p->prog_id, "light.color");
+    p->light.intensity = program_get_uniform_location(p->prog_id, "light.intensity");
 
     RICO_ASSERT(p->camera.pos >= 0);
     RICO_ASSERT(p->material.tex0 >= 0);
     RICO_ASSERT(p->material.tex1 >= 0);
     RICO_ASSERT(p->light.pos >= 0);
     RICO_ASSERT(p->light.color >= 0);
+    RICO_ASSERT(p->light.intensity >= 0);
 }
 
 int make_program_pbr(struct program_pbr **_program)

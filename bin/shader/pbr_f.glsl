@@ -44,6 +44,7 @@ struct Material {
 struct PointLight {
     vec3 P;
     vec3 color;
+    float intensity;
 };
 
 uniform Camera camera;
@@ -103,7 +104,7 @@ void main()
         vec3 L = normalize(light.P - vertex.P);
         vec3 H = normalize(V + L);
         float dist = length(light.P - vertex.P);
-        float attenuation = 1.0 / (dist * dist);
+        float attenuation = light.intensity / (dist * dist);
         vec3 radiance = light.color * attenuation;
 
         float D = DistributionGGX(N, H, mtl_roughness);
