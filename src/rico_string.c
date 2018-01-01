@@ -22,7 +22,7 @@ int string_init(struct rico_string *str, const char *name,
     hnd_init(&str->hnd, RICO_HND_STRING, name);
     str->slot = slot;
     str->object_id = load_object(pack_transient, name, OBJ_STRING_SCREEN,
-                                 font_mesh_id, font_mat_id, NULL);
+                                 1, &font_mesh_id, 1, &font_mat_id, NULL);
     struct rico_object *str_obj = pack_lookup(pack_transient, str->object_id);
     object_trans_set(str_obj, &VEC3(SCREEN_X(x), SCREEN_Y(y), -1.0f));
     
@@ -61,7 +61,7 @@ int string_free(struct rico_string *str)
 
     struct rico_object *obj = pack_lookup(pack_transient, str->object_id);
     //pack_delete(pack_default, obj->material_id, RICO_HND_MATERIAL);
-    pack_delete(pack_transient, obj->mesh_id, RICO_HND_MESH);
+    pack_delete(pack_transient, object_mesh(obj), RICO_HND_MESH);
     pack_delete(pack_transient, str->object_id, RICO_HND_OBJECT);
 
     return pool_remove(str->hnd.pool, str->hnd.id);

@@ -3,8 +3,9 @@ bool collide_ray_bbox(const struct ray *ray, const struct bbox *bbox,
 {
     //TODO: Transform ray and bbox
     struct vec3 bbox_p[2];
-    bbox_p[0] = bbox->p[0];
-    bbox_p[1] = bbox->p[1];
+    bbox_p[0] = bbox->p;
+    v3_negate(&bbox_p[0]);
+    bbox_p[1] = bbox->p;
     v3_mul_mat4(&bbox_p[0], transform);
     v3_mul_mat4(&bbox_p[1], transform);
 
@@ -53,6 +54,10 @@ bool collide_ray_obb(float *_dist, const struct ray *r, const struct bbox *bbox,
                      const struct mat4 *model_matrix,
                      const struct mat4 *model_matrix_inv)
 {
+    struct vec3 p0 = bbox->p;
+    v3_negate(&p0);
+    struct vec3 p1 = bbox->p;
+
 	// Intersection method from Real-Time Rendering and Essential Mathematics
     // for Games
 
@@ -113,9 +118,9 @@ bool collide_ray_obb(float *_dist, const struct ray *r, const struct bbox *bbox,
 		if (fabsf(f) > 0.00001f) // Standard case
         {
             // Intersection with the "left" plane
-            float t1 = (e + bbox->p[0].x) / f;
+            float t1 = (e + p0.x) / f;
             // Intersection with the "right" plane
-			float t2 = (e + bbox->p[1].x) / f;
+			float t2 = (e + p1.x) / f;
 			// t1 and t2 now contain distances betwen ray origin and ray-plane
             // intersections
 
@@ -145,7 +150,7 @@ bool collide_ray_obb(float *_dist, const struct ray *r, const struct bbox *bbox,
         {
             // Rare case : the ray is almost parallel to the planes, so they
             // don't have any "intersection"
-			if(-e + bbox->p[0].x > 0.0f || -e + bbox->p[1].x < 0.0f)
+			if(-e + p0.x > 0.0f || -e + p1.x < 0.0f)
 				return false;
 		}
 	}
@@ -177,8 +182,8 @@ bool collide_ray_obb(float *_dist, const struct ray *r, const struct bbox *bbox,
 
 		if (fabsf(f) > 0.00001f)
         {
-            float t1 = (e + bbox->p[0].y) / f;
-			float t2 = (e + bbox->p[1].y) / f;
+            float t1 = (e + p0.y) / f;
+			float t2 = (e + p1.y) / f;
 
 			if (t1>t2){float w=t1;t1=t2;t2=w;}
 
@@ -191,7 +196,7 @@ bool collide_ray_obb(float *_dist, const struct ray *r, const struct bbox *bbox,
 		}
         else
         {
-			if(-e + bbox->p[0].y > 0.0f || -e + bbox->p[1].y < 0.0f)
+			if(-e + p0.y > 0.0f || -e + p1.y < 0.0f)
 				return false;
 		}
 	}
@@ -223,8 +228,8 @@ bool collide_ray_obb(float *_dist, const struct ray *r, const struct bbox *bbox,
 
 		if (fabsf(f) > 0.00001f)
         {
-			float t1 = (e + bbox->p[0].z) / f;
-			float t2 = (e + bbox->p[1].z) / f;
+			float t1 = (e + p0.z) / f;
+			float t2 = (e + p1.z) / f;
 
 			if (t1>t2){float w=t1;t1=t2;t2=w;}
 
@@ -237,7 +242,7 @@ bool collide_ray_obb(float *_dist, const struct ray *r, const struct bbox *bbox,
 		}
         else
         {
-			if(-e + bbox->p[0].z > 0.0f || -e + bbox->p[1].z < 0.0f)
+			if(-e + p0.z > 0.0f || -e + p1.z < 0.0f)
 				return false;
 		}
 	}

@@ -109,33 +109,48 @@ void prim_draw_ray(const struct ray *ray, const struct mat4 *model_matrix,
     prim_draw_segment(&ray_seg, model_matrix, color);
 }
 
-void prim_draw_bbox(const struct bbox *bbox, const struct mat4 *model_matrix)
+void prim_draw_bbox(const struct bbox *bbox,
+                    const struct rico_transform *model_xform)
 {
-    prim_draw_bbox_color(bbox, model_matrix, &bbox->color);
+    prim_draw_bbox_color(bbox, model_xform, &bbox->color);
 }
 
 void prim_draw_bbox_color(const struct bbox *bbox,
-                          const struct mat4 *model_matrix,
+                          const struct rico_transform *model_xform,
                           const struct vec4 *color)
 {
     if (bbox->wireframe && cam_player.fill_mode != GL_LINE)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    /*struct vec3 origin = bbox->p[0];
-    v3_scalef(v3_add(&origin, &bbox->p[1]), 0.5f);
+    /*
+    struct vec3 origin = bbox->p[0];
+    v3_add(&origin, &bbox->p[1]);
+    v3_scalef(&origin, 0.5f);
 
     struct vec3 scale = bbox->p[1];
     v3_sub(&scale, &bbox->p[0]);
 
-    struct mat4 model_matrix = MAT4_IDENT;
-    mat4_translate(&model_matrix, &origin);
-    mat4_scale(&model_matrix, &scale);*/
+    struct mat4 model_matrix2 = *model_xform;
+    //mat4_translate(&model_matrix2, &origin);
+    mat4_scale(&model_matrix2, &scale);
+    model_xform = &model_matrix2;
+    */
+
+    struct mat4 transform = MAT4_IDENT;
+    mat4_translate(&transform, &model_xform->trans);
+    mat4_rotx(&transform, model_xform->rot.x);
+    mat4_roty(&transform, model_xform->rot.y);
+    mat4_rotz(&transform, model_xform->rot.z);
+
+    struct vec3 scale = bbox->p;
+    v3_scale(&scale, &model_xform->scale);
+    mat4_scale(&transform, &scale);
 
     glUseProgram(program->prog_id);
 
     glUniformMatrix4fv(program->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
     glUniformMatrix4fv(program->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
-    glUniformMatrix4fv(program->u_model, 1, GL_TRUE, model_matrix->a);
+    glUniformMatrix4fv(program->u_model, 1, GL_TRUE, transform.a);
 
     // TODO: Use per-bbox color instead of rainbowgasm
     //glUniform4f(program->u_col, color->r, color->g, color->b, color->a);

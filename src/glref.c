@@ -21,9 +21,9 @@ global struct program_primitive *prog_primitive;
 
 global struct bbox axis_bbox;
 
-global struct mat4 x_axis_transform;
-global struct mat4 y_axis_transform;
-global struct mat4 z_axis_transform;
+global struct rico_transform x_axis_transform;
+global struct rico_transform y_axis_transform;
+global struct rico_transform z_axis_transform;
 
 void init_glref()
 {
@@ -31,23 +31,19 @@ void init_glref()
     //--------------------------------------------------------------------------
     // Create axis label bboxes
     //--------------------------------------------------------------------------
-    bbox_init(&axis_bbox, VEC3(-0.5f, -0.5f, -0.5f),
-                          VEC3( 0.5f,  0.5f,  0.5f), COLOR_WHITE);
+    bbox_init(&axis_bbox, VEC3(0.5f, 0.5f, 0.5f), COLOR_WHITE);
 
     // X-axis label
-    x_axis_transform = MAT4_IDENT;
-    mat4_scale(&x_axis_transform, &VEC3(1.0f, 0.01f, 0.01f));
-    mat4_translate(&x_axis_transform, &VEC3(0.5f, 0.0f, 0.0f));
+    x_axis_transform.scale = VEC3(1.0f, 0.01f, 0.01f);
+    x_axis_transform.trans = VEC3(0.5f, 0.0f, 0.0f);
 
     // Y-axis label
-    y_axis_transform = MAT4_IDENT;
-    mat4_scale(&y_axis_transform, &VEC3(0.01f, 1.0f, 0.01f));
-    mat4_translate(&y_axis_transform, &VEC3(0.0f, 0.5f, 0.0f));
+    y_axis_transform.scale = VEC3(0.01f, 1.0f, 0.01f);
+    y_axis_transform.trans = VEC3(0.0f, 0.5f, 0.0f);
 
     // Z-axis label
-    z_axis_transform = MAT4_IDENT;
-    mat4_scale(&z_axis_transform, &VEC3(0.01f, 0.01f, 1.0f));
-    mat4_translate(&z_axis_transform, &VEC3(0.0f, 0.0f, 0.5f));
+    z_axis_transform.scale = VEC3(0.01f, 0.01f, 1.0f);
+    z_axis_transform.trans = VEC3(0.0f, 0.0f, 0.5f);
 }
 
 void create_obj()
@@ -56,7 +52,8 @@ void create_obj()
     const char *name = "new_obj";
 
     // Create new object and select it
-    u32 new_obj_id = load_object(pack_active, name, OBJ_STATIC, 0, 0, NULL);
+    u32 new_obj_id = load_object(pack_active, name, OBJ_STATIC, 0, NULL, 0,
+                                 NULL, NULL);
     struct rico_object *obj = pack_lookup(pack_active, new_obj_id);
     select_obj(obj, false);
 }
@@ -113,7 +110,7 @@ void select_next_obj()
 
     u32 start_index;
     if (selected_obj_id)
-        start_index = pack_active->lookup[pack_active->id ^ selected_obj_id];
+        start_index = pack_active->lookup[ID_BLOB(selected_obj_id)];
     else
         start_index = 1;
 
@@ -148,7 +145,7 @@ void select_prev_obj()
 
     u32 start_index;
     if (selected_obj_id)
-        start_index = pack_active->lookup[pack_active->id ^ selected_obj_id];
+        start_index = pack_active->lookup[ID_BLOB(selected_obj_id)];
     else
         start_index = pack_active->blobs_used;
 
@@ -277,7 +274,11 @@ void selected_bbox_reset()
         return;
 
     struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
-    struct rico_mesh *mesh = pack_lookup(pack_active, obj->mesh_id);
+    u32 mesh_id = object_mesh(obj);
+    if (!mesh_id)
+        return;
+
+    struct rico_mesh *mesh = pack_lookup(pack_active, mesh_id);
     obj->bbox = mesh->bbox;
 
     object_select(obj);

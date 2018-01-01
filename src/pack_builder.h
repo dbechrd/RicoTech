@@ -1,6 +1,13 @@
 #ifndef PACK_BUILDER_H
 #define PACK_BUILDER_H
 
+#define ID_BLOB_BITS 24
+#define ID_BLOB_MASK ((1 << ID_BLOB_BITS) - 1)
+#define ID_PACK_MASK (0xffffffff ^ ID_BLOB_MASK)
+#define ID_PACK(id) ((id & ID_PACK_MASK) >> ID_BLOB_BITS)
+#define ID_BLOB(id) (id & ID_BLOB_MASK)
+#define ID_GENERATE(pack, blob) ((pack << ID_BLOB_BITS) | blob)
+
 enum DEFAULT_IDS
 {
     FONT_DEFAULT          = 0x01000001,
@@ -58,19 +65,20 @@ global int pack_load(const char *filename, struct pack **_pack);
 global void pack_expand(struct pack *pack);
 global void pack_compact_buffer(struct pack *pack);
 
-internal inline void *pack_push(struct pack *pack, u32 size)
+internal inline void *pack_push(struct pack *pack, u32 bytes)
 {
-    RICO_ASSERT(pack->buffer_used + size < pack->buffer_size);
+    RICO_ASSERT(pack->buffer_used + bytes < pack->buffer_size);
     void *ptr = pack->buffer + pack->buffer_used;
-    pack->buffer_used += size;
-    pack->index[pack->lookup[pack->blob_current_id]].size += size;
+    pack->buffer_used += bytes;
+    pack->index[pack->lookup[pack->blob_current_id]].size += bytes;
     return ptr;
 }
 internal inline void *pack_push_data(struct pack *pack, const void *data,
-                                     u32 size)
+                                     u32 count, u32 size)
 {
-    void *ptr = pack_push(pack, size);
-    memcpy(ptr, data, size);
+    u32 bytes = count * size;
+    void *ptr = pack_push(pack, bytes);
+    memcpy(ptr, data, bytes);
     return ptr;
 }
 internal inline void *pack_push_str(struct pack *pack, const char *str)
@@ -83,7 +91,7 @@ internal inline void *pack_push_str(struct pack *pack, const char *str)
 #define push_struct(pack, type) ((type *)pack_push(pack, sizeof(type)))
 #define push_bytes(pack, bytes) (pack_push(pack, bytes))
 #define push_string(pack, str) (pack_push_str(pack, str))
-#define push_data(pack, data, size) (pack_push_data(pack, data, size))
+#define push_data(pack, data, count, size) (pack_push_data(pack, data, count, size))
 #define array_count(arr) (sizeof(arr) / sizeof(arr[0]))
 
 internal inline void *pack_pop(struct pack *pack, u32 id)
@@ -114,16 +122,15 @@ internal inline void *pack_read(struct pack *pack, u32 index)
     RICO_ASSERT(index > 0);
     RICO_ASSERT(index < pack->blobs_used);
     RICO_ASSERT(pack->index[index].type);
-    RICO_ASSERT(pack->index[index].size < 0x00FFFFFF);
     return pack->buffer + pack->index[index].offset;
 }
 
 internal inline void *pack_lookup(struct pack *pack, u32 id)
 {
-    u32 pack_id = id & pack->id;
+    u32 pack_id = ID_PACK(id);
     RICO_ASSERT(pack_id == pack->id);
 
-    u32 blob_id = id ^ pack->id;
+    u32 blob_id = ID_BLOB(id);
     RICO_ASSERT(blob_id < pack->blob_count);
     
     return pack_read(pack, pack->lookup[blob_id]);
@@ -149,7 +156,7 @@ internal inline u32 blob_start(struct pack *pack, enum rico_hnd_type type)
     pack->index[pack->blobs_used].offset = pack->buffer_used;
     pack->index[pack->blobs_used].size = 0;
 
-    id = id | pack->id;
+    id = ID_GENERATE(pack->id, id);
     return id;
 }
 internal inline u32 blob_offset(struct pack *pack)

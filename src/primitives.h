@@ -32,9 +32,10 @@ void prim_draw_segment(const struct segment *seg,
                        const struct mat4 *model_matrix, struct vec4 color);
 void prim_draw_ray(const struct ray *ray, const struct mat4 *model_matrix,
                    struct vec4 color);
-void prim_draw_bbox(const struct bbox *bbox, const struct mat4 *model_matrix);
+void prim_draw_bbox(const struct bbox *bbox,
+                    const struct rico_transform *model_xform);
 void prim_draw_bbox_color(const struct bbox *bbox,
-                          const struct mat4 *model_matrix,
+                          const struct rico_transform *model_xform,
                           const struct vec4 *color);
 void prim_draw_sphere(const struct sphere *sphere, const struct vec4 *color);
 void prim_free(enum rico_prim prim);

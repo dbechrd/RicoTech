@@ -21,8 +21,9 @@ enum rico_state
 extern const char *rico_state_string[];
 
 int state_update();
-internal inline enum rico_state state_get();
-internal inline bool is_edit_state(enum rico_state state);
+extern inline enum rico_state state_get();
+extern inline bool state_is_edit();
+extern inline bool state_is_paused();
 void init_rico_engine();
 
 #endif // RICO_STATE_H

@@ -13,7 +13,6 @@
 #define MAX_PACK_BUF_SIZE MB(512)
 #define DEFAULT_PACK_BLOBS 32
 #define DEFAULT_PACK_BUF_SIZE KB(256)
-#define PACK_ID_BITS 8
 
 internal const u8 PACK_SIGNATURE[4] = { 'R', 'I', 'C', 'O' };
 //internal const u32 PACK_SIGNATURE =
@@ -88,8 +87,8 @@ internal void pack_compact_buffer(struct pack *pack)
 
 internal void pack_delete(struct pack *pack, u32 id, enum rico_hnd_type type)
 {
-    u32 pack_id = id & pack->id;
-    u32 blob_id = id ^ pack->id;
+    u32 pack_id = ID_PACK(id);
+    u32 blob_id = ID_BLOB(id);
     RICO_ASSERT(blob_id);
     RICO_ASSERT(blob_id < pack->blob_count);
     RICO_ASSERT(pack_id);
@@ -147,41 +146,54 @@ internal void pack_delete(struct pack *pack, u32 id, enum rico_hnd_type type)
 }
 
 internal u32 load_object(struct pack *pack, const char *name,
-                         enum rico_obj_type type, u32 mesh_id, u32 material_id,
+                         enum rico_obj_type type, u32 mesh_count, u32 *mesh_ids,
+                         u32 material_count, u32 *material_ids,
                          const struct bbox *bbox)
 {
     u32 obj_id = blob_start(pack, RICO_HND_OBJECT);
     struct rico_object *obj = push_bytes(pack, sizeof(*obj));
     obj->id = obj_id;
     obj->type = type;
-    obj->trans = VEC3_ZERO;
-    obj->rot = VEC3_ZERO;
+    obj->xform.trans = VEC3_ZERO;
+    obj->xform.rot = VEC3_ZERO;
     if (type == OBJ_STRING_SCREEN)
-        obj->scale = VEC3_SCALE_ASPECT;
+        obj->xform.scale = VEC3_SCALE_ASPECT;
     else
-        obj->scale = VEC3_ONE;
-    obj->transform = MAT4_IDENT;
-    obj->transform_inverse = MAT4_IDENT;
-    obj->mesh_id = mesh_id;
-    obj->material_id = material_id;
+        obj->xform.scale = VEC3_ONE;
+    obj->xform.matrix = MAT4_IDENT;
+    obj->xform.matrix_inverse = MAT4_IDENT;
+    object_transform_update(obj);
+
+    obj->name_offset = blob_offset(pack);
+    push_string(pack, name);
+
+    obj->mesh_count = mesh_count;
+    obj->meshes_offset = blob_offset(pack);
+    push_data(pack, mesh_ids, mesh_count, sizeof(mesh_ids[0]));
+    struct rico_mesh *mesh = 0;
+    if (mesh_ids)
+    {
+        mesh = pack_lookup(pack, mesh_ids[0]);
+        obj->bbox = mesh->bbox;
+    }
+    else if (!mesh_ids)
+    {
+        mesh = pack_lookup(pack_default, MESH_DEFAULT_BBOX);
+        obj->bbox = mesh->bbox;
+    }
+
     if (bbox)
     {
         obj->bbox = *bbox;
     }
-    else if (mesh_id)
+    else if (mesh)
     {
-        struct rico_mesh *mesh = pack_lookup(pack, mesh_id);
         obj->bbox = mesh->bbox;
     }
-    else
-    {
-        struct rico_mesh *mesh = pack_lookup(pack_default, MESH_DEFAULT_BBOX);
-        obj->bbox = mesh->bbox;
-    }
-    object_update_transform(obj);
 
-    obj->name_offset = blob_offset(pack);
-    push_string(pack, name);
+    obj->material_count = material_count;
+    obj->materials_offset = blob_offset(pack);
+    push_data(pack, material_ids, material_count, sizeof(material_ids[0]));
 
     blob_end(pack);
     return obj_id;
@@ -202,7 +214,7 @@ internal u32 load_texture(struct pack *pack, const char *name, GLenum target,
     push_string(pack, name);
 
     tex->pixels_offset = blob_offset(pack);
-    push_data(pack, pixels, tex->width * tex->height * (tex->bpp / 8));
+    push_data(pack, pixels, tex->width * tex->height, tex->bpp / 8);
 
     blob_end(pack);
     return tex_id;
@@ -292,9 +304,11 @@ internal u32 load_font(struct pack *pack, const char *name,
     tex_bpp = buffer[18];
     font->base_char = buffer[19];
 
+#if RICO_DEBUG
     // Check filesize
     u32 pixels_size = tex_width * tex_height * (tex_bpp / 8);
-    RICO_ASSERT(length == MAP_DATA_OFFSET + pixels_size);
+    RICO_ASSERT(MAP_DATA_OFFSET + pixels_size == length);
+#endif
 
     // Calculate font params
     font->row_pitch = tex_width / font->cell_x;
@@ -342,7 +356,8 @@ internal u32 load_font(struct pack *pack, const char *name,
     push_string(pack, name);
 
     tex0->pixels_offset = blob_offset(pack);
-    push_data(pack, &buffer[MAP_DATA_OFFSET], pixels_size);
+    push_data(pack, &buffer[MAP_DATA_OFFSET], tex_width * tex_height,
+              tex_bpp / 8);
 
     blob_end(pack);
 
@@ -380,9 +395,9 @@ internal u32 load_mesh(struct pack *pack, const char *name, u32 vertex_count,
     mesh->name_offset = blob_offset(pack);
     push_string(pack, name);
     mesh->vertices_offset = blob_offset(pack);
-    push_data(pack, vertex_data, vertex_count * sizeof(*vertex_data));
+    push_data(pack, vertex_data, vertex_count, sizeof(*vertex_data));
     mesh->elements_offset = blob_offset(pack);
-    push_data(pack, element_data, element_count * sizeof(*element_data));
+    push_data(pack, element_data, element_count, sizeof(*element_data));
     
     bbox_init_mesh(&mesh->bbox, mesh, COLOR_RED_HIGHLIGHT);
 
@@ -637,8 +652,7 @@ struct pack *pack_init(const char *name, u32 blob_count, u32 buffer_size)
         buffer_size);
     
     static u32 next_pack_id = 1;
-    const u32 pack_id_shift = (sizeof(pack->id) * 8 - PACK_ID_BITS);
-    pack->id = next_pack_id << pack_id_shift;
+    pack->id = next_pack_id;
     next_pack_id++;
 
     memcpy(pack->magic, PACK_SIGNATURE, sizeof(pack->magic));
@@ -819,7 +833,8 @@ void pack_build_alpha()
     //load_obj_file(pack, "mesh/welcome_floor.ric");
     //load_obj_file(pack, "mesh/grass.ric");
 
-    u32 ground_id = load_object(pack, "Ground", OBJ_STATIC, 0, bricks_mat, NULL);
+    u32 ground_id = load_object(pack, "Ground", OBJ_STATIC, 0, NULL, 1,
+                                &bricks_mat, NULL);
     struct rico_object *ground = pack_lookup(pack, ground_id);
     object_rot_x(ground, -90.0f);
     object_scale(ground, &VEC3(64.0f, 64.0f, 0.001f));
@@ -827,7 +842,8 @@ void pack_build_alpha()
 
     //u32 timmy_diff = load_texture_color(pack, "Timmy", COLOR_YELLOW);
     u32 timmy_mat = load_material(pack, "Timmy", 0, 0);
-    u32 timmy_id = load_object(pack, "Timmy", OBJ_STATIC, sphere, timmy_mat, NULL);
+    u32 timmy_id = load_object(pack, "Timmy", OBJ_STATIC, 1, &sphere, 1,
+                               &timmy_mat, NULL);
     struct rico_object *timmy = pack_lookup(pack, timmy_id);
     object_scale(timmy, &VEC3(0.01f, 0.01f, 0.01f));
     //object_rot_x(timmy, 30.0f);

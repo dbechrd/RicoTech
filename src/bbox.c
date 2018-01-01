@@ -1,10 +1,8 @@
 #define BBOX_EPSILON 0.01f
 
-void bbox_init(struct bbox *bbox, struct vec3 p0, struct vec3 p1,
-               struct vec4 color)
+void bbox_init(struct bbox *bbox, struct vec3 p, struct vec4 color)
 {
-    bbox->p[0] = p0;
-    bbox->p[1] = p1;
+    bbox->p = p;
     bbox->color = color;
     bbox->wireframe = true;
 }
@@ -12,38 +10,30 @@ void bbox_init(struct bbox *bbox, struct vec3 p0, struct vec3 p1,
 void bbox_init_mesh(struct bbox *bbox, struct rico_mesh *mesh,
                     struct vec4 color)
 {
-    struct vec3 p0 = VEC3(9999.0f, 9999.0f, 9999.0);
-    struct vec3 p1 = VEC3(-9999.0f, -9999.0f, -9999.0f);
+    float max_x = 0.0f;
+    float max_y = 0.0f;
+    float max_z = 0.0f;
+
+    float absx, absy, absz;
 
     // Find bounds of mesh
     struct rico_vertex *verts = mesh_vertices(mesh);
     for (u32 i = 0; i < mesh->vertex_count; ++i)
     {
-        if (verts[i].pos.x < p0.x)
-            p0.x = verts[i].pos.x;
-        else if (verts[i].pos.x > p1.x)
-            p1.x = verts[i].pos.x;
-
-        if (verts[i].pos.y < p0.y)
-            p0.y = verts[i].pos.y;
-        else if (verts[i].pos.y > p1.y)
-            p1.y = verts[i].pos.y;
-
-        if (verts[i].pos.z < p0.z)
-            p0.z = verts[i].pos.z;
-        else if (verts[i].pos.z > p1.z)
-            p1.z = verts[i].pos.z;
+        absx = (float)fabs(verts[i].pos.x);
+        absy = (float)fabs(verts[i].pos.y);
+        absz = (float)fabs(verts[i].pos.z);
+        max_x = MAX(max_x, absx);
+        max_y = MAX(max_y, absy);
+        max_z = MAX(max_z, absz);
     }
 
     // Prevent infinitesimally small bounds
-    p0.x -= BBOX_EPSILON;
-    p1.x += BBOX_EPSILON;
-    p0.y -= BBOX_EPSILON;
-    p1.y += BBOX_EPSILON;
-    p0.z -= BBOX_EPSILON;
-    p1.z += BBOX_EPSILON;
+    max_x += BBOX_EPSILON;
+    max_y += BBOX_EPSILON;
+    max_z += BBOX_EPSILON;
 
-    bbox_init(bbox, p0, p1, color);
+    bbox_init(bbox, VEC3(max_x, max_y, max_z), color);
 }
 
 #if 0

@@ -303,11 +303,11 @@ struct state_handlers
 };
 struct state_handlers state_handlers[STATE_COUNT] = { 0 };
 
-internal inline enum rico_state state_get()
+inline enum rico_state state_get()
 {
     return state;
 }
-internal inline bool is_edit_state(enum rico_state state)
+inline bool state_is_edit()
 {
     return (state == STATE_EDIT_TRANSLATE ||
             state == STATE_EDIT_ROTATE ||
@@ -315,7 +315,7 @@ internal inline bool is_edit_state(enum rico_state state)
             state == STATE_EDIT_TEXTURE ||
             state == STATE_EDIT_MESH);
 }
-internal inline bool is_paused_state(enum rico_state state)
+inline bool state_is_paused()
 {
     return (state == STATE_MENU_QUIT);
 }
@@ -511,7 +511,7 @@ int state_update()
     ///-------------------------------------------------------------------------
     //| Update
     ///-------------------------------------------------------------------------
-    if (!is_paused_state(state))
+    if (!state_is_paused(state))
     {
         temp_camera_update(dt);
         glref_update(dt);
@@ -630,7 +630,7 @@ internal int shared_camera_events()
 }
 internal int shared_edit_events()
 {
-    RICO_ASSERT(is_edit_state(state));
+    RICO_ASSERT(state_is_edit(state));
 
     enum rico_error err = SUCCESS;
 
@@ -741,7 +741,7 @@ internal int state_edit_cleanup()
 {
     enum rico_error err = SUCCESS;
 
-    if (!is_edit_state(state))
+    if (!state_is_edit(state))
     {
         string_free_slot(STR_SLOT_SELECTED_OBJ);
     }
