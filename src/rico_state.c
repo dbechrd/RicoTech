@@ -7,12 +7,12 @@ const char *rico_state_string[] = {
 
 enum rico_action
 {
-    ACTION_ENGINE_FPS_TOGGLE,
-    ACTION_ENGINE_QUIT,
     ACTION_ENGINE_DEBUG_LIGHTING_TOGGLE,
-    ACTION_ENGINE_MOUSE_LOCK_TOGGLE,
     ACTION_ENGINE_DEBUG_TRIGGER_BREAKPOINT,
+    ACTION_ENGINE_FPS_TOGGLE,
+    ACTION_ENGINE_MOUSE_LOCK_TOGGLE,
     ACTION_ENGINE_VSYNC_TOGGLE,
+    ACTION_ENGINE_QUIT,
 
     ACTION_CAMERA_SLOW_TOGGLE,
     ACTION_CAMERA_RESET,
@@ -558,14 +558,40 @@ internal int shared_engine_events()
 {
     enum rico_error err = SUCCESS;
 
+    // Toggle scene lighting
+    if (chord_pressed(ACTION_ENGINE_DEBUG_LIGHTING_TOGGLE))
+    {
+        // TODO: Pretty sure this is broken
+        // TODO: Use this to change shader program on render
+        enable_lighting = !enable_lighting;
+    }
+#if RICO_DEBUG
+    // DEBUG: Trigger breakpoint
+    else if (chord_pressed(ACTION_ENGINE_DEBUG_TRIGGER_BREAKPOINT))
+    {
+        SDL_TriggerBreakpoint();
+    }
+#endif
     // Toggle FPS counter
-    if (chord_pressed(ACTION_ENGINE_FPS_TOGGLE))
+    else if (chord_pressed(ACTION_ENGINE_FPS_TOGGLE))
     {
         fps_render = !fps_render;
         if (!fps_render)
         {
             string_free_slot(STR_SLOT_FPS);
         }
+    }
+    // Toggle mouse lock-to-window
+    else if (chord_pressed(ACTION_ENGINE_MOUSE_LOCK_TOGGLE))
+    {
+        mouse_lock = !mouse_lock;
+        SDL_SetRelativeMouseMode(mouse_lock);
+    }
+    // Toggle vsync
+    else if (chord_pressed(ACTION_ENGINE_VSYNC_TOGGLE))
+    {
+        vsync = !vsync;
+        SDL_GL_SetSwapInterval(vsync);
     }
     // Save and exit
     else if (chord_pressed(ACTION_ENGINE_QUIT))
@@ -586,31 +612,6 @@ internal int shared_engine_events()
                           "                       ");
         if (err) return err;
         state = STATE_MENU_QUIT;
-    }
-    // Toggle scene lighting
-    else if (chord_pressed(ACTION_ENGINE_DEBUG_LIGHTING_TOGGLE))
-    {
-        // TODO: Pretty sure this is broken
-        // TODO: Use this to change shader program on render
-        enable_lighting = !enable_lighting;
-    }
-    // Toggle mouse lock-to-window
-    else if (chord_pressed(ACTION_ENGINE_MOUSE_LOCK_TOGGLE))
-    {
-        mouse_lock = !mouse_lock;
-        SDL_SetRelativeMouseMode(mouse_lock);
-    }
-#if RICO_DEBUG
-    // DEBUG: Trigger breakpoint
-    else if (chord_pressed(ACTION_ENGINE_DEBUG_TRIGGER_BREAKPOINT))
-    {
-        SDL_TriggerBreakpoint();
-    }
-#endif
-    else if (chord_pressed(ACTION_ENGINE_VSYNC_TOGGLE))
-    {
-        vsync = !vsync;
-        SDL_GL_SetSwapInterval(vsync);
     }
 
     return err;
@@ -1424,8 +1425,8 @@ internal int state_engine_init()
     CHORD_1(ACTION_ENGINE_DEBUG_TRIGGER_BREAKPOINT, SDL_SCANCODE_P);
     CHORD_1(ACTION_ENGINE_FPS_TOGGLE,               SDL_SCANCODE_2);
     CHORD_1(ACTION_ENGINE_MOUSE_LOCK_TOGGLE,        SDL_SCANCODE_M);
-    CHORD_1(ACTION_ENGINE_QUIT,                     SDL_SCANCODE_ESCAPE);
     CHORD_1(ACTION_ENGINE_VSYNC_TOGGLE,             SDL_SCANCODE_V);
+    CHORD_1(ACTION_ENGINE_QUIT,                     SDL_SCANCODE_ESCAPE);
 
     // Camera
     CHORD_1(ACTION_CAMERA_SLOW_TOGGLE,              SDL_SCANCODE_R);
