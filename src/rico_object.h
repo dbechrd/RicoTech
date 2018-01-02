@@ -2,6 +2,7 @@
 #define RICO_OBJECT_H
 
 #define RICO_OBJ_TYPES(f) \
+    f(OBJ_NULL)           \
     f(OBJ_STATIC)         \
     f(OBJ_STRING_WORLD)   \
     f(OBJ_STRING_SCREEN)  \
@@ -74,13 +75,11 @@ const struct mat4 *object_matrix_get(struct rico_object *object);
 bool object_collide_ray(float *_dist, struct rico_object *object,
                         const struct ray *ray);
 bool object_collide_ray_type(struct pack *pack, struct rico_object **_object,
-                             float *_dist, enum rico_obj_type type,
-                             const struct ray *ray);
+                             float *_dist, const struct ray *ray);
 void object_interact(struct rico_object *obj);
 void object_update(struct rico_object *obj);
-void object_render_type(struct pack *pack, enum rico_obj_type type,
-                        const struct program_pbr *prog,
-                        const struct camera *camera);
+void object_render(struct pack *pack, const struct program_pbr *prog,
+                   const struct camera *camera);
 int object_print(struct rico_object *object);
 
 #endif // RICO_OBJECT_H

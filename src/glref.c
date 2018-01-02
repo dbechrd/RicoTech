@@ -302,24 +302,16 @@ void glref_render(struct camera *camera)
     //--------------------------------------------------------------------------
     // Render objects
     //--------------------------------------------------------------------------
-    object_render_type(pack_active, OBJ_STATIC, prog_pbr, camera);
-    object_render_type(pack_transient, OBJ_STATIC, prog_pbr, camera);
-    object_render_type(pack_frame, OBJ_STATIC, prog_pbr, camera);
-    object_render_type(pack_active, OBJ_STRING_WORLD, prog_pbr, camera);
-    object_render_type(pack_transient, OBJ_STRING_WORLD, prog_pbr, camera);
-    object_render_type(pack_frame, OBJ_STRING_WORLD, prog_pbr, camera);
+    object_render(pack_active, prog_pbr, camera);
+    object_render(pack_transient, prog_pbr, camera);
+    object_render(pack_frame, prog_pbr, camera);
 
     //--------------------------------------------------------------------------
     // Axes labels (bboxes)
     //--------------------------------------------------------------------------
-    //RICO_ASSERT(axis_bbox.hnd.uid != UID_NULL);
     prim_draw_bbox_color(&axis_bbox, &x_axis_transform, &COLOR_RED);
     prim_draw_bbox_color(&axis_bbox, &y_axis_transform, &COLOR_GREEN);
     prim_draw_bbox_color(&axis_bbox, &z_axis_transform, &COLOR_BLUE);
-
-    object_render_type(pack_active, OBJ_STRING_SCREEN, prog_pbr, camera);
-    object_render_type(pack_transient, OBJ_STRING_SCREEN, prog_pbr, camera);
-    object_render_type(pack_frame, OBJ_STRING_SCREEN, prog_pbr, camera);
 }
 void free_glref()
 {

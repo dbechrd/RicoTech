@@ -896,7 +896,7 @@ void pack_build_alpha()
 
     //u32 timmy_diff = load_texture_color(pack, "Timmy", COLOR_YELLOW);
     u32 timmy_mat = load_material(pack, "Timmy", 0, 0);
-    u32 timmy_id = load_object(pack, "Timmy", OBJ_STATIC, 1, &sphere, 1,
+    u32 timmy_id = load_object(pack, "Timmy", OBJ_LIGHT_SWITCH, 1, &sphere, 1,
                                &timmy_mat, NULL);
     struct rico_object *timmy = pack_lookup(pack, timmy_id);
     object_scale(timmy, &VEC3(0.01f, 0.01f, 0.01f));

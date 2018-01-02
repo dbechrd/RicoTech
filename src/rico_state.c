@@ -27,9 +27,12 @@ enum rico_action
     ACTION_MOVE_BACKWARD,
     ACTION_MOVE_SPRINT,
 
+    ACTION_PLAY_INTERACT,
+
     ACTION_EDIT_SAVE,
     ACTION_EDIT_CYCLE,
     ACTION_EDIT_CYCLE_REVERSE,
+    ACTION_EDIT_MOUSE_PICK,
     ACTION_EDIT_BBOX_RECALCULATE,
     ACTION_EDIT_CREATE_OBJECT,
     ACTION_EDIT_SELECTED_DUPLICATE,
@@ -78,7 +81,7 @@ enum rico_action
     ACTION_COUNT
 };
 
-typedef u8 rico_key;
+typedef u16 rico_key;
 
 struct rico_keychord
 {
@@ -185,19 +188,28 @@ global u8 keystate_buffers[2][SDL_NUM_SCANCODES] = { 0 };
 global u8 *keys      = keystate_buffers[0];
 global u8 *keys_prev = keystate_buffers[1];
 
-const u8 RICO_SCANCODE_ALT   = 1;
-const u8 RICO_SCANCODE_CTRL  = 2;
-const u8 RICO_SCANCODE_SHIFT = 3;
+const rico_key RICO_SCANCODE_ALT   = (rico_key)301;
+const rico_key RICO_SCANCODE_CTRL  = (rico_key)302;
+const rico_key RICO_SCANCODE_SHIFT = (rico_key)303;
+const rico_key RICO_SCANCODE_LMB   = (rico_key)304;
+const rico_key RICO_SCANCODE_MMB   = (rico_key)305;
+const rico_key RICO_SCANCODE_RMB   = (rico_key)306;
 
 #define KEY_IS_DOWN(key) (key == 0 || keys[key] || \
 (key == RICO_SCANCODE_ALT   && (keys[SDL_SCANCODE_LALT]   || keys[SDL_SCANCODE_RALT]))  || \
 (key == RICO_SCANCODE_CTRL  && (keys[SDL_SCANCODE_LCTRL]  || keys[SDL_SCANCODE_RCTRL])) || \
-(key == RICO_SCANCODE_SHIFT && (keys[SDL_SCANCODE_LSHIFT] || keys[SDL_SCANCODE_RSHIFT])))
+(key == RICO_SCANCODE_SHIFT && (keys[SDL_SCANCODE_LSHIFT] || keys[SDL_SCANCODE_RSHIFT])) || \
+(key == RICO_SCANCODE_LMB && (mouse_buttons & SDL_BUTTON(SDL_BUTTON_LEFT))) || \
+(key == RICO_SCANCODE_MMB && (mouse_buttons & SDL_BUTTON(SDL_BUTTON_MIDDLE))) || \
+(key == RICO_SCANCODE_RMB && (mouse_buttons & SDL_BUTTON(SDL_BUTTON_RIGHT))))
 
 #define KEY_WAS_DOWN(key) (key == 0 || keys_prev[key] || \
 (key == RICO_SCANCODE_ALT   && (keys_prev[SDL_SCANCODE_LALT]   || keys_prev[SDL_SCANCODE_RALT]))  || \
 (key == RICO_SCANCODE_CTRL  && (keys_prev[SDL_SCANCODE_LCTRL]  || keys_prev[SDL_SCANCODE_RCTRL])) || \
-(key == RICO_SCANCODE_SHIFT && (keys_prev[SDL_SCANCODE_LSHIFT] || keys_prev[SDL_SCANCODE_RSHIFT])))
+(key == RICO_SCANCODE_SHIFT && (keys_prev[SDL_SCANCODE_LSHIFT] || keys_prev[SDL_SCANCODE_RSHIFT])) || \
+(key == RICO_SCANCODE_LMB && (mouse_buttons_prev & SDL_BUTTON(SDL_BUTTON_LEFT))) || \
+(key == RICO_SCANCODE_MMB && (mouse_buttons_prev & SDL_BUTTON(SDL_BUTTON_MIDDLE))) || \
+(key == RICO_SCANCODE_RMB && (mouse_buttons_prev & SDL_BUTTON(SDL_BUTTON_RIGHT))))
 
 #define KEY_PRESSED(key)  ( KEY_IS_DOWN(key) && !KEY_WAS_DOWN(key))
 #define KEY_RELEASED(key) (!KEY_IS_DOWN(key) &&  KEY_WAS_DOWN(key))
@@ -279,7 +291,7 @@ internal int save_file()
     return err;
 #endif
 }
-internal void select_first_obj()
+internal struct rico_object *mouse_first_obj()
 {
     struct rico_object *obj_collided = { 0 };
     float dist;
@@ -287,9 +299,9 @@ internal void select_first_obj()
     // Camera forward ray v. scene
     struct ray cam_fwd;
     camera_fwd(&cam_fwd, &cam_player);
-    object_collide_ray_type(pack_active, &obj_collided, &dist, OBJ_STATIC,
-                            &cam_fwd);
-    select_obj(obj_collided, false);
+    object_collide_ray_type(pack_active, &obj_collided, &dist, &cam_fwd);
+
+    return obj_collided;
 }
 
 // Current state
@@ -637,15 +649,13 @@ internal int shared_edit_events()
 
     enum rico_error err = SUCCESS;
 
-    // TODO: Refactor mouse check out into chord_pressed() somehow?
     // Raycast object selection
-    if (mouse_buttons & SDL_BUTTON(SDL_BUTTON_LEFT))
+    if (chord_is_down(ACTION_EDIT_MOUSE_PICK))
     {
-        select_first_obj();
+        select_obj(mouse_first_obj(), false);
     }
-
     // Recalculate bounding boxes of all objects
-    if (chord_pressed(ACTION_EDIT_BBOX_RECALCULATE))
+    else if (chord_pressed(ACTION_EDIT_BBOX_RECALCULATE))
     {
         recalculate_all_bbox();
     }
@@ -731,8 +741,15 @@ internal int state_play_explore()
     err = shared_engine_events(); if (err || state != state_prev) return err;
     err = shared_camera_events(); if (err || state != state_prev) return err;
 
+    // Interact with clicked object
+    if (chord_pressed(ACTION_PLAY_INTERACT))
+    {
+        struct rico_object *obj = mouse_first_obj();
+        if (obj)
+            object_interact(obj);
+    }
     // Enter edit mode
-    if (chord_pressed(ACTION_ENGINE_EDITOR_TOGGLE))
+    else if (chord_pressed(ACTION_ENGINE_EDITOR_TOGGLE))
     {
         state = STATE_EDIT_TRANSLATE;
         selected_print();
@@ -1414,10 +1431,13 @@ internal int state_engine_init()
     CHORD_1(ACTION_MOVE_BACKWARD,                   SDL_SCANCODE_S);
     CHORD_1(ACTION_MOVE_SPRINT,                     RICO_SCANCODE_SHIFT);
 
+    CHORD_1(ACTION_PLAY_INTERACT,                   RICO_SCANCODE_LMB);
+
     // Editor
     CHORD_2(ACTION_EDIT_SAVE,                       RICO_SCANCODE_CTRL,   SDL_SCANCODE_S);
     CHORD_2(ACTION_EDIT_CYCLE_REVERSE,              RICO_SCANCODE_SHIFT,  SDL_SCANCODE_TAB);
     CHORD_1(ACTION_EDIT_CYCLE,                      SDL_SCANCODE_TAB);
+    CHORD_1(ACTION_EDIT_MOUSE_PICK,                 RICO_SCANCODE_LMB);
     CHORD_2(ACTION_EDIT_BBOX_RECALCULATE,           RICO_SCANCODE_SHIFT,  SDL_SCANCODE_B);
     CHORD_1(ACTION_EDIT_CREATE_OBJECT,              SDL_SCANCODE_INSERT);
     CHORD_2(ACTION_EDIT_SELECTED_DUPLICATE,         RICO_SCANCODE_CTRL,   SDL_SCANCODE_D);
