@@ -172,17 +172,9 @@ internal int init_sdl()
                           SDL_GetError());
     }
 
-    // Disable V-sync
-    sdl_err = SDL_GL_SetSwapInterval(1); //Default on
-    if (sdl_err < 0) {
-        return RICO_ERROR(ERR_SDL_INIT, "SDL_GL_SetSwapInterval error: %s",
-                          SDL_GetError());
-    }
-    else
-    {
-        int swap = SDL_GL_GetSwapInterval();
-        fprintf(stdout, "VSync = %s\n", (swap) ? "Enabled" : "Disabled");
-    }
+    // Log default VSync state
+    int swap = SDL_GL_GetSwapInterval();
+    fprintf(stdout, "VSync = %s\n", (swap) ? "Enabled" : "Disabled");
 
     return SUCCESS;
 }

@@ -7,12 +7,12 @@ const char *rico_state_string[] = {
 
 enum rico_action
 {
-    ACTION_ENGINE_DEBUG_LIGHTING_TOGGLE,
-    ACTION_ENGINE_DEBUG_TRIGGER_BREAKPOINT,
-    ACTION_ENGINE_EDITOR_TOGGLE,
     ACTION_ENGINE_FPS_TOGGLE,
-    ACTION_ENGINE_MOUSE_LOCK_TOGGLE,
     ACTION_ENGINE_QUIT,
+    ACTION_ENGINE_DEBUG_LIGHTING_TOGGLE,
+    ACTION_ENGINE_MOUSE_LOCK_TOGGLE,
+    ACTION_ENGINE_DEBUG_TRIGGER_BREAKPOINT,
+    ACTION_ENGINE_VSYNC_TOGGLE,
 
     ACTION_CAMERA_SLOW_TOGGLE,
     ACTION_CAMERA_RESET,
@@ -27,8 +27,10 @@ enum rico_action
     ACTION_MOVE_BACKWARD,
     ACTION_MOVE_SPRINT,
 
+    ACTION_PLAY_EDITOR,
     ACTION_PLAY_INTERACT,
 
+    ACTION_EDIT_QUIT,
     ACTION_EDIT_SAVE,
     ACTION_EDIT_CYCLE,
     ACTION_EDIT_CYCLE_REVERSE,
@@ -176,8 +178,9 @@ global u64 last_cycles;
 
 // FPS UI
 global u64 fps_last_render;
-global u64 fps_render_delta = 1; //200000;  // 200 ms
+global u64 fps_render_delta = 200000;  // 200 ms
 global bool fps_render = false;
+global bool vsync = true;
 
 ///|////////////////////////////////////////////////////////////////////////////
 // Mouse and keyboard state
@@ -604,6 +607,11 @@ internal int shared_engine_events()
         SDL_TriggerBreakpoint();
     }
 #endif
+    else if (chord_pressed(ACTION_ENGINE_VSYNC_TOGGLE))
+    {
+        vsync = !vsync;
+        SDL_GL_SetSwapInterval(vsync);
+    }
 
     return err;
 }
@@ -665,7 +673,7 @@ internal int shared_edit_events()
         selected_duplicate();
     }
     // Exit edit mode
-    else if (chord_pressed(ACTION_ENGINE_EDITOR_TOGGLE))
+    else if (chord_pressed(ACTION_EDIT_QUIT))
     {
         state = STATE_PLAY_EXPLORE;
     }
@@ -749,7 +757,7 @@ internal int state_play_explore()
             object_interact(obj);
     }
     // Enter edit mode
-    else if (chord_pressed(ACTION_ENGINE_EDITOR_TOGGLE))
+    else if (chord_pressed(ACTION_PLAY_EDITOR))
     {
         state = STATE_EDIT_TRANSLATE;
         selected_print();
@@ -1393,16 +1401,19 @@ internal int state_engine_init()
     view_vel = VEC3_ZERO;
     view_acc = VEC3_ZERO;
 
+    int sdl_err = SDL_GL_SetSwapInterval(vsync);
+    if (sdl_err < 0) {
+        return RICO_ERROR(ERR_SDL_INIT, "SDL_GL_SetSwapInterval error: %s",
+                          SDL_GetError());
+    }
+
     // Reset mouse delta after window opens and mouse is locked to screen
     SDL_SetRelativeMouseMode(mouse_lock);
     mouse_delta.x = 0;
     mouse_delta.y = 0;
 
-    // TODO: Support multiple SCANCODES at the same time (for e.g. CTRL, SHIFT)
     // TODO: Load from config file?
     // Initialize key map
-
-    //struct rico_keychord blah = (struct rico_keychord) { 1, 2, 3 }
 
 #define CHORD_3(action, k0, k1, k2) action_chords[action] = CHORD3(k0, k1, k2)
 #define CHORD_2(action, k0, k1)     action_chords[action] = CHORD2(k0, k1)
@@ -1411,10 +1422,10 @@ internal int state_engine_init()
     // Engine
     CHORD_1(ACTION_ENGINE_DEBUG_LIGHTING_TOGGLE,    SDL_SCANCODE_L);
     CHORD_1(ACTION_ENGINE_DEBUG_TRIGGER_BREAKPOINT, SDL_SCANCODE_P);
-    CHORD_1(ACTION_ENGINE_EDITOR_TOGGLE,            SDL_SCANCODE_GRAVE);
     CHORD_1(ACTION_ENGINE_FPS_TOGGLE,               SDL_SCANCODE_2);
     CHORD_1(ACTION_ENGINE_MOUSE_LOCK_TOGGLE,        SDL_SCANCODE_M);
     CHORD_1(ACTION_ENGINE_QUIT,                     SDL_SCANCODE_ESCAPE);
+    CHORD_1(ACTION_ENGINE_VSYNC_TOGGLE,             SDL_SCANCODE_V);
 
     // Camera
     CHORD_1(ACTION_CAMERA_SLOW_TOGGLE,              SDL_SCANCODE_R);
@@ -1431,9 +1442,11 @@ internal int state_engine_init()
     CHORD_1(ACTION_MOVE_BACKWARD,                   SDL_SCANCODE_S);
     CHORD_1(ACTION_MOVE_SPRINT,                     RICO_SCANCODE_SHIFT);
 
+    CHORD_1(ACTION_PLAY_EDITOR,                     SDL_SCANCODE_GRAVE);
     CHORD_1(ACTION_PLAY_INTERACT,                   RICO_SCANCODE_LMB);
 
     // Editor
+    CHORD_1(ACTION_EDIT_QUIT,                       SDL_SCANCODE_GRAVE);
     CHORD_2(ACTION_EDIT_SAVE,                       RICO_SCANCODE_CTRL,   SDL_SCANCODE_S);
     CHORD_2(ACTION_EDIT_CYCLE_REVERSE,              RICO_SCANCODE_SHIFT,  SDL_SCANCODE_TAB);
     CHORD_1(ACTION_EDIT_CYCLE,                      SDL_SCANCODE_TAB);
