@@ -68,6 +68,9 @@ enum rico_action
     ACTION_EDIT_SCALE_DELTA_INCREASE,
     ACTION_EDIT_SCALE_DELTA_DECREASE,
 
+    ACTION_EDIT_MATERIAL_NEXT,
+    ACTION_EDIT_MATERIAL_PREVIOUS,
+
     ACTION_EDIT_MESH_NEXT,
     ACTION_EDIT_MESH_PREVIOUS,
     ACTION_EDIT_MESH_BBOX_RECALCULATE,
@@ -312,7 +315,7 @@ inline bool state_is_edit()
     return (state == STATE_EDIT_TRANSLATE ||
             state == STATE_EDIT_ROTATE ||
             state == STATE_EDIT_SCALE ||
-            state == STATE_EDIT_TEXTURE ||
+            state == STATE_EDIT_MATERIAL ||
             state == STATE_EDIT_MESH);
 }
 inline bool state_is_paused()
@@ -663,7 +666,7 @@ internal int shared_edit_events()
         {
         case STATE_EDIT_ROTATE:
         case STATE_EDIT_SCALE:
-        case STATE_EDIT_TEXTURE:
+        case STATE_EDIT_MATERIAL:
         case STATE_EDIT_MESH:
             state--;
             break;
@@ -682,7 +685,7 @@ internal int shared_edit_events()
         case STATE_EDIT_TRANSLATE:
         case STATE_EDIT_ROTATE:
         case STATE_EDIT_SCALE:
-        case STATE_EDIT_TEXTURE:
+        case STATE_EDIT_MATERIAL:
             state++;
             break;
         case STATE_EDIT_MESH:
@@ -1016,7 +1019,7 @@ internal int state_edit_scale()
 
     return err;
 }
-internal int state_edit_texture()
+internal int state_edit_material()
 {
     enum rico_error err = SUCCESS;
 
@@ -1024,7 +1027,16 @@ internal int state_edit_texture()
     err = shared_engine_events(); if (err || state != state_prev) return err;
     err = shared_camera_events(); if (err || state != state_prev) return err;
 
-    // TODO: Add texture events
+    // Cycle selected object's material
+    if (chord_pressed(ACTION_EDIT_MATERIAL_NEXT))
+    {
+        selected_material_next();
+    }
+    // Cycle selected object's material (in reverse)
+    else if (chord_pressed(ACTION_EDIT_MATERIAL_PREVIOUS))
+    {
+        selected_material_prev();
+    }
 
     return err;
 }
@@ -1444,6 +1456,9 @@ internal int state_engine_init()
     CHORD_1(ACTION_EDIT_SCALE_DELTA_INCREASE,       SDL_SCANCODE_KP_PLUS);
     CHORD_1(ACTION_EDIT_SCALE_DELTA_DECREASE,       SDL_SCANCODE_KP_MINUS);
 
+    CHORD_1(ACTION_EDIT_MATERIAL_NEXT,              SDL_SCANCODE_RIGHT);
+    CHORD_1(ACTION_EDIT_MATERIAL_PREVIOUS,          SDL_SCANCODE_LEFT);
+
     CHORD_1(ACTION_EDIT_MESH_NEXT,                  SDL_SCANCODE_RIGHT);
     CHORD_1(ACTION_EDIT_MESH_PREVIOUS,              SDL_SCANCODE_LEFT);
     CHORD_1(ACTION_EDIT_MESH_BBOX_RECALCULATE,      SDL_SCANCODE_B);
@@ -1472,14 +1487,14 @@ void init_rico_engine()
     state_handlers[STATE_EDIT_TRANSLATE ].run = &state_edit_translate;
     state_handlers[STATE_EDIT_ROTATE    ].run = &state_edit_rotate;
     state_handlers[STATE_EDIT_SCALE     ].run = &state_edit_scale;
-    state_handlers[STATE_EDIT_TEXTURE   ].run = &state_edit_texture;
+    state_handlers[STATE_EDIT_MATERIAL  ].run = &state_edit_material;
     state_handlers[STATE_EDIT_MESH      ].run = &state_edit_mesh;
     state_handlers[STATE_TEXT_INPUT     ].run = &state_text_input;
 
     state_handlers[STATE_EDIT_TRANSLATE ].cleanup = &state_edit_cleanup;
     state_handlers[STATE_EDIT_ROTATE    ].cleanup = &state_edit_cleanup;
     state_handlers[STATE_EDIT_SCALE     ].cleanup = &state_edit_cleanup;
-    state_handlers[STATE_EDIT_TEXTURE   ].cleanup = &state_edit_cleanup;
+    state_handlers[STATE_EDIT_MATERIAL  ].cleanup = &state_edit_cleanup;
     state_handlers[STATE_EDIT_MESH      ].cleanup = &state_edit_cleanup;
 
     state = STATE_ENGINE_INIT;

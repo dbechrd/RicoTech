@@ -113,6 +113,7 @@ void object_select_toggle(struct rico_object *object)
 
 void object_select(struct rico_object *object)
 {
+    RICO_ASSERT(object_selectable(object));
     object->bbox.wireframe = false;
 }
 

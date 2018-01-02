@@ -23,6 +23,50 @@ struct pack *pack_active = 0;
 struct pack *pack_transient = 0;
 struct pack *pack_frame = 0;
 
+global void *pack_next(struct pack *pack, u32 id, enum rico_hnd_type type)
+{
+    if (pack->blobs_used == 0)
+        return NULL;
+
+    u32 start_idx = (id) ? pack->lookup[ID_BLOB(id)] : 0;
+    u32 idx = start_idx;
+    do
+    {
+        idx++;
+        if (idx == pack->blobs_used)
+            idx = 1;
+
+        if (pack->index[idx].type == type)
+        {
+            return pack_read(pack, idx);
+        }
+    } while (idx != start_idx);
+
+    return NULL;
+}
+
+global void *pack_prev(struct pack *pack, u32 id, enum rico_hnd_type type)
+{
+    if (pack->blobs_used == 0)
+        return NULL;
+
+    u32 start_idx = (id) ? pack->lookup[ID_BLOB(id)] : pack->blobs_used;
+    u32 idx = start_idx;
+    do
+    {
+        idx--;
+        if (idx == 0)
+            idx = pack->blobs_used - 1;
+
+        if (pack->index[idx].type == type)
+        {
+            return pack_read(pack, idx);
+        }
+    } while (idx != start_idx);
+
+    return NULL;
+}
+
 internal void pack_expand(struct pack *pack)
 {
     // TODO: Expand pack by min(size * 2, MAX_EXPAND)
@@ -167,19 +211,20 @@ internal u32 load_object(struct pack *pack, const char *name,
     obj->name_offset = blob_offset(pack);
     push_string(pack, name);
 
-    obj->mesh_count = mesh_count;
     obj->meshes_offset = blob_offset(pack);
-    push_data(pack, mesh_ids, mesh_count, sizeof(mesh_ids[0]));
-    struct rico_mesh *mesh = 0;
-    if (mesh_ids)
+    obj->mesh_count = mesh_count;
+    struct rico_mesh *mesh;
+    if (mesh_count)
     {
+        push_data(pack, mesh_ids, mesh_count, sizeof(mesh_ids[0]));
         mesh = pack_lookup(pack, mesh_ids[0]);
-        obj->bbox = mesh->bbox;
     }
-    else if (!mesh_ids)
+    else
     {
+        // Every object must have at least one mesh slot
+        obj->mesh_count = 1;
+        push_bytes(pack, sizeof(mesh_ids[0]));
         mesh = pack_lookup(pack_default, MESH_DEFAULT_BBOX);
-        obj->bbox = mesh->bbox;
     }
 
     if (bbox)
@@ -191,9 +236,18 @@ internal u32 load_object(struct pack *pack, const char *name,
         obj->bbox = mesh->bbox;
     }
 
-    obj->material_count = material_count;
     obj->materials_offset = blob_offset(pack);
-    push_data(pack, material_ids, material_count, sizeof(material_ids[0]));
+    obj->material_count = material_count;
+    if (material_count)
+    {
+        push_data(pack, material_ids, material_count, sizeof(material_ids[0]));
+    }
+    else
+    {
+        // Every object must have at least one material slot
+        obj->material_count = 1;
+        push_bytes(pack, sizeof(material_ids[0]));
+    }
 
     blob_end(pack);
     return obj_id;

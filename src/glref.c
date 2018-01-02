@@ -100,74 +100,14 @@ void select_obj(struct rico_object *object, bool force)
     selected_print();
 }
 
-// TODO: Refactor this out into pack_next(pack, id)
 void select_next_obj()
 {
-    if (pack_active->blobs_used == 0)
-        return;
-
-    struct rico_object *obj;
-
-    u32 start_index;
-    if (selected_obj_id)
-        start_index = pack_active->lookup[ID_BLOB(selected_obj_id)];
-    else
-        start_index = 1;
-
-    u32 index = start_index;
-    do
-    {
-        index++;
-        if (index == pack_active->blobs_used)
-            break;
-
-        if (pack_active->index[index].type == RICO_HND_OBJECT)
-        {
-            obj = pack_read(pack_active, index);
-            if (object_selectable(obj))
-            {
-                select_obj(obj, false);
-                return;
-            }
-        }
-    } while (index != start_index);
-
-    select_obj(NULL, false);
+    select_obj(pack_next(pack_active, selected_obj_id, RICO_HND_OBJECT), false);
 }
 
-// TODO: Refactor this out into pack_prev(pack, id)
 void select_prev_obj()
 {
-    if (pack_active->blobs_used == 0)
-        return;
-
-    struct rico_object *obj;
-
-    u32 start_index;
-    if (selected_obj_id)
-        start_index = pack_active->lookup[ID_BLOB(selected_obj_id)];
-    else
-        start_index = pack_active->blobs_used;
-
-    u32 index = start_index;
-    do
-    {
-        index--;
-        if (index == 0)
-            break;
-
-        if (pack_active->index[index].type == RICO_HND_OBJECT)
-        {
-            obj = pack_read(pack_active, index);
-            if (object_selectable(obj))
-            {
-                select_obj(obj, false);
-                return;
-            }
-        }
-    } while (index != start_index);
-
-    select_obj(NULL, false);
+    select_obj(pack_prev(pack_active, selected_obj_id, RICO_HND_OBJECT), false);
 }
 
 void selected_print()
@@ -242,30 +182,70 @@ void selected_scale(const struct vec3 *offset)
     object_print(obj);
 }
 
-void selected_mesh_next()
+void selected_material_next()
 {
-#if 0
-    if (!selected_obj)
+    if (!selected_obj_id)
         return;
 
-    object_mesh_set(selected_obj, chunk_next_id(selected_obj->hnd.chunk,
-                                                selected_obj->mesh_id));
-    object_select(selected_obj);
-    object_print(selected_obj);
-#endif
+    struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
+    u32 *materials = object_materials(obj);
+
+    struct rico_mesh *next_material = pack_next(pack_active, materials[0],
+                                                RICO_HND_MATERIAL);
+    if (next_material)
+    {
+        materials[0] = next_material->id;
+        object_print(obj);
+    }
+}
+
+void selected_material_prev()
+{
+    if (!selected_obj_id)
+        return;
+
+    struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
+    u32 *materials = object_materials(obj);
+
+    struct rico_mesh *next_material = pack_prev(pack_active, materials[0],
+                                                RICO_HND_MATERIAL);
+    if (next_material)
+    {
+        materials[0] = next_material->id;
+        object_print(obj);
+    }
+}
+
+void selected_mesh_next()
+{
+    if (!selected_obj_id)
+        return;
+
+    struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
+    u32 *meshes = object_meshes(obj);
+
+    struct rico_mesh *next_mesh = pack_next(pack_active, meshes[0], RICO_HND_MESH);
+    if (next_mesh)
+    {
+        meshes[0] = next_mesh->id;
+        object_print(obj);
+    }
 }
 
 void selected_mesh_prev()
 {
-#if 0
-    if (!selected_obj)
+    if (!selected_obj_id)
         return;
 
-    object_mesh_set(selected_obj, chunk_prev_id(selected_obj->hnd.chunk,
-                                                selected_obj->mesh_id));
-    object_select(selected_obj);
-    object_print(selected_obj);
-#endif
+    struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
+    u32 *meshes = object_meshes(obj);
+
+    struct rico_mesh *prev_mesh = pack_prev(pack_active, meshes[0], RICO_HND_MESH);
+    if (prev_mesh)
+    {
+        meshes[0] = prev_mesh->id;
+        object_print(obj);
+    }
 }
 
 void selected_bbox_reset()

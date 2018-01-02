@@ -61,6 +61,8 @@ extern struct pack *pack_transient;
 extern struct pack *pack_frame;
 
 global void pack_build_all();
+global void *pack_next(struct pack *pack, u32 id, enum rico_hnd_type type);
+global void *pack_prev(struct pack *pack, u32 id, enum rico_hnd_type type);
 global int pack_load(const char *filename, struct pack **_pack);
 global void pack_expand(struct pack *pack);
 global void pack_compact_buffer(struct pack *pack);
@@ -125,7 +127,7 @@ internal inline void *pack_read(struct pack *pack, u32 index)
     return pack->buffer + pack->index[index].offset;
 }
 
-internal inline void *pack_lookup(struct pack *pack, u32 id)
+global inline void *pack_lookup(struct pack *pack, u32 id)
 {
     u32 pack_id = ID_PACK(id);
     RICO_ASSERT(pack_id == pack->id);
@@ -135,7 +137,6 @@ internal inline void *pack_lookup(struct pack *pack, u32 id)
     
     return pack_read(pack, pack->lookup[blob_id]);
 }
-
 
 internal inline u32 blob_start(struct pack *pack, enum rico_hnd_type type)
 {

@@ -7,7 +7,7 @@
     f(STATE_EDIT_TRANSLATE)     \
     f(STATE_EDIT_ROTATE)        \
     f(STATE_EDIT_SCALE)         \
-    f(STATE_EDIT_TEXTURE)       \
+    f(STATE_EDIT_MATERIAL)       \
     f(STATE_EDIT_MESH)          \
     f(STATE_MENU_QUIT)          \
     f(STATE_TEXT_INPUT)         \
