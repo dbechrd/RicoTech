@@ -64,8 +64,27 @@ global void pack_build_all();
 global void *pack_next(struct pack *pack, u32 id, enum rico_hnd_type type);
 global void *pack_prev(struct pack *pack, u32 id, enum rico_hnd_type type);
 global int pack_load(const char *filename, struct pack **_pack);
-global void pack_expand(struct pack *pack);
-global void pack_compact_buffer(struct pack *pack);
+internal void pack_expand(struct pack *pack);
+internal void pack_compact_buffer(struct pack *pack);
+global void pack_delete(struct pack *pack, u32 id, enum rico_hnd_type type);
+
+global u32 load_object(struct pack *pack, const char *name,
+                       enum rico_obj_type type, u32 mesh_count, u32 *mesh_ids,
+                       u32 material_count, u32 *material_ids, u32 prop_count,
+                       struct obj_property *props, const struct bbox *bbox);
+global u32 load_texture(struct pack *pack, const char *name, GLenum target,
+                        u32 width, u32 height, u8 bpp, u8 *pixels);
+global u32 load_texture_file(struct pack *pack, const char *name,
+                             const char *filename);
+global u32 load_texture_color(struct pack *pack, const char *name,
+                              struct vec4 color);
+global u32 load_material(struct pack *pack, const char *name, u32 tex0,
+                         u32 tex1);
+global u32 load_font(struct pack *pack, const char *name,
+                     const char *filename, u32 *font_mat);
+global u32 load_mesh(struct pack *pack, const char *name, u32 vertex_count,
+                     const struct rico_vertex *vertex_data, u32 element_count,
+                     const GLuint *element_data);
 
 internal inline void *pack_push(struct pack *pack, u32 bytes)
 {

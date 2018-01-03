@@ -53,7 +53,7 @@ void create_obj()
 
     // Create new object and select it
     u32 new_obj_id = load_object(pack_active, name, OBJ_STATIC, 0, NULL, 0,
-                                 NULL, NULL);
+                                 NULL, 0, NULL, NULL);
     struct rico_object *obj = pack_lookup(pack_active, new_obj_id);
     select_obj(obj, false);
 }

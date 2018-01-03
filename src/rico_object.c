@@ -17,6 +17,11 @@ global u32 *object_materials(struct rico_object *obj)
     RICO_ASSERT(obj->materials_offset);
     return (u32 *)((u8 *)obj + obj->materials_offset);
 }
+global struct obj_property *object_props(struct rico_object *obj)
+{
+    RICO_ASSERT(obj->prop_count);
+    return (struct obj_property *)((u8 *)obj + obj->props_offset);
+}
 global u32 object_mesh(struct rico_object *obj)
 {
     return (obj->mesh_count)
@@ -29,6 +34,17 @@ global u32 object_material(struct rico_object *obj)
         ? object_materials(obj)[obj->material_idx]
         : 0;
 }
+global struct obj_property *object_prop(struct rico_object *obj,
+                                        enum obj_prop_type type)
+{
+    struct obj_property *props = object_props(obj);
+    for (u32 i = 0; i < obj->prop_count; ++i)
+    {
+        if (props[i].type == type)
+            return &props[i];
+    }
+    return NULL;
+}
 
 global struct rico_object *object_copy(struct pack *pack,
                                        struct rico_object *other,
@@ -37,7 +53,8 @@ global struct rico_object *object_copy(struct pack *pack,
     // Create new object with same mesh / texture
     u32 new_obj_id = load_object(pack, name, other->type, other->mesh_count,
                                  object_meshes(other), other->material_count,
-                                 object_materials(other), &other->bbox);
+                                 object_materials(other), other->prop_count,
+                                 object_props(other), &other->bbox);
     struct rico_object *new_obj = pack_lookup(pack, new_obj_id);
 
     // TODO: Make transform one property and add optional param to object_init

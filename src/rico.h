@@ -29,6 +29,7 @@
 #include "bbox.h"
 #include "camera.h"
 #include "program.h"
+#include "rico_light.h"
 #include "rico_object.h"
 
 #include "rico_texture.h"
@@ -43,7 +44,6 @@
 #include "regularpoly.h"
 #include "rico_convert.h"
 #include "rico_collision.h"
-#include "rico_light.h"
 #include "rico_physics.h"
 #include "rico_state.h"
 #include "shader.h"

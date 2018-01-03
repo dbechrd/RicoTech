@@ -1,6 +1,14 @@
 #ifndef RICO_FONT_H
 #define RICO_FONT_H
 
+#define WIDTH_DATA_OFFSET  20  // Offset to width data with BFF file
+#define MAP_DATA_OFFSET   276  // Offset to texture image data with BFF file
+
+#define BFG_RS_NONE  0x0  // Blend flags
+#define BFG_RS_ALPHA 0x1
+#define BFG_RS_RGB   0x2
+#define BFG_RS_RGBA  0x4
+
 // HACK: Hard-coded font width/height
 // TODO: Figure out how to determine font w/h in screen space
 #define FONT_WIDTH 12.5f

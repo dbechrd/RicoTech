@@ -22,7 +22,8 @@ int string_init(struct rico_string *str, const char *name,
     hnd_init(&str->hnd, RICO_HND_STRING, name);
     str->slot = slot;
     str->object_id = load_object(pack_transient, name, OBJ_STRING_SCREEN,
-                                 1, &font_mesh_id, 1, &font_mat_id, NULL);
+                                 1, &font_mesh_id, 1, &font_mat_id, 0, NULL,
+                                 NULL);
     struct rico_object *str_obj = pack_lookup(pack_transient, str->object_id);
     object_trans_set(str_obj, &VEC3(SCREEN_X(x), SCREEN_Y(y), -1.0f));
     

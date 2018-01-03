@@ -11,7 +11,6 @@
 #include "program.c"
 #include "camera.c"
 #include "bbox.c"
-#include "pack_builder.c"
 
 #include "rico_cereal.c"
 #include "rico_material.c"
@@ -28,6 +27,7 @@
 #include "rico_mesh.c"
 #include "rico_physics.c"
 #include "rico_pool.c"
+#include "pack_builder.c"
 
 #include <time.h>
 #include "rico_state.c"

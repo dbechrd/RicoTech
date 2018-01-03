@@ -23,6 +23,38 @@ struct rico_transform
     struct mat4 matrix_inverse;
 };
 
+enum obj_prop_type
+{
+    PROP_MESH,
+    PROP_MATERIAL,
+    PROP_LIGHT_DIR,
+    PROP_LIGHT_POINT,
+    PROP_LIGHT_SPOT,
+    PROP_LIGHT_SWITCH
+};
+
+struct light_switch
+{
+    u32 light;
+    bool state;
+};
+
+struct obj_property
+{
+    enum obj_prop_type type;
+    union
+    {
+        // PROP_LIGHT_DIR
+        struct light_directional light_dir;
+        // PROP_LIGHT_POINT
+        struct light_point light_point;
+        // PROP_LIGHT_SPOT
+        struct light_spot light_spot;
+        // PROP_LIGHT_SWITCH
+        struct light_switch light_switch;
+    };
+};
+
 struct rico_object
 {
     u32 id;
@@ -41,13 +73,19 @@ struct rico_object
     u32 meshes_offset;
     u32 material_count;
     u32 materials_offset;
+
+    u32 prop_count;
+    u32 props_offset;
 };
 
 global const char *object_name(struct rico_object *obj);
 global u32 *object_meshes(struct rico_object *obj);
 global u32 *object_materials(struct rico_object *obj);
+global struct obj_property *object_props(struct rico_object *obj);
 global u32 object_mesh(struct rico_object *obj);
 global u32 object_material(struct rico_object *obj);
+global struct obj_property *object_prop(struct rico_object *obj,
+                                        enum obj_prop_type type);
 global struct rico_object *object_copy(struct pack *pack,
                                        struct rico_object *other,
                                        const char *name);

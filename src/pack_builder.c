@@ -1,11 +1,3 @@
-#define WIDTH_DATA_OFFSET  20  // Offset to width data with BFF file
-#define MAP_DATA_OFFSET   276  // Offset to texture image data with BFF file
-
-#define BFG_RS_NONE  0x0  // Blend flags
-#define BFG_RS_ALPHA 0x1
-#define BFG_RS_RGB   0x2
-#define BFG_RS_RGBA  0x4
-
 #define MESH_VERTICES_MAX 200000
 
 // TODO: Tune these as necessary
@@ -129,7 +121,7 @@ internal void pack_compact_buffer(struct pack *pack)
     }
 }
 
-internal void pack_delete(struct pack *pack, u32 id, enum rico_hnd_type type)
+global void pack_delete(struct pack *pack, u32 id, enum rico_hnd_type type)
 {
     u32 pack_id = ID_PACK(id);
     u32 blob_id = ID_BLOB(id);
@@ -189,10 +181,10 @@ internal void pack_delete(struct pack *pack, u32 id, enum rico_hnd_type type)
     }
 }
 
-internal u32 load_object(struct pack *pack, const char *name,
-                         enum rico_obj_type type, u32 mesh_count, u32 *mesh_ids,
-                         u32 material_count, u32 *material_ids,
-                         const struct bbox *bbox)
+global u32 load_object(struct pack *pack, const char *name,
+                       enum rico_obj_type type, u32 mesh_count, u32 *mesh_ids,
+                       u32 material_count, u32 *material_ids, u32 prop_count,
+                       struct obj_property *props, const struct bbox *bbox)
 {
     u32 obj_id = blob_start(pack, RICO_HND_OBJECT);
     struct rico_object *obj = push_bytes(pack, sizeof(*obj));
@@ -249,12 +241,19 @@ internal u32 load_object(struct pack *pack, const char *name,
         push_bytes(pack, sizeof(material_ids[0]));
     }
 
+    obj->props_offset = blob_offset(pack);
+    obj->prop_count = prop_count;
+    if (prop_count)
+    {
+        push_data(pack, props, prop_count, sizeof(props[0]));
+    }
+
     blob_end(pack);
     return obj_id;
 }
 
-internal u32 load_texture(struct pack *pack, const char *name, GLenum target,
-                          u32 width, u32 height, u8 bpp, u8 *pixels)
+global u32 load_texture(struct pack *pack, const char *name, GLenum target,
+                        u32 width, u32 height, u8 bpp, u8 *pixels)
 {
     u32 tex_id = blob_start(pack, RICO_HND_TEXTURE);
     struct rico_texture *tex = push_bytes(pack, sizeof(*tex));
@@ -273,8 +272,8 @@ internal u32 load_texture(struct pack *pack, const char *name, GLenum target,
     blob_end(pack);
     return tex_id;
 }
-internal u32 load_texture_file(struct pack *pack, const char *name,
-                               const char *filename)
+global u32 load_texture_file(struct pack *pack, const char *name,
+                             const char *filename)
 {
     enum rico_error err = SUCCESS;
 
@@ -295,8 +294,8 @@ cleanup:
     if (err) blob_error(pack, &tex_id);
     return tex_id;
 }
-internal u32 load_texture_color(struct pack *pack, const char *name,
-                                struct vec4 color)
+global u32 load_texture_color(struct pack *pack, const char *name,
+                              struct vec4 color)
 {
     u8 rgba[4] = {
         (u8)(color.r * 255),
@@ -306,8 +305,8 @@ internal u32 load_texture_color(struct pack *pack, const char *name,
     };
     return load_texture(pack, name, GL_TEXTURE_2D, 1, 1, 32, rgba);
 }
-internal u32 load_material(struct pack *pack, const char *name, u32 tex0,
-                           u32 tex1)
+global u32 load_material(struct pack *pack, const char *name, u32 tex0,
+                         u32 tex1)
 {
     u32 mat_id = blob_start(pack, RICO_HND_MATERIAL);
     struct rico_material *mat = push_bytes(pack, sizeof(*mat));
@@ -322,8 +321,8 @@ internal u32 load_material(struct pack *pack, const char *name, u32 tex0,
     blob_end(pack);
     return mat_id;
 }
-internal u32 load_font(struct pack *pack, const char *name,
-                       const char *filename, u32 *font_mat)
+global u32 load_font(struct pack *pack, const char *name,
+                     const char *filename, u32 *font_mat)
 {
     enum rico_error err;
 
@@ -435,9 +434,9 @@ cleanup:
     if (err) blob_error(pack, &font_id);
     return font_id;
 }
-internal u32 load_mesh(struct pack *pack, const char *name, u32 vertex_count,
-                       const struct rico_vertex *vertex_data, u32 element_count,
-                       const GLuint *element_data)
+global u32 load_mesh(struct pack *pack, const char *name, u32 vertex_count,
+                     const struct rico_vertex *vertex_data, u32 element_count,
+                     const GLuint *element_data)
 {
     u32 mesh_id = blob_start(pack, RICO_HND_MESH);
     struct rico_mesh *mesh = push_bytes(pack, sizeof(*mesh));
@@ -888,7 +887,7 @@ void pack_build_alpha()
     //load_obj_file(pack, "mesh/grass.ric");
 
     u32 ground_id = load_object(pack, "Ground", OBJ_STATIC, 0, NULL, 1,
-                                &bricks_mat, NULL);
+                                &bricks_mat, 0, NULL, NULL);
     struct rico_object *ground = pack_lookup(pack, ground_id);
     object_rot_x(ground, -90.0f);
     object_scale(ground, &VEC3(64.0f, 64.0f, 0.001f));
@@ -896,8 +895,11 @@ void pack_build_alpha()
 
     //u32 timmy_diff = load_texture_color(pack, "Timmy", COLOR_YELLOW);
     u32 timmy_mat = load_material(pack, "Timmy", 0, 0);
+    struct obj_property timmy_props[1] = { 0 };
+    timmy_props[0].type = PROP_LIGHT_SWITCH;
+    timmy_props[0].light_switch = (struct light_switch) { 3, true };
     u32 timmy_id = load_object(pack, "Timmy", OBJ_LIGHT_SWITCH, 1, &sphere, 1,
-                               &timmy_mat, NULL);
+                               &timmy_mat, 1, timmy_props, NULL);
     struct rico_object *timmy = pack_lookup(pack, timmy_id);
     object_scale(timmy, &VEC3(0.01f, 0.01f, 0.01f));
     //object_rot_x(timmy, 30.0f);
