@@ -69,8 +69,7 @@ internal void pack_compact_buffer(struct pack *pack);
 global void pack_delete(struct pack *pack, u32 id, enum rico_hnd_type type);
 
 global u32 load_object(struct pack *pack, const char *name,
-                       enum rico_obj_type type, u32 mesh_count, u32 *mesh_ids,
-                       u32 material_count, u32 *material_ids, u32 prop_count,
+                       enum rico_obj_type type, u32 prop_count,
                        struct obj_property *props, const struct bbox *bbox);
 global u32 load_texture(struct pack *pack, const char *name, GLenum target,
                         u32 width, u32 height, u8 bpp, u8 *pixels);

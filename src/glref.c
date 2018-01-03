@@ -52,8 +52,7 @@ void create_obj()
     const char *name = "new_obj";
 
     // Create new object and select it
-    u32 new_obj_id = load_object(pack_active, name, OBJ_STATIC, 0, NULL, 0,
-                                 NULL, 0, NULL, NULL);
+    u32 new_obj_id = load_object(pack_active, name, OBJ_STATIC, 0, NULL, NULL);
     struct rico_object *obj = pack_lookup(pack_active, new_obj_id);
     select_obj(obj, false);
 }
@@ -188,14 +187,16 @@ void selected_material_next()
         return;
 
     struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
-    u32 *materials = object_materials(obj);
-
-    struct rico_mesh *next_material = pack_next(pack_active, materials[0],
-                                                RICO_HND_MATERIAL);
-    if (next_material)
+    struct obj_property *mat_prop = object_prop(obj, PROP_MATERIAL_ID);
+    if (mat_prop)
     {
-        materials[0] = next_material->id;
-        object_print(obj);
+        struct rico_mesh *next_material =
+            pack_next(pack_active, mat_prop->material_id, RICO_HND_MATERIAL);
+        if (next_material)
+        {
+            mat_prop->material_id = next_material->id;
+            object_print(obj);
+        }
     }
 }
 
@@ -205,14 +206,16 @@ void selected_material_prev()
         return;
 
     struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
-    u32 *materials = object_materials(obj);
-
-    struct rico_mesh *next_material = pack_prev(pack_active, materials[0],
-                                                RICO_HND_MATERIAL);
-    if (next_material)
+    struct obj_property *mat_prop = object_prop(obj, PROP_MATERIAL_ID);
+    if (mat_prop)
     {
-        materials[0] = next_material->id;
-        object_print(obj);
+        struct rico_mesh *prev_material =
+            pack_prev(pack_active, mat_prop->material_id, RICO_HND_MATERIAL);
+        if (prev_material)
+        {
+            mat_prop->material_id = prev_material->id;
+            object_print(obj);
+        }
     }
 }
 
@@ -222,13 +225,16 @@ void selected_mesh_next()
         return;
 
     struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
-    u32 *meshes = object_meshes(obj);
-
-    struct rico_mesh *next_mesh = pack_next(pack_active, meshes[0], RICO_HND_MESH);
-    if (next_mesh)
+    struct obj_property *mesh_prop = object_prop(obj, PROP_MESH_ID);
+    if (mesh_prop)
     {
-        meshes[0] = next_mesh->id;
-        object_print(obj);
+        struct rico_mesh *next_mesh =
+            pack_next(pack_active, mesh_prop->mesh_id, RICO_HND_MESH);
+        if (next_mesh)
+        {
+            mesh_prop->mesh_id = next_mesh->id;
+            object_print(obj);
+        }
     }
 }
 
@@ -238,13 +244,16 @@ void selected_mesh_prev()
         return;
 
     struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
-    u32 *meshes = object_meshes(obj);
-
-    struct rico_mesh *prev_mesh = pack_prev(pack_active, meshes[0], RICO_HND_MESH);
-    if (prev_mesh)
+    struct obj_property *mesh_prop = object_prop(obj, PROP_MESH_ID);
+    if (mesh_prop)
     {
-        meshes[0] = prev_mesh->id;
-        object_print(obj);
+        struct rico_mesh *prev_mesh =
+            pack_next(pack_active, mesh_prop->mesh_id, RICO_HND_MESH);
+        if (prev_mesh)
+        {
+            mesh_prop->mesh_id = prev_mesh->id;
+            object_print(obj);
+        }
     }
 }
 
@@ -254,11 +263,11 @@ void selected_bbox_reset()
         return;
 
     struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
-    u32 mesh_id = object_mesh(obj);
-    if (!mesh_id)
+    struct obj_property *mesh_prop = object_prop(obj, PROP_MESH_ID);
+    if (!mesh_prop)
         return;
 
-    struct rico_mesh *mesh = pack_lookup(pack_active, mesh_id);
+    struct rico_mesh *mesh = pack_lookup(pack_active, mesh_prop->mesh_id);
     obj->bbox = mesh->bbox;
 
     object_select(obj);

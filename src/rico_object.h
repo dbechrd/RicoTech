@@ -6,6 +6,7 @@
     f(OBJ_STATIC)         \
     f(OBJ_STRING_WORLD)   \
     f(OBJ_STRING_SCREEN)  \
+    f(OBJ_LIGHT_POINT)    \
     f(OBJ_LIGHT_SWITCH)
 
 enum rico_obj_type
@@ -25,8 +26,8 @@ struct rico_transform
 
 enum obj_prop_type
 {
-    PROP_MESH,
-    PROP_MATERIAL,
+    PROP_MESH_ID,
+    PROP_MATERIAL_ID,
     PROP_LIGHT_DIR,
     PROP_LIGHT_POINT,
     PROP_LIGHT_SPOT,
@@ -44,6 +45,10 @@ struct obj_property
     enum obj_prop_type type;
     union
     {
+        // PROP_MESH
+        u32 mesh_id;
+        // PROP_MATERIAL
+        u32 material_id;
         // PROP_LIGHT_DIR
         struct light_directional light_dir;
         // PROP_LIGHT_POINT
@@ -79,11 +84,7 @@ struct rico_object
 };
 
 global const char *object_name(struct rico_object *obj);
-global u32 *object_meshes(struct rico_object *obj);
-global u32 *object_materials(struct rico_object *obj);
 global struct obj_property *object_props(struct rico_object *obj);
-global u32 object_mesh(struct rico_object *obj);
-global u32 object_material(struct rico_object *obj);
 global struct obj_property *object_prop(struct rico_object *obj,
                                         enum obj_prop_type type);
 global struct rico_object *object_copy(struct pack *pack,

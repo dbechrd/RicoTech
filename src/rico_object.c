@@ -7,32 +7,10 @@ global const char *object_name(struct rico_object *obj)
     RICO_ASSERT(obj->name_offset);
     return (char *)((u8 *)obj + obj->name_offset);
 }
-global u32 *object_meshes(struct rico_object *obj)
-{
-    RICO_ASSERT(obj->meshes_offset);
-    return (u32 *)((u8 *)obj + obj->meshes_offset);
-}
-global u32 *object_materials(struct rico_object *obj)
-{
-    RICO_ASSERT(obj->materials_offset);
-    return (u32 *)((u8 *)obj + obj->materials_offset);
-}
 global struct obj_property *object_props(struct rico_object *obj)
 {
     RICO_ASSERT(obj->prop_count);
     return (struct obj_property *)((u8 *)obj + obj->props_offset);
-}
-global u32 object_mesh(struct rico_object *obj)
-{
-    return (obj->mesh_count)
-        ? object_meshes(obj)[obj->mesh_idx]
-        : 0;
-}
-global u32 object_material(struct rico_object *obj)
-{
-    return (obj->material_count)
-        ? object_materials(obj)[obj->material_idx]
-        : 0;
 }
 global struct obj_property *object_prop(struct rico_object *obj,
                                         enum obj_prop_type type)
@@ -51,9 +29,7 @@ global struct rico_object *object_copy(struct pack *pack,
                                        const char *name)
 {
     // Create new object with same mesh / texture
-    u32 new_obj_id = load_object(pack, name, other->type, other->mesh_count,
-                                 object_meshes(other), other->material_count,
-                                 object_materials(other), other->prop_count,
+    u32 new_obj_id = load_object(pack, name, other->type, other->prop_count,
                                  object_props(other), &other->bbox);
     struct rico_object *new_obj = pack_lookup(pack, new_obj_id);
 
@@ -96,6 +72,7 @@ void object_free_all(struct rico_chunk *chunk)
 void object_bbox_recalculate_all(struct pack *pack)
 {
     struct rico_object *obj;
+    struct obj_property *prop;
     struct rico_mesh *mesh;
     for (u32 index = 1; index < pack->blobs_used; ++index)
     {
@@ -106,9 +83,10 @@ void object_bbox_recalculate_all(struct pack *pack)
         if (obj->type != OBJ_STATIC)
             continue;
 
-        if (obj->mesh_count)
+        prop = object_prop(obj, PROP_MESH_ID);
+        if (prop)
         {
-            mesh = pack_lookup(pack, object_meshes(obj)[0]);
+            mesh = pack_lookup(pack, prop->mesh_id);
         }
         else
         {
@@ -332,13 +310,7 @@ void object_interact(struct rico_object *obj)
             break;
         }
         default:
-        {
-            u32 *materials = object_materials(obj);
-            struct rico_mesh *next_material =
-                pack_next(pack_active, materials[0], RICO_HND_MATERIAL);
-            if (next_material) materials[0] = next_material->id;
             break;
-        }
         }
     }
 }
@@ -482,13 +454,16 @@ void object_render(struct pack *pack, const struct program_pbr *prog,
 
         // Bind material
         struct pack *mat_pack = pack;
-        u32 mat_id = object_material(obj);
-        if (mat_id)
+        u32 mat_id = 0;
+
+        struct obj_property *mat_prop = object_prop(obj, PROP_MATERIAL_ID);
+        if (mat_prop)
         {
             if (obj->type == OBJ_STRING_SCREEN || obj->type == OBJ_STRING_WORLD)
             {
                 mat_pack = pack_default;
             }
+            mat_id = mat_prop->material_id;
         }
         else
         {
@@ -505,10 +480,10 @@ void object_render(struct pack *pack, const struct program_pbr *prog,
         material_bind(mat_pack, mat_id);
 
         // Render
-        u32 mesh_id = object_mesh(obj);
-        if (mesh_id)
+        struct obj_property *mesh_prop = object_prop(obj, PROP_MESH_ID);
+        if (mesh_prop)
         {
-            mesh_render(pack, mesh_id);
+            mesh_render(pack, mesh_prop->mesh_id);
         }
         else
         {
@@ -535,7 +510,7 @@ void object_render(struct pack *pack, const struct program_pbr *prog,
     }
 }
 
-int object_print(struct rico_object *object)
+int object_print(struct rico_object *obj)
 {
     enum rico_error err;
 
@@ -545,11 +520,14 @@ int object_print(struct rico_object *object)
     int len;
     char buf[BFG_MAXSTRING + 1] = { 0 };
 
-    if (object)
+    if (obj)
     {
-        u32 mesh_id = object_mesh(object);
-        u32 material_id = object_material(object);
-        struct rico_mesh *mesh = (mesh_id)
+        struct obj_property *mesh_prop = object_prop(obj, PROP_MESH_ID);
+        struct obj_property *material_prop = object_prop(obj, PROP_MATERIAL_ID);
+
+        u32 mesh_id = (mesh_prop) ? mesh_prop->mesh_id : 0;
+        u32 material_id = (material_prop) ? material_prop->material_id : 0;
+        struct rico_mesh *mesh = (mesh_prop)
             ? pack_lookup(pack_active, mesh_id)
             : NULL;
         struct rico_material *material = (material_id)
@@ -605,13 +583,13 @@ int object_print(struct rico_object *object)
             "Material [%u|%u] %s\n" \
             "  Tex0 [%u|%u] %s\n"   \
             "  Tex1 [%u|%u] %s\n",
-            ID_PACK(object->id), ID_BLOB(object->id),
-            object_name(object),
-            rico_obj_type_string[object->type],
-            object->xform.trans.x, object->xform.trans.y, object->xform.trans.z,
-            object->xform.rot.x,   object->xform.rot.y,   object->xform.rot.z,
-            object->xform.scale.x, object->xform.scale.y, object->xform.scale.z,
-            object->bbox.p.x, object->bbox.p.y, object->bbox.p.z,
+            ID_PACK(obj->id), ID_BLOB(obj->id),
+            object_name(obj),
+            rico_obj_type_string[obj->type],
+            obj->xform.trans.x, obj->xform.trans.y, obj->xform.trans.z,
+            obj->xform.rot.x,   obj->xform.rot.y,   obj->xform.rot.z,
+            obj->xform.scale.x, obj->xform.scale.y, obj->xform.scale.z,
+            obj->bbox.p.x, obj->bbox.p.y, obj->bbox.p.z,
             ID_PACK(mesh_id), ID_BLOB(mesh_id), mesh_str,
             mesh_verts,
             ID_PACK(material_id), ID_BLOB(material_id), material_str,

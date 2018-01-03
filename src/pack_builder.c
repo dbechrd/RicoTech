@@ -182,8 +182,7 @@ global void pack_delete(struct pack *pack, u32 id, enum rico_hnd_type type)
 }
 
 global u32 load_object(struct pack *pack, const char *name,
-                       enum rico_obj_type type, u32 mesh_count, u32 *mesh_ids,
-                       u32 material_count, u32 *material_ids, u32 prop_count,
+                       enum rico_obj_type type, u32 prop_count,
                        struct obj_property *props, const struct bbox *bbox)
 {
     u32 obj_id = blob_start(pack, RICO_HND_OBJECT);
@@ -203,49 +202,30 @@ global u32 load_object(struct pack *pack, const char *name,
     obj->name_offset = blob_offset(pack);
     push_string(pack, name);
 
-    obj->meshes_offset = blob_offset(pack);
-    obj->mesh_count = mesh_count;
-    struct rico_mesh *mesh;
-    if (mesh_count)
+    obj->props_offset = blob_offset(pack);
+    obj->prop_count = prop_count;
+    if (prop_count)
     {
-        push_data(pack, mesh_ids, mesh_count, sizeof(mesh_ids[0]));
-        mesh = pack_lookup(pack, mesh_ids[0]);
-    }
-    else
-    {
-        // Every object must have at least one mesh slot
-        obj->mesh_count = 1;
-        push_bytes(pack, sizeof(mesh_ids[0]));
-        mesh = pack_lookup(pack_default, MESH_DEFAULT_BBOX);
+        push_data(pack, props, prop_count, sizeof(props[0]));
     }
 
     if (bbox)
     {
         obj->bbox = *bbox;
     }
-    else if (mesh)
-    {
-        obj->bbox = mesh->bbox;
-    }
-
-    obj->materials_offset = blob_offset(pack);
-    obj->material_count = material_count;
-    if (material_count)
-    {
-        push_data(pack, material_ids, material_count, sizeof(material_ids[0]));
-    }
     else
     {
-        // Every object must have at least one material slot
-        obj->material_count = 1;
-        push_bytes(pack, sizeof(material_ids[0]));
-    }
-
-    obj->props_offset = blob_offset(pack);
-    obj->prop_count = prop_count;
-    if (prop_count)
-    {
-        push_data(pack, props, prop_count, sizeof(props[0]));
+        struct rico_mesh *mesh;
+        struct obj_property *mesh_prop = object_prop(obj, PROP_MESH_ID);
+        if (mesh_prop)
+        {
+            mesh = pack_lookup(pack, mesh_prop->mesh_id);
+        }
+        else
+        {
+            mesh = pack_lookup(pack_default, MESH_DEFAULT_BBOX);
+        }
+        obj->bbox = mesh->bbox;
     }
 
     blob_end(pack);
@@ -886,8 +866,11 @@ void pack_build_alpha()
     //load_obj_file(pack, "mesh/welcome_floor.ric");
     //load_obj_file(pack, "mesh/grass.ric");
 
-    u32 ground_id = load_object(pack, "Ground", OBJ_STATIC, 0, NULL, 1,
-                                &bricks_mat, 0, NULL, NULL);
+    struct obj_property ground_props[1] = { 0 };
+    ground_props[0].type = PROP_MATERIAL_ID;
+    ground_props[0].material_id = bricks_mat;
+    u32 ground_id = load_object(pack, "Ground", OBJ_STATIC,
+                                array_count(ground_props), ground_props, NULL);
     struct rico_object *ground = pack_lookup(pack, ground_id);
     object_rot_x(ground, -90.0f);
     object_scale(ground, &VEC3(64.0f, 64.0f, 0.001f));
@@ -895,11 +878,15 @@ void pack_build_alpha()
 
     //u32 timmy_diff = load_texture_color(pack, "Timmy", COLOR_YELLOW);
     u32 timmy_mat = load_material(pack, "Timmy", 0, 0);
-    struct obj_property timmy_props[1] = { 0 };
-    timmy_props[0].type = PROP_LIGHT_SWITCH;
-    timmy_props[0].light_switch = (struct light_switch) { 3, true };
-    u32 timmy_id = load_object(pack, "Timmy", OBJ_LIGHT_SWITCH, 1, &sphere, 1,
-                               &timmy_mat, 1, timmy_props, NULL);
+    struct obj_property timmy_props[3] = { 0 };
+    timmy_props[0].type = PROP_MESH_ID;
+    timmy_props[0].mesh_id = sphere;
+    timmy_props[1].type = PROP_MATERIAL_ID;
+    timmy_props[1].material_id = timmy_mat;
+    timmy_props[2].type = PROP_LIGHT_SWITCH;
+    timmy_props[2].light_switch = (struct light_switch) { 3, true };
+    u32 timmy_id = load_object(pack, "Timmy", OBJ_LIGHT_SWITCH,
+                               array_count(timmy_props), timmy_props, NULL);
     struct rico_object *timmy = pack_lookup(pack, timmy_id);
     object_scale(timmy, &VEC3(0.01f, 0.01f, 0.01f));
     //object_rot_x(timmy, 30.0f);
