@@ -34,4 +34,4 @@ internal inline unsigned long swap_32bit(unsigned long ul)
                            ((ul & 0x000000FF) << 24));
 }
 
-#endif // UTIL_H
+#endif

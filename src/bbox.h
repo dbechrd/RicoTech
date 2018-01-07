@@ -49,4 +49,4 @@ internal inline bool bbox_intersects(const struct bbox *a, const struct bbox *b)
              b->p.z < -a->p.z);
 }
 
-#endif // BBOX_H
+#endif

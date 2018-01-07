@@ -8,7 +8,9 @@ struct camera cam_player;
 void camera_init(struct camera *camera, struct vec3 position, struct quat view,
                  float fov_deg)
 {
-    camera->position = position;
+    camera->pos = position;
+    camera->vel = VEC3_ZERO;
+    camera->acc = VEC3_ZERO;
     camera->view = view;
     camera->fov_deg = fov_deg;
 
@@ -34,11 +36,11 @@ void camera_reset(struct camera *camera)
 
 void camera_translate_world(struct camera *camera, const struct vec3 *v)
 {
-    v3_add(&camera->position, v);
+    v3_add(&camera->pos, v);
 
     // Prevent camera from going below the floor
-    if (camera->position.y < CAMERA_POS_Y_MIN)
-        camera->position.y = CAMERA_POS_Y_MIN;
+    if (camera->pos.y < CAMERA_POS_Y_MIN)
+        camera->pos.y = CAMERA_POS_Y_MIN;
 
     camera->need_update = true;
 }
@@ -58,13 +60,13 @@ void camera_translate_local(struct camera *camera, const struct vec3 *v)
     v3_normalize(&right);
     v3_normalize(&fwd);
 
-    camera->position.x += v->x * right.x + v->z * fwd.x;
-    camera->position.y += v->y;
-    camera->position.z += v->z * fwd.z + v->x * right.z;
+    camera->pos.x += v->x * right.x + v->z * fwd.x;
+    camera->pos.y += v->y;
+    camera->pos.z += v->z * fwd.z + v->x * right.z;
 
     // Prevent camera from going below the floor
-    if (camera->position.y < CAMERA_POS_Y_MIN)
-        camera->position.y = CAMERA_POS_Y_MIN;
+    if (camera->pos.y < CAMERA_POS_Y_MIN)
+        camera->pos.y = CAMERA_POS_Y_MIN;
 
     camera->need_update = true;
 }
@@ -108,10 +110,80 @@ void camera_update(struct camera *camera)
     //       really understand what this is doing.
     mat4_scalef(&camera->view_matrix, QUAT_SCALE_HACK);
 
-    struct vec3 pos = camera->position;
+    struct vec3 pos = camera->pos;
     mat4_translate(&camera->view_matrix, v3_negate(&pos));
 
     camera->need_update = false;
+}
+
+#define CAM_ACC_MULTIPLIER 20.0f
+#define CAM_SLOW_MULTIPLIER 0.1f
+#define CAM_SPRINT_MULTIPLIER 2.0f
+#define CAM_FRICTION_MUL 0.9f
+#define LOOK_SENSITIVITY_X 0.1f
+#define LOOK_SENSITIVITY_Y 0.1f
+
+void player_camera_update(struct camera *camera, r64 dt, int dx, int dy,
+                          struct vec3 acc, bool sprint, bool slow)
+{
+    //dt = 1.0f;
+    //acc = 1.26f;
+
+    cam_player.acc = acc;
+
+    // Calculate delta velocity
+    // dv' = at;
+    struct vec3 delta_vel = camera->acc;
+    v3_scalef(&delta_vel, CAM_ACC_MULTIPLIER);
+    if (sprint) v3_scalef(&delta_vel, CAM_SPRINT_MULTIPLIER);
+    if (slow)   v3_scalef(&delta_vel, CAM_SLOW_MULTIPLIER);
+    v3_scalef(&delta_vel, (r32)dt);
+
+    // Update velocity
+    v3_add(&camera->vel, &delta_vel);
+
+    // Apply friction (double when slowing down for a more realistic stop)
+    float mag_acc = v3_length(&camera->acc);
+    if (mag_acc != 0.0f)
+        v3_scalef(&camera->vel, CAM_FRICTION_MUL);
+    else
+        v3_scalef(&camera->vel, 1.0f - (1.0f - CAM_FRICTION_MUL) * 2.0f);
+
+    // Resting check
+    float mag_vel = v3_length(&camera->vel);
+    if (mag_vel < VEC3_EPSILON)
+    {
+        camera->vel = VEC3_ZERO;
+    }
+
+    // Calculate delta position
+    // dp' = 1/2at^2 + vt
+    struct vec3 half_at_squared = camera->acc;
+    v3_scalef(&half_at_squared, 0.5f * (r32)dt * (r32)dt);
+
+    struct vec3 vt = camera->vel;
+    v3_scalef(&vt, (r32)dt);
+
+    struct vec3 delta_pos = half_at_squared;
+    v3_add(&delta_pos, &vt);
+
+    //if (mouse_lock)
+    //{
+        // TODO: Why was this inside mouse_lock?
+        // Update position
+        camera_translate_local(&cam_player, &delta_pos);
+
+        // TODO: Smooth mouse look somehow
+        if (dx != 0 || dy != 0)
+        {
+            struct vec3 delta;
+            delta.x = dx * LOOK_SENSITIVITY_X;
+            delta.y = dy * LOOK_SENSITIVITY_Y;
+            camera_rotate(&cam_player, delta.x, delta.y);
+        }
+    //}
+
+    camera_update(&cam_player);
 }
 
 void camera_render(struct camera *camera)
@@ -121,10 +193,10 @@ void camera_render(struct camera *camera)
     v3_mul_quat(v3_scalef(&x, 0.1f / QUAT_SCALE_HACK), &camera->view);
     v3_mul_quat(v3_scalef(&y, 0.1f / QUAT_SCALE_HACK), &camera->view);
 
-    struct vec3 x0 = camera->position;
-    struct vec3 x1 = camera->position;
-    struct vec3 y0 = camera->position;
-    struct vec3 y1 = camera->position;
+    struct vec3 x0 = camera->pos;
+    struct vec3 x1 = camera->pos;
+    struct vec3 y0 = camera->pos;
+    struct vec3 y1 = camera->pos;
     v3_sub(&x0, &x);
     v3_add(&x1, &x);
     v3_sub(&y0, &y);
@@ -166,7 +238,7 @@ void camera_fwd(struct ray *_ray, struct camera *camera)
 {
     struct vec3 z = VEC3_FWD;
     v3_mul_quat(&z, &camera->view);
-    _ray->orig = camera->position;
+    _ray->orig = camera->pos;
     _ray->dir = z;
 }
 

@@ -27,4 +27,4 @@ void texture_delete(struct rico_texture *texture);
 void texture_bind(struct pack *pack, u32 id, GLenum texture_unit);
 void texture_unbind(struct pack *pack, u32 id, GLenum texture_unit);
 
-#endif // RICO_TEXTURE_H
+#endif

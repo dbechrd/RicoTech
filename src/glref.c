@@ -129,7 +129,7 @@ void selected_translate(struct camera *camera, const struct vec3 *offset)
     {
         if (camera->locked && selectable)
         {
-            camera->position = VEC3_ZERO;
+            camera->pos = VEC3_ZERO;
         }
         object_trans_set(obj, &VEC3_ZERO);
     }

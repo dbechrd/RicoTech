@@ -84,6 +84,10 @@ global u32 load_font(struct pack *pack, const char *name,
 global u32 load_mesh(struct pack *pack, const char *name, u32 vertex_count,
                      const struct rico_vertex *vertex_data, u32 element_count,
                      const GLuint *element_data);
+global u32 load_string(struct pack *pack, const char *name,
+                       enum rico_string_slot slot, float x, float y,
+                       struct vec4 color, u32 lifespan, struct rico_font *font,
+                       const char *text);
 
 internal inline void *pack_push(struct pack *pack, u32 bytes)
 {

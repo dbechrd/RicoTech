@@ -17,17 +17,14 @@ extern const char *rico_string_slot_string[];
 
 struct rico_string
 {
-    struct hnd hnd;
+    u32 id;
     enum rico_string_slot slot;
     u32 object_id;
     u32 lifespan;
 };
 
-int string_init(struct rico_string *str, const char *name,
-                enum rico_string_slot slot, float x, float y, struct vec4 color,
-                u32 lifespan, struct rico_font *font, const char *text);
-int string_free(struct rico_string *str);
-int string_free_slot(enum rico_string_slot slot);
-int string_update(r64 dt);
+void string_delete(struct pack *pack, struct rico_string *str);
+bool string_free_slot(enum rico_string_slot slot);
+void string_update(r64 dt);
 
-#endif // RICO_STRING_H
+#endif

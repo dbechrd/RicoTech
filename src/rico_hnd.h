@@ -20,4 +20,4 @@ void hnd_init(struct hnd *hnd, enum rico_hnd_type type, const char *name);
 //SERIAL(hnd_serialize);
 //DESERIAL(hnd_deserialize);
 
-#endif // UID_H
+#endif

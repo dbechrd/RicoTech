@@ -21,4 +21,4 @@ void glref_update(r64 dt);
 void glref_render(struct camera *camera);
 void free_glref();
 
-#endif // !GLREF_H
+#endif

@@ -102,7 +102,7 @@ void notes_casey()
 
 	// Day 045: Collision via nearest walkable point
 	//
-	//			49:35 For a bounding box, clip would-be destination point to 
+	//			49:35 For a bounding box, clip would-be destination point to
 	//			bounding volume to find the closest point in this particular
 	//			space.
 
@@ -133,7 +133,7 @@ void notes_casey()
     struct forest
     {
         char *name;
-        
+
         struct tree hash_trees[4096]; // TODO: Prime number for avalanche
     };
 
@@ -318,20 +318,20 @@ void notes_casey()
     //
     // 31:00
     // API-provided services
-    
+
     // A: ChunkLoad(filename) tightly couples file I/O and interpretation
     //    of the actual raw chunk data.
     chunk = ChunkLoad(filename);
-    
+
     // B: Callbacks are bad for flow control. ChunkLoad(filename) tightly
     //    couples file I/O and interpretation of the data.
     SetFileCallbacks(MyOpen, MyRead, MyClose);
     chunk = ChunkLoad(filename); // Calls MyRead for I/O
-    
+
     // C: Chunk is initialized from data, but where is its memory? Unless it's
     //    being returned by value, it doesn't let us manage allocation.
     chunk = ChunkInit(filedata); // Take raw data from user
-    
+
     // D: API is still allocating memory for the uncompressed data.
     filedata = DecompressData(raw_filedata);
     chunk = ChunkInit(filedata);
@@ -400,6 +400,19 @@ void notes_casey()
 
 
     // -------------------------------------------------------------------------
+}
+
+void notes_robert()
+{
+    //--------------------------------------------------------------------------
+    // Double Buffer
+    //
+    //  Can be used for things other than graphics. E.g. physics or AI. Store
+    //  previous state as a read-only replica while doing work on the current
+    //  one. Swap pointers when done.
+    //
+    //
+    //--------------------------------------------------------------------------
 }
 
 void notes_gl()

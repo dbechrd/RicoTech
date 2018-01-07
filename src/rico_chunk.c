@@ -136,7 +136,8 @@ int chunk_free(struct rico_chunk *chunk, struct pool_id id)
     }
     case RICO_HND_STRING:
     {
-        err = string_free(block);
+        RICO_ASSERT(0);
+        //err = string_free(block);
         break;
     }
     case RICO_HND_MATERIAL:

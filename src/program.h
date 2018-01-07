@@ -146,4 +146,4 @@ struct program_primitive
 //void program_primitive_uniform_projection(struct program_primitive *program,
 //                                          struct mat4 *proj);
 
-#endif // PROGRAM_H
+#endif

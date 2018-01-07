@@ -19,4 +19,4 @@ internal inline void free_shader(GLuint shader)
     if (shader) glDeleteShader(shader);
 }
 
-#endif // SHADER_H
+#endif

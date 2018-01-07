@@ -11,9 +11,10 @@ struct hash_kv
     u32 vlen; // 4
 };
 
-internal inline bool keys_equal(struct hash_kv *kv, const hkey key, u32 klen)
+internal inline bool keys_equal(struct hash_kv *kv, const void *key, u32 klen)
 {
-    return kv->klen == klen && memcmp(kv->key, key, MIN(sizeof(hkey), klen)) == 0;
+    return kv->klen == klen &&
+           memcmp(kv->key, key, MIN(sizeof(hkey), klen)) == 0;
 }
 
 void hashtable_init(struct hash_table *table, const char *name, u32 count)
@@ -36,8 +37,7 @@ void hashtable_free(struct hash_table *table)
     free(table->slots);
 }
 
-internal void *hashtable_search(struct hash_table *table, const hkey key,
-                                u32 klen)
+void *hashtable_search(struct hash_table *table, const void *key, u32 klen)
 {
     hash hash;
     MurmurHash3_x86_32(key, MIN(sizeof(hkey), klen), &hash);
@@ -63,39 +63,9 @@ internal void *hashtable_search(struct hash_table *table, const hkey key,
     return NULL;
 }
 
-void *hashtable_search_str(struct hash_table *table, const char *str)
-{
-    void *val = hashtable_search(table, (u8 *)str, strlen(str));
-#if RICO_DEBUG_HASH
-    printf("[hash][srch] %s\n             [%s, %p]\n",
-           table->hnd.name, str, val);
-#endif
-    return val;
-}
-
-void *hashtable_search_hnd(struct hash_table *table, struct hnd *hnd)
-{
-    void *val = hashtable_search(table, (u8 *)hnd->name, hnd->len);
-#if RICO_DEBUG_HASH
-    printf("[hash][srch] %s\n             [%s, %p]\n",
-           table->hnd.name, hnd->name, val);
-#endif
-    return val;
-}
-
-void *hashtable_search_uid(struct hash_table *table, uid uid)
-{
-    void *val = hashtable_search(table, (u8 *)&uid, sizeof(uid));
-#if RICO_DEBUG_HASH
-    printf("[hash][srch] %s\n             [%d, %p]\n",
-           table->hnd.name, uid, val);
-#endif
-    return val;
-}
-
 // TODO: Replace linear search/insert with quadratic if necessary, or use
 //       external chaining.
-int hashtable_insert(struct hash_table *table, const hkey key, u32 klen,
+int hashtable_insert(struct hash_table *table, const void *key, u32 klen,
                      const void *val, u32 vlen)
 {
     RICO_ASSERT(klen);
@@ -111,7 +81,7 @@ int hashtable_insert(struct hash_table *table, const hkey key, u32 klen,
     {
         // Next slot
         index++;
-		index %= table->count;
+        index %= table->count;
 
         // Back at start; hash table full
         if (index == start)
@@ -140,37 +110,7 @@ int hashtable_insert(struct hash_table *table, const hkey key, u32 klen,
     return SUCCESS;
 }
 
-int hashtable_insert_str(struct hash_table *table, const char *str,
-                         const void *val, u32 vlen)
-{
-#if RICO_DEBUG_HASH
-    printf("[hash][ins ] %s\n             [%s, %p]\n",
-           table->hnd.name, str, val);
-#endif
-    return hashtable_insert(table, (u8 *)str, strlen(str), val, vlen);
-}
-
-int hashtable_insert_hnd(struct hash_table *table, struct hnd *hnd,
-                         const void *val, u32 vlen)
-{
-#if RICO_DEBUG_HASH
-    printf("[hash][ins ] %s\n             [%s, %p]\n",
-           table->hnd.name, hnd->name, val);
-#endif
-    return hashtable_insert(table, (u8 *)hnd->name, hnd->len, val, vlen);
-}
-
-int hashtable_insert_uid(struct hash_table *table, uid uid, const void *val,
-                         u32 vlen)
-{
-#if RICO_DEBUG_HASH
-    printf("[hash][ins ] %s\n             [%d, %p]\n",
-           table->hnd.name, uid, val);
-#endif
-    return hashtable_insert(table, (u8 *)&uid, sizeof(uid), val, vlen);
-}
-
-bool hashtable_delete(struct hash_table *table, const hkey key, u32 klen)
+bool hashtable_delete(struct hash_table *table, const void *key, u32 klen)
 {
     hash hash;
     MurmurHash3_x86_32(key, MIN(sizeof(hkey), klen), &hash);
@@ -194,7 +134,7 @@ bool hashtable_delete(struct hash_table *table, const hkey key, u32 klen)
         }
 
         // Next slot
-		index++;
+        index++;
         index %= table->count;
     } while (index != start);
 
@@ -202,13 +142,73 @@ bool hashtable_delete(struct hash_table *table, const hkey key, u32 klen)
     return false;
 }
 
+void *hashtable_search_str(struct hash_table *table, const char *str)
+{
+    void *val = hashtable_search(table, (u8 *)str, strlen(str));
+#if RICO_DEBUG_HASH
+    printf("[hash][srch] %s\n             [%s, %p]\n", table->hnd.name, str,
+           val);
+#endif
+    return val;
+}
+
+void *hashtable_search_hnd(struct hash_table *table, struct hnd *hnd)
+{
+    void *val = hashtable_search(table, (u8 *)hnd->name, hnd->len);
+#if RICO_DEBUG_HASH
+    printf("[hash][srch] %s\n             [%s, %p]\n", table->hnd.name,
+           hnd->name, val);
+#endif
+    return val;
+}
+
+void *hashtable_search_uid(struct hash_table *table, uid uid)
+{
+    void *val = hashtable_search(table, (u8 *)&uid, sizeof(uid));
+#if RICO_DEBUG_HASH
+    printf("[hash][srch] %s\n             [%d, %p]\n", table->hnd.name, uid,
+           val);
+#endif
+    return val;
+}
+
+int hashtable_insert_str(struct hash_table *table, const char *str,
+                         const void *val, u32 vlen)
+{
+#if RICO_DEBUG_HASH
+    printf("[hash][ins ] %s\n             [%s, %p]\n", table->hnd.name, str,
+           val);
+#endif
+    return hashtable_insert(table, (u8 *)str, strlen(str), val, vlen);
+}
+
+int hashtable_insert_hnd(struct hash_table *table, struct hnd *hnd,
+                         const void *val, u32 vlen)
+{
+#if RICO_DEBUG_HASH
+    printf("[hash][ins ] %s\n             [%s, %p]\n", table->hnd.name,
+           hnd->name, val);
+#endif
+    return hashtable_insert(table, (u8 *)hnd->name, hnd->len, val, vlen);
+}
+
+int hashtable_insert_uid(struct hash_table *table, uid uid, const void *val,
+                         u32 vlen)
+{
+#if RICO_DEBUG_HASH
+    printf("[hash][ins ] %s\n             [%d, %p]\n", table->hnd.name, uid,
+           val);
+#endif
+    return hashtable_insert(table, (u8 *)&uid, sizeof(uid), val, vlen);
+}
+
 bool hashtable_delete_str(struct hash_table *table, const char *str)
 {
 
     bool success = hashtable_delete(table, (u8 *)str, strlen(str));
 #if RICO_DEBUG_HASH
-    printf("[hash][del ] %s\n             [%s, %d]\n",
-           table->hnd.name, str, success);
+    printf("[hash][del ] %s\n             [%s, %d]\n", table->hnd.name, str,
+           success);
 #endif
     return success;
 }
@@ -217,8 +217,8 @@ bool hashtable_delete_hnd(struct hash_table *table, struct hnd *hnd)
 {
     bool success = hashtable_delete(table, (u8 *)hnd->name, hnd->len);
 #if RICO_DEBUG_HASH
-    printf("[hash][del ] %s\n             [%s, %d]\n",
-           table->hnd.name, hnd->name, success);
+    printf("[hash][del ] %s\n             [%s, %d]\n", table->hnd.name,
+           hnd->name, success);
 #endif
     return success;
 }
@@ -227,8 +227,8 @@ bool hashtable_delete_uid(struct hash_table *table, uid uid)
 {
     bool success = hashtable_delete(table, (u8 *)&uid, sizeof(uid));
 #if RICO_DEBUG_HASH
-    printf("[hash][del ] %s\n             [%d, %d]\n",
-           table->hnd.name, uid, success);
+    printf("[hash][del ] %s\n             [%d, %d]\n", table->hnd.name, uid,
+           success);
 #endif
     return success;
 }

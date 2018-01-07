@@ -26,4 +26,4 @@ extern inline bool state_is_edit();
 extern inline bool state_is_paused();
 void init_rico_engine();
 
-#endif // RICO_STATE_H
+#endif

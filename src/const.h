@@ -278,4 +278,4 @@ enum rico_error rico_fatal_print(const char *file, int line,
 
 //------------------------------------------------------------------------------
 
-#endif // CONST_H
+#endif

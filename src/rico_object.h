@@ -70,15 +70,7 @@ struct rico_object
     // TODO: Animation
     struct rico_transform xform;
 
-    u8 mesh_idx;
-    u8 material_idx;
-
     u32 name_offset;
-    u32 mesh_count;
-    u32 meshes_offset;
-    u32 material_count;
-    u32 materials_offset;
-
     u32 prop_count;
     u32 props_offset;
 };
@@ -87,6 +79,7 @@ global const char *object_name(struct rico_object *obj);
 global struct obj_property *object_props(struct rico_object *obj);
 global struct obj_property *object_prop(struct rico_object *obj,
                                         enum obj_prop_type type);
+global void object_delete(struct pack *pack, struct rico_object *obj);
 global struct rico_object *object_copy(struct pack *pack,
                                        struct rico_object *other,
                                        const char *name);
@@ -119,6 +112,6 @@ void object_interact(struct rico_object *obj);
 void object_update(struct rico_object *obj);
 void object_render(struct pack *pack, const struct program_pbr *prog,
                    const struct camera *camera);
-int object_print(struct rico_object *object);
+void object_print(struct rico_object *obj);
 
-#endif // RICO_OBJECT_H
+#endif

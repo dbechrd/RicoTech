@@ -21,4 +21,4 @@ SERIAL(rico_serialize);
 DESERIAL(rico_deserialize);
 #endif
 
-#endif // RICO_CEREAL_H
+#endif

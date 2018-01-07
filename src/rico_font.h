@@ -39,4 +39,4 @@ void font_render(u32 *mesh_id, u32 *material_id, struct rico_font *font, int x,
                  int y, struct vec4 bg, const char *text,
                  const char *mesh_name);
 
-#endif // RICO_FONT_H
+#endif

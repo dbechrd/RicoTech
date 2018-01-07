@@ -86,4 +86,4 @@ static inline void *pool_read(const struct rico_pool *pool, u32 value)
 }
 #endif
 
-#endif // RICO_POOL_H
+#endif

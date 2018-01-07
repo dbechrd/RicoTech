@@ -261,6 +261,7 @@
     <ClInclude Include="src\rico_font.h" />
     <ClInclude Include="src\rico_hash.h" />
     <ClInclude Include="src\rico_hnd.h" />
+    <ClInclude Include="src\rico_input.h" />
     <ClInclude Include="src\rico_light.h" />
     <ClInclude Include="src\rico_material.h" />
     <ClInclude Include="src\rico_mesh.h" />

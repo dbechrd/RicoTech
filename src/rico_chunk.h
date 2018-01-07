@@ -62,4 +62,4 @@ static inline struct rico_pool *chunk_pool(struct rico_chunk *chunk,
 }
 */
 
-#endif //RICO_CHUNK_H
+#endif

@@ -40,4 +40,4 @@ void prim_draw_bbox_color(const struct bbox *bbox,
 void prim_draw_sphere(const struct sphere *sphere, const struct vec4 *color);
 void prim_free(enum rico_prim prim);
 
-#endif // PRIMITIVES_H
+#endif

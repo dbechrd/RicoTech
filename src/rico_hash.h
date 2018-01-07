@@ -20,6 +20,11 @@ extern struct hash_table global_string_slots;
 
 void hashtable_init(struct hash_table *table, const char *name, u32 count);
 void hashtable_free(struct hash_table *table);
+void *hashtable_search(struct hash_table *table, const void *key, u32 klen);
+int hashtable_insert(struct hash_table *table, const void *key, u32 klen,
+                     const void *val, u32 vlen);
+bool hashtable_delete(struct hash_table *table, const void *key, u32 klen);
+
 void *hashtable_search_str(struct hash_table *table, const char *str);
 void *hashtable_search_hnd(struct hash_table *table, struct hnd *hnd);
 void *hashtable_search_uid(struct hash_table *table, uid uid);
@@ -35,4 +40,4 @@ bool hashtable_delete_uid(struct hash_table *table, uid uid);
 
 void rico_hashtable_init();
 
-#endif // RICO_HASH_H
+#endif

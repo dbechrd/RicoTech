@@ -40,4 +40,4 @@ struct light_spot
     float kq;  // Quadratic
 };
 
-#endif // RICO_LIGHT_H
+#endif

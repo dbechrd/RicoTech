@@ -24,6 +24,22 @@ global struct obj_property *object_prop(struct rico_object *obj,
     return NULL;
 }
 
+global void object_delete(struct pack *pack, struct rico_object *obj)
+{
+    struct obj_property *props = object_props(obj);
+    for (u32 i = 0; i < obj->prop_count; ++i)
+    {
+        if (props[i].type == PROP_MESH_ID)
+        {
+            pack_delete(pack, props[i].mesh_id, RICO_HND_MESH);
+        }
+        else if (props[i].type == PROP_MATERIAL_ID)
+        {
+            pack_delete(pack, props[i].material_id, RICO_HND_MATERIAL);
+        }
+    }
+}
+
 global struct rico_object *object_copy(struct pack *pack,
                                        struct rico_object *other,
                                        const char *name)
@@ -365,7 +381,7 @@ void object_render_setup(const struct program_pbr *prog,
     }
     */
 
-    glUniform3fv(prog->camera.pos, 1, (const GLfloat *)&camera->position);
+    glUniform3fv(prog->camera.pos, 1, (const GLfloat *)&camera->pos);
 
     // Material textures
     // Note: We don't have to do this every time as long as we make sure
@@ -510,12 +526,9 @@ void object_render(struct pack *pack, const struct program_pbr *prog,
     }
 }
 
-int object_print(struct rico_object *obj)
+void object_print(struct rico_object *obj)
 {
-    enum rico_error err;
-
-    err = string_free_slot(STR_SLOT_SELECTED_OBJ);
-    if (err) return err;
+    string_free_slot(STR_SLOT_SELECTED_OBJ);
 
     int len;
     char buf[BFG_MAXSTRING + 1] = { 0 };
@@ -603,12 +616,7 @@ int object_print(struct rico_object *obj)
     }
 
     string_truncate(buf, sizeof(buf), len);
-
-    struct rico_string *str;
-    err = chunk_alloc((void **)&str, chunk_transient, RICO_HND_STRING);
-    if (err) return err;
-    err = string_init(str, rico_string_slot_string[STR_SLOT_SELECTED_OBJ],
-                      STR_SLOT_SELECTED_OBJ, 0, FONT_HEIGHT,
-                      COLOR_DARK_GRAY_HIGHLIGHT, 0, NULL, buf);
-    return err;
+    load_string(pack_transient, rico_string_slot_string[STR_SLOT_SELECTED_OBJ],
+                STR_SLOT_SELECTED_OBJ, 0, FONT_HEIGHT,
+                COLOR_DARK_GRAY_HIGHLIGHT, 0, NULL, buf);
 }

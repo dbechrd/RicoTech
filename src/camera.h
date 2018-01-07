@@ -18,7 +18,9 @@
 
 struct camera
 {
-    struct vec3 position;
+    struct vec3 pos;
+    struct vec3 vel;
+    struct vec3 acc;
     struct quat view;
     //struct vec3 up;
     float fov_deg;
@@ -41,4 +43,4 @@ void camera_update(struct camera *camera);
 void camera_render(struct camera *camera);
 void camera_fwd(struct ray *_ray, struct camera *camera);
 
-#endif // CAMERA_H
+#endif

@@ -43,4 +43,4 @@ void mesh_upload(struct rico_mesh *mesh, GLenum hint);
 void mesh_delete(struct rico_mesh *mesh);
 void mesh_render(struct pack *pack, u32 id);
 
-#endif // RICO_MESH_H
+#endif

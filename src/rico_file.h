@@ -20,4 +20,4 @@ int rico_file_open_write(struct rico_file *_handle, const char *filename,
 int rico_file_open_read(struct rico_file *_handle, const char *filename);
 void rico_file_close(struct rico_file *handle);
 
-#endif // RICO_FILE_H
+#endif

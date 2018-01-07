@@ -125,6 +125,11 @@ global void pack_delete(struct pack *pack, u32 id, enum rico_hnd_type type)
 {
     u32 pack_id = ID_PACK(id);
     u32 blob_id = ID_BLOB(id);
+
+    // HACK: For now, just ignore requests to delete blobs in the default pack
+    if (pack_id == pack_default->id)
+        return;
+
     RICO_ASSERT(blob_id);
     RICO_ASSERT(blob_id < pack->blob_count);
     RICO_ASSERT(pack_id);
@@ -132,6 +137,7 @@ global void pack_delete(struct pack *pack, u32 id, enum rico_hnd_type type)
 
     if (blob_id == 0)
         return;
+
     RICO_ASSERT(blob_id < pack->blob_count);
 
     u32 index = pack->lookup[blob_id];
@@ -140,24 +146,8 @@ global void pack_delete(struct pack *pack, u32 id, enum rico_hnd_type type)
     RICO_ASSERT(pack->index[index].type);
     RICO_ASSERT(pack->index[index].type == type);
 
-    switch (pack->index[index].type)
-    {
-    case RICO_HND_TEXTURE:
-    {
-        struct rico_texture *tex = pack_read(pack, index);
-        texture_delete(tex);
-        break;
-    }
-    case RICO_HND_MESH:
-    {
-        struct rico_mesh *mesh = pack_read(pack, index);
-        mesh_delete(mesh);
-        break;
-    }
-    default:
-        break;
-    }
-
+    void *delete_me = pack_read(pack, index);
+    
     // 7 used, delete 4
     // 0 1 2 3 4 5 6 7 8 9
     // a b c d - e f [blob = 4]
@@ -178,6 +168,36 @@ global void pack_delete(struct pack *pack, u32 id, enum rico_hnd_type type)
     {
         if (pack->lookup[i] > index)
             pack->lookup[i]--;
+    }
+
+    switch (type)
+    {
+    case RICO_HND_OBJECT:
+    {
+        struct rico_object *obj = delete_me;
+        object_delete(pack, obj);
+        break;
+    }
+    case RICO_HND_TEXTURE:
+    {
+        struct rico_texture *tex = delete_me;
+        texture_delete(tex);
+        break;
+    }
+    case RICO_HND_MESH:
+    {
+        struct rico_mesh *mesh = delete_me;
+        mesh_delete(mesh);
+        break;
+    }
+    case RICO_HND_STRING:
+    {
+        struct rico_string *string = delete_me;
+        string_delete(pack, string);
+        break;
+    }
+    default:
+        break;
     }
 }
 
@@ -436,6 +456,53 @@ global u32 load_mesh(struct pack *pack, const char *name, u32 vertex_count,
 
     blob_end(pack);
     return mesh_id;
+}
+global u32 load_string(struct pack *pack, const char *name,
+                       enum rico_string_slot slot, float x, float y,
+                       struct vec4 color, u32 lifespan, struct rico_font *font,
+                       const char *text)
+{
+#if RICO_DEBUG_STRING
+    printf("[strg][init] name=%s\n", name);
+#endif
+
+    // TODO: Reuse mesh and material if they are the same
+    // Generate font mesh and get texture handle
+    u32 font_mesh_id;
+    u32 font_mat_id;
+    font_render(&font_mesh_id, &font_mat_id, font, 0, 0, color, text, name);
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    u32 str_object_id;
+    struct obj_property str_props[2] = { 0 };
+    str_props[0].type = PROP_MESH_ID;
+    str_props[0].mesh_id = font_mesh_id;
+    str_props[1].type = PROP_MATERIAL_ID;
+    str_props[1].material_id = font_mat_id;
+    str_object_id = load_object(pack, name, OBJ_STRING_SCREEN,
+                                array_count(str_props), str_props, NULL);
+    struct rico_object *str_obj = pack_lookup(pack, str_object_id);
+    object_trans_set(str_obj, &VEC3(SCREEN_X(x), SCREEN_Y(y), -1.0f));
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    u32 str_id = blob_start(pack, RICO_HND_STRING);
+    struct rico_string *str = push_bytes(pack, sizeof(*str));
+    str->id = str_id;
+    str->slot = slot;
+    str->object_id = str_object_id;
+    str->lifespan = lifespan;
+
+    // Store in slot table if not dynamic
+    if (str->slot != STR_SLOT_DYNAMIC)
+    {
+        hashtable_insert(&global_string_slots, &str->slot,
+                         sizeof(str->slot), &str->id, sizeof(str->id));
+    }
+
+    blob_end(pack);
+    return str_id;
 }
 
 internal u32 default_mesh(struct pack *pack, const char *name)

@@ -59,6 +59,7 @@ void test_hashtable()
     RICO_ASSERT(hashtable_delete_uid(table, key_uid));
 }
 
+#if 0
 int test_pool()
 {
     enum rico_error err;
@@ -120,6 +121,7 @@ cleanup:
     free(mem_block);
     return err;
 }
+#endif
 
 void run_tests()
 {

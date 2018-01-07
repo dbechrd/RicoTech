@@ -1,135 +1,11 @@
 #define LOAD_SAVE_FILE false
 
+#include "rico_input.h"
+
 ///|////////////////////////////////////////////////////////////////////////////
 const char *rico_state_string[] = {
     RICO_STATES(GEN_STRING)
 };
-
-enum rico_action
-{
-    ACTION_ENGINE_DEBUG_LIGHTING_TOGGLE,
-    ACTION_ENGINE_DEBUG_TRIGGER_BREAKPOINT,
-    ACTION_ENGINE_FPS_TOGGLE,
-    ACTION_ENGINE_MOUSE_LOCK_TOGGLE,
-    ACTION_ENGINE_VSYNC_TOGGLE,
-    ACTION_ENGINE_QUIT,
-
-    ACTION_CAMERA_SLOW_TOGGLE,
-    ACTION_CAMERA_RESET,
-    ACTION_CAMERA_LOCK_TOGGLE,
-    ACTION_CAMERA_WIREFRAME_TOGGLE,
-
-    ACTION_MOVE_RIGHT,
-    ACTION_MOVE_LEFT,
-    ACTION_MOVE_UP,
-    ACTION_MOVE_DOWN,
-    ACTION_MOVE_FORWARD,
-    ACTION_MOVE_BACKWARD,
-    ACTION_MOVE_SPRINT,
-
-    ACTION_PLAY_EDITOR,
-    ACTION_PLAY_INTERACT,
-
-    ACTION_EDIT_QUIT,
-    ACTION_EDIT_SAVE,
-    ACTION_EDIT_CYCLE,
-    ACTION_EDIT_CYCLE_REVERSE,
-    ACTION_EDIT_MOUSE_PICK,
-    ACTION_EDIT_BBOX_RECALCULATE,
-    ACTION_EDIT_CREATE_OBJECT,
-    ACTION_EDIT_SELECTED_DUPLICATE,
-    ACTION_EDIT_SELECTED_DELETE,
-    ACTION_EDIT_MODE_NEXT,
-    ACTION_EDIT_MODE_PREVIOUS,
-
-    ACTION_EDIT_TRANSLATE_RESET,
-    ACTION_EDIT_TRANSLATE_UP,
-    ACTION_EDIT_TRANSLATE_DOWN,
-    ACTION_EDIT_TRANSLATE_WEST,
-    ACTION_EDIT_TRANSLATE_EAST,
-    ACTION_EDIT_TRANSLATE_NORTH,
-    ACTION_EDIT_TRANSLATE_SOUTH,
-    ACTION_EDIT_TRANSLATE_DELTA_INCREASE,
-    ACTION_EDIT_TRANSLATE_DELTA_DECREASE,
-
-    ACTION_EDIT_ROTATE_RESET,
-    ACTION_EDIT_ROTATE_UP,
-    ACTION_EDIT_ROTATE_DOWN,
-    ACTION_EDIT_ROTATE_WEST,
-    ACTION_EDIT_ROTATE_EAST,
-    ACTION_EDIT_ROTATE_NORTH,
-    ACTION_EDIT_ROTATE_SOUTH,
-    ACTION_EDIT_ROTATE_DELTA_INCREASE,
-    ACTION_EDIT_ROTATE_DELTA_DECREASE,
-    ACTION_EDIT_ROTATE_HEPTAMODE_TOGGLE,
-
-    ACTION_EDIT_SCALE_RESET,
-    ACTION_EDIT_SCALE_UP,
-    ACTION_EDIT_SCALE_DOWN,
-    ACTION_EDIT_SCALE_WEST,
-    ACTION_EDIT_SCALE_EAST,
-    ACTION_EDIT_SCALE_NORTH,
-    ACTION_EDIT_SCALE_SOUTH,
-    ACTION_EDIT_SCALE_DELTA_INCREASE,
-    ACTION_EDIT_SCALE_DELTA_DECREASE,
-
-    ACTION_EDIT_MATERIAL_NEXT,
-    ACTION_EDIT_MATERIAL_PREVIOUS,
-
-    ACTION_EDIT_MESH_NEXT,
-    ACTION_EDIT_MESH_PREVIOUS,
-    ACTION_EDIT_MESH_BBOX_RECALCULATE,
-
-    ACTION_COUNT
-};
-
-typedef u16 rico_key;
-
-struct rico_keychord
-{
-    rico_key keys[3];
-};
-
-#define CHORD3(k0, k1, k2) (struct rico_keychord) {{ k0, k1, k2 }};
-#define CHORD2(k0, k1) CHORD3(k0, k1, 0)
-#define CHORD1(k0)     CHORD3(k0, 0, 0)
-
-#if 0
-struct rico_keysequence
-{
-    union
-    {
-        struct rico_keychord chords[3];
-        struct
-        {
-            struct rico_keychord c0;
-            struct rico_keychord c1;
-            struct rico_keychord c2;
-        };
-    };
-};
-
-// NOTE: Key, chord, sequence
-struct rico_keyevent
-{
-    enum rico_keyevent_type
-    {
-        RICO_KEYEVENT_KEY,
-        RICO_KEYEVENT_CHORD,
-        RICO_KEYEVENT_SEQUENCE
-    } type;
-    union
-    {
-        rico_key key;
-        struct rico_keychord chord;
-        struct rico_keysequence sequence;
-    };
-};
-
-#define EVENT (struct rico_keyevent)
-#define EVENT_KEY(key) EVENT{ RICO_KEYEVENT_KEY, key }
-#define EVENT_CHORD(k0, k1) EVENT{ RICO_KEYEVENT_CHORD, k0, k1 }
-#endif
 
 static struct rico_keychord action_chords[ACTION_COUNT] = { 0 };
 
@@ -139,57 +15,50 @@ static struct rico_keychord action_chords[ACTION_COUNT] = { 0 };
 // frame. Typical walking stride is ~0.762 meters (30 inches). Distance traveled
 // per frame (60hz) is 0.762 * 0.0275 = 0.020955 ~= 0.021
 
-struct { int x, y; } mouse_delta = { 0 };
-global float look_sensitivity_x = 0.1f;
-global float look_sensitivity_y = 0.1f;
+int mouse_dx = 0;
+int mouse_dy = 0;
 
-global struct vec3 view_vel;
-global struct vec3 view_acc;
-global float player_acceleration = 20.0f;
-global float sprint_factor = 2.0f;
-global bool sprint = false;
-global float friction_factor = 0.1f;
-
-global float camera_slow_factor = 0.1f;
-global bool camera_slow = false;
+internal struct vec3 player_acc;
+internal bool player_sprint = false;
+internal bool camera_slow = false;
 
 ///|////////////////////////////////////////////////////////////////////////////
 #define TRANS_DELTA_MIN 0.01f
 #define TRANS_DELTA_MAX 10.0f
-global float trans_delta = 1.0f;
+internal float trans_delta = 1.0f;
 
 #define ROT_DELTA_MIN 1.0f
 #define ROT_DELTA_MAX 90.0f
 #define ROT_DELTA_DEFAULT 5.0f
-global float rot_delta = ROT_DELTA_DEFAULT;
+internal float rot_delta = ROT_DELTA_DEFAULT;
 
 #define SCALE_DELTA_MIN 0.1f
 #define SCALE_DELTA_MAX 5.0f
-global float scale_delta = 1.0f;
+internal float scale_delta = 1.0f;
 
-global bool mouse_lock = true;
-global bool enable_lighting = true;
+internal bool mouse_lock = true;
+internal bool enable_lighting = true;
 
 ///|////////////////////////////////////////////////////////////////////////////
 // Performance timing
-global u64 perfs_frequency;
-global u64 last_perfs;
-global u64 last_cycles;
+internal u64 perfs_frequency;
+internal u64 last_perfs;
+internal u64 last_cycles;
 
 // FPS UI
-global u64 fps_last_render;
-global u64 fps_render_delta = 200000;  // 200 ms
-global bool fps_render = false;
-global bool vsync = true;
+internal u64 fps_last_render;
+internal u64 fps_render_delta = 200000;  // 200 ms
+internal bool fps_render = false;
+internal bool vsync = true;
 
 ///|////////////////////////////////////////////////////////////////////////////
 // Mouse and keyboard state
-global u32 mouse_buttons = 0;
-global u32 mouse_buttons_prev = 0;
+internal u32 mouse_buttons = 0;
+internal u32 mouse_buttons_prev = 0;
 
-global u8 keystate_buffers[2][SDL_NUM_SCANCODES] = { 0 };
-global u8 *keys      = keystate_buffers[0];
-global u8 *keys_prev = keystate_buffers[1];
+internal u8 keystate_buffers[2][SDL_NUM_SCANCODES] = { 0 };
+internal u8 *keys      = keystate_buffers[0];
+internal u8 *keys_prev = keystate_buffers[1];
 
 const rico_key RICO_SCANCODE_ALT   = (rico_key)301;
 const rico_key RICO_SCANCODE_CTRL  = (rico_key)302;
@@ -308,8 +177,8 @@ internal struct rico_object *mouse_first_obj()
 }
 
 // Current state
-global enum rico_state state_prev;
-global enum rico_state state;
+internal enum rico_state state_prev;
+internal enum rico_state state;
 
 // State change handlers
 typedef int (*state_handler)();
@@ -338,94 +207,6 @@ inline bool state_is_paused()
     return (state == STATE_MENU_QUIT);
 }
 
-// TODO: Move this to camera file
-void temp_camera_update(r64 dt)
-{
-    // Calculate delta velocity
-    // dv' = at;
-    struct vec3 delta_vel = view_acc;
-    v3_scalef(&delta_vel, player_acceleration);
-    if (sprint)      v3_scalef(&delta_vel, sprint_factor);
-    if (camera_slow) v3_scalef(&delta_vel, camera_slow_factor);
-    v3_scalef(&delta_vel, (r32)dt);
-
-    // Update velocity
-    v3_add(&view_vel, &delta_vel);
-
-    // Apply friction (double when slowing down for a more realistic stop)
-    float mag_acc = v3_length(&view_acc);
-    if (mag_acc != 0.0f)
-        v3_scalef(&view_vel, 1.0f - friction_factor);
-    else
-        v3_scalef(&view_vel, 1.0f - friction_factor * 2.0f);
-
-    // Resting check
-    float mag_vel = v3_length(&view_vel);
-    if (mag_vel < VEC3_EPSILON)
-    {
-        view_vel = VEC3_ZERO;
-    }
-
-#if 0
-    // DEBUG: Print velocity
-    char buf[64] = { 0 };
-    int len = snprintf(buf, sizeof(buf), "Vel: %.1f %.1f %.1f", view_vel.x,
-                       view_vel.y, view_vel.z);
-    string_truncate(buf, sizeof(buf), len);
-
-    struct rico_string *str;
-    err = chunk_alloc(chunk_transient, RICO_HND_STRING, (struct hnd **)&str);
-    if (err) return err;
-    err = string_init(str, RICO_TRANSIENT, "STR_VEL", STR_SLOT_DEBUG, 0,
-                      -FONT_HEIGHT, COLOR_DARK_RED_HIGHLIGHT, 0, NULL,
-                      buf);
-    if (err) return err;
-#endif
-
-    // Calculate delta position
-    // dp' = 1/2at^2 + vt
-    struct vec3 half_at_squared = view_acc;
-    v3_scalef(&half_at_squared, 0.5f * (r32)dt * (r32)dt);
-
-    struct vec3 vt = view_vel;
-    v3_scalef(&vt, (r32)dt);
-
-    struct vec3 delta_pos = half_at_squared;
-    v3_add(&delta_pos, &vt);
-
-    if (mouse_lock)
-    {
-        // Update position
-        camera_translate_local(&cam_player, &delta_pos);
-
-        // TODO: Smooth mouse look somehow
-        if (mouse_delta.x != 0 || mouse_delta.y != 0)
-        {
-            struct vec3 delta;
-            delta.x = mouse_delta.x * look_sensitivity_x;
-            delta.y = mouse_delta.y * look_sensitivity_y;
-            camera_rotate(&cam_player, delta.x, delta.y);
-        }
-    }
-
-    camera_update(&cam_player);
-}
-
-/*
-internal void clear_slot_string(enum rico_string_slot slot)
-{
-    // TODO: How to make this more logical? Maybe STR_SLOT_* should be handles?
-    const char *slot_name = rico_string_slot_string[slot];
-    struct rico_string *str;
-    str = hashtable_search_str(&global_strings, slot_name);
-    if (str)
-    {
-        string_free(str);
-        hashtable_delete_str(&global_strings, slot_name);
-    }
-}
-*/
-
 int state_update()
 {
     enum rico_error err;
@@ -435,7 +216,7 @@ int state_update()
     ///-------------------------------------------------------------------------
     // Get mouse state
     mouse_buttons_prev = mouse_buttons;
-    mouse_buttons = SDL_GetRelativeMouseState(&mouse_delta.x, &mouse_delta.y);
+    mouse_buttons = SDL_GetRelativeMouseState(&mouse_dx, &mouse_dy);
 
     // Get keyboard state
     u8 *keys_tmp = keys_prev;
@@ -475,12 +256,10 @@ int state_update()
         string_truncate(buf, sizeof(buf), len);
 
         string_free_slot(STR_SLOT_STATE);
-        struct rico_string *str;
-        err = chunk_alloc((void **)&str, chunk_transient, RICO_HND_STRING);
-        if (err) return err;
-        err = string_init(str, rico_string_slot_string[STR_SLOT_STATE],
-                          STR_SLOT_STATE, 0, 0, COLOR_DARK_RED_HIGHLIGHT, 0,
-                          NULL, buf);
+        load_string(pack_transient, rico_string_slot_string[STR_SLOT_STATE],
+                    STR_SLOT_STATE, 0, 0, COLOR_DARK_RED_HIGHLIGHT, 0, NULL,
+                    buf);
+
         if (err) return err;
     }
 
@@ -513,15 +292,10 @@ int state_update()
         int len = snprintf(buf, sizeof(buf), "%.f fps %.2f ms %.2f mcyc", fps,
                            ms, mcyc);
         string_truncate(buf, sizeof(buf), len);
-
         string_free_slot(STR_SLOT_FPS);
-        struct rico_string *str;
-        err = chunk_alloc((void **)&str, chunk_transient, RICO_HND_STRING);
-        if (err) return err;
-        err = string_init(str, rico_string_slot_string[STR_SLOT_FPS],
-                          STR_SLOT_FPS, -(FONT_WIDTH * len), 0,
-                          COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
-        if (err) return err;
+        load_string(pack_transient, rico_string_slot_string[STR_SLOT_FPS],
+                    STR_SLOT_FPS, -(FONT_WIDTH * len), 0,
+                    COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
 
         fps_last_render = last_perfs;
     }
@@ -531,7 +305,8 @@ int state_update()
     ///-------------------------------------------------------------------------
     if (!state_is_paused(state))
     {
-        temp_camera_update(dt);
+        player_camera_update(&cam_player, dt, mouse_dx, mouse_dy, player_acc,
+                             player_sprint, camera_slow);
         glref_update(dt);
     }
 
@@ -597,20 +372,16 @@ internal int shared_engine_events()
     else if (chord_pressed(ACTION_ENGINE_QUIT))
     {
         string_free_slot(STR_SLOT_MENU_QUIT);
-        struct rico_string *str;
-        err = chunk_alloc((void **)&str, chunk_transient, RICO_HND_STRING);
-        if (err) return err;
-        err = string_init(str, rico_string_slot_string[STR_SLOT_MENU_QUIT],
-                          STR_SLOT_MENU_QUIT, 600, 400,
-                          COLOR_DARK_GREEN_HIGHLIGHT, 0, NULL,
-                          "                       \n" \
-                          "  Save and quit?       \n" \
-                          "                       \n" \
-                          "  [Y] Yes              \n" \
-                          "  [N] No               \n" \
-                          "  [Q] Quit w/o saving  \n" \
-                          "                       ");
-        if (err) return err;
+        load_string(pack_transient, rico_string_slot_string[STR_SLOT_MENU_QUIT],
+                    STR_SLOT_MENU_QUIT, 600, 400, COLOR_DARK_GREEN_HIGHLIGHT, 0,
+                    NULL,
+                    "                       \n" \
+                    "  Save and quit?       \n" \
+                    "                       \n" \
+                    "  [Y] Yes              \n" \
+                    "  [N] No               \n" \
+                    "  [Q] Quit w/o saving  \n" \
+                    "                       ");
         state = STATE_MENU_QUIT;
     }
 
@@ -620,16 +391,16 @@ internal int shared_camera_events()
 {
     enum rico_error err = SUCCESS;
 
-    view_acc = VEC3_ZERO;
-    if (chord_is_down(ACTION_MOVE_UP))       view_acc.y += 1.0f;
-    if (chord_is_down(ACTION_MOVE_DOWN))     view_acc.y -= 1.0f;
-    if (chord_is_down(ACTION_MOVE_RIGHT))    view_acc.x += 1.0f;
-    if (chord_is_down(ACTION_MOVE_LEFT))     view_acc.x -= 1.0f;
-    if (chord_is_down(ACTION_MOVE_FORWARD))  view_acc.z += 1.0f;
-    if (chord_is_down(ACTION_MOVE_BACKWARD)) view_acc.z -= 1.0f;
-    v3_normalize(&view_acc);  // NOTE: Prevent faster movement on diagonal
+    player_acc = VEC3_ZERO;
+    if (chord_is_down(ACTION_MOVE_UP))       player_acc.y += 1.0f;
+    if (chord_is_down(ACTION_MOVE_DOWN))     player_acc.y -= 1.0f;
+    if (chord_is_down(ACTION_MOVE_RIGHT))    player_acc.x += 1.0f;
+    if (chord_is_down(ACTION_MOVE_LEFT))     player_acc.x -= 1.0f;
+    if (chord_is_down(ACTION_MOVE_FORWARD))  player_acc.z += 1.0f;
+    if (chord_is_down(ACTION_MOVE_BACKWARD)) player_acc.z -= 1.0f;
+    v3_normalize(&player_acc);  // NOTE: Prevent faster movement on diagonal
 
-    sprint = chord_is_down(ACTION_MOVE_SPRINT);
+    player_sprint = chord_is_down(ACTION_MOVE_SPRINT);
 
     if (chord_pressed(ACTION_CAMERA_SLOW_TOGGLE))
     {
@@ -747,6 +518,17 @@ internal int state_play_explore()
 {
     enum rico_error err = SUCCESS;
 
+    // Check global engine / editor chords after the more specific checks run
+    // to allow overriding the global keybinds while in more specific states.
+    // This is like doing base.Foo() at the end of an overridden Foo() method.
+    // It might also be useful to have a stack of states, e.g.:
+    // active_states = { ENGINE, EDITOR, TEXTURE }
+    // active_states = { ENGINE, GAME, FLY }
+    // Alternatively, stack can be used for "pushdown automata", where you
+    // need to pop to a previous state when the current one finishes. e.g.:
+    // state_stack.push(WALK);
+    // state_stack.push(JUMP);
+    // state_stack.pop(JUMP);
     err = shared_engine_events(); if (err || state != state_prev) return err;
     err = shared_camera_events(); if (err || state != state_prev) return err;
 
@@ -846,15 +628,10 @@ internal int state_edit_translate()
         char buf[32] = { 0 };
         int len = snprintf(buf, sizeof(buf), "Trans Delta: %f", trans_delta);
         string_truncate(buf, sizeof(buf), len);
-
         string_free_slot(STR_SLOT_DELTA);
-        struct rico_string *str;
-        err = chunk_alloc((void **)&str, chunk_transient, RICO_HND_STRING);
-        if (err) return err;
-        err = string_init(str, rico_string_slot_string[STR_SLOT_DELTA],
-                          STR_SLOT_DELTA, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
-                          1000, NULL, buf);
-        if (err) return err;
+        load_string(pack_transient, rico_string_slot_string[STR_SLOT_DELTA],
+                    STR_SLOT_DELTA, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL,
+                    buf);
     }
 
     return err;
@@ -938,13 +715,9 @@ internal int state_edit_rotate()
         string_truncate(buf, sizeof(buf), len);
 
         string_free_slot(STR_SLOT_DELTA);
-        struct rico_string *str;
-        err = chunk_alloc((void **)&str, chunk_transient, RICO_HND_STRING);
-        if (err) return err;
-        err = string_init(str, rico_string_slot_string[STR_SLOT_DELTA],
-                          STR_SLOT_DELTA, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
-                          1000, NULL, buf);
-        if (err) return err;
+        load_string(pack_transient, rico_string_slot_string[STR_SLOT_DELTA],
+                    STR_SLOT_DELTA, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL,
+                    buf);
     }
 
     return err;
@@ -1032,15 +805,10 @@ internal int state_edit_scale()
         char buf[32] = { 0 };
         int len = snprintf(buf, sizeof(buf), "Scale Delta: %f", scale_delta);
         string_truncate(buf, sizeof(buf), len);
-
         string_free_slot(STR_SLOT_DELTA);
-        struct rico_string *str;
-        err = chunk_alloc((void **)&str, chunk_transient, RICO_HND_STRING);
-        if (err) return err;
-        err = string_init(str, rico_string_slot_string[STR_SLOT_DELTA],
-                          STR_SLOT_DELTA, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT,
-                          1000, NULL, buf);
-        if (err) return err;
+        load_string(pack_transient, rico_string_slot_string[STR_SLOT_DELTA],
+                    STR_SLOT_DELTA, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL,
+                    buf);
     }
 
     return err;
@@ -1361,7 +1129,7 @@ internal int rico_init()
     printf("----------------------------------------------------------\n");
     err = load_mesh_files();
     if (err) return err;
-#endif 
+#endif
 
     printf("----------------------------------------------------------\n");
     printf("[MAIN][init] Loading chunks\n");
@@ -1399,8 +1167,6 @@ internal int state_engine_init()
     last_perfs = SDL_GetPerformanceCounter();
     last_cycles = __rdtsc();
     fps_last_render = last_perfs;
-    view_vel = VEC3_ZERO;
-    view_acc = VEC3_ZERO;
 
     int sdl_err = SDL_GL_SetSwapInterval(vsync);
     if (sdl_err < 0) {
@@ -1410,8 +1176,8 @@ internal int state_engine_init()
 
     // Reset mouse delta after window opens and mouse is locked to screen
     SDL_SetRelativeMouseMode(mouse_lock);
-    mouse_delta.x = 0;
-    mouse_delta.y = 0;
+    mouse_dx = 0;
+    mouse_dy = 0;
 
     // TODO: Load from config file?
     // Initialize key map

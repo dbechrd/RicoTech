@@ -26,7 +26,7 @@ int mymain()
     init_murmurhash3();
 
     pack_build_all();
-    pack_transient = pack_init("pack_transient", 0, 0);
+    pack_transient = pack_init("pack_transient", 0, MB(4));
     pack_frame = pack_init("pack_frame", 0, 0);
     err = pack_load("packs/default.pak", &pack_default);
     err = pack_load("packs/alpha.pak", &pack_active);

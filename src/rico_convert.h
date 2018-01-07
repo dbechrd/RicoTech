@@ -72,4 +72,4 @@ internal inline char *read_word(char *fp, int len, char **buf)
 }
 #endif
 
-#endif // RICO_CONVERT_H
+#endif

@@ -13,4 +13,4 @@ global const char *material_name(struct rico_material *material);
 void material_bind(struct pack *pack, u32 id);
 void material_unbind(struct pack *pack, u32 id);
 
-#endif // RICO_MATERIAL_H
+#endif

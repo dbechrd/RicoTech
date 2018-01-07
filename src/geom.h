@@ -813,4 +813,4 @@ struct sphere
     float radius;
 };
 
-#endif // GEOM_H
+#endif

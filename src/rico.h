@@ -16,6 +16,8 @@
 #include <limits.h>
 #include <math.h>
 
+struct pack;
+
 #include "dlb_string.h"
 #include "geom.h"
 #include "util.h"
@@ -24,20 +26,18 @@
 #include "rico_pool.h"
 #include "rico_hnd.h"
 #include "rico_hash.h"
-#include "pack_builder.h"
-
 #include "bbox.h"
 #include "camera.h"
 #include "program.h"
 #include "rico_light.h"
 #include "rico_object.h"
-
 #include "rico_texture.h"
 #include "rico_mesh.h"
 #include "rico_font.h"
 #include "rico_string.h"
 #include "rico_material.h"
 #include "rico_chunk.h"
+#include "pack_builder.h"
 
 #include "3rdparty/MurmurHash3.h"
 #include "primitives.h"
@@ -63,4 +63,4 @@
 #include "3rdparty/tinyobjloader.h"
 #include "3rdparty/MurmurHash3.h"
 
-#endif // RICO_H
+#endif
