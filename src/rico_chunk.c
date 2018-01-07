@@ -196,8 +196,7 @@ int chunk_serialize(const struct rico_chunk *chunk,
 
     #if RICO_DEBUG_CHUNK
         printf("[chnk][save] uid=%d name=%s filename=%s total_size=%d\n",
-               chunk->hnd.uid, chunk->hnd.name, file->filename,
-               chunk->total_size);
+               chunk->uid, chunk->name, file->filename, chunk->total_size);
     #endif
 
     return err;
@@ -275,11 +274,11 @@ internal void chunk_print(struct rico_chunk *chunk)
 {
     // Print information about chunk and pool sizes
     printf("[chnk][show] uid=%d name=%s total_size=%d\n",
-           chunk->hnd.uid, chunk->hnd.name, chunk->total_size);
+           chunk->uid, chunk->name, chunk->total_size);
 
-    for (int i = 0; i < RICO_HND_CEREAL_COUNT; ++i)
+    for (int i = 1; i < RICO_HND_CEREAL_COUNT; ++i)
     {
-        printf("             %s = %d\n", chunk->pools[i]->hnd.name,
+        printf("             %s = %d\n", chunk->pools[i]->name,
                chunk->pool_counts[i]);
     }
 }

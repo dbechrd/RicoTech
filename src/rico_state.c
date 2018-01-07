@@ -15,10 +15,13 @@ static struct rico_keychord action_chords[ACTION_COUNT] = { 0 };
 // frame. Typical walking stride is ~0.762 meters (30 inches). Distance traveled
 // per frame (60hz) is 0.762 * 0.0275 = 0.020955 ~= 0.021
 
-int mouse_dx = 0;
-int mouse_dy = 0;
+r32 mouse_dx = 0;
+r32 mouse_dy = 0;
 
 internal struct vec3 player_acc;
+
+#define CAM_SLOW_MULTIPLIER 0.1f
+#define CAM_SPRINT_MULTIPLIER 2.0f
 internal bool player_sprint = false;
 internal bool camera_slow = false;
 
@@ -40,6 +43,9 @@ internal bool mouse_lock = true;
 internal bool enable_lighting = true;
 
 ///|////////////////////////////////////////////////////////////////////////////
+// Simulation params
+internal r64 sim_accum = 0;
+
 // Performance timing
 internal u64 perfs_frequency;
 internal u64 last_perfs;
@@ -207,6 +213,20 @@ inline bool state_is_paused()
     return (state == STATE_MENU_QUIT);
 }
 
+void render_fps(r64 fps, r64 ms, r64 mcyc)
+{
+    // TODO: Allow x/y coords to be given in characters instead of pixels
+    //       based on FONT_WIDTH / FONT_HEIGHT.
+    char buf[128] = { 0 };
+    int len = snprintf(buf, sizeof(buf), "%.f fps %.2f ms %.2f mcyc", fps, ms,
+                       mcyc);
+    string_truncate(buf, sizeof(buf), len);
+    string_free_slot(STR_SLOT_FPS);
+    load_string(pack_transient, rico_string_slot_string[STR_SLOT_FPS],
+                STR_SLOT_FPS, -(FONT_WIDTH * len), 0,
+                COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
+}
+
 int state_update()
 {
     enum rico_error err;
@@ -215,8 +235,18 @@ int state_update()
     //| Query input state
     ///-------------------------------------------------------------------------
     // Get mouse state
+    int dx, dy;
     mouse_buttons_prev = mouse_buttons;
-    mouse_buttons = SDL_GetRelativeMouseState(&mouse_dx, &mouse_dy);
+    mouse_buttons = SDL_GetRelativeMouseState(&dx, &dy);
+    if (mouse_lock)
+    {
+        mouse_dx += (r32)dx;
+        mouse_dy += (r32)dy;
+    }
+    else
+    {
+        mouse_dx = mouse_dy = 0;
+    }
 
     // Get keyboard state
     u8 *keys_tmp = keys_prev;
@@ -259,8 +289,6 @@ int state_update()
         load_string(pack_transient, rico_string_slot_string[STR_SLOT_STATE],
                     STR_SLOT_STATE, 0, 0, COLOR_DARK_RED_HIGHLIGHT, 0, NULL,
                     buf);
-
-        if (err) return err;
     }
 
     ///-------------------------------------------------------------------------
@@ -276,46 +304,47 @@ int state_update()
     u64 delta_cycles = (cycles - last_cycles);
     last_cycles = cycles;
 
-    r64 dt = (r64)delta_perfs / perfs_frequency;
+    r64 frame_dt = (r64)delta_perfs / perfs_frequency;
+    r64 frame_ms = frame_dt * 1000.0;
 
     // Update FPS counter string if enabled and overdue
     if (fps_render && last_perfs - fps_last_render > fps_render_delta)
     {
         r64 fps = (r64)perfs_frequency / delta_perfs;
-        r64 ms = dt * 1000.0;
         r64 mcyc = (r64)delta_cycles / (1000.0 * 1000.0); // MegaCycles/Frame
 
-        // TODO: string_init() negative x/y coords = backwards from SCREEN_W.
-        //       Allow x/y coords to be given in characters instead of pixels
-        //       based on FONT_WIDTH / FONT_HEIGHT.
-        char buf[128] = { 0 };
-        int len = snprintf(buf, sizeof(buf), "%.f fps %.2f ms %.2f mcyc", fps,
-                           ms, mcyc);
-        string_truncate(buf, sizeof(buf), len);
-        string_free_slot(STR_SLOT_FPS);
-        load_string(pack_transient, rico_string_slot_string[STR_SLOT_FPS],
-                    STR_SLOT_FPS, -(FONT_WIDTH * len), 0,
-                    COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
-
+        render_fps(fps, frame_ms, mcyc);
         fps_last_render = last_perfs;
     }
 
     ///-------------------------------------------------------------------------
     //| Update
     ///-------------------------------------------------------------------------
-    if (!state_is_paused(state))
+    sim_accum += MIN(frame_ms, SIM_MAX_FRAMESKIP_MS);
+    while (sim_accum >= SIM_MS)
     {
-        player_camera_update(&cam_player, dt, mouse_dx, mouse_dy, player_acc,
-                             player_sprint, camera_slow);
-        glref_update(dt);
-    }
+        if (!state_is_paused(state))
+        {
+            struct vec3 camera_acc = player_acc;
+            if (player_sprint) v3_scalef(&camera_acc, CAM_SPRINT_MULTIPLIER);
+            if (camera_slow)   v3_scalef(&camera_acc, CAM_SLOW_MULTIPLIER);
+            player_camera_update(&cam_player, mouse_dx, mouse_dy, camera_acc);
 
-    // Update debug text
-    string_update(dt);
+            glref_update();
+        }
+
+        string_update();
+
+        mouse_dx = 0;
+        mouse_dy = 0;
+        sim_accum -= SIM_MS;
+    }
 
     ///-------------------------------------------------------------------------
     //| Render
     ///-------------------------------------------------------------------------
+    r64 alpha = (r64)sim_accum / SIM_MS;
+
     glClearColor(0.1f, 0.1f, 0.2f, 1.0f);
     //glClearColor(0.46f, 0.70f, 1.0f, 1.0f);
     //glClearDepth(0.0f);
@@ -323,6 +352,10 @@ int state_update()
     // glPolygonMode(GL_FRONT_AND_BACK, cam_player.fill_mode);
     glPolygonMode(GL_FRONT, cam_player.fill_mode);
 
+    // TODO: Use alpha
+    // glref_render(alpha, &cam_player);
+    // camera_render(alpha, &cam_player);
+    UNUSED(alpha);
     glref_render(&cam_player);
     camera_render(&cam_player);
 

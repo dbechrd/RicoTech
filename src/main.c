@@ -64,6 +64,9 @@ int mymain()
             break;
 
         SDL_GL_SwapWindow(window);
+        // HACK: Kill some time (a.k.a. save my computer from lighting itself
+        //       on fire when VSync is disabled)
+        SDL_Delay(3);
     }
 
 cleanup:

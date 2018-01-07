@@ -5,7 +5,7 @@ const char *rico_string_slot_string[] = {
 void string_delete(struct pack *pack, struct rico_string *str)
 {
 #if RICO_DEBUG_STRING
-    printf("[strg][free] uid=%d name=%s\n", str->hnd.uid, str->hnd.name);
+    printf("[strg][free] uid=%d\n", str->id);
 #endif
 
     if (str->slot != STR_SLOT_DYNAMIC)
@@ -36,10 +36,8 @@ bool string_free_slot(enum rico_string_slot slot)
 // TODO: Lifespan objects shouldn't be string-specific; refactor this logic out
 //       into something more relevant, e.g. an object delete queue, sorted by
 //       time to delete in ms, soonest first.
-void string_update(r64 dt)
+void string_update()
 {
-    u32 delta_ms = (u32)(dt * 1000);
-
     struct pack *pack = pack_transient;
     struct rico_string *str = 0;
     u32 index = 0;
@@ -47,22 +45,24 @@ void string_update(r64 dt)
     {
         if (pack->index[index].type != RICO_HND_STRING)
         {
-            index--;
+            index++;
             continue;
         }
 
         str = pack_read(pack, index);
         if (str->lifespan > 0)
         {
-            if (str->lifespan > delta_ms)
+            if (str->lifespan > (u32)SIM_MS)
             {
-                str->lifespan -= delta_ms;
-                index--;
+                str->lifespan -= (u32)SIM_MS;
             }
             else
             {
                 pack_delete(pack_transient, str->id, RICO_HND_STRING);
+                continue;
             }
         }
+
+        index++;
     }
 }

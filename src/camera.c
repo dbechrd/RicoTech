@@ -116,38 +116,43 @@ void camera_update(struct camera *camera)
     camera->need_update = false;
 }
 
-#define CAM_ACC_MULTIPLIER 20.0f
-#define CAM_SLOW_MULTIPLIER 0.1f
-#define CAM_SPRINT_MULTIPLIER 2.0f
-#define CAM_FRICTION_MUL 0.9f
+#define CAM_ACC 0.2f
+#define CAM_FRICTION_MUL 0.95f
 #define LOOK_SENSITIVITY_X 0.1f
 #define LOOK_SENSITIVITY_Y 0.1f
 
-void player_camera_update(struct camera *camera, r64 dt, int dx, int dy,
-                          struct vec3 acc, bool sprint, bool slow)
+void player_camera_update(struct camera *camera, r32 dx, r32 dy,
+                          struct vec3 delta_acc)
 {
-    //dt = 1.0f;
-    //acc = 1.26f;
+    //---------------------------------------------------
+    // Acceleration
+    //---------------------------------------------------
+    cam_player.acc = delta_acc;
 
-    cam_player.acc = acc;
-
+    //---------------------------------------------------
+    // Velocity
+    //---------------------------------------------------
     // Calculate delta velocity
     // dv' = at;
-    struct vec3 delta_vel = camera->acc;
-    v3_scalef(&delta_vel, CAM_ACC_MULTIPLIER);
-    if (sprint) v3_scalef(&delta_vel, CAM_SPRINT_MULTIPLIER);
-    if (slow)   v3_scalef(&delta_vel, CAM_SLOW_MULTIPLIER);
-    v3_scalef(&delta_vel, (r32)dt);
+    struct vec3 acc = camera->acc;
+    v3_scalef(&acc, (r32)SIM_SEC);
 
-    // Update velocity
-    v3_add(&camera->vel, &delta_vel);
+    // HACK: Other manual adjustments to cam velocity
+    // TODO: Adjust acceleration instead?
+    v3_scalef(&acc, CAM_ACC / (r32)SIM_SEC);
+
+    v3_add(&camera->vel, &acc);
 
     // Apply friction (double when slowing down for a more realistic stop)
     float mag_acc = v3_length(&camera->acc);
-    if (mag_acc != 0.0f)
-        v3_scalef(&camera->vel, CAM_FRICTION_MUL);
-    else
+    if (mag_acc == 0.0f)
+    {
         v3_scalef(&camera->vel, 1.0f - (1.0f - CAM_FRICTION_MUL) * 2.0f);
+    }
+    else
+    {
+        v3_scalef(&camera->vel, CAM_FRICTION_MUL);
+    }
 
     // Resting check
     float mag_vel = v3_length(&camera->vel);
@@ -156,32 +161,38 @@ void player_camera_update(struct camera *camera, r64 dt, int dx, int dy,
         camera->vel = VEC3_ZERO;
     }
 
+    //---------------------------------------------------
+    // Position
+    //---------------------------------------------------
     // Calculate delta position
     // dp' = 1/2at^2 + vt
-    struct vec3 half_at_squared = camera->acc;
-    v3_scalef(&half_at_squared, 0.5f * (r32)dt * (r32)dt);
+    struct vec3 vel = camera->acc;
+    v3_scalef(&vel, 0.5f * (r32)SIM_SEC * (r32)SIM_SEC);
 
     struct vec3 vt = camera->vel;
-    v3_scalef(&vt, (r32)dt);
+    v3_scalef(&vt, (r32)SIM_SEC);
 
-    struct vec3 delta_pos = half_at_squared;
-    v3_add(&delta_pos, &vt);
+    v3_add(&vel, &vt);
 
-    //if (mouse_lock)
-    //{
-        // TODO: Why was this inside mouse_lock?
-        // Update position
-        camera_translate_local(&cam_player, &delta_pos);
+    // Update position
+    camera_translate_local(&cam_player, &vel);
 
-        // TODO: Smooth mouse look somehow
-        if (dx != 0 || dy != 0)
-        {
-            struct vec3 delta;
-            delta.x = dx * LOOK_SENSITIVITY_X;
-            delta.y = dy * LOOK_SENSITIVITY_Y;
-            camera_rotate(&cam_player, delta.x, delta.y);
-        }
-    //}
+    // TODO: Smooth mouse look somehow
+    if (dx != 0 || dy != 0)
+    {
+        struct vec3 delta;
+        delta.x = dx * LOOK_SENSITIVITY_X;
+        delta.y = dy * LOOK_SENSITIVITY_Y;
+        camera_rotate(&cam_player, delta.x, delta.y);            
+    }
+
+    char buf[128] = { 0 };
+    int len = snprintf(buf, sizeof(buf), "delta_x: %4.f\ndelta_y: %4.f", dx, dy);
+    string_truncate(buf, sizeof(buf), len);
+    string_free_slot(STR_SLOT_DEBUG);
+    load_string(pack_transient, rico_string_slot_string[STR_SLOT_DEBUG],
+                STR_SLOT_DEBUG, -(FONT_WIDTH * len/2), FONT_HEIGHT,
+                COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
 
     camera_update(&cam_player);
 }

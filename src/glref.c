@@ -296,13 +296,13 @@ void selected_delete()
     select_prev_obj();
 }
 
-void glref_update(r64 dt)
+void glref_update()
 {
     //--------------------------------------------------------------------------
     // Update uniforms
     //--------------------------------------------------------------------------
     glUseProgram(prog_pbr->prog_id);
-    glUniform1f(prog_pbr->time, (r32)dt);
+    glUniform1f(prog_pbr->time, (r32)SIM_SEC);
     glUseProgram(0);
 }
 

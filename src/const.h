@@ -63,35 +63,6 @@
 //#define FLAG_PERSIST_GET(handle)          BIT_GET(handle, FLAG_PERSIST)
 
 //------------------------------------------------------------------------------
-// Rico constants
-//------------------------------------------------------------------------------
-// TODO: Is there a better way to handle this?
-#define RICO_SHADER_POS_LOC     0
-#define RICO_SHADER_COL_LOC     1
-#define RICO_SHADER_NORMAL_LOC  2
-#define RICO_SHADER_UV_LOC      3
-
-// Math / Physics
-#define M_PI 3.14159265358979323846264338327950288
-#define M_2PI 6.28318530717958647692528676655900576
-
-#define DEG_TO_RAD(deg) deg * M_PI / 180.0
-#define RAD_TO_DEG(rad) rad * 180.0 / M_PI
-
-#define DEG_TO_RADF(deg) deg * (float)M_PI / 180.0f
-#define RAD_TO_DEGF(rad) rad * 180.0f / (float)M_PI
-
-#define LERP(v0, v1, t) (1 - t) * v0 + t * v1
-
-#define M_SEVENTH_DEG 51.428571428571428571428571428571
-
-#define EPSILON 0.001f
-
-#define KB(bytes) (1024 * bytes)
-#define MB(bytes) (1024 * KB(bytes))
-#define GB(bytes) (1024 * MB(bytes))
-
-//------------------------------------------------------------------------------
 // Basic type redefinitions
 //------------------------------------------------------------------------------
 //#include <stdint.h>
@@ -168,6 +139,34 @@ typedef real64 r64;
 typedef real32 f32;
 typedef real64 f64;
 */
+
+//------------------------------------------------------------------------------
+// Rico constants
+//------------------------------------------------------------------------------
+// Math / Physics
+#define M_PI 3.14159265358979323846264338327950288
+#define M_2PI 6.28318530717958647692528676655900576
+
+#define DEG_TO_RAD(deg) deg * M_PI / 180.0
+#define RAD_TO_DEG(rad) rad * 180.0 / M_PI
+
+#define DEG_TO_RADF(deg) deg * (float)M_PI / 180.0f
+#define RAD_TO_DEGF(rad) rad * 180.0f / (float)M_PI
+
+#define LERP(v0, v1, t) (1 - t) * v0 + t * v1
+
+#define M_SEVENTH_DEG 51.428571428571428571428571428571
+
+#define EPSILON 0.001f
+
+#define KB(bytes) (1024 * bytes)
+#define MB(bytes) (1024 * KB(bytes))
+#define GB(bytes) (1024 * MB(bytes))
+
+#define SIM_MS ((r64)10)
+#define SIM_SEC (SIM_MS / 1000)
+#define SIM_MAX_FRAMESKIP_MS ((r64)50)
+//#define SIM_MAX_FRAMESKIP_SEC (SIM_MAX_FRAMESKIP_MS / 1000)
 
 //------------------------------------------------------------------------------
 // Enums

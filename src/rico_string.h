@@ -25,6 +25,6 @@ struct rico_string
 
 void string_delete(struct pack *pack, struct rico_string *str);
 bool string_free_slot(enum rico_string_slot slot);
-void string_update(r64 dt);
+void string_update();
 
 #endif
