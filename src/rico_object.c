@@ -9,7 +9,8 @@ global const char *object_name(struct rico_object *obj)
 }
 global struct obj_property *object_props(struct rico_object *obj)
 {
-    RICO_ASSERT(obj->prop_count);
+    if (!obj->prop_count)
+        return NULL;
     return (struct obj_property *)((u8 *)obj + obj->props_offset);
 }
 global struct obj_property *object_prop(struct rico_object *obj,
@@ -106,7 +107,7 @@ void object_bbox_recalculate_all(struct pack *pack)
         }
         else
         {
-            mesh = pack_lookup(pack_default, MESH_DEFAULT_BBOX);
+            mesh = pack_lookup(pack_default, MESH_DEFAULT_CUBE);
         }
         obj->bbox = mesh->bbox;
     }
@@ -503,7 +504,7 @@ void object_render(struct pack *pack, const struct program_pbr *prog,
         }
         else
         {
-            mesh_render(pack_default, MESH_DEFAULT_BBOX);
+            mesh_render(pack_default, MESH_DEFAULT_CUBE);
         }
 
         // Clean up

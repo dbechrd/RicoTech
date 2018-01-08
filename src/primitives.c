@@ -157,7 +157,7 @@ void prim_draw_bbox_color(const struct bbox *bbox,
 	UNUSED(color);
     glUniform4f(program->u_col, 1.0f, 1.0f, 1.0f, 0.5f);
 
-    mesh_render(pack_default, MESH_DEFAULT_BBOX);
+    mesh_render(pack_default, MESH_DEFAULT_CUBE);
 
     // Clean up
     glUseProgram(0);

@@ -243,7 +243,7 @@ global u32 load_object(struct pack *pack, const char *name,
         }
         else
         {
-            mesh = pack_lookup(pack_default, MESH_DEFAULT_BBOX);
+            mesh = pack_lookup(pack_default, MESH_DEFAULT_CUBE);
         }
         obj->bbox = mesh->bbox;
     }
@@ -505,6 +505,7 @@ global u32 load_string(struct pack *pack, const char *name,
     return str_id;
 }
 
+/*
 internal u32 default_mesh(struct pack *pack, const char *name)
 {
     //--------------------------------------------------------------------------
@@ -574,6 +575,7 @@ internal u32 default_mesh(struct pack *pack, const char *name)
     return load_mesh(pack, name, array_count(verts), verts,
                      array_count(elements), elements);
 }
+*/
 
 int load_obj_file(struct pack *pack, const char *filename, u32 *_last_mesh_id)
 {
@@ -896,18 +898,19 @@ struct pack *pack_build_default()
     u32 spec = load_texture_file(pack, "[TEX_SPEC_DEFAULT]",
                                  "texture/pbr_default_1.tga");
     u32 mat  = load_material(pack, "[MATERIAL_DEFAULT]", diff, spec);
-    u32 bbox = default_mesh(pack, "[MESH_DEFAULT_BBOX]");
 
     // HACK: This is a bit of a gross way to get the id of the last mesh
+    u32 cube;
+    load_obj_file(pack, "mesh/prim_cube.obj", &cube);
     u32 sphere;
-    load_obj_file(pack, "mesh/prim_sphere.ric", &sphere);
+    load_obj_file(pack, "mesh/prim_sphere.obj", &sphere);
 
     RICO_ASSERT(font == FONT_DEFAULT);
     RICO_ASSERT(font_mat == FONT_DEFAULT_MATERIAL);
     RICO_ASSERT(diff == TEXTURE_DEFAULT_DIFF);
     RICO_ASSERT(spec == TEXTURE_DEFAULT_SPEC);
     RICO_ASSERT(mat == MATERIAL_DEFAULT);
-    RICO_ASSERT(bbox == MESH_DEFAULT_BBOX);
+    RICO_ASSERT(cube == MESH_DEFAULT_CUBE);
     RICO_ASSERT(sphere == MESH_DEFAULT_SPHERE);
 
     pack_save(pack, filename, true);
@@ -924,14 +927,14 @@ void pack_build_alpha()
     u32 bricks_mat = load_material(pack, "Bricks", bricks_tex0, bricks_tex1);
 
     u32 sphere;
-    load_obj_file(pack, "mesh/sphere.ric", &sphere);
-    load_obj_file(pack, "mesh/wall_cornertest.ric", 0);
-    load_obj_file(pack, "mesh/door2.ric", &sphere);
+    load_obj_file(pack, "mesh/sphere.obj", &sphere);
+    load_obj_file(pack, "mesh/wall_cornertest.obj", 0);
+    load_obj_file(pack, "mesh/door2.obj", &sphere);
     //sphere = 0x02000023;
-    //load_obj_file(pack, "mesh/spawn.ric");
-    //load_obj_file(pack, "mesh/door.ric");
-    //load_obj_file(pack, "mesh/welcome_floor.ric");
-    //load_obj_file(pack, "mesh/grass.ric");
+    //load_obj_file(pack, "mesh/spawn.obj");
+    //load_obj_file(pack, "mesh/door.obj");
+    //load_obj_file(pack, "mesh/welcome_floor.obj");
+    //load_obj_file(pack, "mesh/grass.obj");
 
     struct obj_property ground_props[1] = { 0 };
     ground_props[0].type = PROP_MATERIAL_ID;
