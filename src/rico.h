@@ -11,6 +11,9 @@
 //#include <stdlib.h>
 #include "3rdparty/GL/gl3w.h"
 #include "3rdparty/SDL/SDL.h"
+#include "3rdparty/AL/al.h"
+#include "3rdparty/AL/alc.h"
+#include "3rdparty/MurmurHash3.h"
 
 #include <stdio.h>
 #include <limits.h>
@@ -39,7 +42,6 @@ struct pack;
 #include "rico_chunk.h"
 #include "pack_builder.h"
 
-#include "3rdparty/MurmurHash3.h"
 #include "primitives.h"
 #include "regularpoly.h"
 #include "rico_convert.h"
@@ -57,7 +59,7 @@ struct pack;
 //#include "3rdparty/CacheLineSize.h"
 //#include "3rdparty/nuklear.h"
 //#include "3rdparty/nuklear_sdl_gl3.h"
-#define STB_IMAGE_IMPLEMENTATION
+
 #define STBI_ONLY_TGA
 #include "3rdparty/stb_image.h"
 #include "3rdparty/tinyobjloader.h"

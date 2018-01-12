@@ -15,7 +15,7 @@ struct light_directional
 struct light_point
 {
     struct vec3 color;
-    struct vec3 pos;
+    struct vec3 position;
     float intensity;
 
     // Distance fall-off

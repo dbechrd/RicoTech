@@ -336,4 +336,6 @@ void free_glref()
 
     //TODO: Free all programs
     free_program_pbr(&prog_pbr);
+    free_program_default(&prog_default);
+    free_program_primitive(&prog_primitive);
 }

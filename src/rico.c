@@ -40,3 +40,6 @@
 //#include "3rdparty/CacheLineSize.c"
 //#include "3rdparty/main_nuke.c"
 #include "3rdparty/MurmurHash3.c"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "3rdparty/stb_image.h"

@@ -922,8 +922,10 @@ void pack_build_alpha()
     const char *filename = "packs/alpha.pak";
 
     struct pack *pack = pack_init(filename, 128, MB(256));
-    u32 bricks_tex0 = load_texture_file(pack, "Bricks_0", "texture/pbr_bricks_0.tga");
-    u32 bricks_tex1 = load_texture_file(pack, "Bricks_1", "texture/pbr_bricks_1.tga");
+    //u32 bricks_tex0 = load_texture_file(pack, "Bricks_0", "texture/pbr_bricks_0.tga");
+    //u32 bricks_tex1 = load_texture_file(pack, "Bricks_1", "texture/pbr_bricks_1.tga");
+    u32 bricks_tex0 = load_texture_file(pack, "Bricks_0", "texture/cobble_diff.tga");
+    u32 bricks_tex1 = load_texture_file(pack, "Bricks_1", "texture/cobble_mrao.tga");
     u32 bricks_mat = load_material(pack, "Bricks", bricks_tex0, bricks_tex1);
 
     u32 sphere;

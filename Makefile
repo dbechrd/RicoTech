@@ -6,7 +6,7 @@
 
 # Directories
 SRC_DIR := src
-INC_DIR := include include/SDL include/GL include/stb
+INC_DIR := include include/SDL include/GL include/AL include/stb
 OBJ_DIR := obj
 LIB_DIR := lib
 DLL_DIR := dll
@@ -39,7 +39,7 @@ RESOURCE_DIRS := $(RES_SUBDIRS:%=$(BIN_DIR)/%)
 # Use this with mingw libraries
 #_LIBS = -lmingw32 -lSDL2main -lSDL2 -lopengl32 -mwindows
 # Use this with MSVC libraries
-_LIBS = -lSDL2main -lSDL2 -lopengl32 #-mwindows
+_LIBS = -lSDL2main -lSDL2 -lopengl32 -lopenal32 #-mwindows
 LIBS  := -L$(LIB_DIR) $(_LIBS)
 
 # Compiler & flags

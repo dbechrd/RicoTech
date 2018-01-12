@@ -361,7 +361,7 @@ void object_render_setup(const struct program_pbr *prog,
     float light_pos_z = sinf((float)ticks / 2000.0f) * 3.0f;
 
     struct light_point light;
-    light.pos = VEC3(light_pos_x, 3.0f, light_pos_z);
+    light.position = VEC3(light_pos_x, 3.0f, light_pos_z);
     light.color = VEC3(1.0f, 0.9f, 0.6f);
     light.intensity = (lights_on) ? 10.0f : 0.0f;
     //light.ambient = VEC3(0.10f, 0.09f, 0.11f);
@@ -392,7 +392,7 @@ void object_render_setup(const struct program_pbr *prog,
     glUniform1i(prog->material.tex1, 1);
 
     // Lighting
-    glUniform3fv(prog->light.pos, 1, (const GLfloat *)&light.pos);
+    glUniform3fv(prog->light.pos, 1, (const GLfloat *)&light.position);
     glUniform3fv(prog->light.color, 1, (const GLfloat *)&light.color);
     glUniform1f(prog->light.intensity, light.intensity);
 

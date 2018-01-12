@@ -195,6 +195,7 @@ typedef real64 f64;
     f(ERR_SHADER_LINK)             \
     f(ERR_SDL_INIT)                \
     f(ERR_GL3W_INIT)               \
+    f(ERR_OPENAL_INIT)             \
     f(ERR_PRIM_UNSUPPORTED)        \
     f(ERR_OBJ_TOO_MANY_VERTS)      \
     f(ERR_CHUNK_NULL)              \
