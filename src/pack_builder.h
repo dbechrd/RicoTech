@@ -212,9 +212,15 @@ internal inline void blob_end(struct pack *pack)
     pack->blobs_used++;
     pack->blob_current_id = 0;
 
-    // Compact buffer if over 66% utilized
-    u32 four_to_one = pack->buffer_used >> 1;
-    if (four_to_one > pack->buffer_size - pack->buffer_used)
+    // Compact buffer if over 50% utilized
+    u32 half_blobs = pack->blobs_used >> 1;
+    if (half_blobs > pack->blob_count - pack->blobs_used)
+    {
+        pack_compact_buffer(pack);
+    }
+
+    u32 half_buffer = pack->buffer_used >> 1;
+    if (half_buffer > pack->buffer_size - pack->buffer_used)
     {
         pack_compact_buffer(pack);
     }

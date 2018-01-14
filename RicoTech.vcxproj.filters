@@ -203,6 +203,9 @@
     <ClInclude Include="src\3rdparty\stb_leakcheck.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\rico_audio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\3rdparty\MurmurHash3.c">
@@ -308,6 +311,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\rico_convert.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico_audio.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

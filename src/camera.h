@@ -21,8 +21,9 @@ struct camera
     struct vec3 pos;
     struct vec3 vel;
     struct vec3 acc;
+    //TODO: Implement better camera with position + lookat. Is that necessary?
+    //      Maybe it's easy to derive lookat when I need it? Probably not..
     struct quat view;
-    //struct vec3 up;
     float fov_deg;
     GLenum fill_mode;
     bool locked;

@@ -253,6 +253,7 @@
     <ClInclude Include="src\program.h" />
     <ClInclude Include="src\regularpoly.h" />
     <ClInclude Include="src\rico.h" />
+    <ClInclude Include="src\rico_audio.h" />
     <ClInclude Include="src\rico_cereal.h" />
     <ClInclude Include="src\rico_chunk.h" />
     <ClInclude Include="src\rico_collision.h" />
@@ -337,6 +338,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\rico.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\rico_audio.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>

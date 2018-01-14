@@ -311,6 +311,29 @@ internal void object_interact_light_switch(struct rico_object *obj)
     lights_on = !lights_on;
 }
 
+// HACK: I want to make an audio switch!
+static bool audio_on = true;
+internal void object_interact_audio_switch(struct rico_object *obj)
+{
+    UNUSED(obj);
+    audio_on = !audio_on;
+    if (audio_on)
+        alSourcePlay(audio_source);
+    else
+        alSourceStop(audio_source);
+}
+
+typedef void (*prop_interactor)(struct rico_object *obj);
+prop_interactor interactors[PROP_COUNT] = {
+    0,                            // PROP_MESH_ID
+    0,                            // PROP_MATERIAL_ID
+    0,                            // PROP_LIGHT_DIR
+    0,                            // PROP_LIGHT_POINT
+    0,                            // PROP_LIGHT_SPOT
+    object_interact_light_switch, // PROP_LIGHT_SWITCH
+    object_interact_audio_switch  // PROP_AUDIO_SWITCH
+};
+
 void object_interact(struct rico_object *obj)
 {
     if (state_is_edit())
@@ -319,15 +342,11 @@ void object_interact(struct rico_object *obj)
     }
     else if (!state_is_paused())
     {
-        switch (obj->type)
+        struct obj_property *props = object_props(obj);
+        for (u32 i = 0; i < obj->prop_count; ++i)
         {
-        case OBJ_LIGHT_SWITCH:
-        {
-            object_interact_light_switch(obj);
-            break;
-        }
-        default:
-            break;
+            prop_interactor interactor = interactors[props[i].type];
+            if (interactor) interactor(obj);
         }
     }
 }

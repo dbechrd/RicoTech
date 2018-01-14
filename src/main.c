@@ -2,10 +2,6 @@
 
 global SDL_Window *window = 0;
 global SDL_GLContext gl_context = 0;
-internal ALCdevice *audio_device = 0;
-internal ALCcontext *audio_context = 0;
-internal ALuint audio_source;
-internal ALuint audio_buffer;
 
 internal inline void init_stb();
 internal inline void init_murmurhash3();
@@ -13,7 +9,6 @@ internal int sdl_gl_attrib(SDL_GLattr attr, int value);
 internal int init_sdl();
 internal int init_gl3w(int major, int minor);
 internal void init_opengl();
-internal int init_openal();
 
 int mymain()
 {
@@ -30,12 +25,12 @@ int mymain()
     init_stb();
     init_murmurhash3();
 
-    pack_build_all();
-    pack_transient = pack_init("pack_transient", 0, MB(4));
-    pack_frame = pack_init("pack_frame", 0, 0);
+    //pack_build_all();
     err = pack_load("packs/default.pak", &pack_default);
     err = pack_load("packs/alpha.pak", &pack_active);
-
+    pack_transient = pack_init("pack_transient", 512, MB(4));
+    pack_frame = pack_init("pack_frame", 0, 0);
+    
     err = init_sdl();
     if (err) goto cleanup;
     err = init_gl3w(GL_VERSION_MAJOR, GL_VERSION_MINOR);
@@ -256,120 +251,4 @@ internal void init_opengl()
     glBlendEquation(GL_FUNC_ADD);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
-}
-
-internal int init_openal()
-{
-    ALenum err;
-
-    const char *devices = alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER);
-    const char *s = devices;
-    while (*s)
-    {
-        printf("Device: %s\n", s);
-        s += strlen(s) + 1;
-    }
-
-    audio_device = alcOpenDevice(NULL);
-    if (!audio_device)
-        return RICO_FATAL(ERR_OPENAL_INIT, "Failed to open audio device");
-    err = alGetError();
-    if (err) RICO_ERROR(ERR_OPENAL_INIT, "OpenAL error: %s\n", err);
-
-    ALCint attrlist[] = { ALC_FREQUENCY, 44100, 0 };
-    audio_context = alcCreateContext(audio_device, attrlist);
-    if (!audio_context)
-        return RICO_FATAL(ERR_OPENAL_INIT, "Failed to create audio context");
-    err = alGetError();
-    if (err) RICO_ERROR(ERR_OPENAL_INIT, "OpenAL error: %s\n", err);
-
-    if (!alcMakeContextCurrent(audio_context))
-        return RICO_FATAL(ERR_OPENAL_INIT, "Failed to activate audio context");
-    err = alGetError();
-    if (err) RICO_ERROR(ERR_OPENAL_INIT, "OpenAL error: %s\n", err);
-
-    alListener3f(AL_POSITION, 0.0, 1.5, 0.0);
-    alListener3f(AL_VELOCITY, 0.0, 0.0, 0.0);
-    struct vec3 fwd_up[2] = {
-        VEC3(0.0f, 0.0f, -1.0f),
-        VEC3(0.0f, 1.0f,  0.0f)
-    };
-    alListenerfv(AL_ORIENTATION, (float *)fwd_up);
-    err = alGetError();
-    if (err) RICO_ERROR(ERR_OPENAL_INIT, "OpenAL error: %s\n", err);
-
-    alGenSources(1, &audio_source);
-    err = alGetError();
-    if (err) RICO_ERROR(ERR_OPENAL_INIT, "OpenAL error: %s\n", err);
-    alSourcef(audio_source, AL_PITCH, 1.0f);
-    alSourcef(audio_source, AL_GAIN, 1.0f);
-    alSourcei(audio_source, AL_LOOPING, AL_TRUE);
-    err = alGetError();
-    if (err) RICO_ERROR(ERR_OPENAL_INIT, "OpenAL error: %s\n", err);
-
-    struct vec3 src_pos = VEC3(0.0f, 0.0f, -1.0f);
-    alSourcefv(audio_source, AL_POSITION, (float *)&src_pos);
-    alSourcefv(audio_source, AL_VELOCITY, (float *)&VEC3_ZERO);
-    err = alGetError();
-    if (err) RICO_ERROR(ERR_OPENAL_INIT, "OpenAL error: %s\n", err);
-
-    alGenBuffers(1, &audio_buffer);
-    err = alGetError();
-    if (err) RICO_ERROR(ERR_OPENAL_INIT, "OpenAL error: %s\n", err);
-
-    // TODO: Load from file
-    #define SAMPLE_RATE 44100
-    const u32 AMPLITUDE = 15000;
-    s16 buf[SAMPLE_RATE];
-
-    //const double TWO_PI = 6.28318;
-    //const double c4 = 261.63 / 44100;
-    //const double e4 = 329.63 / 44100;
-    //const double g4 = 392.00 / 44100;
-    const double ring1 = 350.0 / 44100;
-    const double ring2 = 440.0 / 44100;
-    double x1 = 0;
-    double x2 = 0;
-    double x3 = 0;
-    for (unsigned i = 0; i < SAMPLE_RATE; ++i)
-    {
-        buf[i] = (s16)(AMPLITUDE / 2 * (sin(x1 * M_2PI) + sin(x2 * M_2PI) + sin(x3 * M_2PI)));
-        x1 += ring1;
-        x2 += ring2;
-        //x1 += c4;
-        //x2 += e4;
-        //x3 += g4;
-    }
-
-    /*
-    const double TWO_PI = 6.28318;
-    const double sample_rate = 44100.0;
-    const double frequency = 440.0;
-    const double increment = TWO_PI / (44100.0 / 440.0);
-    for (u32 i = 0; i < 440; ++i)
-    {
-        for (double j = 0; j < TWO_PI; j += increment)
-        {
-            buf[i] = (s16)(AMPLITUDE * sin(j));
-        }
-    }
-    */
-
-    alBufferData(audio_buffer, AL_FORMAT_MONO16, buf, sizeof(buf), SAMPLE_RATE);
-    err = alGetError();
-    if (err) RICO_ERROR(ERR_OPENAL_INIT, "OpenAL error: %s\n", err);
-
-    //alSourceQueueBuffers(audio_source, 1, &audio_buffer);
-    alSourcei(audio_source, AL_BUFFER, audio_buffer);
-
-    ALenum state;
-    alGetSourcei(audio_source, AL_SOURCE_STATE, &state);
-
-    alSourcePlay(audio_source);
-    alGetSourcei(audio_source, AL_SOURCE_STATE, &state);
-
-    err = alGetError();
-    if (err) RICO_ERROR(ERR_OPENAL_INIT, "OpenAL error: %s\n", err);
-
-    return SUCCESS;
 }

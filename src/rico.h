@@ -29,6 +29,8 @@ struct pack;
 #include "rico_pool.h"
 #include "rico_hnd.h"
 #include "rico_hash.h"
+#include "rico_audio.h"
+
 #include "bbox.h"
 #include "camera.h"
 #include "program.h"

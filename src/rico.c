@@ -5,6 +5,7 @@
 #include "geom.c"
 #include "util.c"
 #include "rico_hash.c"
+#include "rico_audio.c"
 
 #include "rico_hnd.c"
 #include "shader.c"

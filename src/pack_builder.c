@@ -737,6 +737,7 @@ internal void null_blob(struct pack *pack)
 
 internal u32 perf_pack_tick_start;
 internal u32 perf_pack_tick_end;
+static u32 next_pack_id = 1;
 
 struct pack *pack_init(const char *name, u32 blob_count, u32 buffer_size)
 {
@@ -753,10 +754,8 @@ struct pack *pack_init(const char *name, u32 blob_count, u32 buffer_size)
         blob_count * sizeof(pack->index[0]) +
         buffer_size);
     
-    static u32 next_pack_id = 1;
     pack->id = next_pack_id;
     next_pack_id++;
-
     memcpy(pack->magic, PACK_SIGNATURE, sizeof(pack->magic));
     pack->version = RICO_FILE_VERSION_CURRENT;
     strncpy(pack->name, name, (u32)sizeof(pack->name) - 1);
@@ -849,7 +848,7 @@ int pack_load(const char *filename, struct pack **_pack)
     {
         struct pack tmp_pack = { 0 };
         fread(&tmp_pack, 1, sizeof(tmp_pack), pack_file);
-        fseek(pack_file, 0, SEEK_SET);
+        rewind(pack_file);
 
         u32 size = tmp_pack.data_offset + tmp_pack.buffer_size;
         u32 size_on_disk = tmp_pack.data_offset + tmp_pack.buffer_used;
@@ -865,6 +864,11 @@ int pack_load(const char *filename, struct pack **_pack)
         pack->index = (void *)(base + pack->index_offset);
         pack->buffer = base + pack->data_offset;
         *_pack = pack;
+
+        if (pack->id >= next_pack_id)
+        {
+            next_pack_id = pack->id + 1;
+        }
     }
     else
     {
@@ -928,10 +932,10 @@ void pack_build_alpha()
     u32 bricks_tex1 = load_texture_file(pack, "Bricks_1", "texture/cobble_mrao.tga");
     u32 bricks_mat = load_material(pack, "Bricks", bricks_tex0, bricks_tex1);
 
-    u32 sphere;
+    u32 sphere, door;
     load_obj_file(pack, "mesh/sphere.obj", &sphere);
     load_obj_file(pack, "mesh/wall_cornertest.obj", 0);
-    load_obj_file(pack, "mesh/door2.obj", &sphere);
+    load_obj_file(pack, "mesh/door.obj", &door);
     //sphere = 0x02000023;
     //load_obj_file(pack, "mesh/spawn.obj");
     //load_obj_file(pack, "mesh/door.obj");
@@ -950,14 +954,16 @@ void pack_build_alpha()
 
     //u32 timmy_diff = load_texture_color(pack, "Timmy", COLOR_YELLOW);
     u32 timmy_mat = load_material(pack, "Timmy", 0, 0);
-    struct obj_property timmy_props[3] = { 0 };
+    struct obj_property timmy_props[4] = { 0 };
     timmy_props[0].type = PROP_MESH_ID;
-    timmy_props[0].mesh_id = sphere;
+    timmy_props[0].mesh_id = door;
     timmy_props[1].type = PROP_MATERIAL_ID;
     timmy_props[1].material_id = timmy_mat;
     timmy_props[2].type = PROP_LIGHT_SWITCH;
     timmy_props[2].light_switch = (struct light_switch) { 3, true };
-    u32 timmy_id = load_object(pack, "Timmy", OBJ_LIGHT_SWITCH,
+    timmy_props[3].type = PROP_AUDIO_SWITCH;
+    timmy_props[3].audio_switch = (struct audio_switch) { 3, true };
+    u32 timmy_id = load_object(pack, "Timmy", OBJ_STATIC,
                                array_count(timmy_props), timmy_props, NULL);
     struct rico_object *timmy = pack_lookup(pack, timmy_id);
     object_scale(timmy, &VEC3(0.01f, 0.01f, 0.01f));

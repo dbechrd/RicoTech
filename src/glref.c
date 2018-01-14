@@ -1,23 +1,8 @@
-//TODO: Implement better camera with position + lookat. Is that necessary?
-//      Maybe it's easy to derive lookat when I need it? Probably not..
-//struct vec3 camera_right = {  }
-
-//global GLuint vao;
-//global GLuint vbos[2];
-
 global u32 selected_obj_id;
 
 global struct program_pbr *prog_pbr;
 global struct program_default *prog_default;
 global struct program_primitive *prog_primitive;
-
-//global u32 font;
-//global u32 tex_font_test;
-//global u32 mesh_font_test;
-//global u32 tex_grass;
-//global u32 tex_rock;
-//global u32 tex_hello;
-//global u32 tex_yellow;
 
 global struct bbox axis_bbox;
 
@@ -74,10 +59,7 @@ void select_obj(struct rico_object *object, bool force)
     // NULL already selected
     if (!force && !object && !selected_obj_id)
         return;
-    // Requested object already selected
-    if (!force && object && object->id == selected_obj_id)
-        return;
-
+    
     // Deselect current object
     if (selected_obj_id)
     {
@@ -86,7 +68,7 @@ void select_obj(struct rico_object *object, bool force)
     }
 
     // Select requested object
-    if (object)
+    if (object && (force || object->id != selected_obj_id))
     {
         object_select(object);
         selected_obj_id = object->id;
@@ -248,7 +230,7 @@ void selected_mesh_prev()
     if (mesh_prop)
     {
         struct rico_mesh *prev_mesh =
-            pack_next(pack_active, mesh_prop->mesh_id, RICO_HND_MESH);
+            pack_prev(pack_active, mesh_prop->mesh_id, RICO_HND_MESH);
         if (prev_mesh)
         {
             mesh_prop->mesh_id = prev_mesh->id;

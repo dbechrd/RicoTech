@@ -113,6 +113,15 @@ void camera_update(struct camera *camera)
     struct vec3 pos = camera->pos;
     mat4_translate(&camera->view_matrix, v3_negate(&pos));
 
+    // Update audio listener
+    alListenerfv(AL_POSITION, (float *)&camera->pos);
+    alListenerfv(AL_VELOCITY, (float *)&camera->vel);
+    
+    struct vec3 fwd = VEC3_FWD;
+    v3_mul_quat(&fwd, &camera->view);
+    struct vec3 fwd_up[2] = { fwd, VEC3_UP };
+    alListenerfv(AL_ORIENTATION, (float *)fwd_up);
+
     camera->need_update = false;
 }
 

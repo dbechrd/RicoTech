@@ -463,7 +463,7 @@ internal int shared_edit_events()
     enum rico_error err = SUCCESS;
 
     // Raycast object selection
-    if (chord_is_down(ACTION_EDIT_MOUSE_PICK))
+    if (chord_pressed(ACTION_EDIT_MOUSE_PICK))
     {
         select_obj(mouse_first_obj(), false);
     }

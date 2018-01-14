@@ -6,8 +6,7 @@
     f(OBJ_STATIC)         \
     f(OBJ_STRING_WORLD)   \
     f(OBJ_STRING_SCREEN)  \
-    f(OBJ_LIGHT_POINT)    \
-    f(OBJ_LIGHT_SWITCH)
+    f(OBJ_LIGHT_POINT)
 
 enum rico_obj_type
 {
@@ -31,12 +30,20 @@ enum obj_prop_type
     PROP_LIGHT_DIR,
     PROP_LIGHT_POINT,
     PROP_LIGHT_SPOT,
-    PROP_LIGHT_SWITCH
+    PROP_LIGHT_SWITCH,
+    PROP_AUDIO_SWITCH,
+    PROP_COUNT
 };
 
 struct light_switch
 {
-    u32 light;
+    u32 light_id;
+    bool state;
+};
+
+struct audio_switch
+{
+    u32 audio_id;
     bool state;
 };
 
@@ -57,6 +64,8 @@ struct obj_property
         struct light_spot light_spot;
         // PROP_LIGHT_SWITCH
         struct light_switch light_switch;
+        // PROP_AUDIO_SWITCH
+        struct audio_switch audio_switch;
     };
 };
 

@@ -11,7 +11,7 @@ int file_contents(const char *filename, u32 *_length, char **_buffer)
 
     fseek(fs, 0, SEEK_END);
     *_length = ftell(fs);
-    fseek(fs, 0, SEEK_SET);
+    rewind(fs);
 
     if (!*_length) {
         return RICO_ERROR(ERR_FILE_READ, "Unable to determine length of %s",
