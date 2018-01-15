@@ -935,7 +935,7 @@ void pack_build_alpha()
     u32 sphere, door;
     load_obj_file(pack, "mesh/sphere.obj", &sphere);
     load_obj_file(pack, "mesh/wall_cornertest.obj", 0);
-    load_obj_file(pack, "mesh/door.obj", &door);
+    load_obj_file(pack, "mesh/alpha.obj", &door);
     //sphere = 0x02000023;
     //load_obj_file(pack, "mesh/spawn.obj");
     //load_obj_file(pack, "mesh/door.obj");
