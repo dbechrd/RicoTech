@@ -1,8 +1,14 @@
+program_attribs_helper program_attribs[PROG_COUNT] = {
+    program_pbr_attribs,
+    program_primitive_attribs,
+    program_text_attribs
+};
+
 ///=============================================================================
 //| General-purpose
 ///=============================================================================
 internal int make_program(GLuint vertex_shader, GLuint fragment_shader,
-                        GLuint *_program)
+                          GLuint *_program)
 {
     GLint status;
     GLuint program = glCreateProgram();
@@ -105,7 +111,7 @@ internal inline void program_pbr_get_locations(struct program_pbr *p)
     RICO_ASSERT(p->light.intensity >= 0);
 }
 
-inline void program_pbr_attribs()
+void program_pbr_attribs()
 {
     glVertexAttribPointer(LOCATION_PBR_POSITION, 4, GL_FLOAT, GL_FALSE,
                           sizeof(struct pbr_vertex),
@@ -155,6 +161,7 @@ int make_program_pbr(struct program_pbr **_program)
 
     // Create program object
     prog_pbr = calloc(1, sizeof(*prog_pbr));
+    prog_pbr->type = PROG_PBR;
     prog_pbr->prog_id = program;
 
     // Query shader locations
@@ -190,14 +197,27 @@ internal inline void program_primitive_get_locations(struct program_primitive *p
     p->u_view = program_get_uniform_location(p->prog_id, "u_view");
     p->u_proj = program_get_uniform_location(p->prog_id, "u_proj");
 
-    p->vert_pos = program_get_attrib_location(p->prog_id, "vert_pos");
-    p->vert_col = program_get_attrib_location(p->prog_id, "vert_col");
+    p->attrs.position = program_get_attrib_location(p->prog_id, "vert_pos");
+    p->attrs.color = program_get_attrib_location(p->prog_id, "vert_col");
 
-    RICO_ASSERT(p->vert_pos == LOCATION_PBR_POSITION);
-    RICO_ASSERT(p->vert_col == LOCATION_PBR_COLOR);
+    RICO_ASSERT(p->attrs.position == LOCATION_PRIM_POSITION);
+    RICO_ASSERT(p->attrs.color == LOCATION_PRIM_COLOR);
 
     // Fragment shader
     p->u_col = program_get_uniform_location(p->prog_id, "u_col");
+}
+
+void program_primitive_attribs()
+{
+    glVertexAttribPointer(LOCATION_PRIM_POSITION, 4, GL_FLOAT, GL_FALSE,
+                          sizeof(struct pbr_vertex),
+                          (GLvoid *)offsetof(struct pbr_vertex, pos));
+    glEnableVertexAttribArray(LOCATION_PRIM_POSITION);
+
+    glVertexAttribPointer(LOCATION_PRIM_COLOR, 4, GL_FLOAT, GL_FALSE,
+                          sizeof(struct pbr_vertex),
+                          (GLvoid *)offsetof(struct pbr_vertex, col));
+    glEnableVertexAttribArray(LOCATION_PRIM_COLOR);
 }
 
 int make_program_primitive(struct program_primitive **_program)
@@ -321,10 +341,8 @@ internal inline void program_text_get_locations(struct program_text *p)
     p->color = program_get_uniform_location(p->prog_id, "color");
 }
 
-internal inline void program_text_attribs(struct program_text *p)
+void program_text_attribs()
 {
-    glUseProgram(p->prog_id);
-
     glVertexAttribPointer(LOCATION_TEXT_POSITION, 4, GL_FLOAT, GL_FALSE,
                           sizeof(struct text_vertex),
                           (GLvoid *)offsetof(struct text_vertex, pos));
@@ -335,12 +353,10 @@ internal inline void program_text_attribs(struct program_text *p)
                           (GLvoid *)offsetof(struct text_vertex, col));
     glEnableVertexAttribArray(LOCATION_TEXT_COLOR);
 
-    glVertexAttribPointer(LOCATION_TEXT_UV, 2, GL_FLOAT, GL_FALSE,
+    glVertexAttribPointer(LOCATION_TEXT_UV, 4, GL_FLOAT, GL_FALSE,
                           sizeof(struct text_vertex),
                           (GLvoid *)offsetof(struct text_vertex, uv));
     glEnableVertexAttribArray(LOCATION_TEXT_UV);
-
-    glUseProgram(0);
 }
 
 int make_program_text(struct program_text **_program)

@@ -2,7 +2,7 @@
 #define GLREF_H
 
 extern struct program_pbr *prog_pbr;
-extern struct program_primitive *prog_primitive;
+extern struct program_primitive *prog_prim;
 extern struct program_text *prog_text;
 
 void init_glref();

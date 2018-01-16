@@ -491,11 +491,11 @@ void object_render(struct pack *pack, const struct camera *camera)
         struct obj_property *mesh_prop = object_prop(obj, PROP_MESH_ID);
         if (mesh_prop && mesh_prop->mesh_id)
         {
-            mesh_render(pack, mesh_prop->mesh_id, obj->type);
+            mesh_render(pack, mesh_prop->mesh_id, prog->type);
         }
         else
         {
-            mesh_render(pack_default, MESH_DEFAULT_CUBE, obj->type);
+            mesh_render(pack_default, MESH_DEFAULT_CUBE, prog->type);
         }
 
         // Clean up
@@ -570,7 +570,7 @@ void object_render_ui(struct pack *pack)
         struct obj_property *mesh_prop = object_prop(obj, PROP_MESH_ID);
         if (mesh_prop && mesh_prop->mesh_id)
         {
-            mesh_render(pack, mesh_prop->mesh_id, obj->type);
+            mesh_render(pack, mesh_prop->mesh_id, prog->type);
         }
         else
         {

@@ -12,7 +12,8 @@ internal u32 *mesh_elements(struct rico_mesh *mesh)
     return (u32 *)((u8 *)mesh + mesh->elements_offset);
 }
 
-void mesh_upload(struct rico_mesh *mesh, GLenum hint)
+void mesh_upload(struct rico_mesh *mesh, GLenum hint,
+                 enum program_type prog_type)
 {
 #if RICO_DEBUG_MESH
     printf("[mesh][upld] name=%s\n", mesh_name(mesh));
@@ -48,27 +49,9 @@ void mesh_upload(struct rico_mesh *mesh, GLenum hint)
                      mesh_elements(mesh), hint);
     }
 
-    //program_pbr_attribs();
-
-    glVertexAttribPointer(LOCATION_PBR_POSITION, 4, GL_FLOAT, GL_FALSE,
-                          sizeof(struct pbr_vertex),
-                          (GLvoid *)offsetof(struct pbr_vertex, pos));
-    glEnableVertexAttribArray(LOCATION_PBR_POSITION);
-    
-    glVertexAttribPointer(LOCATION_PBR_NORMAL, 4, GL_FLOAT, GL_FALSE,
-                          sizeof(struct pbr_vertex),
-                          (GLvoid *)offsetof(struct pbr_vertex, normal));
-    glEnableVertexAttribArray(LOCATION_PBR_NORMAL);
-    
-    glVertexAttribPointer(LOCATION_PBR_COLOR, 4, GL_FLOAT, GL_FALSE,
-                          sizeof(struct pbr_vertex),
-                          (GLvoid *)offsetof(struct pbr_vertex, col));
-    glEnableVertexAttribArray(LOCATION_PBR_COLOR);
-    
-    glVertexAttribPointer(LOCATION_PBR_UV, 4, GL_FLOAT, GL_FALSE,
-                          sizeof(struct pbr_vertex),
-                          (GLvoid *)offsetof(struct pbr_vertex, uv));
-    glEnableVertexAttribArray(LOCATION_PBR_UV);
+    RICO_ASSERT(program_attribs[prog_type]);
+    if(program_attribs[prog_type])
+        program_attribs[prog_type]();
 
     //--------------------------------------------------------------------------
     // Clean up
@@ -96,7 +79,7 @@ void mesh_delete(struct rico_mesh *mesh)
     hashtable_delete_uid(&global_meshes, mesh->id);
 }
 
-void mesh_render(struct pack *pack, u32 id, enum rico_obj_type obj_type)
+void mesh_render(struct pack *pack, u32 id, enum program_type prog_type)
 {
     RICO_ASSERT(pack);
 
@@ -104,7 +87,7 @@ void mesh_render(struct pack *pack, u32 id, enum rico_obj_type obj_type)
     if (!rgl_mesh)
     {
         struct rico_mesh *mesh = pack_lookup(pack, id);
-        mesh_upload(mesh, GL_STATIC_DRAW);
+        mesh_upload(mesh, GL_STATIC_DRAW, prog_type);
         rgl_mesh = hashtable_search_uid(&global_meshes, id);
     }
     RICO_ASSERT(rgl_mesh);

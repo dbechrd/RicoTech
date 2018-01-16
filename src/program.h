@@ -1,6 +1,17 @@
 #ifndef PROGRAM_H
 #define PROGRAM_H
 
+enum program_type
+{
+    PROG_PBR,
+    PROG_PRIM,
+    PROG_TEXT,
+    PROG_COUNT
+};
+
+typedef void(*program_attribs_helper)();
+extern program_attribs_helper program_attribs[PROG_COUNT];
+
 ///=============================================================================
 //| PBR program
 ///=============================================================================
@@ -52,6 +63,7 @@ struct pbr_light_point
 
 struct program_pbr
 {
+    enum program_type type;
     u32 ref_count;
     GLuint prog_id;
 
@@ -78,8 +90,18 @@ void free_program_pbr(struct program_pbr **program);
 ///=============================================================================
 //| Primitive program
 ///=============================================================================
+#define LOCATION_PRIM_POSITION 0
+#define LOCATION_PRIM_COLOR    1
+
+struct prim_attrib
+{
+    GLint position; // vec3
+    GLint color;    // vec3
+};
+
 struct program_primitive
 {
+    enum program_type type;
     GLuint prog_id;
 
     // Vertex shader
@@ -87,13 +109,13 @@ struct program_primitive
     GLint u_view;   //mat4
     GLint u_proj;   //mat4
 
-    GLint vert_pos; //vec3
-    GLint vert_col; //vec3
+    struct prim_attrib attrs;
 
     // Fragment shader
     GLint u_col;    //vec3
 };
 
+inline void program_primitive_attribs();
 int make_program_primitive(struct program_primitive **_program);
 void free_program_primitive(struct program_primitive **program);
 
@@ -107,6 +129,7 @@ struct program_prim_cube_attrib
 
 struct program_prim_cube
 {
+    enum program_type type;
     GLuint prog_id;
 
     // Vertex shader
@@ -149,6 +172,7 @@ struct program_text_attrib
 
 struct program_text
 {
+    enum program_type type;
     GLuint prog_id;
 
     // Vertex shader
@@ -161,6 +185,7 @@ struct program_text
     GLint tex;   // (sampler2D)
 };
 
+void program_text_attribs();
 int make_program_text(struct program_text **_program);
 void free_program_text(struct program_text **program);
 

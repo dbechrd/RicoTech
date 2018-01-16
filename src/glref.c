@@ -1,7 +1,7 @@
 global u32 selected_obj_id;
 
 struct program_pbr *prog_pbr;
-struct program_primitive *prog_primitive;
+struct program_primitive *prog_prim;
 struct program_text *prog_text;
 
 global struct bbox axis_bbox;
@@ -330,6 +330,6 @@ void free_glref()
 
     //TODO: Free all programs
     free_program_pbr(&prog_pbr);
-    free_program_primitive(&prog_primitive);
+    free_program_primitive(&prog_prim);
     free_program_text(&prog_text);
 }

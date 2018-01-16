@@ -32,8 +32,9 @@ struct rico_mesh
 
 global const char *mesh_name(struct rico_mesh *mesh);
 global void *mesh_vertices(struct rico_mesh *mesh);
-void mesh_upload(struct rico_mesh *mesh, GLenum hint);
+void mesh_upload(struct rico_mesh *mesh, GLenum hint,
+                 enum program_type prog_type);
 void mesh_delete(struct rico_mesh *mesh);
-void mesh_render(struct pack *pack, u32 id, enum rico_obj_type obj_type);
+void mesh_render(struct pack *pack, u32 id, enum program_type prog_type);
 
 #endif

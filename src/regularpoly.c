@@ -47,7 +47,7 @@ internal void rebuild_vao(struct regularpoly *poly)
     // GLboolean normalized, GLsizei stride, const void *pointer);
     glVertexAttribPointer(regularpoly_program->prog_id, 4, GL_FLOAT,
                           GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(regularpoly_program->vert_pos);
+    glEnableVertexAttribArray(regularpoly_program->attrs.position);
 
     glBindVertexArray(0);
     glDeleteBuffers(1, &poly_vbo);

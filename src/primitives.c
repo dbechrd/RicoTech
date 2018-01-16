@@ -8,13 +8,11 @@ struct pool_id PRIM_MESH_SPHERE;
 global GLuint vaos[PRIM_COUNT];
 global GLuint vbos[PRIM_COUNT][VBO_COUNT];
 
-global struct program_primitive *program;
-
 internal int prim_init_gl(enum rico_prim prim);
 
 int prim_init(enum rico_prim prim)
 {
-    enum rico_error err = make_program_primitive(&program);
+    enum rico_error err = make_program_primitive(&prog_prim);
     if (err) return err;
 
     return prim_init_gl(prim);
@@ -69,14 +67,14 @@ void prim_draw_segment(const struct segment *seg,
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // Set shader program
-    glUseProgram(program->prog_id);
+    glUseProgram(prog_prim->prog_id);
 
     // Transform
-    glUniformMatrix4fv(program->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
-    glUniformMatrix4fv(program->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
-    glUniformMatrix4fv(program->u_model, 1, GL_TRUE, model_matrix->a);
+    glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
+    glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
+    glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, model_matrix->a);
 
-    glUniform4f(program->u_col, color.r, color.g, color.b, color.a);
+    glUniform4f(prog_prim->u_col, color.r, color.g, color.b, color.a);
 
     // Draw
     glBindVertexArray(vaos[PRIM_SEGMENT]);
@@ -144,18 +142,18 @@ void prim_draw_bbox_color(const struct bbox *bbox,
     mat4_scale(&transform, &scale);
     //--------------------------------------------------
 
-    glUseProgram(program->prog_id);
+    glUseProgram(prog_prim->prog_id);
 
-    glUniformMatrix4fv(program->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
-    glUniformMatrix4fv(program->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
-    glUniformMatrix4fv(program->u_model, 1, GL_TRUE, transform.a);
+    glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
+    glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
+    glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, transform.a);
 
     // TODO: Use per-bbox color instead of rainbowgasm
-    glUniform4f(program->u_col, color->r, color->g, color->b, color->a);
+    glUniform4f(prog_prim->u_col, color->r, color->g, color->b, color->a);
 	//UNUSED(color);
     //glUniform4f(program->u_col, 1.0f, 1.0f, 1.0f, 0.5f);
 
-    mesh_render(pack_default, MESH_DEFAULT_CUBE, OBJ_NULL);
+    mesh_render(pack_default, MESH_DEFAULT_CUBE, PROG_PRIM);
 
     // Clean up
     glUseProgram(0);
@@ -173,14 +171,14 @@ void prim_draw_sphere(const struct sphere *sphere, const struct vec4 *color)
     mat4_translate(&model_matrix, &sphere->orig);
     mat4_scalef(&model_matrix, sphere->radius);
 
-    glUseProgram(program->prog_id);
+    glUseProgram(prog_prim->prog_id);
 
-    glUniformMatrix4fv(program->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
-    glUniformMatrix4fv(program->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
-    glUniformMatrix4fv(program->u_model, 1, GL_TRUE, model_matrix.a);
-    glUniform4f(program->u_col, color->r, color->g, color->b, color->a);
+    glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
+    glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
+    glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, model_matrix.a);
+    glUniform4f(prog_prim->u_col, color->r, color->g, color->b, color->a);
 
-    mesh_render(pack_default, MESH_DEFAULT_SPHERE, OBJ_NULL);
+    mesh_render(pack_default, MESH_DEFAULT_SPHERE, PROG_PRIM);
 
     // Clean up
     glUseProgram(0);
