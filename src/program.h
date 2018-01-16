@@ -3,6 +3,7 @@
 
 enum program_type
 {
+    PROG_NULL,
     PROG_PBR,
     PROG_PRIM,
     PROG_TEXT,
@@ -181,7 +182,6 @@ struct program_text
     struct program_text_attrib attrs;
 
     // Fragment shader
-    GLint color; // vec3
     GLint tex;   // (sampler2D)
 };
 

@@ -315,6 +315,13 @@ void glref_render(struct camera *camera)
     prim_draw_bbox_color(&axis_bbox, &x_axis_transform, &COLOR_RED);
     prim_draw_bbox_color(&axis_bbox, &y_axis_transform, &COLOR_GREEN);
     prim_draw_bbox_color(&axis_bbox, &z_axis_transform, &COLOR_BLUE);
+
+    //--------------------------------------------------------------------------
+    // UI
+    //--------------------------------------------------------------------------
+    object_render_ui(pack_active);
+    object_render_ui(pack_transient);
+    object_render_ui(pack_frame);
 }
 void free_glref()
 {

@@ -144,9 +144,8 @@ void font_render(u32 *mesh_id, u32 *material_id, struct rico_font *font, int x,
         cur_x += xOffset;
     }
 
-    u32 new_mesh_id = load_mesh(pack_transient, mesh_name, idx_vertex,
-                                sizeof(*vertices), vertices, idx_element,
-                                elements);
+    u32 new_mesh_id = load_mesh(pack_transient, mesh_name, sizeof(*vertices),
+                                idx_vertex, vertices, idx_element, elements);
 
     *mesh_id = new_mesh_id;
     *material_id = font->material_id;

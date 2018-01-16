@@ -1,4 +1,5 @@
 program_attribs_helper program_attribs[PROG_COUNT] = {
+    0,
     program_pbr_attribs,
     program_primitive_attribs,
     program_text_attribs
@@ -113,7 +114,7 @@ internal inline void program_pbr_get_locations(struct program_pbr *p)
 
 void program_pbr_attribs()
 {
-    glVertexAttribPointer(LOCATION_PBR_POSITION, 4, GL_FLOAT, GL_FALSE,
+    glVertexAttribPointer(LOCATION_PBR_POSITION, 3, GL_FLOAT, GL_FALSE,
                           sizeof(struct pbr_vertex),
                           (GLvoid *)offsetof(struct pbr_vertex, pos));
     glEnableVertexAttribArray(LOCATION_PBR_POSITION);
@@ -123,7 +124,7 @@ void program_pbr_attribs()
                           (GLvoid *)offsetof(struct pbr_vertex, normal));
     glEnableVertexAttribArray(LOCATION_PBR_NORMAL);
 
-    glVertexAttribPointer(LOCATION_PBR_COLOR, 4, GL_FLOAT, GL_FALSE,
+    glVertexAttribPointer(LOCATION_PBR_COLOR, 3, GL_FLOAT, GL_FALSE,
                           sizeof(struct pbr_vertex),
                           (GLvoid *)offsetof(struct pbr_vertex, col));
     glEnableVertexAttribArray(LOCATION_PBR_COLOR);
@@ -209,7 +210,8 @@ internal inline void program_primitive_get_locations(struct program_primitive *p
 
 void program_primitive_attribs()
 {
-    glVertexAttribPointer(LOCATION_PRIM_POSITION, 4, GL_FLOAT, GL_FALSE,
+    // TODO: This should have it's own vertex type.. not even sure if this works
+    glVertexAttribPointer(LOCATION_PRIM_POSITION, 3, GL_FLOAT, GL_FALSE,
                           sizeof(struct pbr_vertex),
                           (GLvoid *)offsetof(struct pbr_vertex, pos));
     glEnableVertexAttribArray(LOCATION_PRIM_POSITION);
@@ -247,6 +249,7 @@ int make_program_primitive(struct program_primitive **_program)
 
     // Create program object
     prog_primitive = calloc(1, sizeof(*prog_primitive));
+    prog_primitive->type = PROG_PRIM;
     prog_primitive->prog_id = program;
 
     // Query shader locations
@@ -310,6 +313,7 @@ int make_program_prim_cube(struct program_prim_cube **_program)
 
     // Create program object
     prog_prim_cube = calloc(1, sizeof(*prog_prim_cube));
+    prog_prim_cube->type = PROG_PRIM;
     prog_prim_cube->prog_id = program;
 
     // Query shader locations
@@ -338,12 +342,12 @@ internal inline void program_text_get_locations(struct program_text *p)
     p->model = program_get_uniform_location(p->prog_id, "model");
 
     // Fragment shader
-    p->color = program_get_uniform_location(p->prog_id, "color");
+    p->tex = program_get_uniform_location(p->prog_id, "tex");
 }
 
 void program_text_attribs()
 {
-    glVertexAttribPointer(LOCATION_TEXT_POSITION, 4, GL_FLOAT, GL_FALSE,
+    glVertexAttribPointer(LOCATION_TEXT_POSITION, 3, GL_FLOAT, GL_FALSE,
                           sizeof(struct text_vertex),
                           (GLvoid *)offsetof(struct text_vertex, pos));
     glEnableVertexAttribArray(LOCATION_TEXT_POSITION);
@@ -353,7 +357,7 @@ void program_text_attribs()
                           (GLvoid *)offsetof(struct text_vertex, col));
     glEnableVertexAttribArray(LOCATION_TEXT_COLOR);
 
-    glVertexAttribPointer(LOCATION_TEXT_UV, 4, GL_FLOAT, GL_FALSE,
+    glVertexAttribPointer(LOCATION_TEXT_UV, 2, GL_FLOAT, GL_FALSE,
                           sizeof(struct text_vertex),
                           (GLvoid *)offsetof(struct text_vertex, uv));
     glEnableVertexAttribArray(LOCATION_TEXT_UV);
@@ -386,6 +390,7 @@ int make_program_text(struct program_text **_program)
 
     // Create program object
     prog_text = calloc(1, sizeof(*prog_text));
+    prog_text->type = PROG_TEXT;
     prog_text->prog_id = program;
 
     // Query shader locations
