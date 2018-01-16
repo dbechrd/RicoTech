@@ -3,9 +3,9 @@ global const char *mesh_name(struct rico_mesh *mesh)
     RICO_ASSERT(mesh->name_offset);
     return (char *)((u8 *)mesh + mesh->name_offset);
 }
-global struct rico_vertex *mesh_vertices(struct rico_mesh *mesh)
+global void *mesh_vertices(struct rico_mesh *mesh)
 {
-    return (struct rico_vertex *)((u8 *)mesh + mesh->vertices_offset);
+    return ((u8 *)mesh + mesh->vertices_offset);
 }
 internal u32 *mesh_elements(struct rico_mesh *mesh)
 {
@@ -34,7 +34,7 @@ void mesh_upload(struct rico_mesh *mesh, GLenum hint)
     //--------------------------------------------------------------------------
     glBindBuffer(GL_ARRAY_BUFFER, rgl_mesh.vbos[VBO_VERTEX]);
     glBufferData(GL_ARRAY_BUFFER,
-                 rgl_mesh.vertices * sizeof(struct rico_vertex),
+                 rgl_mesh.vertices * mesh->vertex_size,
                  mesh_vertices(mesh), hint);
 
     //--------------------------------------------------------------------------
@@ -48,28 +48,27 @@ void mesh_upload(struct rico_mesh *mesh, GLenum hint)
                      mesh_elements(mesh), hint);
     }
 
-    //--------------------------------------------------------------------------
-    // Shader attribute pointers
-    //--------------------------------------------------------------------------
-    glVertexAttribPointer(RICO_SHADER_POS_LOC, 4, GL_FLOAT, GL_FALSE,
-                          sizeof(struct rico_vertex),
-                          (GLvoid *)offsetof(struct rico_vertex, pos));
-    glEnableVertexAttribArray(RICO_SHADER_POS_LOC);
+    //program_pbr_attribs();
 
-    glVertexAttribPointer(RICO_SHADER_NORMAL_LOC, 4, GL_FLOAT, GL_FALSE,
-                          sizeof(struct rico_vertex),
-                          (GLvoid *)offsetof(struct rico_vertex, normal));
-    glEnableVertexAttribArray(RICO_SHADER_NORMAL_LOC);
-
-    glVertexAttribPointer(RICO_SHADER_COL_LOC, 4, GL_FLOAT, GL_FALSE,
-                          sizeof(struct rico_vertex),
-                          (GLvoid *)offsetof(struct rico_vertex, col));
-    glEnableVertexAttribArray(RICO_SHADER_COL_LOC);
-
-    glVertexAttribPointer(RICO_SHADER_UV_LOC, 2, GL_FLOAT, GL_FALSE,
-                          sizeof(struct rico_vertex),
-                          (GLvoid *)offsetof(struct rico_vertex, uv));
-    glEnableVertexAttribArray(RICO_SHADER_UV_LOC);
+    glVertexAttribPointer(LOCATION_PBR_POSITION, 4, GL_FLOAT, GL_FALSE,
+                          sizeof(struct pbr_vertex),
+                          (GLvoid *)offsetof(struct pbr_vertex, pos));
+    glEnableVertexAttribArray(LOCATION_PBR_POSITION);
+    
+    glVertexAttribPointer(LOCATION_PBR_NORMAL, 4, GL_FLOAT, GL_FALSE,
+                          sizeof(struct pbr_vertex),
+                          (GLvoid *)offsetof(struct pbr_vertex, normal));
+    glEnableVertexAttribArray(LOCATION_PBR_NORMAL);
+    
+    glVertexAttribPointer(LOCATION_PBR_COLOR, 4, GL_FLOAT, GL_FALSE,
+                          sizeof(struct pbr_vertex),
+                          (GLvoid *)offsetof(struct pbr_vertex, col));
+    glEnableVertexAttribArray(LOCATION_PBR_COLOR);
+    
+    glVertexAttribPointer(LOCATION_PBR_UV, 4, GL_FLOAT, GL_FALSE,
+                          sizeof(struct pbr_vertex),
+                          (GLvoid *)offsetof(struct pbr_vertex, uv));
+    glEnableVertexAttribArray(LOCATION_PBR_UV);
 
     //--------------------------------------------------------------------------
     // Clean up
@@ -97,7 +96,7 @@ void mesh_delete(struct rico_mesh *mesh)
     hashtable_delete_uid(&global_meshes, mesh->id);
 }
 
-void mesh_render(struct pack *pack, u32 id)
+void mesh_render(struct pack *pack, u32 id, enum rico_obj_type obj_type)
 {
     RICO_ASSERT(pack);
 

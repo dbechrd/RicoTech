@@ -17,17 +17,10 @@ struct rgl_mesh
     u32 elements;
 };
 
-struct rico_vertex
-{
-    struct vec3 pos;
-    struct vec4 col;
-    struct vec3 normal;
-    struct vec2 uv;
-};
-
 struct rico_mesh
 {
     u32 id;
+    u32 vertex_size;
     u32 vertex_count;
     u32 element_count;
     struct bbox bbox;
@@ -38,9 +31,9 @@ struct rico_mesh
 };
 
 global const char *mesh_name(struct rico_mesh *mesh);
-global struct rico_vertex *mesh_vertices(struct rico_mesh *mesh);
+global void *mesh_vertices(struct rico_mesh *mesh);
 void mesh_upload(struct rico_mesh *mesh, GLenum hint);
 void mesh_delete(struct rico_mesh *mesh);
-void mesh_render(struct pack *pack, u32 id);
+void mesh_render(struct pack *pack, u32 id, enum rico_obj_type obj_type);
 
 #endif

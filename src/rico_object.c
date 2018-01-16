@@ -286,6 +286,8 @@ bool object_collide_ray_type(struct pack *pack, struct rico_object **_object,
             continue;
 
         obj = pack_read(pack, index);
+        if (obj->type == OBJ_TERRAIN)
+            continue;
 
         collided = collide_ray_obb(&distance, ray, &obj->bbox,
                                    &obj->xform.matrix,
@@ -368,38 +370,26 @@ void object_update(struct rico_object *obj)
     }
 }
 
-void object_render_setup(const struct program_pbr *prog,
-                         const struct camera *camera)
+void object_render(struct pack *pack, const struct camera *camera)
 {
+    struct program_pbr *prog = prog_pbr;
     glUseProgram(prog->prog_id);
 
     // TODO: Get the light out of here!!! It should't be updating its position
     //       in the render function, argh!
-    u32 ticks = SDL_GetTicks();
-    float light_pos_x = cosf((float)ticks / 2000.0f) * 3.0f;
-    float light_pos_z = sinf((float)ticks / 2000.0f) * 3.0f;
+    struct vec3 light_pos = { 0 };
+
+    light_pos = cam_player.pos;
+    v3_add(&light_pos, &VEC3(0.0f, -0.5f, 0.0f));
 
     struct light_point light;
-    light.position = VEC3(light_pos_x, 3.0f, light_pos_z);
-    light.color = VEC3(1.0f, 0.9f, 0.6f);
-    light.intensity = (lights_on) ? 10.0f : 0.0f;
+    light.position = light_pos;
+    light.color = VEC3(1.0f, 0.8f, 0.4f);
+    light.intensity = (lights_on) ? 1000.0f : 0.0f;
     //light.ambient = VEC3(0.10f, 0.09f, 0.11f);
     light.kc = 1.0f;
     light.kl = 0.05f;
     light.kq = 0.001f;
-
-    /*
-    if (type == OBJ_STRING_SCREEN)
-    {
-        light.pos = VEC3_ZERO;
-        light.color = VEC3_ONE;
-        light.intensity = 10.0f;
-
-        light.kc = 1.0f;
-        light.kl = 0.0f;
-        light.kq = 0.0f;
-    }
-    */
 
     glUniform3fv(prog->camera.pos, 1, (const GLfloat *)&camera->pos);
 
@@ -416,15 +406,7 @@ void object_render_setup(const struct program_pbr *prog,
     glUniform1f(prog->light.intensity, light.intensity);
 
     glUniform2f(prog->scale_uv, 1.0f, 1.0f);
-}
 
-void object_render(struct pack *pack, const struct program_pbr *prog,
-                   const struct camera *camera)
-{
-    object_render_setup(prog, camera);
-
-    //struct rico_pool *pool = chunk->pools[RICO_HND_OBJECT];
-    //struct rico_object *obj = pool_first(pool);
     struct rico_object *obj = 0;
     enum rico_obj_type prev_type = OBJ_NULL;
     for (u32 index = 1; index < pack->blobs_used; ++index)
@@ -433,6 +415,8 @@ void object_render(struct pack *pack, const struct program_pbr *prog,
             continue;
 
         obj = pack_read(pack, index);
+        if (obj->type == OBJ_STRING_SCREEN)
+            continue;
 
 #if RICO_DEBUG_OBJECT
         printf("[ obj][rndr] name=%s\n", object_name(obj));
@@ -440,29 +424,16 @@ void object_render(struct pack *pack, const struct program_pbr *prog,
 
         if (obj->type != prev_type)
         {
-            if (obj->type == OBJ_STRING_SCREEN)
-                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-            else
-                glPolygonMode(GL_FRONT_AND_BACK, camera->fill_mode);
+            glPolygonMode(GL_FRONT_AND_BACK, camera->fill_mode);
 
             // Model transform
             struct mat4 proj_matrix;
             struct mat4 view_matrix;
 
-            if (obj->type == OBJ_STRING_SCREEN)
-            {
-                // TODO: Create dedicated shader for OBJ_STRING_SCREEN instead
-                //       of using all of these hacks.
-                proj_matrix = MAT4_IDENT;
-                view_matrix = MAT4_IDENT;
-            }
-            else
-            {
-                proj_matrix = camera->proj_matrix;
-                view_matrix = camera->view_matrix;
-            }
+            proj_matrix = camera->proj_matrix;
+            view_matrix = camera->view_matrix;
 
-            glUniformMatrix4fv(prog->projection, 1, GL_TRUE, proj_matrix.a);
+            glUniformMatrix4fv(prog->proj, 1, GL_TRUE, proj_matrix.a);
             glUniformMatrix4fv(prog->view, 1, GL_TRUE, view_matrix.a);
 
             prev_type = obj->type;
@@ -476,8 +447,9 @@ void object_render(struct pack *pack, const struct program_pbr *prog,
         // TODO: UV scaling in general only works when object is uniformly
         //       scaled. Maybe I should only allow textured objects to be
         //       uniformly scaled?
-        if (obj->type == OBJ_STRING_WORLD || obj->type == OBJ_STRING_SCREEN)
+        if (obj->type == OBJ_STRING_WORLD)
         {
+            // TODO: Why can't I just assume obj->xform.scale is always 1,1,1?
             glUniform2f(prog->scale_uv, 1.0f, 1.0f);
         }
         else
@@ -493,9 +465,9 @@ void object_render(struct pack *pack, const struct program_pbr *prog,
         u32 mat_id = 0;
 
         struct obj_property *mat_prop = object_prop(obj, PROP_MATERIAL_ID);
-        if (mat_prop)
+        if (mat_prop && mat_prop->material_id)
         {
-            if (obj->type == OBJ_STRING_SCREEN || obj->type == OBJ_STRING_WORLD)
+            if (obj->type == OBJ_STRING_WORLD)
             {
                 mat_pack = pack_default;
             }
@@ -504,7 +476,7 @@ void object_render(struct pack *pack, const struct program_pbr *prog,
         else
         {
             mat_pack = pack_default;
-            if (obj->type == OBJ_STRING_SCREEN || obj->type == OBJ_STRING_WORLD)
+            if (obj->type == OBJ_STRING_WORLD)
             {
                 mat_id = FONT_DEFAULT_MATERIAL;
             }
@@ -517,13 +489,13 @@ void object_render(struct pack *pack, const struct program_pbr *prog,
 
         // Render
         struct obj_property *mesh_prop = object_prop(obj, PROP_MESH_ID);
-        if (mesh_prop)
+        if (mesh_prop && mesh_prop->mesh_id)
         {
-            mesh_render(pack, mesh_prop->mesh_id);
+            mesh_render(pack, mesh_prop->mesh_id, obj->type);
         }
         else
         {
-            mesh_render(pack_default, MESH_DEFAULT_CUBE);
+            mesh_render(pack_default, MESH_DEFAULT_CUBE, obj->type);
         }
 
         // Clean up
@@ -546,6 +518,74 @@ void object_render(struct pack *pack, const struct program_pbr *prog,
     }
 }
 
+void object_render_ui(struct pack *pack)
+{
+    struct program_text *prog = prog_text;
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glUseProgram(prog->prog_id);
+
+    // Material textures
+    // Note: We don't have to do this every time as long as we make sure
+    //       the correct textures are bound before each draw to the texture
+    //       index assumed when the program was initialized.
+    glUniform1i(prog->tex, 0);
+
+    struct rico_object *obj = 0;
+    for (u32 index = 1; index < pack->blobs_used; ++index)
+    {
+        if (pack->index[index].type != RICO_HND_OBJECT)
+            continue;
+
+        obj = pack_read(pack, index);
+        if (obj->type != OBJ_STRING_SCREEN)
+            continue;
+
+#if RICO_DEBUG_OBJECT
+        printf("[ obj][rndr] name=%s\n", object_name(obj));
+#endif
+
+        // Model matrix
+        glUniformMatrix4fv(prog->model, 1, GL_TRUE, obj->xform.matrix.a);
+
+        // Bind material
+        struct pack *mat_pack = pack;
+        u32 mat_id = 0;
+
+        struct obj_property *mat_prop = object_prop(obj, PROP_MATERIAL_ID);
+        if (mat_prop && mat_prop->material_id)
+        {
+            // TODO: Let UI need to use materials outside of default pack?
+            mat_pack = pack_default;
+            mat_id = mat_prop->material_id;
+        }
+        else
+        {
+            mat_pack = pack_default;
+            mat_id = FONT_DEFAULT_MATERIAL;
+        }
+        material_bind(mat_pack, mat_id);
+
+        // Render
+        struct obj_property *mesh_prop = object_prop(obj, PROP_MESH_ID);
+        if (mesh_prop && mesh_prop->mesh_id)
+        {
+            mesh_render(pack, mesh_prop->mesh_id, obj->type);
+        }
+        else
+        {
+            // Screen strings should always have a mesh set, and even if it
+            // doesn't, cube makes no sense. Need a MESH_DEFAULT_QUAD.
+            RICO_ASSERT(0);
+            //mesh_render(pack_default, MESH_DEFAULT_CUBE);
+        }
+
+        // Clean up
+        material_unbind(mat_pack, mat_id);
+    }
+    glUseProgram(0);
+}
+
 void object_print(struct rico_object *obj)
 {
     string_free_slot(STR_SLOT_SELECTED_OBJ);
@@ -560,7 +600,7 @@ void object_print(struct rico_object *obj)
 
         u32 mesh_id = (mesh_prop) ? mesh_prop->mesh_id : 0;
         u32 material_id = (material_prop) ? material_prop->material_id : 0;
-        struct rico_mesh *mesh = (mesh_prop)
+        struct rico_mesh *mesh = (mesh_id)
             ? pack_lookup(pack_active, mesh_id)
             : NULL;
         struct rico_material *material = (material_id)
@@ -602,17 +642,18 @@ void object_print(struct rico_object *obj)
 
         len = snprintf(
             buf, sizeof(buf),
-            "\n" \
-            "Object [%u|%u] %s\n" \
-            "  Type  %s\n"        \
-            "  Trans %f %f %f\n"  \
-            "  Rot   %f %f %f\n"  \
-            "  Scale %f %f %f\n"  \
-            "  BBox  %f %f %f\n"  \
-            "\n" \
-            "Mesh [%u|%u] %s\n"   \
-            "  Verts %u\n"        \
-            "\n" \
+            "\n"                    \
+            "Object [%u|%u] %s\n"   \
+            "  Type  %s\n"          \
+            "  Trans %f %f %f\n"    \
+            "  Rot   %f %f %f\n"    \
+            "  Scale %f %f %f\n"    \
+            "  BBox  %f %f %f\n"    \
+            "        %f %f %f\n"    \
+            "\n"                    \
+            "Mesh [%u|%u] %s\n"     \
+            "  Verts %u\n"          \
+            "\n"                    \
             "Material [%u|%u] %s\n" \
             "  Tex0 [%u|%u] %s\n"   \
             "  Tex1 [%u|%u] %s\n",
@@ -622,7 +663,8 @@ void object_print(struct rico_object *obj)
             obj->xform.trans.x, obj->xform.trans.y, obj->xform.trans.z,
             obj->xform.rot.x,   obj->xform.rot.y,   obj->xform.rot.z,
             obj->xform.scale.x, obj->xform.scale.y, obj->xform.scale.z,
-            obj->bbox.p.x, obj->bbox.p.y, obj->bbox.p.z,
+            obj->bbox.min.x, obj->bbox.min.y, obj->bbox.min.z,
+            obj->bbox.max.x, obj->bbox.max.y, obj->bbox.max.z,
             ID_PACK(mesh_id), ID_BLOB(mesh_id), mesh_str,
             mesh_verts,
             ID_PACK(material_id), ID_BLOB(material_id), material_str,

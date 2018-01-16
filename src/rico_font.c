@@ -52,7 +52,7 @@ void font_render(u32 *mesh_id, u32 *material_id, struct rico_font *font, int x,
 {
     // TODO: Use instanced quad?
     // Persistent buffers for font rendering
-    local struct rico_vertex vertices[BFG_MAXSTRING * 4] = { 0 };
+    local struct text_vertex vertices[BFG_MAXSTRING * 4] = { 0 };
     local GLuint elements[BFG_MAXSTRING * 6] = { 0 };
 
     if (!font)
@@ -97,36 +97,32 @@ void font_render(u32 *mesh_id, u32 *material_id, struct rico_font *font, int x,
         //xOffset = font->CellX;
 
         // Vertices for this character's quad
-        vertices[idx_vertex++] = (struct rico_vertex) {
+        vertices[idx_vertex++] = (struct text_vertex) {
             VEC3(cur_x / 64.0f,
                  cur_y / 64.0f,
                  0.0f),
             bg,
-            VEC3(1.0f, 1.0f, 1.0f),
             VEC2(u0, v1)
         };
-        vertices[idx_vertex++] = (struct rico_vertex) {
+        vertices[idx_vertex++] = (struct text_vertex) {
             VEC3((cur_x + xOffset) / 64.0f,
                  cur_y / 64.0f,
                  0.0f),
             bg,
-            VEC3(1.0f, 1.0f, 1.0f),
             VEC2(u1, v1)
         };
-        vertices[idx_vertex++] = (struct rico_vertex) {
+        vertices[idx_vertex++] = (struct text_vertex) {
             VEC3((cur_x + xOffset) / 64.0f,
                  (cur_y + font->y_offset) / 64.0f,
                  0.0f),
             bg,
-            VEC3(1.0f, 1.0f, 1.0f),
             VEC2(u1, v0)
         };
-        vertices[idx_vertex++] = (struct rico_vertex) {
+        vertices[idx_vertex++] = (struct text_vertex) {
             VEC3(cur_x / 64.0f,
                  (cur_y + font->y_offset) / 64.0f,
                  0.0f),
             bg,
-            VEC3(1.0f, 1.0f, 1.0f),
             VEC2(u0, v0)
         };
 
@@ -148,10 +144,9 @@ void font_render(u32 *mesh_id, u32 *material_id, struct rico_font *font, int x,
         cur_x += xOffset;
     }
 
-    // TODO: This stuff is severely broken, need to figure out where these
-    //       dynamic-at-runtime meshes will go for e.g. screen strings.
-    u32 new_mesh_id = load_mesh(pack_transient, mesh_name, idx_vertex, vertices,
-                                idx_element, elements);
+    u32 new_mesh_id = load_mesh(pack_transient, mesh_name, idx_vertex,
+                                sizeof(*vertices), vertices, idx_element,
+                                elements);
 
     *mesh_id = new_mesh_id;
     *material_id = font->material_id;

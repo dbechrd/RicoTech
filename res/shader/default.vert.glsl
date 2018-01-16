@@ -2,7 +2,7 @@
 
 uniform float u_time;
 uniform vec2 u_scale_uv;
-uniform mat4 u_projection;
+uniform mat4 u_proj;
 uniform mat4 u_view;
 uniform mat4 u_model;
 
@@ -25,5 +25,5 @@ void main()
     vert.uv = u_scale_uv * attr_uv;
     gl_Position = u_model * vec4(attr_position, 1.0);
     vert.position = gl_Position.xyz;
-    gl_Position = u_projection * u_view * gl_Position;
+    gl_Position = u_proj * u_view * gl_Position;
 }

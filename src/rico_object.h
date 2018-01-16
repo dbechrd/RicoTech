@@ -3,6 +3,7 @@
 
 #define RICO_OBJ_TYPES(f) \
     f(OBJ_NULL)           \
+    f(OBJ_TERRAIN)        \
     f(OBJ_STATIC)         \
     f(OBJ_STRING_WORLD)   \
     f(OBJ_STRING_SCREEN)  \
@@ -119,8 +120,8 @@ bool object_collide_ray_type(struct pack *pack, struct rico_object **_object,
                              float *_dist, const struct ray *ray);
 void object_interact(struct rico_object *obj);
 void object_update(struct rico_object *obj);
-void object_render(struct pack *pack, const struct program_pbr *prog,
-                   const struct camera *camera);
+void object_render(struct pack *pack, const struct camera *camera);
+void object_render_ui(struct pack *pack);
 void object_print(struct rico_object *obj);
 
 #endif

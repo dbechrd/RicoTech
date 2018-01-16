@@ -9,7 +9,7 @@ out vs_out {
 
 uniform float time;
 uniform vec2 scale_uv;
-uniform mat4 projection;
+uniform mat4 proj;
 uniform mat4 view;
 uniform mat4 model;
 
@@ -25,5 +25,5 @@ void main()
     vertex.UV = scale_uv * attr_uv;
     gl_Position = model * vec4(attr_position, 1.0);
     vertex.P = gl_Position.xyz;
-    gl_Position = projection * view * gl_Position;
+    gl_Position = proj * view * gl_Position;
 }

@@ -1,8 +1,8 @@
 global u32 selected_obj_id;
 
-global struct program_pbr *prog_pbr;
-global struct program_default *prog_default;
-global struct program_primitive *prog_primitive;
+struct program_pbr *prog_pbr;
+struct program_primitive *prog_primitive;
+struct program_text *prog_text;
 
 global struct bbox axis_bbox;
 
@@ -16,19 +16,24 @@ void init_glref()
     //--------------------------------------------------------------------------
     // Create axis label bboxes
     //--------------------------------------------------------------------------
-    bbox_init(&axis_bbox, VEC3(0.5f, 0.5f, 0.5f), COLOR_WHITE);
+    // TODO: Just use prim_cube!
+    struct rico_mesh *mesh = pack_lookup(pack_default, MESH_DEFAULT_CUBE);
+    axis_bbox = mesh->bbox;
+    //bbox_init(&axis_bbox, VEC3(0.f, 0.f, 0.f), VEC3(1.f, 1.f, 1.f), COLOR_WHITE);
+
+    const float trans = 0.0f;
 
     // X-axis label
     x_axis_transform.scale = VEC3(1.0f, 0.01f, 0.01f);
-    x_axis_transform.trans = VEC3(0.5f, 0.0f, 0.0f);
+    x_axis_transform.trans = VEC3(trans, 0.0f, 0.0f);
 
     // Y-axis label
     y_axis_transform.scale = VEC3(0.01f, 1.0f, 0.01f);
-    y_axis_transform.trans = VEC3(0.0f, 0.5f, 0.0f);
+    y_axis_transform.trans = VEC3(0.0f, trans, 0.0f);
 
     // Z-axis label
     z_axis_transform.scale = VEC3(0.01f, 0.01f, 1.0f);
-    z_axis_transform.trans = VEC3(0.0f, 0.0f, 0.5f);
+    z_axis_transform.trans = VEC3(0.0f, 0.0f, trans);
 }
 
 void create_obj()
@@ -36,8 +41,15 @@ void create_obj()
     // TODO: Prompt user for object name
     const char *name = "new_obj";
 
+    // TODO: Allow properties to be added dynamically
     // Create new object and select it
-    u32 new_obj_id = load_object(pack_active, name, OBJ_STATIC, 0, NULL, NULL);
+    struct obj_property props[2] = { 0 };
+    props[0].type = PROP_MESH_ID;
+    props[0].mesh_id = 0;
+    props[1].type = PROP_MATERIAL_ID;
+    props[1].material_id = 0;
+    u32 new_obj_id = load_object(pack_active, name, OBJ_STATIC,
+                                 array_count(props), props, NULL);
     struct rico_object *obj = pack_lookup(pack_active, new_obj_id);
     select_obj(obj, false);
 }
@@ -293,9 +305,9 @@ void glref_render(struct camera *camera)
     //--------------------------------------------------------------------------
     // Render objects
     //--------------------------------------------------------------------------
-    object_render(pack_active, prog_pbr, camera);
-    object_render(pack_transient, prog_pbr, camera);
-    object_render(pack_frame, prog_pbr, camera);
+    object_render(pack_active, camera);
+    object_render(pack_transient, camera);
+    object_render(pack_frame, camera);
 
     //--------------------------------------------------------------------------
     // Axes labels (bboxes)
@@ -318,6 +330,6 @@ void free_glref()
 
     //TODO: Free all programs
     free_program_pbr(&prog_pbr);
-    free_program_default(&prog_default);
     free_program_primitive(&prog_primitive);
+    free_program_text(&prog_text);
 }

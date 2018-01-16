@@ -9,15 +9,15 @@ const struct vec4 COLOR_MAGENTA = {{{ 1.0f, 0.0f, 1.0f, 1.0f }}};
 const struct vec4 COLOR_WHITE   = {{{ 1.0f, 1.0f, 1.0f, 1.0f }}};
 const struct vec4 COLOR_GRAY    = {{{ 0.5f, 0.5f, 0.5f, 1.0f }}};
 
-const struct vec4 COLOR_BLACK_HIGHLIGHT   = {{{ 0.0f, 0.0f, 0.0f, 0.7f }}};
-const struct vec4 COLOR_RED_HIGHLIGHT     = {{{ 1.0f, 0.0f, 0.0f, 0.7f }}};
-const struct vec4 COLOR_GREEN_HIGHLIGHT   = {{{ 0.0f, 1.0f, 0.0f, 0.7f }}};
-const struct vec4 COLOR_BLUE_HIGHLIGHT    = {{{ 0.0f, 0.0f, 1.0f, 0.7f }}};
-const struct vec4 COLOR_YELLOW_HIGHLIGHT  = {{{ 1.0f, 1.0f, 0.0f, 0.7f }}};
-const struct vec4 COLOR_CYAN_HIGHLIGHT    = {{{ 0.0f, 1.0f, 1.0f, 0.7f }}};
-const struct vec4 COLOR_MAGENTA_HIGHLIGHT = {{{ 1.0f, 0.0f, 1.0f, 0.7f }}};
-const struct vec4 COLOR_WHITE_HIGHLIGHT   = {{{ 1.0f, 1.0f, 1.0f, 0.7f }}};
-const struct vec4 COLOR_GRAY_HIGHLIGHT    = {{{ 0.5f, 0.5f, 0.5f, 0.7f }}};
+const struct vec4 COLOR_BLACK_HIGHLIGHT   = {{{ 0.0f, 0.0f, 0.0f, 0.1f }}};
+const struct vec4 COLOR_RED_HIGHLIGHT     = {{{ 1.0f, 0.0f, 0.0f, 0.1f }}};
+const struct vec4 COLOR_GREEN_HIGHLIGHT   = {{{ 0.0f, 1.0f, 0.0f, 0.1f }}};
+const struct vec4 COLOR_BLUE_HIGHLIGHT    = {{{ 0.0f, 0.0f, 1.0f, 0.1f }}};
+const struct vec4 COLOR_YELLOW_HIGHLIGHT  = {{{ 1.0f, 1.0f, 0.0f, 0.1f }}};
+const struct vec4 COLOR_CYAN_HIGHLIGHT    = {{{ 0.0f, 1.0f, 1.0f, 0.1f }}};
+const struct vec4 COLOR_MAGENTA_HIGHLIGHT = {{{ 1.0f, 0.0f, 1.0f, 0.1f }}};
+const struct vec4 COLOR_WHITE_HIGHLIGHT   = {{{ 1.0f, 1.0f, 1.0f, 0.1f }}};
+const struct vec4 COLOR_GRAY_HIGHLIGHT    = {{{ 0.5f, 0.5f, 0.5f, 0.1f }}};
 
 const struct vec4 COLOR_DARK_RED     = {{{ 0.5f, 0.0f, 0.0f, 1.0f }}};
 const struct vec4 COLOR_DARK_GREEN   = {{{ 0.0f, 0.5f, 0.0f, 1.0f }}};

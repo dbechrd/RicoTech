@@ -44,15 +44,15 @@ internal int prim_init_gl(enum rico_prim prim)
     //--------------------------------------------------------------------------
     // Shader attribute pointers
     //--------------------------------------------------------------------------
-    glVertexAttribPointer(RICO_SHADER_POS_LOC, 4, GL_FLOAT, GL_FALSE,
+    glVertexAttribPointer(LOCATION_PBR_POSITION, 4, GL_FLOAT, GL_FALSE,
                           sizeof(struct prim_vertex),
                           (GLvoid *)offsetof(struct prim_vertex, pos));
-    glEnableVertexAttribArray(RICO_SHADER_POS_LOC);
+    glEnableVertexAttribArray(LOCATION_PBR_POSITION);
 
-    glVertexAttribPointer(RICO_SHADER_COL_LOC, 4, GL_FLOAT, GL_FALSE,
+    glVertexAttribPointer(LOCATION_PBR_COLOR, 4, GL_FLOAT, GL_FALSE,
                           sizeof(struct prim_vertex),
                           (GLvoid *)offsetof(struct prim_vertex, col));
-    glEnableVertexAttribArray(RICO_SHADER_COL_LOC);
+    glEnableVertexAttribArray(LOCATION_PBR_COLOR);
 
     // Clean up
     glBindVertexArray(0);
@@ -122,29 +122,27 @@ void prim_draw_bbox_color(const struct bbox *bbox,
     if (bbox->wireframe && cam_player.fill_mode != GL_LINE)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    /*
-    struct vec3 origin = bbox->p[0];
-    v3_add(&origin, &bbox->p[1]);
-    v3_scalef(&origin, 0.5f);
-
-    struct vec3 scale = bbox->p[1];
-    v3_sub(&scale, &bbox->p[0]);
-
-    struct mat4 model_matrix2 = *model_xform;
-    //mat4_translate(&model_matrix2, &origin);
-    mat4_scale(&model_matrix2, &scale);
-    model_xform = &model_matrix2;
-    */
-
     struct mat4 transform = MAT4_IDENT;
+
+    // Adjust unit bbox to fit mesh and model transform
+    //--------------------------------------------------
+    struct vec3 center = bbox->min;
+    v3_add(&center, &bbox->max);
+    v3_scalef(&center, 0.5f);
+    
+    mat4_translate(&transform, &center);
+    mat4_translate(&transform, &BBOX_EPSILON_TRANS);
+
     mat4_translate(&transform, &model_xform->trans);
     mat4_rotx(&transform, model_xform->rot.x);
     mat4_roty(&transform, model_xform->rot.y);
     mat4_rotz(&transform, model_xform->rot.z);
-
-    struct vec3 scale = bbox->p;
-    v3_scale(&scale, &model_xform->scale);
+    mat4_scale(&transform, &model_xform->scale);
+    
+    struct vec3 scale = bbox->max;
+    v3_sub(&scale, &bbox->min);
     mat4_scale(&transform, &scale);
+    //--------------------------------------------------
 
     glUseProgram(program->prog_id);
 
@@ -153,11 +151,11 @@ void prim_draw_bbox_color(const struct bbox *bbox,
     glUniformMatrix4fv(program->u_model, 1, GL_TRUE, transform.a);
 
     // TODO: Use per-bbox color instead of rainbowgasm
-    //glUniform4f(program->u_col, color->r, color->g, color->b, color->a);
-	UNUSED(color);
-    glUniform4f(program->u_col, 1.0f, 1.0f, 1.0f, 0.5f);
+    glUniform4f(program->u_col, color->r, color->g, color->b, color->a);
+	//UNUSED(color);
+    //glUniform4f(program->u_col, 1.0f, 1.0f, 1.0f, 0.5f);
 
-    mesh_render(pack_default, MESH_DEFAULT_CUBE);
+    mesh_render(pack_default, MESH_DEFAULT_CUBE, OBJ_NULL);
 
     // Clean up
     glUseProgram(0);
@@ -182,7 +180,7 @@ void prim_draw_sphere(const struct sphere *sphere, const struct vec4 *color)
     glUniformMatrix4fv(program->u_model, 1, GL_TRUE, model_matrix.a);
     glUniform4f(program->u_col, color->r, color->g, color->b, color->a);
 
-    mesh_render(pack_default, MESH_DEFAULT_SPHERE);
+    mesh_render(pack_default, MESH_DEFAULT_SPHERE, OBJ_NULL);
 
     // Clean up
     glUseProgram(0);

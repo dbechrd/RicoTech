@@ -1,8 +1,11 @@
 #ifndef GLREF_H
 #define GLREF_H
 
+extern struct program_pbr *prog_pbr;
+extern struct program_primitive *prog_primitive;
+extern struct program_text *prog_text;
+
 void init_glref();
-internal int init_hardcoded_test_chunk();
 void create_obj();
 void recalculate_all_bbox();
 void select_obj(struct rico_object *obj, bool force);

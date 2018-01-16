@@ -18,7 +18,8 @@ void camera_init(struct camera *camera, struct vec3 position, struct quat view,
     camera->locked = false;
     camera->need_update = true;
 
-    bbox_init(&camera->bbox, VEC3(0.5f, 0.5f, 0.5f), COLOR_WHITE);
+    bbox_init(&camera->bbox, VEC3(0.f, 0.f, 0.f), VEC3(1.f, 1.f, 1.f),
+              COLOR_WHITE);
 
     camera->proj_matrix = mat4_init_perspective(SCREEN_W, SCREEN_H, Z_NEAR,
                                                 Z_FAR, fov_deg);

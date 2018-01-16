@@ -2,12 +2,9 @@ bool collide_ray_bbox(const struct ray *ray, const struct bbox *bbox,
                       const struct mat4 *transform)
 {
     //TODO: Transform ray and bbox
-    struct vec3 bbox_p[2];
-    bbox_p[0] = bbox->p;
-    v3_negate(&bbox_p[0]);
-    bbox_p[1] = bbox->p;
-    v3_mul_mat4(&bbox_p[0], transform);
-    v3_mul_mat4(&bbox_p[1], transform);
+    struct vec3 p[2] = { bbox->min, bbox->max };
+    v3_mul_mat4(&p[0], transform);
+    v3_mul_mat4(&p[1], transform);
 
     struct vec3 invdir;
     invdir.x = 1.0f / ray->dir.x;
@@ -21,10 +18,10 @@ bool collide_ray_bbox(const struct ray *ray, const struct bbox *bbox,
 
     float t_min, t_max, y_min, y_max, z_min, z_max;
 
-    t_min = (bbox_p[    sign[0]].x - ray->orig.x) * invdir.x;
-    t_max = (bbox_p[1 - sign[0]].x - ray->orig.x) * invdir.x;
-    y_min = (bbox_p[    sign[1]].y - ray->orig.y) * invdir.y;
-    y_max = (bbox_p[1 - sign[1]].y - ray->orig.y) * invdir.y;
+    t_min = (p[    sign[0]].x - ray->orig.x) * invdir.x;
+    t_max = (p[1 - sign[0]].x - ray->orig.x) * invdir.x;
+    y_min = (p[    sign[1]].y - ray->orig.y) * invdir.y;
+    y_max = (p[1 - sign[1]].y - ray->orig.y) * invdir.y;
 
     if (t_min > y_max || y_min > t_max)
         return false;
@@ -33,8 +30,8 @@ bool collide_ray_bbox(const struct ray *ray, const struct bbox *bbox,
     if (y_max < t_max)
         t_max = y_max;
 
-    z_min = (bbox_p[    sign[2]].z - ray->orig.z) * invdir.z;
-    z_max = (bbox_p[1 - sign[2]].z - ray->orig.z) * invdir.z;
+    z_min = (p[    sign[2]].z - ray->orig.z) * invdir.z;
+    z_max = (p[1 - sign[2]].z - ray->orig.z) * invdir.z;
 
     if ((t_min > z_max) || (z_min > t_max))
         return false;
@@ -54,9 +51,8 @@ bool collide_ray_obb(float *_dist, const struct ray *r, const struct bbox *bbox,
                      const struct mat4 *model_matrix,
                      const struct mat4 *model_matrix_inv)
 {
-    struct vec3 p0 = bbox->p;
-    v3_negate(&p0);
-    struct vec3 p1 = bbox->p;
+    struct vec3 p0 = bbox->min;
+    struct vec3 p1 = bbox->max;
 
 	// Intersection method from Real-Time Rendering and Essential Mathematics
     // for Games

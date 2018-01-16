@@ -940,11 +940,11 @@ internal int rico_init_shaders()
     err = make_program_pbr(&prog_pbr);
     if (err) return err;
 
-    err = make_program_default(&prog_default);
-    if (err) return err;
-
     err = make_program_primitive(&prog_primitive);
     return err;
+
+    err = make_program_text(&prog_text);
+    if (err) return err;
 }
 internal void rico_init_cereal()
 {

@@ -19,15 +19,15 @@ struct bbox
     //GLuint vbos[2];
     //struct program_primitive *prog;
 
-    struct vec3 p;
+    struct vec3 min;
+    struct vec3 max;
     struct vec4 color;
 
     bool wireframe;
 };
 
-struct rico_vertex;
-
-void bbox_init(struct bbox *bbox, struct vec3 p, struct vec4 color);
+void bbox_init(struct bbox *bbox, struct vec3 min, struct vec3 max,
+               struct vec4 color);
 void bbox_init_mesh(struct bbox *bbox, struct rico_mesh *mesh,
                     struct vec4 color);
 #if 0
@@ -41,12 +41,12 @@ DESERIAL(bbox_deserialize_0);
 
 internal inline bool bbox_intersects(const struct bbox *a, const struct bbox *b)
 {
-    return !(a->p.x < -b->p.x ||
-             b->p.x < -a->p.x ||
-             a->p.y < -b->p.y ||
-             b->p.y < -a->p.y ||
-             a->p.z < -b->p.z ||
-             b->p.z < -a->p.z);
+    return !(a->max.x < b->min.x ||
+             b->max.x < a->min.x ||
+             a->max.y < b->min.y ||
+             b->max.y < a->min.y ||
+             a->max.z < b->min.z ||
+             b->max.z < a->min.z);
 }
 
 #endif

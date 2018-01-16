@@ -237,7 +237,7 @@ global u32 load_object(struct pack *pack, const char *name,
     {
         struct rico_mesh *mesh;
         struct obj_property *mesh_prop = object_prop(obj, PROP_MESH_ID);
-        if (mesh_prop)
+        if (mesh_prop && mesh_prop->mesh_id)
         {
             mesh = pack_lookup(pack, mesh_prop->mesh_id);
         }
@@ -434,26 +434,25 @@ cleanup:
     if (err) blob_error(pack, &font_id);
     return font_id;
 }
-global u32 load_mesh(struct pack *pack, const char *name, u32 vertex_count,
-                     const struct rico_vertex *vertex_data, u32 element_count,
-                     const GLuint *element_data)
+global u32 load_mesh(struct pack *pack, const char *name, u32 vertex_size,
+                     u32 vertex_count, const void *vertex_data,
+                     u32 element_count, const GLuint *element_data)
 {
     u32 mesh_id = blob_start(pack, RICO_HND_MESH);
     struct rico_mesh *mesh = push_bytes(pack, sizeof(*mesh));
 
     mesh->id = mesh_id;
+    mesh->vertex_size = vertex_size;
     mesh->vertex_count = vertex_count;
     mesh->element_count = element_count;
 
     mesh->name_offset = blob_offset(pack);
     push_string(pack, name);
     mesh->vertices_offset = blob_offset(pack);
-    push_data(pack, vertex_data, vertex_count, sizeof(*vertex_data));
+    push_data(pack, vertex_data, vertex_count, vertex_size);
     mesh->elements_offset = blob_offset(pack);
     push_data(pack, element_data, element_count, sizeof(*element_data));
     
-    bbox_init_mesh(&mesh->bbox, mesh, COLOR_RED_HIGHLIGHT);
-
     blob_end(pack);
     return mesh_id;
 }
@@ -586,7 +585,7 @@ int load_obj_file(struct pack *pack, const char *filename, u32 *_last_mesh_id)
     struct vec3 *positions = calloc(MESH_VERTICES_MAX, sizeof(*positions));
     struct vec2 *texcoords = calloc(MESH_VERTICES_MAX, sizeof(*texcoords));
     struct vec3 *normals = calloc(MESH_VERTICES_MAX, sizeof(*normals));
-    struct rico_vertex *vertices = calloc(MESH_VERTICES_MAX, sizeof(*vertices));
+    struct pbr_vertex *vertices = calloc(MESH_VERTICES_MAX, sizeof(*vertices));
     GLuint *elements = calloc(MESH_VERTICES_MAX, sizeof(*elements));
 
     u32 idx_pos = 0;
@@ -618,8 +617,12 @@ int load_obj_file(struct pack *pack, const char *filename, u32 *_last_mesh_id)
         {
             if (idx_vertex > 0)
             {
-                last_mesh_id = load_mesh(pack, name, idx_vertex, vertices,
-                                         idx_element, elements);
+                last_mesh_id = load_mesh(pack, name, sizeof(*vertices),
+                                         idx_vertex, vertices, idx_element,
+                                         elements);
+                struct rico_mesh *mesh = pack_lookup(pack, last_mesh_id);
+                bbox_init_mesh(&mesh->bbox, mesh, COLOR_RED_HIGHLIGHT);
+
                 idx_mesh++;
                 if (idx_mesh > 10)
                     goto cleanup;
@@ -710,8 +713,11 @@ int load_obj_file(struct pack *pack, const char *filename, u32 *_last_mesh_id)
 
     if (idx_vertex > 0)
     {
-        last_mesh_id = load_mesh(pack, name, idx_vertex, vertices, idx_element,
-                                 elements);
+        last_mesh_id = load_mesh(pack, name, sizeof(*vertices), idx_vertex,
+                                 vertices, idx_element, elements);
+        struct rico_mesh *mesh = pack_lookup(pack, last_mesh_id);
+        bbox_init_mesh(&mesh->bbox, mesh, COLOR_RED_HIGHLIGHT);
+
         idx_mesh++;
     }
 
@@ -932,31 +938,34 @@ void pack_build_alpha()
     u32 bricks_tex1 = load_texture_file(pack, "Bricks_1", "texture/cobble_mrao.tga");
     u32 bricks_mat = load_material(pack, "Bricks", bricks_tex0, bricks_tex1);
 
-    u32 sphere, door;
-    load_obj_file(pack, "mesh/sphere.obj", &sphere);
-    load_obj_file(pack, "mesh/wall_cornertest.obj", 0);
-    load_obj_file(pack, "mesh/alpha.obj", &door);
+    u32 door_mesh, ground_mesh;
+    load_obj_file(pack, "mesh/alpha_door_001.obj", &door_mesh);
+    load_obj_file(pack, "mesh/alpha_staircase_001.obj", 0);
+    load_obj_file(pack, "mesh/alpha_wall_001.obj", 0);
+    load_obj_file(pack, "mesh/alpha_terrain_001.obj", &ground_mesh);
     //sphere = 0x02000023;
     //load_obj_file(pack, "mesh/spawn.obj");
     //load_obj_file(pack, "mesh/door.obj");
     //load_obj_file(pack, "mesh/welcome_floor.obj");
     //load_obj_file(pack, "mesh/grass.obj");
 
-    struct obj_property ground_props[1] = { 0 };
-    ground_props[0].type = PROP_MATERIAL_ID;
-    ground_props[0].material_id = bricks_mat;
-    u32 ground_id = load_object(pack, "Ground", OBJ_STATIC,
-                                array_count(ground_props), ground_props, NULL);
-    struct rico_object *ground = pack_lookup(pack, ground_id);
-    object_rot_x(ground, -90.0f);
-    object_scale(ground, &VEC3(64.0f, 64.0f, 0.001f));
-    object_trans(ground, &VEC3(0.0f, -1.0f, 0.0f));
+    struct obj_property ground_props[2] = { 0 };
+    ground_props[0].type = PROP_MESH_ID;
+    ground_props[0].material_id = ground_mesh;
+    ground_props[1].type = PROP_MATERIAL_ID;
+    ground_props[1].material_id = bricks_mat;
+    load_object(pack, "Ground", OBJ_TERRAIN, array_count(ground_props),
+                ground_props, NULL);
+    //struct rico_object *ground = pack_lookup(pack, ground_id);
+    //object_rot_x(ground, -90.0f);
+    //object_scale(ground, &VEC3(64.0f, 64.0f, 0.001f));
+    //object_trans(ground, &VEC3(0.0f, -1.0f, 0.0f));
 
     //u32 timmy_diff = load_texture_color(pack, "Timmy", COLOR_YELLOW);
     u32 timmy_mat = load_material(pack, "Timmy", 0, 0);
     struct obj_property timmy_props[4] = { 0 };
     timmy_props[0].type = PROP_MESH_ID;
-    timmy_props[0].mesh_id = door;
+    timmy_props[0].mesh_id = door_mesh;
     timmy_props[1].type = PROP_MATERIAL_ID;
     timmy_props[1].material_id = timmy_mat;
     timmy_props[2].type = PROP_LIGHT_SWITCH;
