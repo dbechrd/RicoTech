@@ -31,10 +31,16 @@ int init_openal()
     alSourcef(audio_source, AL_PITCH, 1.0f);
     alSourcef(audio_source, AL_GAIN, 1.0f);
     alSourcei(audio_source, AL_LOOPING, AL_TRUE);
-
+    
+#ifdef POSITIONAL_SOUND
     struct vec3 src_pos = VEC3(0.0f, 1.5f, 0.0f);
     alSourcefv(audio_source, AL_POSITION, (float *)&src_pos);
     alSourcefv(audio_source, AL_VELOCITY, (float *)&VEC3_ZERO);
+#else
+    alSourcei(audio_source, AL_SOURCE_RELATIVE, AL_TRUE);
+    //alSourcefv(audio_source, AL_POSITION, (float *)&VEC3_ZERO);
+    //alSourcefv(audio_source, AL_POSITION, (float *)&VEC3_ZERO);
+#endif
 
     alGenBuffers(1, &audio_buffer);
 
