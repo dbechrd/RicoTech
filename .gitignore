@@ -1,3 +1,7 @@
+# Whitelist
+!res/mesh/*
+
+# Blacklist
 **/ignore
 bin/chunks/cereal_*
 bin/out.txt
