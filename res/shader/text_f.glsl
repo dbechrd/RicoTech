@@ -7,16 +7,10 @@ in vs_out {
     vec4 color;
 } vertex;
 
-out vec4 frag_color;
-
 uniform sampler2D tex;
 
 void main()
 {
-    vec4 color = texture(tex, vertex.UV);
-    if (color.a == 0)
-    {
-        color = vertex.color;
-    }
-    frag_color = color;
+    vec4 texel = texture(tex, vertex.UV);
+    gl_FragColor = mix(vertex.color, texel, step(0.01, texel.a));
 }

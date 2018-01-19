@@ -20,5 +20,4 @@ void main()
     vertex.UV = attr_uv;
     gl_Position = model * vec4(attr_position, 1.0);
     vertex.P = gl_Position.xyz;
-    //gl_Position = proj * view * gl_Position;
 }
