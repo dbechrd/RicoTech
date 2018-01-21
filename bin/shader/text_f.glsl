@@ -12,6 +12,5 @@ uniform sampler2D tex;
 void main()
 {
     vec4 texel = texture(tex, vertex.UV);
-    gl_FragColor = mix(vertex.color, texel, step(0.01, texel.a));;
+    gl_FragColor = mix(vertex.color, texel, step(0.01, texel.a));
 }
-

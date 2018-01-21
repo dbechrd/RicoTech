@@ -28,6 +28,7 @@ struct Camera {
 #define mtl_metallic  texture(material.tex1, vertex.UV).r
 #define mtl_roughness texture(material.tex1, vertex.UV).g
 #define mtl_ao        texture(material.tex1, vertex.UV).b
+#define mtl_emission  texture(material.tex2, vertex.UV)
 
 struct Material {
     // rgb: metallic ? specular.rgb : albedo.rgb
@@ -39,6 +40,10 @@ struct Material {
     // b: ao
     // a: UNUSED
     sampler2D tex1;
+
+    // rgb: emission color
+    //   a: UNUSED
+    sampler2D tex2;
 };
 
 struct PointLight {
@@ -129,6 +134,8 @@ void main()
 
     color = color / (color + vec3(1.0));
     color = pow(color, vec3(1.0/2.2));
+
+    color = mix(color, mtl_emission.rgb, 0.8 * step(0.01, mtl_emission.a));
 
     frag_color = vec4(color, 1.0);
 }

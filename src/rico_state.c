@@ -41,6 +41,7 @@ internal float scale_delta = 1.0f;
 
 internal bool mouse_lock = true;
 internal bool enable_lighting = true;
+internal bool audio_muted = false;
 
 ///|////////////////////////////////////////////////////////////////////////////
 // Simulation params
@@ -400,6 +401,27 @@ internal int shared_engine_events()
     {
         vsync = !vsync;
         SDL_GL_SetSwapInterval(vsync);
+    }
+    // Toggle audio
+    else if (chord_pressed(ACTION_ENGINE_MUTE_TOGGLE))
+    {
+        audio_muted = !audio_muted;
+        alSourcef(audio_source, AL_GAIN, (audio_muted) ? 0.0f : 1.0f);
+
+        char buf[16] = { 0 };
+        int len;
+        if (audio_muted)
+        {
+            len = snprintf(buf, sizeof(buf), "Volume:   0%%");
+        }
+        else
+        {
+            len = snprintf(buf, sizeof(buf), "Volume: 100%%");
+        }
+        string_truncate(buf, sizeof(buf), len);
+        string_free_slot(STR_SLOT_DEBUG);
+        load_string(pack_transient, rico_string_slot_string[STR_SLOT_DEBUG],
+                    STR_SLOT_DEBUG, -150, 0, COLOR_DARK_GRAY, 1000, NULL, buf);
     }
     // Save and exit
     else if (chord_pressed(ACTION_ENGINE_QUIT))
@@ -1225,6 +1247,7 @@ internal int state_engine_init()
     CHORD_1(ACTION_ENGINE_FPS_TOGGLE,               SDL_SCANCODE_2);
     CHORD_1(ACTION_ENGINE_MOUSE_LOCK_TOGGLE,        SDL_SCANCODE_M);
     CHORD_1(ACTION_ENGINE_VSYNC_TOGGLE,             SDL_SCANCODE_V);
+    CHORD_1(ACTION_ENGINE_MUTE_TOGGLE,              SDL_SCANCODE_PERIOD);
     CHORD_1(ACTION_ENGINE_QUIT,                     SDL_SCANCODE_ESCAPE);
 
     // Camera

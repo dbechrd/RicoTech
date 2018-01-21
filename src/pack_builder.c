@@ -306,7 +306,7 @@ global u32 load_texture_color(struct pack *pack, const char *name,
     return load_texture(pack, name, GL_TEXTURE_2D, 1, 1, 32, rgba);
 }
 global u32 load_material(struct pack *pack, const char *name, u32 tex0,
-                         u32 tex1)
+                         u32 tex1, u32 tex2)
 {
     u32 mat_id = blob_start(pack, RICO_HND_MATERIAL);
     struct rico_material *mat = push_bytes(pack, sizeof(*mat));
@@ -314,6 +314,7 @@ global u32 load_material(struct pack *pack, const char *name, u32 tex0,
     mat->id = mat_id;
     mat->tex_id[0] = tex0;
     mat->tex_id[1] = tex1;
+    mat->tex_id[2] = tex2;
 
     mat->name_offset = blob_offset(pack);
     push_string(pack, name);
@@ -322,7 +323,7 @@ global u32 load_material(struct pack *pack, const char *name, u32 tex0,
     return mat_id;
 }
 global u32 load_font(struct pack *pack, const char *name,
-                     const char *filename, u32 *font_mat)
+                     const char *filename, u32 *font_tex)
 {
     enum rico_error err;
 
@@ -395,11 +396,11 @@ global u32 load_font(struct pack *pack, const char *name,
     blob_end(pack);
 
     //------------------------------------------------------------
-    // Tex 0
+    // Font texture
     //------------------------------------------------------------
-    u32 tex0_id = blob_start(pack, RICO_HND_TEXTURE);
+    u32 tex_id = blob_start(pack, RICO_HND_TEXTURE);
     struct rico_texture *tex0 = push_bytes(pack, sizeof(*tex0));
-    tex0->id = tex0_id;
+    tex0->id = tex_id;
     tex0->width = tex_width;
     tex0->height = tex_height;
     tex0->bpp = tex_bpp;
@@ -414,20 +415,8 @@ global u32 load_font(struct pack *pack, const char *name,
 
     blob_end(pack);
 
-    //------------------------------------------------------------
-    // Tex 1
-    //------------------------------------------------------------
-    // metallic = 0, roughness = 1 (no specular), ao = 1 (no occlusion)
-    struct vec4 DIELECTRIC_ROUGH = VEC4(0.0f, 1.0f, 1.0f, 1.0f);
-    u32 tex1_id = load_texture_color(pack, name, DIELECTRIC_ROUGH);
-
-    //------------------------------------------------------------
-    // Font material
-    //------------------------------------------------------------
-    u32 font_mat_id = load_material(pack, name, tex0_id, tex1_id);
-
-    font->material_id = font_mat_id;
-    *font_mat = font->material_id;
+    font->tex_id = tex_id;
+    *font_tex = font->tex_id;
 
 cleanup:
     free(buffer);
@@ -468,8 +457,8 @@ global u32 load_string(struct pack *pack, const char *name,
     // TODO: Reuse mesh and material if they are the same
     // Generate font mesh and get texture handle
     u32 font_mesh_id;
-    u32 font_mat_id;
-    font_render(&font_mesh_id, &font_mat_id, font, 0, 0, color, text, name);
+    u32 font_tex_id;
+    font_render(&font_mesh_id, &font_tex_id, font, 0, 0, color, text, name);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -477,8 +466,8 @@ global u32 load_string(struct pack *pack, const char *name,
     struct obj_property str_props[2] = { 0 };
     str_props[0].type = PROP_MESH_ID;
     str_props[0].mesh_id = font_mesh_id;
-    str_props[1].type = PROP_MATERIAL_ID;
-    str_props[1].material_id = font_mat_id;
+    str_props[1].type = PROP_TEXTURE_ID;
+    str_props[1].texture_id = font_tex_id;
     str_object_id = load_object(pack, name, OBJ_STRING_SCREEN,
                                 array_count(str_props), str_props, NULL);
     struct rico_object *str_obj = pack_lookup(pack, str_object_id);
@@ -899,15 +888,17 @@ struct pack *pack_build_default()
     //       when the data directory is missing.
     const char *filename = "packs/default.pak";
 
-    struct pack *pack = pack_init(filename, 10, MB(1));
-    u32 font_mat = 0;
+    struct pack *pack = pack_init(filename, 16, MB(1));
+    u32 font_tex = 0;
     u32 font = load_font(pack, "[FONT_DEFAULT]", "font/courier_new.bff",
-                         &font_mat);
+                         &font_tex);
     u32 diff = load_texture_file(pack, "[TEX_DIFF_DEFAULT]",
                                  "texture/pbr_default_0.tga");
     u32 spec = load_texture_file(pack, "[TEX_SPEC_DEFAULT]",
                                  "texture/pbr_default_1.tga");
-    u32 mat  = load_material(pack, "[MATERIAL_DEFAULT]", diff, spec);
+    u32 emis = load_texture_file(pack, "[TEX_EMIS_DEFAULT]",
+                                 "texture/pbr_default_2.tga");
+    u32 mat  = load_material(pack, "[MATERIAL_DEFAULT]", diff, spec, emis);
 
     // HACK: This is a bit of a gross way to get the id of the last mesh
     u32 cube;
@@ -916,9 +907,10 @@ struct pack *pack_build_default()
     load_obj_file(pack, "mesh/prim_sphere.obj", &sphere);
 
     RICO_ASSERT(font == FONT_DEFAULT);
-    RICO_ASSERT(font_mat == FONT_DEFAULT_MATERIAL);
+    RICO_ASSERT(font_tex == FONT_DEFAULT_TEXTURE);
     RICO_ASSERT(diff == TEXTURE_DEFAULT_DIFF);
     RICO_ASSERT(spec == TEXTURE_DEFAULT_SPEC);
+    RICO_ASSERT(emis == TEXTURE_DEFAULT_EMIS);
     RICO_ASSERT(mat == MATERIAL_DEFAULT);
     RICO_ASSERT(cube == MESH_DEFAULT_CUBE);
     RICO_ASSERT(sphere == MESH_DEFAULT_SPHERE);
@@ -936,7 +928,7 @@ void pack_build_alpha()
     //u32 bricks_tex1 = load_texture_file(pack, "Bricks_1", "texture/pbr_bricks_1.tga");
     u32 bricks_tex0 = load_texture_file(pack, "Bricks_0", "texture/cobble_diff.tga");
     u32 bricks_tex1 = load_texture_file(pack, "Bricks_1", "texture/cobble_mrao.tga");
-    u32 bricks_mat = load_material(pack, "Bricks", bricks_tex0, bricks_tex1);
+    u32 bricks_mat = load_material(pack, "Bricks", bricks_tex0, bricks_tex1, 0);
 
     u32 door_mesh, ground_mesh;
     load_obj_file(pack, "mesh/alpha_door_001.obj", &door_mesh);
@@ -962,7 +954,7 @@ void pack_build_alpha()
     //object_trans(ground, &VEC3(0.0f, -1.0f, 0.0f));
 
     //u32 timmy_diff = load_texture_color(pack, "Timmy", COLOR_YELLOW);
-    u32 timmy_mat = load_material(pack, "Timmy", 0, 0);
+    u32 timmy_mat = load_material(pack, "Timmy", 0, 0, 0);
     struct obj_property timmy_props[4] = { 0 };
     timmy_props[0].type = PROP_MESH_ID;
     timmy_props[0].mesh_id = door_mesh;

@@ -196,13 +196,13 @@ void player_camera_update(struct camera *camera, r32 dx, r32 dy,
         camera_rotate(&cam_player, delta.x, delta.y);            
     }
 
-    char buf[128] = { 0 };
-    int len = snprintf(buf, sizeof(buf), "delta_x: %4.f\ndelta_y: %4.f", dx, dy);
-    string_truncate(buf, sizeof(buf), len);
-    string_free_slot(STR_SLOT_DEBUG);
-    load_string(pack_transient, rico_string_slot_string[STR_SLOT_DEBUG],
-                STR_SLOT_DEBUG, -(FONT_WIDTH * len/2), FONT_HEIGHT,
-                COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
+    //char buf[128] = { 0 };
+    //int len = snprintf(buf, sizeof(buf), "delta_x: %4.f\ndelta_y: %4.f", dx, dy);
+    //string_truncate(buf, sizeof(buf), len);
+    //string_free_slot(STR_SLOT_DEBUG);
+    //load_string(pack_transient, rico_string_slot_string[STR_SLOT_DEBUG],
+    //            STR_SLOT_DEBUG, -(FONT_WIDTH * len/2), FONT_HEIGHT,
+    //            COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
 
     camera_update(&cam_player);
 }

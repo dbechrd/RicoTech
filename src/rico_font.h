@@ -29,13 +29,13 @@ struct rico_font
     bool y_invert;
     u8 render_style;
     u8 char_widths[256];
-    u32 material_id;
+    u32 tex_id;
 
     u32 name_offset;
 };
 
 global const char *font_name(struct rico_font *font);
-void font_render(u32 *mesh_id, u32 *material_id, struct rico_font *font, int x,
+void font_render(u32 *mesh_id, u32 *tex_id, struct rico_font *font, int x,
                  int y, struct vec4 bg, const char *text,
                  const char *mesh_name);
 

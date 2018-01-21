@@ -4,7 +4,7 @@
 struct rico_material
 {
     u32 id;
-    u32 tex_id[2];
+    u32 tex_id[3];
 
     u32 name_offset;
 };

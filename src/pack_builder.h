@@ -11,12 +11,13 @@
 enum DEFAULT_IDS
 {
     FONT_DEFAULT          = 0x01000001,
-    FONT_DEFAULT_MATERIAL = 0x01000004,
-    TEXTURE_DEFAULT_DIFF  = 0x01000005,
-    TEXTURE_DEFAULT_SPEC  = 0x01000006,
-    MATERIAL_DEFAULT      = 0x01000007,
-    MESH_DEFAULT_CUBE     = 0x01000008,
-    MESH_DEFAULT_SPHERE   = 0x01000009
+    FONT_DEFAULT_TEXTURE,
+    TEXTURE_DEFAULT_DIFF,
+    TEXTURE_DEFAULT_SPEC,
+    TEXTURE_DEFAULT_EMIS,
+    MATERIAL_DEFAULT,
+    MESH_DEFAULT_CUBE,
+    MESH_DEFAULT_SPHERE 
 };
 
 struct blob_index
@@ -78,9 +79,9 @@ global u32 load_texture_file(struct pack *pack, const char *name,
 global u32 load_texture_color(struct pack *pack, const char *name,
                               struct vec4 color);
 global u32 load_material(struct pack *pack, const char *name, u32 tex0,
-                         u32 tex1);
+                         u32 tex1, u32 tex2);
 global u32 load_font(struct pack *pack, const char *name,
-                     const char *filename, u32 *font_mat);
+                     const char *filename, u32 *font_tex);
 global u32 load_mesh(struct pack *pack, const char *name, u32 vertex_size,
                      u32 vertex_count, const void *vertex_data,
                      u32 element_count, const GLuint *element_data);

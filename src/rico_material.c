@@ -32,6 +32,16 @@ void material_bind(struct pack *pack, u32 id)
     {
         texture_bind(pack_default, TEXTURE_DEFAULT_SPEC, GL_TEXTURE1);
     }
+
+    // Bind emission or default
+    if (material->tex_id[2])
+    {
+        texture_bind(pack, material->tex_id[2], GL_TEXTURE2);
+    }
+    else
+    {
+        texture_bind(pack_default, TEXTURE_DEFAULT_EMIS, GL_TEXTURE2);
+    }
 }
 
 void material_unbind(struct pack *pack, u32 id)
@@ -43,7 +53,7 @@ void material_unbind(struct pack *pack, u32 id)
     printf("[ mtl][unbd] name=%s\n", material_name(material));
 #endif
 
-    // Bind diffuse or default
+    // Unbind diffuse or default
     if (material->tex_id[0])
     {
         texture_unbind(pack, material->tex_id[0], GL_TEXTURE0);
@@ -53,7 +63,7 @@ void material_unbind(struct pack *pack, u32 id)
         texture_unbind(pack_default, TEXTURE_DEFAULT_DIFF, GL_TEXTURE0);
     }
 
-    // Bind specular or default
+    // Unbind specular or default
     if (material->tex_id[1])
     {
         texture_unbind(pack, material->tex_id[1], GL_TEXTURE1);
@@ -61,5 +71,15 @@ void material_unbind(struct pack *pack, u32 id)
     else
     {
         texture_unbind(pack_default, TEXTURE_DEFAULT_SPEC, GL_TEXTURE1);
+    }
+
+    // Unbind emission or default
+    if (material->tex_id[2])
+    {
+        texture_unbind(pack, material->tex_id[2], GL_TEXTURE2);
+    }
+    else
+    {
+        texture_unbind(pack_default, TEXTURE_DEFAULT_EMIS, GL_TEXTURE2);
     }
 }

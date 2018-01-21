@@ -27,6 +27,7 @@ struct rico_transform
 enum obj_prop_type
 {
     PROP_MESH_ID,
+    PROP_TEXTURE_ID,
     PROP_MATERIAL_ID,
     PROP_LIGHT_DIR,
     PROP_LIGHT_POINT,
@@ -55,6 +56,8 @@ struct obj_property
     {
         // PROP_MESH
         u32 mesh_id;
+        // PROP_TEXTURE
+        u32 texture_id;
         // PROP_MATERIAL
         u32 material_id;
         // PROP_LIGHT_DIR

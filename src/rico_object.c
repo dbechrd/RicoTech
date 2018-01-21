@@ -314,12 +314,12 @@ internal void object_interact_light_switch(struct rico_object *obj)
 }
 
 // HACK: I want to make an audio switch!
-static bool audio_on = true;
+static bool audio_play = true;
 internal void object_interact_audio_switch(struct rico_object *obj)
 {
     UNUSED(obj);
-    audio_on = !audio_on;
-    if (audio_on)
+    audio_play = !audio_play;
+    if (audio_play)
         alSourcePlay(audio_source);
     else
         alSourceStop(audio_source);
@@ -385,7 +385,7 @@ void object_render(struct pack *pack, const struct camera *camera)
     struct light_point light;
     light.position = light_pos;
     light.color = VEC3(1.0f, 0.8f, 0.4f);
-    light.intensity = (lights_on) ? 1000.0f : 0.0f;
+    light.intensity = (lights_on) ? 10.0f : 0.0f;
     //light.ambient = VEC3(0.10f, 0.09f, 0.11f);
     light.kc = 1.0f;
     light.kl = 0.05f;
@@ -399,6 +399,7 @@ void object_render(struct pack *pack, const struct camera *camera)
     //       index assumed when the program was initialized.
     glUniform1i(prog->material.tex0, 0);
     glUniform1i(prog->material.tex1, 1);
+    glUniform1i(prog->material.tex2, 2);
 
     // Lighting
     glUniform3fv(prog->light.pos, 1, (const GLfloat *)&light.position);
@@ -478,7 +479,7 @@ void object_render(struct pack *pack, const struct camera *camera)
             mat_pack = pack_default;
             if (obj->type == OBJ_STRING_WORLD)
             {
-                mat_id = FONT_DEFAULT_MATERIAL;
+                mat_id = FONT_DEFAULT_TEXTURE;
             }
             else
             {
@@ -525,7 +526,7 @@ void object_render_ui(struct pack *pack)
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glUseProgram(prog->prog_id);
 
-    // Material textures
+    // Font texture
     // Note: We don't have to do this every time as long as we make sure
     //       the correct textures are bound before each draw to the texture
     //       index assumed when the program was initialized.
@@ -548,23 +549,23 @@ void object_render_ui(struct pack *pack)
         // Model matrix
         glUniformMatrix4fv(prog->model, 1, GL_TRUE, obj->xform.matrix.a);
 
-        // Bind material
-        struct pack *mat_pack = pack;
-        u32 mat_id = 0;
+        // Bind texture
+        struct pack *tex_pack = pack;
+        u32 tex_id = 0;
 
-        struct obj_property *mat_prop = object_prop(obj, PROP_MATERIAL_ID);
-        if (mat_prop && mat_prop->material_id)
+        struct obj_property *tex_prop = object_prop(obj, PROP_TEXTURE_ID);
+        if (tex_prop && tex_prop->texture_id)
         {
-            // TODO: Let UI need to use materials outside of default pack?
-            mat_pack = pack_default;
-            mat_id = mat_prop->material_id;
+            // TODO: Let UI use textures outside of default pack?
+            tex_pack = pack_default;
+            tex_id = tex_prop->texture_id;
         }
         else
         {
-            mat_pack = pack_default;
-            mat_id = FONT_DEFAULT_MATERIAL;
+            tex_pack = pack_default;
+            tex_id = FONT_DEFAULT_TEXTURE;
         }
-        material_bind(mat_pack, mat_id);
+        texture_bind(tex_pack, tex_id, GL_TEXTURE0);
 
         // Render
         struct obj_property *mesh_prop = object_prop(obj, PROP_MESH_ID);
@@ -574,14 +575,12 @@ void object_render_ui(struct pack *pack)
         }
         else
         {
-            // Screen strings should always have a mesh set, and even if it
-            // doesn't, cube makes no sense. Need a MESH_DEFAULT_QUAD.
+            // Screen strings should always have a mesh set.
             RICO_ASSERT(0);
-            //mesh_render(pack_default, MESH_DEFAULT_CUBE);
         }
 
         // Clean up
-        material_unbind(mat_pack, mat_id);
+        texture_unbind(tex_pack, tex_id, GL_TEXTURE0);
     }
     glUseProgram(0);
 }
@@ -614,6 +613,8 @@ void object_print(struct rico_object *obj)
         const char *mat_tex0_str = "---";
         u32 mat_tex1_id = 0;
         const char *mat_tex1_str = "---";
+        u32 mat_tex2_id = 0;
+        const char *mat_tex2_str = "---";
 
         if (mesh)
         {
@@ -638,6 +639,13 @@ void object_print(struct rico_object *obj)
                 mat_tex1_id = tex->id;
                 mat_tex1_str = texture_name(tex);
             }
+            if (material->tex_id[2])
+            {
+                struct rico_texture *tex =
+                    pack_lookup(pack_active, material->tex_id[2]);
+                mat_tex2_id = tex->id;
+                mat_tex2_str = texture_name(tex);
+            }
         }
 
         len = snprintf(
@@ -655,8 +663,9 @@ void object_print(struct rico_object *obj)
             "  Verts %u\n"          \
             "\n"                    \
             "Material [%u|%u] %s\n" \
-            "  Tex0 [%u|%u] %s\n"   \
-            "  Tex1 [%u|%u] %s\n",
+            "  Diff [%u|%u] %s\n"   \
+            "  Spec [%u|%u] %s\n"   \
+            "  Emis [%u|%u] %s\n",
             ID_PACK(obj->id), ID_BLOB(obj->id),
             object_name(obj),
             rico_obj_type_string[obj->type],
@@ -669,7 +678,8 @@ void object_print(struct rico_object *obj)
             mesh_verts,
             ID_PACK(material_id), ID_BLOB(material_id), material_str,
             ID_PACK(mat_tex0_id), ID_BLOB(mat_tex0_id), mat_tex0_str,
-            ID_PACK(mat_tex1_id), ID_BLOB(mat_tex1_id), mat_tex1_str
+            ID_PACK(mat_tex1_id), ID_BLOB(mat_tex1_id), mat_tex1_str,
+            ID_PACK(mat_tex2_id), ID_BLOB(mat_tex2_id), mat_tex2_str
         );
     }
     else

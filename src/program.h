@@ -44,8 +44,8 @@ struct pbr_camera
 
 struct pbr_material
 {
-    // Dielectic: albedo.rgb, a = opacity
-    // Metallic:  specular.rgb, a = UNUSED
+    // rgb: metallic ? specular.rgb : albedo.rgb
+    //   a: metallic ?            1 : opacity
     GLint tex0; // (sampler2D)
 
     // r: metallic
@@ -53,6 +53,10 @@ struct pbr_material
     // b: ao
     // a: UNUSED
     GLint tex1; // (sampler2D)
+
+    // rgb: emission color
+    //   a: UNUSED
+    GLint tex2; // (sampler2D)
 };
 
 struct pbr_light_point
