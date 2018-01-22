@@ -25,7 +25,7 @@ bool string_free_slot(enum rico_string_slot slot)
         u32 *id = hashtable_search(&global_string_slots, &slot, sizeof(slot));
         if (id)
         {
-            pack_delete(pack_transient, *id, RICO_HND_STRING);
+            pack_delete(packs[PACK_TRANSIENT], *id, RICO_HND_STRING);
             return true;
         }
     }
@@ -38,7 +38,7 @@ bool string_free_slot(enum rico_string_slot slot)
 //       time to delete in ms, soonest first.
 void string_update()
 {
-    struct pack *pack = pack_transient;
+    struct pack *pack = packs[PACK_TRANSIENT];
     struct rico_string *str = 0;
     u32 index = 0;
     while(index < pack->blobs_used)
@@ -58,7 +58,7 @@ void string_update()
             }
             else
             {
-                pack_delete(pack_transient, str->id, RICO_HND_STRING);
+                pack_delete(packs[PACK_TRANSIENT], str->id, RICO_HND_STRING);
                 continue;
             }
         }

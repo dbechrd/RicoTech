@@ -153,7 +153,7 @@ void prim_draw_bbox_color(const struct bbox *bbox,
 	//UNUSED(color);
     //glUniform4f(program->u_col, 1.0f, 1.0f, 1.0f, 0.5f);
 
-    mesh_render(pack_default, MESH_DEFAULT_CUBE, PROG_PRIM);
+    mesh_render(packs[PACK_DEFAULT], MESH_DEFAULT_CUBE, PROG_PRIM);
 
     // Clean up
     glUseProgram(0);
@@ -178,7 +178,7 @@ void prim_draw_sphere(const struct sphere *sphere, const struct vec4 *color)
     glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, model_matrix.a);
     glUniform4f(prog_prim->u_col, color->r, color->g, color->b, color->a);
 
-    mesh_render(pack_default, MESH_DEFAULT_SPHERE, PROG_PRIM);
+    mesh_render(packs[PACK_DEFAULT], MESH_DEFAULT_SPHERE, PROG_PRIM);
 
     // Clean up
     glUseProgram(0);

@@ -8,6 +8,14 @@
 #define ID_BLOB(id) (id & ID_BLOB_MASK)
 #define ID_GENERATE(pack, blob) ((pack << ID_BLOB_BITS) | blob)
 
+enum PACK_IDS
+{
+    PACK_DEFAULT,
+    PACK_TRANSIENT,
+    PACK_FRAME,
+    PACK_FIRST
+};
+
 enum DEFAULT_IDS
 {
     FONT_DEFAULT          = 0x01000001,
@@ -56,10 +64,9 @@ struct pack
     u8 *buffer;
 };
 
-extern struct pack *pack_default;
-extern struct pack *pack_active;
-extern struct pack *pack_transient;
-extern struct pack *pack_frame;
+#define MAX_PACKS 32
+extern u32 packs_next;
+extern struct pack *packs[MAX_PACKS];
 
 global void pack_build_all();
 global void *pack_next(struct pack *pack, u32 id, enum rico_hnd_type type);

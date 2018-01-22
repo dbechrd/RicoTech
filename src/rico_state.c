@@ -9,6 +9,8 @@ const char *rico_state_string[] = {
 
 static struct rico_keychord action_chords[ACTION_COUNT] = { 0 };
 
+struct pack *pack_active = 0;
+
 ///|////////////////////////////////////////////////////////////////////////////
 //Human walk speed empirically found to be 33 steps in 20 seconds. That is
 // approximately 1.65 steps per second. At 60 fps, that is 0.0275 steps per
@@ -223,7 +225,7 @@ void render_fps(r64 fps, r64 ms, r64 mcyc)
                        mcyc);
     string_truncate(buf, sizeof(buf), len);
     string_free_slot(STR_SLOT_FPS);
-    load_string(pack_transient, rico_string_slot_string[STR_SLOT_FPS],
+    load_string(packs[PACK_TRANSIENT], rico_string_slot_string[STR_SLOT_FPS],
                 STR_SLOT_FPS, -(FONT_WIDTH * len), 0,
                 COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
 }
@@ -287,9 +289,9 @@ int state_update()
         string_truncate(buf, sizeof(buf), len);
 
         string_free_slot(STR_SLOT_STATE);
-        load_string(pack_transient, rico_string_slot_string[STR_SLOT_STATE],
-                    STR_SLOT_STATE, 0, 0, COLOR_DARK_RED_HIGHLIGHT, 0, NULL,
-                    buf);
+        load_string(packs[PACK_TRANSIENT],
+                    rico_string_slot_string[STR_SLOT_STATE], STR_SLOT_STATE, 0,
+                    0, COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
     }
 
     ///-------------------------------------------------------------------------
@@ -420,14 +422,16 @@ internal int shared_engine_events()
         }
         string_truncate(buf, sizeof(buf), len);
         string_free_slot(STR_SLOT_DEBUG);
-        load_string(pack_transient, rico_string_slot_string[STR_SLOT_DEBUG],
-                    STR_SLOT_DEBUG, -150, 0, COLOR_DARK_GRAY, 1000, NULL, buf);
+        load_string(packs[PACK_TRANSIENT],
+                    rico_string_slot_string[STR_SLOT_DEBUG], STR_SLOT_DEBUG,
+                    -150, 0, COLOR_DARK_GRAY, 1000, NULL, buf);
     }
     // Save and exit
     else if (chord_pressed(ACTION_ENGINE_QUIT))
     {
         string_free_slot(STR_SLOT_MENU_QUIT);
-        load_string(pack_transient, rico_string_slot_string[STR_SLOT_MENU_QUIT],
+        load_string(packs[PACK_TRANSIENT],
+                    rico_string_slot_string[STR_SLOT_MENU_QUIT],
                     STR_SLOT_MENU_QUIT, 600, 400, COLOR_DARK_GREEN_HIGHLIGHT, 0,
                     NULL,
                     "                       \n" \
@@ -553,7 +557,7 @@ internal int shared_edit_events()
     // Create new object
     else if (chord_pressed(ACTION_EDIT_CREATE_OBJECT))
     {
-        create_obj();
+        create_obj(pack_active);
     }
     // Delete selected object
     else if (chord_pressed(ACTION_EDIT_SELECTED_DELETE))
@@ -684,9 +688,9 @@ internal int state_edit_translate()
         int len = snprintf(buf, sizeof(buf), "Trans Delta: %f", trans_delta);
         string_truncate(buf, sizeof(buf), len);
         string_free_slot(STR_SLOT_DELTA);
-        load_string(pack_transient, rico_string_slot_string[STR_SLOT_DELTA],
-                    STR_SLOT_DELTA, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL,
-                    buf);
+        load_string(packs[PACK_TRANSIENT],
+                    rico_string_slot_string[STR_SLOT_DELTA], STR_SLOT_DELTA, 0,
+                    0, COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL, buf);
     }
 
     return err;
@@ -770,9 +774,9 @@ internal int state_edit_rotate()
         string_truncate(buf, sizeof(buf), len);
 
         string_free_slot(STR_SLOT_DELTA);
-        load_string(pack_transient, rico_string_slot_string[STR_SLOT_DELTA],
-                    STR_SLOT_DELTA, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL,
-                    buf);
+        load_string(packs[PACK_TRANSIENT],
+                    rico_string_slot_string[STR_SLOT_DELTA], STR_SLOT_DELTA, 0,
+                    0, COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL, buf);
     }
 
     return err;
@@ -861,9 +865,9 @@ internal int state_edit_scale()
         int len = snprintf(buf, sizeof(buf), "Scale Delta: %f", scale_delta);
         string_truncate(buf, sizeof(buf), len);
         string_free_slot(STR_SLOT_DELTA);
-        load_string(pack_transient, rico_string_slot_string[STR_SLOT_DELTA],
-                    STR_SLOT_DELTA, 0, 0, COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL,
-                    buf);
+        load_string(packs[PACK_TRANSIENT],
+                    rico_string_slot_string[STR_SLOT_DELTA], STR_SLOT_DELTA, 0,
+                    0, COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL, buf);
     }
 
     return err;
@@ -1201,6 +1205,17 @@ internal int rico_init()
     printf("[MAIN][init] Initializing camera\n");
     printf("----------------------------------------------------------\n");
     camera_reset(&cam_player);
+    if (err) return err;
+
+    printf("----------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing packs\n");
+    printf("----------------------------------------------------------\n");
+    err = pack_load("packs/default.pak", &packs[PACK_DEFAULT]);
+    packs[PACK_TRANSIENT] = pack_init("pack_transient", 512, MB(4));
+    packs[PACK_FRAME] = pack_init("pack_frame", 0, 0);
+    err = pack_load("packs/alpha.pak", &pack_active);
+    packs[packs_next] = pack_active;
+    packs_next++;
     return err;
 }
 internal int state_engine_init()

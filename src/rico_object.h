@@ -34,6 +34,7 @@ enum obj_prop_type
     PROP_LIGHT_SPOT,
     PROP_LIGHT_SWITCH,
     PROP_AUDIO_SWITCH,
+    PROP_GAME_BUTTON,
     PROP_COUNT
 };
 
@@ -46,6 +47,12 @@ struct light_switch
 struct audio_switch
 {
     u32 audio_id;
+    bool state;
+};
+
+struct game_button
+{
+    u32 button_id;
     bool state;
 };
 
@@ -70,6 +77,8 @@ struct obj_property
         struct light_switch light_switch;
         // PROP_AUDIO_SWITCH
         struct audio_switch audio_switch;
+        // PROP_GAME_BUTTON
+        struct game_button game_button;
     };
 };
 

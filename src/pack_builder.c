@@ -10,10 +10,8 @@ internal const u8 PACK_SIGNATURE[4] = { 'R', 'I', 'C', 'O' };
 //internal const u32 PACK_SIGNATURE =
 //    ((u32)'R' << 24) | ((u32)'I' << 16) | ((u32)'C' << 8) | ((u32)'O');
 
-struct pack *pack_default = 0;
-struct pack *pack_active = 0;
-struct pack *pack_transient = 0;
-struct pack *pack_frame = 0;
+u32 packs_next = PACK_FIRST;
+struct pack *packs[MAX_PACKS] = { 0 };
 
 global void *pack_next(struct pack *pack, u32 id, enum rico_hnd_type type)
 {
@@ -127,7 +125,7 @@ global void pack_delete(struct pack *pack, u32 id, enum rico_hnd_type type)
     u32 blob_id = ID_BLOB(id);
 
     // HACK: For now, just ignore requests to delete blobs in the default pack
-    if (pack_id == pack_default->id)
+    if (pack_id == PACK_DEFAULT)
         return;
 
     RICO_ASSERT(blob_id);
@@ -243,7 +241,7 @@ global u32 load_object(struct pack *pack, const char *name,
         }
         else
         {
-            mesh = pack_lookup(pack_default, MESH_DEFAULT_CUBE);
+            mesh = pack_lookup(packs[PACK_DEFAULT], MESH_DEFAULT_CUBE);
         }
         obj->bbox = mesh->bbox;
     }
@@ -924,22 +922,18 @@ void pack_build_alpha()
     const char *filename = "packs/alpha.pak";
 
     struct pack *pack = pack_init(filename, 128, MB(256));
-    //u32 bricks_tex0 = load_texture_file(pack, "Bricks_0", "texture/pbr_bricks_0.tga");
-    //u32 bricks_tex1 = load_texture_file(pack, "Bricks_1", "texture/pbr_bricks_1.tga");
-    u32 bricks_tex0 = load_texture_file(pack, "Bricks_0", "texture/cobble_diff.tga");
-    u32 bricks_tex1 = load_texture_file(pack, "Bricks_1", "texture/cobble_mrao.tga");
-    u32 bricks_mat = load_material(pack, "Bricks", bricks_tex0, bricks_tex1, 0);
+    u32 bricks_diff = load_texture_file(pack, "Bricks_diff", "texture/cobble_diff.tga");
+    u32 bricks_mrao = load_texture_file(pack, "Bricks_mrao", "texture/cobble_mrao.tga");
+    u32 bricks_emis = load_texture_color(pack, "Bricks_emis", COLOR_TRANSPARENT);
+    u32 bricks_mat = load_material(pack, "Bricks", bricks_diff, bricks_mrao, bricks_emis);
 
     u32 door_mesh, ground_mesh;
     load_obj_file(pack, "mesh/alpha_door_001.obj", &door_mesh);
     load_obj_file(pack, "mesh/alpha_staircase_001.obj", 0);
     load_obj_file(pack, "mesh/alpha_wall_001.obj", 0);
     load_obj_file(pack, "mesh/alpha_terrain_001.obj", &ground_mesh);
-    //sphere = 0x02000023;
-    //load_obj_file(pack, "mesh/spawn.obj");
-    //load_obj_file(pack, "mesh/door.obj");
-    //load_obj_file(pack, "mesh/welcome_floor.obj");
-    //load_obj_file(pack, "mesh/grass.obj");
+    load_obj_file(pack, "mesh/alpha_game_panel.obj", 0);
+    load_obj_file(pack, "mesh/alpha_game_button.obj", 0);
 
     struct obj_property ground_props[2] = { 0 };
     ground_props[0].type = PROP_MESH_ID;
@@ -948,12 +942,7 @@ void pack_build_alpha()
     ground_props[1].material_id = bricks_mat;
     load_object(pack, "Ground", OBJ_TERRAIN, array_count(ground_props),
                 ground_props, NULL);
-    //struct rico_object *ground = pack_lookup(pack, ground_id);
-    //object_rot_x(ground, -90.0f);
-    //object_scale(ground, &VEC3(64.0f, 64.0f, 0.001f));
-    //object_trans(ground, &VEC3(0.0f, -1.0f, 0.0f));
 
-    //u32 timmy_diff = load_texture_color(pack, "Timmy", COLOR_YELLOW);
     u32 timmy_mat = load_material(pack, "Timmy", 0, 0, 0);
     struct obj_property timmy_props[4] = { 0 };
     timmy_props[0].type = PROP_MESH_ID;
@@ -964,13 +953,8 @@ void pack_build_alpha()
     timmy_props[2].light_switch = (struct light_switch) { 3, true };
     timmy_props[3].type = PROP_AUDIO_SWITCH;
     timmy_props[3].audio_switch = (struct audio_switch) { 3, true };
-    u32 timmy_id = load_object(pack, "Timmy", OBJ_STATIC,
-                               array_count(timmy_props), timmy_props, NULL);
-    struct rico_object *timmy = pack_lookup(pack, timmy_id);
-    object_scale(timmy, &VEC3(0.01f, 0.01f, 0.01f));
-    //object_rot_x(timmy, 30.0f);
-    //object_rot_y(timmy, 30.0f);
-    //object_trans(timmy, &VEC3(0.0f, 1.0f, 0.0f));
+    load_object(pack, "Timmy", OBJ_STATIC, array_count(timmy_props),
+                timmy_props, NULL);
 
     pack_save(pack, filename, false);
     free(pack);
@@ -978,6 +962,6 @@ void pack_build_alpha()
 
 void pack_build_all()
 {
-    pack_default = pack_build_default();
+    packs[PACK_DEFAULT] = pack_build_default();
     pack_build_alpha();
 }

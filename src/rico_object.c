@@ -107,7 +107,7 @@ void object_bbox_recalculate_all(struct pack *pack)
         }
         else
         {
-            mesh = pack_lookup(pack_default, MESH_DEFAULT_CUBE);
+            mesh = pack_lookup(packs[PACK_DEFAULT], MESH_DEFAULT_CUBE);
         }
         obj->bbox = mesh->bbox;
     }
@@ -325,15 +325,22 @@ internal void object_interact_audio_switch(struct rico_object *obj)
         alSourceStop(audio_source);
 }
 
+internal void object_interact_game_button(struct rico_object *obj)
+{
+    struct obj_property *prop = object_prop(obj, PROP_GAME_BUTTON);
+    prop->game_button.state = !prop->game_button.state;
+}
+
 typedef void (*prop_interactor)(struct rico_object *obj);
 prop_interactor interactors[PROP_COUNT] = {
     0,                            // PROP_MESH_ID
-    0,                            // PROP_MATERIAL_ID
+    0,                            // PROP_MATERIAL_IDw
     0,                            // PROP_LIGHT_DIR
     0,                            // PROP_LIGHT_POINT
     0,                            // PROP_LIGHT_SPOT
     object_interact_light_switch, // PROP_LIGHT_SWITCH
-    object_interact_audio_switch  // PROP_AUDIO_SWITCH
+    object_interact_audio_switch, // PROP_AUDIO_SWITCH
+    object_interact_game_button   // PROP_GAME_BUTTON
 };
 
 void object_interact(struct rico_object *obj)
@@ -470,13 +477,13 @@ void object_render(struct pack *pack, const struct camera *camera)
         {
             if (obj->type == OBJ_STRING_WORLD)
             {
-                mat_pack = pack_default;
+                mat_pack = packs[PACK_DEFAULT];
             }
             mat_id = mat_prop->material_id;
         }
         else
         {
-            mat_pack = pack_default;
+            mat_pack = packs[PACK_DEFAULT];
             if (obj->type == OBJ_STRING_WORLD)
             {
                 mat_id = FONT_DEFAULT_TEXTURE;
@@ -496,7 +503,7 @@ void object_render(struct pack *pack, const struct camera *camera)
         }
         else
         {
-            mesh_render(pack_default, MESH_DEFAULT_CUBE, prog->type);
+            mesh_render(packs[PACK_DEFAULT], MESH_DEFAULT_CUBE, prog->type);
         }
 
         // Clean up
@@ -557,12 +564,12 @@ void object_render_ui(struct pack *pack)
         if (tex_prop && tex_prop->texture_id)
         {
             // TODO: Let UI use textures outside of default pack?
-            tex_pack = pack_default;
+            tex_pack = packs[PACK_DEFAULT];
             tex_id = tex_prop->texture_id;
         }
         else
         {
-            tex_pack = pack_default;
+            tex_pack = packs[PACK_DEFAULT];
             tex_id = FONT_DEFAULT_TEXTURE;
         }
         texture_bind(tex_pack, tex_id, GL_TEXTURE0);
@@ -594,16 +601,17 @@ void object_print(struct rico_object *obj)
 
     if (obj)
     {
+        struct pack *pack = packs[ID_PACK(obj->id)];
         struct obj_property *mesh_prop = object_prop(obj, PROP_MESH_ID);
         struct obj_property *material_prop = object_prop(obj, PROP_MATERIAL_ID);
 
         u32 mesh_id = (mesh_prop) ? mesh_prop->mesh_id : 0;
         u32 material_id = (material_prop) ? material_prop->material_id : 0;
         struct rico_mesh *mesh = (mesh_id)
-            ? pack_lookup(pack_active, mesh_id)
+            ? pack_lookup(pack, mesh_id)
             : NULL;
         struct rico_material *material = (material_id)
-            ? pack_lookup(pack_active, material_id)
+            ? pack_lookup(pack, material_id)
             : NULL;
 
         const char *mesh_str = "---";
@@ -628,21 +636,21 @@ void object_print(struct rico_object *obj)
             if (material->tex_id[0])
             {
                 struct rico_texture *tex =
-                    pack_lookup(pack_active, material->tex_id[0]);
+                    pack_lookup(pack, material->tex_id[0]);
                 mat_tex0_id = tex->id;
                 mat_tex0_str = texture_name(tex);
             }
             if (material->tex_id[1])
             {
                 struct rico_texture *tex =
-                    pack_lookup(pack_active, material->tex_id[1]);
+                    pack_lookup(pack, material->tex_id[1]);
                 mat_tex1_id = tex->id;
                 mat_tex1_str = texture_name(tex);
             }
             if (material->tex_id[2])
             {
                 struct rico_texture *tex =
-                    pack_lookup(pack_active, material->tex_id[2]);
+                    pack_lookup(pack, material->tex_id[2]);
                 mat_tex2_id = tex->id;
                 mat_tex2_str = texture_name(tex);
             }
@@ -688,7 +696,8 @@ void object_print(struct rico_object *obj)
     }
 
     string_truncate(buf, sizeof(buf), len);
-    load_string(pack_transient, rico_string_slot_string[STR_SLOT_SELECTED_OBJ],
+    load_string(packs[PACK_TRANSIENT],
+                rico_string_slot_string[STR_SLOT_SELECTED_OBJ],
                 STR_SLOT_SELECTED_OBJ, 0, FONT_HEIGHT,
                 COLOR_DARK_GRAY_HIGHLIGHT, 0, NULL, buf);
 }

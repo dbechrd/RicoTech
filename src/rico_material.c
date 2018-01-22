@@ -20,7 +20,7 @@ void material_bind(struct pack *pack, u32 id)
     }
     else
     {
-        texture_bind(pack_default, TEXTURE_DEFAULT_DIFF, GL_TEXTURE0);
+        texture_bind(packs[PACK_DEFAULT], TEXTURE_DEFAULT_DIFF, GL_TEXTURE0);
     }
 
     // Bind specular or default
@@ -30,7 +30,7 @@ void material_bind(struct pack *pack, u32 id)
     }
     else
     {
-        texture_bind(pack_default, TEXTURE_DEFAULT_SPEC, GL_TEXTURE1);
+        texture_bind(packs[PACK_DEFAULT], TEXTURE_DEFAULT_SPEC, GL_TEXTURE1);
     }
 
     // Bind emission or default
@@ -40,7 +40,7 @@ void material_bind(struct pack *pack, u32 id)
     }
     else
     {
-        texture_bind(pack_default, TEXTURE_DEFAULT_EMIS, GL_TEXTURE2);
+        texture_bind(packs[PACK_DEFAULT], TEXTURE_DEFAULT_EMIS, GL_TEXTURE2);
     }
 }
 
@@ -60,7 +60,7 @@ void material_unbind(struct pack *pack, u32 id)
     }
     else
     {
-        texture_unbind(pack_default, TEXTURE_DEFAULT_DIFF, GL_TEXTURE0);
+        texture_unbind(packs[PACK_DEFAULT], TEXTURE_DEFAULT_DIFF, GL_TEXTURE0);
     }
 
     // Unbind specular or default
@@ -70,7 +70,7 @@ void material_unbind(struct pack *pack, u32 id)
     }
     else
     {
-        texture_unbind(pack_default, TEXTURE_DEFAULT_SPEC, GL_TEXTURE1);
+        texture_unbind(packs[PACK_DEFAULT], TEXTURE_DEFAULT_SPEC, GL_TEXTURE1);
     }
 
     // Unbind emission or default
@@ -80,6 +80,6 @@ void material_unbind(struct pack *pack, u32 id)
     }
     else
     {
-        texture_unbind(pack_default, TEXTURE_DEFAULT_EMIS, GL_TEXTURE2);
+        texture_unbind(packs[PACK_DEFAULT], TEXTURE_DEFAULT_EMIS, GL_TEXTURE2);
     }
 }
