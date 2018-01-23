@@ -13,12 +13,12 @@ enum PACK_IDS
     PACK_DEFAULT,
     PACK_TRANSIENT,
     PACK_FRAME,
-    PACK_FIRST
+    PACK_COUNT
 };
 
 enum DEFAULT_IDS
 {
-    FONT_DEFAULT          = 0x01000001,
+    FONT_DEFAULT = 1,
     FONT_DEFAULT_TEXTURE,
     TEXTURE_DEFAULT_DIFF,
     TEXTURE_DEFAULT_SPEC,
@@ -69,13 +69,13 @@ extern u32 packs_next;
 extern struct pack *packs[MAX_PACKS];
 
 global void pack_build_all();
+global int pack_load_all();
 global void *pack_next(struct pack *pack, u32 id, enum rico_hnd_type type);
 global void *pack_prev(struct pack *pack, u32 id, enum rico_hnd_type type);
 global int pack_load(const char *filename, struct pack **_pack);
 internal void pack_expand(struct pack *pack);
 internal void pack_compact_buffer(struct pack *pack);
 global void pack_delete(struct pack *pack, u32 id, enum rico_hnd_type type);
-
 global u32 load_object(struct pack *pack, const char *name,
                        enum rico_obj_type type, u32 prop_count,
                        struct obj_property *props, const struct bbox *bbox);

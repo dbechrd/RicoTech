@@ -10,7 +10,6 @@ internal const u8 PACK_SIGNATURE[4] = { 'R', 'I', 'C', 'O' };
 //internal const u32 PACK_SIGNATURE =
 //    ((u32)'R' << 24) | ((u32)'I' << 16) | ((u32)'C' << 8) | ((u32)'O');
 
-u32 packs_next = PACK_FIRST;
 struct pack *packs[MAX_PACKS] = { 0 };
 
 global void *pack_next(struct pack *pack, u32 id, enum rico_hnd_type type)
@@ -18,7 +17,7 @@ global void *pack_next(struct pack *pack, u32 id, enum rico_hnd_type type)
     if (pack->blobs_used == 0)
         return NULL;
 
-    u32 start_idx = (id) ? pack->lookup[ID_BLOB(id)] : 0;
+    u32 start_idx = (id) ? pack->lookup[ID_BLOB(id)] : 1;
     u32 idx = start_idx;
     do
     {
@@ -730,14 +729,15 @@ internal void null_blob(struct pack *pack)
 
 internal u32 perf_pack_tick_start;
 internal u32 perf_pack_tick_end;
-static u32 next_pack_id = 1;
+static u32 next_pack_id = PACK_COUNT;
 
-struct pack *pack_init(const char *name, u32 blob_count, u32 buffer_size)
+struct pack *pack_init(u32 id, const char *name, u32 blob_count, u32 buffer_size)
 {
     if (!blob_count) blob_count = DEFAULT_PACK_BLOBS;
     if (!buffer_size) buffer_size = DEFAULT_PACK_BUF_SIZE;
     RICO_ASSERT(blob_count < MAX_PACK_BLOBS);
     RICO_ASSERT(buffer_size < MAX_PACK_BUF_SIZE);
+    RICO_ASSERT(id < MAX_PACKS);
 
     perf_pack_tick_start = SDL_GetTicks();
 
@@ -747,8 +747,7 @@ struct pack *pack_init(const char *name, u32 blob_count, u32 buffer_size)
         blob_count * sizeof(pack->index[0]) +
         buffer_size);
     
-    pack->id = next_pack_id;
-    next_pack_id++;
+    pack->id = id;
     memcpy(pack->magic, PACK_SIGNATURE, sizeof(pack->magic));
     pack->version = RICO_FILE_VERSION_CURRENT;
     strncpy(pack->name, name, (u32)sizeof(pack->name) - 1);
@@ -771,6 +770,7 @@ struct pack *pack_init(const char *name, u32 blob_count, u32 buffer_size)
     // First blob in pack must be the null blob
     null_blob(pack);
 
+    packs[pack->id] = pack;
     return pack;
 }
 
@@ -833,12 +833,13 @@ int pack_load(const char *filename, struct pack **_pack)
 {
     UNUSED(filename);
     enum rico_error err = SUCCESS;
-    u32 tick_start = SDL_GetTicks();
 
     // Read pack file from disk
     FILE *pack_file = fopen(filename, "rb");
     if (pack_file)
     {
+        u32 tick_start = SDL_GetTicks();
+
         struct pack tmp_pack = { 0 };
         fread(&tmp_pack, 1, sizeof(tmp_pack), pack_file);
         rewind(pack_file);
@@ -856,12 +857,19 @@ int pack_load(const char *filename, struct pack **_pack)
         pack->lookup = (void *)(base + pack->lookup_offset);
         pack->index = (void *)(base + pack->index_offset);
         pack->buffer = base + pack->data_offset;
-        *_pack = pack;
+        if (_pack) *_pack = pack;
 
+        RICO_ASSERT(pack->id < MAX_PACKS);
+        RICO_ASSERT(packs[pack->id] == 0);
+        packs[pack->id] = pack;
         if (pack->id >= next_pack_id)
         {
             next_pack_id = pack->id + 1;
         }
+
+        u32 tick_end = SDL_GetTicks();
+        printf("[PERF][pack] '%s' loaded in: %d ticks\n", pack->name,
+               tick_end - tick_start);
     }
     else
     {
@@ -871,22 +879,26 @@ int pack_load(const char *filename, struct pack **_pack)
         goto cleanup;
     }
 
-    u32 tick_end = SDL_GetTicks();
-    printf("[PERF][pack] '%s' loaded in: %d ticks\n", (*_pack)->name,
-           tick_end - tick_start);
-
 cleanup:
     return err;
 }
 
-struct pack *pack_build_default()
+void pack_free(u32 id)
+{
+    RICO_ASSERT(id < MAX_PACKS);
+    RICO_ASSERT(packs[id]);
+    free(packs[id]);
+    packs[id] = 0;
+}
+
+void pack_build_default(u32 id)
 {
     // TODO: This entire pack could be embedded as binary data in the .exe once
     //       the contents are finalized. This would allow the engine to run even
     //       when the data directory is missing.
     const char *filename = "packs/default.pak";
 
-    struct pack *pack = pack_init(filename, 16, MB(1));
+    struct pack *pack = pack_init(id, filename, 16, MB(1));
     u32 font_tex = 0;
     u32 font = load_font(pack, "[FONT_DEFAULT]", "font/courier_new.bff",
                          &font_tex);
@@ -914,14 +926,17 @@ struct pack *pack_build_default()
     RICO_ASSERT(sphere == MESH_DEFAULT_SPHERE);
 
     pack_save(pack, filename, true);
-    return pack;
+    pack_free(pack->id);
 }
 
-void pack_build_alpha()
+void pack_build_alpha(u32 id)
 {
+    // TODO: Split objects (state) from resources (materials, textures, audio).
+    //       pack_state: all world objects (for now)
+    //       pack_alpha: textures, materials, audio, etc. specific to alpha
     const char *filename = "packs/alpha.pak";
 
-    struct pack *pack = pack_init(filename, 128, MB(256));
+    struct pack *pack = pack_init(id, filename, 128, MB(256));
     u32 bricks_diff = load_texture_file(pack, "Bricks_diff", "texture/cobble_diff.tga");
     u32 bricks_mrao = load_texture_file(pack, "Bricks_mrao", "texture/cobble_mrao.tga");
     u32 bricks_emis = load_texture_color(pack, "Bricks_emis", COLOR_TRANSPARENT);
@@ -957,11 +972,30 @@ void pack_build_alpha()
                 timmy_props, NULL);
 
     pack_save(pack, filename, false);
-    free(pack);
+    pack_free(pack->id);
 }
 
 void pack_build_all()
 {
-    packs[PACK_DEFAULT] = pack_build_default();
-    pack_build_alpha();
+    pack_build_default(PACK_DEFAULT);
+    pack_build_alpha(next_pack_id);
+    next_pack_id++;
+}
+
+int pack_load_all()
+{
+    enum rico_error err;
+
+    err = pack_load("packs/default.pak", 0);
+    pack_init(PACK_TRANSIENT, "pack_transient", 512, MB(4));
+    pack_init(PACK_FRAME, "pack_frame", 0, 0);
+    err = pack_load("packs/alpha.pak", &pack_active);
+
+    for (u32 i = 0; i < array_count(packs); ++i)
+    {
+        if (packs[i])
+            RICO_ASSERT(i == packs[i]->id);
+    }
+
+    return err;
 }

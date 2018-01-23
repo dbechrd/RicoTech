@@ -130,7 +130,7 @@ void prim_draw_bbox_color(const struct bbox *bbox,
     
     mat4_translate(&transform, &center);
     mat4_translate(&transform, &BBOX_EPSILON_TRANS);
-
+    
     mat4_translate(&transform, &model_xform->trans);
     mat4_rotx(&transform, model_xform->rot.x);
     mat4_roty(&transform, model_xform->rot.y);
@@ -140,6 +140,8 @@ void prim_draw_bbox_color(const struct bbox *bbox,
     struct vec3 scale = bbox->max;
     v3_sub(&scale, &bbox->min);
     mat4_scale(&transform, &scale);
+    //--------------------------------------------------
+    //transform = model_xform->matrix;
     //--------------------------------------------------
 
     glUseProgram(prog_prim->prog_id);

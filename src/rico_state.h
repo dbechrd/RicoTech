@@ -20,6 +20,8 @@ enum rico_state
 };
 extern const char *rico_state_string[];
 
+extern struct pack *pack_active;
+
 int state_update();
 extern inline enum rico_state state_get();
 extern inline bool state_is_edit();

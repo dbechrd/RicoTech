@@ -1197,6 +1197,12 @@ internal int rico_init()
     if (err) return err;
 
     printf("----------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing packs\n");
+    printf("----------------------------------------------------------\n");
+    err = pack_load_all();
+    if (err) return err;
+
+    printf("----------------------------------------------------------\n");
     printf("[MAIN][init] Initializing game world\n");
     printf("----------------------------------------------------------\n");
     init_glref();
@@ -1207,15 +1213,6 @@ internal int rico_init()
     camera_reset(&cam_player);
     if (err) return err;
 
-    printf("----------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing packs\n");
-    printf("----------------------------------------------------------\n");
-    err = pack_load("packs/default.pak", &packs[PACK_DEFAULT]);
-    packs[PACK_TRANSIENT] = pack_init("pack_transient", 512, MB(4));
-    packs[PACK_FRAME] = pack_init("pack_frame", 0, 0);
-    err = pack_load("packs/alpha.pak", &pack_active);
-    packs[packs_next] = pack_active;
-    packs_next++;
     return err;
 }
 internal int state_engine_init()
