@@ -968,6 +968,7 @@ internal int rico_init_shaders()
 
     err = make_program_primitive(&prog_prim);
     if (err) return err;
+    prim_bbox_init();
 
     err = make_program_text(&prog_text);
     return err;

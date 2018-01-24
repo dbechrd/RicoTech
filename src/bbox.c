@@ -8,18 +8,20 @@ void bbox_init(struct bbox *bbox, struct vec3 min, struct vec3 max,
     bbox->min = min;
     bbox->max = max;
     bbox->color = color;
-    bbox->wireframe = true;
+    bbox->selected = false;
 }
 
 void bbox_init_mesh(struct bbox *bbox, struct rico_mesh *mesh,
                     struct vec4 color)
 {
-    struct vec3 min = VEC3(9999.0, 9999.0, 9999.0);
-    struct vec3 max = VEC3_ZERO;
+    RICO_ASSERT(mesh->vertex_count);
+
+    struct pbr_vertex *verts = mesh_vertices(mesh);
+    struct vec3 min = verts[0].pos;
+    struct vec3 max = verts[0].pos;
 
     // Find bounds of mesh
-    struct pbr_vertex *verts = mesh_vertices(mesh);
-    for (u32 i = 0; i < mesh->vertex_count; ++i)
+    for (u32 i = 1; i < mesh->vertex_count; ++i)
     {
         if (verts[i].pos.x > max.x) max.x = verts[i].pos.x;
         if (verts[i].pos.x < min.x) min.x = verts[i].pos.x;

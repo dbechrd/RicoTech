@@ -96,7 +96,6 @@ void free_program_pbr(struct program_pbr **program);
 //| Primitive program
 ///=============================================================================
 #define LOCATION_PRIM_POSITION 0
-#define LOCATION_PRIM_COLOR    1
 
 struct prim_attrib
 {

@@ -201,10 +201,8 @@ internal inline void program_primitive_get_locations(struct program_primitive *p
     p->u_proj = program_get_uniform_location(p->prog_id, "u_proj");
 
     p->attrs.position = program_get_attrib_location(p->prog_id, "vert_pos");
-    p->attrs.color = program_get_attrib_location(p->prog_id, "vert_col");
 
     RICO_ASSERT(p->attrs.position == LOCATION_PRIM_POSITION);
-    RICO_ASSERT(p->attrs.color == LOCATION_PRIM_COLOR);
 
     // Fragment shader
     p->u_col = program_get_uniform_location(p->prog_id, "u_col");
@@ -217,11 +215,6 @@ void program_primitive_attribs()
                           sizeof(struct pbr_vertex),
                           (GLvoid *)offsetof(struct pbr_vertex, pos));
     glEnableVertexAttribArray(LOCATION_PRIM_POSITION);
-
-    glVertexAttribPointer(LOCATION_PRIM_COLOR, 4, GL_FLOAT, GL_FALSE,
-                          sizeof(struct pbr_vertex),
-                          (GLvoid *)offsetof(struct pbr_vertex, col));
-    glEnableVertexAttribArray(LOCATION_PRIM_COLOR);
 }
 
 int make_program_primitive(struct program_primitive **_program)

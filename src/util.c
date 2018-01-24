@@ -106,8 +106,13 @@ void APIENTRY openglCallbackFunction(GLenum source, GLenum type, GLuint id,
             break;
     }
 
-    fprintf(stderr, "[%s][%s][%s][%d] %s\n", sourceStr, typeStr, severityStr,
-            id, message);
+    static u32 gl_errors = 0;
+    if (gl_errors < 10)
+    {
+        printf("[%s][%s][%s][%d] %s\n", sourceStr, typeStr, severityStr, id,
+               message);
+        gl_errors++;
+    }
 }
 
 void show_info_log(GLuint object,
@@ -120,7 +125,7 @@ void show_info_log(GLuint object,
     glGet__iv(object, GL_INFO_LOG_LENGTH, &log_length);
     log = malloc(log_length);
     glGet__InfoLog(object, log_length, NULL, log);
-    fprintf(stderr, "%s", log);
+    printf("%s", log);
     RICO_ERROR(ERR_SHADER_COMPILE, "GL Info Log: '%s'", log);
     free(log);
 };

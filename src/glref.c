@@ -320,9 +320,9 @@ void glref_render(struct camera *camera)
     //--------------------------------------------------------------------------
     // Axes labels (bboxes)
     //--------------------------------------------------------------------------
-    prim_draw_bbox_color(&axis_bbox, &x_axis_transform, &COLOR_RED);
-    prim_draw_bbox_color(&axis_bbox, &y_axis_transform, &COLOR_GREEN);
-    prim_draw_bbox_color(&axis_bbox, &z_axis_transform, &COLOR_BLUE);
+    //prim_draw_bbox_color(&axis_bbox, &x_axis_transform, &COLOR_RED);
+    //prim_draw_bbox_color(&axis_bbox, &y_axis_transform, &COLOR_GREEN);
+    //prim_draw_bbox_color(&axis_bbox, &z_axis_transform, &COLOR_BLUE);
 
     //--------------------------------------------------------------------------
     // UI

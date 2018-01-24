@@ -120,18 +120,18 @@ bool object_selectable(struct rico_object *object)
 
 void object_select_toggle(struct rico_object *object)
 {
-    object->bbox.wireframe = !object->bbox.wireframe;;
+    object->bbox.selected = !object->bbox.selected;
 }
 
 void object_select(struct rico_object *object)
 {
     RICO_ASSERT(object_selectable(object));
-    object->bbox.wireframe = false;
+    object->bbox.selected = true;
 }
 
 void object_deselect(struct rico_object *object)
 {
-    object->bbox.wireframe = true;
+    object->bbox.selected = false;
 }
 
 global void object_transform_update(struct rico_object *object)
@@ -334,7 +334,8 @@ internal void object_interact_game_button(struct rico_object *obj)
 typedef void (*prop_interactor)(struct rico_object *obj);
 prop_interactor interactors[PROP_COUNT] = {
     0,                            // PROP_MESH_ID
-    0,                            // PROP_MATERIAL_IDw
+    0,                            // PROP_TEXTURE_ID
+    0,                            // PROP_MATERIAL_ID
     0,                            // PROP_LIGHT_DIR
     0,                            // PROP_LIGHT_POINT
     0,                            // PROP_LIGHT_SPOT
@@ -518,6 +519,8 @@ void object_render(struct pack *pack, const struct camera *camera)
             continue;
 
         obj = pack_read(pack, index);
+        if (obj->type == OBJ_STRING_SCREEN)
+            continue;
 
         if (state_is_edit(state_get()))
         {

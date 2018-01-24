@@ -567,6 +567,8 @@ int load_obj_file(struct pack *pack, const char *filename, u32 *_last_mesh_id)
     enum rico_error err;
     u32 last_mesh_id = 0;
 
+    struct vec4 bbox_color = COLOR_WHITE;
+
     // TODO: Colossal waste of memory, just preprocess the file and count them!
     struct vec3 *positions = calloc(MESH_VERTICES_MAX, sizeof(*positions));
     struct vec2 *texcoords = calloc(MESH_VERTICES_MAX, sizeof(*texcoords));
@@ -607,7 +609,7 @@ int load_obj_file(struct pack *pack, const char *filename, u32 *_last_mesh_id)
                                          idx_vertex, vertices, idx_element,
                                          elements);
                 struct rico_mesh *mesh = pack_lookup(pack, last_mesh_id);
-                bbox_init_mesh(&mesh->bbox, mesh, COLOR_RED_HIGHLIGHT);
+                bbox_init_mesh(&mesh->bbox, mesh, bbox_color);
 
                 idx_mesh++;
                 if (idx_mesh > 10)
@@ -702,7 +704,7 @@ int load_obj_file(struct pack *pack, const char *filename, u32 *_last_mesh_id)
         last_mesh_id = load_mesh(pack, name, sizeof(*vertices), idx_vertex,
                                  vertices, idx_element, elements);
         struct rico_mesh *mesh = pack_lookup(pack, last_mesh_id);
-        bbox_init_mesh(&mesh->bbox, mesh, COLOR_RED_HIGHLIGHT);
+        bbox_init_mesh(&mesh->bbox, mesh, bbox_color);
 
         idx_mesh++;
     }
@@ -818,7 +820,7 @@ int pack_save(struct pack *pack, const char *filename, bool shrink)
     else
     {
         err = RICO_ERROR(ERR_FILE_WRITE,
-                         "Error: Cannot open pack file [%s] for read.\n",
+                         "Error: Cannot open pack file [%s] for write.\n",
                          filename);
     }
 

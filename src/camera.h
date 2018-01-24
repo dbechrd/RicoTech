@@ -14,7 +14,7 @@
 #define SCREEN_Y(y) (y >= 0.0f ? ABS_SCREEN_Y(y) : ABS_SCREEN_Y(y + SCREEN_H))
 
 #define Z_NEAR 0.01f
-#define Z_FAR 200.0f
+#define Z_FAR 500.0f
 
 struct camera
 {

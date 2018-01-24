@@ -113,36 +113,58 @@ void prim_draw_bbox(const struct bbox *bbox,
     prim_draw_bbox_color(bbox, model_xform, &bbox->color);
 }
 
+static GLuint bbox_vao = 0;
+static GLuint bbox_buffers[2] = { 0 };
+
+void prim_bbox_init()
+{
+    // TODO: Delete vao / buffers?
+    glGenVertexArrays(1, &bbox_vao);
+    glBindVertexArray(bbox_vao);
+    
+    glGenBuffers(2, bbox_buffers);
+
+    glBindBuffer(GL_ARRAY_BUFFER, bbox_buffers[0]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bbox_buffers[1]);
+
+    const GLushort elements[] = {
+        0, 1, 2, 3, // front face
+        4, 5, 6, 7, // back face
+        0, 4, 1, 5, 2, 6, 3, 7 // 4 edges
+    };
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elements), elements, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(
+        LOCATION_PRIM_POSITION,    // attribute
+        3,                  // number of elements per vertex
+        GL_FLOAT,           // the type of each element
+        GL_FALSE,           // take our values as-is
+        0,                  // no extra data between each position
+        0                   // offset of first element
+    );
+    glEnableVertexAttribArray(LOCATION_PRIM_POSITION);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+}
+
 void prim_draw_bbox_color(const struct bbox *bbox,
                           const struct rico_transform *model_xform,
                           const struct vec4 *color)
 {
-    if (bbox->wireframe && cam_player.fill_mode != GL_LINE)
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    GLfloat vertices[] = {
+        bbox->min.x, bbox->min.y, bbox->min.z,
+        bbox->max.x, bbox->min.y, bbox->min.z,
+        bbox->max.x, bbox->max.y, bbox->min.z,
+        bbox->min.x, bbox->max.y, bbox->min.z,
+        bbox->min.x, bbox->min.y, bbox->max.z,
+        bbox->max.x, bbox->min.y, bbox->max.z,
+        bbox->max.x, bbox->max.y, bbox->max.z,
+        bbox->min.x, bbox->max.y, bbox->max.z,
+    };
 
-    struct mat4 transform = MAT4_IDENT;
-
-    // Adjust unit bbox to fit mesh and model transform
-    //--------------------------------------------------
-    struct vec3 center = bbox->min;
-    v3_add(&center, &bbox->max);
-    v3_scalef(&center, 0.5f);
-    
-    mat4_translate(&transform, &center);
-    mat4_translate(&transform, &BBOX_EPSILON_TRANS);
-    
-    mat4_translate(&transform, &model_xform->trans);
-    mat4_rotx(&transform, model_xform->rot.x);
-    mat4_roty(&transform, model_xform->rot.y);
-    mat4_rotz(&transform, model_xform->rot.z);
-    mat4_scale(&transform, &model_xform->scale);
-    
-    struct vec3 scale = bbox->max;
-    v3_sub(&scale, &bbox->min);
-    mat4_scale(&transform, &scale);
-    //--------------------------------------------------
-    //transform = model_xform->matrix;
-    //--------------------------------------------------
+    struct mat4 transform = model_xform->matrix; //MAT4_IDENT;
 
     glUseProgram(prog_prim->prog_id);
 
@@ -151,17 +173,29 @@ void prim_draw_bbox_color(const struct bbox *bbox,
     glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, transform.a);
 
     // TODO: Use per-bbox color instead of rainbowgasm
-    glUniform4f(prog_prim->u_col, color->r, color->g, color->b, color->a);
-	//UNUSED(color);
-    //glUniform4f(program->u_col, 1.0f, 1.0f, 1.0f, 0.5f);
+    if (bbox->selected)
+        glUniform4fv(prog_prim->u_col, 1, (const GLfloat *)&COLOR_RED);
+    else
+        glUniform4fv(prog_prim->u_col, 1, (const GLfloat *)color);
 
-    mesh_render(packs[PACK_DEFAULT], MESH_DEFAULT_CUBE, PROG_PRIM);
+    glBindVertexArray(bbox_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, bbox_buffers[0]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bbox_buffers[1]);
+
+    // Based loosely on:
+    // https://en.wikibooks.org/wiki/OpenGL_Programming/Bounding_box
+    glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0);
+    glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid*)(4 * sizeof(GLushort)));
+    glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT, (GLvoid*)(8 * sizeof(GLushort)));
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
 
     // Clean up
     glUseProgram(0);
-
-    if (bbox->wireframe && cam_player.fill_mode != GL_LINE)
-        glPolygonMode(GL_FRONT_AND_BACK, cam_player.fill_mode);
 }
 
 void prim_draw_sphere(const struct sphere *sphere, const struct vec4 *color)
