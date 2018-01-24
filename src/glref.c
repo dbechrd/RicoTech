@@ -184,7 +184,7 @@ void selected_material_next()
     struct obj_property *mat_prop = object_prop(obj, PROP_MATERIAL_ID);
     if (mat_prop)
     {
-        struct rico_mesh *next_material =
+        struct rico_material *next_material =
             pack_next(pack_active, mat_prop->material_id,
                       RICO_HND_MATERIAL);
         if (next_material)
@@ -204,7 +204,7 @@ void selected_material_prev()
     struct obj_property *mat_prop = object_prop(obj, PROP_MATERIAL_ID);
     if (mat_prop)
     {
-        struct rico_mesh *prev_material =
+        struct rico_material *prev_material =
             pack_prev(pack_active, mat_prop->material_id,
                       RICO_HND_MATERIAL);
         if (prev_material)
@@ -230,6 +230,8 @@ void selected_mesh_next()
         if (next_mesh)
         {
             mesh_prop->mesh_id = next_mesh->id;
+            obj->bbox = next_mesh->bbox;
+            object_select(obj);
             object_print(obj);
         }
     }
@@ -250,6 +252,8 @@ void selected_mesh_prev()
         if (prev_mesh)
         {
             mesh_prop->mesh_id = prev_mesh->id;
+            obj->bbox = prev_mesh->bbox;
+            object_select(obj);
             object_print(obj);
         }
     }

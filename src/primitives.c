@@ -172,7 +172,6 @@ void prim_draw_bbox_color(const struct bbox *bbox,
     glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
     glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, transform.a);
 
-    // TODO: Use per-bbox color instead of rainbowgasm
     if (bbox->selected)
         glUniform4fv(prog_prim->u_col, 1, (const GLfloat *)&COLOR_RED);
     else
