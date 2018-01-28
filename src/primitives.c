@@ -61,56 +61,64 @@ internal int prim_init_gl(enum rico_prim prim)
 //       glUseProgram() call.
 // Render line segment
 void prim_draw_segment(const struct segment *seg,
-                       const struct mat4 *model_matrix, struct vec4 color)
+                       const struct mat4 *matrix, const struct vec4 color)
 {
-    if (cam_player.fill_mode != GL_LINE)
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-    // Set shader program
     glUseProgram(prog_prim->prog_id);
-
-    // Transform
     glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
     glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
-    glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, model_matrix->a);
-
+    glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, matrix->a);
     glUniform4f(prog_prim->u_col, color.r, color.g, color.b, color.a);
 
-    // Draw
     glBindVertexArray(vaos[PRIM_SEGMENT]);
     glBindBuffer(GL_ARRAY_BUFFER, vbos[PRIM_SEGMENT][VBO_VERTEX]);
-    // TODO: Batch these into a single glDrawArrays(LINES, 0, 2 * segment_count)
     glBufferData(GL_ARRAY_BUFFER, sizeof(seg->vertices), seg->vertices,
                  GL_DYNAMIC_DRAW);
+
+    // TODO: Batch all segments, e.g. glDrawArrays(LINES, 0, 2 * count)
+    glDrawArrays(GL_LINES, 0, 2);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+    glUseProgram(0);
+}
+
+void prim_draw_line(const struct vec3 p0, const struct vec3 p1,
+                    const struct mat4 *matrix, const struct vec4 color)
+{
+    struct prim_vertex vertices[2];
+    vertices[0].pos = p0;
+    vertices[1].pos = p1;
+
+    glUseProgram(prog_prim->prog_id);
+    glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
+    glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
+    glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, matrix->a);
+    glUniform4f(prog_prim->u_col, color.r, color.g, color.b, color.a);
+
+    glBindVertexArray(vaos[PRIM_SEGMENT]);
+    glBindBuffer(GL_ARRAY_BUFFER, vbos[PRIM_SEGMENT][VBO_VERTEX]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
 
     glDrawArrays(GL_LINES, 0, 2);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     glUseProgram(0);
-
-    if (cam_player.fill_mode != GL_LINE)
-        glPolygonMode(GL_FRONT_AND_BACK, cam_player.fill_mode);
 }
 
 // Render ray as line segment
-void prim_draw_ray(const struct ray *ray, const struct mat4 *model_matrix,
-                   struct vec4 color)
+void prim_draw_ray(const struct ray *ray, const struct mat4 *matrix,
+                   const struct vec4 color)
 {
     struct vec3 ray_end = ray->orig;
     v3_add(&ray_end, &ray->dir);
-
-    struct segment ray_seg;
-    ray_seg.vertices[0] = (struct prim_vertex) { ray->orig, COLOR_GRAY };
-    ray_seg.vertices[1] = (struct prim_vertex) { ray_end, COLOR_WHITE };
-
-    prim_draw_segment(&ray_seg, model_matrix, color);
+    prim_draw_line(ray->orig, ray->dir, &MAT4_IDENT, color);
 }
 
 void prim_draw_bbox(const struct bbox *bbox,
-                    const struct rico_transform *model_xform)
+                    const struct mat4 *matrix)
 {
-    prim_draw_bbox_color(bbox, model_xform, &bbox->color);
+    prim_draw_bbox_color(bbox, matrix, &bbox->color);
 }
 
 static GLuint bbox_vao = 0;
@@ -150,7 +158,7 @@ void prim_bbox_init()
 }
 
 void prim_draw_bbox_color(const struct bbox *bbox,
-                          const struct rico_transform *model_xform,
+                          const struct mat4 *matrix,
                           const struct vec4 *color)
 {
     GLfloat vertices[] = {
@@ -164,13 +172,11 @@ void prim_draw_bbox_color(const struct bbox *bbox,
         bbox->min.x, bbox->max.y, bbox->max.z,
     };
 
-    struct mat4 transform = model_xform->matrix; //MAT4_IDENT;
-
     glUseProgram(prog_prim->prog_id);
 
     glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
     glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
-    glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, transform.a);
+    glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, matrix->a);
 
     if (bbox->selected)
         glUniform4fv(prog_prim->u_col, 1, (const GLfloat *)&COLOR_RED);
@@ -202,15 +208,15 @@ void prim_draw_sphere(const struct sphere *sphere, const struct vec4 *color)
     if (cam_player.fill_mode != GL_LINE)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    struct mat4 model_matrix = MAT4_IDENT;
-    mat4_translate(&model_matrix, &sphere->orig);
-    mat4_scalef(&model_matrix, sphere->radius);
+    struct mat4 matrix = MAT4_IDENT;
+    mat4_translate(&matrix, &sphere->orig);
+    mat4_scalef(&matrix, sphere->radius);
 
     glUseProgram(prog_prim->prog_id);
 
     glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
     glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
-    glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, model_matrix.a);
+    glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, matrix.a);
     glUniform4f(prog_prim->u_col, color->r, color->g, color->b, color->a);
 
     mesh_render(packs[PACK_DEFAULT], MESH_DEFAULT_SPHERE, PROG_PRIM);

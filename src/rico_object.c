@@ -524,7 +524,7 @@ void object_render(struct pack *pack, const struct camera *camera)
 
         if (state_is_edit(state_get()))
         {
-            prim_draw_bbox(&obj->bbox, &obj->xform);
+            prim_draw_bbox(&obj->bbox, &obj->xform.matrix);
         }
     }
 }

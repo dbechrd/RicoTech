@@ -5,7 +5,6 @@ extern struct program_pbr *prog_pbr;
 extern struct program_primitive *prog_prim;
 extern struct program_text *prog_text;
 
-void init_glref();
 void create_obj(struct pack *pack);
 void recalculate_all_bbox();
 void select_obj(struct rico_object *obj, bool force);

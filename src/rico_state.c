@@ -1204,11 +1204,6 @@ internal int rico_init()
     if (err) return err;
 
     printf("----------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing game world\n");
-    printf("----------------------------------------------------------\n");
-    init_glref();
-
-    printf("----------------------------------------------------------\n");
     printf("[MAIN][init] Initializing camera\n");
     printf("----------------------------------------------------------\n");
     camera_reset(&cam_player);

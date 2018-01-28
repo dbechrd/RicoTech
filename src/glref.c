@@ -4,38 +4,6 @@ struct program_pbr *prog_pbr;
 struct program_primitive *prog_prim;
 struct program_text *prog_text;
 
-global struct bbox axis_bbox;
-
-global struct rico_transform x_axis_transform;
-global struct rico_transform y_axis_transform;
-global struct rico_transform z_axis_transform;
-
-void init_glref()
-{
-    // TODO: Find somewhere to put debug/editor draw code that makes sense
-    //--------------------------------------------------------------------------
-    // Create axis label bboxes
-    //--------------------------------------------------------------------------
-    // TODO: Just use prim_cube!
-    struct rico_mesh *mesh = pack_lookup(packs[PACK_DEFAULT],
-                                         MESH_DEFAULT_CUBE);
-    axis_bbox = mesh->bbox;
-
-    const float trans = 0.0f;
-
-    // X-axis label
-    x_axis_transform.scale = VEC3(1.0f, 0.01f, 0.01f);
-    x_axis_transform.trans = VEC3(trans, 0.0f, 0.0f);
-
-    // Y-axis label
-    y_axis_transform.scale = VEC3(0.01f, 1.0f, 0.01f);
-    y_axis_transform.trans = VEC3(0.0f, trans, 0.0f);
-
-    // Z-axis label
-    z_axis_transform.scale = VEC3(0.01f, 0.01f, 1.0f);
-    z_axis_transform.trans = VEC3(0.0f, 0.0f, trans);
-}
-
 void create_obj(struct pack *pack)
 {
     // TODO: Prompt user for object name
@@ -324,9 +292,9 @@ void glref_render(struct camera *camera)
     //--------------------------------------------------------------------------
     // Axes labels (bboxes)
     //--------------------------------------------------------------------------
-    //prim_draw_bbox_color(&axis_bbox, &x_axis_transform, &COLOR_RED);
-    //prim_draw_bbox_color(&axis_bbox, &y_axis_transform, &COLOR_GREEN);
-    //prim_draw_bbox_color(&axis_bbox, &z_axis_transform, &COLOR_BLUE);
+    prim_draw_line(VEC3_ZERO, VEC3_X, &MAT4_IDENT, COLOR_RED);
+    prim_draw_line(VEC3_ZERO, VEC3_Y, &MAT4_IDENT, COLOR_GREEN);
+    prim_draw_line(VEC3_ZERO, VEC3_Z, &MAT4_IDENT, COLOR_BLUE);
 
     //--------------------------------------------------------------------------
     // UI
