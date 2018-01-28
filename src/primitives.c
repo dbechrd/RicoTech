@@ -112,7 +112,7 @@ void prim_draw_ray(const struct ray *ray, const struct mat4 *matrix,
 {
     struct vec3 ray_end = ray->orig;
     v3_add(&ray_end, &ray->dir);
-    prim_draw_line(ray->orig, ray->dir, &MAT4_IDENT, color);
+    prim_draw_line(ray->orig, ray->dir, matrix, color);
 }
 
 void prim_draw_bbox(const struct bbox *bbox,
