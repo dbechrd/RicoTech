@@ -5,6 +5,7 @@ extern struct program_pbr *prog_pbr;
 extern struct program_primitive *prog_prim;
 extern struct program_text *prog_text;
 
+void glref_init();
 void create_obj(struct pack *pack);
 void recalculate_all_bbox();
 void select_obj(struct rico_object *obj, bool force);
@@ -19,6 +20,9 @@ void selected_mesh_prev();
 void selected_bbox_reset();
 void selected_duplicate();
 void selected_delete();
+void edit_mouse_pressed();
+void edit_mouse_move(r32 dx, r32 dy);
+void edit_mouse_released();
 void glref_update();
 void glref_render(struct camera *camera);
 void free_glref();

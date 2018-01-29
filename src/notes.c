@@ -309,6 +309,7 @@ void notes_casey()
         } break;
 
         default:
+        {
             assert(!"Unrecognized special filter mode");
         } break;
     }

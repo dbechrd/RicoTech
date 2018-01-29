@@ -1,3 +1,26 @@
+bool collide_ray_plane(const struct ray *ray, const struct vec3 *p,
+                       const struct vec3 *n, struct vec3 *_contact)
+{
+    float t = 0.0f;
+
+    float denom = v3_dot(n, &ray->dir);
+    if (fabs(denom) > EPSILON)
+    {
+        struct vec3 w = ray->orig;
+        v3_sub(&w, p);
+
+        t = -v3_dot(n, &w) / denom;
+
+        struct vec3 contact = ray->dir;
+        v3_scalef(&contact, t);
+        v3_add(&contact, &ray->orig);
+
+        *_contact = contact;
+    }
+
+    return t >= 0;
+}
+
 bool collide_ray_bbox(const struct ray *ray, const struct bbox *bbox,
                       const struct mat4 *transform)
 {

@@ -236,10 +236,14 @@ void camera_render(struct camera *camera)
 #endif
 }
 
-void camera_fwd(struct ray *_ray, struct camera *camera)
+void camera_fwd(struct vec3 *_fwd, struct camera *camera)
 {
-    struct vec3 z = VEC3_FWD;
-    v3_mul_quat(&z, &camera->view);
+    *_fwd = VEC3_FWD;
+    v3_mul_quat(_fwd, &camera->view);
+}
+
+void camera_fwd_ray(struct ray *_ray, struct camera *camera)
+{
+    camera_fwd(&_ray->dir, camera);
     _ray->orig = camera->pos;
-    _ray->dir = z;
 }

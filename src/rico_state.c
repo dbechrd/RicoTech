@@ -172,18 +172,6 @@ internal int save_file()
     return err;
 #endif
 }
-internal struct rico_object *mouse_first_obj()
-{
-    struct rico_object *obj_collided = { 0 };
-    float dist;
-
-    // Camera forward ray v. scene
-    struct ray cam_fwd;
-    camera_fwd(&cam_fwd, &cam_player);
-    object_collide_ray_type(pack_active, &obj_collided, &dist, &cam_fwd);
-
-    return obj_collided;
-}
 
 // Current state
 internal enum rico_state state_prev;
@@ -233,6 +221,14 @@ void render_fps(r64 fps, r64 ms, r64 mcyc)
 int state_update()
 {
     enum rico_error err;
+
+    ///-------------------------------------------------------------------------
+    //| Clear previous frame
+    ///-------------------------------------------------------------------------
+    glClearColor(0.1f, 0.1f, 0.2f, 1.0f);
+    //glClearColor(0.46f, 0.70f, 1.0f, 1.0f);
+    //glClearDepth(0.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     ///-------------------------------------------------------------------------
     //| Query input state
@@ -348,10 +344,6 @@ int state_update()
     ///-------------------------------------------------------------------------
     r64 alpha = (r64)sim_accum / SIM_MS;
 
-    glClearColor(0.1f, 0.1f, 0.2f, 1.0f);
-    //glClearColor(0.46f, 0.70f, 1.0f, 1.0f);
-    //glClearDepth(0.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // glPolygonMode(GL_FRONT_AND_BACK, cam_player.fill_mode);
     glPolygonMode(GL_FRONT, cam_player.fill_mode);
 
@@ -491,7 +483,18 @@ internal int shared_edit_events()
     // Raycast object selection
     if (chord_pressed(ACTION_EDIT_MOUSE_PICK))
     {
-        select_obj(mouse_first_obj(), false);
+        edit_mouse_pressed();
+    }
+    else if (chord_is_down(ACTION_EDIT_MOUSE_PICK))
+    {
+        if (mouse_dx || mouse_dy)
+        {
+            edit_mouse_move(mouse_dx, mouse_dy);
+        }
+    }
+    else if (chord_released(ACTION_EDIT_MOUSE_PICK))
+    {
+        edit_mouse_released();
     }
     // Recalculate bounding boxes of all objects
     else if (chord_pressed(ACTION_EDIT_BBOX_RECALCULATE))
@@ -1190,6 +1193,8 @@ internal int rico_init()
     err = load_mesh_files();
     if (err) return err;
 #endif
+
+    glref_init();
 
     printf("----------------------------------------------------------\n");
     printf("[MAIN][init] Loading chunks\n");

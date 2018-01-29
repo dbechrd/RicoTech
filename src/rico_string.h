@@ -8,6 +8,7 @@
     f(STR_SLOT_FPS)          \
     f(STR_SLOT_MENU_QUIT)    \
     f(STR_SLOT_DELTA)        \
+    f(STR_SLOT_WIDGET)       \
     f(STR_SLOT_DYNAMIC)
 enum rico_string_slot
 {

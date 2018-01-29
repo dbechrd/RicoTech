@@ -47,6 +47,7 @@ void camera_translate_local(struct camera *camera, const struct vec3 *v);
 void camera_rotate(struct camera *camera, float dx, float dy, float dz);
 void camera_update(struct camera *camera);
 void camera_render(struct camera *camera);
-void camera_fwd(struct ray *_ray, struct camera *camera);
+void camera_fwd(struct vec3 *_fwd, struct camera *camera);
+void camera_fwd_ray(struct ray *_ray, struct camera *camera);
 
 #endif
