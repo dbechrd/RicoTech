@@ -1,6 +1,18 @@
 #ifndef GLREF_H
 #define GLREF_H
 
+#define WIDGET_ACTIONS(f) \
+    f(WIDGET_NONE)        \
+    f(WIDGET_TRANSLATE_X) \
+    f(WIDGET_TRANSLATE_Y) \
+    f(WIDGET_TRANSLATE_Z)
+
+enum widget_action
+{
+    WIDGET_ACTIONS(GEN_LIST)
+};
+extern const char *widget_action_string[];
+
 extern struct program_pbr *prog_pbr;
 extern struct program_primitive *prog_prim;
 extern struct program_text *prog_text;

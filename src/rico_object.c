@@ -1,6 +1,9 @@
 const char *rico_obj_type_string[] = {
     RICO_OBJ_TYPES(GEN_STRING)
 };
+const char *rico_prop_type_string[] = {
+    RICO_PROP_TYPES(GEN_STRING)
+};
 
 global const char *object_name(struct rico_object *obj)
 {
@@ -524,7 +527,10 @@ void object_render(struct pack *pack, const struct camera *camera)
 
         if (state_is_edit(state_get()))
         {
-            prim_draw_bbox(&obj->bbox, &obj->xform.matrix);
+            struct vec4 color = COLOR_WHITE_HIGHLIGHT;
+            if (obj->bbox.selected)
+                color = COLOR_RED;
+            prim_draw_bbox_color(&obj->bbox, &obj->xform.matrix, &color);
         }
     }
 }

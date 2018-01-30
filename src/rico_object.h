@@ -24,19 +24,24 @@ struct rico_transform
     struct mat4 matrix_inverse;
 };
 
+#define RICO_PROP_TYPES(f) \
+    f(PROP_NULL)           \
+    f(PROP_MESH_ID)        \
+    f(PROP_TEXTURE_ID)     \
+    f(PROP_MATERIAL_ID)    \
+    f(PROP_LIGHT_DIR)      \
+    f(PROP_LIGHT_POINT)    \
+    f(PROP_LIGHT_SPOT)     \
+    f(PROP_LIGHT_SWITCH)   \
+    f(PROP_AUDIO_SWITCH)   \
+    f(PROP_GAME_BUTTON)    \
+    f(PROP_COUNT)
+
 enum obj_prop_type
 {
-    PROP_MESH_ID,
-    PROP_TEXTURE_ID,
-    PROP_MATERIAL_ID,
-    PROP_LIGHT_DIR,
-    PROP_LIGHT_POINT,
-    PROP_LIGHT_SPOT,
-    PROP_LIGHT_SWITCH,
-    PROP_AUDIO_SWITCH,
-    PROP_GAME_BUTTON,
-    PROP_COUNT
+    RICO_PROP_TYPES(GEN_LIST)
 };
+extern const char *rico_prop_type_string[];
 
 struct light_switch
 {

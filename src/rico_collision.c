@@ -1,5 +1,5 @@
-bool collide_ray_plane(const struct ray *ray, const struct vec3 *p,
-                       const struct vec3 *n, struct vec3 *_contact)
+bool collide_ray_plane(struct vec3 *_contact, const struct ray *ray,
+                       const struct vec3 *p, const struct vec3 *n)
 {
     float t = 0.0f;
 
@@ -15,13 +15,17 @@ bool collide_ray_plane(const struct ray *ray, const struct vec3 *p,
         v3_scalef(&contact, t);
         v3_add(&contact, &ray->orig);
 
-        *_contact = contact;
+        if (t >= 0)
+        {
+            *_contact = contact;
+            return true;
+        }
     }
 
-    return t >= 0;
+    return false;
 }
 
-bool collide_ray_bbox(const struct ray *ray, const struct bbox *bbox,
+bool collide_ray_bbox(float *_t, const struct ray *ray, const struct bbox *bbox,
                       const struct mat4 *transform)
 {
     //TODO: Transform ray and bbox
@@ -67,6 +71,7 @@ bool collide_ray_bbox(const struct ray *ray, const struct bbox *bbox,
     if (t_min < 0)
         return false;
 
+    *_t = t_min;
     return true;
 }
 

@@ -1,4 +1,4 @@
-#define BBOX_EPSILON 0.01f
+#define BBOX_EPSILON 0.001f
 const struct vec3 BBOX_EPSILON_TRANS =
     {{{ BBOX_EPSILON / 2, BBOX_EPSILON / 2, BBOX_EPSILON / 2 }}};
 

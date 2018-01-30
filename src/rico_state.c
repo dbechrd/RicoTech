@@ -30,7 +30,7 @@ internal bool camera_slow = false;
 ///|////////////////////////////////////////////////////////////////////////////
 #define TRANS_DELTA_MIN 0.01f
 #define TRANS_DELTA_MAX 10.0f
-internal float trans_delta = 1.0f;
+global float trans_delta = 1.0f;
 
 #define ROT_DELTA_MIN 1.0f
 #define ROT_DELTA_MAX 90.0f
