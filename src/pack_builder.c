@@ -567,8 +567,6 @@ int load_obj_file(struct pack *pack, const char *filename, u32 *_last_mesh_id)
     enum rico_error err;
     u32 last_mesh_id = 0;
 
-    struct vec4 bbox_color = COLOR_WHITE;
-
     // TODO: Colossal waste of memory, just preprocess the file and count them!
     struct vec3 *positions = calloc(MESH_VERTICES_MAX, sizeof(*positions));
     struct vec2 *texcoords = calloc(MESH_VERTICES_MAX, sizeof(*texcoords));
@@ -609,7 +607,7 @@ int load_obj_file(struct pack *pack, const char *filename, u32 *_last_mesh_id)
                                          idx_vertex, vertices, idx_element,
                                          elements);
                 struct rico_mesh *mesh = pack_lookup(pack, last_mesh_id);
-                bbox_init_mesh(&mesh->bbox, mesh, bbox_color);
+                bbox_init_mesh(&mesh->bbox, mesh);
 
                 idx_mesh++;
                 if (idx_mesh > 10)
@@ -704,7 +702,7 @@ int load_obj_file(struct pack *pack, const char *filename, u32 *_last_mesh_id)
         last_mesh_id = load_mesh(pack, name, sizeof(*vertices), idx_vertex,
                                  vertices, idx_element, elements);
         struct rico_mesh *mesh = pack_lookup(pack, last_mesh_id);
-        bbox_init_mesh(&mesh->bbox, mesh, bbox_color);
+        bbox_init_mesh(&mesh->bbox, mesh);
 
         idx_mesh++;
     }
@@ -902,7 +900,7 @@ void pack_build_default(u32 id)
 
     struct pack *pack = pack_init(id, filename, 16, MB(1));
     u32 font_tex = 0;
-    u32 font = load_font(pack, "[FONT_DEFAULT]", "font/courier_new.bff",
+    u32 font = load_font(pack, "[FONT_DEFAULT]", "font/cousine_regular.bff",
                          &font_tex);
     u32 diff = load_texture_file(pack, "[TEX_DIFF_DEFAULT]",
                                  "texture/pbr_default_0.tga");

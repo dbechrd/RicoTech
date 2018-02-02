@@ -11,8 +11,8 @@
 
 // HACK: Hard-coded font width/height
 // TODO: Figure out how to determine font w/h in screen space
-#define FONT_WIDTH 12.5f
-#define FONT_HEIGHT 25.0f
+#define FONT_WIDTH 8.0f
+#define FONT_HEIGHT 16.0f
 
 #define BFG_MAXSTRING 511  // Maximum string length
 

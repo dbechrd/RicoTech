@@ -21,8 +21,7 @@ void camera_init(struct camera *camera, struct vec3 position, struct quat view,
     camera->locked = false;
     camera->need_update = true;
 
-    bbox_init(&camera->bbox, VEC3(0.f, 0.f, 0.f), VEC3(1.f, 1.f, 1.f),
-              COLOR_WHITE);
+    bbox_init(&camera->bbox, VEC3(0.f, 0.f, 0.f), VEC3(1.f, 1.f, 1.f));
 
     camera->proj_matrix = mat4_init_perspective(SCREEN_W, SCREEN_H, Z_NEAR,
                                                 Z_FAR, fov_deg);
@@ -102,7 +101,7 @@ void camera_rotate(struct camera *camera, float dx, float dy, float dz)
     string_truncate(buf, sizeof(buf), len);
     string_free_slot(STR_SLOT_DEBUG);
     load_string(packs[PACK_TRANSIENT], rico_string_slot_string[STR_SLOT_DEBUG],
-                STR_SLOT_DEBUG, -(FONT_WIDTH * len/3), FONT_HEIGHT * 2,
+                STR_SLOT_DEBUG, -(FONT_WIDTH * 16), FONT_HEIGHT * 2,
                 COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
 #endif
 

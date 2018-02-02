@@ -96,31 +96,34 @@ void font_render(u32 *mesh_id, u32 *tex_id, struct rico_font *font, int x,
         xOffset = font->char_widths[(int)text[i]];
         //xOffset = font->CellX;
 
+        const float vert_x = 100.0f; //SCREEN_W / 32.0f;
+        const float vert_y = 100.0f; //SCREEN_H / 16.0f;
+
         // Vertices for this character's quad
         vertices[idx_vertex++] = (struct text_vertex) {
-            VEC3(cur_x / 64.0f,
-                 cur_y / 64.0f,
+            VEC3(cur_x / vert_x,
+                 cur_y / vert_y,
                  0.0f),
             bg,
             VEC2(u0, v1)
         };
         vertices[idx_vertex++] = (struct text_vertex) {
-            VEC3((cur_x + xOffset) / 64.0f,
-                 cur_y / 64.0f,
+            VEC3((cur_x + xOffset) / vert_x,
+                 cur_y / vert_y,
                  0.0f),
             bg,
             VEC2(u1, v1)
         };
         vertices[idx_vertex++] = (struct text_vertex) {
-            VEC3((cur_x + xOffset) / 64.0f,
-                 (cur_y + font->y_offset) / 64.0f,
+            VEC3((cur_x + xOffset) / vert_x,
+                 (cur_y + font->y_offset) / vert_y,
                  0.0f),
             bg,
             VEC2(u1, v0)
         };
         vertices[idx_vertex++] = (struct text_vertex) {
-            VEC3(cur_x / 64.0f,
-                 (cur_y + font->y_offset) / 64.0f,
+            VEC3(cur_x / vert_x,
+                 (cur_y + font->y_offset) / vert_y,
                  0.0f),
             bg,
             VEC2(u0, v0)

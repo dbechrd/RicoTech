@@ -26,17 +26,14 @@ void glref_init()
 
     widgets[0].bbox.min = VEC3(offset - radius, -radius, -radius);
     widgets[0].bbox.max = VEC3(offset + radius, radius, radius);
-    widgets[0].bbox.color = COLOR_RED;
     widgets[0].action = WIDGET_TRANSLATE_X;
 
     widgets[1].bbox.min = VEC3(-radius, offset - radius, -radius);
     widgets[1].bbox.max = VEC3(radius, offset + radius, radius);
-    widgets[1].bbox.color = COLOR_GREEN;
     widgets[1].action = WIDGET_TRANSLATE_Y;
 
     widgets[2].bbox.min = VEC3(-radius, -radius, offset - radius);
     widgets[2].bbox.max = VEC3(radius, radius, offset + radius);
-    widgets[2].bbox.color = COLOR_BLUE;
     widgets[2].action = WIDGET_TRANSLATE_Z;
 }
 
@@ -316,7 +313,7 @@ struct widget *widget_test()
         mat4_translate(&xform, &obj->xform.trans);
 
         float dist_min = 9999.0;
-        for (int i = 0; i < array_count(widgets); ++i)
+        for (u32 i = 0; i < array_count(widgets); ++i)
         {
             float dist;
             bool collide = collide_ray_bbox(&dist, &cam_ray, &widgets[i].bbox,
@@ -391,6 +388,9 @@ void edit_mouse_move(r32 dx, r32 dy)
         normal.x = 0.0f;
         v3_normalize(&normal);
 
+        prim_draw_plane(&obj->xform.trans, &normal, &obj->xform.matrix,
+                        &COLOR_RED_HIGHLIGHT);
+
         struct vec3 contact = { 0 };
         collide = collide_ray_plane(&contact, &cam_ray, &obj->xform.trans,
                                     &normal);
@@ -403,6 +403,9 @@ void edit_mouse_move(r32 dx, r32 dy)
     {
         normal.y = 0.0f;
         v3_normalize(&normal);
+        
+        prim_draw_plane(&obj->xform.trans, &normal, &obj->xform.matrix,
+                        &COLOR_GREEN_HIGHLIGHT);
 
         struct vec3 contact = { 0 };
         collide = collide_ray_plane(&contact, &cam_ray, &obj->xform.trans,
@@ -416,6 +419,9 @@ void edit_mouse_move(r32 dx, r32 dy)
     {
         normal.z = 0.0f;
         v3_normalize(&normal);
+
+        prim_draw_plane(&obj->xform.trans, &normal, &obj->xform.matrix,
+                        &COLOR_BLUE_HIGHLIGHT);
 
         struct vec3 contact = { 0 };
         collide = collide_ray_plane(&contact, &cam_ray, &obj->xform.trans,
@@ -482,12 +488,24 @@ void glref_render(struct camera *camera)
         prim_draw_line(VEC3_ZERO, VEC3_X, &xform, COLOR_RED);
         prim_draw_line(VEC3_ZERO, VEC3_Y, &xform, COLOR_GREEN);
         prim_draw_line(VEC3_ZERO, VEC3_Z, &xform, COLOR_BLUE);
-
-        for (int i = 0; i < array_count(widgets); ++i)
-        {
-            prim_draw_bbox(&widgets[i].bbox, &xform);
-        }
+        prim_draw_bbox(&widgets[0].bbox, &xform, &COLOR_RED);
+        prim_draw_bbox(&widgets[1].bbox, &xform, &COLOR_GREEN);
+        prim_draw_bbox(&widgets[2].bbox, &xform, &COLOR_BLUE);
     }
+
+#if 0
+    struct quad test = {
+        VEC3(2.0f, 2.0f, 0.0f),
+        VEC3(3.0f, 2.0f, 0.0f),
+        VEC3(2.0f, 3.0f, 0.0f),
+        VEC3(3.0f, 3.0f, 0.0f)
+    };
+    prim_draw_quad(&test, &MAT4_IDENT, &COLOR_CYAN_HIGHLIGHT);
+
+    struct vec3 n = VEC3(0.1f, 0.5f, 0.8f);
+    struct vec3 p = VEC3(2.0f, 2.0f, 2.0f);
+    prim_draw_plane(&p, &n, &COLOR_MAGENTA_HIGHLIGHT);
+#endif
 
     //--------------------------------------------------------------------------
     // UI

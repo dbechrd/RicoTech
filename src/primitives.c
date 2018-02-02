@@ -1,93 +1,87 @@
-const char *rico_prim_string[] = {
-    RICO_PRIMITIVES(GEN_STRING)
-};
-
 struct pool_id PRIM_MESH_BBOX;
 struct pool_id PRIM_MESH_SPHERE;
 
-global GLuint vaos[PRIM_COUNT];
-global GLuint vbos[PRIM_COUNT][VBO_COUNT];
+internal GLuint prim_line_vao;
+internal GLuint prim_line_vbo;
 
-internal int prim_init_gl(enum rico_prim prim);
+internal GLuint prim_bbox_vao;
+internal GLuint prim_bbox_vbo[VBO_COUNT];
 
-int prim_init(enum rico_prim prim)
+int prim_init()
 {
-    enum rico_error err = make_program_primitive(&prog_prim);
+    enum rico_error err;
+
+    ///-------------------------------------------------------------------------
+    //| Line / Ray
+    ///-------------------------------------------------------------------------
+    err = make_program_primitive(&prog_prim);
     if (err) return err;
 
-    return prim_init_gl(prim);
-}
-
-internal int prim_init_gl(enum rico_prim prim)
-{
-    //--------------------------------------------------------------------------
     // Generate VAO and buffers
-    //--------------------------------------------------------------------------
-    glGenVertexArrays(1, &vaos[prim]);
-    glBindVertexArray(vaos[prim]);
+    glGenVertexArrays(1, &prim_line_vao);
+    glBindVertexArray(prim_line_vao);
 
-    int buffers;
-    switch (prim)
-    {
-    case PRIM_SEGMENT:
-    case PRIM_RAY:
-        buffers = 1;
-        break;
-    default:
-        return ERR_PRIM_UNSUPPORTED;
-    }
-    glGenBuffers(buffers, vbos[prim]);
-    glBindBuffer(GL_ARRAY_BUFFER, vbos[prim][VBO_VERTEX]);
+    glGenBuffers(1, &prim_line_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, prim_line_vbo);
 
-    //--------------------------------------------------------------------------
     // Shader attribute pointers
-    //--------------------------------------------------------------------------
-    glVertexAttribPointer(LOCATION_PBR_POSITION, 4, GL_FLOAT, GL_FALSE,
+#if 1
+    glVertexAttribPointer(LOCATION_PRIM_POSITION, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(LOCATION_PRIM_POSITION);
+#else
+    glVertexAttribPointer(LOCATION_PRIM_POSITION, 3, GL_FLOAT, GL_FALSE,
                           sizeof(struct prim_vertex),
                           (GLvoid *)offsetof(struct prim_vertex, pos));
-    glEnableVertexAttribArray(LOCATION_PBR_POSITION);
+    glEnableVertexAttribArray(LOCATION_PRIM_POSITION);
 
-    glVertexAttribPointer(LOCATION_PBR_COLOR, 4, GL_FLOAT, GL_FALSE,
+    glVertexAttribPointer(LOCATION_PRIM_COLOR, 3, GL_FLOAT, GL_FALSE,
                           sizeof(struct prim_vertex),
                           (GLvoid *)offsetof(struct prim_vertex, col));
-    glEnableVertexAttribArray(LOCATION_PBR_COLOR);
+    glEnableVertexAttribArray(LOCATION_PRIM_COLOR);
+#endif
 
-    // Clean up
+    ///-------------------------------------------------------------------------
+    //| Bounding box
+    ///-------------------------------------------------------------------------
+    glGenVertexArrays(1, &prim_bbox_vao);
+    glBindVertexArray(prim_bbox_vao);
+
+    glGenBuffers(2, prim_bbox_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, prim_bbox_vbo[0]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, prim_bbox_vbo[1]);
+
+    const GLushort elements[] = {
+        0, 1, 2, 3,            // front face
+        4, 5, 6, 7,            // back face
+        0, 4, 1, 5, 2, 6, 3, 7 // 4 edges
+    };
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elements), elements,
+                 GL_STATIC_DRAW);
+
+    glVertexAttribPointer(
+        LOCATION_PRIM_POSITION, // attribute
+        3,                      // number of elements per vertex
+        GL_FLOAT,               // the type of each element
+        GL_FALSE,               // take our values as-is
+        0,                      // no extra data between each position
+        0                       // offset of first element
+    );
+    glEnableVertexAttribArray(LOCATION_PRIM_POSITION);
+
+    ///-------------------------------------------------------------------------
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-    return SUCCESS;
+
+    return err;
 }
 
 // TODO: Queue up primitive requests and batch them within a single
 //       glUseProgram() call.
-// Render line segment
-void prim_draw_segment(const struct segment *seg,
-                       const struct mat4 *matrix, const struct vec4 color)
-{
-    glUseProgram(prog_prim->prog_id);
-    glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
-    glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
-    glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, matrix->a);
-    glUniform4f(prog_prim->u_col, color.r, color.g, color.b, color.a);
-
-    glBindVertexArray(vaos[PRIM_SEGMENT]);
-    glBindBuffer(GL_ARRAY_BUFFER, vbos[PRIM_SEGMENT][VBO_VERTEX]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(seg->vertices), seg->vertices,
-                 GL_DYNAMIC_DRAW);
-
-    // TODO: Batch all segments, e.g. glDrawArrays(LINES, 0, 2 * count)
-    glDrawArrays(GL_LINES, 0, 2);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-    glUseProgram(0);
-}
-
 void prim_draw_line(const struct vec3 p0, const struct vec3 p1,
                     const struct mat4 *matrix, const struct vec4 color)
 {
-    struct prim_vertex vertices[2];
-    vertices[0].pos = p0;
-    vertices[1].pos = p1;
+    struct vec3 vertices[2] = { p0, p1 };
 
     glUseProgram(prog_prim->prog_id);
     glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
@@ -95,8 +89,8 @@ void prim_draw_line(const struct vec3 p0, const struct vec3 p1,
     glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, matrix->a);
     glUniform4f(prog_prim->u_col, color.r, color.g, color.b, color.a);
 
-    glBindVertexArray(vaos[PRIM_SEGMENT]);
-    glBindBuffer(GL_ARRAY_BUFFER, vbos[PRIM_SEGMENT][VBO_VERTEX]);
+    glBindVertexArray(prim_line_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, prim_line_vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
 
     glDrawArrays(GL_LINES, 0, 2);
@@ -115,51 +109,55 @@ void prim_draw_ray(const struct ray *ray, const struct mat4 *matrix,
     prim_draw_line(ray->orig, ray->dir, matrix, color);
 }
 
-void prim_draw_bbox(const struct bbox *bbox,
-                    const struct mat4 *matrix)
+void prim_draw_quad(const struct quad *quad, const struct mat4 *matrix,
+                    const struct vec4 *color)
 {
-    prim_draw_bbox_color(bbox, matrix, &bbox->color);
-}
+    glUseProgram(prog_prim->prog_id);
+    glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
+    glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
+    glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, matrix->a);
+    glUniform4fv(prog_prim->u_col, 1, (const GLfloat *)color);
 
-static GLuint bbox_vao = 0;
-static GLuint bbox_buffers[2] = { 0 };
+    glBindVertexArray(prim_line_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, prim_line_vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quad->verts), quad->verts,
+                 GL_STATIC_DRAW);
 
-void prim_bbox_init()
-{
-    // TODO: Delete vao / buffers?
-    glGenVertexArrays(1, &bbox_vao);
-    glBindVertexArray(bbox_vao);
-    
-    glGenBuffers(2, bbox_buffers);
-
-    glBindBuffer(GL_ARRAY_BUFFER, bbox_buffers[0]);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bbox_buffers[1]);
-
-    const GLushort elements[] = {
-        0, 1, 2, 3, // front face
-        4, 5, 6, 7, // back face
-        0, 4, 1, 5, 2, 6, 3, 7 // 4 edges
-    };
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elements), elements, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(
-        LOCATION_PRIM_POSITION,    // attribute
-        3,                  // number of elements per vertex
-        GL_FLOAT,           // the type of each element
-        GL_FALSE,           // take our values as-is
-        0,                  // no extra data between each position
-        0                   // offset of first element
-    );
-    glEnableVertexAttribArray(LOCATION_PRIM_POSITION);
+    glDisable(GL_CULL_FACE);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glEnable(GL_CULL_FACE);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+
+    // Clean up
+    glUseProgram(0);
 }
 
-void prim_draw_bbox_color(const struct bbox *bbox,
-                          const struct mat4 *matrix,
-                          const struct vec4 *color)
+void prim_draw_plane(const struct vec3 *p, const struct vec3 *n,
+                     const struct mat4 *matrix, const struct vec4 *color)
+{
+    UNUSED(p);
+
+    struct vec3 tx = VEC3(n->y - n->z, n->z - n->x, n->x - n->y);
+    struct vec3 ty = v3_cross(&tx, n);
+
+    struct quad quad = { 0 };
+    quad.verts[0] = ty;
+    quad.verts[1] = tx;
+    quad.verts[2] = *v3_negate(&tx);
+    quad.verts[3] = *v3_negate(&ty);
+
+    for (int i = 0; i < 4; ++i)
+    {
+        v3_scalef(&quad.verts[i], 10.0f);
+    }
+
+    prim_draw_quad(&quad, matrix, color);
+}
+
+void prim_draw_bbox(const struct bbox *bbox, const struct mat4 *matrix,
+                    const struct vec4 *color)
 {
     GLfloat vertices[] = {
         bbox->min.x, bbox->min.y, bbox->min.z,
@@ -183,11 +181,10 @@ void prim_draw_bbox_color(const struct bbox *bbox,
     else
         glUniform4fv(prog_prim->u_col, 1, (const GLfloat *)color);
 
-    glBindVertexArray(bbox_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, bbox_buffers[0]);
+    glBindVertexArray(prim_bbox_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, prim_bbox_vbo[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bbox_buffers[1]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, prim_bbox_vbo[1]);
 
     // Based loosely on:
     // https://en.wikibooks.org/wiki/OpenGL_Programming/Bounding_box
@@ -228,9 +225,8 @@ void prim_draw_sphere(const struct sphere *sphere, const struct vec4 *color)
         glPolygonMode(GL_FRONT_AND_BACK, cam_player.fill_mode);
 }
 
-void prim_free(enum rico_prim prim)
+void prim_free()
 {
     // TODO: Clean-up prim VAO / VBO? Will probably just keep them for life
     //       of the application for now.
-    UNUSED(prim);
 }

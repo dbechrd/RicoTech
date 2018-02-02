@@ -30,7 +30,7 @@ internal bool camera_slow = false;
 ///|////////////////////////////////////////////////////////////////////////////
 #define TRANS_DELTA_MIN 0.01f
 #define TRANS_DELTA_MAX 10.0f
-global float trans_delta = 1.0f;
+float trans_delta = 1.0f;
 
 #define ROT_DELTA_MIN 1.0f
 #define ROT_DELTA_MAX 90.0f
@@ -424,8 +424,9 @@ internal int shared_engine_events()
         string_free_slot(STR_SLOT_MENU_QUIT);
         load_string(packs[PACK_TRANSIENT],
                     rico_string_slot_string[STR_SLOT_MENU_QUIT],
-                    STR_SLOT_MENU_QUIT, 600, 400, COLOR_DARK_GREEN_HIGHLIGHT, 0,
-                    NULL,
+                    STR_SLOT_MENU_QUIT, SCREEN_W / 2 - FONT_WIDTH * 12,
+                    SCREEN_H / 2 - FONT_HEIGHT * 4, COLOR_DARK_GREEN_HIGHLIGHT,
+                    0, NULL,
                     "                       \n" \
                     "  Save and quit?       \n" \
                     "                       \n" \
@@ -971,9 +972,10 @@ internal int rico_init_shaders()
 
     err = make_program_primitive(&prog_prim);
     if (err) return err;
-    prim_bbox_init();
 
     err = make_program_text(&prog_text);
+    if (err) return err;
+
     return err;
 }
 internal void rico_init_cereal()
@@ -1159,8 +1161,7 @@ internal int rico_init()
     printf("----------------------------------------------------------\n");
     printf("[MAIN][init] Initializing primitives\n");
     printf("----------------------------------------------------------\n");
-    prim_init(PRIM_SEGMENT);
-    prim_init(PRIM_RAY);
+    prim_init();
 
 #if 0
     printf("----------------------------------------------------------\n");

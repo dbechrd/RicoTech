@@ -358,7 +358,7 @@ void object_interact(struct rico_object *obj)
         struct obj_property *props = object_props(obj);
         for (u32 i = 0; i < obj->prop_count; ++i)
         {
-            prop_interactor interactor = interactors[props[i].type];
+            prop_interactor interactor = interactors[props[i].type - 1];
             if (interactor) interactor(obj);
         }
     }
@@ -530,7 +530,7 @@ void object_render(struct pack *pack, const struct camera *camera)
             struct vec4 color = COLOR_WHITE_HIGHLIGHT;
             if (obj->bbox.selected)
                 color = COLOR_RED;
-            prim_draw_bbox_color(&obj->bbox, &obj->xform.matrix, &color);
+            prim_draw_bbox(&obj->bbox, &obj->xform.matrix, &color);
         }
     }
 }

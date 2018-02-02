@@ -235,9 +235,7 @@ internal void init_opengl()
     // Depth buffer
     glDepthFunc(GL_LEQUAL);  // Default GL_LESS.
     glEnable(GL_DEPTH_TEST); // Default off.
-
-                             // Backface culling
-    glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE); // Backface culling
     glCullFace(GL_BACK);
 
     // Multi-sampling
