@@ -3,7 +3,7 @@
 
 struct hash_table
 {
-    struct hnd hnd;
+    const char *name;
     u32 count;
     // TODO: Replace linear search/insert with internal chaining
     struct hash_kv *slots;

@@ -208,10 +208,7 @@ global u32 load_object(struct pack *pack, const char *name,
     obj->type = type;
     obj->xform.trans = VEC3_ZERO;
     obj->xform.rot = VEC3_ZERO;
-    if (type == OBJ_STRING_SCREEN)
-        obj->xform.scale = VEC3_SCALE_ASPECT;
-    else
-        obj->xform.scale = VEC3_ONE;
+    obj->xform.scale = VEC3_ONE;
     obj->xform.matrix = MAT4_IDENT;
     obj->xform.matrix_inverse = MAT4_IDENT;
     object_transform_update(obj);
@@ -455,7 +452,7 @@ global u32 load_string(struct pack *pack, const char *name,
     // Generate font mesh and get texture handle
     u32 font_mesh_id;
     u32 font_tex_id;
-    font_render(&font_mesh_id, &font_tex_id, font, 0, 0, color, text, name);
+    font_render(&font_mesh_id, &font_tex_id, font, x, y, color, text, name);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -467,8 +464,6 @@ global u32 load_string(struct pack *pack, const char *name,
     str_props[1].texture_id = font_tex_id;
     str_object_id = load_object(pack, name, OBJ_STRING_SCREEN,
                                 array_count(str_props), str_props, NULL);
-    struct rico_object *str_obj = pack_lookup(pack, str_object_id);
-    object_trans_set(str_obj, &VEC3(SCREEN_X(x), SCREEN_Y(y), -1.0f));
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -780,6 +775,28 @@ int pack_save(struct pack *pack, const char *filename, bool shrink)
     enum rico_error err = SUCCESS;
 
     pack_compact_buffer(pack);
+
+#if RICO_SAVE_BACKUP
+	// Save backup copy
+	time_t rawtime = time(NULL);
+	struct tm *tm = localtime(&rawtime);
+
+	char backupFilename[128] = { 0 };
+	int len = snprintf(backupFilename, sizeof(backupFilename),
+					   "chunks/cereal_%04d%02d%02dT%02d%02d%02d.bin",
+					   1900 + tm->tm_year, 1 + tm->tm_mon, tm->tm_mday,
+					   tm->tm_hour, tm->tm_min, tm->tm_sec);
+	string_truncate(backupFilename, sizeof(backupFilename), len);
+
+	struct rico_file backupFile;
+	err = rico_file_open_write(&backupFile, backupFilename,
+							   RICO_FILE_VERSION_CURRENT);
+	if (err) return err;
+
+	err = rico_serialize(chunk, &backupFile);
+	rico_file_close(&backupFile);
+	return err;
+#endif
 
     // Write pack file to disk
     FILE *pack_file = fopen(filename, "wb");

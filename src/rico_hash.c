@@ -19,7 +19,7 @@ internal inline bool keys_equal(struct hash_kv *kv, const void *key, u32 klen)
 
 void hashtable_init(struct hash_table *table, const char *name, u32 count)
 {
-    hnd_init(&table->hnd, RICO_HND_HASHTABLE, name);
+    table->name = name;
     table->count = count;
     table->slots = calloc(count, sizeof(table->slots[0]));
 
@@ -88,7 +88,7 @@ int hashtable_insert(struct hash_table *table, const void *key, u32 klen,
         {
             return RICO_ERROR(ERR_HASH_TABLE_FULL,
                               "Failed to insert into full hash table %s",
-                              table->hnd.name);
+                              table->name);
         }
     }
 

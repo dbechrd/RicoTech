@@ -91,20 +91,6 @@ void camera_rotate(struct camera *camera, float dx, float dy, float dz)
     if (camera->yaw >= 180.0f) camera->yaw -= 360.0f;
     if (camera->yaw < -180.0f) camera->yaw += 360.0f;
 
-#if RICO_DEBUG
-    char buf[128] = { 0 };
-    int len = snprintf(buf, sizeof(buf),
-                       "pitch:%6.1f deg\n"
-                       "  yaw:%6.1f deg\n"
-                       " roll:%6.1f deg",
-                       camera->pitch, camera->yaw, camera->roll);
-    string_truncate(buf, sizeof(buf), len);
-    string_free_slot(STR_SLOT_DEBUG);
-    load_string(packs[PACK_TRANSIENT], rico_string_slot_string[STR_SLOT_DEBUG],
-                STR_SLOT_DEBUG, -(FONT_WIDTH * 16), FONT_HEIGHT * 2,
-                COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
-#endif
-
     camera->need_update = true;
 }
 
@@ -143,6 +129,25 @@ void camera_update(struct camera *camera)
     alListenerfv(AL_ORIENTATION, (float *)fwd_up);
     alListenerfv(AL_POSITION, (float *)&camera->pos);
     alListenerfv(AL_VELOCITY, (float *)&camera->vel);
+
+#if RICO_DEBUG
+	char buf[128] = { 0 };
+	int len = snprintf(buf, sizeof(buf),
+					   "    x:%6.1f    \n"
+					   "    y:%6.1f    \n"
+					   "    z:%6.1f    \n"
+					   "pitch:%6.1f deg\n"
+					   "  yaw:%6.1f deg\n"
+					   " roll:%6.1f deg",
+					   camera->pos.x, camera->pos.y, camera->pos.z,
+					   camera->pitch, camera->yaw, camera->roll);
+	string_truncate(buf, sizeof(buf), len);
+	string_free_slot(STR_SLOT_DEBUG);
+	load_string(packs[PACK_TRANSIENT], rico_string_slot_string[STR_SLOT_DEBUG],
+				STR_SLOT_DEBUG, SCREEN_X(-(FONT_WIDTH * 16)),
+				SCREEN_Y(FONT_HEIGHT), COLOR_DARK_RED_HIGHLIGHT, 0, NULL,
+				buf);
+#endif
 
     camera->need_update = false;
 }

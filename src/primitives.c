@@ -1,5 +1,5 @@
-struct pool_id PRIM_MESH_BBOX;
-struct pool_id PRIM_MESH_SPHERE;
+//struct pool_id PRIM_MESH_BBOX;
+//struct pool_id PRIM_MESH_SPHERE;
 
 internal GLuint prim_line_vao;
 internal GLuint prim_line_vbo;
@@ -83,12 +83,15 @@ void prim_draw_line(const struct vec3 p0, const struct vec3 p1,
 {
     struct vec3 vertices[2] = { p0, p1 };
 
+    RICO_ASSERT(prog_prim->prog_id);
     glUseProgram(prog_prim->prog_id);
     glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
     glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
     glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, matrix->a);
     glUniform4f(prog_prim->u_col, color.r, color.g, color.b, color.a);
 
+    RICO_ASSERT(prim_line_vao);
+    RICO_ASSERT(prim_line_vbo);
     glBindVertexArray(prim_line_vao);
     glBindBuffer(GL_ARRAY_BUFFER, prim_line_vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
@@ -112,12 +115,15 @@ void prim_draw_ray(const struct ray *ray, const struct mat4 *matrix,
 void prim_draw_quad(const struct quad *quad, const struct mat4 *matrix,
                     const struct vec4 *color)
 {
+    RICO_ASSERT(prog_prim->prog_id);
     glUseProgram(prog_prim->prog_id);
     glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
     glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
     glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, matrix->a);
     glUniform4fv(prog_prim->u_col, 1, (const GLfloat *)color);
 
+    RICO_ASSERT(prim_line_vao);
+    RICO_ASSERT(prim_line_vbo);
     glBindVertexArray(prim_line_vao);
     glBindBuffer(GL_ARRAY_BUFFER, prim_line_vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(quad->verts), quad->verts,
@@ -170,6 +176,7 @@ void prim_draw_bbox(const struct bbox *bbox, const struct mat4 *matrix,
         bbox->min.x, bbox->max.y, bbox->max.z,
     };
 
+    RICO_ASSERT(prog_prim->prog_id);
     glUseProgram(prog_prim->prog_id);
 
     glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
@@ -181,6 +188,9 @@ void prim_draw_bbox(const struct bbox *bbox, const struct mat4 *matrix,
     else
         glUniform4fv(prog_prim->u_col, 1, (const GLfloat *)color);
 
+    RICO_ASSERT(prim_bbox_vao);
+    RICO_ASSERT(prim_bbox_vbo[0]);
+    RICO_ASSERT(prim_bbox_vbo[1]);
     glBindVertexArray(prim_bbox_vao);
     glBindBuffer(GL_ARRAY_BUFFER, prim_bbox_vbo[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
@@ -209,6 +219,7 @@ void prim_draw_sphere(const struct sphere *sphere, const struct vec4 *color)
     mat4_translate(&matrix, &sphere->orig);
     mat4_scalef(&matrix, sphere->radius);
 
+    RICO_ASSERT(prog_prim->prog_id);
     glUseProgram(prog_prim->prog_id);
 
     glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);

@@ -108,6 +108,7 @@ void render_regularpoly(struct regularpoly *poly)
         rebuild_vao(poly);
     }
 
+    RICO_ASSERT(regularpoly_program->prog_id);
     glUseProgram(regularpoly_program->prog_id);
     glBindVertexArray(poly->vao);
 

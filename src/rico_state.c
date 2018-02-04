@@ -23,14 +23,14 @@ r32 mouse_dy = 0;
 internal struct vec3 player_acc;
 
 #define CAM_SLOW_MULTIPLIER 0.1f
-#define CAM_SPRINT_MULTIPLIER 2.0f
+#define CAM_SPRINT_MULTIPLIER 5.0f
 internal bool player_sprint = false;
 internal bool camera_slow = false;
 
 ///|////////////////////////////////////////////////////////////////////////////
 #define TRANS_DELTA_MIN 0.01f
 #define TRANS_DELTA_MAX 10.0f
-float trans_delta = 1.0f;
+float trans_delta = 0.1f;
 
 #define ROT_DELTA_MIN 1.0f
 #define ROT_DELTA_MAX 90.0f
@@ -128,51 +128,6 @@ static inline bool chord_released(enum rico_action action)
     return !chord_is_down(action) && chord_was_down(action);
 }
 
-// TODO: Where should these functions go?
-internal int save_file()
-{
-    return pack_save(pack_active, pack_active->name, false);
-
-#if 0
-    RICO_ASSERT(chunk_active);
-    enum rico_error err;
-
-    if (chunk_active->uid == UID_NULL)
-        return RICO_ERROR(ERR_CHUNK_NULL, "Failed to save NULL chunk");
-
-    struct rico_file file;
-    err = rico_file_open_write(&file, "chunks/cereal.bin",
-                               RICO_FILE_VERSION_CURRENT);
-    if (err) return err;
-
-    err = chunk_serialize(chunk_active, &file);
-    rico_file_close(&file);
-    return err;
-#endif
-
-#if RICO_SAVE_BACKUP
-    // Save backup copy
-    time_t rawtime = time(NULL);
-    struct tm *tm = localtime(&rawtime);
-
-    char backupFilename[128] = { 0 };
-    int len = snprintf(backupFilename, sizeof(backupFilename),
-                       "chunks/cereal_%04d%02d%02dT%02d%02d%02d.bin",
-                       1900 + tm->tm_year, 1 + tm->tm_mon, tm->tm_mday,
-                       tm->tm_hour, tm->tm_min, tm->tm_sec);
-    string_truncate(backupFilename, sizeof(backupFilename), len);
-
-    struct rico_file backupFile;
-    err = rico_file_open_write(&backupFile, backupFilename,
-                               RICO_FILE_VERSION_CURRENT);
-    if (err) return err;
-
-    err = rico_serialize(chunk, &backupFile);
-    rico_file_close(&backupFile);
-    return err;
-#endif
-}
-
 // Current state
 internal enum rico_state state_prev;
 internal enum rico_state state;
@@ -214,7 +169,7 @@ void render_fps(r64 fps, r64 ms, r64 mcyc)
     string_truncate(buf, sizeof(buf), len);
     string_free_slot(STR_SLOT_FPS);
     load_string(packs[PACK_TRANSIENT], rico_string_slot_string[STR_SLOT_FPS],
-                STR_SLOT_FPS, -(FONT_WIDTH * len), 0,
+                STR_SLOT_FPS, SCREEN_X(-(FONT_WIDTH * len)), SCREEN_Y(0),
                 COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
 }
 
@@ -286,8 +241,9 @@ int state_update()
 
         string_free_slot(STR_SLOT_STATE);
         load_string(packs[PACK_TRANSIENT],
-                    rico_string_slot_string[STR_SLOT_STATE], STR_SLOT_STATE, 0,
-                    0, COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
+                    rico_string_slot_string[STR_SLOT_STATE], STR_SLOT_STATE,
+                    SCREEN_X(0), SCREEN_Y(0), COLOR_DARK_RED_HIGHLIGHT, 0, NULL,
+                    buf);
     }
 
     ///-------------------------------------------------------------------------
@@ -329,7 +285,12 @@ int state_update()
             if (camera_slow)   v3_scalef(&camera_acc, CAM_SLOW_MULTIPLIER);
             player_camera_update(&cam_player, mouse_dx, mouse_dy, camera_acc);
 
-            glref_update();
+            // TODO: Move this to this program.c
+            // Update uniforms
+            RICO_ASSERT(prog_pbr->prog_id);
+            glUseProgram(prog_pbr->prog_id);
+            glUniform1f(prog_pbr->time, (r32)SIM_SEC);
+            glUseProgram(0);
         }
 
         string_update();
@@ -416,7 +377,8 @@ internal int shared_engine_events()
         string_free_slot(STR_SLOT_DEBUG);
         load_string(packs[PACK_TRANSIENT],
                     rico_string_slot_string[STR_SLOT_DEBUG], STR_SLOT_DEBUG,
-                    -150, 0, COLOR_DARK_GRAY, 1000, NULL, buf);
+                    SCREEN_X(-150), SCREEN_Y(0), COLOR_DARK_GRAY, 1000, NULL,
+                    buf);
     }
     // Save and exit
     else if (chord_pressed(ACTION_ENGINE_QUIT))
@@ -424,9 +386,9 @@ internal int shared_engine_events()
         string_free_slot(STR_SLOT_MENU_QUIT);
         load_string(packs[PACK_TRANSIENT],
                     rico_string_slot_string[STR_SLOT_MENU_QUIT],
-                    STR_SLOT_MENU_QUIT, SCREEN_W / 2 - FONT_WIDTH * 12,
-                    SCREEN_H / 2 - FONT_HEIGHT * 4, COLOR_DARK_GREEN_HIGHLIGHT,
-                    0, NULL,
+                    STR_SLOT_MENU_QUIT, SCREEN_X(SCREEN_W / 2 - 92),
+                    SCREEN_Y(SCREEN_H / 2 - 128),
+                    COLOR_DARK_GREEN_HIGHLIGHT, 0, NULL,
                     "                       \n" \
                     "  Save and quit?       \n" \
                     "                       \n" \
@@ -490,7 +452,7 @@ internal int shared_edit_events()
     {
         if (mouse_dx || mouse_dy)
         {
-            edit_mouse_move(mouse_dx, mouse_dy);
+            edit_mouse_move();
         }
     }
     else if (chord_released(ACTION_EDIT_MOUSE_PICK))
@@ -500,16 +462,17 @@ internal int shared_edit_events()
     // Recalculate bounding boxes of all objects
     else if (chord_pressed(ACTION_EDIT_BBOX_RECALCULATE))
     {
-        recalculate_all_bbox();
+        edit_bbox_reset_all();
     }
     // Duplicate selected object
     else if (chord_pressed(ACTION_EDIT_SELECTED_DUPLICATE))
     {
-        selected_duplicate();
+        edit_duplicate();
     }
     // Exit edit mode
     else if (chord_pressed(ACTION_EDIT_QUIT))
     {
+		edit_object_select(0, false);
         state = STATE_PLAY_EXPLORE;
     }
     // Select previous edit mode
@@ -551,27 +514,27 @@ internal int shared_edit_events()
     // Cycle select through objects (in reverse)
     else if (chord_pressed(ACTION_EDIT_CYCLE_REVERSE))
     {
-        select_prev_obj();
+        edit_object_prev();
     }
     // Cycle select through objects
     else if (chord_pressed(ACTION_EDIT_CYCLE))
     {
-        select_next_obj();
+        edit_object_next();
     }
     // Create new object
     else if (chord_pressed(ACTION_EDIT_CREATE_OBJECT))
     {
-        create_obj(pack_active);
+        edit_object_create(pack_active);
     }
     // Delete selected object
     else if (chord_pressed(ACTION_EDIT_SELECTED_DELETE))
     {
-        selected_delete();
+        edit_delete();
     }
     // Save chunk
     else if (chord_pressed(ACTION_EDIT_SAVE))
     {
-        save_file();
+		err = pack_save(pack_active, pack_active->name, false);
     }
 
     return err;
@@ -606,7 +569,7 @@ internal int state_play_explore()
     else if (chord_pressed(ACTION_PLAY_EDITOR))
     {
         state = STATE_EDIT_TRANSLATE;
-        selected_print();
+        edit_print_object();
     }
 
     return err;
@@ -683,7 +646,7 @@ internal int state_edit_translate()
     // Update selected object
     if (translate_reset || !v3_equals(&translate, &VEC3_ZERO))
     {
-        selected_translate(&cam_player, &translate);
+        edit_translate(&cam_player, &translate);
     }
 
     if (trans_delta_changed)
@@ -693,8 +656,9 @@ internal int state_edit_translate()
         string_truncate(buf, sizeof(buf), len);
         string_free_slot(STR_SLOT_DELTA);
         load_string(packs[PACK_TRANSIENT],
-                    rico_string_slot_string[STR_SLOT_DELTA], STR_SLOT_DELTA, 0,
-                    0, COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL, buf);
+                    rico_string_slot_string[STR_SLOT_DELTA], STR_SLOT_DELTA,
+                    SCREEN_X(0), SCREEN_Y(0), COLOR_DARK_BLUE_HIGHLIGHT, 1000,
+                    NULL, buf);
     }
 
     return err;
@@ -768,7 +732,7 @@ internal int state_edit_rotate()
     // Update selected object
     if (rotate_reset || !v3_equals(&rotate, &VEC3_ZERO))
     {
-        selected_rotate(&rotate);
+        edit_rotate(&rotate);
     }
 
     if (rot_delta_changed)
@@ -779,8 +743,9 @@ internal int state_edit_rotate()
 
         string_free_slot(STR_SLOT_DELTA);
         load_string(packs[PACK_TRANSIENT],
-                    rico_string_slot_string[STR_SLOT_DELTA], STR_SLOT_DELTA, 0,
-                    0, COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL, buf);
+                    rico_string_slot_string[STR_SLOT_DELTA], STR_SLOT_DELTA,
+                    SCREEN_X(0), SCREEN_Y(0), COLOR_DARK_BLUE_HIGHLIGHT, 1000,
+                    NULL, buf);
     }
 
     return err;
@@ -860,7 +825,7 @@ internal int state_edit_scale()
     // Update selected object
     if (scale_reset || !v3_equals(&scale, &VEC3_ZERO))
     {
-        selected_scale(&scale);
+        edit_scale(&scale);
     }
 
     if (scale_delta_changed)
@@ -870,8 +835,9 @@ internal int state_edit_scale()
         string_truncate(buf, sizeof(buf), len);
         string_free_slot(STR_SLOT_DELTA);
         load_string(packs[PACK_TRANSIENT],
-                    rico_string_slot_string[STR_SLOT_DELTA], STR_SLOT_DELTA, 0,
-                    0, COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL, buf);
+                    rico_string_slot_string[STR_SLOT_DELTA], STR_SLOT_DELTA,
+                    SCREEN_X(0), SCREEN_Y(0), COLOR_DARK_BLUE_HIGHLIGHT, 1000,
+                    NULL, buf);
     }
 
     return err;
@@ -887,12 +853,12 @@ internal int state_edit_material()
     // Cycle selected object's material
     if (chord_pressed(ACTION_EDIT_MATERIAL_NEXT))
     {
-        selected_material_next();
+        edit_material_next();
     }
     // Cycle selected object's material (in reverse)
     else if (chord_pressed(ACTION_EDIT_MATERIAL_PREVIOUS))
     {
-        selected_material_prev();
+        edit_material_prev();
     }
 
     return err;
@@ -908,17 +874,17 @@ internal int state_edit_mesh()
     // Cycle selected object's mesh
     if (chord_pressed(ACTION_EDIT_MESH_NEXT))
     {
-        selected_mesh_next();
+        edit_mesh_next();
     }
     // Cycle selected object's mesh (in reverse)
     else if (chord_pressed(ACTION_EDIT_MESH_PREVIOUS))
     {
-        selected_mesh_prev();
+        edit_mesh_prev();
     }
     // Recalculate bounding box based on current mesh
     else if (chord_pressed(ACTION_EDIT_MESH_BBOX_RECALCULATE))
     {
-        selected_bbox_reset();
+        edit_bbox_reset();
     }
 
     return err;
@@ -931,7 +897,7 @@ internal int state_menu_quit()
     if (KEY_PRESSED(SDL_SCANCODE_Y) || KEY_PRESSED(SDL_SCANCODE_RETURN))
     {
         string_free_slot(STR_SLOT_MENU_QUIT);
-        save_file();
+		err = pack_save(pack_active, pack_active->name, false);
         state = STATE_ENGINE_SHUTDOWN;
     }
     // [N] / [Escape]: Return to play mode
@@ -978,9 +944,9 @@ internal int rico_init_shaders()
 
     return err;
 }
+#if 0
 internal void rico_init_cereal()
 {
-#if 0
     // Cleanup: Old serializiation methods
     // Custom serialiers
     rico_cereals[RICO_HND_CHUNK].save[0] = &chunk_serialize;
@@ -997,7 +963,6 @@ internal void rico_init_cereal()
 
     rico_cereals[RICO_HND_BBOX].save[0] = &bbox_serialize_0;
     rico_cereals[RICO_HND_BBOX].load[0] = &bbox_deserialize_0;
-#endif
 }
 internal int rico_init_transient_chunk()
 {
@@ -1022,9 +987,7 @@ internal int rico_init_transient_chunk()
 internal int init_hardcoded_test_chunk(struct rico_chunk **chunk)
 {
     enum rico_error err = SUCCESS;
-    UNUSED(chunk);
 
-#if 0
     //--------------------------------------------------------------------------
     // Create chunk
     //--------------------------------------------------------------------------
@@ -1099,7 +1062,6 @@ internal int init_hardcoded_test_chunk(struct rico_chunk **chunk)
     err = rico_serialize(chunk_home, &file);
     rico_file_close(&file);
 #endif
-#endif
 
     return err;
 }
@@ -1131,6 +1093,7 @@ internal int init_active_chunk()
         return err;
     }
 }
+#endif
 
 internal int rico_init()
 {
@@ -1140,17 +1103,6 @@ internal int rico_init()
     printf("[MAIN][init] Initializing hash tables\n");
     printf("----------------------------------------------------------\n");
     rico_hashtable_init();
-
-    printf("----------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing serializers\n");
-    printf("----------------------------------------------------------\n");
-    rico_init_cereal();
-
-    printf("----------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing transient chunk\n");
-    printf("----------------------------------------------------------\n");
-    err = rico_init_transient_chunk();
-    if (err) return err;
 
     printf("----------------------------------------------------------\n");
     printf("[MAIN][init] Initializing shaders\n");
@@ -1164,6 +1116,17 @@ internal int rico_init()
     prim_init();
 
 #if 0
+    printf("----------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing serializers\n");
+    printf("----------------------------------------------------------\n");
+    rico_init_cereal();
+
+    printf("----------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing transient chunk\n");
+    printf("----------------------------------------------------------\n");
+    err = rico_init_transient_chunk();
+    if (err) return err;
+
     printf("----------------------------------------------------------\n");
     printf("[MAIN][init] Initializing fonts\n");
     printf("----------------------------------------------------------\n");
@@ -1193,15 +1156,18 @@ internal int rico_init()
     printf("----------------------------------------------------------\n");
     err = load_mesh_files();
     if (err) return err;
-#endif
-
-    glref_init();
 
     printf("----------------------------------------------------------\n");
     printf("[MAIN][init] Loading chunks\n");
     printf("----------------------------------------------------------\n");
     err = init_active_chunk();
     if (err) return err;
+#endif
+
+    printf("----------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing editor\n");
+    printf("----------------------------------------------------------\n");
+    editor_init();
 
     printf("----------------------------------------------------------\n");
     printf("[MAIN][init] Initializing packs\n");

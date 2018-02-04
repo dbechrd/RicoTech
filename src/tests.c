@@ -59,6 +59,40 @@ void test_hashtable()
     RICO_ASSERT(hashtable_delete_uid(table, key_uid));
 }
 
+void test_ndc_macros()
+{
+    const struct vec2 top_left = VEC2(
+        SCREEN_X(0.0f),
+        SCREEN_Y(0.0f)
+    );
+    const struct vec2 bottom_right = VEC2(
+        SCREEN_X(SCREEN_W),
+        SCREEN_Y(SCREEN_H)
+    );
+    const struct vec2 center = VEC2(
+        SCREEN_X(SCREEN_W / 2.0f),
+        SCREEN_Y(SCREEN_H / 2.0f)
+    );
+    const struct vec2 top_left_neg = VEC2(
+        SCREEN_X(-SCREEN_W),
+        SCREEN_Y(-SCREEN_H)
+    );
+    const struct vec2 center_neg = VEC2(
+        SCREEN_X(-SCREEN_W / 2.0f),
+        SCREEN_Y(-SCREEN_H / 2.0f)
+    );
+    RICO_ASSERT(top_left.x == -1.0f);
+    RICO_ASSERT(top_left.y == 1.0f);
+    RICO_ASSERT(bottom_right.x == 1.0f);
+    RICO_ASSERT(bottom_right.y == -1.0f);
+    RICO_ASSERT(center.y == 0.0f);
+    RICO_ASSERT(center.y == 0.0f);
+    RICO_ASSERT(top_left_neg.x == -1.0f);
+    RICO_ASSERT(top_left_neg.y == 1.0f);
+    RICO_ASSERT(center_neg.y == 0.0f);
+    RICO_ASSERT(center_neg.y == 0.0f);
+}
+
 #if 0
 int test_pool()
 {
@@ -127,5 +161,6 @@ void run_tests()
 {
     //test_geom();
     //test_hashtable();
+    //test_ndc_macros();
     //test_pool();
 }

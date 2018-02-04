@@ -384,6 +384,7 @@ void object_update(struct rico_object *obj)
 void object_render(struct pack *pack, const struct camera *camera)
 {
     struct program_pbr *prog = prog_pbr;
+    RICO_ASSERT(prog->prog_id);
     glUseProgram(prog->prog_id);
 
     // TODO: Get the light out of here!!! It should't be updating its position
@@ -395,9 +396,8 @@ void object_render(struct pack *pack, const struct camera *camera)
 
     struct light_point light;
     light.position = light_pos;
-    light.color = VEC3(1.0f, 0.8f, 0.4f);
-    light.intensity = (lights_on) ? 10.0f : 0.0f;
-    //light.ambient = VEC3(0.10f, 0.09f, 0.11f);
+    light.color = VEC3(1.0f, 1.0f, 0.8f);
+    light.intensity = (lights_on) ? 4.0f : 0.0f;
     light.kc = 1.0f;
     light.kl = 0.05f;
     light.kq = 0.001f;
@@ -464,6 +464,10 @@ void object_render(struct pack *pack, const struct camera *camera)
             // TODO: Why can't I just assume obj->xform.scale is always 1,1,1?
             glUniform2f(prog->scale_uv, 1.0f, 1.0f);
         }
+		else if (obj->type == OBJ_TERRAIN)
+		{
+			glUniform2f(prog->scale_uv, 100.0f, 100.0f);
+		}
         else
         {
             glUniform2f(prog->scale_uv, obj->xform.scale.x, obj->xform.scale.y);
@@ -540,6 +544,7 @@ void object_render_ui(struct pack *pack)
     struct program_text *prog = prog_text;
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    RICO_ASSERT(prog->prog_id);
     glUseProgram(prog->prog_id);
 
     // Font texture
@@ -707,6 +712,6 @@ void object_print(struct rico_object *obj)
     string_truncate(buf, sizeof(buf), len);
     load_string(packs[PACK_TRANSIENT],
                 rico_string_slot_string[STR_SLOT_SELECTED_OBJ],
-                STR_SLOT_SELECTED_OBJ, 0, FONT_HEIGHT,
+                STR_SLOT_SELECTED_OBJ, SCREEN_X(0), SCREEN_Y(FONT_HEIGHT),
                 COLOR_DARK_GRAY_HIGHLIGHT, 0, NULL, buf);
 }

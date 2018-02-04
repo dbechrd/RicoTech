@@ -19,7 +19,7 @@ struct program_pbr *prog_pbr;
 struct program_primitive *prog_prim;
 struct program_text *prog_text;
 
-void glref_init()
+void editor_init()
 {
     const float radius = WIDGET_BOX_RADIUS;
     const float offset = WIDGET_BOX_OFFSET;
@@ -37,7 +37,7 @@ void glref_init()
     widgets[2].action = WIDGET_TRANSLATE_Z;
 }
 
-void create_obj(struct pack *pack)
+void edit_object_create(struct pack *pack)
 {
     // TODO: Prompt user for object name
     const char *name = "new_obj";
@@ -52,10 +52,10 @@ void create_obj(struct pack *pack)
     u32 new_obj_id = load_object(pack, name, OBJ_STATIC, array_count(props),
                                  props, NULL);
     struct rico_object *obj = pack_lookup(pack, new_obj_id);
-    select_obj(obj, false);
+    edit_object_select(obj, false);
 }
 
-void recalculate_all_bbox()
+void edit_bbox_reset_all()
 {
     object_bbox_recalculate_all(pack_active);
 
@@ -63,11 +63,11 @@ void recalculate_all_bbox()
     if (selected_obj_id)
     {
         struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
-        select_obj(obj, true);
+        edit_object_select(obj, true);
     }
 }
 
-void select_obj(struct rico_object *object, bool force)
+void edit_object_select(struct rico_object *object, bool force)
 {
     // NULL already selected
     if (!force && !object && !selected_obj_id)
@@ -91,20 +91,20 @@ void select_obj(struct rico_object *object, bool force)
         selected_obj_id = 0;
     }
 
-    selected_print();
+    edit_print_object();
 }
 
-void select_next_obj()
+void edit_object_next()
 {
-    select_obj(pack_next(pack_active, selected_obj_id, RICO_HND_OBJECT), false);
+    edit_object_select(pack_next(pack_active, selected_obj_id, RICO_HND_OBJECT), false);
 }
 
-void select_prev_obj()
+void edit_object_prev()
 {
-    select_obj(pack_prev(pack_active, selected_obj_id, RICO_HND_OBJECT), false);
+    edit_object_select(pack_prev(pack_active, selected_obj_id, RICO_HND_OBJECT), false);
 }
 
-void selected_print()
+void edit_print_object()
 {
     struct rico_object *obj = NULL;
     if (selected_obj_id)
@@ -112,7 +112,7 @@ void selected_print()
     object_print(obj);
 }
 
-void selected_translate(struct camera *camera, const struct vec3 *offset)
+void edit_translate(struct camera *camera, const struct vec3 *offset)
 {
     if (!selected_obj_id)
         return;
@@ -140,7 +140,7 @@ void selected_translate(struct camera *camera, const struct vec3 *offset)
     object_print(obj);
 }
 
-void selected_rotate(const struct vec3 *offset)
+void edit_rotate(const struct vec3 *offset)
 {
     if (!selected_obj_id)
         return;
@@ -158,7 +158,7 @@ void selected_rotate(const struct vec3 *offset)
     object_print(obj);
 }
 
-void selected_scale(const struct vec3 *offset)
+void edit_scale(const struct vec3 *offset)
 {
     if (!selected_obj_id)
         return;
@@ -176,7 +176,7 @@ void selected_scale(const struct vec3 *offset)
     object_print(obj);
 }
 
-void selected_material_next()
+void edit_material_next()
 {
     if (!selected_obj_id)
         return;
@@ -196,7 +196,7 @@ void selected_material_next()
     }
 }
 
-void selected_material_prev()
+void edit_material_prev()
 {
     if (!selected_obj_id)
         return;
@@ -216,7 +216,7 @@ void selected_material_prev()
     }
 }
 
-void selected_mesh_next()
+void edit_mesh_next()
 {
     if (!selected_obj_id)
         return;
@@ -238,7 +238,7 @@ void selected_mesh_next()
     }
 }
 
-void selected_mesh_prev()
+void edit_mesh_prev()
 {
     if (!selected_obj_id)
         return;
@@ -260,7 +260,7 @@ void selected_mesh_prev()
     }
 }
 
-void selected_bbox_reset()
+void edit_bbox_reset()
 {
     if (!selected_obj_id)
         return;
@@ -277,7 +277,7 @@ void selected_bbox_reset()
     object_print(obj);
 }
 
-void selected_duplicate()
+void edit_duplicate()
 {
     if (!selected_obj_id)
         return;
@@ -287,16 +287,16 @@ void selected_duplicate()
 
     struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
     struct rico_object *new_obj = object_copy(pack_active, obj, name);
-    select_obj(new_obj, false);
+    edit_object_select(new_obj, false);
 }
 
-void selected_delete()
+void edit_delete()
 {
     if (!selected_obj_id)
         return;
 
     pack_delete(pack_active, selected_obj_id, RICO_HND_OBJECT);
-    select_prev_obj();
+    edit_object_prev();
 }
 
 struct widget *widget_test()
@@ -317,7 +317,7 @@ struct widget *widget_test()
         {
             float dist;
             bool collide = collide_ray_bbox(&dist, &cam_ray, &widgets[i].bbox,
-                                            &xform);
+											&xform);
             if (collide && dist < dist_min)
             {
                 dist_min = dist;
@@ -330,8 +330,7 @@ struct widget *widget_test()
             string_free_slot(STR_SLOT_WIDGET);
             load_string(
                 packs[PACK_TRANSIENT], "WIDGET_STATE", STR_SLOT_WIDGET,
-                -(FONT_WIDTH * strlen(widget_action_string[widget->action])),
-                FONT_HEIGHT * 5, COLOR_DARK_CYAN, 0, NULL,
+                SCREEN_X(0), SCREEN_Y(FONT_HEIGHT), COLOR_DARK_CYAN, 0, NULL,
                 widget_action_string[widget->action]
             );
         }
@@ -360,18 +359,13 @@ void edit_mouse_pressed()
     if (widget) return;
 
     // Select first object w/ ray pick
-    select_obj(mouse_first_obj(), false);
+    edit_object_select(mouse_first_obj(), false);
 }
 
-void edit_mouse_move(r32 dx, r32 dy)
+void edit_mouse_move()
 {
-    UNUSED(dx);
-    UNUSED(dy);
-
-    if (!selected_obj_id)
-        return;
-    if (!widget)
-        return;
+    if (!selected_obj_id) return;
+    if (!widget || widget->action == WIDGET_NONE) return;
 
     struct ray cam_ray;
     camera_fwd_ray(&cam_ray, &cam_player);
@@ -388,8 +382,8 @@ void edit_mouse_move(r32 dx, r32 dy)
         normal.x = 0.0f;
         v3_normalize(&normal);
 
-        prim_draw_plane(&obj->xform.trans, &normal, &obj->xform.matrix,
-                        &COLOR_RED_HIGHLIGHT);
+        //prim_draw_plane(&obj->xform.trans, &normal, &MAT4_IDENT,
+        //                &COLOR_RED_HIGHLIGHT);
 
         struct vec3 contact = { 0 };
         collide = collide_ray_plane(&contact, &cam_ray, &obj->xform.trans,
@@ -404,8 +398,8 @@ void edit_mouse_move(r32 dx, r32 dy)
         normal.y = 0.0f;
         v3_normalize(&normal);
         
-        prim_draw_plane(&obj->xform.trans, &normal, &obj->xform.matrix,
-                        &COLOR_GREEN_HIGHLIGHT);
+        //prim_draw_plane(&obj->xform.trans, &normal, &MAT4_IDENT,
+        //                &COLOR_GREEN_HIGHLIGHT);
 
         struct vec3 contact = { 0 };
         collide = collide_ray_plane(&contact, &cam_ray, &obj->xform.trans,
@@ -420,8 +414,8 @@ void edit_mouse_move(r32 dx, r32 dy)
         normal.z = 0.0f;
         v3_normalize(&normal);
 
-        prim_draw_plane(&obj->xform.trans, &normal, &obj->xform.matrix,
-                        &COLOR_BLUE_HIGHLIGHT);
+        //prim_draw_plane(&obj->xform.trans, &normal, &MAT4_IDENT,
+        //                &COLOR_BLUE_HIGHLIGHT);
 
         struct vec3 contact = { 0 };
         collide = collide_ray_plane(&contact, &cam_ray, &obj->xform.trans,
@@ -443,16 +437,6 @@ void edit_mouse_released()
 {
     widget = NULL;
     string_free_slot(STR_SLOT_WIDGET);
-}
-
-void glref_update()
-{
-    //--------------------------------------------------------------------------
-    // Update uniforms
-    //--------------------------------------------------------------------------
-    glUseProgram(prog_pbr->prog_id);
-    glUniform1f(prog_pbr->time, (r32)SIM_SEC);
-    glUseProgram(0);
 }
 
 void glref_render(struct camera *camera)

@@ -29,8 +29,7 @@ int pool_init(void *buf, const char *name, u32 block_count, u32 block_size)
     RICO_ASSERT(block_size > 0);
 
     struct rico_pool *pool = buf;
-    pool->uid = next_uid;
-    next_uid++;
+    pool->uid = 0;
     strncpy(pool->name, name, sizeof(pool->name) - 1);
     pool->block_count = block_count;
     pool->block_size = block_size;

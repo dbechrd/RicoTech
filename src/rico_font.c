@@ -47,8 +47,9 @@ internal void font_setblend(const struct rico_font *font)
 	}
 }
 
-void font_render(u32 *mesh_id, u32 *tex_id, struct rico_font *font, int x,
-                 int y, struct vec4 bg, const char *text, const char *mesh_name)
+void font_render(u32 *mesh_id, u32 *tex_id, struct rico_font *font, float x,
+                 float y, struct vec4 bg, const char *text,
+                 const char *mesh_name)
 {
     // TODO: Use instanced quad?
     // Persistent buffers for font rendering
@@ -71,61 +72,44 @@ void font_render(u32 *mesh_id, u32 *tex_id, struct rico_font *font, int x,
     int idx_vertex = 0;
     int idx_element = 0;
 
-    int cur_x = x;
-    int cur_y = y - font->y_offset;
+    float screen_x = x;
+    float screen_y = y;
 
-    int row, col;
-    GLfloat u0, v0, u1, v1;
-    int xOffset;
     for (int i = 0; i < text_len; i++)
     {
         if (text[i] == '\n') {
-            cur_y -= font->y_offset;
-            cur_x = x;
+            screen_y -= PIXEL_NORMALIZE_Y(font->y_offset);
+            screen_x = x;
             continue;
         }
 
-        row = (text[i] - font->base_char) / font->row_pitch;
-        col = (text[i] - font->base_char) - (row * font->row_pitch);
+        int row = (text[i] - font->base_char) / font->row_pitch;
+        int col = (text[i] - font->base_char) - (row * font->row_pitch);
 
-        u0 = col * font->col_factor;
-        v0 = row * font->row_factor;
-        u1 = u0 + font->col_factor;
-        v1 = v0 + font->row_factor;
+        GLfloat u0 = col * font->col_factor;
+        GLfloat v0 = row * font->row_factor;
+        GLfloat u1 = u0 + font->col_factor;
+        GLfloat v1 = v0 + font->row_factor;
 
-        xOffset = font->char_widths[(int)text[i]];
-        //xOffset = font->CellX;
-
-        const float vert_x = 100.0f; //SCREEN_W / 32.0f;
-        const float vert_y = 100.0f; //SCREEN_H / 16.0f;
+        int char_width = font->char_widths[(int)text[i]];
+        float offset_x = PIXEL_NORMALIZE_X(char_width);
+        float offset_y = PIXEL_NORMALIZE_Y(font->cell_y);
 
         // Vertices for this character's quad
         vertices[idx_vertex++] = (struct text_vertex) {
-            VEC3(cur_x / vert_x,
-                 cur_y / vert_y,
-                 0.0f),
-            bg,
+            VEC3(screen_x, screen_y - offset_y, 0.0f), bg,
             VEC2(u0, v1)
         };
         vertices[idx_vertex++] = (struct text_vertex) {
-            VEC3((cur_x + xOffset) / vert_x,
-                 cur_y / vert_y,
-                 0.0f),
-            bg,
+            VEC3(screen_x + offset_x, screen_y - offset_y, 0.0f), bg,
             VEC2(u1, v1)
         };
         vertices[idx_vertex++] = (struct text_vertex) {
-            VEC3((cur_x + xOffset) / vert_x,
-                 (cur_y + font->y_offset) / vert_y,
-                 0.0f),
-            bg,
+            VEC3(screen_x + offset_x, screen_y, 0.0f), bg,
             VEC2(u1, v0)
         };
         vertices[idx_vertex++] = (struct text_vertex) {
-            VEC3(cur_x / vert_x,
-                 (cur_y + font->y_offset) / vert_y,
-                 0.0f),
-            bg,
+            VEC3(screen_x, screen_y, 0.0f), bg,
             VEC2(u0, v0)
         };
 
@@ -144,7 +128,7 @@ void font_render(u32 *mesh_id, u32 *tex_id, struct rico_font *font, int x,
         elements[idx_element++] = idx_vertex - 2;
         elements[idx_element++] = idx_vertex - 1;
 
-        cur_x += xOffset;
+        screen_x += offset_x;
     }
 
     u32 new_mesh_id = load_mesh(packs[PACK_TRANSIENT], mesh_name,

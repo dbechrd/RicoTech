@@ -90,10 +90,9 @@ void mesh_render(struct pack *pack, u32 id, enum program_type prog_type)
         mesh_upload(mesh, GL_STATIC_DRAW, prog_type);
         rgl_mesh = hashtable_search_uid(&global_meshes, id);
     }
-    RICO_ASSERT(rgl_mesh);
-    RICO_ASSERT(rgl_mesh->vao);
 
     // Draw
+    RICO_ASSERT(rgl_mesh->vao);
     glBindVertexArray(rgl_mesh->vao);
     if (rgl_mesh->elements)
     {

@@ -26,7 +26,7 @@ struct pack;
 #include "util.h"
 #include "rico_file.h"
 #include "rico_cereal.h"
-#include "rico_pool.h"
+//#include "rico_pool.h"
 #include "rico_hnd.h"
 #include "rico_hash.h"
 #include "rico_audio.h"
@@ -41,7 +41,7 @@ struct pack;
 #include "rico_font.h"
 #include "rico_string.h"
 #include "rico_material.h"
-#include "rico_chunk.h"
+//#include "rico_chunk.h"
 #include "pack_builder.h"
 
 #include "primitives.h"

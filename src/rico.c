@@ -7,7 +7,7 @@
 #include "rico_hash.c"
 #include "rico_audio.c"
 
-#include "rico_hnd.c"
+//#include "rico_hnd.c"
 #include "shader.c"
 #include "program.c"
 #include "camera.c"
@@ -20,14 +20,14 @@
 
 #include "primitives.c"
 #include "regularpoly.c"
-#include "rico_chunk.c"
+//#include "rico_chunk.c"
 #include "rico_collision.c"
 #include "rico_convert.c"
 #include "rico_font.c"
 //#include "rico_light.c"
 #include "rico_mesh.c"
 #include "rico_physics.c"
-#include "rico_pool.c"
+//#include "rico_pool.c"
 #include "pack_builder.c"
 
 #include <time.h>
