@@ -1,0 +1,62 @@
+========================================
+// Editor
+========================================
+
+Objects
+-------
+[ ] Place lights
+[ ] Render light boundaries (position spheres; direction rays/cones)
+[ ] Better translation / object placement
+[ ] Snap to grid
+[ ] Snap to object (per-object type, relative "snap points")
+[ ] Directly edit properties (textbox)
+[ ] Set texture
+[ ] Set mesh
+[-] Rotate around arbitrary point
+
+========================================
+// Engine
+========================================
+
+Animation
+---------
+[ ] Global translate, rotate
+[ ] Change texture (instant, fade?)
+[ ] Change mesh
+[ ] Change type-specific "properties" (e.g. toggle light on/off)
+[-] Global scale?
+[n] Deform mesh
+
+Collision
+---------
+[ ] Ray
+[ ] OBB
+[ ] Sphere
+[-] Ellipsoid
+[-] Scene graph (kd-tree, BSP?)
+[-] Frustum culling
+[-] BVH
+[-] Mesh
+
+Foliage
+-------
+[ ] Billboard ground foliage (e.g. 2-plane grass) normal should point straight
+    up for proper lighting calculations. /watch?v=BJDQNjlEO0I
+
+Input
+-----
+[ ] FPS camera? How to lock pitch / yaw with quaternions? Store current pitch /
+    yaw values and convert to quat whenever they change?
+[ ] Better mouse smoothing / accuracy?
+    "The Witness needs Raw Input to get good low-level relative mouse movements"
+    https://mollyrocket.com/casey/stream_0007.html
+
+Lighting
+--------
+[ ] Light objects (OBJ_LIGHT)
+[ ] Multiple lights (how to differentiate types in shader?)
+[ ] Shadows
+
+Shaders
+-------
+[ ] Refactor program_bind() / program_uniform_set() out of object_render()
