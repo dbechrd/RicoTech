@@ -101,8 +101,8 @@ int load_obj_file_new(const char *filename)
     err = file_contents(filename, &length, &buffer);
     if (err) goto cleanup;
 
-    char *bp = buffer;
-    char *value;
+    s8 *bp = buffer;
+	s8 *value;
     struct obj_file file = { 0 };
     // TODO: Memory arena, push tokens, pop when done parsing.
     file.tokens = calloc(MAX_TOKENS, sizeof(*file.tokens));
@@ -130,11 +130,11 @@ int load_obj_file_new(const char *filename)
         else if (keyword == NULL)
         {
             while (*bp && *bp != ' ') bp++;
-            u32 len = bp - value;
+            u32 len = (u32)(bp - value);
 
             for (int kw = 0; kw < OBJ_KW_COUNT; ++kw)
             {
-                if (strlen(obj_keyword_values[kw]) != len) continue;
+                if (dlb_strlen(obj_keyword_values[kw]) != len) continue;
 
                 u32 c = 0;
                 while (value[c] == obj_keyword_values[kw][c]) c++;
@@ -227,7 +227,7 @@ int load_obj_file_new(const char *filename)
 
         // If length greater than 255 characters, truncate to 255
         // NOTE: If this is ever a problem, change obj_token.len to u16
-        u32 len = bp - value;
+        u32 len = (u32)(bp - value);
         file.tokens[tok_idx].len = (len > 255) ? 255 : (u8)len;
 
         tok_idx++;

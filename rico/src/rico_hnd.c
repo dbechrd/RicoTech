@@ -19,7 +19,7 @@ void hnd_init(struct hnd *hnd, enum rico_hnd_type type, const char *name)
 
     hnd->uid = (hnd->chunk == chunk_transient) ? UID_NULL : next_uid++;
     strncpy(hnd->name, name, sizeof(hnd->name) - 1);
-    u32 name_len = strlen(name);
+    u32 name_len = dlb_strlen(name);
     hnd->len = MIN(name_len, sizeof(hnd->name) - 1);
 
 #if RICO_DEBUG_HND

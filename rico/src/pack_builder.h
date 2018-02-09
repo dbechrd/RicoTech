@@ -121,7 +121,7 @@ internal inline void *pack_push_data(struct pack *pack, const void *data,
 }
 internal inline void *pack_push_str(struct pack *pack, const char *str)
 {
-    u32 size = strlen(str) + 1;
+    u32 size = (u32)strlen(str) + 1;
     void *ptr = pack_push(pack, size);
     memcpy(ptr, str, size);
     return ptr;

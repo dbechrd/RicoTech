@@ -24,7 +24,7 @@ int file_contents(const char *filename, u32 *_length, char **_buffer)
                           "Failed to allocate file buffer for %s", filename);
     }
 
-    *_length = fread(*_buffer, 1, *_length, fs);
+    *_length = (u32)fread(*_buffer, 1, *_length, fs);
     fclose(fs);
     (*_buffer)[*_length] = '\0';
 

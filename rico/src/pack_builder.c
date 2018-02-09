@@ -249,14 +249,15 @@ int pack_save(struct pack *pack, const char *filename, bool shrink)
                         pack->buffer_used;
 
         u32 bytes_written = 0;
-        bytes_written += fwrite(pack, 1, sizeof(*pack), pack_file);
-        bytes_written += fwrite(pack->lookup, 1,
-                                pack->blob_count * sizeof(pack->lookup[0]),
-                                pack_file);
-        bytes_written += fwrite(pack->index, 1,
-                                pack->blob_count * sizeof(pack->index[0]),
-                                pack_file);
-        bytes_written += fwrite(pack->buffer, 1, pack->buffer_used, pack_file);
+        bytes_written += (u32)fwrite(pack, 1, sizeof(*pack), pack_file);
+        bytes_written += (u32)fwrite(pack->lookup, 1,
+									 pack->blob_count * sizeof(pack->lookup[0]),
+									 pack_file);
+        bytes_written += (u32)fwrite(pack->index, 1,
+									 pack->blob_count * sizeof(pack->index[0]),
+									 pack_file);
+        bytes_written += (u32)fwrite(pack->buffer, 1, pack->buffer_used,
+									 pack_file);
         fclose(pack_file);
         RICO_ASSERT(bytes_written == pack_size);
 
@@ -299,7 +300,7 @@ int pack_load(const char *filename, struct pack **_pack)
         u32 size_on_disk = tmp_pack.data_offset + tmp_pack.buffer_used;
 
         struct pack *pack = calloc(1, size);
-        u32 bytes_read = fread(pack, 1, size, pack_file);
+        u32 bytes_read = (u32)fread(pack, 1, size, pack_file);
         fclose(pack_file);
         RICO_ASSERT(bytes_read == size_on_disk);
         RICO_ASSERT(pack->blob_current_id == 0); // If not zero, WTF??

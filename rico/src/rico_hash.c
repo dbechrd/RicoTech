@@ -144,7 +144,7 @@ bool hashtable_delete(struct hash_table *table, const void *key, u32 klen)
 
 void *hashtable_search_str(struct hash_table *table, const char *str)
 {
-    void *val = hashtable_search(table, (u8 *)str, strlen(str));
+    void *val = hashtable_search(table, (u8 *)str, dlb_strlen(str));
 #if RICO_DEBUG_HASH
     printf("[hash][srch] %s\n             [%s, %p]\n", table->hnd.name, str,
            val);
@@ -179,7 +179,7 @@ int hashtable_insert_str(struct hash_table *table, const char *str,
     printf("[hash][ins ] %s\n             [%s, %p]\n", table->hnd.name, str,
            val);
 #endif
-    return hashtable_insert(table, (u8 *)str, strlen(str), val, vlen);
+    return hashtable_insert(table, (u8 *)str, dlb_strlen(str), val, vlen);
 }
 
 int hashtable_insert_hnd(struct hash_table *table, struct hnd *hnd,
@@ -205,7 +205,7 @@ int hashtable_insert_uid(struct hash_table *table, uid uid, const void *val,
 bool hashtable_delete_str(struct hash_table *table, const char *str)
 {
 
-    bool success = hashtable_delete(table, (u8 *)str, strlen(str));
+    bool success = hashtable_delete(table, (u8 *)str, dlb_strlen(str));
 #if RICO_DEBUG_HASH
     printf("[hash][del ] %s\n             [%s, %d]\n", table->hnd.name, str,
            success);

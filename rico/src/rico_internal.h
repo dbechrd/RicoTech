@@ -19,6 +19,7 @@
 #include <limits.h>
 #include <math.h>
 
+#include "dlb_string.h"
 #include "dlb_types.h"
 #include "dlb_math.h"
 

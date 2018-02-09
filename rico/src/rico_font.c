@@ -63,7 +63,7 @@ void font_render(u32 *mesh_id, u32 *tex_id, struct rico_font *font, float x,
 
     //font_setblend(font);
 
-    int text_len = strlen(text);
+    int text_len = dlb_strlen(text);
 
     // Truncate strings that are too long to render
     if (text_len > BFG_MAXSTRING)

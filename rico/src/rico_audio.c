@@ -12,7 +12,7 @@ int init_openal()
     while (*s)
     {
         printf("Device: %s\n", s);
-        s += strlen(s) + 1;
+        s += dlb_strlen(s) + 1;
     }
 
     audio_device = alcOpenDevice(NULL);
