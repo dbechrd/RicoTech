@@ -1,8 +1,9 @@
 #include "rico.h"
 //#include "dlb_types.h"
 //#define DLB_MATH_IMPLEMENTATION
-#include "dlb_math.h"
-#include <stdlib.h>
+//#include <math.h>
+//#include "dlb_math.h"
+//#include <stdlib.h>
 
 //int main_nuklear(int argc, char* argv[]);
 //#include "3rdparty/main_nuke.c"
@@ -80,12 +81,13 @@ int pack_load_all()
 
 int main(int argc, char **argv)
 {
-	int exit_code = 0;
+	//main_nuklear(argc, argv);
+	RIC_init(argc, argv);
 
-	exit_code = main_rico(argc, argv);
-	//exit_code = main_nuklear(argc, argv);
+	//pack_build_all();
+	pack_load_all();
 
-	// Hack: SDL_main is stupid and ignores my return value, force exit code
-	exit(exit_code);
-	return exit_code;
+	RIC_run();
+	RIC_quit();
+	return 0;
 }

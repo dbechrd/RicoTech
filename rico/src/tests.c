@@ -159,8 +159,8 @@ cleanup:
 
 void run_tests()
 {
-    //test_geom();
-    //test_hashtable();
-    //test_ndc_macros();
+    test_geom();
+    test_hashtable();
+    test_ndc_macros();
     //test_pool();
 }

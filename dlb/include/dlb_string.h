@@ -6,7 +6,7 @@
 static inline u32 dlb_strlen(const char *str)
 {
 	u32 len = 0;
-	while (*str) len++;
+	while (*str++) len++;
 	return len;
 }
 

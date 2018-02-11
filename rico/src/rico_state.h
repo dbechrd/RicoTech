@@ -2,7 +2,6 @@
 #define RICO_STATE_H
 
 #define RICO_STATES(f)       \
-    f(STATE_ENGINE_INIT)     \
     f(STATE_PLAY_EXPLORE)    \
     f(STATE_EDIT_TRANSLATE)  \
     f(STATE_EDIT_ROTATE)     \
@@ -23,10 +22,8 @@ extern const char *rico_state_string[];
 extern struct pack *pack_active;
 extern float trans_delta;
 
-int state_update();
 extern inline enum rico_state state_get();
 extern inline bool state_is_edit();
 extern inline bool state_is_paused();
-void init_rico_engine();
 
 #endif

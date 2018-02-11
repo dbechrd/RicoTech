@@ -3,7 +3,7 @@ internal ALCcontext *audio_context = 0;
 internal ALuint audio_buffer;
 ALuint audio_source;
 
-int init_openal()
+void init_openal()
 {
     ALenum err;
 
@@ -16,16 +16,25 @@ int init_openal()
     }
 
     audio_device = alcOpenDevice(NULL);
-    if (!audio_device)
-        return RICO_FATAL(ERR_OPENAL_INIT, "Failed to open audio device");
+	if (!audio_device)
+	{
+		RICO_FATAL(ERR_OPENAL_INIT, "Failed to open audio device");
+		return;
+	}
 
     ALCint attrlist[] = { ALC_FREQUENCY, 44100, 0 };
     audio_context = alcCreateContext(audio_device, attrlist);
-    if (!audio_context)
-        return RICO_FATAL(ERR_OPENAL_INIT, "Failed to create audio context");
+	if (!audio_context)
+	{
+		RICO_FATAL(ERR_OPENAL_INIT, "Failed to create audio context");
+		return;
+	}
 
-    if (!alcMakeContextCurrent(audio_context))
-        return RICO_FATAL(ERR_OPENAL_INIT, "Failed to activate audio context");
+	if (!alcMakeContextCurrent(audio_context))
+	{
+		RICO_FATAL(ERR_OPENAL_INIT, "Failed to activate audio context");
+		return;
+	}
 
     alGenSources(1, &audio_source);
     alSourcef(audio_source, AL_PITCH, 1.0f);
@@ -82,6 +91,4 @@ int init_openal()
 
     err = alGetError();
     if (err) RICO_ERROR(ERR_OPENAL_INIT, "OpenAL error: %s\n", err);
-
-    return SUCCESS;
 }

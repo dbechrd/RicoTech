@@ -15,6 +15,8 @@
 //                   PFNGLGETSHADERIVPROC glGet__iv,
 //                   PFNGLGETSHADERINFOLOGPROC glGet__InfoLog);
 
+int file_contents(const char *filename, u32 *_length, char **_buffer);
+
 internal inline int str_starts_with(const char *str, const char *prefix)
 {
     return strncmp(str, prefix, strlen(prefix)) == 0;

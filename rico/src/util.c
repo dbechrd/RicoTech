@@ -3,7 +3,6 @@
 int file_contents(const char *filename, u32 *_length, char **_buffer)
 {
     FILE *fs = fopen(filename, "rb");
-
     if (!fs) {
         return RICO_ERROR(ERR_FILE_READ, "Unable to open %s for reading",
                           filename);

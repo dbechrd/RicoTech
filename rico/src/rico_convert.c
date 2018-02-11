@@ -101,8 +101,8 @@ int load_obj_file_new(const char *filename)
     err = file_contents(filename, &length, &buffer);
     if (err) goto cleanup;
 
-    s8 *bp = buffer;
-	s8 *value;
+    char *bp = buffer;
+	char *value;
     struct obj_file file = { 0 };
     // TODO: Memory arena, push tokens, pop when done parsing.
     file.tokens = calloc(MAX_TOKENS, sizeof(*file.tokens));

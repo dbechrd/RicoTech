@@ -987,6 +987,13 @@ void pack_build_default()
 	//       when the data directory is missing.
 	const char *filename = "packs/default.pak";
 
+	FILE *default_pack = fopen(filename, "rb");
+	if (default_pack)
+	{
+		fclose(default_pack);
+		return;
+	}
+
 	struct pack *pack = pack_init(PACK_DEFAULT, filename, 16, MB(1));
 	u32 font_tex = 0;
 	u32 font = load_font(pack, "[FONT_DEFAULT]", "font/cousine_regular.bff",

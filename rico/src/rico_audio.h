@@ -3,6 +3,6 @@
 
 extern ALuint audio_source;
 
-int init_openal();
+void init_openal();
 
 #endif

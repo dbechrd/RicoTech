@@ -7,21 +7,22 @@
 #include <x86intrin.h>
 #endif
 
-//#include <stdlib.h>
-#include "GL/gl3w.h"
-#include "SDL/SDL.h"
-#undef main
-#include "AL/al.h"
-#include "AL/alc.h"
-#include "MurmurHash3.h"
-
+#include <stdint.h>
 #include <stdio.h>
 #include <limits.h>
 #include <math.h>
+//#include <stdlib.h>
 
-#include "dlb_string.h"
 #include "dlb_types.h"
+#include "dlb_string.h"
 #include "dlb_math.h"
+
+#include "GL/gl3w.h"
+#include "SDL/SDL.h"
+//#undef main
+#include "AL/al.h"
+#include "AL/alc.h"
+#include "MurmurHash3.h"
 
 #include "const.h"
 struct pack;

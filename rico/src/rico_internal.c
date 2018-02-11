@@ -53,6 +53,10 @@
 global SDL_Window *window = 0;
 global SDL_GLContext gl_context = 0;
 
+int RIC_init(int argc, char* argv[]);
+int RIC_run();
+void RIC_quit();
+
 internal inline void init_stb();
 internal inline void init_murmurhash3();
 internal int sdl_gl_attrib(SDL_GLattr attr, int value);
@@ -60,7 +64,7 @@ internal int init_sdl();
 internal int init_gl3w(int major, int minor);
 internal void init_opengl();
 
-int main_rico(int argc, char* argv[])
+int RIC_init(int argc, char* argv[])
 {
 	UNUSED(argc);
 	UNUSED(argv);
@@ -81,63 +85,77 @@ int main_rico(int argc, char* argv[])
     pack_build_default();
 
     err = init_sdl();
-    if (err) goto cleanup;
+    if (err) goto error;
     err = init_gl3w(GL_VERSION_MAJOR, GL_VERSION_MINOR);
-    if (err) goto cleanup;
+    if (err) goto error;
     init_opengl();
     init_openal();
-    init_rico_engine();
+	engine_init();
 
-#if RICO_DEBUG
+#if RICO_DEBUG_RUN_TESTS
     run_tests();
 #endif
 
-    while (!SDL_QuitRequested())
-    {
-        ////////////////////////////////////////////////////////////////////////
-        // TODO: How do I check for SDL resize window events?
-        ////////////////////////////////////////////////////////////////////////
-        /*
-        // Resize OpenGL viewport
-        else if (event.type == SDL_WINDOWEVENT_SIZE)
-        {
-        glViewport(0, 0, event.window.event.size.width,
-        event.window.event.size.height);
-        *handled = true;
-        }
-        */
+error:
+	if (err) printf("Error: %s", rico_error_string[err]);
+	return err;
+}
 
-        err = state_update();
-        if (err) break;
+int RIC_run()
+{
+	enum rico_error err = SUCCESS;
 
-        if (state_get() == STATE_ENGINE_SHUTDOWN)
-            break;
+	while (!SDL_QuitRequested())
+	{
+		////////////////////////////////////////////////////////////////////////
+		// TODO: How do I check for SDL resize window events?
+		////////////////////////////////////////////////////////////////////////
+		/*
+		// Resize OpenGL viewport
+		else if (event.type == SDL_WINDOWEVENT_SIZE)
+		{
+		glViewport(0, 0, event.window.event.size.width,
+		event.window.event.size.height);
+		*handled = true;
+		}
+		*/
 
-        SDL_GL_SwapWindow(window);
-        // HACK: Kill some time (a.k.a. save my computer from lighting itself
-        //       on fire when VSync is disabled)
-        SDL_Delay(3);
-    }
+		err = engine_update();
+		if (err) break;
 
-cleanup:
-    printf("------------------------------------------------------------\n");
-    printf("[MAIN][term] Clean up\n");
-    printf("------------------------------------------------------------\n");
-    alDeleteSources(1, &audio_source);
-    alDeleteBuffers(1, &audio_buffer);
-    alcDestroyContext(audio_context);
-    alcCloseDevice(audio_device);
+		if (state_get() == STATE_ENGINE_SHUTDOWN)
+			break;
 
-    if (gl_context) SDL_GL_DeleteContext(gl_context);
-    if (window) SDL_DestroyWindow(window);
+		SDL_GL_SwapWindow(window);
 
-    SDL_Quit();
+#if RICO_DEBUG
+		// HACK: Kill some time (a.k.a. save my computer from lighting itself
+		//       on fire when VSync is disabled)
+		SDL_Delay(3);
+#endif
+	}
+
+	return err;
+}
+
+void RIC_quit()
+{
+	printf("------------------------------------------------------------\n");
+	printf("[MAIN][term] Clean up\n");
+	printf("------------------------------------------------------------\n");
+	alDeleteSources(1, &audio_source);
+	alDeleteBuffers(1, &audio_buffer);
+	alcDestroyContext(audio_context);
+	alcCloseDevice(audio_device);
+
+	if (gl_context) SDL_GL_DeleteContext(gl_context);
+	if (window) SDL_DestroyWindow(window);
+
+	SDL_Quit();
 #if RICO_DEBUG && !RICO_DEBUG_ALL_ERRORS_FATAL
 	// Don't report fatal errors again when ALL_ERRORS_FATAL flag is set
 	err = RICO_FATAL(err, "Top-level generic error");
 #endif
-	if (err) printf("Error: %s", rico_error_string[err]);
-	return err;
 }
 
 internal inline void init_stb()

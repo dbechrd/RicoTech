@@ -3,9 +3,8 @@
 
 #include "dlb_types.h"
 #include "dlb_math.h"
+#include "SDL/SDL.h"
 #include "GL/gl3w.h"
-
-#define RICO_DEF extern
 
 //------------------------------------------------------------------------------
 // const.c
@@ -50,7 +49,7 @@ enum rico_error
 {
     RICO_ERRORS(GEN_LIST)
 };
-//extern const char *rico_error_string[];
+//const char *rico_error_string[];
 
 //------------------------------------------------------------------------------
 // rico_hnd.c
@@ -73,7 +72,7 @@ enum rico_hnd_type
 {
     RICO_HND_TYPES(GEN_LIST)
 };
-extern const char *rico_hnd_type_string[];
+const char *rico_hnd_type_string;
 
 typedef u32 uid;
 struct hnd
@@ -156,7 +155,7 @@ enum rico_obj_type
 {
     RICO_OBJ_TYPES(GEN_LIST)
 };
-extern const char *rico_obj_type_string[];
+const char *rico_obj_type_string;
 
 struct rico_transform
 {
@@ -184,7 +183,7 @@ enum obj_prop_type
 {
     RICO_PROP_TYPES(GEN_LIST)
 };
-extern const char *rico_prop_type_string[];
+const char *rico_prop_type_string;
 
 struct light_switch
 {
@@ -267,7 +266,7 @@ enum rico_string_slot
 {
     RICO_STRING_SLOTS(GEN_LIST)
 };
-extern const char *rico_string_slot_string[];
+const char *rico_string_slot_string;
 
 struct rico_string
 {
@@ -317,41 +316,40 @@ struct pack
 };
 
 #define MAX_PACKS 32
-RICO_DEF u32 packs_next;
-RICO_DEF struct pack *packs[MAX_PACKS];
+extern u32 packs_next;
+extern struct pack *packs[MAX_PACKS];
 
-RICO_DEF struct pack *pack_init(u32 id, const char *name, u32 blob_count,
-                                u32 buffer_size);
-RICO_DEF int pack_save(struct pack *pack, const char *filename, bool shrink);
-RICO_DEF int pack_load(const char *filename, struct pack **_pack);
-RICO_DEF void pack_free(u32 id);
+struct pack *pack_init(u32 id, const char *name, u32 blob_count,
+					   u32 buffer_size);
+int pack_save(struct pack *pack, const char *filename, bool shrink);
+int pack_load(const char *filename, struct pack **_pack);
+void pack_free(u32 id);
 
-RICO_DEF u32 load_object(struct pack *pack, const char *name,
-                         enum rico_obj_type type, u32 prop_count,
-                         struct obj_property *props, const struct bbox *bbox);
-RICO_DEF u32 load_texture(struct pack *pack, const char *name, GLenum target,
-                          u32 width, u32 height, u8 bpp, u8 *pixels);
-RICO_DEF u32 load_texture_file(struct pack *pack, const char *name,
-                               const char *filename);
-RICO_DEF u32 load_texture_color(struct pack *pack, const char *name,
-                                struct vec4 color);
-RICO_DEF u32 load_material(struct pack *pack, const char *name, u32 tex0,
-                           u32 tex1, u32 tex2);
-RICO_DEF u32 load_font(struct pack *pack, const char *name,
-                       const char *filename, u32 *font_tex);
-RICO_DEF u32 load_mesh(struct pack *pack, const char *name, u32 vertex_size,
-                       u32 vertex_count, const void *vertex_data,
-                       u32 element_count, const GLuint *element_data);
-RICO_DEF u32 load_string(struct pack *pack, const char *name,
-                         enum rico_string_slot slot, float x, float y,
-                         struct vec4 color, u32 lifespan,
-                         struct rico_font *font, const char *text);
-RICO_DEF int load_obj_file(struct pack *pack, const char *filename,
-                           u32 *_last_mesh_id);
+u32 load_object(struct pack *pack, const char *name, enum rico_obj_type type,
+				u32 prop_count, struct obj_property *props,
+				const struct bbox *bbox);
+u32 load_texture(struct pack *pack, const char *name, GLenum target, u32 width,
+				 u32 height, u8 bpp, u8 *pixels);
+u32 load_texture_file(struct pack *pack, const char *name,
+					  const char *filename);
+u32 load_texture_color(struct pack *pack, const char *name, struct vec4 color);
+u32 load_material(struct pack *pack, const char *name, u32 tex0, u32 tex1,
+				  u32 tex2);
+u32 load_font(struct pack *pack, const char *name, const char *filename,
+			  u32 *font_tex);
+u32 load_mesh(struct pack *pack, const char *name, u32 vertex_size,
+			  u32 vertex_count, const void *vertex_data, u32 element_count,
+			  const GLuint *element_data);
+u32 load_string(struct pack *pack, const char *name, enum rico_string_slot slot,
+				float x, float y, struct vec4 color, u32 lifespan,
+				struct rico_font *font, const char *text);
+int load_obj_file(struct pack *pack, const char *filename, u32 *_last_mesh_id);
 
 //------------------------------------------------------------------------------
 // rico_internal.c
 //------------------------------------------------------------------------------
-RICO_DEF int main_rico(int argc, char* argv[]);
+int RIC_init(int argc, char* argv[]);
+int RIC_run();
+void RIC_quit();
 
 #endif

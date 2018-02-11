@@ -171,7 +171,7 @@ void render_fps(r64 fps, r64 ms, r64 mcyc)
                 COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
 }
 
-int state_update()
+int engine_update()
 {
     enum rico_error err;
 
@@ -186,25 +186,25 @@ int state_update()
     ///-------------------------------------------------------------------------
     //| Query input state
     ///-------------------------------------------------------------------------
-    // Get mouse state
-    int dx, dy;
-    mouse_buttons_prev = mouse_buttons;
-    mouse_buttons = SDL_GetRelativeMouseState(&dx, &dy);
-    if (mouse_lock)
-    {
-        mouse_dx += (r32)dx;
-        mouse_dy += (r32)dy;
-    }
-    else
-    {
-        mouse_dx = mouse_dy = 0;
-    }
+	// Get mouse state
+	int dx, dy;
+	mouse_buttons_prev = mouse_buttons;
+	mouse_buttons = SDL_GetRelativeMouseState(&dx, &dy);
+	if (mouse_lock)
+	{
+		mouse_dx += (r32)dx;
+		mouse_dy += (r32)dy;
+	}
+	else
+	{
+		mouse_dx = mouse_dy = 0;
+	}
 
-    // Get keyboard state
-    u8 *keys_tmp = keys_prev;
-    keys_prev = keys;
-    keys = keys_tmp;
-    memcpy(keys, SDL_GetKeyboardState(0), SDL_NUM_SCANCODES);
+	// Get keyboard state
+	u8 *keys_tmp = keys_prev;
+	keys_prev = keys;
+	keys = keys_tmp;
+	memcpy(keys, SDL_GetKeyboardState(0), SDL_NUM_SCANCODES);
 
     ///-------------------------------------------------------------------------
     //| State actions
@@ -950,248 +950,13 @@ internal int rico_init_shaders()
 
     return err;
 }
-#if 0
-internal void rico_init_cereal()
+
+internal int state_engine_shutdown()
 {
-    // Cleanup: Old serializiation methods
-    // Custom serialiers
-    rico_cereals[RICO_HND_CHUNK].save[0] = &chunk_serialize;
-    rico_cereals[RICO_HND_CHUNK].load[0] = &chunk_deserialize;
-
-    rico_cereals[RICO_HND_POOL].save[0] = &pool_serialize_0;
-    rico_cereals[RICO_HND_POOL].load[0] = &pool_deserialize_0;
-
-    rico_cereals[RICO_HND_OBJECT].save[0] = &object_serialize_0;
-    rico_cereals[RICO_HND_OBJECT].load[0] = &object_deserialize_0;
-
-    rico_cereals[RICO_HND_MATERIAL].save[0] = &material_serialize_0;
-    rico_cereals[RICO_HND_MATERIAL].load[0] = &material_deserialize_0;
-
-    rico_cereals[RICO_HND_BBOX].save[0] = &bbox_serialize_0;
-    rico_cereals[RICO_HND_BBOX].load[0] = &bbox_deserialize_0;
+	free_glref();
+	return SUCCESS;
 }
-internal int rico_init_transient_chunk()
-{
-    enum rico_error err;
-
-    // TODO: Hard code defaults that make sense based on how many transient
-    //       objects there actually are.
-    const chunk_pool_counts pool_counts = {
-          0,  // RICO_HND_NULL
-        128,  // RICO_HND_OBJECT
-        128,  // RICO_HND_TEXTURE
-        128,  // RICO_HND_MESH
-          4,  // RICO_HND_FONT
-         32,  // RICO_HND_STRING
-        128   // RICO_HND_MATERIAL
-    };
-
-    // Special chunk used to store transient object pools
-    err = chunk_init(&chunk_transient, "[CHUNK_TRANSIENT]", &pool_counts);
-    return err;
-}
-internal int init_hardcoded_test_chunk(struct rico_chunk **chunk)
-{
-    enum rico_error err = SUCCESS;
-
-    //--------------------------------------------------------------------------
-    // Create chunk
-    //--------------------------------------------------------------------------
-    // TODO: Sane defaults, but use realloc when necessary
-    const chunk_pool_counts pool_counts = {
-          0,  // RICO_HND_NULL
-        128,  // RICO_HND_OBJECT
-        128,  // RICO_HND_TEXTURE
-        128,  // RICO_HND_MESH
-          4,  // RICO_HND_FONT
-         32,  // RICO_HND_STRING
-        128   // RICO_HND_MATERIAL
-    };
-
-    err = chunk_init(chunk, "[CHUNK_DEFAULT]", &pool_counts);
-    if (err) return err;
-    RICO_ASSERT(*chunk);
-
-    //--------------------------------------------------------------------------
-    // Create textures
-    //--------------------------------------------------------------------------
-    struct rico_texture *tex;
-
-    /*
-    "texture/grass.tga"
-    "texture/hello.tga"
-    "texture/fake_yellow.tga"
-    */
-
-    err = chunk_alloc((void **)&tex, *chunk, RICO_HND_TEXTURE);
-    if (err) return err;
-    err = texture_load_file(tex, "bricks", GL_TEXTURE_2D,
-                            "texture/clean_bricks.tga", 32);
-
-    //--------------------------------------------------------------------------
-    // Create materials
-    //--------------------------------------------------------------------------
-    struct pool_id *tex_rock_id = hashtable_search_str(&global_textures,
-                                                       "bricks");
-    RICO_ASSERT(tex_rock_id->type);
-
-    struct rico_material *material_rock;
-    err = chunk_alloc((void **)&material_rock, *chunk, RICO_HND_MATERIAL);
-    if (err) return err;
-    err = material_init(material_rock, "Rock", *tex_rock_id, ID_NULL, 0.5f);
-    if (err) return err;
-
-    //--------------------------------------------------------------------------
-    // Create world objects
-    //--------------------------------------------------------------------------
-
-    // Ground
-    struct rico_object *obj_ground;
-    err = chunk_alloc((void **)&obj_ground, *chunk, RICO_HND_OBJECT);
-    if (err) return err;
-    err = object_init(obj_ground, "Ground", OBJ_STATIC, ID_NULL,
-                      material_rock->hnd.id, NULL);
-    if (err) return err;
-    object_rot_x(obj_ground, -90.0f);
-    object_scale(obj_ground, &VEC3(64.0f, 64.0f, 0.001f));
-    object_trans(obj_ground, &VEC3(0.0f, -1.0f, 0.0f));
-
-#if 0
-    //--------------------------------------------------------------------------
-    // Save manual chunk
-    //--------------------------------------------------------------------------
-    struct rico_file file;
-    err = rico_file_open_write(&file, "chunks/cereal.bin",
-    RICO_FILE_VERSION_CURRENT);
-    if (err) return err;
-
-    err = rico_serialize(chunk_home, &file);
-    rico_file_close(&file);
-#endif
-
-    return err;
-}
-internal int init_active_chunk()
-{
-    enum rico_error err;
-
-    if (LOAD_SAVE_FILE)
-    {
-        struct rico_file file;
-        err = rico_file_open_read(&file, "chunks/cereal.bin");
-        if (err) return err;
-
-        RICO_ASSERT(next_uid < UID_BASE);
-        RICO_ASSERT(next_uid < file.next_uid);
-        next_uid = file.next_uid;
-
-        err = chunk_deserialize(&chunk_active, &file);
-        rico_file_close(&file);
-        return err;
-    }
-    else
-    {
-        RICO_ASSERT(next_uid < UID_BASE);
-        next_uid = UID_BASE;
-
-        printf("Loading hard-coded test chunk\n");
-        err = init_hardcoded_test_chunk(&chunk_active);
-        return err;
-    }
-}
-#endif
-
-internal int rico_init()
-{
-    enum rico_error err;
-
-    printf("----------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing hash tables\n");
-    printf("----------------------------------------------------------\n");
-    rico_hashtable_init();
-
-    printf("----------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing shaders\n");
-    printf("----------------------------------------------------------\n");
-    err = rico_init_shaders();
-    if (err) return err;
-
-    printf("----------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing primitives\n");
-    printf("----------------------------------------------------------\n");
-    prim_init();
-
-#if 0
-    printf("----------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing serializers\n");
-    printf("----------------------------------------------------------\n");
-    rico_init_cereal();
-
-    printf("----------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing transient chunk\n");
-    printf("----------------------------------------------------------\n");
-    err = rico_init_transient_chunk();
-    if (err) return err;
-
-    printf("----------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing fonts\n");
-    printf("----------------------------------------------------------\n");
-    err = rico_init_fonts();
-    if (err) return err;
-
-    printf("----------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing textures\n");
-    printf("----------------------------------------------------------\n");
-    err = rico_init_textures();
-    if (err) return err;
-
-    printf("----------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing materials\n");
-    printf("----------------------------------------------------------\n");
-    err = rico_init_materials();
-    if (err) return err;
-
-    printf("----------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing meshes\n");
-    printf("----------------------------------------------------------\n");
-    err = rico_init_meshes();
-    if (err) return err;
-
-    printf("----------------------------------------------------------\n");
-    printf("[MAIN][init] Loading meshes from resource files\n");
-    printf("----------------------------------------------------------\n");
-    err = load_mesh_files();
-    if (err) return err;
-
-    printf("----------------------------------------------------------\n");
-    printf("[MAIN][init] Loading chunks\n");
-    printf("----------------------------------------------------------\n");
-    err = init_active_chunk();
-    if (err) return err;
-#endif
-
-    printf("----------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing editor\n");
-    printf("----------------------------------------------------------\n");
-    editor_init();
-
-    printf("----------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing packs\n");
-    printf("----------------------------------------------------------\n");
-	err = pack_load("packs/default.pak", 0);
-	if (err) return err;
-	pack_init(PACK_TRANSIENT, "pack_transient", 512, MB(4));
-	pack_init(PACK_FRAME, "pack_frame", 0, 0);
-
-    printf("----------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing camera\n");
-    printf("----------------------------------------------------------\n");
-    camera_reset(&cam_player);
-    if (err) return err;
-
-    return err;
-}
-internal int state_engine_init()
+internal int engine_init()
 {
     enum rico_error err;
 
@@ -1203,7 +968,7 @@ internal int state_engine_init()
     printf("#        | | \\ \\| | |_| (_) || |  __/ |__| | | |         #\n");
     printf("#        |_|  \\_\\_|\\___\\___/ |_|\\___|\\___|_| |_|         #\n");
     printf("#                                                        #\n");
-    printf("#              Copyright 2017 Dan Bechard                #\n");
+    printf("#              Copyright 2018 Dan Bechard                #\n");
     printf("==========================================================\n");
 
     perfs_frequency = SDL_GetPerformanceFrequency();
@@ -1217,7 +982,9 @@ internal int state_engine_init()
                           SDL_GetError());
     }
 
-    // Reset mouse delta after window opens and mouse is locked to screen
+    // Initialize mouse and keyboard states
+	SDL_GetRelativeMouseState(0, 0);
+	SDL_GetKeyboardState(0);
     SDL_SetRelativeMouseMode(mouse_lock);
     mouse_dx = 0;
     mouse_dy = 0;
@@ -1307,8 +1074,58 @@ internal int state_engine_init()
     CHORD_1(ACTION_EDIT_MESH_PREVIOUS,              SDL_SCANCODE_LEFT);
     CHORD_1(ACTION_EDIT_MESH_BBOX_RECALCULATE,      SDL_SCANCODE_B);
 
-    err = rico_init();
-    if (err) return err;
+	state_handlers[STATE_ENGINE_SHUTDOWN].run = &state_engine_shutdown;
+	state_handlers[STATE_MENU_QUIT      ].run = &state_menu_quit;
+	state_handlers[STATE_PLAY_EXPLORE   ].run = &state_play_explore;
+	state_handlers[STATE_EDIT_TRANSLATE ].run = &state_edit_translate;
+	state_handlers[STATE_EDIT_ROTATE    ].run = &state_edit_rotate;
+	state_handlers[STATE_EDIT_SCALE     ].run = &state_edit_scale;
+	state_handlers[STATE_EDIT_MATERIAL  ].run = &state_edit_material;
+	state_handlers[STATE_EDIT_MESH      ].run = &state_edit_mesh;
+	state_handlers[STATE_TEXT_INPUT     ].run = &state_text_input;
+
+	state_handlers[STATE_EDIT_TRANSLATE ].cleanup = &state_edit_cleanup;
+	state_handlers[STATE_EDIT_ROTATE    ].cleanup = &state_edit_cleanup;
+	state_handlers[STATE_EDIT_SCALE     ].cleanup = &state_edit_cleanup;
+	state_handlers[STATE_EDIT_MATERIAL  ].cleanup = &state_edit_cleanup;
+	state_handlers[STATE_EDIT_MESH      ].cleanup = &state_edit_cleanup;
+
+	state = STATE_PLAY_EXPLORE;
+
+	printf("----------------------------------------------------------\n");
+	printf("[MAIN][init] Initializing hash tables\n");
+	printf("----------------------------------------------------------\n");
+	rico_hashtable_init();
+
+	printf("----------------------------------------------------------\n");
+	printf("[MAIN][init] Initializing shaders\n");
+	printf("----------------------------------------------------------\n");
+	err = rico_init_shaders();
+	if (err) return err;
+
+	printf("----------------------------------------------------------\n");
+	printf("[MAIN][init] Initializing primitives\n");
+	printf("----------------------------------------------------------\n");
+	prim_init();
+
+	printf("----------------------------------------------------------\n");
+	printf("[MAIN][init] Initializing editor\n");
+	printf("----------------------------------------------------------\n");
+	editor_init();
+
+	printf("----------------------------------------------------------\n");
+	printf("[MAIN][init] Initializing packs\n");
+	printf("----------------------------------------------------------\n");
+	err = pack_load("packs/default.pak", 0);
+	if (err) return err;
+	pack_init(PACK_TRANSIENT, "pack_transient", 512, MB(4));
+	pack_init(PACK_FRAME, "pack_frame", 0, 0);
+
+	printf("----------------------------------------------------------\n");
+	printf("[MAIN][init] Initializing camera\n");
+	printf("----------------------------------------------------------\n");
+	camera_reset(&cam_player);
+	if (err) return err;
 
     printf("----------------------------------------------------------\n");
     printf("[MAIN][  GO] Initialization complete. Starting game.\n");
@@ -1316,30 +1133,4 @@ internal int state_engine_init()
 
     state = STATE_PLAY_EXPLORE;
     return err;
-}
-internal int state_engine_shutdown()
-{
-    free_glref();
-    return SUCCESS;
-}
-void init_rico_engine()
-{
-    state_handlers[STATE_ENGINE_INIT    ].run = &state_engine_init;
-    state_handlers[STATE_ENGINE_SHUTDOWN].run = &state_engine_shutdown;
-    state_handlers[STATE_MENU_QUIT      ].run = &state_menu_quit;
-    state_handlers[STATE_PLAY_EXPLORE   ].run = &state_play_explore;
-    state_handlers[STATE_EDIT_TRANSLATE ].run = &state_edit_translate;
-    state_handlers[STATE_EDIT_ROTATE    ].run = &state_edit_rotate;
-    state_handlers[STATE_EDIT_SCALE     ].run = &state_edit_scale;
-    state_handlers[STATE_EDIT_MATERIAL  ].run = &state_edit_material;
-    state_handlers[STATE_EDIT_MESH      ].run = &state_edit_mesh;
-    state_handlers[STATE_TEXT_INPUT     ].run = &state_text_input;
-
-    state_handlers[STATE_EDIT_TRANSLATE ].cleanup = &state_edit_cleanup;
-    state_handlers[STATE_EDIT_ROTATE    ].cleanup = &state_edit_cleanup;
-    state_handlers[STATE_EDIT_SCALE     ].cleanup = &state_edit_cleanup;
-    state_handlers[STATE_EDIT_MATERIAL  ].cleanup = &state_edit_cleanup;
-    state_handlers[STATE_EDIT_MESH      ].cleanup = &state_edit_cleanup;
-
-    state = STATE_ENGINE_INIT;
 }
