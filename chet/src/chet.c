@@ -63,21 +63,6 @@ void pack_build_alpha(u32 id)
     timmy->props[PROP_AUDIO_SWITCH].audio_switch =
         (struct audio_switch) { 3, true };
 
-#if 0
-	u32 timmy_mat = load_material(pack, "Timmy", 0, 0, 0);
-	struct obj_property timmy_props[4] = { 0 };
-	timmy_props[0].type = PROP_MESH;
-	timmy_props[0].mesh_uid = door_mesh;
-	timmy_props[1].type = PROP_MATERIAL;
-	timmy_props[1].material_uid = timmy_mat;
-	timmy_props[2].type = PROP_LIGHT_SWITCH;
-	timmy_props[2].light_switch = (struct light_switch) { 3, true };
-	timmy_props[3].type = PROP_AUDIO_SWITCH;
-	timmy_props[3].audio_switch = (struct audio_switch) { 3, true };
-	load_object(pack, "Timmy", OBJ_STATIC, ARRAY_COUNT(timmy_props),
-				timmy_props, NULL);
-#endif
-
 	pack_save(pack, filename, false);
 	pack_free(pack->id);
 }
