@@ -230,7 +230,7 @@ bool object_collide_ray_type(struct pack *pack, struct rico_object **_object,
             continue;
 
         obj = pack_read(pack, index);
-        if (obj->type == OBJ_TERRAIN)
+        if (!obj->props[PROP_BBOX].type)
             continue;
 
         collided = collide_ray_obb(&distance, ray, &obj->props[PROP_BBOX].bbox,

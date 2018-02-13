@@ -28,34 +28,42 @@ void pack_build_alpha(u32 id)
     RICO_ASSERT(bricks_emis);
     RICO_ASSERT(bricks_mat);
 
-	pkid door_mesh, ground_mesh;
-	load_obj_file(pack, "mesh/alpha_door_001.obj", &door_mesh);
+	pkid door_mesh_pkid, ground_mesh_pkid;
+	load_obj_file(pack, "mesh/alpha_door_001.obj", &door_mesh_pkid);
 	load_obj_file(pack, "mesh/alpha_staircase_001.obj", 0);
 	load_obj_file(pack, "mesh/alpha_wall_001.obj", 0);
-	load_obj_file(pack, "mesh/alpha_terrain_001.obj", &ground_mesh);
+	load_obj_file(pack, "mesh/alpha_terrain_001.obj", &ground_mesh_pkid);
 	load_obj_file(pack, "mesh/alpha_game_panel.obj", 0);
 	load_obj_file(pack, "mesh/alpha_game_button.obj", 0);
 
-    RICO_ASSERT(door_mesh);
-    RICO_ASSERT(ground_mesh);
+    RICO_ASSERT(door_mesh_pkid);
+    RICO_ASSERT(ground_mesh_pkid);
 
     pkid ground_pkid = load_object(pack, OBJ_TERRAIN, "Ground");
     struct rico_object *ground = pack_lookup(ground_pkid);
-	ground->type = OBJ_TERRAIN;
     ground->props[PROP_MESH].type = PROP_MESH;
-    ground->props[PROP_MESH].mesh_pkid = ground_mesh;
+    ground->props[PROP_MESH].mesh_pkid = ground_mesh_pkid;
     ground->props[PROP_MATERIAL].type = PROP_MATERIAL;
     ground->props[PROP_MATERIAL].material_pkid = bricks_mat;
 
-#if 0
-	struct obj_property ground_props[2] = { 0 };
-	ground_props[0].type = PROP_MESH;
-	ground_props[0].material_uid = ground_mesh;
-	ground_props[1].type = PROP_MATERIAL;
-	ground_props[1].material_uid = bricks_mat;
-	load_object(pack, "Ground", OBJ_TERRAIN, ARRAY_COUNT(ground_props),
-				ground_props, NULL);
+    pkid timmy_mat_pkid = load_material(pack, "Timmy", 0, 0, 0);
+    pkid timmy_pkid = load_object(pack, OBJ_STATIC, "Timmy");
+    struct rico_object *timmy = pack_lookup(timmy_pkid);
+    struct rico_mesh *door_mesh = pack_lookup(door_mesh_pkid);
+    timmy->props[PROP_MESH].type = PROP_MESH;
+    timmy->props[PROP_MESH].mesh_pkid = door_mesh_pkid;
+    timmy->props[PROP_MATERIAL].type = PROP_MATERIAL;
+    timmy->props[PROP_MATERIAL].material_pkid = timmy_mat_pkid;
+    timmy->props[PROP_BBOX].type = PROP_BBOX;
+    timmy->props[PROP_BBOX].bbox = door_mesh->bbox;
+    timmy->props[PROP_LIGHT_SWITCH].type = PROP_LIGHT_SWITCH;
+    timmy->props[PROP_LIGHT_SWITCH].light_switch =
+        (struct light_switch) { 3, true };
+    timmy->props[PROP_AUDIO_SWITCH].type = PROP_AUDIO_SWITCH;
+    timmy->props[PROP_AUDIO_SWITCH].audio_switch =
+        (struct audio_switch) { 3, true };
 
+#if 0
 	u32 timmy_mat = load_material(pack, "Timmy", 0, 0, 0);
 	struct obj_property timmy_props[4] = { 0 };
 	timmy_props[0].type = PROP_MESH;
