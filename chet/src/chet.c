@@ -1,4 +1,4 @@
-#include "rico.h"
+#include "../../rico/src/rico_internal.h"
 //#include "dlb_types.h"
 //#define DLB_MATH_IMPLEMENTATION
 //#include <math.h>
@@ -18,12 +18,17 @@ void pack_build_alpha(u32 id)
 	const char *filename = "packs/alpha.pak";
 
 	struct pack *pack = pack_init(id, filename, 128, MB(256));
-	u32 bricks_diff = load_texture_file(pack, "Bricks_diff", "texture/cobble_diff.tga");
-	u32 bricks_mrao = load_texture_file(pack, "Bricks_mrao", "texture/cobble_mrao.tga");
-	u32 bricks_emis = load_texture_color(pack, "Bricks_emis", COLOR_TRANSPARENT);
-	u32 bricks_mat = load_material(pack, "Bricks", bricks_diff, bricks_mrao, bricks_emis);
+	pkid bricks_diff = load_texture_file(pack, "Bricks_diff", "texture/cobble_diff.tga");
+	pkid bricks_mrao = load_texture_file(pack, "Bricks_mrao", "texture/cobble_mrao.tga");
+	pkid bricks_emis = load_texture_color(pack, "Bricks_emis", COLOR_TRANSPARENT);
+	pkid bricks_mat = load_material(pack, "Bricks", bricks_diff, bricks_mrao, bricks_emis);
 
-	u32 door_mesh, ground_mesh;
+    RICO_ASSERT(bricks_diff);
+    RICO_ASSERT(bricks_mrao);
+    RICO_ASSERT(bricks_emis);
+    RICO_ASSERT(bricks_mat);
+
+	pkid door_mesh, ground_mesh;
 	load_obj_file(pack, "mesh/alpha_door_001.obj", &door_mesh);
 	load_obj_file(pack, "mesh/alpha_staircase_001.obj", 0);
 	load_obj_file(pack, "mesh/alpha_wall_001.obj", 0);
@@ -31,26 +36,39 @@ void pack_build_alpha(u32 id)
 	load_obj_file(pack, "mesh/alpha_game_panel.obj", 0);
 	load_obj_file(pack, "mesh/alpha_game_button.obj", 0);
 
+    RICO_ASSERT(door_mesh);
+    RICO_ASSERT(ground_mesh);
+
+    pkid ground_pkid = load_object(pack, OBJ_TERRAIN, "Ground");
+    struct rico_object *ground = pack_lookup(ground_pkid);
+	ground->type = OBJ_TERRAIN;
+    ground->props[PROP_MESH].type = PROP_MESH;
+    ground->props[PROP_MESH].mesh_pkid = ground_mesh;
+    ground->props[PROP_MATERIAL].type = PROP_MATERIAL;
+    ground->props[PROP_MATERIAL].material_pkid = bricks_mat;
+
+#if 0
 	struct obj_property ground_props[2] = { 0 };
-	ground_props[0].type = PROP_MESH_ID;
-	ground_props[0].material_id = ground_mesh;
-	ground_props[1].type = PROP_MATERIAL_ID;
-	ground_props[1].material_id = bricks_mat;
+	ground_props[0].type = PROP_MESH;
+	ground_props[0].material_uid = ground_mesh;
+	ground_props[1].type = PROP_MATERIAL;
+	ground_props[1].material_uid = bricks_mat;
 	load_object(pack, "Ground", OBJ_TERRAIN, ARRAY_COUNT(ground_props),
 				ground_props, NULL);
 
 	u32 timmy_mat = load_material(pack, "Timmy", 0, 0, 0);
 	struct obj_property timmy_props[4] = { 0 };
-	timmy_props[0].type = PROP_MESH_ID;
-	timmy_props[0].mesh_id = door_mesh;
-	timmy_props[1].type = PROP_MATERIAL_ID;
-	timmy_props[1].material_id = timmy_mat;
+	timmy_props[0].type = PROP_MESH;
+	timmy_props[0].mesh_uid = door_mesh;
+	timmy_props[1].type = PROP_MATERIAL;
+	timmy_props[1].material_uid = timmy_mat;
 	timmy_props[2].type = PROP_LIGHT_SWITCH;
 	timmy_props[2].light_switch = (struct light_switch) { 3, true };
 	timmy_props[3].type = PROP_AUDIO_SWITCH;
 	timmy_props[3].audio_switch = (struct audio_switch) { 3, true };
 	load_object(pack, "Timmy", OBJ_STATIC, ARRAY_COUNT(timmy_props),
 				timmy_props, NULL);
+#endif
 
 	pack_save(pack, filename, false);
 	pack_free(pack->id);
@@ -68,7 +86,8 @@ int pack_load_all()
 
 	err = pack_load("packs/alpha.pak", &pack_active);
 
-	for (u32 i = 0; i < ARRAY_COUNT(packs); ++i)
+	u32 count = ARRAY_COUNT(packs);
+	for (u32 i = 0; i < count; ++i)
 	{
 		if (packs[i])
         {
@@ -84,7 +103,7 @@ int main(int argc, char **argv)
 	//main_nuklear(argc, argv);
 	RIC_init(argc, argv);
 
-	//pack_build_all();
+	pack_build_all();
 	pack_load_all();
 
 	RIC_run();

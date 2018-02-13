@@ -10,7 +10,7 @@
 #include "rico_hash.c"
 #include "rico_audio.c"
 
-//#include "rico_hnd.c"
+#include "rico_hnd.c"
 #include "shader.c"
 #include "program.c"
 #include "camera.c"
@@ -70,7 +70,7 @@ int RIC_init(int argc, char* argv[])
 	UNUSED(argv);
 
     // Random sanity checks; I just want to know when these change.
-    RICO_ASSERT(sizeof(struct obj_property) < 64);
+    RICO_ASSERT(sizeof(struct obj_property) < 256);
 
     enum rico_error err;
 

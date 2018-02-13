@@ -27,6 +27,7 @@
 #define RICO_DEBUG_FONT             RICO_DEBUG && 0
 #define RICO_DEBUG_HASH             RICO_DEBUG && 0
 #define RICO_DEBUG_PACK             RICO_DEBUG && 0
+#define RICO_DEBUG_BLAH             RICO_DEBUG && 1
 
 #if 0
 // Handle section flags

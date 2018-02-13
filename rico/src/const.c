@@ -2,10 +2,6 @@ const char *rico_error_string[] = {
     RICO_ERRORS(GEN_STRING)
 };
 
-const char *rico_hnd_type_string[] = {
-    RICO_HND_TYPES(GEN_STRING)
-};
-
 void string_truncate(char *buf, int buf_count, int length)
 {
     if (buf_count < 16)

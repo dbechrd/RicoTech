@@ -3,14 +3,11 @@
 
 struct rico_material
 {
-    u32 id;
-    u32 tex_id[3];
-
-    u32 name_offset;
+    struct uid uid;
+    pkid tex_id[3];
 };
 
-global const char *material_name(struct rico_material *material);
-void material_bind(struct pack *pack, u32 id);
-void material_unbind(struct pack *pack, u32 id);
+void material_bind(pkid pkid);
+void material_unbind(pkid pkid);
 
 #endif

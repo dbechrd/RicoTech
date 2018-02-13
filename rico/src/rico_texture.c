@@ -1,8 +1,3 @@
-global const char *texture_name(struct rico_texture *tex)
-{
-    RICO_ASSERT(tex->name_offset);
-    return (char *)((u8 *)tex + tex->name_offset);
-}
 internal u8 *texture_pixels(struct rico_texture *tex)
 {
     return (u8 *)tex + tex->pixels_offset;
@@ -146,7 +141,7 @@ internal int texture_upload(struct rico_texture *texture)
     glBindTexture(rgl_tex.gl_target, 0);
 
     // Store in hash table
-    hashtable_insert_uid(&global_textures, texture->id, &rgl_tex,
+    hashtable_insert_pkid(&global_textures, texture->uid.pkid, &rgl_tex,
                          sizeof(rgl_tex));
     return err;
 }
@@ -154,24 +149,23 @@ internal int texture_upload(struct rico_texture *texture)
 void texture_delete(struct rico_texture *texture)
 {
     struct rgl_texture *rgl_tex =
-        hashtable_search_uid(&global_textures, texture->id);
+        hashtable_search_pkid(&global_textures, texture->uid.pkid);
     if (!rgl_tex) return;
 
     glDeleteTextures(1, &rgl_tex->gl_id);
 
-    hashtable_delete_uid(&global_textures, texture->id);
+    hashtable_delete_pkid(&global_textures, texture->uid.pkid);
 }
 
-void texture_bind(struct pack *pack, u32 id, GLenum texture_unit)
+void texture_bind(pkid pkid, GLenum texture_unit)
 {
-    RICO_ASSERT(pack);
-
-    struct rgl_texture *rgl_tex = hashtable_search_uid(&global_textures, id);
+    struct rgl_texture *rgl_tex = hashtable_search_pkid(&global_textures, pkid);
     if (!rgl_tex)
     {
-        struct rico_texture *texture = pack_lookup(pack, id);
+        struct rico_texture *texture = pack_lookup(pkid);
+        RICO_ASSERT(texture);
         texture_upload(texture);
-        rgl_tex = hashtable_search_uid(&global_textures, id);
+        rgl_tex = hashtable_search_pkid(&global_textures, pkid);
     }
     RICO_ASSERT(rgl_tex);
     RICO_ASSERT(rgl_tex->gl_id);
@@ -185,15 +179,13 @@ void texture_bind(struct pack *pack, u32 id, GLenum texture_unit)
     glBindTexture(rgl_tex->gl_target, rgl_tex->gl_id);
 }
 
-void texture_unbind(struct pack *pack, u32 id, GLenum texture_unit)
+void texture_unbind(pkid pkid, GLenum texture_unit)
 {
-    RICO_ASSERT(pack);
-
-    struct rgl_texture *rgl_tex = hashtable_search_uid(&global_textures, id);
+    struct rgl_texture *rgl_tex = hashtable_search_pkid(&global_textures, pkid);
     RICO_ASSERT(rgl_tex);
 
 #if RICO_DEBUG_TEXTURE
-    struct rico_texture *texture = pack_lookup(pack, id);
+    struct rico_texture *texture = pack_lookup(pack, uid->pkid);
     printf("[ tex][unbd] name=%s\n", texture_name(texture));
 #endif
 

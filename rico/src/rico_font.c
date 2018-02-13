@@ -6,12 +6,6 @@ struct bff_header
     unsigned char StartPoint;
 };
 
-global const char *font_name(struct rico_font *font)
-{
-    RICO_ASSERT(font->name_offset);
-    return (char *)((u8 *)font + font->name_offset);
-}
-
 #if 0
 int font_free(struct rico_font *font)
 {
@@ -58,7 +52,7 @@ void font_render(u32 *mesh_id, u32 *tex_id, struct rico_font *font, float x,
 
     if (!font)
     {
-        font = pack_lookup(packs[PACK_DEFAULT], FONT_DEFAULT);
+        font = pack_lookup(FONT_DEFAULT);
     }
 
     //font_setblend(font);
@@ -135,8 +129,9 @@ void font_render(u32 *mesh_id, u32 *tex_id, struct rico_font *font, float x,
                                 sizeof(*vertices), idx_vertex, vertices,
                                 idx_element, elements);
 
+    RICO_ASSERT(new_mesh_id);
     *mesh_id = new_mesh_id;
-    *tex_id = font->tex_id;
+    *tex_id = font->tex_pkid;
 }
 
 /*

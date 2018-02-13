@@ -50,9 +50,6 @@
     <ClCompile Include="src\rico_cereal.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rico_chunk.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\rico_collision.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -134,9 +131,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\rico_cereal.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rico_chunk.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\rico_collision.h">

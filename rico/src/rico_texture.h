@@ -12,19 +12,17 @@ struct rgl_texture
 
 struct rico_texture
 {
-    u32 id;
+    struct uid uid;
     u32 width;
     u32 height;
     u8 bpp;
     GLenum gl_target;
 
-    u32 name_offset;
     u32 pixels_offset;
 };
 
-global const char *texture_name(struct rico_texture *tex);
 void texture_delete(struct rico_texture *texture);
-void texture_bind(struct pack *pack, u32 id, GLenum texture_unit);
-void texture_unbind(struct pack *pack, u32 id, GLenum texture_unit);
+void texture_bind(pkid pkid, GLenum texture_unit);
+void texture_unbind(pkid pkid, GLenum texture_unit);
 
 #endif

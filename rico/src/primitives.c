@@ -227,7 +227,7 @@ void prim_draw_sphere(const struct sphere *sphere, const struct vec4 *color)
     glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, matrix.a);
     glUniform4f(prog_prim->u_col, color->r, color->g, color->b, color->a);
 
-    mesh_render(packs[PACK_DEFAULT], MESH_DEFAULT_SPHERE, PROG_PRIM);
+    mesh_render(MESH_DEFAULT_SPHERE, PROG_PRIM);
 
     // Clean up
     glUseProgram(0);

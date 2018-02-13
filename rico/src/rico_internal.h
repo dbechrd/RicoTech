@@ -71,4 +71,8 @@ struct pack;
 #include "tinyobjloader.h"
 #include "MurmurHash3.h"
 
+int RIC_init(int argc, char* argv[]);
+int RIC_run();
+void RIC_quit();
+
 #endif

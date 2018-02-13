@@ -1,8 +1,3 @@
-global const char *mesh_name(struct rico_mesh *mesh)
-{
-    RICO_ASSERT(mesh->name_offset);
-    return (char *)((u8 *)mesh + mesh->name_offset);
-}
 global void *mesh_vertices(struct rico_mesh *mesh)
 {
     return ((u8 *)mesh + mesh->vertices_offset);
@@ -61,12 +56,14 @@ void mesh_upload(struct rico_mesh *mesh, GLenum hint,
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     // Store in hash table
-    hashtable_insert_uid(&global_meshes, mesh->id, &rgl_mesh, sizeof(rgl_mesh));
+    hashtable_insert_pkid(&global_meshes, mesh->uid.pkid, &rgl_mesh,
+                          sizeof(rgl_mesh));
 }
 
 void mesh_delete(struct rico_mesh *mesh)
 {
-    struct rgl_mesh *rgl_mesh = hashtable_search_uid(&global_meshes, mesh->id);
+    struct rgl_mesh *rgl_mesh = hashtable_search_pkid(&global_meshes,
+                                                      mesh->uid.pkid);
     if (!rgl_mesh) return;
 
 #if RICO_DEBUG_MESH
@@ -76,19 +73,18 @@ void mesh_delete(struct rico_mesh *mesh)
     glDeleteBuffers(2, rgl_mesh->vbos);
     glDeleteVertexArrays(1, &rgl_mesh->vao);
 
-    hashtable_delete_uid(&global_meshes, mesh->id);
+    hashtable_delete_pkid(&global_meshes, mesh->uid.pkid);
 }
 
-void mesh_render(struct pack *pack, u32 id, enum program_type prog_type)
+void mesh_render(pkid pkid, enum program_type prog_type)
 {
-    RICO_ASSERT(pack);
-
-    struct rgl_mesh *rgl_mesh = hashtable_search_uid(&global_meshes, id);
+    struct rgl_mesh *rgl_mesh = hashtable_search_pkid(&global_meshes, pkid);
     if (!rgl_mesh)
     {
-        struct rico_mesh *mesh = pack_lookup(pack, id);
+        struct rico_mesh *mesh = pack_lookup(pkid);
+        RICO_ASSERT(mesh);
         mesh_upload(mesh, GL_STATIC_DRAW, prog_type);
-        rgl_mesh = hashtable_search_uid(&global_meshes, id);
+        rgl_mesh = hashtable_search_pkid(&global_meshes, pkid);
     }
 
     // Draw

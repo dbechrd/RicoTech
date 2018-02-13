@@ -18,7 +18,7 @@
 
 struct rico_font
 {
-    u32 id;
+    struct uid uid;
     u32 cell_x;
     u32 cell_y;
     u8 base_char;
@@ -29,12 +29,9 @@ struct rico_font
     bool y_invert;
     u8 render_style;
     u8 char_widths[256];
-    u32 tex_id;
-
-    u32 name_offset;
+    pkid tex_pkid;
 };
 
-global const char *font_name(struct rico_font *font);
 void font_render(u32 *mesh_id, u32 *tex_id, struct rico_font *font, float x,
                  float y, struct vec4 bg, const char *text,
                  const char *mesh_name);

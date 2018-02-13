@@ -1,12 +1,12 @@
 #ifndef PACK_BUILDER_H
 #define PACK_BUILDER_H
 
-#define ID_BLOB_BITS 24
-#define ID_BLOB_MASK ((1 << ID_BLOB_BITS) - 1)
-#define ID_PACK_MASK (0xffffffff ^ ID_BLOB_MASK)
-#define ID_PACK(id) ((id & ID_PACK_MASK) >> ID_BLOB_BITS)
-#define ID_BLOB(id) (id & ID_BLOB_MASK)
-#define ID_GENERATE(pack, blob) ((pack << ID_BLOB_BITS) | blob)
+#define PKID_BLOB_BITS 24
+#define PKID_BLOB_MASK ((1 << PKID_BLOB_BITS) - 1)
+#define PKID_PACK_MASK (0xffffffff ^ PKID_BLOB_MASK)
+#define PKID_PACK(id) ((id & PKID_PACK_MASK) >> PKID_BLOB_BITS)
+#define PKID_BLOB(id) (id & PKID_BLOB_MASK)
+#define PKID_GENERATE(pack, blob) ((pack << PKID_BLOB_BITS) | blob)
 
 enum PACK_IDS
 {
@@ -68,6 +68,9 @@ struct pack
 extern u32 packs_next;
 extern struct pack *packs[MAX_PACKS];
 
+internal void *blob_start(struct pack *pack, enum rico_hnd_type type,
+                          const char *name);
+
 internal void pack_expand(struct pack *pack);
 internal void pack_compact_buffer(struct pack *pack);
 
@@ -77,30 +80,28 @@ int pack_save(struct pack *pack, const char *filename, bool shrink);
 int pack_load(const char *filename, struct pack **_pack);
 void pack_free(u32 id);
 
-global void *pack_next(struct pack *pack, u32 id, enum rico_hnd_type type);
-global void *pack_prev(struct pack *pack, u32 id, enum rico_hnd_type type);
-void pack_delete(struct pack *pack, u32 id, enum rico_hnd_type type);
-u32 load_object(struct pack *pack, const char *name,
-                       enum rico_obj_type type, u32 prop_count,
-                       struct obj_property *props, const struct bbox *bbox);
-u32 load_texture(struct pack *pack, const char *name, GLenum target,
-                        u32 width, u32 height, u8 bpp, u8 *pixels);
-u32 load_texture_file(struct pack *pack, const char *name,
-                             const char *filename);
-u32 load_texture_color(struct pack *pack, const char *name,
-                              struct vec4 color);
-u32 load_material(struct pack *pack, const char *name, u32 tex0,
-                         u32 tex1, u32 tex2);
-u32 load_font(struct pack *pack, const char *name,
-                     const char *filename, u32 *font_tex);
-u32 load_mesh(struct pack *pack, const char *name, u32 vertex_size,
-                     u32 vertex_count, const void *vertex_data,
-                     u32 element_count, const GLuint *element_data);
-u32 load_string(struct pack *pack, const char *name,
-                       enum rico_string_slot slot, float x, float y,
-                       struct vec4 color, u32 lifespan, struct rico_font *font,
-                       const char *text);
-int load_obj_file(struct pack *pack, const char *filename, u32 *_last_mesh_id);
+global void *pack_next(pkid pkid, enum rico_hnd_type type);
+global void *pack_prev(pkid pkid, enum rico_hnd_type type);
+void pack_delete(pkid pkid);
+
+pkid load_object(struct pack *pack, enum rico_obj_type type, const char *name);
+pkid load_texture(struct pack *pack, const char *name, GLenum target,
+                 u32 width, u32 height, u8 bpp, u8 *pixels);
+pkid load_texture_file(struct pack *pack, const char *name,
+                       const char *filename);
+pkid load_texture_color(struct pack *pack, const char *name, struct vec4 color);
+pkid load_material(struct pack *pack, const char *name, pkid tex0, pkid tex1,
+                   pkid tex2);
+pkid load_font(struct pack *pack, const char *name, const char *filename,
+               pkid *font_tex);
+pkid load_mesh(struct pack *pack, const char *name, u32 vertex_size,
+               u32 vertex_count, const void *vertex_data,
+               u32 element_count, const GLuint *element_data);
+pkid load_string(struct pack *pack, const char *name,
+                 enum rico_string_slot slot, float x, float y,
+                 struct vec4 color, u32 lifespan, struct rico_font *font,
+                 const char *text);
+int load_obj_file(struct pack *pack, const char *filename, pkid *_last_mesh_id);
 global void pack_build_default();
 
 internal inline void *pack_push(struct pack *pack, u32 bytes)
@@ -162,14 +163,14 @@ internal inline void *pack_read(struct pack *pack, u32 index)
     return pack->buffer + pack->index[index].offset;
 }
 
-global inline void *pack_lookup(struct pack *pack, u32 id)
+global inline void *pack_lookup(pkid pkid)
 {
-    u32 pack_id = ID_PACK(id);
-    RICO_ASSERT(pack_id == pack->id);
+    u32 pack_id = PKID_PACK(pkid);
+    RICO_ASSERT(pack_id < MAX_PACKS);
+    struct pack *pack = packs[pack_id];
 
-    u32 blob_id = ID_BLOB(id);
+    u32 blob_id = PKID_BLOB(pkid);
     RICO_ASSERT(blob_id < pack->blob_count);
-
     return pack_read(pack, pack->lookup[blob_id]);
 }
 

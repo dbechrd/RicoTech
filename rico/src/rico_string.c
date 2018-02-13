@@ -14,7 +14,7 @@ void string_delete(struct pack *pack, struct rico_string *str)
         hashtable_delete(&global_string_slots, &str->slot, sizeof(str->slot));
     }
 
-    pack_delete(pack, str->object_id, RICO_HND_OBJECT);
+    pack_delete(str->object_id);
 }
 
 bool string_free_slot(enum rico_string_slot slot)
@@ -25,7 +25,7 @@ bool string_free_slot(enum rico_string_slot slot)
         u32 *id = hashtable_search(&global_string_slots, &slot, sizeof(slot));
         if (id)
         {
-            pack_delete(packs[PACK_TRANSIENT], *id, RICO_HND_STRING);
+            pack_delete(*id);
             return true;
         }
     }
@@ -58,7 +58,7 @@ void string_update()
             }
             else
             {
-                pack_delete(packs[PACK_TRANSIENT], str->id, RICO_HND_STRING);
+                pack_delete(str->uid.pkid);
                 continue;
             }
         }

@@ -13,7 +13,7 @@ struct widget
 struct widget widgets[3];
 struct widget *widget;
 
-global u32 selected_obj_id;
+global pkid selected_obj_id;
 
 struct program_pbr *prog_pbr;
 struct program_primitive *prog_prim;
@@ -42,16 +42,9 @@ void edit_object_create(struct pack *pack)
     // TODO: Prompt user for object name
     const char *name = "new_obj";
 
-    // TODO: Allow properties to be added dynamically
     // Create new object and select it
-    struct obj_property props[2] = { 0 };
-    props[0].type = PROP_MESH_ID;
-    props[0].mesh_id = 0;
-    props[1].type = PROP_MATERIAL_ID;
-    props[1].material_id = 0;
-    u32 new_obj_id = load_object(pack, name, OBJ_STATIC, ARRAY_COUNT(props),
-                                 props, NULL);
-    struct rico_object *obj = pack_lookup(pack, new_obj_id);
+    pkid obj_pkid = load_object(pack, OBJ_STATIC, name);
+    struct rico_object *obj = pack_lookup(obj_pkid);
     edit_object_select(obj, false);
 }
 
@@ -62,7 +55,7 @@ void edit_bbox_reset_all()
     // Reselect current object
     if (selected_obj_id)
     {
-        struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
+        struct rico_object *obj = pack_lookup(selected_obj_id);
         edit_object_select(obj, true);
     }
 }
@@ -76,15 +69,15 @@ void edit_object_select(struct rico_object *object, bool force)
     // Deselect current object
     if (selected_obj_id)
     {
-        struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
+        struct rico_object *obj = pack_lookup(selected_obj_id);
         object_deselect(obj);
     }
 
     // Select requested object
-    if (object && (force || object->id != selected_obj_id))
+    if (object && (force || object->uid.pkid != selected_obj_id))
     {
         object_select(object);
-        selected_obj_id = object->id;
+        selected_obj_id = object->uid.pkid;
     }
     else
     {
@@ -96,19 +89,19 @@ void edit_object_select(struct rico_object *object, bool force)
 
 void edit_object_next()
 {
-    edit_object_select(pack_next(pack_active, selected_obj_id, RICO_HND_OBJECT), false);
+    edit_object_select(pack_next(selected_obj_id, RICO_HND_OBJECT), false);
 }
 
 void edit_object_prev()
 {
-    edit_object_select(pack_prev(pack_active, selected_obj_id, RICO_HND_OBJECT), false);
+    edit_object_select(pack_prev(selected_obj_id, RICO_HND_OBJECT), false);
 }
 
 void edit_print_object()
 {
     struct rico_object *obj = NULL;
     if (selected_obj_id)
-        obj = pack_lookup(pack_active, selected_obj_id);
+        obj = pack_lookup(selected_obj_id);
     object_print(obj);
 }
 
@@ -117,7 +110,7 @@ void edit_translate(struct camera *camera, const struct vec3 *offset)
     if (!selected_obj_id)
         return;
 
-    struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
+    struct rico_object *obj = pack_lookup(selected_obj_id);
     bool selectable = object_selectable(obj);
 
     if (v3_equals(offset, &VEC3_ZERO))
@@ -145,7 +138,7 @@ void edit_rotate(const struct vec3 *offset)
     if (!selected_obj_id)
         return;
 
-    struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
+    struct rico_object *obj = pack_lookup(selected_obj_id);
     if (v3_equals(offset, &VEC3_ZERO))
     {
         object_rot_set(obj, &VEC3_ZERO);
@@ -163,7 +156,7 @@ void edit_scale(const struct vec3 *offset)
     if (!selected_obj_id)
         return;
 
-    struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
+    struct rico_object *obj = pack_lookup(selected_obj_id);
     if (v3_equals(offset, &VEC3_ZERO))
     {
         object_scale_set(obj, &VEC3_ONE);
@@ -181,18 +174,17 @@ void edit_material_next()
     if (!selected_obj_id)
         return;
 
-    struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
-    struct obj_property *mat_prop = object_prop(obj, PROP_MATERIAL_ID);
-    if (mat_prop)
+    struct rico_object *obj = pack_lookup(selected_obj_id);
+    struct obj_property *mat_prop = &obj->props[PROP_MATERIAL];
+    if (!mat_prop->type)
+        return;
+
+    struct rico_material *next_material = pack_next(mat_prop->material_pkid,
+                                                    RICO_HND_MATERIAL);
+    if (next_material)
     {
-        struct rico_material *next_material =
-            pack_next(pack_active, mat_prop->material_id,
-                      RICO_HND_MATERIAL);
-        if (next_material)
-        {
-            mat_prop->material_id = next_material->id;
-            object_print(obj);
-        }
+        mat_prop->material_pkid = next_material->uid.pkid;
+        object_print(obj);
     }
 }
 
@@ -201,18 +193,17 @@ void edit_material_prev()
     if (!selected_obj_id)
         return;
 
-    struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
-    struct obj_property *mat_prop = object_prop(obj, PROP_MATERIAL_ID);
-    if (mat_prop)
+    struct rico_object *obj = pack_lookup(selected_obj_id);
+    struct obj_property *mat_prop = &obj->props[PROP_MATERIAL];
+    if (!mat_prop->type)
+        return;
+
+    struct rico_material *prev_material = pack_prev(mat_prop->material_pkid,
+                                                    RICO_HND_MATERIAL);
+    if (prev_material)
     {
-        struct rico_material *prev_material =
-            pack_prev(pack_active, mat_prop->material_id,
-                      RICO_HND_MATERIAL);
-        if (prev_material)
-        {
-            mat_prop->material_id = prev_material->id;
-            object_print(obj);
-        }
+        mat_prop->material_pkid = prev_material->uid.pkid;
+        object_print(obj);
     }
 }
 
@@ -221,20 +212,20 @@ void edit_mesh_next()
     if (!selected_obj_id)
         return;
 
-    struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
-    struct obj_property *mesh_prop = object_prop(obj, PROP_MESH_ID);
-    if (mesh_prop)
+    struct rico_object *obj = pack_lookup(selected_obj_id);
+    struct obj_property *mesh_prop = &obj->props[PROP_MESH];
+    if (!mesh_prop->type)
+        return;
+
+    struct rico_mesh *next_mesh = pack_next(mesh_prop->mesh_pkid,
+                                            RICO_HND_MESH);
+    if (next_mesh)
     {
-        struct rico_mesh *next_mesh =
-            pack_next(pack_active, mesh_prop->mesh_id,
-                      RICO_HND_MESH);
-        if (next_mesh)
-        {
-            mesh_prop->mesh_id = next_mesh->id;
-            obj->bbox = next_mesh->bbox;
-            object_select(obj);
-            object_print(obj);
-        }
+        mesh_prop->mesh_pkid = next_mesh->uid.pkid;
+        obj->props[PROP_BBOX].type = PROP_BBOX;
+        obj->props[PROP_BBOX].bbox = next_mesh->bbox;
+        object_select(obj);
+        object_print(obj);
     }
 }
 
@@ -243,20 +234,20 @@ void edit_mesh_prev()
     if (!selected_obj_id)
         return;
 
-    struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
-    struct obj_property *mesh_prop = object_prop(obj, PROP_MESH_ID);
-    if (mesh_prop)
+    struct rico_object *obj = pack_lookup(selected_obj_id);
+    struct obj_property *mesh_prop = &obj->props[PROP_MESH];
+    if (!mesh_prop->type)
+        return;
+
+    struct rico_mesh *prev_mesh = pack_prev(mesh_prop->mesh_pkid,
+                                            RICO_HND_MESH);
+    if (prev_mesh)
     {
-        struct rico_mesh *prev_mesh =
-            pack_prev(pack_active, mesh_prop->mesh_id,
-                      RICO_HND_MESH);
-        if (prev_mesh)
-        {
-            mesh_prop->mesh_id = prev_mesh->id;
-            obj->bbox = prev_mesh->bbox;
-            object_select(obj);
-            object_print(obj);
-        }
+        mesh_prop->mesh_pkid = prev_mesh->uid.pkid;
+        obj->props[PROP_BBOX].type = PROP_BBOX;
+        obj->props[PROP_BBOX].bbox = prev_mesh->bbox;
+        object_select(obj);
+        object_print(obj);
     }
 }
 
@@ -265,13 +256,14 @@ void edit_bbox_reset()
     if (!selected_obj_id)
         return;
 
-    struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
-    struct obj_property *mesh_prop = object_prop(obj, PROP_MESH_ID);
-    if (!mesh_prop)
+    struct rico_object *obj = pack_lookup(selected_obj_id);
+    struct obj_property *mesh_prop = &obj->props[PROP_MESH];
+    if (!mesh_prop->type)
         return;
 
-    struct rico_mesh *mesh = pack_lookup(pack_active, mesh_prop->mesh_id);
-    obj->bbox = mesh->bbox;
+    struct rico_mesh *mesh = pack_lookup(mesh_prop->mesh_pkid);
+    obj->props[PROP_BBOX].type = PROP_BBOX;
+    obj->props[PROP_BBOX].bbox = mesh->bbox;
 
     object_select(obj);
     object_print(obj);
@@ -285,8 +277,9 @@ void edit_duplicate()
     // TODO: Prompt user for name
     const char *name = "Duplicate";
 
-    struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
-    struct rico_object *new_obj = object_copy(pack_active, obj, name);
+    struct rico_object *obj = pack_lookup(selected_obj_id);
+    struct rico_object *new_obj = object_copy(packs[PKID_PACK(selected_obj_id)],
+                                              obj, name);
     edit_object_select(new_obj, false);
 }
 
@@ -295,7 +288,7 @@ void edit_delete()
     if (!selected_obj_id)
         return;
 
-    pack_delete(pack_active, selected_obj_id, RICO_HND_OBJECT);
+    pack_delete(selected_obj_id);
     edit_object_prev();
 }
 
@@ -305,12 +298,12 @@ struct widget *widget_test()
 
     if (selected_obj_id)
     {
-        struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
+        struct rico_object *obj = pack_lookup(selected_obj_id);
         struct ray cam_ray = { 0 };
         camera_fwd_ray(&cam_ray, &cam_player);
 
         struct mat4 xform = MAT4_IDENT;
-        mat4_translate(&xform, &obj->xform.trans);
+        mat4_translate(&xform, &obj->props[PROP_TRANSFORM].xform.trans);
 
         float dist_min = 9999.0;
         for (u32 i = 0; i < ARRAY_COUNT(widgets); ++i)
@@ -371,11 +364,11 @@ void edit_mouse_move()
     camera_fwd_ray(&cam_ray, &cam_player);
 
     bool collide = false;
-    struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
-    struct vec3 trans = obj->xform.trans;
+    struct rico_object *obj = pack_lookup(selected_obj_id);
+    struct vec3 trans = obj->props[PROP_TRANSFORM].xform.trans;
 
     struct vec3 normal = cam_player.pos;
-    v3_sub(&normal, &obj->xform.trans);
+    v3_sub(&normal, &obj->props[PROP_TRANSFORM].xform.trans);
 
     if (widget->action == WIDGET_TRANSLATE_X)
     {
@@ -386,7 +379,8 @@ void edit_mouse_move()
         //                &COLOR_RED_HIGHLIGHT);
 
         struct vec3 contact = { 0 };
-        collide = collide_ray_plane(&contact, &cam_ray, &obj->xform.trans,
+        collide = collide_ray_plane(&contact, &cam_ray,
+                                    &obj->props[PROP_TRANSFORM].xform.trans,
                                     &normal);
         if (collide) {
             trans.x = contact.x - WIDGET_BOX_OFFSET;
@@ -402,7 +396,8 @@ void edit_mouse_move()
         //                &COLOR_GREEN_HIGHLIGHT);
 
         struct vec3 contact = { 0 };
-        collide = collide_ray_plane(&contact, &cam_ray, &obj->xform.trans,
+        collide = collide_ray_plane(&contact, &cam_ray,
+                                    &obj->props[PROP_TRANSFORM].xform.trans,
                                     &normal);
         if (collide) {
             trans.y = contact.y - WIDGET_BOX_OFFSET;
@@ -418,7 +413,8 @@ void edit_mouse_move()
         //                &COLOR_BLUE_HIGHLIGHT);
 
         struct vec3 contact = { 0 };
-        collide = collide_ray_plane(&contact, &cam_ray, &obj->xform.trans,
+        collide = collide_ray_plane(&contact, &cam_ray,
+                                    &obj->props[PROP_TRANSFORM].xform.trans,
                                     &normal);
         if (collide) {
             trans.z = contact.z - WIDGET_BOX_OFFSET;
@@ -455,10 +451,10 @@ void edit_render(struct camera *camera)
     //--------------------------------------------------------------------------
     if (selected_obj_id)
     {
-        struct rico_object *obj = pack_lookup(pack_active, selected_obj_id);
+        struct rico_object *obj = pack_lookup(selected_obj_id);
 
         struct mat4 xform = MAT4_IDENT;
-        mat4_translate(&xform, &obj->xform.trans);
+        mat4_translate(&xform, &obj->props[PROP_TRANSFORM].xform.trans);
 
         prim_draw_line(VEC3_ZERO, VEC3_X, &xform, COLOR_RED);
         prim_draw_line(VEC3_ZERO, VEC3_Y, &xform, COLOR_GREEN);

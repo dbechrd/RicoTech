@@ -51,12 +51,12 @@ void test_hashtable()
 
     //=================================================
 
-    uid key_uid = 12345;
-    hashtable_insert_uid(table, key_uid, &data, sizeof(data));
+    pkid key_pkid = 12345;
+    hashtable_insert_pkid(table, key_pkid, &data, sizeof(data));
 
-    int *lookup_uid = hashtable_search_uid(table, key_uid);
+    int *lookup_uid = hashtable_search_pkid(table, key_pkid);
     RICO_ASSERT(*lookup_uid == data);
-    RICO_ASSERT(hashtable_delete_uid(table, key_uid));
+    RICO_ASSERT(hashtable_delete_pkid(table, key_pkid));
 }
 
 void test_ndc_macros()

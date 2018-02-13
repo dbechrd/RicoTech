@@ -26,9 +26,11 @@ struct rico_transform
 
 #define RICO_PROP_TYPES(f) \
     f(PROP_NULL)           \
-    f(PROP_MESH_ID)        \
-    f(PROP_TEXTURE_ID)     \
-    f(PROP_MATERIAL_ID)    \
+    f(PROP_TRANSFORM)      \
+    f(PROP_MESH)           \
+    f(PROP_TEXTURE)        \
+    f(PROP_MATERIAL)       \
+    f(PROP_BBOX)           \
     f(PROP_LIGHT_DIR)      \
     f(PROP_LIGHT_POINT)    \
     f(PROP_LIGHT_SPOT)     \
@@ -45,67 +47,50 @@ extern const char *rico_prop_type_string[];
 
 struct light_switch
 {
-    u32 light_id;
+    pkid light_id;
     bool state;
 };
 
 struct audio_switch
 {
-    u32 audio_id;
+    pkid audio_id;
     bool state;
 };
 
 struct game_button
 {
-    u32 button_id;
+    pkid button_id;
     bool state;
 };
 
+// TODO: This is really dumb.. eventually I'll replace it with: pkid props[]
 struct obj_property
 {
     enum obj_prop_type type;
     union
     {
-        // PROP_MESH
-        u32 mesh_id;
-        // PROP_TEXTURE
-        u32 texture_id;
-        // PROP_MATERIAL
-        u32 material_id;
-        // PROP_LIGHT_DIR
+        struct rico_transform xform;
+        pkid mesh_pkid;
+        pkid texture_pkid;
+        pkid material_pkid;
+        struct bbox bbox;
         struct light_directional light_dir;
-        // PROP_LIGHT_POINT
         struct light_point light_point;
-        // PROP_LIGHT_SPOT
         struct light_spot light_spot;
-        // PROP_LIGHT_SWITCH
         struct light_switch light_switch;
-        // PROP_AUDIO_SWITCH
         struct audio_switch audio_switch;
-        // PROP_GAME_BUTTON
         struct game_button game_button;
     };
 };
 
 struct rico_object
 {
-    u32 id;
+    struct uid uid;
     enum rico_obj_type type;
-    struct bbox bbox;
 
-    // TODO: Refactor into rico_transform
-    // TODO: Animation
-    struct rico_transform xform;
-
-    u32 name_offset;
-    u32 prop_count;
-    u32 props_offset;
+    struct obj_property props[PROP_COUNT];
 };
 
-global const char *object_name(struct rico_object *obj);
-global struct obj_property *object_props(struct rico_object *obj);
-global struct obj_property *object_prop(struct rico_object *obj,
-                                        enum obj_prop_type type);
 global void object_delete(struct pack *pack, struct rico_object *obj);
 global struct rico_object *object_copy(struct pack *pack,
                                        struct rico_object *other,

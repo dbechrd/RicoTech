@@ -17,7 +17,7 @@ SRC_FILES := chet.c
 LIBS = -lrico -lSDL2main -lSDL2 -lopengl32 -lopenal32 # Use this with MSVC libs
 LIB_DIRS := $(LIB_DIR:%=-L%)
 LIBS := $(LIB_DIRS) $(LIBS)
-BIN_EXE := $(BIN_DIR)/Chet.exe
+BIN_EXE := $(BIN_DIR)/chet.exe
 RES_SUBDIRS := audio font mesh packs shader texture
 
 INCLUDE_DIRS := $(INC_DIR:%=-I%)

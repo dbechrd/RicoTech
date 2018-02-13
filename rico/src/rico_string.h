@@ -18,9 +18,9 @@ extern const char *rico_string_slot_string[];
 
 struct rico_string
 {
-    u32 id;
+    struct uid uid;
     enum rico_string_slot slot;
-    u32 object_id;
+    pkid object_id;
     u32 lifespan;
 };
 
