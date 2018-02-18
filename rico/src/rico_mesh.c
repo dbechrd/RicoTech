@@ -1,4 +1,4 @@
-global void *mesh_vertices(struct rico_mesh *mesh)
+void *mesh_vertices(struct rico_mesh *mesh)
 {
     return ((u8 *)mesh + mesh->vertices_offset);
 }
@@ -81,7 +81,7 @@ void mesh_render(pkid pkid, enum program_type prog_type)
     struct rgl_mesh *rgl_mesh = hashtable_search_pkid(&global_meshes, pkid);
     if (!rgl_mesh)
     {
-        struct rico_mesh *mesh = pack_lookup(pkid);
+        struct rico_mesh *mesh = RICO_pack_lookup(pkid);
         RICO_ASSERT(mesh);
         mesh_upload(mesh, GL_STATIC_DRAW, prog_type);
         rgl_mesh = hashtable_search_pkid(&global_meshes, pkid);

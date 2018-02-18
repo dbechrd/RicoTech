@@ -38,7 +38,7 @@ bool string_free_slot(enum rico_string_slot slot)
 //       time to delete in ms, soonest first.
 void string_update()
 {
-    struct pack *pack = packs[PACK_TRANSIENT];
+    struct pack *pack = RICO_packs[PACK_TRANSIENT];
     struct rico_string *str = 0;
     u32 index = 0;
     while(index < pack->blobs_used)

@@ -1,9 +1,9 @@
-internal ALCdevice *audio_device = 0;
-internal ALCcontext *audio_context = 0;
-internal ALuint audio_buffer;
-ALuint audio_source;
+const char *rico_audio_state_string[] = { RICO_AUDIO_STATE(GEN_STRING) };
 
-void init_openal()
+static ALCdevice *audio_device = 0;
+static ALCcontext *audio_context = 0;
+
+static void init_openal()
 {
     ALenum err;
 
@@ -36,22 +36,123 @@ void init_openal()
 		return;
 	}
 
-    alGenSources(1, &audio_source);
-    alSourcef(audio_source, AL_PITCH, 1.0f);
-    alSourcef(audio_source, AL_GAIN, 1.0f);
-    alSourcei(audio_source, AL_LOOPING, AL_TRUE);
-    
+    err = alGetError();
+    if (err) RICO_ERROR(ERR_OPENAL_INIT, "OpenAL error: %s\n", err);
+}
+
+void RICO_audio_volume_set(float volume)
+{
+    alListenerf(AL_GAIN, volume);
+}
+
+void RICO_audio_mute()
+{
+    RICO_audio_volume_set(0.0f);
+}
+
+void RICO_audio_unmute()
+{
+    RICO_audio_volume_set(1.0f);
+}
+
+void RICO_audio_source_init(struct rico_audio_source *source)
+{
+    if (!source->pitch) source->pitch = 1.0f;
+    if (!source->gain) source->gain = 1.0f;
+
+    alGenSources(1, &source->al_source_id);
+    alSourcef(source->al_source_id, AL_PITCH, source->pitch);
+    alSourcef(source->al_source_id, AL_GAIN, source->gain);
+
+    // TODO: Attach rico_audio to objects which auto-update this stuff
 #ifdef POSITIONAL_SOUND
     struct vec3 src_pos = VEC3(0.0f, 1.5f, 0.0f);
     alSourcefv(audio_source, AL_POSITION, (float *)&src_pos);
     alSourcefv(audio_source, AL_VELOCITY, (float *)&VEC3_ZERO);
 #else
-    alSourcei(audio_source, AL_SOURCE_RELATIVE, AL_TRUE);
+    alSourcei(source->al_source_id, AL_SOURCE_RELATIVE, AL_TRUE);
     //alSourcefv(audio_source, AL_POSITION, (float *)&VEC3_ZERO);
     //alSourcefv(audio_source, AL_POSITION, (float *)&VEC3_ZERO);
 #endif
+}
 
-    alGenBuffers(1, &audio_buffer);
+void RICO_audio_source_free(struct rico_audio_source *source)
+{
+    alDeleteSources(1, &source->al_source_id);
+}
+
+void RICO_audio_buffer_load_file(struct rico_audio_buffer *buffer,
+                                 const char *filename)
+{
+    u32 len;
+    char *data;
+    file_contents(filename, &len, &data);
+    RICO_audio_buffer_load(buffer, len, data);
+    free(data);
+}
+
+#if 0
+// TODO: Copy rico_mesh auto-load scheme for audio buffers that that are loaded
+//       in from packs.
+void audio_upload(struct ral_audio_buffer *buffer)
+{
+
+}
+#endif
+
+void RICO_audio_source_play(struct rico_audio_source *source)
+{
+    source->loop = false;
+    alSourcei(source->al_source_id, AL_LOOPING, source->loop);
+    alSourcePlay(source->al_source_id);
+}
+
+void RICO_audio_source_play_loop(struct rico_audio_source *source)
+{
+    source->loop = true;
+    alSourcei(source->al_source_id, AL_LOOPING, source->loop);
+    alSourcePlay(source->al_source_id);
+}
+
+void RICO_audio_source_pause(struct rico_audio_source *source)
+{
+    alSourcePause(source->al_source_id);
+}
+
+void RICO_audio_source_resume(struct rico_audio_source *source)
+{
+    alSourcePlay(source->al_source_id);
+}
+
+void RICO_audio_source_stop(struct rico_audio_source *source)
+{
+    alSourceStop(source->al_source_id);
+}
+
+enum rico_audio_state RICO_audio_source_state(struct rico_audio_source *source)
+{
+    ALenum state;
+    alGetSourcei(source->al_source_id, AL_SOURCE_STATE, &state);
+
+    switch (state)
+    {
+        case AL_INITIAL:
+        case AL_STOPPED:
+            return RICO_AUDIO_STOPPED;
+        case AL_PLAYING:
+            return RICO_AUDIO_STOPPED;
+        case AL_PAUSED:
+            return RICO_AUDIO_STOPPED;
+        default:
+            return RICO_AUDIO_UNKNOWN;
+    }
+}
+
+
+void RICO_audio_buffer_load(struct rico_audio_buffer *buffer, u32 len,
+                            char *data)
+{
+    alGenBuffers(1, &buffer->al_buffer_id);
 
 #define SAMPLE_RATE 44100
 #if 0
@@ -73,22 +174,19 @@ void init_openal()
     }
     alBufferData(audio_buffer, AL_FORMAT_MONO16, buf, sizeof(buf), SAMPLE_RATE);
 #else
-    u32 len;
-    char *buf;
-    file_contents("audio/thunder_storm.raw", &len, &buf);
-    alBufferData(audio_buffer, AL_FORMAT_MONO16, buf, len, SAMPLE_RATE);
-    free(buf);
+    // TODO: Allow caller to specify format and sample rate
+    alBufferData(buffer->al_buffer_id, AL_FORMAT_MONO16, data, len, SAMPLE_RATE);
 #endif
+}
 
+void RICO_audio_source_buffer(struct rico_audio_source *source,
+                              struct rico_audio_buffer *buffer)
+{
     //alSourceQueueBuffers(audio_source, 1, &audio_buffer);
-    alSourcei(audio_source, AL_BUFFER, audio_buffer);
+    alSourcei(source->al_source_id, AL_BUFFER, buffer->al_buffer_id);
+}
 
-    //AL_INITIAL, AL_PLAYING, AL_PAUSED, AL_STOPPED
-    //ALenum state;
-    //alGetSourcei(audio_source, AL_SOURCE_STATE, &state);
-
-    alSourcePlay(audio_source);
-
-    err = alGetError();
-    if (err) RICO_ERROR(ERR_OPENAL_INIT, "OpenAL error: %s\n", err);
+void RICO_audio_buffer_free(struct rico_audio_buffer *buffer)
+{
+    alDeleteBuffers(1, &buffer->al_buffer_id);
 }

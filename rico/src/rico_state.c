@@ -1,13 +1,24 @@
 #define LOAD_SAVE_FILE false
 
-#include "rico_input.h"
-
 ///|////////////////////////////////////////////////////////////////////////////
-const char *rico_state_string[] = {
-    RICO_STATES(GEN_STRING)
-};
+#define RICO_STATES(f)       \
+    f(STATE_PLAY_EXPLORE)    \
+    f(STATE_EDIT_TRANSLATE)  \
+    f(STATE_EDIT_ROTATE)     \
+    f(STATE_EDIT_SCALE)      \
+    f(STATE_EDIT_MATERIAL)   \
+    f(STATE_EDIT_MESH)       \
+    f(STATE_MENU_QUIT)       \
+    f(STATE_TEXT_INPUT)      \
+    f(STATE_ENGINE_SHUTDOWN) \
+    f(STATE_COUNT)
+
+enum rico_state { RICO_STATES(GEN_LIST) };
+const char *rico_state_string[] = { RICO_STATES(GEN_STRING) };
 
 static struct rico_keychord action_chords[ACTION_COUNT] = { 0 };
+static enum rico_action action_queue[32] = { 0 };
+u32 action_queue_count = 0;
 
 ///|////////////////////////////////////////////////////////////////////////////
 //Human walk speed empirically found to be 33 steps in 20 seconds. That is
@@ -166,8 +177,8 @@ void render_fps(r64 fps, r64 ms, r64 mcyc)
                        mcyc);
     string_truncate(buf, sizeof(buf), len);
     string_free_slot(STR_SLOT_FPS);
-    load_string(packs[PACK_TRANSIENT], rico_string_slot_string[STR_SLOT_FPS],
-                STR_SLOT_FPS, SCREEN_X(-(FONT_WIDTH * len)), SCREEN_Y(0),
+    RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_FPS,
+                SCREEN_X(-(FONT_WIDTH * len)), SCREEN_Y(0),
                 COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
 }
 
@@ -206,6 +217,8 @@ int engine_update()
 	keys = keys_tmp;
 	memcpy(keys, SDL_GetKeyboardState(0), SDL_NUM_SCANCODES);
 
+    RICO_check_key_events();
+
     ///-------------------------------------------------------------------------
     //| State actions
     ///-------------------------------------------------------------------------
@@ -238,10 +251,8 @@ int engine_update()
         string_truncate(buf, sizeof(buf), len);
 
         string_free_slot(STR_SLOT_STATE);
-        load_string(packs[PACK_TRANSIENT],
-                    rico_string_slot_string[STR_SLOT_STATE], STR_SLOT_STATE,
-                    SCREEN_X(0), SCREEN_Y(0), COLOR_DARK_RED_HIGHLIGHT, 0, NULL,
-                    buf);
+        RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_STATE, SCREEN_X(0),
+                    SCREEN_Y(0), COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
     }
 
     ///-------------------------------------------------------------------------
@@ -321,18 +332,26 @@ internal int shared_engine_events()
 {
     enum rico_error err = SUCCESS;
 
-    // Toggle scene lighting
+#if RICO_DEBUG
+    // DEBUG: Toggle scene lighting
     if (chord_pressed(ACTION_ENGINE_DEBUG_LIGHTING_TOGGLE))
     {
-        // TODO: Pretty sure this is broken
-        // TODO: Use this to change shader program on render
         enable_lighting = !enable_lighting;
     }
-#if RICO_DEBUG
     // DEBUG: Trigger breakpoint
     else if (chord_pressed(ACTION_ENGINE_DEBUG_TRIGGER_BREAKPOINT))
     {
         SDL_TriggerBreakpoint();
+    }
+    // DEBUG: Change FOV
+    else if (chord_pressed(ACTION_ENGINE_DEBUG_FOV_INCREASE) ||
+             chord_pressed(ACTION_ENGINE_DEBUG_FOV_DECREASE))
+    {
+        float fov = cam_player.fov_deg;
+        fov += chord_pressed(ACTION_ENGINE_DEBUG_FOV_INCREASE)
+            ? 5.0f
+            : -5.0f;
+        camera_set_fov(&cam_player, fov);
     }
 #endif
     // Toggle FPS counter
@@ -360,7 +379,7 @@ internal int shared_engine_events()
     else if (chord_pressed(ACTION_ENGINE_MUTE_TOGGLE))
     {
         audio_muted = !audio_muted;
-        alSourcef(audio_source, AL_GAIN, (audio_muted) ? 0.0f : 1.0f);
+        (audio_muted) ? RICO_audio_mute() : RICO_audio_unmute();
 
         char buf[16] = { 0 };
         int len;
@@ -373,20 +392,16 @@ internal int shared_engine_events()
             len = snprintf(buf, sizeof(buf), "Volume: 100%%");
         }
         string_truncate(buf, sizeof(buf), len);
-        string_free_slot(STR_SLOT_DEBUG);
-        load_string(packs[PACK_TRANSIENT],
-                    rico_string_slot_string[STR_SLOT_DEBUG], STR_SLOT_DEBUG,
-                    SCREEN_X(-150), SCREEN_Y(0), COLOR_DARK_GRAY, 1000, NULL,
-                    buf);
+        RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_DYNAMIC,
+                    SCREEN_X(-FONT_WIDTH * 12), SCREEN_Y(0), COLOR_DARK_GRAY,
+                    1000, NULL, buf);
     }
     // Save and exit
     else if (chord_pressed(ACTION_ENGINE_QUIT))
     {
         string_free_slot(STR_SLOT_MENU_QUIT);
-        load_string(packs[PACK_TRANSIENT],
-                    rico_string_slot_string[STR_SLOT_MENU_QUIT],
-                    STR_SLOT_MENU_QUIT, SCREEN_X(SCREEN_W / 2 - 92),
-                    SCREEN_Y(SCREEN_H / 2 - 128),
+        RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_MENU_QUIT,
+                    SCREEN_X(SCREEN_W / 2 - 92), SCREEN_Y(SCREEN_H / 2 - 128),
                     COLOR_DARK_GREEN_HIGHLIGHT, 0, NULL,
                     "                       \n" \
                     "  Save and quit?       \n" \
@@ -535,7 +550,7 @@ internal int shared_edit_events()
     // Save chunk
     else if (chord_pressed(ACTION_EDIT_SAVE))
     {
-		err = pack_save(pack_active, pack_active->name, false);
+		err = RICO_pack_save(pack_active, pack_active->name, false);
     }
 
 	if (cursor_moved || !v3_equals(&player_acc, &VEC3_ZERO))
@@ -661,10 +676,8 @@ internal int state_edit_translate()
         int len = snprintf(buf, sizeof(buf), "Trans Delta: %f", trans_delta);
         string_truncate(buf, sizeof(buf), len);
         string_free_slot(STR_SLOT_DELTA);
-        load_string(packs[PACK_TRANSIENT],
-                    rico_string_slot_string[STR_SLOT_DELTA], STR_SLOT_DELTA,
-                    SCREEN_X(0), SCREEN_Y(0), COLOR_DARK_BLUE_HIGHLIGHT, 1000,
-                    NULL, buf);
+        RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_DELTA, SCREEN_X(0),
+                    SCREEN_Y(0), COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL, buf);
     }
 
     return err;
@@ -748,10 +761,8 @@ internal int state_edit_rotate()
         string_truncate(buf, sizeof(buf), len);
 
         string_free_slot(STR_SLOT_DELTA);
-        load_string(packs[PACK_TRANSIENT],
-                    rico_string_slot_string[STR_SLOT_DELTA], STR_SLOT_DELTA,
-                    SCREEN_X(0), SCREEN_Y(0), COLOR_DARK_BLUE_HIGHLIGHT, 1000,
-                    NULL, buf);
+        RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_DELTA, SCREEN_X(0),
+                    SCREEN_Y(0), COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL, buf);
     }
 
     return err;
@@ -840,10 +851,8 @@ internal int state_edit_scale()
         int len = snprintf(buf, sizeof(buf), "Scale Delta: %f", scale_delta);
         string_truncate(buf, sizeof(buf), len);
         string_free_slot(STR_SLOT_DELTA);
-        load_string(packs[PACK_TRANSIENT],
-                    rico_string_slot_string[STR_SLOT_DELTA], STR_SLOT_DELTA,
-                    SCREEN_X(0), SCREEN_Y(0), COLOR_DARK_BLUE_HIGHLIGHT, 1000,
-                    NULL, buf);
+        RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_DELTA, SCREEN_X(0),
+                    SCREEN_Y(0), COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL, buf);
     }
 
     return err;
@@ -903,7 +912,7 @@ internal int state_menu_quit()
     if (KEY_PRESSED(SDL_SCANCODE_Y) || KEY_PRESSED(SDL_SCANCODE_RETURN))
     {
         string_free_slot(STR_SLOT_MENU_QUIT);
-		err = pack_save(pack_active, pack_active->name, false);
+		err = RICO_pack_save(pack_active, pack_active->name, false);
         state = STATE_ENGINE_SHUTDOWN;
     }
     // [N] / [Escape]: Return to play mode
@@ -956,6 +965,37 @@ internal int state_engine_shutdown()
 	free_glref();
 	return SUCCESS;
 }
+void RICO_check_key_events()
+{
+    for (enum rico_action i = ACTION_RICO_TEST; i < ACTION_COUNT; ++i)
+    {
+        if (action_queue_count >= ARRAY_COUNT(action_queue))
+            return;
+
+        if (chord_is_down(i))
+        {
+            action_queue[action_queue_count] = i;
+            action_queue_count++;
+        }
+    }
+}
+enum rico_action RICO_key_event()
+{
+    enum rico_action action = ACTION_NULL;
+    if (action_queue_count)
+    {
+        // TODO: Circular queue
+        action_queue_count--;
+        action = action_queue[action_queue_count];
+        action_queue[action_queue_count] = 0;
+    }
+    return action;
+}
+internal void RICO_bind_action(enum rico_action action,
+                              struct rico_keychord chord)
+{
+    action_chords[action] = chord;
+}
 internal int engine_init()
 {
     enum rico_error err;
@@ -992,87 +1032,85 @@ internal int engine_init()
     // TODO: Load from config file?
     // Initialize key map
 
-#define CHORD_3(action, k0, k1, k2) action_chords[action] = CHORD3(k0, k1, k2)
-#define CHORD_2(action, k0, k1)     action_chords[action] = CHORD2(k0, k1)
-#define CHORD_1(action, k0)         action_chords[action] = CHORD1(k0)
-
     // Engine
-    CHORD_1(ACTION_ENGINE_DEBUG_LIGHTING_TOGGLE,    SDL_SCANCODE_L);
-    CHORD_1(ACTION_ENGINE_DEBUG_TRIGGER_BREAKPOINT, SDL_SCANCODE_P);
-    CHORD_1(ACTION_ENGINE_FPS_TOGGLE,               SDL_SCANCODE_2);
-    CHORD_1(ACTION_ENGINE_MOUSE_LOCK_TOGGLE,        SDL_SCANCODE_M);
-    CHORD_1(ACTION_ENGINE_VSYNC_TOGGLE,             SDL_SCANCODE_V);
-    CHORD_1(ACTION_ENGINE_MUTE_TOGGLE,              SDL_SCANCODE_PERIOD);
-    CHORD_1(ACTION_ENGINE_QUIT,                     SDL_SCANCODE_ESCAPE);
+    RICO_bind_action(ACTION_ENGINE_DEBUG_LIGHTING_TOGGLE,    CHORD1(SDL_SCANCODE_L));
+    RICO_bind_action(ACTION_ENGINE_DEBUG_TRIGGER_BREAKPOINT, CHORD1(SDL_SCANCODE_P));
+    RICO_bind_action(ACTION_ENGINE_DEBUG_FOV_INCREASE,       CHORD1(SDL_SCANCODE_3));
+    RICO_bind_action(ACTION_ENGINE_DEBUG_FOV_DECREASE,       CHORD1(SDL_SCANCODE_4));
+    RICO_bind_action(ACTION_ENGINE_FPS_TOGGLE,               CHORD1(SDL_SCANCODE_2));
+    RICO_bind_action(ACTION_ENGINE_MOUSE_LOCK_TOGGLE,        CHORD1(SDL_SCANCODE_M));
+    RICO_bind_action(ACTION_ENGINE_VSYNC_TOGGLE,             CHORD1(SDL_SCANCODE_V));
+    RICO_bind_action(ACTION_ENGINE_MUTE_TOGGLE,              CHORD1(SDL_SCANCODE_PERIOD));
+    RICO_bind_action(ACTION_ENGINE_QUIT,                     CHORD1(SDL_SCANCODE_ESCAPE));
 
     // Camera
-    CHORD_1(ACTION_CAMERA_SLOW_TOGGLE,              SDL_SCANCODE_R);
-    CHORD_1(ACTION_CAMERA_RESET,                    SDL_SCANCODE_F);
-    CHORD_1(ACTION_CAMERA_LOCK_TOGGLE,              SDL_SCANCODE_C);
-    CHORD_1(ACTION_CAMERA_WIREFRAME_TOGGLE,         SDL_SCANCODE_1);
+    RICO_bind_action(ACTION_CAMERA_SLOW_TOGGLE,              CHORD1(SDL_SCANCODE_R));
+    RICO_bind_action(ACTION_CAMERA_RESET,                    CHORD1(SDL_SCANCODE_F));
+    RICO_bind_action(ACTION_CAMERA_LOCK_TOGGLE,              CHORD1(SDL_SCANCODE_C));
+    RICO_bind_action(ACTION_CAMERA_WIREFRAME_TOGGLE,         CHORD1(SDL_SCANCODE_1));
 
     // Player
-    CHORD_1(ACTION_MOVE_RIGHT,                      SDL_SCANCODE_D);
-    CHORD_1(ACTION_MOVE_LEFT,                       SDL_SCANCODE_A);
-    CHORD_1(ACTION_MOVE_UP,                         SDL_SCANCODE_E);
-    CHORD_1(ACTION_MOVE_DOWN,                       SDL_SCANCODE_Q);
-    CHORD_1(ACTION_MOVE_FORWARD,                    SDL_SCANCODE_W);
-    CHORD_1(ACTION_MOVE_BACKWARD,                   SDL_SCANCODE_S);
-    CHORD_1(ACTION_MOVE_SPRINT,                     RICO_SCANCODE_SHIFT);
+    RICO_bind_action(ACTION_MOVE_RIGHT,                      CHORD1(SDL_SCANCODE_D));
+    RICO_bind_action(ACTION_MOVE_LEFT,                       CHORD1(SDL_SCANCODE_A));
+    RICO_bind_action(ACTION_MOVE_UP,                         CHORD1(SDL_SCANCODE_E));
+    RICO_bind_action(ACTION_MOVE_DOWN,                       CHORD1(SDL_SCANCODE_Q));
+    RICO_bind_action(ACTION_MOVE_FORWARD,                    CHORD1(SDL_SCANCODE_W));
+    RICO_bind_action(ACTION_MOVE_BACKWARD,                   CHORD1(SDL_SCANCODE_S));
+    RICO_bind_action(ACTION_MOVE_SPRINT,                     CHORD1(RICO_SCANCODE_SHIFT));
 
-    CHORD_1(ACTION_PLAY_EDITOR,                     SDL_SCANCODE_GRAVE);
-    CHORD_1(ACTION_PLAY_INTERACT,                   RICO_SCANCODE_LMB);
+    RICO_bind_action(ACTION_PLAY_EDITOR,                     CHORD1(SDL_SCANCODE_GRAVE));
+    RICO_bind_action(ACTION_PLAY_INTERACT,                   CHORD1(RICO_SCANCODE_LMB));
 
     // Editor
-    CHORD_1(ACTION_EDIT_QUIT,                       SDL_SCANCODE_GRAVE);
-    CHORD_2(ACTION_EDIT_SAVE,                       RICO_SCANCODE_CTRL,   SDL_SCANCODE_S);
-    CHORD_2(ACTION_EDIT_CYCLE_REVERSE,              RICO_SCANCODE_SHIFT,  SDL_SCANCODE_TAB);
-    CHORD_1(ACTION_EDIT_CYCLE,                      SDL_SCANCODE_TAB);
-    CHORD_1(ACTION_EDIT_MOUSE_PICK,                 RICO_SCANCODE_LMB);
-    CHORD_2(ACTION_EDIT_BBOX_RECALCULATE,           RICO_SCANCODE_SHIFT,  SDL_SCANCODE_B);
-    CHORD_1(ACTION_EDIT_CREATE_OBJECT,              SDL_SCANCODE_INSERT);
-    CHORD_2(ACTION_EDIT_SELECTED_DUPLICATE,         RICO_SCANCODE_CTRL,   SDL_SCANCODE_D);
-    CHORD_1(ACTION_EDIT_SELECTED_DELETE,            SDL_SCANCODE_DELETE);
-    CHORD_1(ACTION_EDIT_MODE_PREVIOUS,              SDL_SCANCODE_KP_PERIOD);
-    CHORD_1(ACTION_EDIT_MODE_NEXT,                  SDL_SCANCODE_KP_0);
+    RICO_bind_action(ACTION_EDIT_QUIT,                       CHORD1(SDL_SCANCODE_GRAVE));
+    RICO_bind_action(ACTION_EDIT_SAVE,                       CHORD2(RICO_SCANCODE_CTRL,   SDL_SCANCODE_S));
+    RICO_bind_action(ACTION_EDIT_CYCLE_REVERSE,              CHORD2(RICO_SCANCODE_SHIFT,  SDL_SCANCODE_TAB));
+    RICO_bind_action(ACTION_EDIT_CYCLE,                      CHORD1(SDL_SCANCODE_TAB));
+    RICO_bind_action(ACTION_EDIT_MOUSE_PICK,                 CHORD1(RICO_SCANCODE_LMB));
+    RICO_bind_action(ACTION_EDIT_BBOX_RECALCULATE,           CHORD2(RICO_SCANCODE_SHIFT,  SDL_SCANCODE_B));
+    RICO_bind_action(ACTION_EDIT_CREATE_OBJECT,              CHORD1(SDL_SCANCODE_INSERT));
+    RICO_bind_action(ACTION_EDIT_SELECTED_DUPLICATE,         CHORD2(RICO_SCANCODE_CTRL,   SDL_SCANCODE_D));
+    RICO_bind_action(ACTION_EDIT_SELECTED_DELETE,            CHORD1(SDL_SCANCODE_DELETE));
+    RICO_bind_action(ACTION_EDIT_MODE_PREVIOUS,              CHORD1(SDL_SCANCODE_KP_PERIOD));
+    RICO_bind_action(ACTION_EDIT_MODE_NEXT,                  CHORD1(SDL_SCANCODE_KP_0));
 
-    CHORD_1(ACTION_EDIT_TRANSLATE_RESET,            SDL_SCANCODE_0);
-    CHORD_1(ACTION_EDIT_TRANSLATE_UP,               SDL_SCANCODE_UP);
-    CHORD_1(ACTION_EDIT_TRANSLATE_DOWN,             SDL_SCANCODE_DOWN);
-    CHORD_1(ACTION_EDIT_TRANSLATE_WEST,             SDL_SCANCODE_LEFT);
-    CHORD_1(ACTION_EDIT_TRANSLATE_EAST,             SDL_SCANCODE_RIGHT);
-    CHORD_1(ACTION_EDIT_TRANSLATE_NORTH,            SDL_SCANCODE_PAGEUP);
-    CHORD_1(ACTION_EDIT_TRANSLATE_SOUTH,            SDL_SCANCODE_PAGEDOWN);
-    CHORD_1(ACTION_EDIT_TRANSLATE_DELTA_INCREASE,   SDL_SCANCODE_KP_PLUS);
-    CHORD_1(ACTION_EDIT_TRANSLATE_DELTA_DECREASE,   SDL_SCANCODE_KP_MINUS);
+    RICO_bind_action(ACTION_EDIT_TRANSLATE_RESET,            CHORD1(SDL_SCANCODE_0));
+    RICO_bind_action(ACTION_EDIT_TRANSLATE_UP,               CHORD1(SDL_SCANCODE_UP));
+    RICO_bind_action(ACTION_EDIT_TRANSLATE_DOWN,             CHORD1(SDL_SCANCODE_DOWN));
+    RICO_bind_action(ACTION_EDIT_TRANSLATE_WEST,             CHORD1(SDL_SCANCODE_LEFT));
+    RICO_bind_action(ACTION_EDIT_TRANSLATE_EAST,             CHORD1(SDL_SCANCODE_RIGHT));
+    RICO_bind_action(ACTION_EDIT_TRANSLATE_NORTH,            CHORD1(SDL_SCANCODE_PAGEUP));
+    RICO_bind_action(ACTION_EDIT_TRANSLATE_SOUTH,            CHORD1(SDL_SCANCODE_PAGEDOWN));
+    RICO_bind_action(ACTION_EDIT_TRANSLATE_DELTA_INCREASE,   CHORD1(SDL_SCANCODE_KP_PLUS));
+    RICO_bind_action(ACTION_EDIT_TRANSLATE_DELTA_DECREASE,   CHORD1(SDL_SCANCODE_KP_MINUS));
 
-    CHORD_1(ACTION_EDIT_ROTATE_RESET,               SDL_SCANCODE_0);
-    CHORD_1(ACTION_EDIT_ROTATE_UP,                  SDL_SCANCODE_UP);
-    CHORD_1(ACTION_EDIT_ROTATE_DOWN,                SDL_SCANCODE_DOWN);
-    CHORD_1(ACTION_EDIT_ROTATE_WEST,                SDL_SCANCODE_LEFT);
-    CHORD_1(ACTION_EDIT_ROTATE_EAST,                SDL_SCANCODE_RIGHT);
-    CHORD_1(ACTION_EDIT_ROTATE_NORTH,               SDL_SCANCODE_PAGEUP);
-    CHORD_1(ACTION_EDIT_ROTATE_SOUTH,               SDL_SCANCODE_PAGEDOWN);
-    CHORD_1(ACTION_EDIT_ROTATE_DELTA_INCREASE,      SDL_SCANCODE_KP_PLUS);
-    CHORD_1(ACTION_EDIT_ROTATE_DELTA_DECREASE,      SDL_SCANCODE_KP_MINUS);
-    CHORD_1(ACTION_EDIT_ROTATE_HEPTAMODE_TOGGLE,    SDL_SCANCODE_7);
+    RICO_bind_action(ACTION_EDIT_ROTATE_RESET,               CHORD1(SDL_SCANCODE_0));
+    RICO_bind_action(ACTION_EDIT_ROTATE_UP,                  CHORD1(SDL_SCANCODE_UP));
+    RICO_bind_action(ACTION_EDIT_ROTATE_DOWN,                CHORD1(SDL_SCANCODE_DOWN));
+    RICO_bind_action(ACTION_EDIT_ROTATE_WEST,                CHORD1(SDL_SCANCODE_LEFT));
+    RICO_bind_action(ACTION_EDIT_ROTATE_EAST,                CHORD1(SDL_SCANCODE_RIGHT));
+    RICO_bind_action(ACTION_EDIT_ROTATE_NORTH,               CHORD1(SDL_SCANCODE_PAGEUP));
+    RICO_bind_action(ACTION_EDIT_ROTATE_SOUTH,               CHORD1(SDL_SCANCODE_PAGEDOWN));
+    RICO_bind_action(ACTION_EDIT_ROTATE_DELTA_INCREASE,      CHORD1(SDL_SCANCODE_KP_PLUS));
+    RICO_bind_action(ACTION_EDIT_ROTATE_DELTA_DECREASE,      CHORD1(SDL_SCANCODE_KP_MINUS));
+    RICO_bind_action(ACTION_EDIT_ROTATE_HEPTAMODE_TOGGLE,    CHORD1(SDL_SCANCODE_7));
 
-    CHORD_1(ACTION_EDIT_SCALE_RESET,                SDL_SCANCODE_0);
-    CHORD_1(ACTION_EDIT_SCALE_UP,                   SDL_SCANCODE_UP);
-    CHORD_1(ACTION_EDIT_SCALE_DOWN,                 SDL_SCANCODE_DOWN);
-    CHORD_1(ACTION_EDIT_SCALE_WEST,                 SDL_SCANCODE_LEFT);
-    CHORD_1(ACTION_EDIT_SCALE_EAST,                 SDL_SCANCODE_RIGHT);
-    CHORD_1(ACTION_EDIT_SCALE_NORTH,                SDL_SCANCODE_PAGEUP);
-    CHORD_1(ACTION_EDIT_SCALE_SOUTH,                SDL_SCANCODE_PAGEDOWN);
-    CHORD_1(ACTION_EDIT_SCALE_DELTA_INCREASE,       SDL_SCANCODE_KP_PLUS);
-    CHORD_1(ACTION_EDIT_SCALE_DELTA_DECREASE,       SDL_SCANCODE_KP_MINUS);
+    RICO_bind_action(ACTION_EDIT_SCALE_RESET,                CHORD1(SDL_SCANCODE_0));
+    RICO_bind_action(ACTION_EDIT_SCALE_UP,                   CHORD1(SDL_SCANCODE_UP));
+    RICO_bind_action(ACTION_EDIT_SCALE_DOWN,                 CHORD1(SDL_SCANCODE_DOWN));
+    RICO_bind_action(ACTION_EDIT_SCALE_WEST,                 CHORD1(SDL_SCANCODE_LEFT));
+    RICO_bind_action(ACTION_EDIT_SCALE_EAST,                 CHORD1(SDL_SCANCODE_RIGHT));
+    RICO_bind_action(ACTION_EDIT_SCALE_NORTH,                CHORD1(SDL_SCANCODE_PAGEUP));
+    RICO_bind_action(ACTION_EDIT_SCALE_SOUTH,                CHORD1(SDL_SCANCODE_PAGEDOWN));
+    RICO_bind_action(ACTION_EDIT_SCALE_DELTA_INCREASE,       CHORD1(SDL_SCANCODE_KP_PLUS));
+    RICO_bind_action(ACTION_EDIT_SCALE_DELTA_DECREASE,       CHORD1(SDL_SCANCODE_KP_MINUS));
 
-    CHORD_1(ACTION_EDIT_MATERIAL_NEXT,              SDL_SCANCODE_RIGHT);
-    CHORD_1(ACTION_EDIT_MATERIAL_PREVIOUS,          SDL_SCANCODE_LEFT);
+    RICO_bind_action(ACTION_EDIT_MATERIAL_NEXT,              CHORD1(SDL_SCANCODE_RIGHT));
+    RICO_bind_action(ACTION_EDIT_MATERIAL_PREVIOUS,          CHORD1(SDL_SCANCODE_LEFT));
 
-    CHORD_1(ACTION_EDIT_MESH_NEXT,                  SDL_SCANCODE_RIGHT);
-    CHORD_1(ACTION_EDIT_MESH_PREVIOUS,              SDL_SCANCODE_LEFT);
-    CHORD_1(ACTION_EDIT_MESH_BBOX_RECALCULATE,      SDL_SCANCODE_B);
+    RICO_bind_action(ACTION_EDIT_MESH_NEXT,                  CHORD1(SDL_SCANCODE_RIGHT));
+    RICO_bind_action(ACTION_EDIT_MESH_PREVIOUS,              CHORD1(SDL_SCANCODE_LEFT));
+    RICO_bind_action(ACTION_EDIT_MESH_BBOX_RECALCULATE,      CHORD1(SDL_SCANCODE_B));
 
 	state_handlers[STATE_ENGINE_SHUTDOWN].run = &state_engine_shutdown;
 	state_handlers[STATE_MENU_QUIT      ].run = &state_menu_quit;
@@ -1116,10 +1154,10 @@ internal int engine_init()
 	printf("----------------------------------------------------------\n");
 	printf("[MAIN][init] Initializing packs\n");
 	printf("----------------------------------------------------------\n");
-	err = pack_load("packs/default.pak", 0);
+	err = RICO_pack_load("packs/default.pak", 0);
 	if (err) return err;
-	pack_init(PACK_TRANSIENT, "pack_transient", 512, MB(4));
-	pack_init(PACK_FRAME, "pack_frame", 0, 0);
+	RICO_pack_init(PACK_TRANSIENT, "pack_transient", 512, MB(4));
+	RICO_pack_init(PACK_FRAME, "pack_frame", 0, 0);
 
 	printf("----------------------------------------------------------\n");
 	printf("[MAIN][init] Initializing camera\n");

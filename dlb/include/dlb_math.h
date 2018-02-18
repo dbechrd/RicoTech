@@ -674,11 +674,9 @@ DLB_MATH_DEF struct vec3 *v3_mul_mat4(struct vec3 *v, const struct mat4 *m)
 
 //Calculate PERSPECTIVE projection
 DLB_MATH_DEF struct mat4 mat4_init_perspective(float width, float height,
-                                                      float z_near, float z_far,
-                                                      float fov_deg)
+                                               float z_near, float z_far,
+                                               float fov_deg)
 {
-    ///////////////////////////////////////////////////////
-
     float aspect = width / height;
     float dz = z_far - z_near;
     float fov_calc = 1.0f / tanf(DEG_TO_RADF(fov_deg) / 2.0f);
@@ -689,6 +687,22 @@ DLB_MATH_DEF struct mat4 mat4_init_perspective(float width, float height,
     mat.m[2][2] = -(z_far + z_near) / dz;
     mat.m[2][3] = 2.0f * (z_far * z_near) / dz;
     mat.m[3][2] = -1.0f;
+    return mat;
+}
+
+//Calculate ORTHOGRAPHIC projection
+DLB_MATH_DEF struct mat4 mat4_init_ortho(float width, float height,
+                                         float z_near, float z_far)
+{
+    float aspect = width / height;
+    float dz = z_far - z_near;
+
+    struct mat4 mat = MAT4_IDENT;
+    mat.m[0][0] = 1.0f / aspect;
+    mat.m[1][1] = 1.0f;
+    mat.m[2][2] = -2.0f / dz;
+    mat.m[2][3] = (z_far + z_near) / dz;
+    mat.m[3][3] = 500.0f;
     return mat;
 }
 

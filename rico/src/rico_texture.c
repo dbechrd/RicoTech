@@ -162,7 +162,7 @@ void texture_bind(pkid pkid, GLenum texture_unit)
     struct rgl_texture *rgl_tex = hashtable_search_pkid(&global_textures, pkid);
     if (!rgl_tex)
     {
-        struct rico_texture *texture = pack_lookup(pkid);
+        struct rico_texture *texture = RICO_pack_lookup(pkid);
         RICO_ASSERT(texture);
         texture_upload(texture);
         rgl_tex = hashtable_search_pkid(&global_textures, pkid);

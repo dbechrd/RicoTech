@@ -52,7 +52,7 @@ void font_render(u32 *mesh_id, u32 *tex_id, struct rico_font *font, float x,
 
     if (!font)
     {
-        font = pack_lookup(FONT_DEFAULT);
+        font = RICO_pack_lookup(FONT_DEFAULT);
     }
 
     //font_setblend(font);
@@ -125,7 +125,7 @@ void font_render(u32 *mesh_id, u32 *tex_id, struct rico_font *font, float x,
         screen_x += offset_x;
     }
 
-    u32 new_mesh_id = load_mesh(packs[PACK_TRANSIENT], mesh_name,
+    u32 new_mesh_id = RICO_load_mesh(RICO_packs[PACK_TRANSIENT], mesh_name,
                                 sizeof(*vertices), idx_vertex, vertices,
                                 idx_element, elements);
 

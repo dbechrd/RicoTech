@@ -1,23 +1,21 @@
-const char *rico_obj_type_string[] = {
-    RICO_OBJ_TYPES(GEN_STRING)
-};
-const char *rico_prop_type_string[] = {
-    RICO_PROP_TYPES(GEN_STRING)
-};
+const char *rico_obj_type_string[] = { RICO_OBJ_TYPES(GEN_STRING) };
+const char *rico_prop_type_string[] = { RICO_PROP_TYPES(GEN_STRING) };
 
-global void object_delete(struct pack *pack, struct rico_object *obj)
+RICO_event_object *object_event_handler;
+
+void object_delete(struct pack *pack, struct rico_object *obj)
 {
     // TODO: Make sure all of the properties get cleaned up properly
     pack_delete(obj->props[PROP_MESH].mesh_pkid);
     pack_delete(obj->props[PROP_MATERIAL].material_pkid);
 }
 
-global struct rico_object *object_copy(struct pack *pack,
+struct rico_object *object_copy(struct pack *pack,
                                        struct rico_object *other,
                                        const char *name)
 {
-    pkid new_obj_pkid = load_object(pack, other->type, name);
-    struct rico_object *new_obj = pack_lookup(new_obj_pkid);
+    pkid new_obj_pkid = RICO_load_object(pack, other->type, name);
+    struct rico_object *new_obj = RICO_pack_lookup(new_obj_pkid);
 
     // TODO: Make sure to update any ref counting we're using to prevent e.g.
     //       mesh or texture from being deleted when still in use.
@@ -45,11 +43,11 @@ void object_bbox_recalculate_all(struct pack *pack)
         prop = &obj->props[PROP_MESH];
         if (prop->type)
         {
-            mesh = pack_lookup(prop->mesh_pkid);
+            mesh = RICO_pack_lookup(prop->mesh_pkid);
         }
         else
         {
-            mesh = pack_lookup(MESH_DEFAULT_CUBE);
+            mesh = RICO_pack_lookup(MESH_DEFAULT_CUBE);
         }
         obj->props[PROP_BBOX].type = PROP_BBOX;
         obj->props[PROP_BBOX].bbox = mesh->bbox;
@@ -77,7 +75,7 @@ void object_deselect(struct rico_object *object)
     object->props[PROP_BBOX].bbox.selected = false;
 }
 
-global void object_transform_update(struct rico_object *object)
+void object_transform_update(struct rico_object *object)
 {
     //HACK: Order of these operations might not always be the same.. should
     //      probably just store the transformation matrix directly rather than
@@ -219,7 +217,7 @@ bool object_collide_ray(float *_dist, struct rico_object *object,
 bool object_collide_ray_type(struct pack *pack, struct rico_object **_object,
                              float *_dist, const struct ray *ray)
 {
-    bool collided = false;
+    bool collided;
     float distance;
     *_dist = Z_FAR; // Track closest object
 
@@ -230,12 +228,39 @@ bool object_collide_ray_type(struct pack *pack, struct rico_object **_object,
             continue;
 
         obj = pack_read(pack, index);
-        if (!obj->props[PROP_BBOX].type)
+        if (obj->type == OBJ_TERRAIN)
             continue;
 
-        collided = collide_ray_obb(&distance, ray, &obj->props[PROP_BBOX].bbox,
-                                   &obj->props[PROP_TRANSFORM].xform.matrix,
-                                   &obj->props[PROP_TRANSFORM].xform.matrix_inverse);
+        if (obj->props[PROP_BBOX].type)
+        {
+            collided = collide_ray_obb(
+                &distance, ray, &obj->props[PROP_BBOX].bbox,
+                &obj->props[PROP_TRANSFORM].xform.matrix,
+                &obj->props[PROP_TRANSFORM].xform.matrix_inverse
+            );
+        }
+        else if (obj->props[PROP_MESH].type)
+        {
+            struct rico_mesh *mesh =
+                RICO_pack_lookup(obj->props[PROP_MESH].mesh_pkid);
+
+            collided = collide_ray_obb(
+                &distance, ray, &mesh->bbox,
+                &obj->props[PROP_TRANSFORM].xform.matrix,
+                &obj->props[PROP_TRANSFORM].xform.matrix_inverse
+            );
+        }
+        else
+        {
+            // HACK: This is kinda meh.. but it's technically the correct bbox
+            //       to use for objects with no mesh set.
+            struct rico_mesh *mesh = RICO_pack_lookup(MESH_DEFAULT_CUBE);
+            collided = collide_ray_obb(
+                &distance, ray, &mesh->bbox,
+                &obj->props[PROP_TRANSFORM].xform.matrix,
+                &obj->props[PROP_TRANSFORM].xform.matrix_inverse
+            );
+        }
 
         // If closest so far, save info
         if (collided && distance < *_dist)
@@ -249,34 +274,7 @@ bool object_collide_ray_type(struct pack *pack, struct rico_object **_object,
     return collided;
 }
 
-// HACK: I want to make a light switch!
-static bool lights_on = true;
-internal void object_interact_light_switch(struct rico_object *obj)
-{
-    UNUSED(obj);
-    lights_on = !lights_on;
-}
-
-// HACK: I want to make an audio switch!
-static bool audio_play = true;
-internal void object_interact_audio_switch(struct rico_object *obj)
-{
-    UNUSED(obj);
-    audio_play = !audio_play;
-    if (audio_play)
-        alSourcePlay(audio_source);
-    else
-        alSourceStop(audio_source);
-}
-
-internal void object_interact_game_button(struct rico_object *obj)
-{
-    struct obj_property *prop = &obj->props[PROP_GAME_BUTTON];
-    RICO_ASSERT(prop->type);
-    prop->game_button.state = !prop->game_button.state;
-}
-
-void object_interact(struct rico_object *obj)
+internal void object_interact(struct rico_object *obj)
 {
     if (state_is_edit())
     {
@@ -284,21 +282,8 @@ void object_interact(struct rico_object *obj)
     }
     else if (!state_is_paused())
     {
-        for (u32 i = 0; i < PROP_COUNT; ++i)
-        {
-            switch (obj->props[i].type)
-            {
-                case PROP_LIGHT_SWITCH:
-                    object_interact_light_switch(obj);
-                    break;
-                case PROP_AUDIO_SWITCH:
-                    object_interact_audio_switch(obj);
-                    break;
-                case PROP_GAME_BUTTON:
-                    object_interact_game_button(obj);
-                    break;
-            }
-        }
+        if (RICO_event_object_interact)
+            RICO_event_object_interact(obj);
     }
 }
 
@@ -335,7 +320,7 @@ void object_render(struct pack *pack, const struct camera *camera)
     struct light_point light;
     light.position = light_pos;
     light.color = VEC3(1.0f, 1.0f, 0.8f);
-    light.intensity = (lights_on) ? 4.0f : 0.0f;
+    light.intensity = (RICO_lighting_enabled) ? 4.0f : 0.0f;
     light.kc = 1.0f;
     light.kl = 0.05f;
     light.kq = 0.001f;
@@ -516,13 +501,13 @@ void object_render_ui(struct pack *pack)
 
 void object_render_all(struct camera *camera)
 {
-	for (u32 i = PACK_COUNT; i < ARRAY_COUNT(packs); ++i)
+	for (u32 i = PACK_COUNT; i < ARRAY_COUNT(RICO_packs); ++i)
 	{
-		if (packs[i])
-			object_render(packs[i], camera);
+		if (RICO_packs[i])
+			object_render(RICO_packs[i], camera);
 	}
-	object_render(packs[PACK_TRANSIENT], camera);
-	object_render(packs[PACK_FRAME], camera);
+	object_render(RICO_packs[PACK_TRANSIENT], camera);
+	object_render(RICO_packs[PACK_FRAME], camera);
 }
 
 void object_print(struct rico_object *obj)
@@ -534,7 +519,7 @@ void object_print(struct rico_object *obj)
 
     if (obj)
     {
-        struct pack *pack = packs[PKID_PACK(obj->uid.pkid)];
+        struct pack *pack = RICO_packs[PKID_PACK(obj->uid.pkid)];
         bool has_mesh = obj->props[PROP_MESH].type;
         bool has_material = obj->props[PROP_MATERIAL].type;
 
@@ -543,9 +528,9 @@ void object_print(struct rico_object *obj)
         pkid material_id = (has_material)
             ? obj->props[PROP_MATERIAL].material_pkid : 0;
         struct rico_mesh *mesh = (mesh_id)
-            ? pack_lookup(mesh_id) : NULL;
+            ? RICO_pack_lookup(mesh_id) : NULL;
         struct rico_material *material = (material_id)
-            ? pack_lookup(material_id) : NULL;
+            ? RICO_pack_lookup(material_id) : NULL;
 
         const char *mesh_str = "---";
         u32 mesh_verts = 0;
@@ -569,21 +554,21 @@ void object_print(struct rico_object *obj)
             if (material->tex_id[0])
             {
                 struct rico_texture *tex =
-                    pack_lookup(material->tex_id[0]);
+                    RICO_pack_lookup(material->tex_id[0]);
                 mat_tex0_id = tex->uid.pkid;
                 mat_tex0_str = tex->uid.name;
             }
             if (material->tex_id[1])
             {
                 struct rico_texture *tex =
-                    pack_lookup(material->tex_id[1]);
+                    RICO_pack_lookup(material->tex_id[1]);
                 mat_tex1_id = tex->uid.pkid;
                 mat_tex1_str = tex->uid.name;
             }
             if (material->tex_id[2])
             {
                 struct rico_texture *tex =
-                    pack_lookup(material->tex_id[2]);
+                    RICO_pack_lookup(material->tex_id[2]);
                 mat_tex2_id = tex->uid.pkid;
                 mat_tex2_str = tex->uid.name;
             }
@@ -628,8 +613,6 @@ void object_print(struct rico_object *obj)
     }
 
     string_truncate(buf, sizeof(buf), len);
-    load_string(packs[PACK_TRANSIENT],
-                rico_string_slot_string[STR_SLOT_SELECTED_OBJ],
-                STR_SLOT_SELECTED_OBJ, SCREEN_X(0), SCREEN_Y(FONT_HEIGHT),
-                COLOR_DARK_GRAY_HIGHLIGHT, 0, NULL, buf);
+    RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_SELECTED_OBJ, SCREEN_X(0),
+                SCREEN_Y(FONT_HEIGHT), COLOR_DARK_GRAY_HIGHLIGHT, 0, NULL, buf);
 }

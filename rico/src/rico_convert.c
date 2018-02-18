@@ -37,7 +37,7 @@ int rico_convert_obj(const char *filename)
     f(OBJ_TOK_COMMENT)         /* [www.blender.org] */ \
     f(OBJ_TOK_KEYWORD)         /* [vt]              */ \
     f(OBJ_TOK_SEPARATOR)       /* [ ]               */ \
-    f(OBJ_TOK_IDENTIFIER)      /* [fabric_plants]   */ \
+    f(OBJ_TOK_IDENTIFIER)      /* [fabRICO_plants]   */ \
     f(OBJ_TOK_LITERAL)         /* [0.8542]          */ \
     f(OBJ_TOK_INDEX)           /* [3]               */ \
     f(OBJ_TOK_INDEX_SEPARATOR) /* [/]               */ \

@@ -30,7 +30,9 @@ typedef u32 bool;
 // NOTE: internal and global are relative to translation unit
 #define internal static
 #define local    static
+#if 0
 #define global   static
+#endif
 
 // Enums generators
 #define GEN_LIST(e, ...) e,
