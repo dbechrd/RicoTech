@@ -85,16 +85,18 @@ int pack_load_all()
 	return err;
 }
 
-// HACK: I want to make a light switch!
 internal void object_interact_light_switch(struct rico_object *obj)
 {
     UNUSED(obj);
     RICO_lighting_enabled = !RICO_lighting_enabled;
 }
 
-// HACK: I want to make an audio switch!
 internal void object_interact_audio_switch(struct rico_object *obj)
 {
+    //struct obj_property *prop = &obj->props[PROP_AUDIO_SWITCH];
+    //assert(prop->type);
+    //RICO_audio_source_stop(&source, prop->audio_switch.audio_id);
+
     UNUSED(obj);
     static audio_play = true;
     
