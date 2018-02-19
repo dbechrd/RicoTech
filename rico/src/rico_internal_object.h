@@ -6,6 +6,7 @@
 void object_delete(struct pack *pack, struct rico_object *obj);
 struct rico_object *object_copy(struct pack *pack, struct rico_object *other,
                                 const char *name);
+void object_bbox_recalculate(struct rico_object *obj);
 void object_bbox_recalculate_all(struct pack *pack);
 bool object_selectable(struct rico_object *rico);
 void object_select(struct rico_object *rico);

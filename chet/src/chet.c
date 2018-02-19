@@ -11,13 +11,19 @@ enum game_object_type
     OBJ_ETC
 };
 
-struct timmy
-{
-    struct rico_object rico;
+RICO_OBJECT(timmy)
     u32 light_id;
     u32 audio_id;
     bool state;
 };
+
+//struct timmy
+//{
+//    struct rico_object rico;
+//    u32 light_id;
+//    u32 audio_id;
+//    bool state;
+//};
 
 void pack_build_alpha(u32 id)
 {

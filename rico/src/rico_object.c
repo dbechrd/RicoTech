@@ -25,6 +25,20 @@ struct rico_object *object_copy(struct pack *pack, struct rico_object *other,
     return new_obj;
 }
 
+void object_bbox_recalculate(struct rico_object *obj)
+{
+    struct rico_mesh *mesh;
+    if (obj->mesh_pkid)
+    {
+        mesh = RICO_pack_lookup(obj->mesh_pkid);
+    }
+    else
+    {
+        mesh = RICO_pack_lookup(MESH_DEFAULT_CUBE);
+    }
+    obj->bbox = mesh->bbox;
+}
+
 void object_bbox_recalculate_all(struct pack *pack)
 {
     struct rico_object *obj;
@@ -228,36 +242,11 @@ bool object_collide_ray_type(struct pack *pack, struct rico_object **_object,
         if (obj->type == RICO_OBJECT_TYPE_TERRAIN)
             continue;
 
-        if (obj->type)
-        {
-            collided = collide_ray_obb(
-                &distance, ray, &obj->bbox,
-                &obj->xform.matrix,
-                &obj->xform.matrix_inverse
-            );
-        }
-        else if (obj->type)
-        {
-            struct rico_mesh *mesh =
-                RICO_pack_lookup(obj->mesh_pkid);
-
-            collided = collide_ray_obb(
-                &distance, ray, &mesh->bbox,
-                &obj->xform.matrix,
-                &obj->xform.matrix_inverse
-            );
-        }
-        else
-        {
-            // HACK: This is kinda meh.. but it's technically the correct bbox
-            //       to use for objects with no mesh set.
-            struct rico_mesh *mesh = RICO_pack_lookup(MESH_DEFAULT_CUBE);
-            collided = collide_ray_obb(
-                &distance, ray, &mesh->bbox,
-                &obj->xform.matrix,
-                &obj->xform.matrix_inverse
-            );
-        }
+        collided = collide_ray_obb(
+            &distance, ray, &obj->bbox,
+            &obj->xform.matrix,
+            &obj->xform.matrix_inverse
+        );
 
         // If closest so far, save info
         if (collided && distance < *_dist)
@@ -384,12 +373,12 @@ void object_render(struct pack *pack, const struct camera *camera)
         // TODO: UV scaling in general only works when object is uniformly
         //       scaled. Maybe I should only allow textured objects to be
         //       uniformly scaled?
-        if (obj->type == OBJ_STRING_WORLD)
+        if (obj->type == RICO_OBJECT_TYPE_STRING_WORLD)
         {
             // TODO: Why can't I just assume obj->xform.scale is always 1,1,1?
             glUniform2f(prog->scale_uv, 1.0f, 1.0f);
         }
-		else if (obj->type == OBJ_TERRAIN)
+		else if (obj->type == RICO_OBJECT_TYPE_TERRAIN)
 		{
 			glUniform2f(prog->scale_uv, 100.0f, 100.0f);
 		}
@@ -407,7 +396,7 @@ void object_render(struct pack *pack, const struct camera *camera)
 
         // Bind material
         pkid mat_id = MATERIAL_DEFAULT;
-        if (obj->type)
+        if (obj->material_pkid)
         {
             mat_id = obj->material_pkid;
         }
@@ -415,7 +404,7 @@ void object_render(struct pack *pack, const struct camera *camera)
 
         // Render
         pkid mesh_id = MESH_DEFAULT_CUBE;
-        if (obj->type)
+        if (obj->mesh_pkid)
         {
             mesh_id = obj->mesh_pkid;
         }
@@ -485,7 +474,7 @@ void object_render_ui(struct pack *pack)
 
         // Render
         pkid mesh_id = 0;
-        if (obj->type)
+        if (obj->mesh_pkid)
         {
             mesh_id = obj->mesh_pkid;
         }

@@ -507,6 +507,7 @@ pkid RICO_load_object(struct pack *pack, u32 type, u32 size, const char *name)
     obj->type = type;
     obj->xform.orientation = QUAT_IDENT;
     obj->xform.scale = VEC3_ONE;
+    object_bbox_recalculate(obj);
     object_transform_update(obj);
 
     pkid pkid = obj->uid.pkid;
