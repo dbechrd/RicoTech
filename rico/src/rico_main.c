@@ -63,9 +63,6 @@ internal void init_opengl();
 
 int RICO_init()
 {
-    // Random sanity checks; I just want to know when these change.
-    RICO_ASSERT(sizeof(struct obj_property) < 256);
-
     enum rico_error err;
 
     printf("------------------------------------------------------------\n");

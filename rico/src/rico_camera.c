@@ -120,8 +120,7 @@ void camera_update(struct camera *camera)
 
     camera->view_matrix = MAT4_IDENT;
 
-    struct mat4 rot;
-    mat4_from_quat(&rot, &orient);
+    struct mat4 rot = mat4_init_quat(&orient);
     mat4_mul(&camera->view_matrix, &rot);
 
     // HACK: Scale view matrix to decrease quaternion rotation radius. I don't
@@ -154,8 +153,8 @@ void camera_update(struct camera *camera)
 	string_truncate(buf, sizeof(buf), len);
 	string_free_slot(STR_SLOT_DEBUG_CAMERA);
 	RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_DEBUG_CAMERA,
-                SCREEN_X(-(FONT_WIDTH * 16)), SCREEN_Y(FONT_HEIGHT),
-                COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
+                     SCREEN_X(-(FONT_WIDTH * 16)), SCREEN_Y(FONT_HEIGHT),
+                     COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
 #endif
 
     camera->need_update = false;

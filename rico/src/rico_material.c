@@ -7,9 +7,9 @@ void material_bind(pkid pkid)
 #endif
 
     // Bind diffuse or default
-    if (material->tex_id[0])
+    if (material->tex_albedo)
     {
-        texture_bind(material->tex_id[0], GL_TEXTURE0);
+        texture_bind(material->tex_albedo, GL_TEXTURE0);
     }
     else
     {
@@ -17,9 +17,9 @@ void material_bind(pkid pkid)
     }
 
     // Bind specular or default
-    if (material->tex_id[1])
+    if (material->tex_mrao)
     {
-        texture_bind(material->tex_id[1], GL_TEXTURE1);
+        texture_bind(material->tex_mrao, GL_TEXTURE1);
     }
     else
     {
@@ -27,9 +27,9 @@ void material_bind(pkid pkid)
     }
 
     // Bind emission or default
-    if (material->tex_id[2])
+    if (material->tex_emission)
     {
-        texture_bind(material->tex_id[2], GL_TEXTURE2);
+        texture_bind(material->tex_emission, GL_TEXTURE2);
     }
     else
     {
@@ -46,9 +46,9 @@ void material_unbind(pkid pkid)
 #endif
 
     // Unbind diffuse or default
-    if (material->tex_id[0])
+    if (material->tex_albedo)
     {
-        texture_unbind(material->tex_id[0], GL_TEXTURE0);
+        texture_unbind(material->tex_albedo, GL_TEXTURE0);
     }
     else
     {
@@ -56,9 +56,9 @@ void material_unbind(pkid pkid)
     }
 
     // Unbind specular or default
-    if (material->tex_id[1])
+    if (material->tex_mrao)
     {
-        texture_unbind(material->tex_id[1], GL_TEXTURE1);
+        texture_unbind(material->tex_mrao, GL_TEXTURE1);
     }
     else
     {
@@ -66,9 +66,9 @@ void material_unbind(pkid pkid)
     }
 
     // Unbind emission or default
-    if (material->tex_id[2])
+    if (material->tex_emission)
     {
-        texture_unbind(material->tex_id[2], GL_TEXTURE2);
+        texture_unbind(material->tex_emission, GL_TEXTURE2);
     }
     else
     {

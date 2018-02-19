@@ -114,16 +114,16 @@ void APIENTRY openglCallbackFunction(GLenum source, GLenum type, GLuint id,
     }
 }
 
-void show_info_log(GLuint object,
+void show_info_log(GLuint rico,
                    PFNGLGETSHADERIVPROC glGet__iv,
                    PFNGLGETSHADERINFOLOGPROC glGet__InfoLog)
 {
     GLint log_length;
     char *log;
 
-    glGet__iv(object, GL_INFO_LOG_LENGTH, &log_length);
+    glGet__iv(rico, GL_INFO_LOG_LENGTH, &log_length);
     log = malloc(log_length);
-    glGet__InfoLog(object, log_length, NULL, log);
+    glGet__InfoLog(rico, log_length, NULL, log);
     printf("%s", log);
     RICO_ERROR(ERR_SHADER_COMPILE, "GL Info Log: '%s'", log);
     free(log);

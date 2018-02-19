@@ -41,7 +41,7 @@ void edit_object_create(struct pack *pack)
     const char *name = "new_obj";
 
     // Create new object and select it
-    pkid obj_pkid = RICO_load_object(pack, OBJ_STATIC, name);
+    pkid obj_pkid = RICO_load_object(pack, RICO_OBJECT_TYPE_START, 0, name);
     struct rico_object *obj = RICO_pack_lookup(obj_pkid);
     edit_object_select(obj, false);
 }
@@ -58,10 +58,10 @@ void edit_bbox_reset_all()
     }
 }
 
-void edit_object_select(struct rico_object *object, bool force)
+void edit_object_select(struct rico_object *rico, bool force)
 {
     // NULL already selected
-    if (!force && !object && !selected_obj_id)
+    if (!force && !rico && !selected_obj_id)
         return;
 
     // Deselect current object
@@ -72,10 +72,10 @@ void edit_object_select(struct rico_object *object, bool force)
     }
 
     // Select requested object
-    if (object && (force || object->uid.pkid != selected_obj_id))
+    if (rico && (force || rico->uid.pkid != selected_obj_id))
     {
-        object_select(object);
-        selected_obj_id = object->uid.pkid;
+        object_select(rico);
+        selected_obj_id = rico->uid.pkid;
     }
     else
     {
@@ -109,11 +109,13 @@ void edit_translate(struct camera *camera, const struct vec3 *offset)
         return;
 
     struct rico_object *obj = RICO_pack_lookup(selected_obj_id);
-    bool selectable = object_selectable(obj);
+
+    // HACK: There's probably a better way to do this check
+    bool has_bbox = !v3_equals(&obj->bbox.min, &obj->bbox.max);
 
     if (v3_equals(offset, &VEC3_ZERO))
     {
-        if (camera->locked && selectable)
+        if (camera->locked && has_bbox)
         {
             camera->pos = VEC3_ZERO;
         }
@@ -121,7 +123,7 @@ void edit_translate(struct camera *camera, const struct vec3 *offset)
     }
     else
     {
-        if (camera->locked && selectable)
+        if (camera->locked && has_bbox)
         {
             camera_translate_world(camera, offset);
         }
@@ -131,15 +133,15 @@ void edit_translate(struct camera *camera, const struct vec3 *offset)
     object_print(obj);
 }
 
-void edit_rotate(const struct vec3 *offset)
+void edit_rotate(const struct quat *offset)
 {
     if (!selected_obj_id)
         return;
 
     struct rico_object *obj = RICO_pack_lookup(selected_obj_id);
-    if (v3_equals(offset, &VEC3_ZERO))
+    if (quat_equals(offset, &QUAT_IDENT))
     {
-        object_rot_set(obj, &VEC3_ZERO);
+        object_rot_set(obj, &QUAT_IDENT);
     }
     else
     {
@@ -173,15 +175,11 @@ void edit_material_next()
         return;
 
     struct rico_object *obj = RICO_pack_lookup(selected_obj_id);
-    struct obj_property *mat_prop = &obj->props[PROP_MATERIAL];
-    if (!mat_prop->type)
-        return;
-
-    struct rico_material *next_material = pack_next(mat_prop->material_pkid,
+    struct rico_material *next_material = pack_next(obj->material_pkid,
                                                     RICO_HND_MATERIAL);
     if (next_material)
     {
-        mat_prop->material_pkid = next_material->uid.pkid;
+        obj->material_pkid = next_material->uid.pkid;
         object_print(obj);
     }
 }
@@ -192,15 +190,11 @@ void edit_material_prev()
         return;
 
     struct rico_object *obj = RICO_pack_lookup(selected_obj_id);
-    struct obj_property *mat_prop = &obj->props[PROP_MATERIAL];
-    if (!mat_prop->type)
-        return;
-
-    struct rico_material *prev_material = pack_prev(mat_prop->material_pkid,
+    struct rico_material *prev_material = pack_prev(obj->material_pkid,
                                                     RICO_HND_MATERIAL);
     if (prev_material)
     {
-        mat_prop->material_pkid = prev_material->uid.pkid;
+        obj->material_pkid = prev_material->uid.pkid;
         object_print(obj);
     }
 }
@@ -211,20 +205,12 @@ void edit_mesh_next()
         return;
 
     struct rico_object *obj = RICO_pack_lookup(selected_obj_id);
-    struct obj_property *mesh_prop = &obj->props[PROP_MESH];
-    if (!mesh_prop->type)
-    {
-        mesh_prop->type = PROP_MESH;
-        mesh_prop->mesh_pkid = 0;
-    }
-
-    struct rico_mesh *next_mesh = pack_next(mesh_prop->mesh_pkid,
+    struct rico_mesh *next_mesh = pack_next(obj->mesh_pkid,
                                             RICO_HND_MESH);
     if (next_mesh)
     {
-        mesh_prop->mesh_pkid = next_mesh->uid.pkid;
-        obj->props[PROP_BBOX].type = PROP_BBOX;
-        obj->props[PROP_BBOX].bbox = next_mesh->bbox;
+        obj->mesh_pkid = next_mesh->uid.pkid;
+        obj->bbox = next_mesh->bbox;
         object_select(obj);
         object_print(obj);
     }
@@ -236,17 +222,12 @@ void edit_mesh_prev()
         return;
 
     struct rico_object *obj = RICO_pack_lookup(selected_obj_id);
-    struct obj_property *mesh_prop = &obj->props[PROP_MESH];
-    if (!mesh_prop->type)
-        return;
-
-    struct rico_mesh *prev_mesh = pack_prev(mesh_prop->mesh_pkid,
+    struct rico_mesh *prev_mesh = pack_prev(obj->mesh_pkid,
                                             RICO_HND_MESH);
     if (prev_mesh)
     {
-        mesh_prop->mesh_pkid = prev_mesh->uid.pkid;
-        obj->props[PROP_BBOX].type = PROP_BBOX;
-        obj->props[PROP_BBOX].bbox = prev_mesh->bbox;
+        obj->mesh_pkid = prev_mesh->uid.pkid;
+        obj->bbox = prev_mesh->bbox;
         object_select(obj);
         object_print(obj);
     }
@@ -258,13 +239,8 @@ void edit_bbox_reset()
         return;
 
     struct rico_object *obj = RICO_pack_lookup(selected_obj_id);
-    struct obj_property *mesh_prop = &obj->props[PROP_MESH];
-    if (!mesh_prop->type)
-        return;
-
-    struct rico_mesh *mesh = RICO_pack_lookup(mesh_prop->mesh_pkid);
-    obj->props[PROP_BBOX].type = PROP_BBOX;
-    obj->props[PROP_BBOX].bbox = mesh->bbox;
+    struct rico_mesh *mesh = RICO_pack_lookup(obj->mesh_pkid);
+    obj->bbox = mesh->bbox;
 
     object_select(obj);
     object_print(obj);
@@ -304,7 +280,7 @@ struct widget *widget_test()
         camera_fwd_ray(&cam_ray, &cam_player);
 
         struct mat4 xform = MAT4_IDENT;
-        mat4_translate(&xform, &obj->props[PROP_TRANSFORM].xform.trans);
+        mat4_translate(&xform, &obj->xform.position);
 
         float dist_min = 9999.0;
         for (u32 i = 0; i < ARRAY_COUNT(widgets); ++i)
@@ -322,9 +298,10 @@ struct widget *widget_test()
         if (widget)
         {
             string_free_slot(STR_SLOT_WIDGET);
-            RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_WIDGET, SCREEN_X(0),
-                        SCREEN_Y(FONT_HEIGHT), COLOR_DARK_CYAN, 0, NULL,
-                        widget_action_string[widget->action]);
+            RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_WIDGET,
+                             SCREEN_X(0), SCREEN_Y(FONT_HEIGHT),
+                             COLOR_DARK_CYAN, 0, NULL,
+                             widget_action_string[widget->action]);
         }
     }
 
@@ -364,22 +341,22 @@ void edit_mouse_move()
 
     bool collide = false;
     struct rico_object *obj = RICO_pack_lookup(selected_obj_id);
-    struct vec3 trans = obj->props[PROP_TRANSFORM].xform.trans;
+    struct vec3 trans = obj->xform.position;
 
     struct vec3 normal = cam_player.pos;
-    v3_sub(&normal, &obj->props[PROP_TRANSFORM].xform.trans);
+    v3_sub(&normal, &obj->xform.position);
 
     if (widget->action == WIDGET_TRANSLATE_X)
     {
         normal.x = 0.0f;
         v3_normalize(&normal);
 
-        //prim_draw_plane(&obj->xform.trans, &normal, &MAT4_IDENT,
+        //prim_draw_plane(&obj->xform.position, &normal, &MAT4_IDENT,
         //                &COLOR_RED_HIGHLIGHT);
 
         struct vec3 contact = { 0 };
         collide = collide_ray_plane(&contact, &cam_ray,
-                                    &obj->props[PROP_TRANSFORM].xform.trans,
+                                    &obj->xform.position,
                                     &normal);
         if (collide) {
             trans.x = contact.x - WIDGET_BOX_OFFSET;
@@ -391,12 +368,12 @@ void edit_mouse_move()
         normal.y = 0.0f;
         v3_normalize(&normal);
 
-        //prim_draw_plane(&obj->xform.trans, &normal, &MAT4_IDENT,
+        //prim_draw_plane(&obj->xform.position, &normal, &MAT4_IDENT,
         //                &COLOR_GREEN_HIGHLIGHT);
 
         struct vec3 contact = { 0 };
         collide = collide_ray_plane(&contact, &cam_ray,
-                                    &obj->props[PROP_TRANSFORM].xform.trans,
+                                    &obj->xform.position,
                                     &normal);
         if (collide) {
             trans.y = contact.y - WIDGET_BOX_OFFSET;
@@ -408,12 +385,12 @@ void edit_mouse_move()
         normal.z = 0.0f;
         v3_normalize(&normal);
 
-        //prim_draw_plane(&obj->xform.trans, &normal, &MAT4_IDENT,
+        //prim_draw_plane(&obj->xform.position, &normal, &MAT4_IDENT,
         //                &COLOR_BLUE_HIGHLIGHT);
 
         struct vec3 contact = { 0 };
         collide = collide_ray_plane(&contact, &cam_ray,
-                                    &obj->props[PROP_TRANSFORM].xform.trans,
+                                    &obj->xform.position,
                                     &normal);
         if (collide) {
             trans.z = contact.z - WIDGET_BOX_OFFSET;
@@ -455,9 +432,9 @@ void edit_render(struct camera *camera)
         struct rico_object *obj = RICO_pack_lookup(selected_obj_id);
 
         struct mat4 xform = MAT4_IDENT;
-        mat4_translate(&xform, &obj->props[PROP_TRANSFORM].xform.trans);
+        mat4_translate(&xform, &obj->xform.position);
         
-        //struct vec3 *bbox = &obj->props[PROP_BBOX].bbox.max;
+        //struct vec3 *bbox = &obj->bbox.max;
         //prim_draw_line(&VEC3_ZERO, &VEC3(bbox->x, 0.0f, 0.0f), &xform, COLOR_RED);
         //prim_draw_line(&VEC3_ZERO, &VEC3(0.0f, bbox->y, 0.0f), &xform, COLOR_GREEN);
         //prim_draw_line(&VEC3_ZERO, &VEC3(0.0f, 0.0f, bbox->z), &xform, COLOR_BLUE);

@@ -1,20 +1,19 @@
-const char *rico_obj_type_string[] = { RICO_OBJ_TYPES(GEN_STRING) };
-const char *rico_prop_type_string[] = { RICO_PROP_TYPES(GEN_STRING) };
+const char *rico_obj_type_string[] = { RICO_OBJECT_TYPES(GEN_STRING) };
+//const char *rico_prop_type_string[] = { RICO_PROP_TYPES(GEN_STRING) };
 
 RICO_event_object *object_event_handler;
 
 void object_delete(struct pack *pack, struct rico_object *obj)
 {
     // TODO: Make sure all of the properties get cleaned up properly
-    pack_delete(obj->props[PROP_MESH].mesh_pkid);
-    pack_delete(obj->props[PROP_MATERIAL].material_pkid);
+    pack_delete(obj->mesh_pkid);
+    pack_delete(obj->material_pkid);
 }
 
-struct rico_object *object_copy(struct pack *pack,
-                                       struct rico_object *other,
-                                       const char *name)
+struct rico_object *object_copy(struct pack *pack, struct rico_object *other,
+                                const char *name)
 {
-    pkid new_obj_pkid = RICO_load_object(pack, other->type, name);
+    pkid new_obj_pkid = RICO_load_object(pack, other->type, 0, name);
     struct rico_object *new_obj = RICO_pack_lookup(new_obj_pkid);
 
     // TODO: Make sure to update any ref counting we're using to prevent e.g.
@@ -29,7 +28,6 @@ struct rico_object *object_copy(struct pack *pack,
 void object_bbox_recalculate_all(struct pack *pack)
 {
     struct rico_object *obj;
-    struct obj_property *prop;
     struct rico_mesh *mesh;
     for (u32 index = 1; index < pack->blobs_used; ++index)
     {
@@ -37,45 +35,43 @@ void object_bbox_recalculate_all(struct pack *pack)
             continue;
 
         obj = pack_read(pack, index);
-        if (obj->type != OBJ_STATIC)
+        if (obj->type < RICO_OBJECT_TYPE_START)
             continue;
 
-        prop = &obj->props[PROP_MESH];
-        if (prop->type)
+        if (obj->mesh_pkid)
         {
-            mesh = RICO_pack_lookup(prop->mesh_pkid);
+            mesh = RICO_pack_lookup(obj->mesh_pkid);
         }
         else
         {
             mesh = RICO_pack_lookup(MESH_DEFAULT_CUBE);
         }
-        obj->props[PROP_BBOX].type = PROP_BBOX;
-        obj->props[PROP_BBOX].bbox = mesh->bbox;
+        obj->bbox = mesh->bbox;
     }
 }
 
-bool object_selectable(struct rico_object *object)
+bool object_selectable(struct rico_object *rico)
 {
-    return (object->type != OBJ_STRING_SCREEN);
+    return (rico->type != RICO_OBJECT_TYPE_STRING_SCREEN);
 }
 
-void object_select_toggle(struct rico_object *object)
+void object_select_toggle(struct rico_object *rico)
 {
-    object->props[PROP_BBOX].bbox.selected = !object->props[PROP_BBOX].bbox.selected;
+    rico->bbox.selected = !rico->bbox.selected;
 }
 
-void object_select(struct rico_object *object)
+void object_select(struct rico_object *rico)
 {
-    RICO_ASSERT(object_selectable(object));
-    object->props[PROP_BBOX].bbox.selected = true;
+    RICO_ASSERT(object_selectable(rico));
+    rico->bbox.selected = true;
 }
 
-void object_deselect(struct rico_object *object)
+void object_deselect(struct rico_object *rico)
 {
-    object->props[PROP_BBOX].bbox.selected = false;
+    rico->bbox.selected = false;
 }
 
-void object_transform_update(struct rico_object *object)
+void object_transform_update(struct rico_object *rico)
 {
     //HACK: Order of these operations might not always be the same.. should
     //      probably just store the transformation matrix directly rather than
@@ -84,134 +80,135 @@ void object_transform_update(struct rico_object *object)
     //      should have "edit mode" where the matrix is decomposed, then
     //      recomposed again when edit mode is ended?
     struct mat4 transform = MAT4_IDENT;
-    mat4_translate(&transform, &object->props[PROP_TRANSFORM].xform.trans);
-    mat4_rotx(&transform, object->props[PROP_TRANSFORM].xform.rot.x);
-    mat4_roty(&transform, object->props[PROP_TRANSFORM].xform.rot.y);
-    mat4_rotz(&transform, object->props[PROP_TRANSFORM].xform.rot.z);
-    mat4_scale(&transform, &object->props[PROP_TRANSFORM].xform.scale);
-    object->props[PROP_TRANSFORM].xform.matrix = transform;
+    mat4_translate(&transform, &rico->xform.position);
+    mat4_rot_quat(&transform, &rico->xform.orientation);
+    mat4_scale(&transform, &rico->xform.scale);
+    rico->xform.matrix = transform;
 
     struct vec3 scale_inv;
-    scale_inv.x = 1.0f / object->props[PROP_TRANSFORM].xform.scale.x;
-    scale_inv.y = 1.0f / object->props[PROP_TRANSFORM].xform.scale.y;
-    scale_inv.z = 1.0f / object->props[PROP_TRANSFORM].xform.scale.z;
+    scale_inv.x = 1.0f / rico->xform.scale.x;
+    scale_inv.y = 1.0f / rico->xform.scale.y;
+    scale_inv.z = 1.0f / rico->xform.scale.z;
 
-    struct vec3 trans_inv = object->props[PROP_TRANSFORM].xform.trans;
-    v3_negate(&trans_inv);
+    struct quat orientation_inv = rico->xform.orientation;
+    quat_inverse(&orientation_inv);
+
+    struct vec3 position_inv = rico->xform.position;
+    v3_negate(&position_inv);
 
     struct mat4 transform_inverse = MAT4_IDENT;
     mat4_scale(&transform_inverse, &scale_inv);
-    mat4_rotz(&transform_inverse, -object->props[PROP_TRANSFORM].xform.rot.z);
-    mat4_roty(&transform_inverse, -object->props[PROP_TRANSFORM].xform.rot.y);
-    mat4_rotx(&transform_inverse, -object->props[PROP_TRANSFORM].xform.rot.x);
-    mat4_translate(&transform_inverse, &trans_inv);
-    object->props[PROP_TRANSFORM].xform.matrix_inverse = transform_inverse;
+    mat4_rot_quat(&transform, &orientation_inv);
+    mat4_translate(&transform_inverse, &position_inv);
+    rico->xform.matrix_inverse = transform_inverse;
 
     //struct mat4 mm = object->transform;
     //mat4_mul(&mm, &object->transform_inverse);
     //RICO_ASSERT(mat4_equals(&mm, &MAT4_IDENT));
 }
 
-void object_trans(struct rico_object *object, const struct vec3 *v)
+void object_trans(struct rico_object *rico, const struct vec3 *v)
 {
-    v3_add(&object->props[PROP_TRANSFORM].xform.trans, v);
-    object_transform_update(object);
+    v3_add(&rico->xform.position, v);
+    object_transform_update(rico);
 }
 
-const struct vec3 *object_trans_get(struct rico_object *object)
+const struct vec3 *object_trans_get(struct rico_object *rico)
 {
-    return &object->props[PROP_TRANSFORM].xform.trans;
+    return &rico->xform.position;
 }
 
-void object_trans_set(struct rico_object *object,
+void object_trans_set(struct rico_object *rico,
                       const struct vec3 *v)
 {
-    object->props[PROP_TRANSFORM].xform.trans = *v;
-    object_transform_update(object);
+    rico->xform.position = *v;
+    object_transform_update(rico);
 }
 
-void object_rot(struct rico_object *object, const struct vec3 *v)
+void object_rot(struct rico_object *rico, const struct quat *q)
 {
-    v3_add(&object->props[PROP_TRANSFORM].xform.rot, v);
-    object_transform_update(object);
+    quat_mul(&rico->xform.orientation, q);
+    object_transform_update(rico);
 }
 
-void object_rot_set(struct rico_object *object, const struct vec3 *v)
+void object_rot_set(struct rico_object *rico, const struct quat *q)
 {
-    object->props[PROP_TRANSFORM].xform.rot = *v;
-    object_transform_update(object);
+    rico->xform.orientation = *q;
+    object_transform_update(rico);
 }
 
-const struct vec3 *object_rot_get(struct rico_object *object)
+const struct quat *object_rot_get(struct rico_object *rico)
 {
-    return &object->props[PROP_TRANSFORM].xform.rot;
+    return &rico->xform.orientation;
 }
 
+#if 0
 void object_rot_x(struct rico_object *object, float deg)
 {
-    object->props[PROP_TRANSFORM].xform.rot.x += deg;
+    object->xform.rot.x += deg;
     object_transform_update(object);
 }
 
 void object_rot_x_set(struct rico_object *object, float deg)
 {
-    object->props[PROP_TRANSFORM].xform.rot.x = deg;
+    object->xform.rot.x = deg;
     object_transform_update(object);
 }
 
 void object_rot_y(struct rico_object *object, float deg)
 {
-    object->props[PROP_TRANSFORM].xform.rot.y += deg;
+    object->xform.rot.y += deg;
     object_transform_update(object);
 }
 
 void object_rot_y_set(struct rico_object *object, float deg)
 {
-    object->props[PROP_TRANSFORM].xform.rot.y = deg;
+    object->xform.rot.y = deg;
     object_transform_update(object);
 }
 
 void object_rot_z(struct rico_object *object, float deg)
 {
-    object->props[PROP_TRANSFORM].xform.rot.z += deg;
+    object->xform.rot.z += deg;
     object_transform_update(object);
 }
 
 void object_rot_z_set(struct rico_object *object, float deg)
 {
-    object->props[PROP_TRANSFORM].xform.rot.z = deg;
+    object->xform.rot.z = deg;
     object_transform_update(object);
 }
+#endif
 
-void object_scale(struct rico_object *object, const struct vec3 *v)
+void object_scale(struct rico_object *rico, const struct vec3 *v)
 {
-    v3_add(&object->props[PROP_TRANSFORM].xform.scale, v);
-    object_transform_update(object);
+    v3_add(&rico->xform.scale, v);
+    object_transform_update(rico);
 }
 
-void object_scale_set(struct rico_object *object,
+void object_scale_set(struct rico_object *rico,
                       const struct vec3 *v)
 {
-    object->props[PROP_TRANSFORM].xform.scale = *v;
-    object_transform_update(object);
+    rico->xform.scale = *v;
+    object_transform_update(rico);
 }
 
-const struct vec3 *object_scale_get(struct rico_object *object)
+const struct vec3 *object_scale_get(struct rico_object *rico)
 {
-    return &object->props[PROP_TRANSFORM].xform.scale;
+    return &rico->xform.scale;
 }
 
-const struct mat4 *object_matrix_get(struct rico_object *object)
+const struct mat4 *object_matrix_get(struct rico_object *rico)
 {
-    return &object->props[PROP_TRANSFORM].xform.matrix;
+    return &rico->xform.matrix;
 }
 
-bool object_collide_ray(float *_dist, struct rico_object *object,
+bool object_collide_ray(float *_dist, struct rico_object *rico,
                         const struct ray *ray)
 {
-    return collide_ray_obb(_dist, ray, &object->props[PROP_BBOX].bbox,
-                           &object->props[PROP_TRANSFORM].xform.matrix,
-                           &object->props[PROP_TRANSFORM].xform.matrix_inverse);
+    return collide_ray_obb(_dist, ray, &rico->bbox,
+                           &rico->xform.matrix,
+                           &rico->xform.matrix_inverse);
 }
 
 bool object_collide_ray_type(struct pack *pack, struct rico_object **_object,
@@ -228,26 +225,26 @@ bool object_collide_ray_type(struct pack *pack, struct rico_object **_object,
             continue;
 
         obj = pack_read(pack, index);
-        if (obj->type == OBJ_TERRAIN)
+        if (obj->type == RICO_OBJECT_TYPE_TERRAIN)
             continue;
 
-        if (obj->props[PROP_BBOX].type)
+        if (obj->type)
         {
             collided = collide_ray_obb(
-                &distance, ray, &obj->props[PROP_BBOX].bbox,
-                &obj->props[PROP_TRANSFORM].xform.matrix,
-                &obj->props[PROP_TRANSFORM].xform.matrix_inverse
+                &distance, ray, &obj->bbox,
+                &obj->xform.matrix,
+                &obj->xform.matrix_inverse
             );
         }
-        else if (obj->props[PROP_MESH].type)
+        else if (obj->type)
         {
             struct rico_mesh *mesh =
-                RICO_pack_lookup(obj->props[PROP_MESH].mesh_pkid);
+                RICO_pack_lookup(obj->mesh_pkid);
 
             collided = collide_ray_obb(
                 &distance, ray, &mesh->bbox,
-                &obj->props[PROP_TRANSFORM].xform.matrix,
-                &obj->props[PROP_TRANSFORM].xform.matrix_inverse
+                &obj->xform.matrix,
+                &obj->xform.matrix_inverse
             );
         }
         else
@@ -257,8 +254,8 @@ bool object_collide_ray_type(struct pack *pack, struct rico_object **_object,
             struct rico_mesh *mesh = RICO_pack_lookup(MESH_DEFAULT_CUBE);
             collided = collide_ray_obb(
                 &distance, ray, &mesh->bbox,
-                &obj->props[PROP_TRANSFORM].xform.matrix,
-                &obj->props[PROP_TRANSFORM].xform.matrix_inverse
+                &obj->xform.matrix,
+                &obj->xform.matrix_inverse
             );
         }
 
@@ -287,6 +284,9 @@ internal void object_interact(struct rico_object *obj)
     }
 }
 
+// TODO: Physics system should iterate should all objects and update their
+//       velocity, position, etc.
+#if 0
 internal void object_update_static(struct rico_object *obj)
 {
     UNUSED(obj);
@@ -303,6 +303,7 @@ void object_update(struct rico_object *obj)
         break;
     }
 }
+#endif
 
 void object_render(struct pack *pack, const struct camera *camera)
 {
@@ -343,14 +344,14 @@ void object_render(struct pack *pack, const struct camera *camera)
     glUniform2f(prog->scale_uv, 1.0f, 1.0f);
 
     struct rico_object *obj = 0;
-    enum rico_obj_type prev_type = OBJ_NULL;
+    enum rico_object_type prev_type = RICO_OBJECT_TYPE_NULL;
     for (u32 index = 1; index < pack->blobs_used; ++index)
     {
         if (pack->index[index].type != RICO_HND_OBJECT)
             continue;
 
         obj = pack_read(pack, index);
-        if (obj->type == OBJ_STRING_SCREEN)
+        if (obj->type == RICO_OBJECT_TYPE_STRING_SCREEN)
             continue;
 
 #if RICO_DEBUG_OBJECT
@@ -374,6 +375,7 @@ void object_render(struct pack *pack, const struct camera *camera)
             prev_type = obj->type;
         }
 
+#if 0
         // Set object-specific uniform values
 
         // UV-coord scale
@@ -394,27 +396,28 @@ void object_render(struct pack *pack, const struct camera *camera)
         else
         {
             glUniform2f(prog->scale_uv,
-                        obj->props[PROP_TRANSFORM].xform.scale.x,
-                        obj->props[PROP_TRANSFORM].xform.scale.y);
+                        obj->xform.scale.x,
+                        obj->xform.scale.y);
         }
+#endif
 
         // Model matrix
         glUniformMatrix4fv(prog->model, 1, GL_TRUE,
-                           obj->props[PROP_TRANSFORM].xform.matrix.a);
+                           obj->xform.matrix.a);
 
         // Bind material
         pkid mat_id = MATERIAL_DEFAULT;
-        if (obj->props[PROP_MATERIAL].type)
+        if (obj->type)
         {
-            mat_id = obj->props[PROP_MATERIAL].material_pkid;
+            mat_id = obj->material_pkid;
         }
         material_bind(mat_id);
 
         // Render
         pkid mesh_id = MESH_DEFAULT_CUBE;
-        if (obj->props[PROP_MESH].type)
+        if (obj->type)
         {
-            mesh_id = obj->props[PROP_MESH].mesh_pkid;
+            mesh_id = obj->mesh_pkid;
         }
         mesh_render(mesh_id, prog->type);
 
@@ -430,16 +433,16 @@ void object_render(struct pack *pack, const struct camera *camera)
             continue;
 
         obj = pack_read(pack, index);
-        if (obj->type == OBJ_STRING_SCREEN)
+        if (obj->type == RICO_OBJECT_TYPE_STRING_SCREEN)
             continue;
 
         if (state_is_edit(state_get()))
         {
             struct vec4 color = COLOR_WHITE_HIGHLIGHT;
-            if (obj->props[PROP_BBOX].bbox.selected)
+            if (obj->bbox.selected)
                 color = COLOR_RED;
-            prim_draw_bbox(&obj->props[PROP_BBOX].bbox,
-                           &obj->props[PROP_TRANSFORM].xform.matrix, &color);
+            prim_draw_bbox(&obj->bbox,
+                           &obj->xform.matrix, &color);
         }
     }
 }
@@ -465,7 +468,7 @@ void object_render_ui(struct pack *pack)
             continue;
 
         obj = pack_read(pack, index);
-        if (obj->type != OBJ_STRING_SCREEN)
+        if (obj->type != RICO_OBJECT_TYPE_STRING_SCREEN)
             continue;
 
 #if RICO_DEBUG_OBJECT
@@ -474,21 +477,17 @@ void object_render_ui(struct pack *pack)
 
         // Model matrix
         glUniformMatrix4fv(prog->model, 1, GL_TRUE,
-                           obj->props[PROP_TRANSFORM].xform.matrix.a);
+                           obj->xform.matrix.a);
 
         // Bind texture
         pkid tex_id = FONT_DEFAULT_TEXTURE;
-        if (obj->props[PROP_TEXTURE].type)
-        {
-            tex_id = obj->props[PROP_TEXTURE].texture_pkid;
-        }
         texture_bind(tex_id, GL_TEXTURE0);
 
         // Render
         pkid mesh_id = 0;
-        if (obj->props[PROP_MESH].type)
+        if (obj->type)
         {
-            mesh_id = obj->props[PROP_MESH].mesh_pkid;
+            mesh_id = obj->mesh_pkid;
         }
         RICO_ASSERT(mesh_id);
         mesh_render(mesh_id, prog->type);
@@ -520,17 +519,11 @@ void object_print(struct rico_object *obj)
     if (obj)
     {
         struct pack *pack = RICO_packs[PKID_PACK(obj->uid.pkid)];
-        bool has_mesh = obj->props[PROP_MESH].type;
-        bool has_material = obj->props[PROP_MATERIAL].type;
 
-        pkid mesh_id = (has_mesh)
-            ? obj->props[PROP_MESH].mesh_pkid : 0;
-        pkid material_id = (has_material)
-            ? obj->props[PROP_MATERIAL].material_pkid : 0;
-        struct rico_mesh *mesh = (mesh_id)
-            ? RICO_pack_lookup(mesh_id) : NULL;
-        struct rico_material *material = (material_id)
-            ? RICO_pack_lookup(material_id) : NULL;
+        struct rico_mesh *mesh = (obj->mesh_pkid)
+            ? RICO_pack_lookup(obj->mesh_pkid) : NULL;
+        struct rico_material *material = (obj->material_pkid)
+            ? RICO_pack_lookup(obj->material_pkid) : NULL;
 
         const char *mesh_str = "---";
         u32 mesh_verts = 0;
@@ -551,24 +544,24 @@ void object_print(struct rico_object *obj)
         {
             material_str = material->uid.name;
 
-            if (material->tex_id[0])
+            if (material->tex_albedo)
             {
                 struct rico_texture *tex =
-                    RICO_pack_lookup(material->tex_id[0]);
+                    RICO_pack_lookup(material->tex_albedo);
                 mat_tex0_id = tex->uid.pkid;
                 mat_tex0_str = tex->uid.name;
             }
-            if (material->tex_id[1])
+            if (material->tex_mrao)
             {
                 struct rico_texture *tex =
-                    RICO_pack_lookup(material->tex_id[1]);
+                    RICO_pack_lookup(material->tex_mrao);
                 mat_tex1_id = tex->uid.pkid;
                 mat_tex1_str = tex->uid.name;
             }
-            if (material->tex_id[2])
+            if (material->tex_emission)
             {
                 struct rico_texture *tex =
-                    RICO_pack_lookup(material->tex_id[2]);
+                    RICO_pack_lookup(material->tex_emission);
                 mat_tex2_id = tex->uid.pkid;
                 mat_tex2_str = tex->uid.name;
             }
@@ -578,9 +571,9 @@ void object_print(struct rico_object *obj)
             buf, sizeof(buf),
             "\n"                    \
             "Object [%u|%u] %s\n"   \
-            "  Type  %s\n"          \
-            "  Trans %f %f %f\n"    \
-            "  Rot   %f %f %f\n"    \
+            "  Type  %d\n"          \
+            "  Pos   %f %f %f\n"    \
+            "  Rot   %f %f %f %f\n" \
             "  Scale %f %f %f\n"    \
             "  BBox  %f %f %f\n"    \
             "        %f %f %f\n"    \
@@ -593,15 +586,17 @@ void object_print(struct rico_object *obj)
             "  Spec [%u|%u] %s\n"   \
             "  Emis [%u|%u] %s\n",
             PKID_PACK(obj->uid.pkid), PKID_BLOB(obj->uid.pkid), obj->uid.name,
-            rico_obj_type_string[obj->type],
-            obj->props[PROP_TRANSFORM].xform.trans.x, obj->props[PROP_TRANSFORM].xform.trans.y, obj->props[PROP_TRANSFORM].xform.trans.z,
-            obj->props[PROP_TRANSFORM].xform.rot.x,   obj->props[PROP_TRANSFORM].xform.rot.y,   obj->props[PROP_TRANSFORM].xform.rot.z,
-            obj->props[PROP_TRANSFORM].xform.scale.x, obj->props[PROP_TRANSFORM].xform.scale.y, obj->props[PROP_TRANSFORM].xform.scale.z,
-            obj->props[PROP_BBOX].bbox.min.x, obj->props[PROP_BBOX].bbox.min.y, obj->props[PROP_BBOX].bbox.min.z,
-            obj->props[PROP_BBOX].bbox.max.x, obj->props[PROP_BBOX].bbox.max.y, obj->props[PROP_BBOX].bbox.max.z,
-            PKID_PACK(mesh_id), PKID_BLOB(mesh_id), mesh_str,
+            obj->type,
+            obj->xform.position.x, obj->xform.position.y, obj->xform.position.z,
+            obj->xform.orientation.w, obj->xform.orientation.x,
+            obj->xform.orientation.y, obj->xform.orientation.z,
+            obj->xform.scale.x, obj->xform.scale.y, obj->xform.scale.z,
+            obj->bbox.min.x, obj->bbox.min.y, obj->bbox.min.z,
+            obj->bbox.max.x, obj->bbox.max.y, obj->bbox.max.z,
+            PKID_PACK(obj->mesh_pkid), PKID_BLOB(obj->mesh_pkid), mesh_str,
             mesh_verts,
-            PKID_PACK(material_id), PKID_BLOB(material_id), material_str,
+            PKID_PACK(obj->material_pkid), PKID_BLOB(obj->material_pkid),
+            material_str,
             PKID_PACK(mat_tex0_id), PKID_BLOB(mat_tex0_id), mat_tex0_str,
             PKID_PACK(mat_tex1_id), PKID_BLOB(mat_tex1_id), mat_tex1_str,
             PKID_PACK(mat_tex2_id), PKID_BLOB(mat_tex2_id), mat_tex2_str

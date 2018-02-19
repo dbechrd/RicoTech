@@ -751,7 +751,13 @@ internal int state_edit_rotate()
     // Update selected object
     if (rotate_reset || !v3_equals(&rotate, &VEC3_ZERO))
     {
-        edit_rotate(&rotate);
+        struct quat qx, qy, qz;
+        quat_from_axis_angle(&qx, VEC3_X, rotate.x);
+        quat_from_axis_angle(&qy, VEC3_Y, rotate.y);
+        quat_from_axis_angle(&qz, VEC3_Z, rotate.z);
+        quat_mul(&qx, &qy);
+        quat_mul(&qx, &qz);
+        edit_rotate(&qx);
     }
 
     if (rot_delta_changed)

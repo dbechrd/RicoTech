@@ -4,7 +4,9 @@
 struct rico_material
 {
     struct uid uid;
-    pkid tex_id[3];
+    pkid tex_albedo;
+    pkid tex_mrao;
+    pkid tex_emission;
 };
 
 void material_bind(pkid pkid);

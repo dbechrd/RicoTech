@@ -4,6 +4,6 @@
 #include "RICO/rico_hnd.h"
 
 const char *rico_hnd_type_string[];
-u32 rico_hnd_type_size[];
+const u32 rico_hnd_type_size[];
 
 #endif

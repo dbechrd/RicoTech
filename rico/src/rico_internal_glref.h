@@ -22,7 +22,7 @@ void edit_object_next();
 void edit_object_prev();
 void edit_print_object();
 void edit_translate(struct camera *camera, const struct vec3 *offset);
-void edit_rotate(const struct vec3 *offset);
+void edit_rotate(const struct quat *offset);
 void edit_scale(const struct vec3 *offset);
 void edit_mesh_next();
 void edit_mesh_prev();

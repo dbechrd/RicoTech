@@ -20,10 +20,10 @@
     #include <stdio.h>
 #endif
 
-#ifdef DLB_MATH_STATIC
-    #define DLB_MATH_DEF static
-#else
+#ifdef DLB_MATH_EXTERN
     #define DLB_MATH_DEF extern
+#else
+    #define DLB_MATH_DEF static inline
 #endif
 
 #define M_PI 3.14159265358979323846264338327950288
@@ -44,11 +44,6 @@
 #define MAT4_EPSILON 0.00001f
 #define QUAT_EPSILON 0.00001f
 
-#define VEC2(a, b) ((struct vec2) {{{ a, b }}})
-#define VEC3(a, b, c) ((struct vec3) {{{ a, b, c }}})
-#define VEC4(a, b, c, d) ((struct vec4) {{{ a, b, c, d }}})
-
-//--- Vectors --------------------------
 struct vec2
 {
     union
@@ -77,68 +72,6 @@ struct vec4
     };
 };
 
-DLB_MATH_DEF const struct vec4 COLOR_TRANSPARENT;
-DLB_MATH_DEF const struct vec4 COLOR_BLACK;
-DLB_MATH_DEF const struct vec4 COLOR_RED;
-DLB_MATH_DEF const struct vec4 COLOR_GREEN;
-DLB_MATH_DEF const struct vec4 COLOR_BLUE;
-DLB_MATH_DEF const struct vec4 COLOR_YELLOW;
-DLB_MATH_DEF const struct vec4 COLOR_CYAN;
-DLB_MATH_DEF const struct vec4 COLOR_MAGENTA;
-DLB_MATH_DEF const struct vec4 COLOR_WHITE;
-DLB_MATH_DEF const struct vec4 COLOR_GRAY;
-
-DLB_MATH_DEF const struct vec4 COLOR_BLACK_HIGHLIGHT;
-DLB_MATH_DEF const struct vec4 COLOR_RED_HIGHLIGHT;
-DLB_MATH_DEF const struct vec4 COLOR_GREEN_HIGHLIGHT;
-DLB_MATH_DEF const struct vec4 COLOR_BLUE_HIGHLIGHT;
-DLB_MATH_DEF const struct vec4 COLOR_YELLOW_HIGHLIGHT;
-DLB_MATH_DEF const struct vec4 COLOR_CYAN_HIGHLIGHT;
-DLB_MATH_DEF const struct vec4 COLOR_MAGENTA_HIGHLIGHT;
-DLB_MATH_DEF const struct vec4 COLOR_WHITE_HIGHLIGHT;
-DLB_MATH_DEF const struct vec4 COLOR_GRAY_HIGHLIGHT;
-
-DLB_MATH_DEF const struct vec4 COLOR_DARK_RED;
-DLB_MATH_DEF const struct vec4 COLOR_DARK_GREEN;
-DLB_MATH_DEF const struct vec4 COLOR_DARK_BLUE;
-DLB_MATH_DEF const struct vec4 COLOR_DARK_YELLOW;
-DLB_MATH_DEF const struct vec4 COLOR_DARK_CYAN;
-DLB_MATH_DEF const struct vec4 COLOR_DARK_MAGENTA;
-DLB_MATH_DEF const struct vec4 COLOR_DARK_GRAY;
-
-DLB_MATH_DEF const struct vec4 COLOR_DARK_RED_HIGHLIGHT;
-DLB_MATH_DEF const struct vec4 COLOR_DARK_GREEN_HIGHLIGHT;
-DLB_MATH_DEF const struct vec4 COLOR_DARK_BLUE_HIGHLIGHT;
-DLB_MATH_DEF const struct vec4 COLOR_DARK_YELLOW_HIGHLIGHT;
-DLB_MATH_DEF const struct vec4 COLOR_DARK_CYAN_HIGHLIGHT;
-DLB_MATH_DEF const struct vec4 COLOR_DARK_MAGENTA_HIGHLIGHT;
-DLB_MATH_DEF const struct vec4 COLOR_DARK_GRAY_HIGHLIGHT;
-
-DLB_MATH_DEF const struct vec3 VEC3_ZERO;
-DLB_MATH_DEF const struct vec3 VEC3_ONE;
-DLB_MATH_DEF const struct vec3 VEC3_UNIT;
-DLB_MATH_DEF const struct vec3 VEC3_X;
-DLB_MATH_DEF const struct vec3 VEC3_Y;
-DLB_MATH_DEF const struct vec3 VEC3_Z;
-DLB_MATH_DEF const struct vec3 VEC3_RIGHT;
-DLB_MATH_DEF const struct vec3 VEC3_UP;
-DLB_MATH_DEF const struct vec3 VEC3_FWD;
-DLB_MATH_DEF const struct vec3 VEC3_DOWN;
-DLB_MATH_DEF const struct vec3 VEC3_SMALL;
-
-DLB_MATH_DEF struct vec3 *v3_add(struct vec3 *a, const struct vec3 *b);
-DLB_MATH_DEF struct vec3 *v3_sub(struct vec3 *a, const struct vec3 *b);
-DLB_MATH_DEF struct vec3 *v3_scale(struct vec3 *v, const struct vec3 *s);
-DLB_MATH_DEF struct vec3 *v3_scalef(struct vec3 *v, float s);
-DLB_MATH_DEF float v3_dot(const struct vec3 *a, const struct vec3 *b);
-DLB_MATH_DEF struct vec3 v3_cross(const struct vec3 *a, const struct vec3 *b);
-DLB_MATH_DEF float v3_length(const struct vec3 *v);
-DLB_MATH_DEF struct vec3 *v3_negate(struct vec3 *v);
-DLB_MATH_DEF struct vec3 *v3_normalize(struct vec3 *v);
-DLB_MATH_DEF struct vec3 *v3_positive(struct vec3 *v);
-DLB_MATH_DEF int v3_equals(const struct vec3 *a, const struct vec3 *b);
-
-//--- Matrices -------------------------
 struct mat4
 {
     union
@@ -155,38 +88,6 @@ struct mat4
     };
 };
 
-DLB_MATH_DEF const struct mat4 MAT4_IDENT;
-
-DLB_MATH_DEF struct mat4 mat4_init(
-    float m00, float m01, float m02, float m03,
-    float m10, float m11, float m12, float m13,
-    float m20, float m21, float m22, float m23,
-    float m30, float m31, float m32, float m33);
-DLB_MATH_DEF struct mat4 mat4_init_transpose(const struct mat4 *m);
-DLB_MATH_DEF struct mat4 mat4_init_translate(const struct vec3 *v);
-DLB_MATH_DEF struct mat4 mat4_init_scale(const struct vec3 *s);
-DLB_MATH_DEF struct mat4 mat4_init_scalef(float s);
-DLB_MATH_DEF struct mat4 mat4_init_rotx(float deg);
-DLB_MATH_DEF struct mat4 mat4_init_roty(float deg);
-DLB_MATH_DEF struct mat4 mat4_init_rotz(float deg);
-DLB_MATH_DEF int mat4_equals(const struct mat4 *a, const struct mat4 *b);
-DLB_MATH_DEF struct mat4 *mat4_mul(struct mat4 *a, const struct mat4 *b);
-DLB_MATH_DEF void mat4_translate(struct mat4 *m, const struct vec3 *v);
-DLB_MATH_DEF void mat4_scale(struct mat4 *m, const struct vec3 *s);
-DLB_MATH_DEF void mat4_scalef(struct mat4 *m, float s);
-DLB_MATH_DEF void mat4_rotx(struct mat4 *m, float deg);
-DLB_MATH_DEF void mat4_roty(struct mat4 *m, float deg);
-DLB_MATH_DEF void mat4_rotz(struct mat4 *m, float deg);
-DLB_MATH_DEF void mat4_transpose(struct mat4 *m);
-DLB_MATH_DEF struct vec3 *v3_mul_mat4(struct vec3 *v, const struct mat4 *m);
-DLB_MATH_DEF struct mat4 mat4_init_perspective(float width, float height,
-                                                      float z_near, float z_far,
-                                                      float fov_deg);
-DLB_MATH_DEF struct mat4 mat4_init_lookat(struct vec3 *pos,
-                                                 struct vec3 *view,
-                                                 struct vec3 *up);
-
-//--- Quaternions ----------------------
 struct quat
 {
     float w;
@@ -200,8 +101,105 @@ struct quat
     };
 };
 
-DLB_MATH_DEF const struct quat QUAT_IDENT;
+#define VEC2(x, y)       ((struct vec2) {{{ x, y }}})
+#define VEC3(x, y, z)    ((struct vec3) {{{ x, y, z }}})
+#define VEC4(x, y, z, w) ((struct vec4) {{{ x, y, z, w }}})
+#define QUAT(w, x, y, z) ((struct quat) { w, {{ x, y, z }}})
 
+#define COLOR_TRANSPARENT             VEC4(0.0f, 0.0f, 0.0f, 0.0f)
+#define COLOR_BLACK                   VEC4(0.0f, 0.0f, 0.0f, 1.0f)
+#define COLOR_RED                     VEC4(1.0f, 0.0f, 0.0f, 1.0f)
+#define COLOR_GREEN                   VEC4(0.0f, 1.0f, 0.0f, 1.0f)
+#define COLOR_BLUE                    VEC4(0.0f, 0.0f, 1.0f, 1.0f)
+#define COLOR_YELLOW                  VEC4(1.0f, 1.0f, 0.0f, 1.0f)
+#define COLOR_CYAN                    VEC4(0.0f, 1.0f, 1.0f, 1.0f)
+#define COLOR_MAGENTA                 VEC4(1.0f, 0.0f, 1.0f, 1.0f)
+#define COLOR_WHITE                   VEC4(1.0f, 1.0f, 1.0f, 1.0f)
+#define COLOR_GRAY                    VEC4(0.5f, 0.5f, 0.5f, 1.0f)
+#define COLOR_BLACK_HIGHLIGHT         VEC4(0.0f, 0.0f, 0.0f, 0.1f)
+#define COLOR_RED_HIGHLIGHT           VEC4(1.0f, 0.0f, 0.0f, 0.1f)
+#define COLOR_GREEN_HIGHLIGHT         VEC4(0.0f, 1.0f, 0.0f, 0.1f)
+#define COLOR_BLUE_HIGHLIGHT          VEC4(0.0f, 0.0f, 1.0f, 0.1f)
+#define COLOR_YELLOW_HIGHLIGHT        VEC4(1.0f, 1.0f, 0.0f, 0.1f)
+#define COLOR_CYAN_HIGHLIGHT          VEC4(0.0f, 1.0f, 1.0f, 0.1f)
+#define COLOR_MAGENTA_HIGHLIGHT       VEC4(1.0f, 0.0f, 1.0f, 0.1f)
+#define COLOR_WHITE_HIGHLIGHT         VEC4(1.0f, 1.0f, 1.0f, 0.1f)
+#define COLOR_GRAY_HIGHLIGHT          VEC4(0.5f, 0.5f, 0.5f, 0.1f)
+#define COLOR_DARK_RED                VEC4(0.5f, 0.0f, 0.0f, 1.0f)
+#define COLOR_DARK_GREEN              VEC4(0.0f, 0.5f, 0.0f, 1.0f)
+#define COLOR_DARK_BLUE               VEC4(0.0f, 0.0f, 0.5f, 1.0f)
+#define COLOR_DARK_YELLOW             VEC4(0.5f, 0.5f, 0.0f, 1.0f)
+#define COLOR_DARK_CYAN               VEC4(0.0f, 0.5f, 0.5f, 1.0f)
+#define COLOR_DARK_MAGENTA            VEC4(0.5f, 0.0f, 0.5f, 1.0f)
+#define COLOR_DARK_GRAY               VEC4(0.25f, 0.25f, 0.25f, 1.0f)
+#define COLOR_DARK_RED_HIGHLIGHT      VEC4(0.5f, 0.0f, 0.0f, 0.5f)
+#define COLOR_DARK_GREEN_HIGHLIGHT    VEC4(0.0f, 0.5f, 0.0f, 0.5f)
+#define COLOR_DARK_BLUE_HIGHLIGHT     VEC4(0.0f, 0.0f, 0.5f, 0.5f)
+#define COLOR_DARK_YELLOW_HIGHLIGHT   VEC4(0.5f, 0.5f, 0.0f, 0.5f)
+#define COLOR_DARK_CYAN_HIGHLIGHT     VEC4(0.0f, 0.5f, 0.5f, 0.5f)
+#define COLOR_DARK_MAGENTA_HIGHLIGHT  VEC4(0.5f, 0.0f, 0.5f, 0.5f)
+#define COLOR_DARK_GRAY_HIGHLIGHT     VEC4(0.25f, 0.25f, 0.25f, 0.5f)
+#define VEC3_ZERO                     VEC3(0.0f, 0.0f, 0.0f)
+#define VEC3_ONE                      VEC3(1.0f, 1.0f, 1.0f)
+#define VEC3_UNIT                     VEC3(0.577350259f, 0.577350259f, 0.577350259f)
+#define VEC3_X                        VEC3(1.0f, 0.0f, 0.0f)
+#define VEC3_Y                        VEC3(0.0f, 1.0f, 0.0f)
+#define VEC3_Z                        VEC3(0.0f, 0.0f, 1.0f)
+#define VEC3_RIGHT                    VEC3(1.0f, 0.0f, 0.0f)
+#define VEC3_UP                       VEC3(0.0f, 1.0f, 0.0f)
+#define VEC3_FWD                      VEC3(0.0f, 0.0f,-1.0f)
+#define VEC3_DOWN                     VEC3(0.0f,-1.0f, 0.0f)
+#define VEC3_SMALL                    VEC3(0.01f, 0.01f, 0.01f)
+
+#define QUAT_IDENT QUAT(1.0f, 0.0f, 0.0f, 0.0f)
+
+const struct mat4 MAT4_IDENT;
+
+//--- Vectors --------------------------
+DLB_MATH_DEF struct vec3 *v3_add(struct vec3 *a, const struct vec3 *b);
+DLB_MATH_DEF struct vec3 *v3_sub(struct vec3 *a, const struct vec3 *b);
+DLB_MATH_DEF struct vec3 *v3_scale(struct vec3 *v, const struct vec3 *s);
+DLB_MATH_DEF struct vec3 *v3_scalef(struct vec3 *v, float s);
+DLB_MATH_DEF float v3_dot(const struct vec3 *a, const struct vec3 *b);
+DLB_MATH_DEF struct vec3 v3_cross(const struct vec3 *a, const struct vec3 *b);
+DLB_MATH_DEF float v3_length(const struct vec3 *v);
+DLB_MATH_DEF struct vec3 *v3_negate(struct vec3 *v);
+DLB_MATH_DEF struct vec3 *v3_normalize(struct vec3 *v);
+DLB_MATH_DEF struct vec3 *v3_positive(struct vec3 *v);
+DLB_MATH_DEF int v3_equals(const struct vec3 *a, const struct vec3 *b);
+DLB_MATH_DEF struct vec3 *v3_mul_mat4(struct vec3 *v, const struct mat4 *m);
+DLB_MATH_DEF struct vec3 *v3_mul_quat(struct vec3 *v, const struct quat *q);
+
+//--- Matrices -------------------------
+DLB_MATH_DEF struct mat4 mat4_init(
+    float m00, float m01, float m02, float m03,
+    float m10, float m11, float m12, float m13,
+    float m20, float m21, float m22, float m23,
+    float m30, float m31, float m32, float m33);
+DLB_MATH_DEF struct mat4 mat4_init_transpose(const struct mat4 *m);
+DLB_MATH_DEF struct mat4 mat4_init_translate(const struct vec3 *v);
+DLB_MATH_DEF struct mat4 mat4_init_scale(const struct vec3 *s);
+DLB_MATH_DEF struct mat4 mat4_init_scalef(float s);
+DLB_MATH_DEF struct mat4 mat4_init_rotx(float deg);
+DLB_MATH_DEF struct mat4 mat4_init_roty(float deg);
+DLB_MATH_DEF struct mat4 mat4_init_rotz(float deg);
+DLB_MATH_DEF struct mat4 mat4_init_quat(const struct quat *q);
+DLB_MATH_DEF int mat4_equals(const struct mat4 *a, const struct mat4 *b);
+DLB_MATH_DEF struct mat4 *mat4_mul(struct mat4 *a, const struct mat4 *b);
+DLB_MATH_DEF void mat4_translate(struct mat4 *m, const struct vec3 *v);
+DLB_MATH_DEF void mat4_scale(struct mat4 *m, const struct vec3 *s);
+DLB_MATH_DEF void mat4_scalef(struct mat4 *m, float s);
+DLB_MATH_DEF void mat4_rotx(struct mat4 *m, float deg);
+DLB_MATH_DEF void mat4_roty(struct mat4 *m, float deg);
+DLB_MATH_DEF void mat4_rotz(struct mat4 *m, float deg);
+DLB_MATH_DEF void mat4_transpose(struct mat4 *m);
+DLB_MATH_DEF struct mat4 mat4_init_perspective(float width, float height,
+                                               float z_near, float z_far,
+                                               float fov_deg);
+DLB_MATH_DEF struct mat4 mat4_init_lookat(struct vec3 *pos, struct vec3 *view,
+                                          struct vec3 *up);
+
+//--- Quaternions ----------------------
 DLB_MATH_DEF struct quat *quat_ident(struct quat *q);
 DLB_MATH_DEF int quat_is_ident(const struct quat *q);
 DLB_MATH_DEF int quat_equals(const struct quat *a, const struct quat *b);
@@ -212,11 +210,8 @@ DLB_MATH_DEF struct quat *quat_conjugate(struct quat *q);
 DLB_MATH_DEF struct quat *quat_inverse(struct quat *q);
 DLB_MATH_DEF struct quat *quat_mul(struct quat *a, const struct quat *b);
 DLB_MATH_DEF float quat_dot(const struct quat *a, const struct quat *b);
-DLB_MATH_DEF struct quat *quat_from_axis_angle(struct quat *q,
-                                                      struct vec3 axis,
-                                                      float angle_deg);
-DLB_MATH_DEF struct vec3 *v3_mul_quat(struct vec3 *v, const struct quat *q);
-DLB_MATH_DEF void mat4_from_quat(struct mat4 *_m, const struct quat *q);
+DLB_MATH_DEF struct quat *quat_from_axis_angle(struct quat *q, struct vec3 axis,
+                                               float angle_deg);
 
 // I don't think these are useful quaternion operations...
 DLB_MATH_DEF struct quat *quat_scale(struct quat *q, float s);
@@ -295,6 +290,13 @@ DLB_MATH_DEF void quat_print(struct quat *q);
 //-- implementation ------------------------------------------------------------
 #ifdef DLB_MATH_IMPLEMENTATION
 #if 1
+const struct mat4 MAT4_IDENT = {{{
+    1.0f, 0.0f, 0.0f, 0.0f,
+    0.0f, 1.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, 1.0f, 0.0f,
+    0.0f, 0.0f, 0.0f, 1.0f
+}}};
+
 DLB_MATH_DEF struct vec3 *v3_add(struct vec3 *a, const struct vec3 *b)
 {
     a->x += b->x;
@@ -372,7 +374,57 @@ DLB_MATH_DEF int v3_equals(const struct vec3 *a, const struct vec3 *b)
 {
     return (a->x == b->x && a->y == b->y && a->z == b->z);
 }
+DLB_MATH_DEF struct vec3 *v3_mul_mat4(struct vec3 *v, const struct mat4 *m)
+{
+    // Copy v
+    struct vec3 vv = *v;
 
+    // Multiply m * v
+    v->x = m->m[0][0] * vv.x +
+        m->m[0][1] * vv.y +
+        m->m[0][2] * vv.z +
+        m->m[0][3] * 1.f;
+    v->y = m->m[1][0] * vv.x +
+        m->m[1][1] * vv.y +
+        m->m[1][2] * vv.z +
+        m->m[1][3] * 1.f;
+    v->z = m->m[2][0] * vv.x +
+        m->m[2][1] * vv.y +
+        m->m[2][2] * vv.z +
+        m->m[2][3] * 1.f;
+    return v;
+}
+DLB_MATH_DEF struct vec3 *v3_mul_quat(struct vec3 *v, const struct quat *q)
+{
+    // Copy q
+    struct quat qq = *q;
+
+    // Create pure quaternion from v
+    struct quat qv;
+    qv.w = 0.0f;
+    qv.x = v->x;
+    qv.y = v->y;
+    qv.z = v->z;
+
+    // Rotate v by q
+    quat_mul(quat_mul(quat_conjugate(&qq), &qv), q);
+    /* USE THIS INSTEAD !!
+    quat_mul(quat_conjugate(&qq), &qv);
+    quat_mul(&qq, q);
+    */
+
+    if (fabsf(qq.w) < QUAT_EPSILON) qq.w = 0.0f;
+    if (fabsf(qq.x) < QUAT_EPSILON) qq.x = 0.0f;
+    if (fabsf(qq.y) < QUAT_EPSILON) qq.y = 0.0f;
+    if (fabsf(qq.z) < QUAT_EPSILON) qq.z = 0.0f;
+
+    // Quaternion must be pure to properly convert back into vec3
+    assert(qq.w == 0.0f);
+    v->x = qq.x;
+    v->y = qq.y;
+    v->z = qq.z;
+    return v;
+}
 #else
 DLB_MATH_DEF struct vec3 v3_add(struct vec3 a, struct vec3 b)
 {
@@ -556,6 +608,36 @@ DLB_MATH_DEF struct mat4 mat4_init_rotz(float deg)
     );
 }
 
+DLB_MATH_DEF struct mat4 mat4_init_quat(const struct quat *q)
+{
+    struct quat qq = *q;
+    quat_normalize(&qq);
+
+    float a = qq.x;
+    float b = qq.y;
+    float c = qq.z;
+    float d = qq.w;
+
+    struct mat4 m = { 0 };
+    m.m[0][0] = 1 - 2*b*b - 2*c*c;
+    m.m[0][1] = 2*a*b - 2*c*d;
+    m.m[0][2] = 2*a*c + 2*b*d;
+    m.m[0][3] = 0;
+    m.m[1][0] = 2*a*b + 2*c*d;
+    m.m[1][1] = 1 - 2*a*a - 2*c*c;
+    m.m[1][2] = 2*b*c - 2*a*d;
+    m.m[1][3] = 0;
+    m.m[2][0] = 2*a*c - 2*b*d;
+    m.m[2][1] = 2*b*c + 2*a*d;
+    m.m[2][2] = 1 - 2*a*a - 2*b*b;
+    m.m[2][3] = 0;
+    m.m[3][0] = 0;
+    m.m[3][1] = 0;
+    m.m[3][2] = 0;
+    m.m[3][3] = 1;
+    return m;
+}
+
 DLB_MATH_DEF int mat4_equals(const struct mat4 *a, const struct mat4 *b)
 {
     for (int i = 0; i < 4; ++i)
@@ -616,6 +698,12 @@ DLB_MATH_DEF void mat4_roty(struct mat4 *m, float deg)
     mat4_mul(m, &rot);
 }
 
+DLB_MATH_DEF void mat4_rot_quat(struct mat4 *m, struct quat *q)
+{
+    struct mat4 rot = mat4_init_quat(q);
+    mat4_mul(m, &rot);
+}
+
 DLB_MATH_DEF void mat4_rotz(struct mat4 *m, float deg)
 {
     struct mat4 rot = mat4_init_rotz(deg);
@@ -649,27 +737,6 @@ DLB_MATH_DEF void mat4_transpose(struct mat4 *m)
     tmp = m->m[2][3];
     m->m[2][3] = m->m[3][2];
     m->m[3][2] = tmp;
-}
-
-DLB_MATH_DEF struct vec3 *v3_mul_mat4(struct vec3 *v, const struct mat4 *m)
-{
-    // Copy v
-    struct vec3 vv = *v;
-
-    // Multiply m * v
-    v->x = m->m[0][0] * vv.x +
-           m->m[0][1] * vv.y +
-           m->m[0][2] * vv.z +
-           m->m[0][3] * 1.f;
-    v->y = m->m[1][0] * vv.x +
-           m->m[1][1] * vv.y +
-           m->m[1][2] * vv.z +
-           m->m[1][3] * 1.f;
-    v->z = m->m[2][0] * vv.x +
-           m->m[2][1] * vv.y +
-           m->m[2][2] * vv.z +
-           m->m[2][3] * 1.f;
-    return v;
 }
 
 //Calculate PERSPECTIVE projection
@@ -707,9 +774,8 @@ DLB_MATH_DEF struct mat4 mat4_init_ortho(float width, float height,
 }
 
 //Calculate lookAt matrix
-DLB_MATH_DEF struct mat4 mat4_init_lookat(struct vec3 *pos,
-                                                 struct vec3 *view,
-                                                 struct vec3 *up)
+DLB_MATH_DEF struct mat4 mat4_init_lookat(struct vec3 *pos, struct vec3 *view,
+                                          struct vec3 *up)
 {
     struct mat4 look;
     struct vec3 right = v3_cross(v3_sub(view, pos), up);
@@ -828,9 +894,8 @@ DLB_MATH_DEF float quat_dot(const struct quat *a, const struct quat *b)
             a->z * b->z);
 }
 
-DLB_MATH_DEF struct quat *quat_from_axis_angle(struct quat *q,
-                                                      struct vec3 axis,
-                                                      float angle_deg)
+DLB_MATH_DEF struct quat *quat_from_axis_angle(struct quat *q, struct vec3 axis,
+                                               float angle_deg)
 {
     float s = sinf(DEG_TO_RADF(angle_deg) / 2.0f);
     q->w = cosf(DEG_TO_RADF(angle_deg) / 2.0f);
@@ -840,38 +905,6 @@ DLB_MATH_DEF struct quat *quat_from_axis_angle(struct quat *q,
 
     quat_normalize(q);
     return q;
-}
-
-DLB_MATH_DEF struct vec3 *v3_mul_quat(struct vec3 *v, const struct quat *q)
-{
-    // Copy q
-    struct quat qq = *q;
-
-    // Create pure quaternion from v
-    struct quat qv;
-    qv.w = 0.0f;
-    qv.x = v->x;
-    qv.y = v->y;
-    qv.z = v->z;
-
-    // Rotate v by q
-    quat_mul(quat_mul(quat_conjugate(&qq), &qv), q);
-    /* USE THIS INSTEAD !!
-    quat_mul(quat_conjugate(&qq), &qv);
-    quat_mul(&qq, q);
-    */
-
-    if (fabsf(qq.w) < QUAT_EPSILON) qq.w = 0.0f;
-    if (fabsf(qq.x) < QUAT_EPSILON) qq.x = 0.0f;
-    if (fabsf(qq.y) < QUAT_EPSILON) qq.y = 0.0f;
-    if (fabsf(qq.z) < QUAT_EPSILON) qq.z = 0.0f;
-
-    // Quaternion must be pure to properly convert back into vec3
-    assert(qq.w == 0.0f);
-    v->x = qq.x;
-    v->y = qq.y;
-    v->z = qq.z;
-    return v;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -904,113 +937,6 @@ DLB_MATH_DEF struct quat *quat_sub(struct quat *a, struct quat *b)
     return a;
 }
 ////////////////////////////////////////////////////////////////////////////////
-
-DLB_MATH_DEF void mat4_from_quat(struct mat4 *_m, const struct quat *q)
-{
-    struct quat qq = *q;
-    quat_normalize(&qq);
-
-    float a = qq.x;
-    float b = qq.y;
-    float c = qq.z;
-    float d = qq.w;
-
-#if 1
-    // This code assumes quaternion is normalized
-    _m->m[0][0] = 1 - 2*b*b - 2*c*c;
-    _m->m[0][1] = 2*a*b - 2*c*d;
-    _m->m[0][2] = 2*a*c + 2*b*d;
-    _m->m[0][3] = 0;
-    _m->m[1][0] = 2*a*b + 2*c*d;
-    _m->m[1][1] = 1 - 2*a*a - 2*c*c;
-    _m->m[1][2] = 2*b*c - 2*a*d;
-    _m->m[1][3] = 0;
-    _m->m[2][0] = 2*a*c - 2*b*d;
-    _m->m[2][1] = 2*b*c + 2*a*d;
-    _m->m[2][2] = 1 - 2*a*a - 2*b*b;
-    _m->m[2][3] = 0;
-    _m->m[3][0] = 0;
-    _m->m[3][1] = 0;
-    _m->m[3][2] = 0;
-    _m->m[3][3] = 1;
-#else
-    _m->m[0][0] = a*a + b*b - c*c - d*d;
-    _m->m[1][0] = 2*b*c - 2*a*d;
-    _m->m[2][0] = 2*b*d + 2*a*c;
-    _m->m[3][0] = 0;
-    _m->m[0][1] = 2*b*c + 2*a*d;
-    _m->m[1][1] = a*a - b*b + c*c - d*d;
-    _m->m[2][1] = 2*c*d - 2*a*b;
-    _m->m[3][1] = 0;
-    _m->m[0][2] = 2*b*d - 2*a*c;
-    _m->m[1][2] = 2*c*d + 2*a*b;
-    _m->m[2][2] = a*a - b*b - c*c + d*d;
-    _m->m[3][2] = 0;
-    _m->m[0][3] = 0;
-    _m->m[1][3] = 0;
-    _m->m[2][3] = 0;
-    _m->m[3][3] = a*a + b*b + c*c + d*d;
-#endif
-}
-
-
-const struct vec4 COLOR_TRANSPARENT = {{{ 0.0f, 0.0f, 0.0f, 0.0f }}};
-const struct vec4 COLOR_BLACK   = {{{ 0.0f, 0.0f, 0.0f, 1.0f }}};
-const struct vec4 COLOR_RED     = {{{ 1.0f, 0.0f, 0.0f, 1.0f }}};
-const struct vec4 COLOR_GREEN   = {{{ 0.0f, 1.0f, 0.0f, 1.0f }}};
-const struct vec4 COLOR_BLUE    = {{{ 0.0f, 0.0f, 1.0f, 1.0f }}};
-const struct vec4 COLOR_YELLOW  = {{{ 1.0f, 1.0f, 0.0f, 1.0f }}};
-const struct vec4 COLOR_CYAN    = {{{ 0.0f, 1.0f, 1.0f, 1.0f }}};
-const struct vec4 COLOR_MAGENTA = {{{ 1.0f, 0.0f, 1.0f, 1.0f }}};
-const struct vec4 COLOR_WHITE   = {{{ 1.0f, 1.0f, 1.0f, 1.0f }}};
-const struct vec4 COLOR_GRAY    = {{{ 0.5f, 0.5f, 0.5f, 1.0f }}};
-
-const struct vec4 COLOR_BLACK_HIGHLIGHT   = {{{ 0.0f, 0.0f, 0.0f, 0.1f }}};
-const struct vec4 COLOR_RED_HIGHLIGHT     = {{{ 1.0f, 0.0f, 0.0f, 0.1f }}};
-const struct vec4 COLOR_GREEN_HIGHLIGHT   = {{{ 0.0f, 1.0f, 0.0f, 0.1f }}};
-const struct vec4 COLOR_BLUE_HIGHLIGHT    = {{{ 0.0f, 0.0f, 1.0f, 0.1f }}};
-const struct vec4 COLOR_YELLOW_HIGHLIGHT  = {{{ 1.0f, 1.0f, 0.0f, 0.1f }}};
-const struct vec4 COLOR_CYAN_HIGHLIGHT    = {{{ 0.0f, 1.0f, 1.0f, 0.1f }}};
-const struct vec4 COLOR_MAGENTA_HIGHLIGHT = {{{ 1.0f, 0.0f, 1.0f, 0.1f }}};
-const struct vec4 COLOR_WHITE_HIGHLIGHT   = {{{ 1.0f, 1.0f, 1.0f, 0.1f }}};
-const struct vec4 COLOR_GRAY_HIGHLIGHT    = {{{ 0.5f, 0.5f, 0.5f, 0.1f }}};
-
-const struct vec4 COLOR_DARK_RED     = {{{ 0.5f, 0.0f, 0.0f, 1.0f }}};
-const struct vec4 COLOR_DARK_GREEN   = {{{ 0.0f, 0.5f, 0.0f, 1.0f }}};
-const struct vec4 COLOR_DARK_BLUE    = {{{ 0.0f, 0.0f, 0.5f, 1.0f }}};
-const struct vec4 COLOR_DARK_YELLOW  = {{{ 0.5f, 0.5f, 0.0f, 1.0f }}};
-const struct vec4 COLOR_DARK_CYAN    = {{{ 0.0f, 0.5f, 0.5f, 1.0f }}};
-const struct vec4 COLOR_DARK_MAGENTA = {{{ 0.5f, 0.0f, 0.5f, 1.0f }}};
-const struct vec4 COLOR_DARK_GRAY = {{{ 0.25f, 0.25f, 0.25f, 1.0f }}};
-
-const struct vec4 COLOR_DARK_RED_HIGHLIGHT     = {{{ 0.5f, 0.0f, 0.0f, 0.5f }}};
-const struct vec4 COLOR_DARK_GREEN_HIGHLIGHT   = {{{ 0.0f, 0.5f, 0.0f, 0.5f }}};
-const struct vec4 COLOR_DARK_BLUE_HIGHLIGHT    = {{{ 0.0f, 0.0f, 0.5f, 0.5f }}};
-const struct vec4 COLOR_DARK_YELLOW_HIGHLIGHT  = {{{ 0.5f, 0.5f, 0.0f, 0.5f }}};
-const struct vec4 COLOR_DARK_CYAN_HIGHLIGHT    = {{{ 0.0f, 0.5f, 0.5f, 0.5f }}};
-const struct vec4 COLOR_DARK_MAGENTA_HIGHLIGHT = {{{ 0.5f, 0.0f, 0.5f, 0.5f }}};
-const struct vec4 COLOR_DARK_GRAY_HIGHLIGHT = {{{ 0.25f, 0.25f, 0.25f, 0.5f }}};
-
-const struct vec3 VEC3_ZERO  = {{{ 0.0f, 0.0f, 0.0f }}};
-const struct vec3 VEC3_ONE   = {{{ 1.0f, 1.0f, 1.0f }}};
-const struct vec3 VEC3_UNIT  = {{{ 0.577350259f, 0.577350259f, 0.577350259f }}};
-const struct vec3 VEC3_X     = {{{ 1.0f, 0.0f, 0.0f }}};
-const struct vec3 VEC3_Y     = {{{ 0.0f, 1.0f, 0.0f }}};
-const struct vec3 VEC3_Z     = {{{ 0.0f, 0.0f, 1.0f }}};
-const struct vec3 VEC3_RIGHT = {{{ 1.0f, 0.0f, 0.0f }}};
-const struct vec3 VEC3_UP    = {{{ 0.0f, 1.0f, 0.0f }}};
-const struct vec3 VEC3_FWD   = {{{ 0.0f, 0.0f,-1.0f }}};
-const struct vec3 VEC3_DOWN  = {{{ 0.0f,-1.0f, 0.0f }}};
-const struct vec3 VEC3_SMALL = {{{ 0.01f, 0.01f, 0.01f }}};
-
-const struct mat4 MAT4_IDENT = {{{
-    1.0f, 0.0f, 0.0f, 0.0f,
-    0.0f, 1.0f, 0.0f, 0.0f,
-    0.0f, 0.0f, 1.0f, 0.0f,
-    0.0f, 0.0f, 0.0f, 1.0f
-}}};
-
-const struct quat QUAT_IDENT = { 1.0f, {{ 0.0f, 0.0f, 0.0f }} };
 
 #ifdef DLB_MATH_PRINT
 #include <stdio.h>

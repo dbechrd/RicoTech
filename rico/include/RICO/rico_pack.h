@@ -49,16 +49,15 @@ int RICO_pack_save(struct pack *pack, const char *filename, bool shrink);
 int RICO_pack_load(const char *filename, struct pack **_pack);
 void RICO_pack_free(u32 id);
 
-pkid RICO_load_object(struct pack *pack, enum rico_obj_type type,
-                      const char *name);
+pkid RICO_load_object(struct pack *pack, u32 type, u32 size, const char *name);
 pkid RICO_load_texture(struct pack *pack, const char *name, GLenum target,
                        u32 width, u32 height, u8 bpp, u8 *pixels);
 pkid RICO_load_texture_file(struct pack *pack, const char *name,
                             const char *filename);
 pkid RICO_load_texture_color(struct pack *pack, const char *name,
                              struct vec4 color);
-pkid RICO_load_material(struct pack *pack, const char *name, pkid tex0,
-                        pkid tex1, pkid tex2);
+pkid RICO_load_material(struct pack *pack, const char *name, pkid tex_albedo,
+                        pkid tex_mrao, pkid tex_emission);
 pkid RICO_load_font(struct pack *pack, const char *name, const char *filename,
                     pkid *font_tex);
 pkid RICO_load_mesh(struct pack *pack, const char *name, u32 vertex_size,

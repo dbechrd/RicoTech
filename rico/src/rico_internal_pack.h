@@ -30,7 +30,7 @@ enum DEFAULT_IDS
     MESH_DEFAULT_SPHERE
 };
 
-internal void *blob_start(struct pack *pack, enum rico_hnd_type type,
+internal void *blob_start(struct pack *pack, enum rico_hnd_type type, u32 size,
                           const char *name);
 
 internal void pack_expand(struct pack *pack);

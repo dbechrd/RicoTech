@@ -1,29 +1,28 @@
 #ifndef RICO_OBJECT_H
 #define RICO_OBJECT_H
 
-#define RICO_OBJ_TYPES(f) \
-    f(OBJ_NULL)           \
-    f(OBJ_TERRAIN)        \
-    f(OBJ_STATIC)         \
-    f(OBJ_STRING_WORLD)   \
-    f(OBJ_STRING_SCREEN)  \
-    f(OBJ_LIGHT_POINT)
+#define RICO_OBJECT_TYPES(f) \
+    f(RICO_OBJECT_TYPE_NULL)           \
+    f(RICO_OBJECT_TYPE_TERRAIN)        \
+    f(RICO_OBJECT_TYPE_STRING_SCREEN)
 
-enum rico_obj_type
+enum rico_object_type
 {
-    RICO_OBJ_TYPES(GEN_LIST)
+    RICO_OBJECT_TYPES(GEN_LIST)
+    RICO_OBJECT_TYPE_START = 16
 };
 extern const char *rico_obj_type_string[];
 
 struct rico_transform
 {
-    struct vec3 trans;
-    struct vec3 rot;
+    struct vec3 position;
+    struct quat orientation;
     struct vec3 scale;
     struct mat4 matrix;
     struct mat4 matrix_inverse;
 };
 
+#if 0
 #define RICO_PROP_TYPES(f) \
     f(PROP_NULL)           \
     f(PROP_TRANSFORM)      \
@@ -82,13 +81,18 @@ struct obj_property
         struct game_button game_button;
     };
 };
+#endif
 
 struct rico_object
 {
     struct uid uid;
-    enum rico_obj_type type;
+    u32 type;
+    struct rico_transform xform;
+    struct bbox bbox;
+    pkid mesh_pkid;
+    pkid material_pkid;
 
-    struct obj_property props[PROP_COUNT];
+    //struct obj_property props[PROP_COUNT];
 };
 
 #define RICO_EVENT_OBJECT(name) void name(struct rico_object *obj)

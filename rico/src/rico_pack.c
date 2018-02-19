@@ -13,36 +13,38 @@ internal const u8 PACK_SIGNATURE[4] = { 'R', 'I', 'C', 'O' };
 u32 RICO_packs_next = 0;
 struct pack *RICO_packs[MAX_PACKS] = { 0 };
 
-internal void *blob_start(struct pack *pack, enum rico_hnd_type type,
+internal void *blob_start(struct pack *pack, enum rico_hnd_type type, u32 size,
                           const char *name)
 {
-	RICO_ASSERT(pack->blob_current_id == 0);
-	RICO_ASSERT(pack->blobs_used < pack->blob_count);
+    RICO_ASSERT(pack->blob_current_id == 0);
+    RICO_ASSERT(pack->blobs_used < pack->blob_count);
 
-	// TODO: Free list instead of loop?
-	// Find first available lookup id
-	u32 id = 1;
-	while (pack->lookup[id])
-	{
-		RICO_ASSERT(id < pack->blob_count);
-		id++;
-	}
+    if (!size) size = rico_hnd_type_size[type];
 
-	pack->blob_current_id = id;
-	pack->lookup[pack->blob_current_id] = pack->blobs_used;
-	pack->index[pack->blobs_used].type = type;
-	pack->index[pack->blobs_used].offset = pack->buffer_used;
-	pack->index[pack->blobs_used].size = 0;
+    // TODO: Free list instead of loop?
+    // Find first available lookup id
+    u32 id = 1;
+    while (pack->lookup[id])
+    {
+        RICO_ASSERT(id < pack->blob_count);
+        id++;
+    }
 
-	pkid pkid = PKID_GENERATE(pack->id, id);
+    pack->blob_current_id = id;
+    pack->lookup[pack->blob_current_id] = pack->blobs_used;
+    pack->index[pack->blobs_used].type = type;
+    pack->index[pack->blobs_used].offset = pack->buffer_used;
+    pack->index[pack->blobs_used].size = 0;
 
-    struct uid *uid = push_bytes(pack, rico_hnd_type_size[type]);
+    pkid pkid = PKID_GENERATE(pack->id, id);
+
+    struct uid *uid = push_bytes(pack, size);
     uid->pkid = pkid;
     uid->type = type;
     memcpy(uid->name, name, MIN(sizeof(uid->name) - 1, dlb_strlen(name)));
 
     RICO_ASSERT(uid->type);
-	return uid;
+    return uid;
 }
 internal u32 blob_offset(struct pack *pack)
 {
@@ -499,22 +501,23 @@ void pack_delete(pkid pkid)
 			break;
     }
 }
-pkid RICO_load_object(struct pack *pack, enum rico_obj_type type, const char *name)
+pkid RICO_load_object(struct pack *pack, u32 type, u32 size, const char *name)
 {
-    struct rico_object *obj = blob_start(pack, RICO_HND_OBJECT, name);
+    struct rico_object *obj = blob_start(pack, RICO_HND_OBJECT, size, name);
     obj->type = type;
-    obj->props[PROP_TRANSFORM].type = PROP_TRANSFORM;
-    obj->props[PROP_TRANSFORM].xform.scale = VEC3_ONE;
+    obj->xform.orientation = QUAT_IDENT;
+    obj->xform.scale = VEC3_ONE;
     object_transform_update(obj);
 
     pkid pkid = obj->uid.pkid;
     blob_end(pack);
     return pkid;
 }
-pkid RICO_load_texture(struct pack *pack, const char *name, GLenum target, u32 width,
-				  u32 height, u8 bpp, u8 *pixels)
+pkid RICO_load_texture(struct pack *pack, const char *name, GLenum target,
+                       u32 width, u32 height, u8 bpp, u8 *pixels)
 {
-    struct rico_texture *tex = blob_start(pack, RICO_HND_TEXTURE, name);
+    struct rico_texture *tex = blob_start(pack, RICO_HND_TEXTURE,
+                                          sizeof(struct rico_texture), name);
     tex->width = width;
     tex->height = height;
     tex->bpp = bpp;
@@ -549,7 +552,8 @@ cleanup:
     if (err) blob_error(pack, &tex_pkid);
     return tex_pkid;
 }
-pkid RICO_load_texture_color(struct pack *pack, const char *name, struct vec4 color)
+pkid RICO_load_texture_color(struct pack *pack, const char *name,
+                             struct vec4 color)
 {
     u8 rgba[4] = {
         (u8)(color.r * 255),
@@ -559,13 +563,13 @@ pkid RICO_load_texture_color(struct pack *pack, const char *name, struct vec4 co
     };
     return RICO_load_texture(pack, name, GL_TEXTURE_2D, 1, 1, 32, rgba);
 }
-pkid RICO_load_material(struct pack *pack, const char *name, pkid tex0, pkid tex1,
-				   pkid tex2)
+pkid RICO_load_material(struct pack *pack, const char *name, pkid tex_albedo,
+                        pkid tex_mrao, pkid tex_emission)
 {
-    struct rico_material *mat = blob_start(pack, RICO_HND_MATERIAL, name);
-    mat->tex_id[0] = tex0;
-    mat->tex_id[1] = tex1;
-    mat->tex_id[2] = tex2;
+    struct rico_material *mat = blob_start(pack, RICO_HND_MATERIAL, 0, name);
+    mat->tex_albedo = tex_albedo;
+    mat->tex_mrao = tex_mrao;
+    mat->tex_emission = tex_emission;
 
     pkid pkid = mat->uid.pkid;
     blob_end(pack);
@@ -591,7 +595,7 @@ pkid RICO_load_font(struct pack *pack, const char *name, const char *filename,
     }
 
     // Allocate font/texture
-    struct rico_font *font = blob_start(pack, RICO_HND_FONT, name);
+    struct rico_font *font = blob_start(pack, RICO_HND_FONT, 0, name);
     u32 tex_width = 0;
     u32 tex_height = 0;
     u32 tex_bpp = 0;
@@ -643,7 +647,7 @@ pkid RICO_load_font(struct pack *pack, const char *name, const char *filename,
     //------------------------------------------------------------
     // Font texture
     //------------------------------------------------------------
-    struct rico_texture *tex0 = blob_start(pack, RICO_HND_TEXTURE, name);
+    struct rico_texture *tex0 = blob_start(pack, RICO_HND_TEXTURE, 0, name);
     tex0->width = tex_width;
     tex0->height = tex_height;
     tex0->bpp = tex_bpp;
@@ -668,7 +672,7 @@ pkid RICO_load_mesh(struct pack *pack, const char *name, u32 vertex_size,
                u32 vertex_count, const void *vertex_data, u32 element_count,
                const GLuint *element_data)
 {
-    struct rico_mesh *mesh = blob_start(pack, RICO_HND_MESH, name);
+    struct rico_mesh *mesh = blob_start(pack, RICO_HND_MESH, 0, name);
     mesh->vertex_size = vertex_size;
     mesh->vertex_count = vertex_count;
     mesh->element_count = element_count;
@@ -697,18 +701,12 @@ pkid RICO_load_string(struct pack *pack, enum rico_string_slot slot, float x,
     u32 font_tex_id;
     font_render(&font_mesh_id, &font_tex_id, font, x, y, color, text, name);
 
-    ////////////////////////////////////////////////////////////////////////////
-
-    pkid str_object_pkid = RICO_load_object(pack, OBJ_STRING_SCREEN, name);
+    pkid str_object_pkid =
+        RICO_load_object(pack, RICO_OBJECT_TYPE_STRING_SCREEN, 0, name);
     struct rico_object *str_object = RICO_pack_lookup(str_object_pkid);
-    str_object->props[PROP_MESH].type = PROP_MESH;
-    str_object->props[PROP_MESH].mesh_pkid = font_mesh_id;
-    str_object->props[PROP_TEXTURE].type = PROP_TEXTURE;
-    str_object->props[PROP_TEXTURE].texture_pkid = font_tex_id;
+    str_object->mesh_pkid = font_mesh_id;
 
-    ////////////////////////////////////////////////////////////////////////////
-
-    struct rico_string *str = blob_start(pack, RICO_HND_STRING, "bloop");
+    struct rico_string *str = blob_start(pack, RICO_HND_STRING, 0, "bloop");
     str->slot = slot;
     str->object_id = str_object->uid.pkid;
     str->lifespan = lifespan;
@@ -725,7 +723,8 @@ pkid RICO_load_string(struct pack *pack, enum rico_string_slot slot, float x,
     return pkid;
 }
 
-int RICO_load_obj_file(struct pack *pack, const char *filename, pkid *_last_mesh_id)
+int RICO_load_obj_file(struct pack *pack, const char *filename,
+                       pkid *_last_mesh_id)
 {
     enum rico_error err;
     u32 last_mesh_id = 0;
@@ -901,8 +900,8 @@ void pack_build_default()
 
 	struct pack *pack = RICO_pack_init(PACK_DEFAULT, filename, 16, MB(1));
     pkid font_tex = 0;
-    pkid font = RICO_load_font(pack, "[FONT_DEFAULT]", "font/cousine_regular.bff",
-						  &font_tex);
+    pkid font = RICO_load_font(pack, "[FONT_DEFAULT]",
+                               "font/cousine_regular.bff", &font_tex);
     pkid diff = RICO_load_texture_file(pack, "[TEX_DIFF_DEFAULT]",
 								  "texture/pbr_default_0.tga");
     pkid spec = RICO_load_texture_file(pack, "[TEX_SPEC_DEFAULT]",
