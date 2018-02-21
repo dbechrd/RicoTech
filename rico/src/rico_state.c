@@ -1,27 +1,12 @@
-#define LOAD_SAVE_FILE false
-
-///|////////////////////////////////////////////////////////////////////////////
-#define RICO_STATES(f)       \
-    f(STATE_PLAY_EXPLORE)    \
-    f(STATE_EDIT_TRANSLATE)  \
-    f(STATE_EDIT_ROTATE)     \
-    f(STATE_EDIT_SCALE)      \
-    f(STATE_EDIT_MATERIAL)   \
-    f(STATE_EDIT_MESH)       \
-    f(STATE_MENU_QUIT)       \
-    f(STATE_TEXT_INPUT)      \
-    f(STATE_ENGINE_SHUTDOWN) \
-    f(STATE_COUNT)
-
-enum rico_state { RICO_STATES(GEN_LIST) };
 const char *rico_state_string[] = { RICO_STATES(GEN_STRING) };
+
+#define LOAD_SAVE_FILE false
 
 static struct rico_keychord action_chords[ACTION_COUNT] = { 0 };
 static enum rico_action action_queue[32] = { 0 };
 u32 action_queue_count = 0;
 
-///|////////////////////////////////////////////////////////////////////////////
-//Human walk speed empirically found to be 33 steps in 20 seconds. That is
+// Human walk speed empirically found to be 33 steps in 20 seconds. That is
 // approximately 1.65 steps per second. At 60 fps, that is 0.0275 steps per
 // frame. Typical walking stride is ~0.762 meters (30 inches). Distance traveled
 // per frame (60hz) is 0.762 * 0.0275 = 0.020955 ~= 0.021
@@ -36,7 +21,6 @@ internal struct vec3 player_acc;
 internal bool player_sprint = false;
 internal bool camera_slow = false;
 
-///|////////////////////////////////////////////////////////////////////////////
 #define TRANS_DELTA_MIN 0.01f
 #define TRANS_DELTA_MAX 10.0f
 float trans_delta = 0.1f;
@@ -54,7 +38,6 @@ internal bool mouse_lock = true;
 internal bool enable_lighting = true;
 internal bool audio_muted = false;
 
-///|////////////////////////////////////////////////////////////////////////////
 // Simulation params
 internal r64 sim_accum = 0;
 
@@ -69,7 +52,6 @@ internal u64 fps_render_delta = 200000;  // 200 ms
 internal bool fps_render = false;
 internal bool vsync = true;
 
-///|////////////////////////////////////////////////////////////////////////////
 // Mouse and keyboard state
 internal u32 mouse_buttons = 0;
 internal u32 mouse_buttons_prev = 0;
@@ -179,7 +161,7 @@ void render_fps(r64 fps, r64 ms, r64 mcyc)
     string_free_slot(STR_SLOT_FPS);
     RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_FPS,
                 SCREEN_X(-(FONT_WIDTH * len)), SCREEN_Y(0),
-                COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
+                COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
 }
 
 int engine_update()
@@ -251,8 +233,9 @@ int engine_update()
         string_truncate(buf, sizeof(buf), len);
 
         string_free_slot(STR_SLOT_STATE);
-        RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_STATE, SCREEN_X(0),
-                    SCREEN_Y(0), COLOR_DARK_RED_HIGHLIGHT, 0, NULL, buf);
+        RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_STATE,
+                         SCREEN_X(0), SCREEN_Y(0), COLOR_DARK_RED_HIGHLIGHT, 0,
+                         0, buf);
     }
 
     ///-------------------------------------------------------------------------
@@ -393,23 +376,24 @@ internal int shared_engine_events()
         }
         string_truncate(buf, sizeof(buf), len);
         RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_DYNAMIC,
-                    SCREEN_X(-FONT_WIDTH * 12), SCREEN_Y(0), COLOR_DARK_GRAY,
-                    1000, NULL, buf);
+                         SCREEN_X(-FONT_WIDTH * 12), SCREEN_Y(0),
+                         COLOR_DARK_GRAY, 1000, 0, buf);
     }
     // Save and exit
     else if (chord_pressed(ACTION_ENGINE_QUIT))
     {
         string_free_slot(STR_SLOT_MENU_QUIT);
         RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_MENU_QUIT,
-                    SCREEN_X(SCREEN_W / 2 - 92), SCREEN_Y(SCREEN_H / 2 - 128),
-                    COLOR_DARK_GREEN_HIGHLIGHT, 0, NULL,
-                    "                       \n" \
-                    "  Save and quit?       \n" \
-                    "                       \n" \
-                    "  [Y] Yes              \n" \
-                    "  [N] No               \n" \
-                    "  [Q] Quit w/o saving  \n" \
-                    "                       ");
+                         SCREEN_X(SCREEN_W / 2 - 92),
+                         SCREEN_Y(SCREEN_H / 2 - 128),
+                         COLOR_DARK_GREEN_HIGHLIGHT, 0, 0,
+                         "                       \n" \
+                         "  Save and quit?       \n" \
+                         "                       \n" \
+                         "  [Y] Yes              \n" \
+                         "  [N] No               \n" \
+                         "  [Q] Quit w/o saving  \n" \
+                         "                       ");
         state = STATE_MENU_QUIT;
     }
 
@@ -676,8 +660,9 @@ internal int state_edit_translate()
         int len = snprintf(buf, sizeof(buf), "Trans Delta: %f", trans_delta);
         string_truncate(buf, sizeof(buf), len);
         string_free_slot(STR_SLOT_DELTA);
-        RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_DELTA, SCREEN_X(0),
-                    SCREEN_Y(0), COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL, buf);
+        RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_DELTA,
+                         SCREEN_X(0), SCREEN_Y(0), COLOR_DARK_BLUE_HIGHLIGHT,
+                         1000, 0, buf);
     }
 
     return err;
@@ -767,8 +752,9 @@ internal int state_edit_rotate()
         string_truncate(buf, sizeof(buf), len);
 
         string_free_slot(STR_SLOT_DELTA);
-        RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_DELTA, SCREEN_X(0),
-                    SCREEN_Y(0), COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL, buf);
+        RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_DELTA,
+                         SCREEN_X(0), SCREEN_Y(0), COLOR_DARK_BLUE_HIGHLIGHT,
+                         1000, 0, buf);
     }
 
     return err;
@@ -857,8 +843,9 @@ internal int state_edit_scale()
         int len = snprintf(buf, sizeof(buf), "Scale Delta: %f", scale_delta);
         string_truncate(buf, sizeof(buf), len);
         string_free_slot(STR_SLOT_DELTA);
-        RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_DELTA, SCREEN_X(0),
-                    SCREEN_Y(0), COLOR_DARK_BLUE_HIGHLIGHT, 1000, NULL, buf);
+        RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_DELTA,
+                         SCREEN_X(0), SCREEN_Y(0), COLOR_DARK_BLUE_HIGHLIGHT,
+                         1000, 0, buf);
     }
 
     return err;
@@ -997,7 +984,7 @@ enum rico_action RICO_key_event()
     }
     return action;
 }
-internal void RICO_bind_action(enum rico_action action,
+void RICO_bind_action(enum rico_action action,
                               struct rico_keychord chord)
 {
     action_chords[action] = chord;

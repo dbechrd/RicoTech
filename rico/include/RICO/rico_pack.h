@@ -58,14 +58,14 @@ pkid RICO_load_texture_color(struct pack *pack, const char *name,
                              struct vec4 color);
 pkid RICO_load_material(struct pack *pack, const char *name, pkid tex_albedo,
                         pkid tex_mrao, pkid tex_emission);
-pkid RICO_load_font(struct pack *pack, const char *name, const char *filename,
-                    pkid *font_tex);
+pkid RICO_load_font_file(struct pack *pack, const char *name,
+                         const char *filename);
 pkid RICO_load_mesh(struct pack *pack, const char *name, u32 vertex_size,
                     u32 vertex_count, const void *vertex_data,
                     u32 element_count, const GLuint *element_data);
 pkid RICO_load_string(struct pack *pack, enum rico_string_slot slot, float x,
                       float y, struct vec4 color, u32 lifespan,
-                      struct rico_font *font, const char *text);
+                      pkid font, const char *text);
 int RICO_load_obj_file(struct pack *pack, const char *filename,
                        pkid *_last_mesh_id);
 

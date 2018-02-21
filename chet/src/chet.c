@@ -27,6 +27,11 @@ RICO_OBJECT(timmy)
 
 void pack_build_alpha(u32 id)
 {
+    // TOOD: Refactor object data out into text files that can be read in and
+    //       compiled into pack files. E.g. packs/alpha/objects/timmy.txt which
+    //       references packs/alpha/textures/timmy.tga as "textures/timmy.tga"
+    //       or just "timmy.tga".
+
 	// TODO: Split objects (state) from resources (materials, textures, audio).
 	//       pack_state: all world objects (for now)
 	//       pack_alpha: textures, materials, audio, etc. specific to alpha
@@ -38,10 +43,10 @@ void pack_build_alpha(u32 id)
 	pkid bricks_emis = RICO_load_texture_color(pack, "Bricks_emis", COLOR_TRANSPARENT);
 	pkid bricks_mat = RICO_load_material(pack, "Bricks", bricks_diff, bricks_mrao, bricks_emis);
 
-    assert(bricks_mrao);
-    assert(bricks_diff);
-    assert(bricks_emis);
-    assert(bricks_mat);
+    DLB_ASSERT(bricks_mrao);
+    DLB_ASSERT(bricks_diff);
+    DLB_ASSERT(bricks_emis);
+    DLB_ASSERT(bricks_mat);
 
 	pkid door_mesh_pkid, ground_mesh_pkid;
 	RICO_load_obj_file(pack, "mesh/alpha_door_001.obj", &door_mesh_pkid);
@@ -51,8 +56,8 @@ void pack_build_alpha(u32 id)
 	RICO_load_obj_file(pack, "mesh/alpha_game_panel.obj", 0);
 	RICO_load_obj_file(pack, "mesh/alpha_game_button.obj", 0);
 
-    assert(door_mesh_pkid);
-    assert(ground_mesh_pkid);
+    DLB_ASSERT(door_mesh_pkid);
+    DLB_ASSERT(ground_mesh_pkid);
 
     pkid ground_pkid = RICO_load_object(pack, RICO_OBJECT_TYPE_TERRAIN, 0,
                                         "Ground");
@@ -105,9 +110,10 @@ int pack_load_all()
 
 internal void timmy_interact(struct timmy *obj)
 {
+    UNUSED(obj);
     RICO_lighting_enabled = !RICO_lighting_enabled;
 
-    static audio_play = true;
+    static bool audio_play = true;
     audio_play = !audio_play;
     (audio_play) ? RICO_audio_unmute() : RICO_audio_mute();
 }
@@ -122,6 +128,15 @@ RICO_EVENT_OBJECT(object_interact)
     }
 }
 
+#if _DEBUG
+#include <stdio.h>
+DLB_ASSERT_HANDLER(handle_assert)
+{
+    printf("%s:%d ASSERT: %s", file, line, expr);
+}
+DLB_assert_handler_def *DLB_assert_handler = handle_assert;
+#endif
+
 struct rico_audio_buffer buffer;
 struct rico_audio_source source;
 
@@ -131,7 +146,7 @@ int main(int argc, char **argv)
     UNUSED(argv);
 
 	//main_nuklear(argc, argv);
-    RICO_init();;
+    RICO_init();
 	//pack_build_all();
 	pack_load_all();
 

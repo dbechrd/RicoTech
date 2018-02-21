@@ -300,7 +300,7 @@ struct widget *widget_test()
             string_free_slot(STR_SLOT_WIDGET);
             RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_WIDGET,
                              SCREEN_X(0), SCREEN_Y(FONT_HEIGHT),
-                             COLOR_DARK_CYAN, 0, NULL,
+                             COLOR_DARK_CYAN, 0, 0,
                              widget_action_string[widget->action]);
         }
     }

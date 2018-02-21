@@ -1,5 +1,22 @@
 // Boring, non-OpenGL-related utility functions
 
+void string_truncate(char *buf, int buf_count, int length)
+{
+    if (buf_count < 16)
+    {
+        RICO_ASSERT(0);  // Why are you truncating such a tiny buffer!?
+        return;
+    }
+
+    if (length > buf_count)
+    {
+        char *buf_end = buf + (buf_count - 4);
+        *buf_end = '.'; buf_end++;
+        *buf_end = '.'; buf_end++;
+        *buf_end = '.';
+    }
+}
+
 int file_contents(const char *filename, u32 *_length, char **_buffer)
 {
     FILE *fs = fopen(filename, "rb");

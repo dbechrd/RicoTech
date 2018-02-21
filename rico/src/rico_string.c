@@ -2,7 +2,7 @@ const char *rico_string_slot_string[] = {
     RICO_STRING_SLOTS(GEN_STRING)
 };
 
-void string_delete(struct pack *pack, struct rico_string *str)
+void string_delete(struct rico_string *str)
 {
 #if RICO_DEBUG_STRING
     printf("[strg][free] uid=%d\n", str->id);

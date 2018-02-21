@@ -1,9 +1,9 @@
 const char *rico_obj_type_string[] = { RICO_OBJECT_TYPES(GEN_STRING) };
 //const char *rico_prop_type_string[] = { RICO_PROP_TYPES(GEN_STRING) };
 
-RICO_event_object *object_event_handler;
+RICO_event_object_def *object_event_handler;
 
-void object_delete(struct pack *pack, struct rico_object *obj)
+void object_delete(struct rico_object *obj)
 {
     // TODO: Make sure all of the properties get cleaned up properly
     pack_delete(obj->mesh_pkid);
@@ -260,7 +260,7 @@ bool object_collide_ray_type(struct pack *pack, struct rico_object **_object,
     return collided;
 }
 
-internal void object_interact(struct rico_object *obj)
+static void object_interact(struct rico_object *obj)
 {
     if (state_is_edit())
     {
@@ -507,8 +507,6 @@ void object_print(struct rico_object *obj)
 
     if (obj)
     {
-        struct pack *pack = RICO_packs[PKID_PACK(obj->uid.pkid)];
-
         struct rico_mesh *mesh = (obj->mesh_pkid)
             ? RICO_pack_lookup(obj->mesh_pkid) : NULL;
         struct rico_material *material = (obj->material_pkid)
@@ -597,6 +595,7 @@ void object_print(struct rico_object *obj)
     }
 
     string_truncate(buf, sizeof(buf), len);
-    RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_SELECTED_OBJ, SCREEN_X(0),
-                SCREEN_Y(FONT_HEIGHT), COLOR_DARK_GRAY_HIGHLIGHT, 0, NULL, buf);
+    RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_SELECTED_OBJ,
+                     SCREEN_X(0), SCREEN_Y(FONT_HEIGHT),
+                     COLOR_DARK_GRAY_HIGHLIGHT, 0, 0, buf);
 }

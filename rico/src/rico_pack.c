@@ -178,7 +178,7 @@ internal u32 perf_pack_tick_start;
 internal u32 perf_pack_tick_end;
 
 struct pack *RICO_pack_init(u32 id, const char *name, u32 blob_count,
-					   u32 buffer_size)
+					        u32 buffer_size)
 {
     if (!blob_count) blob_count = DEFAULT_PACK_BLOBS;
     if (!buffer_size) buffer_size = DEFAULT_PACK_BUF_SIZE;
@@ -476,7 +476,7 @@ void pack_delete(pkid pkid)
 		case RICO_HND_OBJECT:
 		{
 			struct rico_object *obj = delete_me;
-			object_delete(pack, obj);
+			object_delete(obj);
 			break;
 		}
 		case RICO_HND_TEXTURE:
@@ -494,7 +494,7 @@ void pack_delete(pkid pkid)
 		case RICO_HND_STRING:
 		{
 			struct rico_string *string = delete_me;
-			string_delete(pack, string);
+			string_delete(string);
 			break;
 		}
 		default:
@@ -532,7 +532,7 @@ pkid RICO_load_texture(struct pack *pack, const char *name, GLenum target,
     return pkid;
 }
 pkid RICO_load_texture_file(struct pack *pack, const char *name,
-                       const char *filename)
+                            const char *filename)
 {
     enum rico_error err = SUCCESS;
 
@@ -576,8 +576,8 @@ pkid RICO_load_material(struct pack *pack, const char *name, pkid tex_albedo,
     blob_end(pack);
     return pkid;
 }
-pkid RICO_load_font(struct pack *pack, const char *name, const char *filename,
-		  	   pkid *font_tex)
+pkid RICO_load_font_file(struct pack *pack, const char *name,
+                         const char *filename)
 {
     enum rico_error err;
     pkid font_pkid = 0;
@@ -663,15 +663,14 @@ pkid RICO_load_font(struct pack *pack, const char *name, const char *filename,
 
     font = RICO_pack_lookup(font_pkid);
     font->tex_pkid = tex0_pkid;
-    *font_tex = font->tex_pkid;
 
 cleanup:
     free(buffer);
     return font_pkid;
 }
 pkid RICO_load_mesh(struct pack *pack, const char *name, u32 vertex_size,
-               u32 vertex_count, const void *vertex_data, u32 element_count,
-               const GLuint *element_data)
+                    u32 vertex_count, const void *vertex_data,
+                    u32 element_count, const GLuint *element_data)
 {
     struct rico_mesh *mesh = blob_start(pack, RICO_HND_MESH, 0, name);
     mesh->vertex_size = vertex_size;
@@ -687,8 +686,8 @@ pkid RICO_load_mesh(struct pack *pack, const char *name, u32 vertex_size,
     return pkid;
 }
 pkid RICO_load_string(struct pack *pack, enum rico_string_slot slot, float x,
-                 float y, struct vec4 color, u32 lifespan,
-                 struct rico_font *font, const char *text)
+                      float y, struct vec4 color, u32 lifespan,
+                      pkid font, const char *text)
 {
 #if RICO_DEBUG_STRING
     printf("[strg][init] name=%s\n", name);
@@ -900,16 +899,16 @@ void pack_build_default()
 #endif
 
 	struct pack *pack = RICO_pack_init(PACK_DEFAULT, filename, 16, MB(1));
-    pkid font_tex = 0;
-    pkid font = RICO_load_font(pack, "[FONT_DEFAULT]",
-                               "font/cousine_regular.bff", &font_tex);
-    pkid diff = RICO_load_texture_file(pack, "[TEX_DIFF_DEFAULT]",
-								  "texture/pbr_default_0.tga");
-    pkid spec = RICO_load_texture_file(pack, "[TEX_SPEC_DEFAULT]",
-								  "texture/pbr_default_1.tga");
-    pkid emis = RICO_load_texture_file(pack, "[TEX_EMIS_DEFAULT]",
-						 		 "texture/pbr_default_2.tga");
-    pkid mat = RICO_load_material(pack, "[MATERIAL_DEFAULT]", diff, spec, emis);
+    pkid font_id = RICO_load_font_file(pack, "[FONT_DEFAULT]",
+                                       "font/cousine_regular.bff");
+    pkid diff_id = RICO_load_texture_file(pack, "[TEX_DIFF_DEFAULT]",
+                                          "texture/pbr_default_0.tga");
+    pkid spec_id = RICO_load_texture_file(pack, "[TEX_SPEC_DEFAULT]",
+                                          "texture/pbr_default_1.tga");
+    pkid emis_id = RICO_load_texture_file(pack, "[TEX_EMIS_DEFAULT]",
+                                          "texture/pbr_default_2.tga");
+    pkid mat_id = RICO_load_material(pack, "[MATERIAL_DEFAULT]", diff_id,
+                                     spec_id, emis_id);
 
 	// HACK: This is a bit of a gross way to get the id of the last mesh
     pkid cube;
@@ -917,12 +916,13 @@ void pack_build_default()
     pkid sphere;
 	RICO_load_obj_file(pack, "mesh/prim_sphere.obj", &sphere);
 
-	RICO_ASSERT(font == FONT_DEFAULT);
-	RICO_ASSERT(font_tex == FONT_DEFAULT_TEXTURE);
-	RICO_ASSERT(diff == TEXTURE_DEFAULT_DIFF);
-	RICO_ASSERT(spec == TEXTURE_DEFAULT_SPEC);
-	RICO_ASSERT(emis == TEXTURE_DEFAULT_EMIS);
-	RICO_ASSERT(mat == MATERIAL_DEFAULT);
+    struct rico_font *font = RICO_pack_lookup(font_id);
+	RICO_ASSERT(font_id == FONT_DEFAULT);
+	RICO_ASSERT(font->tex_pkid == FONT_DEFAULT_TEXTURE);
+	RICO_ASSERT(diff_id == TEXTURE_DEFAULT_DIFF);
+	RICO_ASSERT(spec_id == TEXTURE_DEFAULT_SPEC);
+	RICO_ASSERT(emis_id == TEXTURE_DEFAULT_EMIS);
+	RICO_ASSERT(mat_id == MATERIAL_DEFAULT);
 	RICO_ASSERT(cube == MESH_DEFAULT_CUBE);
 	RICO_ASSERT(sphere == MESH_DEFAULT_SPHERE);
 

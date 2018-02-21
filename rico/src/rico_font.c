@@ -41,16 +41,20 @@ internal void font_setblend(const struct rico_font *font)
 	}
 }
 
-void font_render(u32 *mesh_id, u32 *tex_id, struct rico_font *font, float x,
-                 float y, struct vec4 bg, const char *text,
-                 const char *mesh_name)
+void font_render(u32 *mesh_id, u32 *tex_id, pkid font_id, float x, float y,
+                 struct vec4 bg, const char *text, const char *mesh_name)
 {
     // TODO: Use instanced quad?
     // Persistent buffers for font rendering
     local struct text_vertex vertices[BFG_MAXSTRING * 4] = { 0 };
     local GLuint elements[BFG_MAXSTRING * 6] = { 0 };
 
-    if (!font)
+    struct rico_font *font;
+    if (font_id)
+    {
+        font = RICO_pack_lookup(font_id);
+    }
+    else
     {
         font = RICO_pack_lookup(FONT_DEFAULT);
     }
@@ -125,9 +129,9 @@ void font_render(u32 *mesh_id, u32 *tex_id, struct rico_font *font, float x,
         screen_x += offset_x;
     }
 
-    u32 new_mesh_id = RICO_load_mesh(RICO_packs[PACK_TRANSIENT], mesh_name,
-                                sizeof(*vertices), idx_vertex, vertices,
-                                idx_element, elements);
+    pkid new_mesh_id =
+        RICO_load_mesh(RICO_packs[PACK_TRANSIENT], mesh_name, sizeof(*vertices),
+                       idx_vertex, vertices, idx_element, elements);
 
     RICO_ASSERT(new_mesh_id);
     *mesh_id = new_mesh_id;

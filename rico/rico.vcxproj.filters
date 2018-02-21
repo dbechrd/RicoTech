@@ -32,9 +32,6 @@
     <ClCompile Include="src\rico_collision.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rico_const.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\rico_convert.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -104,6 +101,9 @@
     <ClCompile Include="src\rico_light.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\rico_error.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\rico_internal_audio.h">
@@ -140,9 +140,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\rico_internal_hnd.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rico_internal_input.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\rico_internal_light.h">
@@ -191,6 +188,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\rico_internal_main.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rico_internal_error.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -10,7 +10,7 @@ INC_DIR := include include/SDL include/GL include/AL ../dlb/include
 OBJ_DIR := obj
 LIB_DIR := lib
 
-SRC_FILE := rico_internal.c
+SRC_FILE := rico_main.c
 OUT_FILE := $(LIB_DIR)/rico.lib
 
 INCLUDE_DIRS := $(INC_DIR:%=-I%)

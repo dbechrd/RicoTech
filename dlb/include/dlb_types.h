@@ -46,4 +46,24 @@ typedef u32 bool;
 #define ARRAY_COUNT(a) (sizeof(a) / sizeof(a[0]))
 #define SIZEOF_MEMBER(type, member) sizeof(((type *)0)->member)
 
+#define DLB_ASSERT_HANDLER(name) \
+    void name(const char *expr, const char *file, u32 line)
+typedef DLB_ASSERT_HANDLER(DLB_assert_handler_def);
+DLB_assert_handler_def *DLB_assert_handler;
+
+#if defined(_MSC_VER)
+    #define DLB_DEBUG_BREAK (__debugbreak());
+#elif defined(__GNUC__) || defined(__clang__)
+    #define DLB_DEBUG_BREAK (__builtin_trap());
+#endif
+
+#define DLB_ASSERT(expr) \
+    if (expr) { } \
+    else { \
+        if (DLB_assert_handler) { \
+            (*DLB_assert_handler)(#expr, __FILE__, __LINE__); \
+        } \
+        DLB_DEBUG_BREAK; \
+    }
+
 #endif

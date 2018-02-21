@@ -3,7 +3,7 @@
 
 #include "RICO/rico_object.h"
 
-void object_delete(struct pack *pack, struct rico_object *obj);
+void object_delete(struct rico_object *obj);
 struct rico_object *object_copy(struct pack *pack, struct rico_object *other,
                                 const char *name);
 void object_bbox_recalculate(struct rico_object *obj);
@@ -34,7 +34,7 @@ bool object_collide_ray(float *_dist, struct rico_object *rico,
                         const struct ray *ray);
 bool object_collide_ray_type(struct pack *pack, struct rico_object **_object,
                              float *_dist, const struct ray *ray);
-void object_interact(struct rico_object *obj);
+static void object_interact(struct rico_object *obj);
 void object_render(struct pack *pack, const struct camera *camera);
 void object_render_ui(struct pack *pack);
 void object_render_all(struct camera *camera);

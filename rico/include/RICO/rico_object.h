@@ -37,8 +37,7 @@ struct rico_object
 #define RICO_OBJECT(name) struct name { struct rico_object rico;
 
 #define RICO_EVENT_OBJECT(name) void name(struct rico_object *obj)
-typedef RICO_EVENT_OBJECT(RICO_event_object);
-
-RICO_event_object *RICO_event_object_interact;
+typedef RICO_EVENT_OBJECT(RICO_event_object_def);
+RICO_event_object_def *RICO_event_object_interact;
 
 #endif

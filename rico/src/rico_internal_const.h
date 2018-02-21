@@ -67,63 +67,9 @@
 //#define SIM_MAX_FRAMESKIP_SEC (SIM_MAX_FRAMESKIP_MS / 1000)
 
 //------------------------------------------------------------------------------
-// Enums
-//------------------------------------------------------------------------------
-#define RICO_ERRORS(f)             \
-    f(SUCCESS)                     \
-    f(ERR_BAD_ALLOC)               \
-    f(ERR_POOL_OUT_OF_MEMORY)      \
-    f(ERR_POOL_INVALID_HANDLE)     \
-    f(ERR_POOL_BAD_FREE)           \
-    f(ERR_FILE_WRITE)              \
-    f(ERR_FILE_READ)               \
-    f(ERR_FILE_SIGNATURE)          \
-    f(ERR_FILE_VERSION)            \
-    f(ERR_SERIALIZE_DISABLED)      \
-    f(ERR_SERIALIZER_NULL)         \
-    f(ERR_DESERIALIZER_NULL)       \
-    f(ERR_TEXTURE_LOAD)            \
-    f(ERR_TEXTURE_UNSUPPORTED_BPP) \
-    f(ERR_SHADER_COMPILE)          \
-    f(ERR_SHADER_LINK)             \
-    f(ERR_SDL_INIT)                \
-    f(ERR_GL3W_INIT)               \
-    f(ERR_OPENAL_INIT)             \
-    f(ERR_PRIM_UNSUPPORTED)        \
-    f(ERR_OBJ_TOO_MANY_VERTS)      \
-    f(ERR_CHUNK_NULL)              \
-    f(ERR_MESH_INVALID_NAME)       \
-    f(ERR_TEXTURE_INVALID_NAME)    \
-    f(ERR_MATERIAL_INVALID_NAME)   \
-    f(ERR_OBJECT_INVALID_NAME)     \
-    f(ERR_STRING_INVALID_NAME)     \
-    f(ERR_FONT_INVALID_NAME)       \
-    f(ERR_HASH_TABLE_FULL)         \
-    f(ERR_HASH_INVALID_KEY)        \
-    f(ERR_HASH_OVERWRITE)          \
-    f(ERR_INVALID_PARAMS)          \
-    f(ERR_CHUNK_FREE_FAILED)       \
-    f(ERR_OBJ_PARSE_FAILED)
-
-enum rico_error { RICO_ERRORS(GEN_LIST) };
-const char *rico_error_string[];
-
-//------------------------------------------------------------------------------
-// Global functions
-//------------------------------------------------------------------------------
-// TODO: Move this to rico_error.h?
-//enum rico_error rico_error_print(enum rico_error err, const char *desc,
-//                                 const char *file, int line);
-//enum rico_error rico_fatal_print(enum rico_error err, const char *desc,
-//                                 const char *file, int line);
-enum rico_error rico_error_print(const char *file, int line,
-                                 enum rico_error err, const char *fmt, ...);
-enum rico_error rico_fatal_print(const char *file, int line,
-                                 enum rico_error err, const char *fmt, ...);
-
-//------------------------------------------------------------------------------
 // Macros
 //------------------------------------------------------------------------------
+// TODO: Replace these with the stuff in dlb_types
 #define HALT() SDL_TriggerBreakpoint()
 
 #if RICO_DEBUG

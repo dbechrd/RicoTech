@@ -5,7 +5,7 @@
 #define DLB_MATH_PRINT
 #include "dlb_math.h"
 
-#include "rico_const.c"
+#include "rico_error.c"
 #include "rico_util.c"
 #include "rico_hash.c"
 #include "rico_audio.c"

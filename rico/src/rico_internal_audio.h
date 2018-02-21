@@ -3,8 +3,6 @@
 
 #include "RICO/rico_audio.h"
 
-static bool audio_play = true;
-
 static void init_openal();
 
 #endif

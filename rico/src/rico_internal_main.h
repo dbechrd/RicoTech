@@ -25,6 +25,7 @@
 #include "MurmurHash3.h"
 
 #include "rico_internal_const.h"
+#include "rico_internal_error.h"
 struct pack;
 
 #include "rico_internal_util.h"
@@ -53,7 +54,6 @@ struct pack;
 #include "rico_internal_convert.h"
 #include "rico_internal_collision.h"
 #include "rico_internal_physics.h"
-#include "rico_internal_input.h"
 #include "rico_internal_state.h"
 #include "rico_internal_shader.h"
 #include "rico_internal_glref.h"

@@ -10,8 +10,12 @@
     f(RICO_AUDIO_PLAYING)   \
     f(RICO_AUDIO_PAUSED)
 
-enum rico_audio_state { RICO_AUDIO_STATE(GEN_LIST) };
-const char *rico_audio_state_string[];
+enum rico_audio_state
+{
+    RICO_AUDIO_STATE(GEN_LIST)
+    RICO_AUDIO_COUNT
+};
+const char *rico_audio_state_string[RICO_AUDIO_COUNT];
 
 struct rico_audio_source
 {
