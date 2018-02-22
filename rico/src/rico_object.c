@@ -276,7 +276,7 @@ static void object_interact(struct rico_object *obj)
 // TODO: Physics system should iterate should all objects and update their
 //       velocity, position, etc.
 #if 0
-internal void object_update_static(struct rico_object *obj)
+static void object_update_static(struct rico_object *obj)
 {
     UNUSED(obj);
 }

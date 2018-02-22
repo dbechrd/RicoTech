@@ -18,18 +18,18 @@
 static void string_truncate(char *buf, int buf_count, int length);
 int file_contents(const char *filename, u32 *_length, char **_buffer);
 
-internal inline int str_starts_with(const char *str, const char *prefix)
+static inline int str_starts_with(const char *str, const char *prefix)
 {
     return strncmp(str, prefix, strlen(prefix)) == 0;
 }
 
-internal inline unsigned short swap_16bit(unsigned short us)
+static inline unsigned short swap_16bit(unsigned short us)
 {
     return (unsigned short)(((us & 0xFF00) >> 8) |
                             ((us & 0x00FF) << 8));
 }
 
-internal inline unsigned long swap_32bit(unsigned long ul)
+static inline unsigned long swap_32bit(unsigned long ul)
 {
     return (unsigned long)(((ul & 0xFF000000) >> 24) |
                            ((ul & 0x00FF0000) >>  8) |

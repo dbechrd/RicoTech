@@ -108,7 +108,7 @@ int pack_load_all()
 	return err;
 }
 
-internal void timmy_interact(struct timmy *obj)
+void timmy_interact(struct timmy *obj)
 {
     UNUSED(obj);
     RICO_lighting_enabled = !RICO_lighting_enabled;

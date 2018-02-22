@@ -14,12 +14,12 @@ u32 action_queue_count = 0;
 r32 mouse_dx = 0;
 r32 mouse_dy = 0;
 
-internal struct vec3 player_acc;
+static struct vec3 player_acc;
 
 #define CAM_SLOW_MULTIPLIER 0.1f
 #define CAM_SPRINT_MULTIPLIER 5.0f
-internal bool player_sprint = false;
-internal bool camera_slow = false;
+static bool player_sprint = false;
+static bool camera_slow = false;
 
 #define TRANS_DELTA_MIN 0.01f
 #define TRANS_DELTA_MAX 10.0f
@@ -28,37 +28,37 @@ float trans_delta = 0.1f;
 #define ROT_DELTA_MIN 1.0f
 #define ROT_DELTA_MAX 90.0f
 #define ROT_DELTA_DEFAULT 5.0f
-internal float rot_delta = ROT_DELTA_DEFAULT;
+static float rot_delta = ROT_DELTA_DEFAULT;
 
 #define SCALE_DELTA_MIN 0.1f
 #define SCALE_DELTA_MAX 5.0f
-internal float scale_delta = 1.0f;
+static float scale_delta = 1.0f;
 
-internal bool mouse_lock = true;
-internal bool enable_lighting = true;
-internal bool audio_muted = false;
+static bool mouse_lock = true;
+static bool enable_lighting = true;
+static bool audio_muted = false;
 
 // Simulation params
-internal r64 sim_accum = 0;
+static r64 sim_accum = 0;
 
 // Performance timing
-internal u64 perfs_frequency;
-internal u64 last_perfs;
-internal u64 last_cycles;
+static u64 perfs_frequency;
+static u64 last_perfs;
+static u64 last_cycles;
 
 // FPS UI
-internal u64 fps_last_render;
-internal u64 fps_render_delta = 200000;  // 200 ms
-internal bool fps_render = false;
-internal bool vsync = true;
+static u64 fps_last_render;
+static u64 fps_render_delta = 200000;  // 200 ms
+static bool fps_render = false;
+static bool vsync = true;
 
 // Mouse and keyboard state
-internal u32 mouse_buttons = 0;
-internal u32 mouse_buttons_prev = 0;
+static u32 mouse_buttons = 0;
+static u32 mouse_buttons_prev = 0;
 
-internal u8 keystate_buffers[2][SDL_NUM_SCANCODES] = { 0 };
-internal u8 *keys      = keystate_buffers[0];
-internal u8 *keys_prev = keystate_buffers[1];
+static u8 keystate_buffers[2][SDL_NUM_SCANCODES] = { 0 };
+static u8 *keys      = keystate_buffers[0];
+static u8 *keys_prev = keystate_buffers[1];
 
 const rico_key RICO_SCANCODE_ALT   = (rico_key)301;
 const rico_key RICO_SCANCODE_CTRL  = (rico_key)302;
@@ -120,8 +120,8 @@ static inline bool chord_released(enum rico_action action)
 }
 
 // Current state
-internal enum rico_state state_prev;
-internal enum rico_state state;
+static enum rico_state state_prev;
+static enum rico_state state;
 
 // State change handlers
 typedef int (*state_handler)();
@@ -199,7 +199,7 @@ int engine_update()
 	keys = keys_tmp;
 	memcpy(keys, SDL_GetKeyboardState(0), SDL_NUM_SCANCODES);
 
-    RICO_check_key_events();
+    rico_check_key_events();
 
     ///-------------------------------------------------------------------------
     //| State actions
@@ -311,7 +311,7 @@ int engine_update()
     return err;
 }
 
-internal int shared_engine_events()
+static int shared_engine_events()
 {
     enum rico_error err = SUCCESS;
 
@@ -399,7 +399,7 @@ internal int shared_engine_events()
 
     return err;
 }
-internal int shared_camera_events()
+static int shared_camera_events()
 {
     enum rico_error err = SUCCESS;
 
@@ -435,7 +435,7 @@ internal int shared_camera_events()
 
     return err;
 }
-internal int shared_edit_events()
+static int shared_edit_events()
 {
     RICO_ASSERT(state_is_edit(state));
 
@@ -545,7 +545,7 @@ internal int shared_edit_events()
     return err;
 }
 
-internal int state_play_explore()
+static int state_play_explore()
 {
     enum rico_error err = SUCCESS;
 
@@ -579,7 +579,7 @@ internal int state_play_explore()
 
     return err;
 }
-internal int state_edit_cleanup()
+static int state_edit_cleanup()
 {
     enum rico_error err = SUCCESS;
 
@@ -590,7 +590,7 @@ internal int state_edit_cleanup()
 
     return err;
 }
-internal int state_edit_translate()
+static int state_edit_translate()
 {
     enum rico_error err = SUCCESS;
 
@@ -667,7 +667,7 @@ internal int state_edit_translate()
 
     return err;
 }
-internal int state_edit_rotate()
+static int state_edit_rotate()
 {
     enum rico_error err = SUCCESS;
 
@@ -759,7 +759,7 @@ internal int state_edit_rotate()
 
     return err;
 }
-internal int state_edit_scale()
+static int state_edit_scale()
 {
     enum rico_error err = SUCCESS;
 
@@ -850,7 +850,7 @@ internal int state_edit_scale()
 
     return err;
 }
-internal int state_edit_material()
+static int state_edit_material()
 {
     enum rico_error err = SUCCESS;
 
@@ -871,7 +871,7 @@ internal int state_edit_material()
 
     return err;
 }
-internal int state_edit_mesh()
+static int state_edit_mesh()
 {
     enum rico_error err = SUCCESS;
 
@@ -897,7 +897,7 @@ internal int state_edit_mesh()
 
     return err;
 }
-internal int state_menu_quit()
+static int state_menu_quit()
 {
     enum rico_error err = SUCCESS;
 
@@ -923,7 +923,7 @@ internal int state_menu_quit()
 
     return err;
 }
-internal int state_text_input()
+static int state_text_input()
 {
     enum rico_error err = SUCCESS;
 
@@ -936,7 +936,7 @@ internal int state_text_input()
     return err;
 }
 
-internal int rico_init_shaders()
+static int rico_init_shaders()
 {
     enum rico_error err;
 
@@ -953,12 +953,12 @@ internal int rico_init_shaders()
     return err;
 }
 
-internal int state_engine_shutdown()
+static int state_engine_shutdown()
 {
 	free_glref();
 	return SUCCESS;
 }
-void RICO_check_key_events()
+void rico_check_key_events()
 {
     for (enum rico_action i = ACTION_RICO_TEST; i < ACTION_COUNT; ++i)
     {
@@ -989,7 +989,7 @@ void RICO_bind_action(enum rico_action action,
 {
     action_chords[action] = chord;
 }
-internal int engine_init()
+static int engine_init()
 {
     enum rico_error err;
 

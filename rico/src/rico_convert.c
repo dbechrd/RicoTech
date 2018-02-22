@@ -65,7 +65,7 @@ const char *obj_token_type_string[] = { OBJ_TOKEN_TYPES(GEN_STRING) };
 
 enum obj_keyword_type { OBJ_KEYWORD_TYPES(GEN_LIST) };
 const char *obj_keyword_type_string[] = { OBJ_KEYWORD_TYPES(GEN_STRING) };
-internal const char *obj_keyword_values[] = { OBJ_KEYWORD_TYPES(GEN_VALUE) };
+static const char *obj_keyword_values[] = { OBJ_KEYWORD_TYPES(GEN_VALUE) };
 
 struct obj_token
 {

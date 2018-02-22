@@ -5,7 +5,7 @@ int rico_convert(int argc, char **argv);
 int rico_convert_obj(const char *filename);
 int load_obj_file_new(const char *filename);
 
-internal inline char *strsep(char **stringp, const char delim)
+static inline char *strsep(char **stringp, const char delim)
 {
     char *start = *stringp;
 
@@ -23,7 +23,7 @@ internal inline char *strsep(char **stringp, const char delim)
     return start;
 }
 
-internal inline char *strsep_mul(char **stringp, const char *delims)
+static inline char *strsep_mul(char **stringp, const char *delims)
 {
     char *start = *stringp;
     const char *delim;
@@ -47,7 +47,7 @@ internal inline char *strsep_mul(char **stringp, const char *delims)
     return start;
 }
 
-internal inline long fast_atol(const char *str)
+static inline long fast_atol(const char *str)
 {
     if (!str) return 0;
 
@@ -59,7 +59,7 @@ internal inline long fast_atol(const char *str)
 }
 
 #if 0
-internal inline char *read_word(char *fp, int len, char **buf)
+static inline char *read_word(char *fp, int len, char **buf)
 {
     len--;
     while (*fp && len)

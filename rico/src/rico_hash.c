@@ -11,7 +11,7 @@ struct hash_kv
     u32 vlen; // 4
 };
 
-internal inline bool keys_equal(struct hash_kv *kv, const void *key, u32 klen)
+static inline bool keys_equal(struct hash_kv *kv, const void *key, u32 klen)
 {
     return kv->klen == klen &&
            memcmp(kv->key, key, MIN(sizeof(hkey), klen)) == 0;

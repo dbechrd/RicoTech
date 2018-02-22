@@ -1,11 +1,11 @@
 //struct pool_id PRIM_MESH_BBOX;
 //struct pool_id PRIM_MESH_SPHERE;
 
-internal GLuint prim_line_vao;
-internal GLuint prim_line_vbo;
+static GLuint prim_line_vao;
+static GLuint prim_line_vbo;
 
-internal GLuint prim_bbox_vao;
-internal GLuint prim_bbox_vbo[VBO_COUNT];
+static GLuint prim_bbox_vao;
+static GLuint prim_bbox_vbo[VBO_COUNT];
 
 int prim_init()
 {

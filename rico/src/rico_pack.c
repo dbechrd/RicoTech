@@ -6,14 +6,14 @@
 #define DEFAULT_PACK_BLOBS 32
 #define DEFAULT_PACK_BUF_SIZE KB(256)
 
-internal const u8 PACK_SIGNATURE[4] = { 'R', 'I', 'C', 'O' };
+static const u8 PACK_SIGNATURE[4] = { 'R', 'I', 'C', 'O' };
 //internal const u32 PACK_SIGNATURE =
 //    ((u32)'R' << 24) | ((u32)'I' << 16) | ((u32)'C' << 8) | ((u32)'O');
 
 u32 RICO_packs_next = 0;
 struct pack *RICO_packs[MAX_PACKS] = { 0 };
 
-internal void *blob_start(struct pack *pack, enum rico_hnd_type type, u32 size,
+static void *blob_start(struct pack *pack, enum rico_hnd_type type, u32 size,
                           const char *name)
 {
     RICO_ASSERT(pack->blob_current_id == 0);
@@ -46,7 +46,7 @@ internal void *blob_start(struct pack *pack, enum rico_hnd_type type, u32 size,
     RICO_ASSERT(uid->type);
     return uid;
 }
-internal u32 blob_offset(struct pack *pack)
+static u32 blob_offset(struct pack *pack)
 {
 	RICO_ASSERT(pack->blob_current_id);
 	RICO_ASSERT(pack->index[pack->lookup[pack->blob_current_id]].offset <
@@ -56,7 +56,7 @@ internal u32 blob_offset(struct pack *pack)
 		pack->index[pack->lookup[pack->blob_current_id]].offset;
 	return offset;
 }
-internal void blob_end(struct pack *pack)
+static void blob_end(struct pack *pack)
 {
 	RICO_ASSERT(pack->blob_current_id);
 	RICO_ASSERT(pack->lookup[pack->blob_current_id] == pack->blobs_used);
@@ -89,12 +89,12 @@ internal void blob_end(struct pack *pack)
 		pack_compact_buffer(pack);
 	}
 }
-internal void blob_error(struct pack *pack, u32 *pack_idx)
+static void blob_error(struct pack *pack, u32 *pack_idx)
 {
 	pack_pop(pack, *pack_idx);
 	*pack_idx = UINT_MAX;
 }
-internal void null_blob(struct pack *pack)
+static void null_blob(struct pack *pack)
 {
     push_string(pack, "[This page intentionally left blank]");
     pack->index[0].size = pack->buffer_used;
@@ -112,14 +112,14 @@ void *RICO_pack_lookup(pkid pkid)
     return pack_read(pack, pack->lookup[blob_id]);
 }
 
-internal void pack_expand(struct pack *pack)
+static void pack_expand(struct pack *pack)
 {
     // TODO: Expand pack by min(size * 2, MAX_EXPAND)
     UNUSED(pack);
 }
 
 // NOTE: This will break all existing pointers
-internal void pack_compact_buffer(struct pack *pack)
+static void pack_compact_buffer(struct pack *pack)
 {
     // Can't rearrange memory in the middle of creating a blob, because it will
     // break any pointers in the load() functions.
@@ -174,8 +174,8 @@ internal void pack_compact_buffer(struct pack *pack)
     }
 }
 
-internal u32 perf_pack_tick_start;
-internal u32 perf_pack_tick_end;
+static u32 perf_pack_tick_start;
+static u32 perf_pack_tick_end;
 
 struct pack *RICO_pack_init(u32 id, const char *name, u32 blob_count,
 					        u32 buffer_size)

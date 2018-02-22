@@ -24,6 +24,6 @@ float trans_delta;
 static inline enum rico_state state_get();
 static inline bool state_is_edit();
 static inline bool state_is_paused();
-void RICO_check_key_events();
+static void rico_check_key_events();
 
 #endif

@@ -8,7 +8,7 @@ program_attribs_helper program_attribs[PROG_COUNT] = {
 ///=============================================================================
 //| General-purpose
 ///=============================================================================
-internal int make_program(GLuint vertex_shader, GLuint fragment_shader,
+static int make_program(GLuint vertex_shader, GLuint fragment_shader,
                           GLuint *_program)
 {
     GLint status;
@@ -37,12 +37,12 @@ internal int make_program(GLuint vertex_shader, GLuint fragment_shader,
     return SUCCESS;
 }
 
-internal inline void free_program(GLuint program)
+static inline void free_program(GLuint program)
 {
     if (program) glDeleteProgram(program);
 }
 
-internal inline GLint program_get_attrib_location(GLuint program,
+static inline GLint program_get_attrib_location(GLuint program,
                                                 const char* name)
 {
     GLint location = glGetAttribLocation(program, name);
@@ -55,7 +55,7 @@ internal inline GLint program_get_attrib_location(GLuint program,
     return location;
 }
 
-internal inline GLint program_get_uniform_location(GLuint program,
+static inline GLint program_get_uniform_location(GLuint program,
                                                  const char* name)
 {
     GLint location = glGetUniformLocation(program, name);
@@ -71,7 +71,7 @@ internal inline GLint program_get_uniform_location(GLuint program,
 ///=============================================================================
 //| PBR program
 ///=============================================================================
-internal inline void program_pbr_get_locations(struct program_pbr *p)
+static inline void program_pbr_get_locations(struct program_pbr *p)
 {
     // Vertex shader
     p->time = program_get_uniform_location(p->prog_id, "time");
@@ -193,7 +193,7 @@ static void free_program_pbr(struct program_pbr **program)
 ///=============================================================================
 //| Primitive program
 ///=============================================================================
-internal inline void program_primitive_get_locations(struct program_primitive *p)
+static inline void program_primitive_get_locations(struct program_primitive *p)
 {
     // Vertex shader
     p->u_model = program_get_uniform_location(p->prog_id, "u_model");
@@ -267,7 +267,7 @@ static void free_program_primitive(struct program_primitive **program)
 ///=============================================================================
 //| Primitive cube program
 ///=============================================================================
-internal inline void program_prim_cube_get_locations(struct program_prim_cube *p)
+static inline void program_prim_cube_get_locations(struct program_prim_cube *p)
 {
     // Vertex shader
     p->model = program_get_uniform_location(p->prog_id, "model");
@@ -331,7 +331,7 @@ static void free_program_prim_cube(struct program_prim_cube **program)
 ///=============================================================================
 //| Text program
 ///=============================================================================
-internal inline void program_text_get_locations(struct program_text *p)
+static inline void program_text_get_locations(struct program_text *p)
 {
     // Vertex shader
     p->model = program_get_uniform_location(p->prog_id, "model");

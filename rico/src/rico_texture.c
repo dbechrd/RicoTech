@@ -1,9 +1,9 @@
-internal u8 *texture_pixels(struct rico_texture *tex)
+static u8 *texture_pixels(struct rico_texture *tex)
 {
     return (u8 *)tex + tex->pixels_offset;
 }
 
-internal int texture_upload(struct rico_texture *texture)
+static int texture_upload(struct rico_texture *texture)
 {
     enum rico_error err = SUCCESS;
 

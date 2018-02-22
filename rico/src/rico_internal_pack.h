@@ -30,11 +30,11 @@ enum DEFAULT_IDS
     MESH_DEFAULT_SPHERE
 };
 
-internal void *blob_start(struct pack *pack, enum rico_hnd_type type, u32 size,
+static void *blob_start(struct pack *pack, enum rico_hnd_type type, u32 size,
                           const char *name);
 
-internal void pack_expand(struct pack *pack);
-internal void pack_compact_buffer(struct pack *pack);
+static void pack_expand(struct pack *pack);
+static void pack_compact_buffer(struct pack *pack);
 
 static void *pack_next(pkid pkid, enum rico_hnd_type type);
 static void *pack_prev(pkid pkid, enum rico_hnd_type type);
@@ -42,7 +42,7 @@ static void pack_delete(pkid pkid);
 
 static void pack_build_default();
 
-internal inline void *pack_push(struct pack *pack, u32 bytes)
+static inline void *pack_push(struct pack *pack, u32 bytes)
 {
     RICO_ASSERT(pack->buffer_used + bytes < pack->buffer_size);
     void *ptr = pack->buffer + pack->buffer_used;
@@ -50,7 +50,7 @@ internal inline void *pack_push(struct pack *pack, u32 bytes)
     pack->index[pack->lookup[pack->blob_current_id]].size += bytes;
     return ptr;
 }
-internal inline void *pack_push_data(struct pack *pack, const void *data,
+static inline void *pack_push_data(struct pack *pack, const void *data,
                                      u32 count, u32 size)
 {
     u32 bytes = count * size;
@@ -58,7 +58,7 @@ internal inline void *pack_push_data(struct pack *pack, const void *data,
     memcpy(ptr, data, bytes);
     return ptr;
 }
-internal inline void *pack_push_str(struct pack *pack, const char *str)
+static inline void *pack_push_str(struct pack *pack, const char *str)
 {
     u32 size = (u32)strlen(str) + 1;
     void *ptr = pack_push(pack, size);
@@ -70,7 +70,7 @@ internal inline void *pack_push_str(struct pack *pack, const char *str)
 #define push_string(pack, str) (pack_push_str(pack, str))
 #define push_data(pack, data, count, size) (pack_push_data(pack, data, count, size))
 
-internal inline void *pack_pop(struct pack *pack, u32 id)
+static inline void *pack_pop(struct pack *pack, u32 id)
 {
     // This pop nonsense just seems like a bad idea.. probably not resetting
     // index_iter properly, who knows what other side effects.
@@ -93,7 +93,7 @@ internal inline void *pack_pop(struct pack *pack, u32 id)
 #endif
 }
 
-internal inline void *pack_read(struct pack *pack, u32 index)
+static inline void *pack_read(struct pack *pack, u32 index)
 {
     RICO_ASSERT(index > 0);
     RICO_ASSERT(index < pack->blobs_used);

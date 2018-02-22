@@ -1,4 +1,4 @@
-internal void pool_print_handles(struct rico_pool *pool);
+static void pool_print_handles(struct rico_pool *pool);
 
 inline void pool_fixup(struct rico_pool *pool, struct rico_chunk *chunk)
 {
@@ -163,7 +163,7 @@ inline void pool_request(struct rico_pool *pool, struct pool_id id)
 }
 #endif
 
-internal void pool_print_handles(struct rico_pool *pool)
+static void pool_print_handles(struct rico_pool *pool)
 {
 #if RICO_DEBUG_POOL
     printf("             [");

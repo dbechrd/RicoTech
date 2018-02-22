@@ -22,7 +22,7 @@ int font_free(struct rico_font *font)
 }
 #endif
 
-internal void font_setblend(const struct rico_font *font)
+static void font_setblend(const struct rico_font *font)
 {
     // TODO: Preserve blend settings before changing
 	switch(font->render_style)

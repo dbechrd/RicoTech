@@ -54,12 +54,12 @@
 SDL_Window *window = 0;
 SDL_GLContext gl_context = 0;
 
-internal inline void init_stb();
-internal inline void init_murmurhash3();
-internal int sdl_gl_attrib(SDL_GLattr attr, int value);
-internal int init_sdl();
-internal int init_gl3w(int major, int minor);
-internal void init_opengl();
+static inline void init_stb();
+static inline void init_murmurhash3();
+static int sdl_gl_attrib(SDL_GLattr attr, int value);
+static int init_sdl();
+static int init_gl3w(int major, int minor);
+static void init_opengl();
 
 int RICO_init()
 {
@@ -162,12 +162,12 @@ void RICO_quit()
 #endif
 }
 
-internal inline void init_stb()
+static inline void init_stb()
 {
     stbi_set_flip_vertically_on_load(1);
 }
 
-internal inline void init_murmurhash3()
+static inline void init_murmurhash3()
 {
     // key=RicoTech, seed=0
     MurmurHash3_seed = 3533902173;
@@ -179,7 +179,7 @@ internal inline void init_murmurhash3()
     printf("Hash: %u\n", hash);
 }
 
-internal int sdl_gl_attrib(SDL_GLattr attr, int value)
+static int sdl_gl_attrib(SDL_GLattr attr, int value)
 {
     int sdl_err = SDL_GL_SetAttribute(attr, value);
     if (sdl_err < 0)
@@ -190,7 +190,7 @@ internal int sdl_gl_attrib(SDL_GLattr attr, int value)
     return SUCCESS;
 }
 
-internal int init_sdl()
+static int init_sdl()
 {
     enum rico_error err;
     int sdl_err;
@@ -251,7 +251,7 @@ internal int init_sdl()
     return SUCCESS;
 }
 
-internal int init_gl3w(int major, int minor)
+static int init_gl3w(int major, int minor)
 {
     int init = gl3wInit();
     if (init)
@@ -266,7 +266,7 @@ internal int init_gl3w(int major, int minor)
     return SUCCESS;
 }
 
-internal void init_opengl()
+static void init_opengl()
 {
 #if RICO_DEBUG
     {

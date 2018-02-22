@@ -2,7 +2,7 @@ static void *mesh_vertices(struct rico_mesh *mesh)
 {
     return ((u8 *)mesh + mesh->vertices_offset);
 }
-internal u32 *mesh_elements(struct rico_mesh *mesh)
+static u32 *mesh_elements(struct rico_mesh *mesh)
 {
     return (u32 *)((u8 *)mesh + mesh->elements_offset);
 }
