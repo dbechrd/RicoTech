@@ -1,14 +1,14 @@
 #ifndef RICO_STATE_H
 #define RICO_STATE_H
 
-typedef u16 rico_key;
+typedef u16 RICO_key;
 
-struct rico_keychord
+struct RICO_keychord
 {
-    rico_key keys[3];
+    RICO_key keys[3];
 };
 
-#define CHORD3(k0, k1, k2) (struct rico_keychord) {{ k0, k1, k2 }}
+#define CHORD3(k0, k1, k2) (struct RICO_keychord) {{ k0, k1, k2 }}
 #define CHORD2(k0, k1) CHORD3(k0, k1, 0)
 #define CHORD1(k0)     CHORD3(k0, 0, 0)
 
@@ -44,7 +44,7 @@ struct rico_keyevent
 #define EVENT_CHORD(k0, k1) EVENT{ RICO_KEYEVENT_CHORD, k0, k1 }
 #endif
 
-enum rico_action
+enum RICO_action
 {
     ACTION_NULL,
 
@@ -129,7 +129,7 @@ enum rico_action
     ACTION_COUNT
 };
 
-enum rico_action RICO_key_event();
-void RICO_bind_action(enum rico_action action, struct rico_keychord chord);
+enum RICO_action RICO_key_event();
+void RICO_bind_action(enum RICO_action action, struct RICO_keychord chord);
 
 #endif

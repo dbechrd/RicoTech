@@ -3,7 +3,7 @@
 
 // TODO: Material describes texture(s), device state settings, and which v/f
 //       shader to use when rendering.
-struct rico_material
+struct RICO_material
 {
     struct uid uid;
 

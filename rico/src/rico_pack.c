@@ -10,16 +10,22 @@ static const u8 PACK_SIGNATURE[4] = { 'R', 'I', 'C', 'O' };
 //internal const u32 PACK_SIGNATURE =
 //    ((u32)'R' << 24) | ((u32)'I' << 16) | ((u32)'C' << 8) | ((u32)'O');
 
-u32 RICO_packs_next = 0;
 struct pack *RICO_packs[MAX_PACKS] = { 0 };
+u32 RICO_packs_next = 0;
+struct pack *pack_active = 0;
 
-static void *blob_start(struct pack *pack, enum rico_hnd_type type, u32 size,
-                          const char *name)
+static u32 perf_pack_tick_start;
+static u32 perf_pack_tick_end;
+
+static void pack_compact_buffer(struct pack *pack);
+
+static void *blob_start(struct pack *pack, enum RICO_hnd_type type, u32 size,
+                        const char *name)
 {
     RICO_ASSERT(pack->blob_current_id == 0);
     RICO_ASSERT(pack->blobs_used < pack->blob_count);
 
-    if (!size) size = rico_hnd_type_size[type];
+    if (!size) size = RICO_hnd_type_size[type];
 
     // TODO: Free list instead of loop?
     // Find first available lookup id
@@ -101,26 +107,15 @@ static void null_blob(struct pack *pack)
     pack->blobs_used++;
 }
 
-void *RICO_pack_lookup(pkid pkid)
-{
-    u32 pack_id = PKID_PACK(pkid);
-    RICO_ASSERT(pack_id < MAX_PACKS);
-    struct pack *pack = RICO_packs[pack_id];
-
-    u32 blob_id = PKID_BLOB(pkid);
-    RICO_ASSERT(blob_id < pack->blob_count);
-    return pack_read(pack, pack->lookup[blob_id]);
-}
-
 static void pack_expand(struct pack *pack)
 {
     // TODO: Expand pack by min(size * 2, MAX_EXPAND)
     UNUSED(pack);
 }
-
-// NOTE: This will break all existing pointers
 static void pack_compact_buffer(struct pack *pack)
 {
+    // NOTE: This will break all existing pointers
+
     // Can't rearrange memory in the middle of creating a blob, because it will
     // break any pointers in the load() functions.
     RICO_ASSERT(pack->blob_current_id == 0);
@@ -173,12 +168,203 @@ static void pack_compact_buffer(struct pack *pack)
 #endif
     }
 }
+static void *pack_next(pkid pkid, enum RICO_hnd_type type)
+{
+    u32 pack_id = PKID_PACK(pkid);
+    u32 blob_id = PKID_BLOB(pkid);
 
-static u32 perf_pack_tick_start;
-static u32 perf_pack_tick_end;
+    struct pack *pack = RICO_packs[pack_id];
+    RICO_ASSERT(pack);
 
-struct pack *RICO_pack_init(u32 id, const char *name, u32 blob_count,
-					        u32 buffer_size)
+    if (pack->blobs_used == 0)
+        return NULL;
+
+    u32 start_idx = (blob_id) ? pack->lookup[blob_id] : 1;
+    u32 idx = start_idx;
+    do
+    {
+        idx++;
+        if (idx == pack->blobs_used)
+            idx = 1;
+
+        if (pack->index[idx].type == type)
+        {
+            return pack_read(pack, idx);
+        }
+    } while (idx != start_idx);
+
+    return NULL;
+}
+static void *pack_prev(pkid pkid, enum RICO_hnd_type type)
+{
+    u32 pack_id = PKID_PACK(pkid);
+    u32 blob_id = PKID_BLOB(pkid);
+
+    struct pack *pack = RICO_packs[pack_id];
+    RICO_ASSERT(pack);
+
+    if (pack->blobs_used == 0)
+        return NULL;
+
+    u32 start_idx = (blob_id) ? pack->lookup[blob_id] : pack->blobs_used;
+    u32 idx = start_idx;
+    do
+    {
+        idx--;
+        if (idx == 0)
+            idx = pack->blobs_used - 1;
+
+        if (pack->index[idx].type == type)
+        {
+            return pack_read(pack, idx);
+        }
+    } while (idx != start_idx);
+
+    return NULL;
+}
+static void pack_delete(pkid pkid)
+{
+    u32 pack_id = PKID_PACK(pkid);
+    u32 blob_id = PKID_BLOB(pkid);
+    RICO_ASSERT(pack_id < MAX_PACKS);
+
+    struct pack *pack = RICO_packs[pack_id];
+    RICO_ASSERT(pack);
+    RICO_ASSERT(blob_id < pack->blob_count);
+
+    // HACK: For now, just ignore requests to delete blobs in the default pack
+    if (pack_id == PACK_DEFAULT)
+        return;
+
+    // TODO: Why was I allowed blob_id == 0 to return? Is this something that's
+    //       already been deleted?
+    RICO_ASSERT(blob_id);
+    if (blob_id == 0)
+        return;
+
+    RICO_ASSERT(blob_id < pack->blob_count);
+
+    u32 index = pack->lookup[blob_id];
+    RICO_ASSERT(index > 0);
+    RICO_ASSERT(index < pack->blobs_used);
+
+    enum RICO_hnd_type type = pack->index[index].type;
+    RICO_ASSERT(type);
+
+    void *delete_me = pack_read(pack, index);
+
+    // 7 used, delete 4
+    // 0 1 2 3 4 5 6 7 8 9
+    // a b c d - e f [blob = 4]
+    // a b c d e e f [blob = 5]
+    // a b c d e f f
+
+    // Shift everything after the deleted blob index left
+    for (u32 idx = index; idx < pack->blobs_used - 1; ++idx)
+    {
+        pack->index[idx] = pack->index[idx + 1];
+    }
+    pack->lookup[blob_id] = 0;
+    pack->blobs_used--;
+    pack->index[pack->blobs_used].type = 0;
+
+    // Update lookup table
+    for (u32 i = 1; i < pack->blob_count; ++i)
+    {
+        if (pack->lookup[i] > index)
+            pack->lookup[i]--;
+    }
+
+    switch (type)
+    {
+        case RICO_HND_OBJECT:
+        {
+            struct RICO_object *obj = delete_me;
+            object_delete(obj);
+            break;
+        }
+        case RICO_HND_TEXTURE:
+        {
+            struct RICO_texture *tex = delete_me;
+            texture_delete(tex);
+            break;
+        }
+        case RICO_HND_MESH:
+        {
+            struct RICO_mesh *mesh = delete_me;
+            mesh_delete(mesh);
+            break;
+        }
+        case RICO_HND_STRING:
+        {
+            struct RICO_string *string = delete_me;
+            string_delete(string);
+            break;
+        }
+        default:
+            break;
+    }
+}
+static void pack_build_default()
+{
+    // TODO: This entire pack could be embedded as binary data in the .exe once
+    //       the contents are finalized. This would allow the engine to run even
+    //       when the data directory is missing.
+    const char *filename = "packs/default.pak";
+
+#if 0
+    FILE *default_pack = fopen(filename, "rb");
+    if (default_pack)
+    {
+        fclose(default_pack);
+        return;
+    }
+#endif
+
+    struct pack *pack = RICO_pack_init(PACK_DEFAULT, filename, 16, MB(1));
+    pkid font_id = RICO_load_font_file(pack, "[FONT_DEFAULT]",
+                                       "font/cousine_regular.bff");
+    pkid diff_id = RICO_load_texture_file(pack, "[TEX_DIFF_DEFAULT]",
+                                          "texture/pbr_default_0.tga");
+    pkid spec_id = RICO_load_texture_file(pack, "[TEX_SPEC_DEFAULT]",
+                                          "texture/pbr_default_1.tga");
+    pkid emis_id = RICO_load_texture_file(pack, "[TEX_EMIS_DEFAULT]",
+                                          "texture/pbr_default_2.tga");
+    pkid mat_id = RICO_load_material(pack, "[MATERIAL_DEFAULT]", diff_id,
+                                     spec_id, emis_id);
+
+    // HACK: This is a bit of a gross way to get the id of the last mesh
+    pkid cube;
+    RICO_load_obj_file(pack, "mesh/prim_cube.obj", &cube);
+    pkid sphere;
+    RICO_load_obj_file(pack, "mesh/prim_sphere.obj", &sphere);
+
+    struct RICO_font *font = RICO_pack_lookup(font_id);
+    RICO_ASSERT(font_id == FONT_DEFAULT);
+    RICO_ASSERT(font->tex_pkid == FONT_DEFAULT_TEXTURE);
+    RICO_ASSERT(diff_id == TEXTURE_DEFAULT_DIFF);
+    RICO_ASSERT(spec_id == TEXTURE_DEFAULT_SPEC);
+    RICO_ASSERT(emis_id == TEXTURE_DEFAULT_EMIS);
+    RICO_ASSERT(mat_id == MATERIAL_DEFAULT);
+    RICO_ASSERT(cube == MESH_DEFAULT_CUBE);
+    RICO_ASSERT(sphere == MESH_DEFAULT_SPHERE);
+
+    RICO_pack_save(pack, filename, true);
+    RICO_pack_free(pack->id);
+}
+
+extern void *RICO_pack_lookup(pkid pkid)
+{
+    u32 pack_id = PKID_PACK(pkid);
+    RICO_ASSERT(pack_id < MAX_PACKS);
+    struct pack *pack = RICO_packs[pack_id];
+
+    u32 blob_id = PKID_BLOB(pkid);
+    RICO_ASSERT(blob_id < pack->blob_count);
+    return pack_read(pack, pack->lookup[blob_id]);
+}
+extern struct pack *RICO_pack_init(u32 id, const char *name, u32 blob_count,
+                                   u32 buffer_size)
 {
     if (!blob_count) blob_count = DEFAULT_PACK_BLOBS;
     if (!buffer_size) buffer_size = DEFAULT_PACK_BUF_SIZE;
@@ -225,11 +411,10 @@ struct pack *RICO_pack_init(u32 id, const char *name, u32 blob_count,
     RICO_packs[pack->id] = pack;
     return pack;
 }
-
-int RICO_pack_save(struct pack *pack, const char *filename, bool shrink)
+extern int RICO_pack_save(struct pack *pack, const char *filename, bool shrink)
 {
     RICO_ASSERT(pack->blob_current_id == 0);
-    enum rico_error err = SUCCESS;
+    enum RICO_error err = SUCCESS;
 
     pack_compact_buffer(pack);
 
@@ -303,11 +488,9 @@ int RICO_pack_save(struct pack *pack, const char *filename, bool shrink)
     perf_pack_tick_start = perf_pack_tick_end = 0;
     return err;
 }
-
-int RICO_pack_load(const char *filename, struct pack **_pack)
+extern int RICO_pack_load(const char *filename, struct pack **_pack)
 {
-    UNUSED(filename);
-    enum rico_error err = SUCCESS;
+    enum RICO_error err = SUCCESS;
 
     // Read pack file from disk
     FILE *pack_file = fopen(filename, "rb");
@@ -353,157 +536,17 @@ int RICO_pack_load(const char *filename, struct pack **_pack)
 cleanup:
     return err;
 }
-
-void RICO_pack_free(u32 id)
+extern void RICO_pack_free(u32 id)
 {
     RICO_ASSERT(id < MAX_PACKS);
     RICO_ASSERT(RICO_packs[id]);
     free(RICO_packs[id]);
     RICO_packs[id] = 0;
 }
-
-static void *pack_next(pkid pkid, enum rico_hnd_type type)
+extern pkid RICO_load_object(struct pack *pack, u32 type, u32 size,
+                             const char *name)
 {
-    u32 pack_id = PKID_PACK(pkid);
-    u32 blob_id = PKID_BLOB(pkid);
-
-    struct pack *pack = RICO_packs[pack_id];
-    RICO_ASSERT(pack);
-
-    if (pack->blobs_used == 0)
-        return NULL;
-
-    u32 start_idx = (blob_id) ? pack->lookup[blob_id] : 1;
-    u32 idx = start_idx;
-    do
-    {
-        idx++;
-        if (idx == pack->blobs_used)
-            idx = 1;
-
-        if (pack->index[idx].type == type)
-        {
-            return pack_read(pack, idx);
-        }
-    } while (idx != start_idx);
-
-    return NULL;
-}
-
-static void *pack_prev(pkid pkid, enum rico_hnd_type type)
-{
-    u32 pack_id = PKID_PACK(pkid);
-    u32 blob_id = PKID_BLOB(pkid);
-
-    struct pack *pack = RICO_packs[pack_id];
-    RICO_ASSERT(pack);
-
-    if (pack->blobs_used == 0)
-        return NULL;
-
-    u32 start_idx = (blob_id) ? pack->lookup[blob_id] : pack->blobs_used;
-    u32 idx = start_idx;
-    do
-    {
-        idx--;
-        if (idx == 0)
-            idx = pack->blobs_used - 1;
-
-        if (pack->index[idx].type == type)
-        {
-            return pack_read(pack, idx);
-        }
-    } while (idx != start_idx);
-
-    return NULL;
-}
-
-static void pack_delete(pkid pkid)
-{
-    u32 pack_id = PKID_PACK(pkid);
-    u32 blob_id = PKID_BLOB(pkid);
-    RICO_ASSERT(pack_id < MAX_PACKS);
-
-    struct pack *pack = RICO_packs[pack_id];
-    RICO_ASSERT(pack);
-    RICO_ASSERT(blob_id < pack->blob_count);
-
-    // HACK: For now, just ignore requests to delete blobs in the default pack
-    if (pack_id == PACK_DEFAULT)
-        return;
-
-    // TODO: Why was I allowed blob_id == 0 to return? Is this something that's
-    //       already been deleted?
-    RICO_ASSERT(blob_id);
-    if (blob_id == 0)
-        return;
-
-    RICO_ASSERT(blob_id < pack->blob_count);
-
-    u32 index = pack->lookup[blob_id];
-    RICO_ASSERT(index > 0);
-    RICO_ASSERT(index < pack->blobs_used);
-
-    enum rico_hnd_type type = pack->index[index].type;
-    RICO_ASSERT(type);
-
-    void *delete_me = pack_read(pack, index);
-
-    // 7 used, delete 4
-    // 0 1 2 3 4 5 6 7 8 9
-    // a b c d - e f [blob = 4]
-    // a b c d e e f [blob = 5]
-    // a b c d e f f
-
-    // Shift everything after the deleted blob index left
-    for (u32 idx = index; idx < pack->blobs_used - 1; ++idx)
-    {
-        pack->index[idx] = pack->index[idx + 1];
-    }
-    pack->lookup[blob_id] = 0;
-    pack->blobs_used--;
-    pack->index[pack->blobs_used].type = 0;
-
-    // Update lookup table
-    for (u32 i = 1; i < pack->blob_count; ++i)
-    {
-        if (pack->lookup[i] > index)
-            pack->lookup[i]--;
-    }
-
-    switch (type)
-    {
-		case RICO_HND_OBJECT:
-		{
-			struct rico_object *obj = delete_me;
-			object_delete(obj);
-			break;
-		}
-		case RICO_HND_TEXTURE:
-		{
-			struct rico_texture *tex = delete_me;
-			texture_delete(tex);
-			break;
-		}
-		case RICO_HND_MESH:
-		{
-			struct rico_mesh *mesh = delete_me;
-			mesh_delete(mesh);
-			break;
-		}
-		case RICO_HND_STRING:
-		{
-			struct rico_string *string = delete_me;
-			string_delete(string);
-			break;
-		}
-		default:
-			break;
-    }
-}
-pkid RICO_load_object(struct pack *pack, u32 type, u32 size, const char *name)
-{
-    struct rico_object *obj = blob_start(pack, RICO_HND_OBJECT, size, name);
+    struct RICO_object *obj = blob_start(pack, RICO_HND_OBJECT, size, name);
     obj->type = type;
     obj->xform.orientation = QUAT_IDENT;
     obj->xform.scale = VEC3_ONE;
@@ -514,11 +557,12 @@ pkid RICO_load_object(struct pack *pack, u32 type, u32 size, const char *name)
     blob_end(pack);
     return pkid;
 }
-pkid RICO_load_texture(struct pack *pack, const char *name, GLenum target,
-                       u32 width, u32 height, u8 bpp, u8 *pixels)
+extern pkid RICO_load_texture(struct pack *pack, const char *name,
+                              GLenum target, u32 width, u32 height, u8 bpp,
+                              u8 *pixels)
 {
-    struct rico_texture *tex = blob_start(pack, RICO_HND_TEXTURE,
-                                          sizeof(struct rico_texture), name);
+    struct RICO_texture *tex = blob_start(pack, RICO_HND_TEXTURE,
+                                          sizeof(struct RICO_texture), name);
     tex->width = width;
     tex->height = height;
     tex->bpp = bpp;
@@ -531,10 +575,10 @@ pkid RICO_load_texture(struct pack *pack, const char *name, GLenum target,
     blob_end(pack);
     return pkid;
 }
-pkid RICO_load_texture_file(struct pack *pack, const char *name,
-                            const char *filename)
+extern pkid RICO_load_texture_file(struct pack *pack, const char *name,
+                                   const char *filename)
 {
-    enum rico_error err = SUCCESS;
+    enum RICO_error err = SUCCESS;
 
     int width, height;
     u8 *pixels = stbi_load(filename, &width, &height, NULL, 4);
@@ -553,8 +597,8 @@ cleanup:
     if (err) blob_error(pack, &tex_pkid);
     return tex_pkid;
 }
-pkid RICO_load_texture_color(struct pack *pack, const char *name,
-                             struct vec4 color)
+extern pkid RICO_load_texture_color(struct pack *pack, const char *name,
+                                    struct vec4 color)
 {
     u8 rgba[4] = {
         (u8)(color.r * 255),
@@ -564,10 +608,11 @@ pkid RICO_load_texture_color(struct pack *pack, const char *name,
     };
     return RICO_load_texture(pack, name, GL_TEXTURE_2D, 1, 1, 32, rgba);
 }
-pkid RICO_load_material(struct pack *pack, const char *name, pkid tex_albedo,
-                        pkid tex_mrao, pkid tex_emission)
+extern pkid RICO_load_material(struct pack *pack, const char *name,
+                               pkid tex_albedo, pkid tex_mrao,
+                               pkid tex_emission)
 {
-    struct rico_material *mat = blob_start(pack, RICO_HND_MATERIAL, 0, name);
+    struct RICO_material *mat = blob_start(pack, RICO_HND_MATERIAL, 0, name);
     mat->tex_albedo = tex_albedo;
     mat->tex_mrao = tex_mrao;
     mat->tex_emission = tex_emission;
@@ -576,10 +621,10 @@ pkid RICO_load_material(struct pack *pack, const char *name, pkid tex_albedo,
     blob_end(pack);
     return pkid;
 }
-pkid RICO_load_font_file(struct pack *pack, const char *name,
-                         const char *filename)
+extern pkid RICO_load_font_file(struct pack *pack, const char *name,
+                                const char *filename)
 {
-    enum rico_error err;
+    enum RICO_error err;
     pkid font_pkid = 0;
 
     // Read font file
@@ -596,7 +641,7 @@ pkid RICO_load_font_file(struct pack *pack, const char *name,
     }
 
     // Allocate font/texture
-    struct rico_font *font = blob_start(pack, RICO_HND_FONT, 0, name);
+    struct RICO_font *font = blob_start(pack, RICO_HND_FONT, 0, name);
     u32 tex_width = 0;
     u32 tex_height = 0;
     u32 tex_bpp = 0;
@@ -648,7 +693,7 @@ pkid RICO_load_font_file(struct pack *pack, const char *name,
     //------------------------------------------------------------
     // Font texture
     //------------------------------------------------------------
-    struct rico_texture *tex0 = blob_start(pack, RICO_HND_TEXTURE, 0, name);
+    struct RICO_texture *tex0 = blob_start(pack, RICO_HND_TEXTURE, 0, name);
     tex0->width = tex_width;
     tex0->height = tex_height;
     tex0->bpp = tex_bpp;
@@ -668,11 +713,11 @@ cleanup:
     free(buffer);
     return font_pkid;
 }
-pkid RICO_load_mesh(struct pack *pack, const char *name, u32 vertex_size,
-                    u32 vertex_count, const void *vertex_data,
-                    u32 element_count, const GLuint *element_data)
+extern pkid RICO_load_mesh(struct pack *pack, const char *name, u32 vertex_size,
+                           u32 vertex_count, const void *vertex_data,
+                           u32 element_count, const GLuint *element_data)
 {
-    struct rico_mesh *mesh = blob_start(pack, RICO_HND_MESH, 0, name);
+    struct RICO_mesh *mesh = blob_start(pack, RICO_HND_MESH, 0, name);
     mesh->vertex_size = vertex_size;
     mesh->vertex_count = vertex_count;
     mesh->element_count = element_count;
@@ -685,15 +730,15 @@ pkid RICO_load_mesh(struct pack *pack, const char *name, u32 vertex_size,
     blob_end(pack);
     return pkid;
 }
-pkid RICO_load_string(struct pack *pack, enum rico_string_slot slot, float x,
-                      float y, struct vec4 color, u32 lifespan,
-                      pkid font, const char *text)
+extern pkid RICO_load_string(struct pack *pack, enum RICO_string_slot slot,
+                             float x, float y, struct vec4 color, u32 lifespan,
+                             pkid font, const char *text)
 {
 #if RICO_DEBUG_STRING
     printf("[strg][init] name=%s\n", name);
 #endif
 
-    const char *name = rico_string_slot_string[slot];
+    const char *name = RICO_string_slot_string[slot];
 
     // TODO: Reuse mesh and material if they are the same
     // Generate font mesh and get texture handle
@@ -703,10 +748,10 @@ pkid RICO_load_string(struct pack *pack, enum rico_string_slot slot, float x,
 
     pkid str_object_pkid =
         RICO_load_object(pack, RICO_OBJECT_TYPE_STRING_SCREEN, 0, name);
-    struct rico_object *str_object = RICO_pack_lookup(str_object_pkid);
+    struct RICO_object *str_object = RICO_pack_lookup(str_object_pkid);
     str_object->mesh_pkid = font_mesh_id;
 
-    struct rico_string *str = blob_start(pack, RICO_HND_STRING, 0, "bloop");
+    struct RICO_string *str = blob_start(pack, RICO_HND_STRING, 0, "bloop");
     str->slot = slot;
     str->object_id = str_object->uid.pkid;
     str->lifespan = lifespan;
@@ -722,11 +767,10 @@ pkid RICO_load_string(struct pack *pack, enum rico_string_slot slot, float x,
     blob_end(pack);
     return pkid;
 }
-
-int RICO_load_obj_file(struct pack *pack, const char *filename,
-                       pkid *_last_mesh_id)
+extern int RICO_load_obj_file(struct pack *pack, const char *filename,
+                              pkid *_last_mesh_id)
 {
-    enum rico_error err;
+    enum RICO_error err;
     u32 last_mesh_id = 0;
 
     // TODO: Colossal waste of memory, just preprocess the file and count them!
@@ -768,8 +812,8 @@ int RICO_load_obj_file(struct pack *pack, const char *filename,
                 last_mesh_id = RICO_load_mesh(pack, name, sizeof(*vertices),
                                          idx_vertex, vertices, idx_element,
                                          elements);
-                struct rico_mesh *mesh = RICO_pack_lookup(last_mesh_id);
-                bbox_init_mesh(&mesh->bbox, mesh);
+                struct RICO_mesh *mesh = RICO_pack_lookup(last_mesh_id);
+                bbox_init_mesh(&mesh->RICO_bbox, mesh);
 
                 idx_mesh++;
                 if (idx_mesh > 10)
@@ -863,8 +907,8 @@ int RICO_load_obj_file(struct pack *pack, const char *filename,
     {
         last_mesh_id = RICO_load_mesh(pack, name, sizeof(*vertices), idx_vertex,
                                  vertices, idx_element, elements);
-        struct rico_mesh *mesh = RICO_pack_lookup(last_mesh_id);
-        bbox_init_mesh(&mesh->bbox, mesh);
+        struct RICO_mesh *mesh = RICO_pack_lookup(last_mesh_id);
+        bbox_init_mesh(&mesh->RICO_bbox, mesh);
 
         idx_mesh++;
     }
@@ -880,52 +924,4 @@ cleanup:
     if (vertices)   free(vertices);
     if (elements)   free(elements);
     return err;
-}
-
-static void pack_build_default()
-{
-	// TODO: This entire pack could be embedded as binary data in the .exe once
-	//       the contents are finalized. This would allow the engine to run even
-	//       when the data directory is missing.
-	const char *filename = "packs/default.pak";
-
-#if 0
-	FILE *default_pack = fopen(filename, "rb");
-	if (default_pack)
-	{
-		fclose(default_pack);
-		return;
-	}
-#endif
-
-	struct pack *pack = RICO_pack_init(PACK_DEFAULT, filename, 16, MB(1));
-    pkid font_id = RICO_load_font_file(pack, "[FONT_DEFAULT]",
-                                       "font/cousine_regular.bff");
-    pkid diff_id = RICO_load_texture_file(pack, "[TEX_DIFF_DEFAULT]",
-                                          "texture/pbr_default_0.tga");
-    pkid spec_id = RICO_load_texture_file(pack, "[TEX_SPEC_DEFAULT]",
-                                          "texture/pbr_default_1.tga");
-    pkid emis_id = RICO_load_texture_file(pack, "[TEX_EMIS_DEFAULT]",
-                                          "texture/pbr_default_2.tga");
-    pkid mat_id = RICO_load_material(pack, "[MATERIAL_DEFAULT]", diff_id,
-                                     spec_id, emis_id);
-
-	// HACK: This is a bit of a gross way to get the id of the last mesh
-    pkid cube;
-	RICO_load_obj_file(pack, "mesh/prim_cube.obj", &cube);
-    pkid sphere;
-	RICO_load_obj_file(pack, "mesh/prim_sphere.obj", &sphere);
-
-    struct rico_font *font = RICO_pack_lookup(font_id);
-	RICO_ASSERT(font_id == FONT_DEFAULT);
-	RICO_ASSERT(font->tex_pkid == FONT_DEFAULT_TEXTURE);
-	RICO_ASSERT(diff_id == TEXTURE_DEFAULT_DIFF);
-	RICO_ASSERT(spec_id == TEXTURE_DEFAULT_SPEC);
-	RICO_ASSERT(emis_id == TEXTURE_DEFAULT_EMIS);
-	RICO_ASSERT(mat_id == MATERIAL_DEFAULT);
-	RICO_ASSERT(cube == MESH_DEFAULT_CUBE);
-	RICO_ASSERT(sphere == MESH_DEFAULT_SPHERE);
-
-	RICO_pack_save(pack, filename, true);
-	RICO_pack_free(pack->id);
 }

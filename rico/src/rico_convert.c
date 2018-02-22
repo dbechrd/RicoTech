@@ -1,35 +1,3 @@
-int rico_convert(int argc, char **argv)
-{
-    enum rico_error err = ERR_INVALID_PARAMS;
-
-    for (int i = 1; i < argc; ++i)
-    {
-        printf("args[%d] %s\n", i, argv[i]);
-    }
-
-    if (argc == 3 &&
-        strcmp(argv[1], "convert-obj") == 0)
-    {
-        err = rico_convert_obj(argv[2]);
-    }
-    else
-    {
-        printf("Usage: rico convert-obj <filename>\n");
-    }
-
-    return err;
-}
-
-int rico_convert_obj(const char *filename)
-{
-    enum rico_error err = SUCCESS;
-    printf("Converting %s\n", filename);
-    return load_obj_file_new(filename);
-    return err;
-}
-
-// =============================================================================
-
 #define MAX_TOKENS 32 * 1024 * 1024
 
 #define OBJ_TOKEN_TYPES(f) \
@@ -45,7 +13,7 @@ int rico_convert_obj(const char *filename)
     f(OBJ_TOK_COUNT)
 
 enum obj_token_type { OBJ_TOKEN_TYPES(GEN_LIST) };
-const char *obj_token_type_string[] = { OBJ_TOKEN_TYPES(GEN_STRING) };
+static const char *obj_token_type_string[] = { OBJ_TOKEN_TYPES(GEN_STRING) };
 
 #define OBJ_KEYWORD_TYPES(f) \
     f(OBJ_KW_INVALID,        "\0") \
@@ -64,7 +32,7 @@ const char *obj_token_type_string[] = { OBJ_TOKEN_TYPES(GEN_STRING) };
     f(OBJ_KW_COUNT, "\0")
 
 enum obj_keyword_type { OBJ_KEYWORD_TYPES(GEN_LIST) };
-const char *obj_keyword_type_string[] = { OBJ_KEYWORD_TYPES(GEN_STRING) };
+static const char *obj_keyword_type_string[] = { OBJ_KEYWORD_TYPES(GEN_STRING) };
 static const char *obj_keyword_values[] = { OBJ_KEYWORD_TYPES(GEN_VALUE) };
 
 struct obj_token
@@ -89,9 +57,40 @@ struct obj_file
     struct obj_token *tokens;
 };
 
-int load_obj_file_new(const char *filename)
+static int rico_convert(int argc, char **argv)
 {
-    enum rico_error err;
+    enum RICO_error err = ERR_INVALID_PARAMS;
+
+    for (int i = 1; i < argc; ++i)
+    {
+        printf("args[%d] %s\n", i, argv[i]);
+    }
+
+    if (argc == 3 &&
+        strcmp(argv[1], "convert-obj") == 0)
+    {
+        err = rico_convert_obj(argv[2]);
+    }
+    else
+    {
+        printf("Usage: rico convert-obj <filename>\n");
+    }
+
+    return err;
+}
+static int rico_convert_obj(const char *filename)
+{
+    enum RICO_error err = SUCCESS;
+    printf("Converting %s\n", filename);
+    return load_obj_file_new(filename);
+    return err;
+}
+static int load_obj_file_new(const char *filename)
+{
+    UNUSED(obj_token_type_string);
+    UNUSED(obj_keyword_type_string);
+
+    enum RICO_error err;
 
     u32 length;
     char *buffer;

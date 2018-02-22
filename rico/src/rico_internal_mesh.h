@@ -19,10 +19,10 @@ struct rgl_mesh
     u32 elements;
 };
 
-static void *mesh_vertices(struct rico_mesh *mesh);
-static void mesh_upload(struct rico_mesh *mesh, GLenum hint,
-                 enum program_type prog_type);
-static void mesh_delete(struct rico_mesh *mesh);
+static void *mesh_vertices(struct RICO_mesh *mesh);
+static void mesh_upload(struct RICO_mesh *mesh, GLenum hint,
+                        enum program_type prog_type);
+static void mesh_delete(struct RICO_mesh *mesh);
 static void mesh_render(pkid pkid, enum program_type prog_type);
 
 #endif

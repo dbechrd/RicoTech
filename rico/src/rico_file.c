@@ -1,7 +1,7 @@
-int rico_file_open_write(struct rico_file *_file, const char *filename,
-                         u32 version)
+static int rico_file_open_write(struct rico_file *_file, const char *filename,
+                                u32 version)
 {
-    enum rico_error err = SUCCESS;
+    enum RICO_error err = SUCCESS;
 
     // Open file for write
     _file->fs = fopen(filename, "wb");
@@ -51,10 +51,9 @@ int rico_file_open_write(struct rico_file *_file, const char *filename,
 
     return err;
 }
-
-int rico_file_open_read(struct rico_file *_file, const char *filename)
+static int rico_file_open_read(struct rico_file *_file, const char *filename)
 {
-    enum rico_error err = SUCCESS;
+    enum RICO_error err = SUCCESS;
 
     // Open file for read
     _file->fs = fopen(filename, "rb");
@@ -111,8 +110,7 @@ int rico_file_open_read(struct rico_file *_file, const char *filename)
     _file->filename = filename;
     return err;
 }
-
-void rico_file_close(struct rico_file *handle)
+static void rico_file_close(struct rico_file *handle)
 {
     if (handle->fs) {
         fclose(handle->fs);

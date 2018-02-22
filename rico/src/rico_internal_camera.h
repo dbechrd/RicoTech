@@ -37,14 +37,14 @@ struct camera
     bool locked;
     bool need_update;
 
-    struct bbox bbox; //TODO: Replace with vec3 and do v3_render()
+    struct RICO_bbox RICO_bbox; //TODO: Replace with vec3 and do v3_render()
     struct mat4 view_matrix;
     struct mat4 proj_matrix;
     struct mat4 ortho_matrix;
 };
 
-static void camera_init(struct camera *camera, struct vec3 position, struct quat view,
-                 float fov_deg);
+static void camera_init(struct camera *camera, struct vec3 position,
+                        struct quat view, float fov_deg);
 static void camera_reset(struct camera *camera);
 static void camera_set_fov(struct camera *camera, float fov_deg);
 static void camera_translate_world(struct camera *camera, const struct vec3 *v);

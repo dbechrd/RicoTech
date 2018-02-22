@@ -3,9 +3,11 @@
 
 #include "RICO/rico_error.h"
 
-enum rico_error rico_error_print(const char *file, int line,
-    enum rico_error err, const char *fmt, ...);
-enum rico_error rico_fatal_print(const char *file, int line,
-    enum rico_error err, const char *fmt, ...);
+static enum RICO_error rico_error_print(const char *file, int line,
+                                        enum RICO_error err, const char *fmt,
+                                        ...);
+static enum RICO_error rico_fatal_print(const char *file, int line,
+                                        enum RICO_error err, const char *fmt,
+                                        ...);
 
 #endif

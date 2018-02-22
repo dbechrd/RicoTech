@@ -6,14 +6,14 @@
     f(RICO_OBJECT_TYPE_TERRAIN)        \
     f(RICO_OBJECT_TYPE_STRING_SCREEN)
 
-enum rico_object_type
+enum RICO_object_type
 {
     RICO_OBJECT_TYPES(GEN_LIST)
     RICO_OBJECT_TYPE_START = 16
 };
-extern const char *rico_obj_type_string[];
+extern const char *RICO_obj_type_string[];
 
-struct rico_transform
+struct RICO_transform
 {
     struct vec3 position;
     struct quat orientation;
@@ -22,22 +22,20 @@ struct rico_transform
     struct mat4 matrix_inverse;
 };
 
-struct rico_object
+struct RICO_object
 {
     struct uid uid;
     u32 type;
-    struct rico_transform xform;
-    struct bbox bbox;
+    struct RICO_transform xform;
+    struct RICO_bbox RICO_bbox;
     pkid mesh_pkid;
     pkid material_pkid;
-
-    //struct obj_property props[PROP_COUNT];
 };
 
-#define RICO_OBJECT(name) struct name { struct rico_object rico;
+#define RICO_OBJECT(name) struct name { struct RICO_object rico;
 
-#define RICO_EVENT_OBJECT(name) void name(struct rico_object *obj)
+#define RICO_EVENT_OBJECT(name) void name(struct RICO_object *obj)
 typedef RICO_EVENT_OBJECT(RICO_event_object_def);
-RICO_event_object_def *RICO_event_object_interact;
+extern RICO_event_object_def *RICO_event_object_interact;
 
 #endif

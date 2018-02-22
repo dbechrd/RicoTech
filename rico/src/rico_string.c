@@ -1,8 +1,6 @@
-const char *rico_string_slot_string[] = {
-    RICO_STRING_SLOTS(GEN_STRING)
-};
+const char *RICO_string_slot_string[] = { RICO_STRING_SLOTS(GEN_STRING) };
 
-static void string_delete(struct rico_string *str)
+static void string_delete(struct RICO_string *str)
 {
 #if RICO_DEBUG_STRING
     printf("[strg][free] uid=%d\n", str->id);
@@ -16,8 +14,7 @@ static void string_delete(struct rico_string *str)
 
     pack_delete(str->object_id);
 }
-
-bool string_free_slot(enum rico_string_slot slot)
+static bool string_free_slot(enum RICO_string_slot slot)
 {
     if (slot != STR_SLOT_DYNAMIC)
     {
@@ -32,14 +29,13 @@ bool string_free_slot(enum rico_string_slot slot)
 
     return false;
 }
-
 // TODO: Lifespan objects shouldn't be string-specific; refactor this logic out
 //       into something more relevant, e.g. an object delete queue, sorted by
 //       time to delete in ms, soonest first.
 static void string_update()
 {
     struct pack *pack = RICO_packs[PACK_TRANSIENT];
-    struct rico_string *str = 0;
+    struct RICO_string *str = 0;
     u32 index = 0;
     while(index < pack->blobs_used)
     {

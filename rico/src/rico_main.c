@@ -17,7 +17,6 @@
 #include "rico_camera.c"
 #include "rico_bbox.c"
 
-#include "rico_cereal.c"
 #include "rico_material.c"
 #include "rico_object.c"
 #include "rico_glref.c"
@@ -28,7 +27,6 @@
 #include "rico_collision.c"
 #include "rico_convert.c"
 #include "rico_font.c"
-//#include "rico_light.c"
 #include "rico_mesh.c"
 #include "rico_physics.c"
 //#include "rico_pool.c"
@@ -51,8 +49,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-SDL_Window *window = 0;
-SDL_GLContext gl_context = 0;
+static SDL_Window *window = 0;
+static SDL_GLContext gl_context = 0;
 
 static inline void init_stb();
 static inline void init_murmurhash3();
@@ -60,113 +58,10 @@ static int sdl_gl_attrib(SDL_GLattr attr, int value);
 static int init_sdl();
 static int init_gl3w(int major, int minor);
 static void init_opengl();
-
-int RICO_init()
-{
-    enum rico_error err;
-
-    printf("------------------------------------------------------------\n");
-    printf("[MAIN][init] Initializing third party\n");
-    printf("------------------------------------------------------------\n");
-    //size_t cacheSize = CacheLineSize();
-    //printf("Cache line size: %d bytes\n", cacheSize);
-    init_stb();
-    init_murmurhash3();
-
-    pack_build_default();
-
-    err = init_sdl();
-    if (err) goto error;
-    err = init_gl3w(GL_VERSION_MAJOR, GL_VERSION_MINOR);
-    if (err) goto error;
-    init_opengl();
-    init_openal();
-	engine_init();
-
-#if RICO_DEBUG_RUN_TESTS
-    run_tests();
-#endif
-
-error:
-	if (err) printf("Error: %s", rico_error_string[err]);
-	return err;
-}
-
-int RICO_run()
-{
-	enum rico_error err = SUCCESS;
-
-    RICO_bind_action(ACTION_RICO_TEST, CHORD1(SDL_SCANCODE_Z));
-
-	while (!SDL_QuitRequested())
-	{
-		////////////////////////////////////////////////////////////////////////
-		// TODO: How do I check for SDL resize window events?
-		////////////////////////////////////////////////////////////////////////
-		/*
-		// Resize OpenGL viewport
-		else if (event.type == SDL_WINDOWEVENT_SIZE)
-		{
-		glViewport(0, 0, event.window.event.size.width,
-		event.window.event.size.height);
-		*handled = true;
-		}
-		*/
-
-		err = engine_update();
-		if (err) break;
-
-        enum rico_action action = RICO_key_event();
-        while (action)
-        {
-            switch (action)
-            {
-                case ACTION_RICO_TEST:
-                    RICO_ASSERT(0);
-                    break;
-                default: break;
-            }
-            action = RICO_key_event();
-        }
-
-		if (state_get() == STATE_ENGINE_SHUTDOWN)
-			break;
-
-		SDL_GL_SwapWindow(window);
-
-#if RICO_DEBUG
-		// HACK: Kill some time (a.k.a. save my computer from lighting itself on
-		//       fire when VSync is disabled)
-		SDL_Delay(1);
-#endif
-	}
-
-	return err;
-}
-
-void RICO_quit()
-{
-	printf("------------------------------------------------------------\n");
-	printf("[MAIN][term] Clean up\n");
-	printf("------------------------------------------------------------\n");
-	alcDestroyContext(audio_context);
-	alcCloseDevice(audio_device);
-
-	if (gl_context) SDL_GL_DeleteContext(gl_context);
-	if (window) SDL_DestroyWindow(window);
-
-	SDL_Quit();
-#if RICO_DEBUG && !RICO_DEBUG_ALL_ERRORS_FATAL
-	// Don't report fatal errors again when ALL_ERRORS_FATAL flag is set
-	err = RICO_FATAL(err, "Top-level generic error");
-#endif
-}
-
 static inline void init_stb()
 {
     stbi_set_flip_vertically_on_load(1);
 }
-
 static inline void init_murmurhash3()
 {
     // key=RicoTech, seed=0
@@ -178,7 +73,6 @@ static inline void init_murmurhash3()
     printf("Key: %s\n", key);
     printf("Hash: %u\n", hash);
 }
-
 static int sdl_gl_attrib(SDL_GLattr attr, int value)
 {
     int sdl_err = SDL_GL_SetAttribute(attr, value);
@@ -189,10 +83,9 @@ static int sdl_gl_attrib(SDL_GLattr attr, int value)
     }
     return SUCCESS;
 }
-
 static int init_sdl()
 {
-    enum rico_error err;
+    enum RICO_error err;
     int sdl_err;
 
     sdl_err = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
@@ -250,7 +143,6 @@ static int init_sdl()
 
     return SUCCESS;
 }
-
 static int init_gl3w(int major, int minor)
 {
     int init = gl3wInit();
@@ -265,7 +157,6 @@ static int init_gl3w(int major, int minor)
 
     return SUCCESS;
 }
-
 static void init_opengl()
 {
 #if RICO_DEBUG
@@ -285,10 +176,8 @@ static void init_opengl()
 
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
         glDebugMessageCallback(openglCallbackFunction, NULL);
-
-        GLuint unusedIds = 0;
-        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0,
-                              &unusedIds, true);
+        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, 0,
+                              true);
     }
     else
     {
@@ -309,4 +198,103 @@ static void init_opengl()
     glBlendEquation(GL_FUNC_ADD);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
+}
+
+int RICO_init()
+{
+    enum RICO_error err;
+
+    printf("------------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing third party\n");
+    printf("------------------------------------------------------------\n");
+    //size_t cacheSize = CacheLineSize();
+    //printf("Cache line size: %d bytes\n", cacheSize);
+    init_stb();
+    init_murmurhash3();
+
+    pack_build_default();
+
+    err = init_sdl();
+    if (err) goto error;
+    err = init_gl3w(GL_VERSION_MAJOR, GL_VERSION_MINOR);
+    if (err) goto error;
+    init_opengl();
+    init_openal();
+    engine_init();
+
+#if RICO_DEBUG_RUN_TESTS
+    run_tests();
+#endif
+
+error:
+    if (err) printf("Error: %s", RICO_error_string[err]);
+    return err;
+}
+int RICO_run()
+{
+    enum RICO_error err = SUCCESS;
+
+    RICO_bind_action(ACTION_RICO_TEST, CHORD1(SDL_SCANCODE_Z));
+
+    while (!SDL_QuitRequested())
+    {
+        ////////////////////////////////////////////////////////////////////////
+        // TODO: How do I check for SDL resize window events?
+        ////////////////////////////////////////////////////////////////////////
+        /*
+        // Resize OpenGL viewport
+        else if (event.type == SDL_WINDOWEVENT_SIZE)
+        {
+        glViewport(0, 0, event.window.event.size.width,
+        event.window.event.size.height);
+        *handled = true;
+        }
+        */
+
+        err = engine_update();
+        if (err) break;
+
+        enum RICO_action action = RICO_key_event();
+        while (action)
+        {
+            switch (action)
+            {
+                case ACTION_RICO_TEST:
+                    RICO_ASSERT(0);
+                    break;
+                default: break;
+            }
+            action = RICO_key_event();
+        }
+
+        if (state_get() == STATE_ENGINE_SHUTDOWN)
+            break;
+
+        SDL_GL_SwapWindow(window);
+
+#if RICO_DEBUG
+        // HACK: Kill some time (a.k.a. save my computer from lighting itself on
+        //       fire when VSync is disabled)
+        SDL_Delay(1);
+#endif
+    }
+
+    return err;
+}
+void RICO_quit()
+{
+    printf("------------------------------------------------------------\n");
+    printf("[MAIN][term] Clean up\n");
+    printf("------------------------------------------------------------\n");
+    alcDestroyContext(audio_context);
+    alcCloseDevice(audio_device);
+
+    if (gl_context) SDL_GL_DeleteContext(gl_context);
+    if (window) SDL_DestroyWindow(window);
+
+    SDL_Quit();
+#if RICO_DEBUG && !RICO_DEBUG_ALL_ERRORS_FATAL
+    // Don't report fatal errors again when ALL_ERRORS_FATAL flag is set
+    err = RICO_FATAL(err, "Top-level generic error");
+#endif
 }

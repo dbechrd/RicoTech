@@ -22,7 +22,7 @@ int font_free(struct rico_font *font)
 }
 #endif
 
-static void font_setblend(const struct rico_font *font)
+static void font_setblend(const struct RICO_font *font)
 {
     // TODO: Preserve blend settings before changing
 	switch(font->render_style)
@@ -40,7 +40,6 @@ static void font_setblend(const struct rico_font *font)
 		break;
 	}
 }
-
 static void font_render(u32 *mesh_id, u32 *tex_id, pkid font_id, float x,
                         float y, struct vec4 bg, const char *text,
                         const char *mesh_name)
@@ -50,7 +49,7 @@ static void font_render(u32 *mesh_id, u32 *tex_id, pkid font_id, float x,
     local struct text_vertex vertices[BFG_MAXSTRING * 4] = { 0 };
     local GLuint elements[BFG_MAXSTRING * 6] = { 0 };
 
-    struct rico_font *font;
+    struct RICO_font *font;
     if (font_id)
     {
         font = RICO_pack_lookup(font_id);

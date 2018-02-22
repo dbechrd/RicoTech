@@ -26,11 +26,10 @@
 
 #include "rico_internal_const.h"
 #include "rico_internal_error.h"
-struct pack;
+struct pack; // Cleanup: Can we move these to the top of this file or something?
 
 #include "rico_internal_util.h"
 #include "rico_internal_file.h"
-#include "rico_internal_cereal.h"
 //#include "rico_internal_pool.h"
 #include "rico_internal_hnd.h"
 #include "rico_internal_hash.h"

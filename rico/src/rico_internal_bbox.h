@@ -3,12 +3,12 @@
 
 #include "RICO/rico_bbox.h"
 
-struct rico_mesh;
+struct RICO_mesh;
 
-static void bbox_init(struct bbox *bbox, struct vec3 min, struct vec3 max);
-static void bbox_init_mesh(struct bbox *bbox, struct rico_mesh *mesh);
+static void bbox_init(struct RICO_bbox *RICO_bbox, struct vec3 min, struct vec3 max);
+static void bbox_init_mesh(struct RICO_bbox *RICO_bbox, struct RICO_mesh *mesh);
 
-static inline bool bbox_intersects(const struct bbox *a, const struct bbox *b)
+static inline bool bbox_intersects(const struct RICO_bbox *a, const struct RICO_bbox *b)
 {
     return !(a->max.x < b->min.x ||
              b->max.x < a->min.x ||

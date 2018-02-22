@@ -26,9 +26,6 @@
     <ClCompile Include="src\rico_camera.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rico_cereal.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\rico_collision.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -113,9 +110,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\rico_internal_camera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rico_internal_cereal.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\rico_internal_collision.h">

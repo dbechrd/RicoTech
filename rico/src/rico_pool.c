@@ -57,7 +57,7 @@ int pool_add(struct hnd **handle, struct rico_pool *pool)
 {
     RICO_ASSERT(pool);
 
-    enum rico_error err = SUCCESS;
+    enum RICO_error err = SUCCESS;
 
     if (pool->blocks_used == pool->block_count)
     {

@@ -2,7 +2,6 @@
 #define RICO_INTERNAL_UTIL_H
 
 //#include <GL/gl3w.h>
-
 //int file_contents(const char *filename, int *_length, char **_buffer);
 ////void *read_tga(const char *filename, int *width, int *height);
 //
@@ -16,7 +15,7 @@
 //                   PFNGLGETSHADERINFOLOGPROC glGet__InfoLog);
 
 static void string_truncate(char *buf, int buf_count, int length);
-int file_contents(const char *filename, u32 *_length, char **_buffer);
+static int file_contents(const char *filename, u32 *_length, char **_buffer);
 
 static inline int str_starts_with(const char *str, const char *prefix)
 {

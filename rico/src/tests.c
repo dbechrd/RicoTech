@@ -35,7 +35,6 @@ static void test_geom()
     mat4_mul(&a, &b);
     mat4_print(&a);
 }
-
 static void test_hashtable()
 {
     struct hash_table *table = &global_textures;
@@ -58,7 +57,6 @@ static void test_hashtable()
     RICO_ASSERT(*lookup_uid == data);
     RICO_ASSERT(hashtable_delete_pkid(table, key_pkid));
 }
-
 static void test_ndc_macros()
 {
     const struct vec2 top_left = VEC2(
@@ -92,9 +90,8 @@ static void test_ndc_macros()
     RICO_ASSERT(center_neg.y == 0.0f);
     RICO_ASSERT(center_neg.y == 0.0f);
 }
-
 #if 0
-int test_pool()
+static int test_pool()
 {
     enum rico_error err;
 
@@ -156,7 +153,6 @@ cleanup:
     return err;
 }
 #endif
-
 static void run_tests()
 {
     test_geom();

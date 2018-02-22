@@ -11,7 +11,7 @@ enum program_type
 };
 
 typedef void(*program_attribs_helper)();
-extern program_attribs_helper program_attribs[PROG_COUNT];
+static program_attribs_helper program_attribs[PROG_COUNT];
 
 ///=============================================================================
 //| PBR program
@@ -51,11 +51,11 @@ struct pbr_material
     // r: metallic
     // g: roughness
     // b: ao
-    // a: UNUSED
+    // a: NOT USED
     GLint tex1; // (sampler2D)
 
     // rgb: emission color
-    //   a: UNUSED
+    //   a: NOT USED
     GLint tex2; // (sampler2D)
 };
 
@@ -88,8 +88,8 @@ struct program_pbr
     struct pbr_light_point light;
 };
 
-inline void program_pbr_attribs();
-int make_program_pbr(struct program_pbr **_program);
+static void program_pbr_attribs();
+static int make_program_pbr(struct program_pbr **_program);
 static void free_program_pbr(struct program_pbr **program);
 
 ///=============================================================================
@@ -120,8 +120,8 @@ struct program_primitive
     GLint u_col;    //vec3
 };
 
-inline void program_primitive_attribs();
-int make_program_primitive(struct program_primitive **_program);
+static void program_primitive_attribs();
+static int make_program_primitive(struct program_primitive **_program);
 static void free_program_primitive(struct program_primitive **program);
 
 ///=============================================================================
@@ -151,7 +151,7 @@ struct program_prim_cube
     GLint color; //vec3
 };
 
-int make_program_prim_cube(struct program_prim_cube **_program);
+static int make_program_prim_cube(struct program_prim_cube **_program);
 static void free_program_prim_cube(struct program_prim_cube **program);
 
 ///=============================================================================
@@ -190,7 +190,7 @@ struct program_text
 };
 
 static void program_text_attribs();
-int make_program_text(struct program_text **_program);
+static int make_program_text(struct program_text **_program);
 static void free_program_text(struct program_text **program);
 
 #endif

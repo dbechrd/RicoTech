@@ -35,13 +35,10 @@
     f(ERR_HASH_OVERWRITE)          \
     f(ERR_INVALID_PARAMS)          \
     f(ERR_CHUNK_FREE_FAILED)       \
-    f(ERR_OBJ_PARSE_FAILED)
+    f(ERR_OBJ_PARSE_FAILED)        \
+    f(ERR_COUNT)
 
-enum rico_error
-{
-    RICO_ERRORS(GEN_LIST)
-    ERR_COUNT
-};
-const char *rico_error_string[ERR_COUNT];
+enum RICO_error { RICO_ERRORS(GEN_LIST) };
+extern const char *RICO_error_string[];
 
 #endif

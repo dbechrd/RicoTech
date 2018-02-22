@@ -3,8 +3,6 @@
 //int main_nuklear(int argc, char* argv[]);
 //#include "3rdparty/main_nuke.c"
 
-struct pack *pack_active = 0;
-
 enum game_object_type
 {
     OBJ_TIMMY = RICO_OBJECT_TYPE_START,
@@ -61,7 +59,7 @@ void pack_build_alpha(u32 id)
 
     pkid ground_pkid = RICO_load_object(pack, RICO_OBJECT_TYPE_TERRAIN, 0,
                                         "Ground");
-    struct rico_object *ground = RICO_pack_lookup(ground_pkid);
+    struct RICO_object *ground = RICO_pack_lookup(ground_pkid);
     ground->mesh_pkid = ground_mesh_pkid;
     ground->material_pkid = bricks_mat;
 
@@ -69,10 +67,10 @@ void pack_build_alpha(u32 id)
     pkid timmy_pkid = RICO_load_object(pack, OBJ_TIMMY, sizeof(struct timmy),
                                        "Timmy");
     struct timmy *timmy = RICO_pack_lookup(timmy_pkid);
-    struct rico_mesh *door_mesh = RICO_pack_lookup(door_mesh_pkid);
+    struct RICO_mesh *door_mesh = RICO_pack_lookup(door_mesh_pkid);
     timmy->rico.mesh_pkid = door_mesh_pkid;
     timmy->rico.material_pkid = timmy_mat_pkid;
-    timmy->rico.bbox = door_mesh->bbox;
+    timmy->rico.RICO_bbox = door_mesh->RICO_bbox;
     timmy->audio_id = 19;
     timmy->light_id = 68;
     // TODO: How do I implement this...?
@@ -93,7 +91,7 @@ void pack_build_all()
 
 int pack_load_all()
 {
-	enum rico_error err;
+	enum RICO_error err;
 
 	err = RICO_pack_load("packs/alpha.pak", &pack_active);
 
@@ -137,8 +135,8 @@ DLB_ASSERT_HANDLER(handle_assert)
 DLB_assert_handler_def *DLB_assert_handler = handle_assert;
 #endif
 
-struct rico_audio_buffer buffer;
-struct rico_audio_source source;
+struct RICO_audio_buffer buffer;
+struct RICO_audio_source source;
 
 int main(int argc, char **argv)
 {
@@ -147,7 +145,7 @@ int main(int argc, char **argv)
 
 	//main_nuklear(argc, argv);
     RICO_init();
-	//pack_build_all();
+	pack_build_all();
 	pack_load_all();
 
     RICO_event_object_interact = &object_interact;

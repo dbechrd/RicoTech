@@ -10,7 +10,7 @@ struct rgl_texture
     GLenum format;
 };
 
-struct rico_texture
+struct RICO_texture
 {
     struct uid uid;
     u32 width;
@@ -21,7 +21,7 @@ struct rico_texture
     u32 pixels_offset;
 };
 
-static void texture_delete(struct rico_texture *texture);
+static void texture_delete(struct RICO_texture *texture);
 static void texture_bind(pkid pkid, GLenum texture_unit);
 static void texture_unbind(pkid pkid, GLenum texture_unit);
 

@@ -1,6 +1,6 @@
 static void material_bind(pkid pkid)
 {
-    struct rico_material *material = RICO_pack_lookup(pkid);
+    struct RICO_material *material = RICO_pack_lookup(pkid);
 
 #if RICO_DEBUG_MATERIAL
     printf("[ mtl][bind] name=%s\n", material_name(material));
@@ -36,10 +36,9 @@ static void material_bind(pkid pkid)
         texture_bind(TEXTURE_DEFAULT_EMIS, GL_TEXTURE2);
     }
 }
-
 static void material_unbind(pkid pkid)
 {
-    struct rico_material *material = RICO_pack_lookup(pkid);
+    struct RICO_material *material = RICO_pack_lookup(pkid);
 
 #if RICO_DEBUG_MATERIAL
     printf("[ mtl][unbd] name=%s\n", material_name(material));

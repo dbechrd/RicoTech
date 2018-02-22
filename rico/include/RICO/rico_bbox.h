@@ -9,7 +9,7 @@
 // TODO: Don't serialize vao/vbo!
 
 // IMPORTANT: *DO NOT* add pointers in this struct, it will break cereal!
-struct bbox
+struct RICO_bbox
 {
     struct vec3 min;
     struct vec3 max;

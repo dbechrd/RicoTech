@@ -12,14 +12,16 @@
     f(STATE_EDIT_MESH)       \
     f(STATE_MENU_QUIT)       \
     f(STATE_TEXT_INPUT)      \
-    f(STATE_ENGINE_SHUTDOWN) \
-    f(STATE_COUNT)
+    f(STATE_ENGINE_SHUTDOWN)
 
-enum rico_state { RICO_STATES(GEN_LIST) };
-const char *rico_state_string[];
+enum rico_state
+{
+    RICO_STATES(GEN_LIST)
+    STATE_COUNT
+};
+static const char *rico_state_string[STATE_COUNT];
 
-struct pack *pack_active;
-float trans_delta;
+static float trans_delta;
 
 static inline enum rico_state state_get();
 static inline bool state_is_edit();

@@ -1,9 +1,6 @@
 #ifndef RICO_INTERNAL_SHADER_H
 #define RICO_INTERNAL_SHADER_H
 
-//#include "util.h"
-//#include <GL/gl3w.h>
-
 /*************************************************************************
 | Shader types:
 |
@@ -12,7 +9,8 @@
 | GL_FRAGMENT_SHADER    Fragment shader.
 |
 *************************************************************************/
-int make_shader(const GLenum type, const char *filename, GLuint *_shader);
+static int make_shader(const GLenum type, const char *filename,
+                       GLuint *_shader);
 
 static inline void free_shader(GLuint shader)
 {

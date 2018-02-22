@@ -1,7 +1,8 @@
-const char *rico_error_string[] = { RICO_ERRORS(GEN_STRING) };
+const char *RICO_error_string[] = { RICO_ERRORS(GEN_STRING) };
 
-enum rico_error rico_error_print(const char *file, int line,
-    enum rico_error err, const char *fmt, ...)
+static enum RICO_error rico_error_print(const char *file, int line,
+                                        enum RICO_error err, const char *fmt,
+                                        ...)
 {
     if (err != SUCCESS)
     {
@@ -14,13 +15,13 @@ enum rico_error rico_error_print(const char *file, int line,
         string_truncate(desc, sizeof(desc), len);
 
         fprintf(stderr, "[ERROR][%s:%d][%d:%s] %s\n", strstr(file, "src"), line,
-                err, rico_error_string[err], desc);
+                err, RICO_error_string[err], desc);
     }
     return err;
 }
-
-enum rico_error rico_fatal_print(const char *file, int line,
-    enum rico_error err, const char *fmt, ...)
+static enum RICO_error rico_fatal_print(const char *file, int line,
+                                        enum RICO_error err, const char *fmt,
+                                        ...)
 {
     if (err != SUCCESS)
     {
@@ -34,7 +35,7 @@ enum rico_error rico_fatal_print(const char *file, int line,
         va_end(args);
 
         fprintf(stderr, "[FATAL][%s:%d][%d:%s] %s\n", strstr(file, "src"), line,
-                err, rico_error_string[err], desc);
+                err, RICO_error_string[err], desc);
 
         char title[128] = { 0 };
         len = snprintf(title, sizeof(title), "%s : Line %d",
@@ -42,7 +43,7 @@ enum rico_error rico_fatal_print(const char *file, int line,
         string_truncate(title, sizeof(title), len);
 
         char msg[500] = { 0 };
-        snprintf(msg, sizeof(msg), "%s [%d]\n\n%s", rico_error_string[err], err,
+        snprintf(msg, sizeof(msg), "%s [%d]\n\n%s", RICO_error_string[err], err,
                  desc);
         string_truncate(msg, sizeof(msg), len);
 

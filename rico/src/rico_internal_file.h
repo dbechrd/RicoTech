@@ -15,9 +15,9 @@ struct rico_file
     const char *filename;
 };
 
-int rico_file_open_write(struct rico_file *_handle, const char *filename,
-                         u32 version);
-int rico_file_open_read(struct rico_file *_handle, const char *filename);
-void rico_file_close(struct rico_file *handle);
+static int rico_file_open_write(struct rico_file *_handle, const char *filename,
+                                u32 version);
+static int rico_file_open_read(struct rico_file *_handle, const char *filename);
+static void rico_file_close(struct rico_file *handle);
 
 #endif

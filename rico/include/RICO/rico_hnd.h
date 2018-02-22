@@ -5,25 +5,26 @@ typedef u32 pkid;
 
 #define RICO_HND_TYPES(f)	 \
     f(RICO_HND_NULL,	  0) \
-    f(RICO_HND_OBJECT,    sizeof(struct rico_object))   \
-    f(RICO_HND_TEXTURE,   sizeof(struct rico_texture))	\
-    f(RICO_HND_MESH,      sizeof(struct rico_mesh))		\
-    f(RICO_HND_FONT,      sizeof(struct rico_font))		\
-    f(RICO_HND_STRING,    sizeof(struct rico_string))	\
-    f(RICO_HND_MATERIAL,  sizeof(struct rico_material))	\
-    f(RICO_HND_BBOX,      sizeof(struct bbox))			\
-    f(RICO_HND_HASHTABLE, sizeof(struct hash_table))	\
-	f(RICO_HND_COUNT,	  0)
+    f(RICO_HND_OBJECT,    sizeof(struct RICO_object))   \
+    f(RICO_HND_TEXTURE,   sizeof(struct RICO_texture))	\
+    f(RICO_HND_MESH,      sizeof(struct RICO_mesh))		\
+    f(RICO_HND_FONT,      sizeof(struct RICO_font))		\
+    f(RICO_HND_STRING,    sizeof(struct RICO_string))	\
+    f(RICO_HND_MATERIAL,  sizeof(struct RICO_material))	\
+    f(RICO_HND_BBOX,      sizeof(struct RICO_bbox))
 
-enum rico_hnd_type
+enum RICO_hnd_type
 {
     RICO_HND_TYPES(GEN_LIST)
+    RICO_HND_COUNT
 };
+extern const char *RICO_hnd_type_string[];
+extern const u32 RICO_hnd_type_size[];
 
 struct uid
 {
     pkid pkid;
-    enum rico_hnd_type type;
+    enum RICO_hnd_type type;
     char name[32];
 };
 

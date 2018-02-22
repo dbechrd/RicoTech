@@ -1,18 +1,18 @@
-const char *rico_state_string[] = { RICO_STATES(GEN_STRING) };
+static const char *rico_state_string[] = { RICO_STATES(GEN_STRING) };
 
 #define LOAD_SAVE_FILE false
 
-struct rico_keychord action_chords[ACTION_COUNT] = { 0 };
-enum rico_action action_queue[32] = { 0 };
-u32 action_queue_count = 0;
+static struct RICO_keychord action_chords[ACTION_COUNT] = { 0 };
+static enum RICO_action action_queue[32] = { 0 };
+static u32 action_queue_count = 0;
 
 // Human walk speed empirically found to be 33 steps in 20 seconds. That is
 // approximately 1.65 steps per second. At 60 fps, that is 0.0275 steps per
 // frame. Typical walking stride is ~0.762 meters (30 inches). Distance traveled
 // per frame (60hz) is 0.762 * 0.0275 = 0.020955 ~= 0.021
 
-r32 mouse_dx = 0;
-r32 mouse_dy = 0;
+static r32 mouse_dx = 0;
+static r32 mouse_dy = 0;
 
 static struct vec3 player_acc;
 
@@ -23,7 +23,7 @@ static bool camera_slow = false;
 
 #define TRANS_DELTA_MIN 0.01f
 #define TRANS_DELTA_MAX 10.0f
-float trans_delta = 0.1f;
+static float trans_delta = 0.1f;
 
 #define ROT_DELTA_MIN 1.0f
 #define ROT_DELTA_MAX 90.0f
@@ -60,12 +60,12 @@ static u8 keystate_buffers[2][SDL_NUM_SCANCODES] = { 0 };
 static u8 *keys      = keystate_buffers[0];
 static u8 *keys_prev = keystate_buffers[1];
 
-const rico_key RICO_SCANCODE_ALT   = (rico_key)301;
-const rico_key RICO_SCANCODE_CTRL  = (rico_key)302;
-const rico_key RICO_SCANCODE_SHIFT = (rico_key)303;
-const rico_key RICO_SCANCODE_LMB   = (rico_key)304;
-const rico_key RICO_SCANCODE_MMB   = (rico_key)305;
-const rico_key RICO_SCANCODE_RMB   = (rico_key)306;
+static const RICO_key RICO_SCANCODE_ALT   = (RICO_key)301;
+static const RICO_key RICO_SCANCODE_CTRL  = (RICO_key)302;
+static const RICO_key RICO_SCANCODE_SHIFT = (RICO_key)303;
+static const RICO_key RICO_SCANCODE_LMB   = (RICO_key)304;
+static const RICO_key RICO_SCANCODE_MMB   = (RICO_key)305;
+static const RICO_key RICO_SCANCODE_RMB   = (RICO_key)306;
 
 #define KEY_IS_DOWN(key) (key == 0 || keys[key] || \
 (key == RICO_SCANCODE_ALT   && (keys[SDL_SCANCODE_LALT]   || keys[SDL_SCANCODE_RALT]))  || \
@@ -86,7 +86,7 @@ const rico_key RICO_SCANCODE_RMB   = (rico_key)306;
 #define KEY_PRESSED(key)  ( KEY_IS_DOWN(key) && !KEY_WAS_DOWN(key))
 #define KEY_RELEASED(key) (!KEY_IS_DOWN(key) &&  KEY_WAS_DOWN(key))
 
-static inline bool chord_is_down(enum rico_action action)
+static inline bool chord_is_down(enum RICO_action action)
 {
     RICO_ASSERT(action_chords[action].keys[0] ||
                 action_chords[action].keys[1] ||
@@ -97,7 +97,7 @@ static inline bool chord_is_down(enum rico_action action)
             KEY_IS_DOWN(action_chords[action].keys[1]) &&
             KEY_IS_DOWN(action_chords[action].keys[2]));
 }
-static inline bool chord_was_down(enum rico_action action)
+static inline bool chord_was_down(enum RICO_action action)
 {
     RICO_ASSERT(action_chords[action].keys[0] ||
                 action_chords[action].keys[1] ||
@@ -108,12 +108,12 @@ static inline bool chord_was_down(enum rico_action action)
             KEY_WAS_DOWN(action_chords[action].keys[1]) &&
             KEY_WAS_DOWN(action_chords[action].keys[2]));
 }
-static inline bool chord_pressed(enum rico_action action)
+static inline bool chord_pressed(enum RICO_action action)
 {
     // All keys are down, and at least one was up last frame
     return chord_is_down(action) && !chord_was_down(action);
 }
-static inline bool chord_released(enum rico_action action)
+static inline bool chord_released(enum RICO_action action)
 {
     // At least one key is up, and all were down last frame
     return !chord_is_down(action) && chord_was_down(action);
@@ -131,13 +131,13 @@ struct state_handlers
     state_handler run;
     state_handler cleanup;
 };
-struct state_handlers state_handlers[STATE_COUNT] = { 0 };
+static struct state_handlers state_handlers[STATE_COUNT] = { 0 };
 
-inline enum rico_state state_get()
+static inline enum rico_state state_get()
 {
     return state;
 }
-inline bool state_is_edit()
+static inline bool state_is_edit()
 {
     return (state == STATE_EDIT_TRANSLATE ||
             state == STATE_EDIT_ROTATE ||
@@ -145,7 +145,7 @@ inline bool state_is_edit()
             state == STATE_EDIT_MATERIAL ||
             state == STATE_EDIT_MESH);
 }
-inline bool state_is_paused()
+static inline bool state_is_paused()
 {
     return (state == STATE_MENU_QUIT);
 }
@@ -164,9 +164,9 @@ static void render_fps(r64 fps, r64 ms, r64 mcyc)
                 COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
 }
 
-int engine_update()
+static int engine_update()
 {
-    enum rico_error err;
+    enum RICO_error err;
 
     ///-------------------------------------------------------------------------
     //| Clear previous frame
@@ -275,7 +275,7 @@ int engine_update()
             struct vec3 camera_acc = player_acc;
             if (player_sprint) v3_scalef(&camera_acc, CAM_SPRINT_MULTIPLIER);
             if (camera_slow)   v3_scalef(&camera_acc, CAM_SLOW_MULTIPLIER);
-            player_camera_update(&cam_player, mouse_dx, mouse_dy, camera_acc);
+            camera_player_update(&cam_player, mouse_dx, mouse_dy, camera_acc);
 
             // TODO: Move this to this program.c
             // Update uniforms
@@ -300,20 +300,15 @@ int engine_update()
     // glPolygonMode(GL_FRONT_AND_BACK, cam_player.fill_mode);
     glPolygonMode(GL_FRONT, cam_player.fill_mode);
 
-    // TODO: Use alpha
-    // glref_render(alpha, &cam_player);
-    // camera_render(alpha, &cam_player);
-    UNUSED(alpha);
-	object_render_all(&cam_player);
-    edit_render(&cam_player);
+	object_render_all(alpha, &cam_player);
+    edit_render();
     camera_render(&cam_player);
 
     return err;
 }
-
 static int shared_engine_events()
 {
-    enum rico_error err = SUCCESS;
+    enum RICO_error err = SUCCESS;
 
 #if RICO_DEBUG
     // DEBUG: Toggle scene lighting
@@ -401,7 +396,7 @@ static int shared_engine_events()
 }
 static int shared_camera_events()
 {
-    enum rico_error err = SUCCESS;
+    enum RICO_error err = SUCCESS;
 
     player_acc = VEC3_ZERO;
     if (chord_is_down(ACTION_MOVE_UP))       player_acc.y += 1.0f;
@@ -439,7 +434,7 @@ static int shared_edit_events()
 {
     RICO_ASSERT(state_is_edit(state));
 
-    enum rico_error err = SUCCESS;
+    enum RICO_error err = SUCCESS;
 
 	bool cursor_moved = false;
 
@@ -547,7 +542,7 @@ static int shared_edit_events()
 
 static int state_play_explore()
 {
-    enum rico_error err = SUCCESS;
+    enum RICO_error err = SUCCESS;
 
     // Check global engine / editor chords after the more specific checks run
     // to allow overriding the global keybinds while in more specific states.
@@ -566,7 +561,7 @@ static int state_play_explore()
     // Interact with clicked object
     if (chord_pressed(ACTION_PLAY_INTERACT))
     {
-        struct rico_object *obj = mouse_first_obj();
+        struct RICO_object *obj = mouse_first_obj();
         if (obj)
             object_interact(obj);
     }
@@ -581,7 +576,7 @@ static int state_play_explore()
 }
 static int state_edit_cleanup()
 {
-    enum rico_error err = SUCCESS;
+    enum RICO_error err = SUCCESS;
 
     if (!state_is_edit(state))
     {
@@ -592,7 +587,7 @@ static int state_edit_cleanup()
 }
 static int state_edit_translate()
 {
-    enum rico_error err = SUCCESS;
+    enum RICO_error err = SUCCESS;
 
     err = shared_edit_events();   if (err || state != state_prev) return err;
     err = shared_engine_events(); if (err || state != state_prev) return err;
@@ -669,7 +664,7 @@ static int state_edit_translate()
 }
 static int state_edit_rotate()
 {
-    enum rico_error err = SUCCESS;
+    enum RICO_error err = SUCCESS;
 
     err = shared_edit_events();   if (err || state != state_prev) return err;
     err = shared_engine_events(); if (err || state != state_prev) return err;
@@ -761,7 +756,7 @@ static int state_edit_rotate()
 }
 static int state_edit_scale()
 {
-    enum rico_error err = SUCCESS;
+    enum RICO_error err = SUCCESS;
 
     err = shared_edit_events();   if (err || state != state_prev) return err;
     err = shared_engine_events(); if (err || state != state_prev) return err;
@@ -852,7 +847,7 @@ static int state_edit_scale()
 }
 static int state_edit_material()
 {
-    enum rico_error err = SUCCESS;
+    enum RICO_error err = SUCCESS;
 
     err = shared_edit_events();   if (err || state != state_prev) return err;
     err = shared_engine_events(); if (err || state != state_prev) return err;
@@ -873,7 +868,7 @@ static int state_edit_material()
 }
 static int state_edit_mesh()
 {
-    enum rico_error err = SUCCESS;
+    enum RICO_error err = SUCCESS;
 
     err = shared_edit_events();   if (err || state != state_prev) return err;
     err = shared_engine_events(); if (err || state != state_prev) return err;
@@ -899,7 +894,7 @@ static int state_edit_mesh()
 }
 static int state_menu_quit()
 {
-    enum rico_error err = SUCCESS;
+    enum RICO_error err = SUCCESS;
 
     // [Y] / [Return]: Save and exit
     if (KEY_PRESSED(SDL_SCANCODE_Y) || KEY_PRESSED(SDL_SCANCODE_RETURN))
@@ -925,7 +920,7 @@ static int state_menu_quit()
 }
 static int state_text_input()
 {
-    enum rico_error err = SUCCESS;
+    enum RICO_error err = SUCCESS;
 
     err = shared_edit_events();   if (err || state != state_prev) return err;
     err = shared_engine_events(); if (err || state != state_prev) return err;
@@ -938,7 +933,7 @@ static int state_text_input()
 
 static int rico_init_shaders()
 {
-    enum rico_error err;
+    enum RICO_error err;
 
     // Create shader programs
     err = make_program_pbr(&prog_pbr);
@@ -952,15 +947,14 @@ static int rico_init_shaders()
 
     return err;
 }
-
 static int state_engine_shutdown()
 {
 	free_glref();
 	return SUCCESS;
 }
-void rico_check_key_events()
+static void rico_check_key_events()
 {
-    for (enum rico_action i = ACTION_RICO_TEST; i < ACTION_COUNT; ++i)
+    for (enum RICO_action i = ACTION_RICO_TEST; i < ACTION_COUNT; ++i)
     {
         if (action_queue_count >= ARRAY_COUNT(action_queue))
             return;
@@ -972,9 +966,9 @@ void rico_check_key_events()
         }
     }
 }
-enum rico_action RICO_key_event()
+extern enum RICO_action RICO_key_event()
 {
-    enum rico_action action = ACTION_NULL;
+    enum RICO_action action = ACTION_NULL;
     if (action_queue_count)
     {
         // TODO: Circular queue
@@ -984,14 +978,14 @@ enum rico_action RICO_key_event()
     }
     return action;
 }
-void RICO_bind_action(enum rico_action action,
-                              struct rico_keychord chord)
+extern void RICO_bind_action(enum RICO_action action,
+                             struct RICO_keychord chord)
 {
     action_chords[action] = chord;
 }
 static int engine_init()
 {
-    enum rico_error err;
+    enum RICO_error err;
 
     printf("==========================================================\n");
     printf("#        ______            _______        _              #\n");

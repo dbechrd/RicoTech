@@ -11,11 +11,11 @@
     f(STR_SLOT_DEBUG_CAMERA) \
     f(STR_SLOT_DYNAMIC)
 
-enum rico_string_slot
+enum RICO_string_slot
 {
     RICO_STRING_SLOTS(GEN_LIST)
     STR_SLOT_COUNT
 };
-const char *rico_string_slot_string[STR_SLOT_COUNT];
+extern const char *RICO_string_slot_string[];
 
 #endif

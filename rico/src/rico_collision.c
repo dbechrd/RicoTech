@@ -1,5 +1,5 @@
-bool collide_ray_plane(struct vec3 *_contact, const struct ray *ray,
-                       const struct vec3 *p, const struct vec3 *n)
+static bool collide_ray_plane(struct vec3 *_contact, const struct ray *ray,
+                              const struct vec3 *p, const struct vec3 *n)
 {
     float t = 0.0f;
 
@@ -24,12 +24,12 @@ bool collide_ray_plane(struct vec3 *_contact, const struct ray *ray,
 
     return false;
 }
-
-bool collide_ray_bbox(float *_t, const struct ray *ray, const struct bbox *bbox,
-                      const struct mat4 *transform)
+static bool collide_ray_bbox(float *_t, const struct ray *ray,
+                             const struct RICO_bbox *RICO_bbox,
+                             const struct mat4 *transform)
 {
     //TODO: Transform ray and bbox
-    struct vec3 p[2] = { bbox->min, bbox->max };
+    struct vec3 p[2] = { RICO_bbox->min, RICO_bbox->max };
     v3_mul_mat4(&p[0], transform);
     v3_mul_mat4(&p[1], transform);
 
@@ -74,13 +74,12 @@ bool collide_ray_bbox(float *_t, const struct ray *ray, const struct bbox *bbox,
     *_t = t_min;
     return true;
 }
-
-bool collide_ray_obb(float *_dist, const struct ray *r, const struct bbox *bbox,
-                     const struct mat4 *model_matrix,
-                     const struct mat4 *model_matrix_inv)
+static bool collide_ray_obb(float *_dist, const struct ray *r,
+                            const struct RICO_bbox *RICO_bbox,
+                            const struct mat4 *model_matrix)
 {
-    struct vec3 p0 = bbox->min;
-    struct vec3 p1 = bbox->max;
+    struct vec3 p0 = RICO_bbox->min;
+    struct vec3 p1 = RICO_bbox->max;
 
 	// Intersection method from Real-Time Rendering and Essential Mathematics
     // for Games
@@ -110,9 +109,6 @@ bool collide_ray_obb(float *_dist, const struct ray *r, const struct bbox *bbox,
     // struct ray debug_ray = ray;
     // v3_scalef(&debug_ray.dir, 10.0f);
     // prim_draw_ray(&debug_ray, &MAT4_IDENT, COLOR_YELLOW_HIGHLIGHT);
-
-    UNUSED(model_matrix);
-    UNUSED(model_matrix_inv);
 
 	// Test intersection with the 2 planes perpendicular to the OBB's X axis
 	{

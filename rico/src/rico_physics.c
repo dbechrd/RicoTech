@@ -1,18 +1,15 @@
 struct rico_physics *make_physics(struct vec3 size)
 {
     struct rico_physics *phys = calloc(1, sizeof(struct rico_physics));
-
     phys->size = size;
 
     return phys;
 }
-
 static void free_physics(struct rico_physics *phys)
 {
     free(phys);
     phys = NULL;
 }
-
 static void update_physics(struct rico_physics *phys, int count)
 {
     for (int i = 0; i < count; i++)

@@ -30,16 +30,9 @@ enum DEFAULT_IDS
     MESH_DEFAULT_SPHERE
 };
 
-static void *blob_start(struct pack *pack, enum rico_hnd_type type, u32 size,
-                          const char *name);
-
-static void pack_expand(struct pack *pack);
-static void pack_compact_buffer(struct pack *pack);
-
-static void *pack_next(pkid pkid, enum rico_hnd_type type);
-static void *pack_prev(pkid pkid, enum rico_hnd_type type);
+static void *pack_next(pkid pkid, enum RICO_hnd_type type);
+static void *pack_prev(pkid pkid, enum RICO_hnd_type type);
 static void pack_delete(pkid pkid);
-
 static void pack_build_default();
 
 static inline void *pack_push(struct pack *pack, u32 bytes)

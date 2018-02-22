@@ -1,4 +1,4 @@
-const char *rico_audio_state_string[] = { RICO_AUDIO_STATE(GEN_STRING) };
+const char *RICO_audio_state_string[] = { RICO_AUDIO_STATE(GEN_STRING) };
 
 static ALCdevice *audio_device = 0;
 static ALCcontext *audio_context = 0;
@@ -40,22 +40,19 @@ static void init_openal()
     if (err) RICO_ERROR(ERR_OPENAL_INIT, "OpenAL error: %s\n", err);
 }
 
-void RICO_audio_volume_set(float volume)
+extern void RICO_audio_volume_set(float volume)
 {
     alListenerf(AL_GAIN, volume);
 }
-
-void RICO_audio_mute()
+extern void RICO_audio_mute()
 {
     RICO_audio_volume_set(0.0f);
 }
-
-void RICO_audio_unmute()
+extern void RICO_audio_unmute()
 {
     RICO_audio_volume_set(1.0f);
 }
-
-void RICO_audio_source_init(struct rico_audio_source *source)
+extern void RICO_audio_source_init(struct RICO_audio_source *source)
 {
     if (!source->pitch) source->pitch = 1.0f;
     if (!source->gain) source->gain = 1.0f;
@@ -75,14 +72,12 @@ void RICO_audio_source_init(struct rico_audio_source *source)
     //alSourcefv(audio_source, AL_POSITION, (float *)&VEC3_ZERO);
 #endif
 }
-
-void RICO_audio_source_free(struct rico_audio_source *source)
+extern void RICO_audio_source_free(struct RICO_audio_source *source)
 {
     alDeleteSources(1, &source->al_source_id);
 }
-
-void RICO_audio_buffer_load_file(struct rico_audio_buffer *buffer,
-                                 const char *filename)
+extern void RICO_audio_buffer_load_file(struct RICO_audio_buffer *buffer,
+                                        const char *filename)
 {
     u32 len;
     char *data;
@@ -90,7 +85,6 @@ void RICO_audio_buffer_load_file(struct rico_audio_buffer *buffer,
     RICO_audio_buffer_load(buffer, len, data);
     free(data);
 }
-
 #if 0
 // TODO: Copy rico_mesh auto-load scheme for audio buffers that that are loaded
 //       in from packs.
@@ -99,37 +93,31 @@ static void audio_upload(struct ral_audio_buffer *buffer)
 
 }
 #endif
-
-void RICO_audio_source_play(struct rico_audio_source *source)
+extern void RICO_audio_source_play(struct RICO_audio_source *source)
 {
     source->loop = false;
     alSourcei(source->al_source_id, AL_LOOPING, source->loop);
     alSourcePlay(source->al_source_id);
 }
-
-void RICO_audio_source_play_loop(struct rico_audio_source *source)
+extern void RICO_audio_source_play_loop(struct RICO_audio_source *source)
 {
     source->loop = true;
     alSourcei(source->al_source_id, AL_LOOPING, source->loop);
     alSourcePlay(source->al_source_id);
 }
-
-void RICO_audio_source_pause(struct rico_audio_source *source)
+extern void RICO_audio_source_pause(struct RICO_audio_source *source)
 {
     alSourcePause(source->al_source_id);
 }
-
-void RICO_audio_source_resume(struct rico_audio_source *source)
+extern void RICO_audio_source_resume(struct RICO_audio_source *source)
 {
     alSourcePlay(source->al_source_id);
 }
-
-void RICO_audio_source_stop(struct rico_audio_source *source)
+extern void RICO_audio_source_stop(struct RICO_audio_source *source)
 {
     alSourceStop(source->al_source_id);
 }
-
-enum rico_audio_state RICO_audio_source_state(struct rico_audio_source *source)
+extern enum RICO_audio_state RICO_audio_source_state(struct RICO_audio_source *source)
 {
     ALenum state;
     alGetSourcei(source->al_source_id, AL_SOURCE_STATE, &state);
@@ -147,9 +135,7 @@ enum rico_audio_state RICO_audio_source_state(struct rico_audio_source *source)
             return RICO_AUDIO_UNKNOWN;
     }
 }
-
-
-void RICO_audio_buffer_load(struct rico_audio_buffer *buffer, u32 len,
+extern void RICO_audio_buffer_load(struct RICO_audio_buffer *buffer, u32 len,
                             char *data)
 {
     alGenBuffers(1, &buffer->al_buffer_id);
@@ -178,15 +164,13 @@ void RICO_audio_buffer_load(struct rico_audio_buffer *buffer, u32 len,
     alBufferData(buffer->al_buffer_id, AL_FORMAT_MONO16, data, len, SAMPLE_RATE);
 #endif
 }
-
-void RICO_audio_source_buffer(struct rico_audio_source *source,
-                              struct rico_audio_buffer *buffer)
+extern void RICO_audio_source_buffer(struct RICO_audio_source *source,
+                              struct RICO_audio_buffer *buffer)
 {
     //alSourceQueueBuffers(audio_source, 1, &audio_buffer);
     alSourcei(source->al_source_id, AL_BUFFER, buffer->al_buffer_id);
 }
-
-void RICO_audio_buffer_free(struct rico_audio_buffer *buffer)
+extern void RICO_audio_buffer_free(struct RICO_audio_buffer *buffer)
 {
     alDeleteBuffers(1, &buffer->al_buffer_id);
 }

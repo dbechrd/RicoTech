@@ -1,6 +1,6 @@
-int make_shader(const GLenum type, const char *filename, GLuint *_shader)
+static int make_shader(const GLenum type, const char *filename, GLuint *_shader)
 {
-    enum rico_error err;
+    enum RICO_error err;
     u32 len;
     GLchar *source;
     GLuint shader;

@@ -1,15 +1,14 @@
 static struct program_primitive *regularpoly_program = NULL;
 
-int init_regularpoly_program()
+static int init_regularpoly_program()
 {
-    enum rico_error err = make_program_primitive(&regularpoly_program);
+    enum RICO_error err = make_program_primitive(&regularpoly_program);
     if (err) {
         fprintf(stderr, "regularpoly: Failed to make program.\n");
     }
 
     return err;
 }
-
 static void rebuild_vao(struct regularpoly *poly)
 {
     if (poly->vao)
@@ -54,9 +53,8 @@ static void rebuild_vao(struct regularpoly *poly)
 
     poly->dirty_vao = false;
 }
-
-struct regularpoly *make_regularpoly(struct vec3 center, GLfloat radius,
-                                     unsigned int vertex_count)
+static struct regularpoly *make_regularpoly(struct vec3 center, GLfloat radius,
+                                            unsigned int vertex_count)
 {
     struct regularpoly *poly = calloc(1, sizeof(struct regularpoly));
     if (!poly)
@@ -74,7 +72,6 @@ struct regularpoly *make_regularpoly(struct vec3 center, GLfloat radius,
 
     return poly;
 }
-
 static void free_regularpoly(struct regularpoly *poly)
 {
     free(poly->vertices);
@@ -83,9 +80,8 @@ static void free_regularpoly(struct regularpoly *poly)
     free(poly);
     poly = NULL;
 }
-
 static void set_regularpoly_pos(struct regularpoly *poly, GLfloat x, GLfloat y,
-                         GLfloat z, bool rebuild)
+                                GLfloat z, bool rebuild)
 {
     poly->pos.x = x;
     poly->pos.y = y;
@@ -97,7 +93,6 @@ static void set_regularpoly_pos(struct regularpoly *poly, GLfloat x, GLfloat y,
         poly->dirty_vao = true;
 
 }
-
 static void render_regularpoly(struct regularpoly *poly)
 {
     RICO_ASSERT(regularpoly_program->prog_id);

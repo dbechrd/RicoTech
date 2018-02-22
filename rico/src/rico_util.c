@@ -16,8 +16,7 @@ static void string_truncate(char *buf, int buf_count, int length)
         *buf_end = '.';
     }
 }
-
-int file_contents(const char *filename, u32 *_length, char **_buffer)
+static int file_contents(const char *filename, u32 *_length, char **_buffer)
 {
     FILE *fs = fopen(filename, "rb");
     if (!fs) {
@@ -46,11 +45,10 @@ int file_contents(const char *filename, u32 *_length, char **_buffer)
 
     return SUCCESS;
 }
-
-static void APIENTRY openglCallbackFunction(GLenum source, GLenum type, GLuint id,
-                                     GLenum severity, GLsizei length,
-                                     const GLchar *message,
-                                     const void *userParam)
+static void APIENTRY
+openglCallbackFunction(GLenum source, GLenum type, GLuint id, GLenum severity,
+                       GLsizei length, const GLchar *message,
+                       const void *userParam)
 {
     UNUSED(length);
     UNUSED(userParam);
@@ -130,7 +128,6 @@ static void APIENTRY openglCallbackFunction(GLenum source, GLenum type, GLuint i
         gl_errors++;
     }
 }
-
 static void show_info_log(GLuint rico,
                    PFNGLGETSHADERIVPROC glGet__iv,
                    PFNGLGETSHADERINFOLOGPROC glGet__InfoLog)
@@ -146,9 +143,7 @@ static void show_info_log(GLuint rico,
     free(log);
 };
 
-////////////////////////////////////////////////////////////////////////////////
-
-/*
+#if 0
 static short le_short(unsigned char *bytes)
 {
     return bytes[0] | ((char)bytes[1] << 8);
@@ -233,4 +228,4 @@ static void *read_tga(const char *filename, int *width, int *height)
 
     return pixels;
 }
-*/
+#endif

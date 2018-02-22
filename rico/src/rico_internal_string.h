@@ -3,16 +3,16 @@
 
 #include "RICO/rico_string.h"
 
-struct rico_string
+struct RICO_string
 {
     struct uid uid;
-    enum rico_string_slot slot;
+    enum RICO_string_slot slot;
     pkid object_id;
     u32 lifespan;
 };
 
-static void string_delete(struct rico_string *str);
-bool string_free_slot(enum rico_string_slot slot);
+static void string_delete(struct RICO_string *str);
+static bool string_free_slot(enum RICO_string_slot slot);
 static void string_update();
 
 #endif

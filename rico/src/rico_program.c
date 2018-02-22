@@ -1,4 +1,4 @@
-program_attribs_helper program_attribs[PROG_COUNT] = {
+static program_attribs_helper program_attribs[PROG_COUNT] = {
     0,
     program_pbr_attribs,
     program_primitive_attribs,
@@ -36,13 +36,11 @@ static int make_program(GLuint vertex_shader, GLuint fragment_shader,
     *_program = program;
     return SUCCESS;
 }
-
-static inline void free_program(GLuint program)
+static void free_program(GLuint program)
 {
     if (program) glDeleteProgram(program);
 }
-
-static inline GLint program_get_attrib_location(GLuint program,
+static GLint program_get_attrib_location(GLuint program,
                                                 const char* name)
 {
     GLint location = glGetAttribLocation(program, name);
@@ -54,8 +52,7 @@ static inline GLint program_get_attrib_location(GLuint program,
 
     return location;
 }
-
-static inline GLint program_get_uniform_location(GLuint program,
+static GLint program_get_uniform_location(GLuint program,
                                                  const char* name)
 {
     GLint location = glGetUniformLocation(program, name);
@@ -71,7 +68,7 @@ static inline GLint program_get_uniform_location(GLuint program,
 ///=============================================================================
 //| PBR program
 ///=============================================================================
-static inline void program_pbr_get_locations(struct program_pbr *p)
+static void program_pbr_get_locations(struct program_pbr *p)
 {
     // Vertex shader
     p->time = program_get_uniform_location(p->prog_id, "time");
@@ -113,7 +110,6 @@ static inline void program_pbr_get_locations(struct program_pbr *p)
     RICO_ASSERT(p->light.color >= 0);
     RICO_ASSERT(p->light.intensity >= 0);
 }
-
 static void program_pbr_attribs()
 {
     glVertexAttribPointer(LOCATION_PBR_POSITION, 3, GL_FLOAT, GL_FALSE,
@@ -136,11 +132,10 @@ static void program_pbr_attribs()
                           (GLvoid *)offsetof(struct pbr_vertex, uv));
     glEnableVertexAttribArray(LOCATION_PBR_UV);
 }
-
-int make_program_pbr(struct program_pbr **_program)
+static int make_program_pbr(struct program_pbr **_program)
 {
     local struct program_pbr *prog_pbr = NULL;
-    enum rico_error err;
+    enum RICO_error err;
 
     if (prog_pbr != NULL) {
         *_program = prog_pbr;
@@ -176,7 +171,6 @@ cleanup:
     *_program = prog_pbr;
     return err;
 }
-
 static void free_program_pbr(struct program_pbr **program)
 {
     //TODO: Handle error
@@ -193,7 +187,7 @@ static void free_program_pbr(struct program_pbr **program)
 ///=============================================================================
 //| Primitive program
 ///=============================================================================
-static inline void program_primitive_get_locations(struct program_primitive *p)
+static void program_primitive_get_locations(struct program_primitive *p)
 {
     // Vertex shader
     p->u_model = program_get_uniform_location(p->prog_id, "u_model");
@@ -207,7 +201,6 @@ static inline void program_primitive_get_locations(struct program_primitive *p)
     // Fragment shader
     p->u_col = program_get_uniform_location(p->prog_id, "u_col");
 }
-
 static void program_primitive_attribs()
 {
     // TODO: This should have it's own vertex type.. not even sure if this works
@@ -216,11 +209,10 @@ static void program_primitive_attribs()
                           (GLvoid *)offsetof(struct pbr_vertex, pos));
     glEnableVertexAttribArray(LOCATION_PRIM_POSITION);
 }
-
-int make_program_primitive(struct program_primitive **_program)
+static int make_program_primitive(struct program_primitive **_program)
 {
     local struct program_primitive *prog_primitive = NULL;
-    enum rico_error err;
+    enum RICO_error err;
 
     if (prog_primitive != NULL) {
         *_program = prog_primitive;
@@ -256,7 +248,6 @@ cleanup:
     *_program = prog_primitive;
     return err;
 }
-
 static void free_program_primitive(struct program_primitive **program)
 {
     glDeleteProgram((*program)->prog_id);
@@ -267,7 +258,7 @@ static void free_program_primitive(struct program_primitive **program)
 ///=============================================================================
 //| Primitive cube program
 ///=============================================================================
-static inline void program_prim_cube_get_locations(struct program_prim_cube *p)
+static void program_prim_cube_get_locations(struct program_prim_cube *p)
 {
     // Vertex shader
     p->model = program_get_uniform_location(p->prog_id, "model");
@@ -280,11 +271,10 @@ static inline void program_prim_cube_get_locations(struct program_prim_cube *p)
     // Fragment shader
     p->color = program_get_uniform_location(p->prog_id, "color");
 }
-
-int make_program_prim_cube(struct program_prim_cube **_program)
+static int make_program_prim_cube(struct program_prim_cube **_program)
 {
     local struct program_prim_cube *prog_prim_cube = NULL;
-    enum rico_error err;
+    enum RICO_error err;
 
     if (prog_prim_cube != NULL) {
         *_program = prog_prim_cube;
@@ -320,7 +310,6 @@ cleanup:
     *_program = prog_prim_cube;
     return err;
 }
-
 static void free_program_prim_cube(struct program_prim_cube **program)
 {
     glDeleteProgram((*program)->prog_id);
@@ -331,7 +320,7 @@ static void free_program_prim_cube(struct program_prim_cube **program)
 ///=============================================================================
 //| Text program
 ///=============================================================================
-static inline void program_text_get_locations(struct program_text *p)
+static void program_text_get_locations(struct program_text *p)
 {
     // Vertex shader
     p->model = program_get_uniform_location(p->prog_id, "model");
@@ -339,7 +328,6 @@ static inline void program_text_get_locations(struct program_text *p)
     // Fragment shader
     p->tex = program_get_uniform_location(p->prog_id, "tex");
 }
-
 static void program_text_attribs()
 {
     glVertexAttribPointer(LOCATION_TEXT_POSITION, 3, GL_FLOAT, GL_FALSE,
@@ -357,11 +345,10 @@ static void program_text_attribs()
                           (GLvoid *)offsetof(struct text_vertex, uv));
     glEnableVertexAttribArray(LOCATION_TEXT_UV);
 }
-
-int make_program_text(struct program_text **_program)
+static int make_program_text(struct program_text **_program)
 {
     local struct program_text *prog_text = NULL;
-    enum rico_error err;
+    enum RICO_error err;
 
     if (prog_text != NULL) {
         *_program = prog_text;
@@ -397,7 +384,6 @@ cleanup:
     *_program = prog_text;
     return err;
 }
-
 static void free_program_text(struct program_text **program)
 {
     glDeleteProgram((*program)->prog_id);

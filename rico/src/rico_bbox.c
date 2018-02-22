@@ -1,15 +1,14 @@
 #define BBOX_EPSILON 0.001f
-const struct vec3 BBOX_EPSILON_TRANS =
+static const struct vec3 BBOX_EPSILON_TRANS =
     {{{ BBOX_EPSILON / 2, BBOX_EPSILON / 2, BBOX_EPSILON / 2 }}};
 
-static void bbox_init(struct bbox *bbox, struct vec3 min, struct vec3 max)
+static void bbox_init(struct RICO_bbox *RICO_bbox, struct vec3 min, struct vec3 max)
 {
-    bbox->min = min;
-    bbox->max = max;
-    bbox->selected = false;
+    RICO_bbox->min = min;
+    RICO_bbox->max = max;
+    RICO_bbox->selected = false;
 }
-
-static void bbox_init_mesh(struct bbox *bbox, struct rico_mesh *mesh)
+static void bbox_init_mesh(struct RICO_bbox *RICO_bbox, struct RICO_mesh *mesh)
 {
     RICO_ASSERT(mesh->vertex_count);
 
@@ -38,5 +37,5 @@ static void bbox_init_mesh(struct bbox *bbox, struct rico_mesh *mesh)
     max.z += BBOX_EPSILON;
     min.z -= BBOX_EPSILON;
 
-    bbox_init(bbox, min, max);
+    bbox_init(RICO_bbox, min, max);
 }
