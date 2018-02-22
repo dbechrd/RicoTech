@@ -2,14 +2,14 @@
 const struct vec3 BBOX_EPSILON_TRANS =
     {{{ BBOX_EPSILON / 2, BBOX_EPSILON / 2, BBOX_EPSILON / 2 }}};
 
-void bbox_init(struct bbox *bbox, struct vec3 min, struct vec3 max)
+static void bbox_init(struct bbox *bbox, struct vec3 min, struct vec3 max)
 {
     bbox->min = min;
     bbox->max = max;
     bbox->selected = false;
 }
 
-void bbox_init_mesh(struct bbox *bbox, struct rico_mesh *mesh)
+static void bbox_init_mesh(struct bbox *bbox, struct rico_mesh *mesh)
 {
     RICO_ASSERT(mesh->vertex_count);
 

@@ -146,7 +146,7 @@ internal int texture_upload(struct rico_texture *texture)
     return err;
 }
 
-void texture_delete(struct rico_texture *texture)
+static void texture_delete(struct rico_texture *texture)
 {
     struct rgl_texture *rgl_tex =
         hashtable_search_pkid(&global_textures, texture->uid.pkid);
@@ -157,7 +157,7 @@ void texture_delete(struct rico_texture *texture)
     hashtable_delete_pkid(&global_textures, texture->uid.pkid);
 }
 
-void texture_bind(pkid pkid, GLenum texture_unit)
+static void texture_bind(pkid pkid, GLenum texture_unit)
 {
     struct rgl_texture *rgl_tex = hashtable_search_pkid(&global_textures, pkid);
     if (!rgl_tex)
@@ -179,7 +179,7 @@ void texture_bind(pkid pkid, GLenum texture_unit)
     glBindTexture(rgl_tex->gl_target, rgl_tex->gl_id);
 }
 
-void texture_unbind(pkid pkid, GLenum texture_unit)
+static void texture_unbind(pkid pkid, GLenum texture_unit)
 {
     struct rgl_texture *rgl_tex = hashtable_search_pkid(&global_textures, pkid);
     RICO_ASSERT(rgl_tex);

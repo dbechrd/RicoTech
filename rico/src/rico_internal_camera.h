@@ -43,16 +43,16 @@ struct camera
     struct mat4 ortho_matrix;
 };
 
-void camera_init(struct camera *camera, struct vec3 position, struct quat view,
+static void camera_init(struct camera *camera, struct vec3 position, struct quat view,
                  float fov_deg);
-void camera_reset(struct camera *camera);
-void camera_set_fov(struct camera *camera, float fov_deg);
-void camera_translate_world(struct camera *camera, const struct vec3 *v);
-void camera_translate_local(struct camera *camera, const struct vec3 *v);
-void camera_rotate(struct camera *camera, float dx, float dy, float dz);
-void camera_update(struct camera *camera);
-void camera_render(struct camera *camera);
-void camera_fwd(struct vec3 *_fwd, struct camera *camera);
-void camera_fwd_ray(struct ray *_ray, struct camera *camera);
+static void camera_reset(struct camera *camera);
+static void camera_set_fov(struct camera *camera, float fov_deg);
+static void camera_translate_world(struct camera *camera, const struct vec3 *v);
+static void camera_translate_local(struct camera *camera, const struct vec3 *v);
+static void camera_rotate(struct camera *camera, float dx, float dy, float dz);
+static void camera_update(struct camera *camera);
+static void camera_render(struct camera *camera);
+static void camera_fwd(struct vec3 *_fwd, struct camera *camera);
+static void camera_fwd_ray(struct ray *_ray, struct camera *camera);
 
 #endif

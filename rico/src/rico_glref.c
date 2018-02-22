@@ -17,7 +17,7 @@ struct program_pbr *prog_pbr;
 struct program_primitive *prog_prim;
 struct program_text *prog_text;
 
-void editor_init()
+static void editor_init()
 {
     const float offset = WIDGET_BOX_OFFSET;
     const float radius = WIDGET_BOX_RADIUS;
@@ -35,7 +35,7 @@ void editor_init()
     widgets[2].action = WIDGET_TRANSLATE_Z;
 }
 
-void edit_object_create(struct pack *pack)
+static void edit_object_create(struct pack *pack)
 {
     // TODO: Prompt user for object name
     const char *name = "new_obj";
@@ -46,7 +46,7 @@ void edit_object_create(struct pack *pack)
     edit_object_select(obj, false);
 }
 
-void edit_bbox_reset_all()
+static void edit_bbox_reset_all()
 {
     object_bbox_recalculate_all(pack_active);
 
@@ -58,7 +58,7 @@ void edit_bbox_reset_all()
     }
 }
 
-void edit_object_select(struct rico_object *rico, bool force)
+static void edit_object_select(struct rico_object *rico, bool force)
 {
     // NULL already selected
     if (!force && !rico && !selected_obj_id)
@@ -85,17 +85,17 @@ void edit_object_select(struct rico_object *rico, bool force)
     edit_print_object();
 }
 
-void edit_object_next()
+static void edit_object_next()
 {
     edit_object_select(pack_next(selected_obj_id, RICO_HND_OBJECT), false);
 }
 
-void edit_object_prev()
+static void edit_object_prev()
 {
     edit_object_select(pack_prev(selected_obj_id, RICO_HND_OBJECT), false);
 }
 
-void edit_print_object()
+static void edit_print_object()
 {
     struct rico_object *obj = NULL;
     if (selected_obj_id)
@@ -103,7 +103,7 @@ void edit_print_object()
     object_print(obj);
 }
 
-void edit_translate(struct camera *camera, const struct vec3 *offset)
+static void edit_translate(struct camera *camera, const struct vec3 *offset)
 {
     if (!selected_obj_id)
         return;
@@ -133,7 +133,7 @@ void edit_translate(struct camera *camera, const struct vec3 *offset)
     object_print(obj);
 }
 
-void edit_rotate(const struct quat *offset)
+static void edit_rotate(const struct quat *offset)
 {
     if (!selected_obj_id)
         return;
@@ -151,7 +151,7 @@ void edit_rotate(const struct quat *offset)
     object_print(obj);
 }
 
-void edit_scale(const struct vec3 *offset)
+static void edit_scale(const struct vec3 *offset)
 {
     if (!selected_obj_id)
         return;
@@ -169,7 +169,7 @@ void edit_scale(const struct vec3 *offset)
     object_print(obj);
 }
 
-void edit_material_next()
+static void edit_material_next()
 {
     if (!selected_obj_id)
         return;
@@ -184,7 +184,7 @@ void edit_material_next()
     }
 }
 
-void edit_material_prev()
+static void edit_material_prev()
 {
     if (!selected_obj_id)
         return;
@@ -199,7 +199,7 @@ void edit_material_prev()
     }
 }
 
-void edit_mesh_next()
+static void edit_mesh_next()
 {
     if (!selected_obj_id)
         return;
@@ -216,7 +216,7 @@ void edit_mesh_next()
     }
 }
 
-void edit_mesh_prev()
+static void edit_mesh_prev()
 {
     if (!selected_obj_id)
         return;
@@ -233,7 +233,7 @@ void edit_mesh_prev()
     }
 }
 
-void edit_bbox_reset()
+static void edit_bbox_reset()
 {
     if (!selected_obj_id)
         return;
@@ -246,7 +246,7 @@ void edit_bbox_reset()
     object_print(obj);
 }
 
-void edit_duplicate()
+static void edit_duplicate()
 {
     if (!selected_obj_id)
         return;
@@ -260,7 +260,7 @@ void edit_duplicate()
     edit_object_select(new_obj, false);
 }
 
-void edit_delete()
+static void edit_delete()
 {
     if (!selected_obj_id)
         return;
@@ -321,7 +321,7 @@ struct rico_object *mouse_first_obj()
     return obj_collided;
 }
 
-void edit_mouse_pressed()
+static void edit_mouse_pressed()
 {
     // Hit test widgets
     widget = widget_test();
@@ -331,7 +331,7 @@ void edit_mouse_pressed()
     edit_object_select(mouse_first_obj(), false);
 }
 
-void edit_mouse_move()
+static void edit_mouse_move()
 {
     if (!selected_obj_id) return;
     if (!widget || widget->action == WIDGET_NONE) return;
@@ -405,13 +405,13 @@ void edit_mouse_move()
     }
 }
 
-void edit_mouse_released()
+static void edit_mouse_released()
 {
     widget = NULL;
     string_free_slot(STR_SLOT_WIDGET);
 }
 
-void edit_render(struct camera *camera)
+static void edit_render(struct camera *camera)
 {
     UNUSED(camera);
 
@@ -475,7 +475,7 @@ void edit_render(struct camera *camera)
     object_render_ui(RICO_packs[PACK_TRANSIENT]);
     object_render_ui(RICO_packs[PACK_FRAME]);
 }
-void free_glref()
+static void free_glref()
 {
 #if 0
     // TODO: What are chunks used for now? How/when do we need to free them?

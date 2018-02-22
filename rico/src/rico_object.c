@@ -3,7 +3,7 @@ const char *rico_obj_type_string[] = { RICO_OBJECT_TYPES(GEN_STRING) };
 
 RICO_event_object_def *object_event_handler;
 
-void object_delete(struct rico_object *obj)
+static void object_delete(struct rico_object *obj)
 {
     // TODO: Make sure all of the properties get cleaned up properly
     pack_delete(obj->mesh_pkid);
@@ -25,7 +25,7 @@ struct rico_object *object_copy(struct pack *pack, struct rico_object *other,
     return new_obj;
 }
 
-void object_bbox_recalculate(struct rico_object *obj)
+static void object_bbox_recalculate(struct rico_object *obj)
 {
     struct rico_mesh *mesh;
     if (obj->mesh_pkid)
@@ -39,7 +39,7 @@ void object_bbox_recalculate(struct rico_object *obj)
     obj->bbox = mesh->bbox;
 }
 
-void object_bbox_recalculate_all(struct pack *pack)
+static void object_bbox_recalculate_all(struct pack *pack)
 {
     struct rico_object *obj;
     struct rico_mesh *mesh;
@@ -69,23 +69,23 @@ bool object_selectable(struct rico_object *rico)
     return (rico->type != RICO_OBJECT_TYPE_STRING_SCREEN);
 }
 
-void object_select_toggle(struct rico_object *rico)
+static void object_select_toggle(struct rico_object *rico)
 {
     rico->bbox.selected = !rico->bbox.selected;
 }
 
-void object_select(struct rico_object *rico)
+static void object_select(struct rico_object *rico)
 {
     RICO_ASSERT(object_selectable(rico));
     rico->bbox.selected = true;
 }
 
-void object_deselect(struct rico_object *rico)
+static void object_deselect(struct rico_object *rico)
 {
     rico->bbox.selected = false;
 }
 
-void object_transform_update(struct rico_object *rico)
+static void object_transform_update(struct rico_object *rico)
 {
     //HACK: Order of these operations might not always be the same.. should
     //      probably just store the transformation matrix directly rather than
@@ -121,7 +121,7 @@ void object_transform_update(struct rico_object *rico)
     //RICO_ASSERT(mat4_equals(&mm, &MAT4_IDENT));
 }
 
-void object_trans(struct rico_object *rico, const struct vec3 *v)
+static void object_trans(struct rico_object *rico, const struct vec3 *v)
 {
     v3_add(&rico->xform.position, v);
     object_transform_update(rico);
@@ -132,20 +132,20 @@ const struct vec3 *object_trans_get(struct rico_object *rico)
     return &rico->xform.position;
 }
 
-void object_trans_set(struct rico_object *rico,
+static void object_trans_set(struct rico_object *rico,
                       const struct vec3 *v)
 {
     rico->xform.position = *v;
     object_transform_update(rico);
 }
 
-void object_rot(struct rico_object *rico, const struct quat *q)
+static void object_rot(struct rico_object *rico, const struct quat *q)
 {
     quat_mul(&rico->xform.orientation, q);
     object_transform_update(rico);
 }
 
-void object_rot_set(struct rico_object *rico, const struct quat *q)
+static void object_rot_set(struct rico_object *rico, const struct quat *q)
 {
     rico->xform.orientation = *q;
     object_transform_update(rico);
@@ -157,50 +157,50 @@ const struct quat *object_rot_get(struct rico_object *rico)
 }
 
 #if 0
-void object_rot_x(struct rico_object *object, float deg)
+static void object_rot_x(struct rico_object *object, float deg)
 {
     object->xform.rot.x += deg;
     object_transform_update(object);
 }
 
-void object_rot_x_set(struct rico_object *object, float deg)
+static void object_rot_x_set(struct rico_object *object, float deg)
 {
     object->xform.rot.x = deg;
     object_transform_update(object);
 }
 
-void object_rot_y(struct rico_object *object, float deg)
+static void object_rot_y(struct rico_object *object, float deg)
 {
     object->xform.rot.y += deg;
     object_transform_update(object);
 }
 
-void object_rot_y_set(struct rico_object *object, float deg)
+static void object_rot_y_set(struct rico_object *object, float deg)
 {
     object->xform.rot.y = deg;
     object_transform_update(object);
 }
 
-void object_rot_z(struct rico_object *object, float deg)
+static void object_rot_z(struct rico_object *object, float deg)
 {
     object->xform.rot.z += deg;
     object_transform_update(object);
 }
 
-void object_rot_z_set(struct rico_object *object, float deg)
+static void object_rot_z_set(struct rico_object *object, float deg)
 {
     object->xform.rot.z = deg;
     object_transform_update(object);
 }
 #endif
 
-void object_scale(struct rico_object *rico, const struct vec3 *v)
+static void object_scale(struct rico_object *rico, const struct vec3 *v)
 {
     v3_add(&rico->xform.scale, v);
     object_transform_update(rico);
 }
 
-void object_scale_set(struct rico_object *rico,
+static void object_scale_set(struct rico_object *rico,
                       const struct vec3 *v)
 {
     rico->xform.scale = *v;
@@ -281,7 +281,7 @@ internal void object_update_static(struct rico_object *obj)
     UNUSED(obj);
 }
 
-void object_update(struct rico_object *obj)
+static void object_update(struct rico_object *obj)
 {
     switch (obj->type)
     {
@@ -294,7 +294,7 @@ void object_update(struct rico_object *obj)
 }
 #endif
 
-void object_render(struct pack *pack, const struct camera *camera)
+static void object_render(struct pack *pack, const struct camera *camera)
 {
     struct program_pbr *prog = prog_pbr;
     RICO_ASSERT(prog->prog_id);
@@ -436,7 +436,7 @@ void object_render(struct pack *pack, const struct camera *camera)
     }
 }
 
-void object_render_ui(struct pack *pack)
+static void object_render_ui(struct pack *pack)
 {
     struct program_text *prog = prog_text;
 
@@ -487,7 +487,7 @@ void object_render_ui(struct pack *pack)
     glUseProgram(0);
 }
 
-void object_render_all(struct camera *camera)
+static void object_render_all(struct camera *camera)
 {
 	for (u32 i = PACK_COUNT; i < ARRAY_COUNT(RICO_packs); ++i)
 	{
@@ -498,7 +498,7 @@ void object_render_all(struct camera *camera)
 	object_render(RICO_packs[PACK_FRAME], camera);
 }
 
-void object_print(struct rico_object *obj)
+static void object_print(struct rico_object *obj)
 {
     string_free_slot(STR_SLOT_SELECTED_OBJ);
 

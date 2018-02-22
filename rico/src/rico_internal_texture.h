@@ -21,8 +21,8 @@ struct rico_texture
     u32 pixels_offset;
 };
 
-void texture_delete(struct rico_texture *texture);
-void texture_bind(pkid pkid, GLenum texture_unit);
-void texture_unbind(pkid pkid, GLenum texture_unit);
+static void texture_delete(struct rico_texture *texture);
+static void texture_bind(pkid pkid, GLenum texture_unit);
+static void texture_unbind(pkid pkid, GLenum texture_unit);
 
 #endif

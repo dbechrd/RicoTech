@@ -18,28 +18,28 @@ extern struct hash_table global_objects;
 //extern struct hash_table global_uids;
 extern struct hash_table global_string_slots;
 
-void hashtable_init(struct hash_table *table, const char *name, u32 count);
-void hashtable_free(struct hash_table *table);
-void *hashtable_search(struct hash_table *table, const void *key, u32 klen);
+static void hashtable_init(struct hash_table *table, const char *name, u32 count);
+static void hashtable_free(struct hash_table *table);
+static void *hashtable_search(struct hash_table *table, const void *key, u32 klen);
 int hashtable_insert(struct hash_table *table, const void *key, u32 klen,
                      const void *val, u32 vlen);
 bool hashtable_delete(struct hash_table *table, const void *key, u32 klen);
 
-void *hashtable_search_str(struct hash_table *table, const char *str);
+static void *hashtable_search_str(struct hash_table *table, const char *str);
 int hashtable_insert_str(struct hash_table *table, const char *str,
                          const void *val, u32 len);
 bool hashtable_delete_str(struct hash_table *table, const char *str);
 #if 0
-void *hashtable_search_uid(struct hash_table *table, const struct uid *uid);
+static void *hashtable_search_uid(struct hash_table *table, const struct uid *uid);
 int hashtable_insert_uid(struct hash_table *table, const struct uid *uid,
                          const void *val, u32 len);
 bool hashtable_delete_uid(struct hash_table *table, const struct uid *uid);
 #endif
-void *hashtable_search_pkid(struct hash_table *table, pkid pkid);
+static void *hashtable_search_pkid(struct hash_table *table, pkid pkid);
 int hashtable_insert_pkid(struct hash_table *table, pkid pkid, const void *val,
                           u32 vlen);
 bool hashtable_delete_pkid(struct hash_table *table, pkid pkid);
 
-void rico_hashtable_init();
+void RICO_hashtable_init();
 
 #endif

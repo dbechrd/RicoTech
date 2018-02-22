@@ -5,8 +5,8 @@
 
 struct rico_mesh;
 
-void bbox_init(struct bbox *bbox, struct vec3 min, struct vec3 max);
-void bbox_init_mesh(struct bbox *bbox, struct rico_mesh *mesh);
+static void bbox_init(struct bbox *bbox, struct vec3 min, struct vec3 max);
+static void bbox_init_mesh(struct bbox *bbox, struct rico_mesh *mesh);
 
 internal inline bool bbox_intersects(const struct bbox *a, const struct bbox *b)
 {

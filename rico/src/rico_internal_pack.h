@@ -36,11 +36,11 @@ internal void *blob_start(struct pack *pack, enum rico_hnd_type type, u32 size,
 internal void pack_expand(struct pack *pack);
 internal void pack_compact_buffer(struct pack *pack);
 
-void *pack_next(pkid pkid, enum rico_hnd_type type);
-void *pack_prev(pkid pkid, enum rico_hnd_type type);
-void pack_delete(pkid pkid);
+static void *pack_next(pkid pkid, enum rico_hnd_type type);
+static void *pack_prev(pkid pkid, enum rico_hnd_type type);
+static void pack_delete(pkid pkid);
 
-void pack_build_default();
+static void pack_build_default();
 
 internal inline void *pack_push(struct pack *pack, u32 bytes)
 {

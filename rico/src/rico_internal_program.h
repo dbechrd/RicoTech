@@ -90,7 +90,7 @@ struct program_pbr
 
 inline void program_pbr_attribs();
 int make_program_pbr(struct program_pbr **_program);
-void free_program_pbr(struct program_pbr **program);
+static void free_program_pbr(struct program_pbr **program);
 
 ///=============================================================================
 //| Primitive program
@@ -122,7 +122,7 @@ struct program_primitive
 
 inline void program_primitive_attribs();
 int make_program_primitive(struct program_primitive **_program);
-void free_program_primitive(struct program_primitive **program);
+static void free_program_primitive(struct program_primitive **program);
 
 ///=============================================================================
 //| Primitive cube program
@@ -152,7 +152,7 @@ struct program_prim_cube
 };
 
 int make_program_prim_cube(struct program_prim_cube **_program);
-void free_program_prim_cube(struct program_prim_cube **program);
+static void free_program_prim_cube(struct program_prim_cube **program);
 
 ///=============================================================================
 //| Text program
@@ -189,8 +189,8 @@ struct program_text
     GLint tex;   // (sampler2D)
 };
 
-void program_text_attribs();
+static void program_text_attribs();
 int make_program_text(struct program_text **_program);
-void free_program_text(struct program_text **program);
+static void free_program_text(struct program_text **program);
 
 #endif

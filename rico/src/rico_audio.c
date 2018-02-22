@@ -94,7 +94,7 @@ void RICO_audio_buffer_load_file(struct rico_audio_buffer *buffer,
 #if 0
 // TODO: Copy rico_mesh auto-load scheme for audio buffers that that are loaded
 //       in from packs.
-void audio_upload(struct ral_audio_buffer *buffer)
+static void audio_upload(struct ral_audio_buffer *buffer)
 {
 
 }

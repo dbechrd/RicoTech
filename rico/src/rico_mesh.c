@@ -1,4 +1,4 @@
-void *mesh_vertices(struct rico_mesh *mesh)
+static void *mesh_vertices(struct rico_mesh *mesh)
 {
     return ((u8 *)mesh + mesh->vertices_offset);
 }
@@ -7,7 +7,7 @@ internal u32 *mesh_elements(struct rico_mesh *mesh)
     return (u32 *)((u8 *)mesh + mesh->elements_offset);
 }
 
-void mesh_upload(struct rico_mesh *mesh, GLenum hint,
+static void mesh_upload(struct rico_mesh *mesh, GLenum hint,
                  enum program_type prog_type)
 {
 #if RICO_DEBUG_MESH
@@ -60,7 +60,7 @@ void mesh_upload(struct rico_mesh *mesh, GLenum hint,
                           sizeof(rgl_mesh));
 }
 
-void mesh_delete(struct rico_mesh *mesh)
+static void mesh_delete(struct rico_mesh *mesh)
 {
     struct rgl_mesh *rgl_mesh = hashtable_search_pkid(&global_meshes,
                                                       mesh->uid.pkid);
@@ -76,7 +76,7 @@ void mesh_delete(struct rico_mesh *mesh)
     hashtable_delete_pkid(&global_meshes, mesh->uid.pkid);
 }
 
-void mesh_render(pkid pkid, enum program_type prog_type)
+static void mesh_render(pkid pkid, enum program_type prog_type)
 {
     struct rgl_mesh *rgl_mesh = hashtable_search_pkid(&global_meshes, pkid);
     if (!rgl_mesh)

@@ -2,8 +2,8 @@ const char *rico_state_string[] = { RICO_STATES(GEN_STRING) };
 
 #define LOAD_SAVE_FILE false
 
-static struct rico_keychord action_chords[ACTION_COUNT] = { 0 };
-static enum rico_action action_queue[32] = { 0 };
+struct rico_keychord action_chords[ACTION_COUNT] = { 0 };
+enum rico_action action_queue[32] = { 0 };
 u32 action_queue_count = 0;
 
 // Human walk speed empirically found to be 33 steps in 20 seconds. That is
@@ -150,7 +150,7 @@ inline bool state_is_paused()
     return (state == STATE_MENU_QUIT);
 }
 
-void render_fps(r64 fps, r64 ms, r64 mcyc)
+static void render_fps(r64 fps, r64 ms, r64 mcyc)
 {
     // TODO: Allow x/y coords to be given in characters instead of pixels
     //       based on FONT_WIDTH / FONT_HEIGHT.

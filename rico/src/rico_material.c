@@ -1,4 +1,4 @@
-void material_bind(pkid pkid)
+static void material_bind(pkid pkid)
 {
     struct rico_material *material = RICO_pack_lookup(pkid);
 
@@ -37,7 +37,7 @@ void material_bind(pkid pkid)
     }
 }
 
-void material_unbind(pkid pkid)
+static void material_unbind(pkid pkid)
 {
     struct rico_material *material = RICO_pack_lookup(pkid);
 

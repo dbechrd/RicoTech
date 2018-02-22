@@ -75,7 +75,7 @@ struct regularpoly *make_regularpoly(struct vec3 center, GLfloat radius,
     return poly;
 }
 
-void free_regularpoly(struct regularpoly *poly)
+static void free_regularpoly(struct regularpoly *poly)
 {
     free(poly->vertices);
     poly->vertices = NULL;
@@ -84,7 +84,7 @@ void free_regularpoly(struct regularpoly *poly)
     poly = NULL;
 }
 
-void set_regularpoly_pos(struct regularpoly *poly, GLfloat x, GLfloat y,
+static void set_regularpoly_pos(struct regularpoly *poly, GLfloat x, GLfloat y,
                          GLfloat z, bool rebuild)
 {
     poly->pos.x = x;
@@ -98,7 +98,7 @@ void set_regularpoly_pos(struct regularpoly *poly, GLfloat x, GLfloat y,
 
 }
 
-void render_regularpoly(struct regularpoly *poly)
+static void render_regularpoly(struct regularpoly *poly)
 {
     RICO_ASSERT(regularpoly_program->prog_id);
 

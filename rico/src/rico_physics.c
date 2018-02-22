@@ -7,13 +7,13 @@ struct rico_physics *make_physics(struct vec3 size)
     return phys;
 }
 
-void free_physics(struct rico_physics *phys)
+static void free_physics(struct rico_physics *phys)
 {
     free(phys);
     phys = NULL;
 }
 
-void update_physics(struct rico_physics *phys, int count)
+static void update_physics(struct rico_physics *phys, int count)
 {
     for (int i = 0; i < count; i++)
     {

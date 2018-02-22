@@ -17,7 +17,7 @@ internal inline bool keys_equal(struct hash_kv *kv, const void *key, u32 klen)
            memcmp(kv->key, key, MIN(sizeof(hkey), klen)) == 0;
 }
 
-void hashtable_init(struct hash_table *table, const char *name, u32 count)
+static void hashtable_init(struct hash_table *table, const char *name, u32 count)
 {
     table->name = name;
     table->count = count;
@@ -27,7 +27,7 @@ void hashtable_init(struct hash_table *table, const char *name, u32 count)
     printf("[hash][init] %s\n", table->hnd.name);
 #endif
 }
-void hashtable_free(struct hash_table *table)
+static void hashtable_free(struct hash_table *table)
 {
 #if RICO_DEBUG_HASH
     printf("[hash][free] %s\n", table->hnd.name);
@@ -35,7 +35,7 @@ void hashtable_free(struct hash_table *table)
 
     free(table->slots);
 }
-void *hashtable_search(struct hash_table *table, const void *key, u32 klen)
+static void *hashtable_search(struct hash_table *table, const void *key, u32 klen)
 {
     hash hash;
     MurmurHash3_x86_32(key, MIN(sizeof(hkey), klen), &hash);
@@ -138,7 +138,7 @@ bool hashtable_delete(struct hash_table *table, const void *key, u32 klen)
     return false;
 }
 
-void *hashtable_search_str(struct hash_table *table, const char *str)
+static void *hashtable_search_str(struct hash_table *table, const char *str)
 {
     void *val = hashtable_search(table, (u8 *)str, dlb_strlen(str));
 #if RICO_DEBUG_HASH
@@ -167,7 +167,7 @@ bool hashtable_delete_str(struct hash_table *table, const char *str)
     return success;
 }
 #if 0
-void *hashtable_search_uid(struct hash_table *table, const struct uid *uid)
+static void *hashtable_search_uid(struct hash_table *table, const struct uid *uid)
 {
     void *val = hashtable_search(table, (u8 *)&uid, sizeof(uid));
 #if RICO_DEBUG_HASH
@@ -195,7 +195,7 @@ bool hashtable_delete_uid(struct hash_table *table, const struct uid *uid)
     return success;
 }
 #endif
-void *hashtable_search_pkid(struct hash_table *table, pkid pkid)
+static void *hashtable_search_pkid(struct hash_table *table, pkid pkid)
 {
     void *val = hashtable_search(table, (u8 *)&pkid, sizeof(pkid));
 #if RICO_DEBUG_HASH

@@ -1,6 +1,6 @@
 // Boring, non-OpenGL-related utility functions
 
-void string_truncate(char *buf, int buf_count, int length)
+static void string_truncate(char *buf, int buf_count, int length)
 {
     if (buf_count < 16)
     {
@@ -47,7 +47,7 @@ int file_contents(const char *filename, u32 *_length, char **_buffer)
     return SUCCESS;
 }
 
-void APIENTRY openglCallbackFunction(GLenum source, GLenum type, GLuint id,
+static void APIENTRY openglCallbackFunction(GLenum source, GLenum type, GLuint id,
                                      GLenum severity, GLsizei length,
                                      const GLchar *message,
                                      const void *userParam)
@@ -131,7 +131,7 @@ void APIENTRY openglCallbackFunction(GLenum source, GLenum type, GLuint id,
     }
 }
 
-void show_info_log(GLuint rico,
+static void show_info_log(GLuint rico,
                    PFNGLGETSHADERIVPROC glGet__iv,
                    PFNGLGETSHADERINFOLOGPROC glGet__InfoLog)
 {
@@ -154,7 +154,7 @@ internal short le_short(unsigned char *bytes)
     return bytes[0] | ((char)bytes[1] << 8);
 }
 
-void *read_tga(const char *filename, int *width, int *height)
+static void *read_tga(const char *filename, int *width, int *height)
 {
     struct tga_header
     {

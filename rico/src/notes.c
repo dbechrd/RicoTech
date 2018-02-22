@@ -3,7 +3,7 @@
 
 //Don't actually call these, it's just notes (w/ syntax highlighting)
 
-void notes_casey()
+static void notes_casey()
 {
     //--------------------------------------------------------------------------
     // Handmade Hero
@@ -451,7 +451,7 @@ void notes_casey()
     // -------------------------------------------------------------------------
 }
 
-void notes_robert()
+static void notes_robert()
 {
     //--------------------------------------------------------------------------
     // Double Buffer
@@ -464,7 +464,7 @@ void notes_robert()
     //--------------------------------------------------------------------------
 }
 
-void notes_gl()
+static void notes_gl()
 {
     /*************************************************************************
     | Generate buffers
@@ -571,7 +571,7 @@ void notes_gl()
     //      effects like a skybox.
 }
 
-void notes_geom()
+static void notes_geom()
 {
 #if 0
     internal inline struct vec3 *v3_add(struct vec3 *a, const struct vec3 *b)

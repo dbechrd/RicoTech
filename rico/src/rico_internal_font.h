@@ -32,6 +32,6 @@ struct rico_font
     pkid tex_pkid;
 };
 
-void font_render(u32 *mesh_id, u32 *tex_id, pkid font_id, float x, float y,
+static void font_render(u32 *mesh_id, u32 *tex_id, pkid font_id, float x, float y,
                  struct vec4 bg, const char *text, const char *mesh_name);
 #endif

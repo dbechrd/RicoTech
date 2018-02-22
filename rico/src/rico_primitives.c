@@ -78,7 +78,7 @@ int prim_init()
 
 // TODO: Queue up primitive requests and batch them within a single
 //       glUseProgram() call.
-void prim_draw_line(const struct vec3 *p0, const struct vec3 *p1,
+static void prim_draw_line(const struct vec3 *p0, const struct vec3 *p1,
                     const struct mat4 *matrix, const struct vec4 color)
 {
     struct vec3 vertices[2] = { *p0, *p1 };
@@ -104,7 +104,7 @@ void prim_draw_line(const struct vec3 *p0, const struct vec3 *p1,
 }
 
 // Render ray as line segment
-void prim_draw_ray(const struct ray *ray, const struct mat4 *matrix,
+static void prim_draw_ray(const struct ray *ray, const struct mat4 *matrix,
                    const struct vec4 color)
 {
     struct vec3 ray_end = ray->orig;
@@ -112,7 +112,7 @@ void prim_draw_ray(const struct ray *ray, const struct mat4 *matrix,
     prim_draw_line(&ray->orig, &ray->dir, matrix, color);
 }
 
-void prim_draw_quad(const struct quad *quad, const struct mat4 *matrix,
+static void prim_draw_quad(const struct quad *quad, const struct mat4 *matrix,
                     const struct vec4 *color)
 {
     RICO_ASSERT(prog_prim->prog_id);
@@ -140,7 +140,7 @@ void prim_draw_quad(const struct quad *quad, const struct mat4 *matrix,
     glUseProgram(0);
 }
 
-void prim_draw_plane(const struct vec3 *p, const struct vec3 *n,
+static void prim_draw_plane(const struct vec3 *p, const struct vec3 *n,
                      const struct mat4 *matrix, const struct vec4 *color)
 {
     UNUSED(p);
@@ -162,7 +162,7 @@ void prim_draw_plane(const struct vec3 *p, const struct vec3 *n,
     prim_draw_quad(&quad, matrix, color);
 }
 
-void prim_draw_bbox(const struct bbox *bbox, const struct mat4 *matrix,
+static void prim_draw_bbox(const struct bbox *bbox, const struct mat4 *matrix,
                     const struct vec4 *color)
 {
     GLfloat vertices[] = {
@@ -210,7 +210,7 @@ void prim_draw_bbox(const struct bbox *bbox, const struct mat4 *matrix,
     glUseProgram(0);
 }
 
-void prim_draw_sphere(const struct sphere *sphere, const struct vec4 *color)
+static void prim_draw_sphere(const struct sphere *sphere, const struct vec4 *color)
 {
     if (cam_player.fill_mode != GL_LINE)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -236,7 +236,7 @@ void prim_draw_sphere(const struct sphere *sphere, const struct vec4 *color)
         glPolygonMode(GL_FRONT_AND_BACK, cam_player.fill_mode);
 }
 
-void prim_free()
+static void prim_free()
 {
     // TODO: Clean-up prim VAO / VBO? Will probably just keep them for life
     //       of the application for now.

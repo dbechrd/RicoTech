@@ -12,7 +12,7 @@ struct rico_physics
 };
 
 struct rico_physics *make_physics(struct vec3 size);
-void free_physics(struct rico_physics *);
-void update_physics(struct rico_physics *, int count);
+static void free_physics(struct rico_physics *);
+static void update_physics(struct rico_physics *, int count);
 
 #endif

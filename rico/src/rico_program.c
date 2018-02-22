@@ -114,7 +114,7 @@ internal inline void program_pbr_get_locations(struct program_pbr *p)
     RICO_ASSERT(p->light.intensity >= 0);
 }
 
-void program_pbr_attribs()
+static void program_pbr_attribs()
 {
     glVertexAttribPointer(LOCATION_PBR_POSITION, 3, GL_FLOAT, GL_FALSE,
                           sizeof(struct pbr_vertex),
@@ -177,7 +177,7 @@ cleanup:
     return err;
 }
 
-void free_program_pbr(struct program_pbr **program)
+static void free_program_pbr(struct program_pbr **program)
 {
     //TODO: Handle error
     if ((*program)->ref_count > 0) {
@@ -208,7 +208,7 @@ internal inline void program_primitive_get_locations(struct program_primitive *p
     p->u_col = program_get_uniform_location(p->prog_id, "u_col");
 }
 
-void program_primitive_attribs()
+static void program_primitive_attribs()
 {
     // TODO: This should have it's own vertex type.. not even sure if this works
     glVertexAttribPointer(LOCATION_PRIM_POSITION, 3, GL_FLOAT, GL_FALSE,
@@ -257,7 +257,7 @@ cleanup:
     return err;
 }
 
-void free_program_primitive(struct program_primitive **program)
+static void free_program_primitive(struct program_primitive **program)
 {
     glDeleteProgram((*program)->prog_id);
     free(*program);
@@ -321,7 +321,7 @@ cleanup:
     return err;
 }
 
-void free_program_prim_cube(struct program_prim_cube **program)
+static void free_program_prim_cube(struct program_prim_cube **program)
 {
     glDeleteProgram((*program)->prog_id);
     free(*program);
@@ -340,7 +340,7 @@ internal inline void program_text_get_locations(struct program_text *p)
     p->tex = program_get_uniform_location(p->prog_id, "tex");
 }
 
-void program_text_attribs()
+static void program_text_attribs()
 {
     glVertexAttribPointer(LOCATION_TEXT_POSITION, 3, GL_FLOAT, GL_FALSE,
                           sizeof(struct text_vertex),
@@ -398,7 +398,7 @@ cleanup:
     return err;
 }
 
-void free_program_text(struct program_text **program)
+static void free_program_text(struct program_text **program)
 {
     glDeleteProgram((*program)->prog_id);
     free(*program);

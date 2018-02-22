@@ -15,7 +15,7 @@ struct rico_material
     // TODO: pkid tex_normal;
 };
 
-void material_bind(pkid pkid);
-void material_unbind(pkid pkid);
+static void material_bind(pkid pkid);
+static void material_unbind(pkid pkid);
 
 #endif

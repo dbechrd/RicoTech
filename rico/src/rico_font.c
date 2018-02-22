@@ -41,8 +41,9 @@ internal void font_setblend(const struct rico_font *font)
 	}
 }
 
-void font_render(u32 *mesh_id, u32 *tex_id, pkid font_id, float x, float y,
-                 struct vec4 bg, const char *text, const char *mesh_name)
+static void font_render(u32 *mesh_id, u32 *tex_id, pkid font_id, float x,
+                        float y, struct vec4 bg, const char *text,
+                        const char *mesh_name)
 {
     // TODO: Use instanced quad?
     // Persistent buffers for font rendering
@@ -141,16 +142,16 @@ void font_render(u32 *mesh_id, u32 *tex_id, pkid font_id, float x, float y,
 /*
 
 bool Load(char *fname);
-void SetScreen(int x, int y);
-void SetCursor(int x, int y);
-void SetColor(float Red, float Green, float Blue);
-void ReverseYAxis(bool State);
-void Select();
-void Bind();
-void SetBlend();
-void Print(char *Text);
-void Print(char *Text, int x, int y);
-void ezPrint(char *Text, int x, int y);
+static void SetScreen(int x, int y);
+static void SetCursor(int x, int y);
+static void SetColor(float Red, float Green, float Blue);
+static void ReverseYAxis(bool State);
+static void Select();
+static void Bind();
+static void SetBlend();
+static void Print(char *Text);
+static void Print(char *Text, int x, int y);
+static void ezPrint(char *Text, int x, int y);
 int  GetWidth(char *Text);
 
 int CellX,CellY,YOffset,RowPitch;

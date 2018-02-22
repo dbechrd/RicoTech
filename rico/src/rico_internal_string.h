@@ -11,8 +11,8 @@ struct rico_string
     u32 lifespan;
 };
 
-void string_delete(struct rico_string *str);
+static void string_delete(struct rico_string *str);
 bool string_free_slot(enum rico_string_slot slot);
-void string_update();
+static void string_update();
 
 #endif

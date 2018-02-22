@@ -362,7 +362,7 @@ void RICO_pack_free(u32 id)
     RICO_packs[id] = 0;
 }
 
-void *pack_next(pkid pkid, enum rico_hnd_type type)
+static void *pack_next(pkid pkid, enum rico_hnd_type type)
 {
     u32 pack_id = PKID_PACK(pkid);
     u32 blob_id = PKID_BLOB(pkid);
@@ -390,7 +390,7 @@ void *pack_next(pkid pkid, enum rico_hnd_type type)
     return NULL;
 }
 
-void *pack_prev(pkid pkid, enum rico_hnd_type type)
+static void *pack_prev(pkid pkid, enum rico_hnd_type type)
 {
     u32 pack_id = PKID_PACK(pkid);
     u32 blob_id = PKID_BLOB(pkid);
@@ -418,7 +418,7 @@ void *pack_prev(pkid pkid, enum rico_hnd_type type)
     return NULL;
 }
 
-void pack_delete(pkid pkid)
+static void pack_delete(pkid pkid)
 {
     u32 pack_id = PKID_PACK(pkid);
     u32 blob_id = PKID_BLOB(pkid);
@@ -882,7 +882,7 @@ cleanup:
     return err;
 }
 
-void pack_build_default()
+static void pack_build_default()
 {
 	// TODO: This entire pack could be embedded as binary data in the .exe once
 	//       the contents are finalized. This would allow the engine to run even

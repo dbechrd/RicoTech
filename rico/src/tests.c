@@ -1,4 +1,4 @@
-void test_geom()
+static void test_geom()
 {
     //TODO: Use Unity test framework (http://www.throwtheswitch.org/unity)
     //http://www.drdobbs.com/testing/unit-testing-in-c-tools-and-conventions/240156344
@@ -36,7 +36,7 @@ void test_geom()
     mat4_print(&a);
 }
 
-void test_hashtable()
+static void test_hashtable()
 {
     struct hash_table *table = &global_textures;
 
@@ -59,7 +59,7 @@ void test_hashtable()
     RICO_ASSERT(hashtable_delete_pkid(table, key_pkid));
 }
 
-void test_ndc_macros()
+static void test_ndc_macros()
 {
     const struct vec2 top_left = VEC2(
         SCREEN_X(0.0f),
@@ -157,7 +157,7 @@ cleanup:
 }
 #endif
 
-void run_tests()
+static void run_tests()
 {
     test_geom();
     test_hashtable();
