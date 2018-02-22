@@ -101,10 +101,19 @@ struct quat
     };
 };
 
+// HACK: Make gcc shut up about missing braces bug. While this syntax is
+//       technically valid in VS, it makes Intellisense whine and misbehave.
+#if defined(__GNUC__) || defined(__clang__)
 #define VEC2(x, y)       ((struct vec2) {{{ x, y }}})
 #define VEC3(x, y, z)    ((struct vec3) {{{ x, y, z }}})
 #define VEC4(x, y, z, w) ((struct vec4) {{{ x, y, z, w }}})
 #define QUAT(w, x, y, z) ((struct quat) { w, {{ x, y, z }}})
+#else
+#define VEC2(x, y)       ((struct vec2) { x, y })
+#define VEC3(x, y, z)    ((struct vec3) { x, y, z })
+#define VEC4(x, y, z, w) ((struct vec4) { x, y, z, w })
+#define QUAT(w, x, y, z) ((struct quat) { w, x, y, z })
+#endif
 
 #define COLOR_TRANSPARENT             VEC4(0.0f, 0.0f, 0.0f, 0.0f)
 #define COLOR_BLACK                   VEC4(0.0f, 0.0f, 0.0f, 1.0f)
