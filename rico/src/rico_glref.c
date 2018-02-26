@@ -249,8 +249,10 @@ static void edit_delete()
     if (!selected_obj_id)
         return;
 
+    u32 selected_prev = selected_obj_id;
     pack_delete(selected_obj_id);
-    edit_object_prev();
+    selected_obj_id = 0;
+    edit_object_select(pack_prev(selected_prev, RICO_HND_OBJECT), false);
 }
 static struct widget *widget_test()
 {

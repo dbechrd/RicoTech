@@ -210,9 +210,10 @@ static void *pack_prev(pkid pkid, enum RICO_hnd_type type)
     u32 idx = start_idx;
     do
     {
-        idx--;
         if (idx == 0)
             idx = pack->blobs_used - 1;
+        else
+            idx--;
 
         if (pack->index[idx].type == type)
         {
@@ -361,7 +362,9 @@ extern void *RICO_pack_lookup(pkid pkid)
 
     u32 blob_id = PKID_BLOB(pkid);
     RICO_ASSERT(blob_id < pack->blob_count);
-    return pack_read(pack, pack->lookup[blob_id]);
+
+    u32 id = pack->lookup[blob_id];
+    return pack_read(pack, id);
 }
 extern struct pack *RICO_pack_init(u32 id, const char *name, u32 blob_count,
                                    u32 buffer_size)

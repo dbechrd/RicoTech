@@ -57,10 +57,10 @@ void pack_build_alpha(u32 id)
     DLB_ASSERT(mat_bricks);
 
 	pkid mesh_door, mesh_terrain;
+    RICO_load_obj_file(pack, "mesh/alpha_terrain_001.obj", &mesh_terrain);
 	RICO_load_obj_file(pack, "mesh/alpha_door_001.obj", &mesh_door);
-	RICO_load_obj_file(pack, "mesh/alpha_staircase_001.obj", 0);
+    RICO_load_obj_file(pack, "mesh/alpha_staircase_001.obj", 0);
 	RICO_load_obj_file(pack, "mesh/alpha_wall_001.obj", 0);
-	RICO_load_obj_file(pack, "mesh/alpha_terrain_001.obj", &mesh_terrain);
 	RICO_load_obj_file(pack, "mesh/alpha_game_panel.obj", 0);
 	RICO_load_obj_file(pack, "mesh/alpha_game_button.obj", 0);
 
@@ -83,7 +83,7 @@ void pack_build_alpha(u32 id)
     timmy->audio_on = true;
 
 	RICO_pack_save(pack, PATH_ALPHA, false);
-    RICO_pack_save(pack_sav, PATH_ALPHA_SAV, false);
+    //RICO_pack_save(pack_sav, PATH_ALPHA_SAV, false);
     RICO_pack_free(pack->id);
 	RICO_pack_free(pack_sav->id);
 }
@@ -121,7 +121,7 @@ void timmy_interact(struct timmy *obj)
     (obj->audio_on) ? RICO_audio_unmute() : RICO_audio_mute();
 }
 
-RICO_EVENT_OBJECT(object_interact)
+void object_interact(struct RICO_object *obj)
 {
     switch (obj->type)
     {
@@ -147,6 +147,8 @@ int main(int argc, char **argv)
 {
     UNUSED(argc);
     UNUSED(argv);
+
+    UNUSED(panel_1);
 
 	//main_nuklear(argc, argv);
     RICO_init();
