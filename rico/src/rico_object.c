@@ -5,16 +5,16 @@ RICO_event_object_def *RICO_event_object_interact;
 static void object_delete(struct RICO_object *obj)
 {
     // TODO: Make sure all of the properties get cleaned up properly
-    pack_delete(obj->mesh_pkid);
-    pack_delete(obj->material_pkid);
+    pack_delete(obj->mesh_id);
+    pack_delete(obj->material_id);
 }
 
 static struct RICO_object *object_copy(struct pack *pack,
                                        struct RICO_object *other,
                                        const char *name)
 {
-    pkid new_obj_pkid = RICO_load_object(pack, other->type, 0, name);
-    struct RICO_object *new_obj = RICO_pack_lookup(new_obj_pkid);
+    pkid new_obj_id = RICO_load_object(pack, other->type, 0, name);
+    struct RICO_object *new_obj = RICO_pack_lookup(new_obj_id);
 
     // TODO: Make sure to update any ref counting we're using to prevent e.g.
     //       mesh or texture from being deleted when still in use.
@@ -27,15 +27,15 @@ static struct RICO_object *object_copy(struct pack *pack,
 static void object_bbox_recalculate(struct RICO_object *obj)
 {
     struct RICO_mesh *mesh;
-    if (obj->mesh_pkid)
+    if (obj->mesh_id)
     {
-        mesh = RICO_pack_lookup(obj->mesh_pkid);
+        mesh = RICO_pack_lookup(obj->mesh_id);
     }
     else
     {
         mesh = RICO_pack_lookup(MESH_DEFAULT_CUBE);
     }
-    obj->RICO_bbox = mesh->RICO_bbox;
+    obj->bbox = mesh->bbox;
 }
 static void object_bbox_recalculate_all(struct pack *pack)
 {
@@ -50,15 +50,15 @@ static void object_bbox_recalculate_all(struct pack *pack)
         if (obj->type < RICO_OBJECT_TYPE_START)
             continue;
 
-        if (obj->mesh_pkid)
+        if (obj->mesh_id)
         {
-            mesh = RICO_pack_lookup(obj->mesh_pkid);
+            mesh = RICO_pack_lookup(obj->mesh_id);
         }
         else
         {
             mesh = RICO_pack_lookup(MESH_DEFAULT_CUBE);
         }
-        obj->RICO_bbox = mesh->RICO_bbox;
+        obj->bbox = mesh->bbox;
     }
 }
 static bool object_selectable(struct RICO_object *rico)
@@ -67,16 +67,16 @@ static bool object_selectable(struct RICO_object *rico)
 }
 static void object_select_toggle(struct RICO_object *rico)
 {
-    rico->RICO_bbox.selected = !rico->RICO_bbox.selected;
+    rico->bbox.selected = !rico->bbox.selected;
 }
 static void object_select(struct RICO_object *rico)
 {
     RICO_ASSERT(object_selectable(rico));
-    rico->RICO_bbox.selected = true;
+    rico->bbox.selected = true;
 }
 static void object_deselect(struct RICO_object *rico)
 {
-    rico->RICO_bbox.selected = false;
+    rico->bbox.selected = false;
 }
 static void object_transform_update(struct RICO_object *rico)
 {
@@ -163,7 +163,7 @@ static const struct mat4 *object_matrix_get(struct RICO_object *rico)
 static bool object_collide_ray(float *_dist, struct RICO_object *rico,
                                const struct ray *ray)
 {
-    return collide_ray_obb(_dist, ray, &rico->RICO_bbox, &rico->xform.matrix);
+    return collide_ray_obb(_dist, ray, &rico->bbox, &rico->xform.matrix);
 }
 static bool object_collide_ray_type(struct pack *pack,
                                     struct RICO_object **_object, float *_dist,
@@ -183,7 +183,7 @@ static bool object_collide_ray_type(struct pack *pack,
         if (obj->type == RICO_OBJECT_TYPE_TERRAIN)
             continue;
 
-        collided = collide_ray_obb(&distance, ray, &obj->RICO_bbox,
+        collided = collide_ray_obb(&distance, ray, &obj->bbox,
                                    &obj->xform.matrix);
 
         // If closest so far, save info
@@ -311,17 +311,17 @@ static void object_render(struct pack *pack, const struct camera *camera)
 
         // Bind material
         pkid mat_id = MATERIAL_DEFAULT;
-        if (obj->material_pkid)
+        if (obj->material_id)
         {
-            mat_id = obj->material_pkid;
+            mat_id = obj->material_id;
         }
         material_bind(mat_id);
 
         // Render
         pkid mesh_id = MESH_DEFAULT_CUBE;
-        if (obj->mesh_pkid)
+        if (obj->mesh_id)
         {
-            mesh_id = obj->mesh_pkid;
+            mesh_id = obj->mesh_id;
         }
         mesh_render(mesh_id, prog->type);
 
@@ -343,9 +343,9 @@ static void object_render(struct pack *pack, const struct camera *camera)
         if (state_is_edit(state_get()))
         {
             struct vec4 color = COLOR_WHITE_HIGHLIGHT;
-            if (obj->RICO_bbox.selected)
+            if (obj->bbox.selected)
                 color = COLOR_RED;
-            prim_draw_bbox(&obj->RICO_bbox,
+            prim_draw_bbox(&obj->bbox,
                            &obj->xform.matrix, &color);
         }
     }
@@ -388,9 +388,9 @@ static void object_render_ui(struct pack *pack)
 
         // Render
         pkid mesh_id = 0;
-        if (obj->mesh_pkid)
+        if (obj->mesh_id)
         {
-            mesh_id = obj->mesh_pkid;
+            mesh_id = obj->mesh_id;
         }
         RICO_ASSERT(mesh_id);
         mesh_render(mesh_id, prog->type);
@@ -421,10 +421,10 @@ static void object_print(struct RICO_object *obj)
 
     if (obj)
     {
-        struct RICO_mesh *mesh = (obj->mesh_pkid)
-            ? RICO_pack_lookup(obj->mesh_pkid) : NULL;
-        struct RICO_material *material = (obj->material_pkid)
-            ? RICO_pack_lookup(obj->material_pkid) : NULL;
+        struct RICO_mesh *mesh = (obj->mesh_id)
+            ? RICO_pack_lookup(obj->mesh_id) : NULL;
+        struct RICO_material *material = (obj->material_id)
+            ? RICO_pack_lookup(obj->material_id) : NULL;
 
         const char *mesh_str = "---";
         u32 mesh_verts = 0;
@@ -492,11 +492,11 @@ static void object_print(struct RICO_object *obj)
             obj->xform.orientation.w, obj->xform.orientation.x,
             obj->xform.orientation.y, obj->xform.orientation.z,
             obj->xform.scale.x, obj->xform.scale.y, obj->xform.scale.z,
-            obj->RICO_bbox.min.x, obj->RICO_bbox.min.y, obj->RICO_bbox.min.z,
-            obj->RICO_bbox.max.x, obj->RICO_bbox.max.y, obj->RICO_bbox.max.z,
-            PKID_PACK(obj->mesh_pkid), PKID_BLOB(obj->mesh_pkid), mesh_str,
+            obj->bbox.min.x, obj->bbox.min.y, obj->bbox.min.z,
+            obj->bbox.max.x, obj->bbox.max.y, obj->bbox.max.z,
+            PKID_PACK(obj->mesh_id), PKID_BLOB(obj->mesh_id), mesh_str,
             mesh_verts,
-            PKID_PACK(obj->material_pkid), PKID_BLOB(obj->material_pkid),
+            PKID_PACK(obj->material_id), PKID_BLOB(obj->material_id),
             material_str,
             PKID_PACK(mat_tex0_id), PKID_BLOB(mat_tex0_id), mat_tex0_str,
             PKID_PACK(mat_tex1_id), PKID_BLOB(mat_tex1_id), mat_tex1_str,

@@ -135,7 +135,7 @@ static void font_render(u32 *mesh_id, u32 *tex_id, pkid font_id, float x,
 
     RICO_ASSERT(new_mesh_id);
     *mesh_id = new_mesh_id;
-    *tex_id = font->tex_pkid;
+    *tex_id = font->tex_id;
 }
 
 /*

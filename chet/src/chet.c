@@ -6,22 +6,32 @@
 enum game_object_type
 {
     OBJ_TIMMY = RICO_OBJECT_TYPE_START,
-    OBJ_ETC
+    OBJ_GAME_PANEL,
+    OBJ_GAME_BUTTON
 };
 
-RICO_OBJECT(timmy)
-    u32 light_id;
-    u32 audio_id;
-    bool state;
+struct timmy
+{
+    struct RICO_object rico;
+    bool lights_on;
+    bool audio_on;
 };
 
-//struct timmy
-//{
-//    struct rico_object rico;
-//    u32 light_id;
-//    u32 audio_id;
-//    bool state;
-//};
+struct game_button
+{
+    struct RICO_object rico;
+};
+
+struct game_panel
+{
+    struct RICO_object rico;
+    struct game_button buttons[9];
+};
+
+static struct game_panel panel_1;
+
+static const char *PATH_ALPHA = "packs/alpha.pak";
+static const char *PATH_ALPHA_SAV = "packs/alpha_sav.pak";
 
 void pack_build_alpha(u32 id)
 {
@@ -33,54 +43,49 @@ void pack_build_alpha(u32 id)
 	// TODO: Split objects (state) from resources (materials, textures, audio).
 	//       pack_state: all world objects (for now)
 	//       pack_alpha: textures, materials, audio, etc. specific to alpha
-	const char *filename = "packs/alpha.pak";
 
-	struct pack *pack = RICO_pack_init(id, filename, 128, MB(256));
-	pkid bricks_diff = RICO_load_texture_file(pack, "Bricks_diff", "texture/cobble_diff.tga");
-	pkid bricks_mrao = RICO_load_texture_file(pack, "Bricks_mrao", "texture/cobble_mrao.tga");
-	pkid bricks_emis = RICO_load_texture_color(pack, "Bricks_emis", COLOR_TRANSPARENT);
-	pkid bricks_mat = RICO_load_material(pack, "Bricks", bricks_diff, bricks_mrao, bricks_emis);
+	struct pack *pack = RICO_pack_init(id, PATH_ALPHA, 64, MB(32));
+	pkid tex_bricks_diff = RICO_load_texture_file(pack, "bricks_diff", "texture/cobble_diff.tga");
+	pkid tex_bricks_mrao = RICO_load_texture_file(pack, "bricks_mrao", "texture/cobble_mrao.tga");
+	pkid tex_bricks_emis = RICO_load_texture_color(pack, "bricks_emis", COLOR_TRANSPARENT);
+	pkid mat_bricks = RICO_load_material(pack, "bricks", tex_bricks_diff, tex_bricks_mrao, tex_bricks_emis);
+    pkid mat_timmy = RICO_load_material(pack, "timmy", 0, 0, 0);
 
-    DLB_ASSERT(bricks_mrao);
-    DLB_ASSERT(bricks_diff);
-    DLB_ASSERT(bricks_emis);
-    DLB_ASSERT(bricks_mat);
+    DLB_ASSERT(tex_bricks_mrao);
+    DLB_ASSERT(tex_bricks_diff);
+    DLB_ASSERT(tex_bricks_emis);
+    DLB_ASSERT(mat_bricks);
 
-	pkid door_mesh_pkid, ground_mesh_pkid;
-	RICO_load_obj_file(pack, "mesh/alpha_door_001.obj", &door_mesh_pkid);
+	pkid mesh_door, mesh_terrain;
+	RICO_load_obj_file(pack, "mesh/alpha_door_001.obj", &mesh_door);
 	RICO_load_obj_file(pack, "mesh/alpha_staircase_001.obj", 0);
 	RICO_load_obj_file(pack, "mesh/alpha_wall_001.obj", 0);
-	RICO_load_obj_file(pack, "mesh/alpha_terrain_001.obj", &ground_mesh_pkid);
+	RICO_load_obj_file(pack, "mesh/alpha_terrain_001.obj", &mesh_terrain);
 	RICO_load_obj_file(pack, "mesh/alpha_game_panel.obj", 0);
 	RICO_load_obj_file(pack, "mesh/alpha_game_button.obj", 0);
 
-    DLB_ASSERT(door_mesh_pkid);
-    DLB_ASSERT(ground_mesh_pkid);
+    DLB_ASSERT(mesh_door);
+    DLB_ASSERT(mesh_terrain);
 
-    pkid ground_pkid = RICO_load_object(pack, RICO_OBJECT_TYPE_TERRAIN, 0,
-                                        "Ground");
-    struct RICO_object *ground = RICO_pack_lookup(ground_pkid);
-    ground->mesh_pkid = ground_mesh_pkid;
-    ground->material_pkid = bricks_mat;
+    struct pack *pack_sav = RICO_pack_init(id + 1, PATH_ALPHA_SAV, 512, MB(32));
+    pkid terrain_id = RICO_load_object(pack_sav, RICO_OBJECT_TYPE_TERRAIN, 0, "terrain");
+    struct RICO_object *terrain = RICO_pack_lookup(terrain_id);
+    terrain->mesh_id = mesh_terrain;
+    terrain->material_id = mat_bricks;
 
-    pkid timmy_mat_pkid = RICO_load_material(pack, "Timmy", 0, 0, 0);
-    pkid timmy_pkid = RICO_load_object(pack, OBJ_TIMMY, sizeof(struct timmy),
-                                       "Timmy");
-    struct timmy *timmy = RICO_pack_lookup(timmy_pkid);
-    struct RICO_mesh *door_mesh = RICO_pack_lookup(door_mesh_pkid);
-    timmy->rico.mesh_pkid = door_mesh_pkid;
-    timmy->rico.material_pkid = timmy_mat_pkid;
-    timmy->rico.RICO_bbox = door_mesh->RICO_bbox;
-    timmy->audio_id = 19;
-    timmy->light_id = 68;
-    // TODO: How do I implement this...?
-    //timmy->light_switch =
-    //    (struct light_switch) { 3, true };
-    //timmy->audio_switch =
-    //    (struct audio_switch) { 3, true };
+    pkid timmy_id = RICO_load_object(pack_sav, OBJ_TIMMY, sizeof(struct timmy), "timmy");
+    struct timmy *timmy = RICO_pack_lookup(timmy_id);
+    struct RICO_mesh *door_mesh = RICO_pack_lookup(mesh_door);
+    timmy->rico.mesh_id = mesh_door;
+    timmy->rico.material_id = mat_timmy;
+    timmy->rico.bbox = door_mesh->bbox;
+    timmy->lights_on = true;
+    timmy->audio_on = true;
 
-	RICO_pack_save(pack, filename, false);
-	RICO_pack_free(pack->id);
+	RICO_pack_save(pack, PATH_ALPHA, false);
+    RICO_pack_save(pack_sav, PATH_ALPHA_SAV, false);
+    RICO_pack_free(pack->id);
+	RICO_pack_free(pack_sav->id);
 }
 
 void pack_build_all()
@@ -93,7 +98,8 @@ int pack_load_all()
 {
 	enum RICO_error err;
 
-	err = RICO_pack_load("packs/alpha.pak", &pack_active);
+    err = RICO_pack_load(PATH_ALPHA, 0);
+    err = RICO_pack_load(PATH_ALPHA_SAV, &pack_active);
 
 	for (u32 i = 0; i < ARRAY_COUNT(RICO_packs); ++i)
 	{
@@ -108,12 +114,11 @@ int pack_load_all()
 
 void timmy_interact(struct timmy *obj)
 {
-    UNUSED(obj);
-    RICO_lighting_enabled = !RICO_lighting_enabled;
+    obj->lights_on = !obj->lights_on;
+    RICO_lighting_enabled = obj->lights_on;
 
-    static bool audio_play = true;
-    audio_play = !audio_play;
-    (audio_play) ? RICO_audio_unmute() : RICO_audio_mute();
+    obj->audio_on = !obj->audio_on;
+    (obj->audio_on) ? RICO_audio_unmute() : RICO_audio_mute();
 }
 
 RICO_EVENT_OBJECT(object_interact)

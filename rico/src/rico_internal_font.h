@@ -29,7 +29,7 @@ struct RICO_font
     bool y_invert;
     u8 render_style;
     u8 char_widths[256];
-    pkid tex_pkid;
+    pkid tex_id;
 };
 
 static void font_render(u32 *mesh_id, u32 *tex_id, pkid font_id, float x,

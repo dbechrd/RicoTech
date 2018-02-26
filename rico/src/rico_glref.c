@@ -5,7 +5,7 @@ static const char *widget_action_string[] = { WIDGET_ACTIONS(GEN_STRING) };
 
 struct widget
 {
-    struct RICO_bbox RICO_bbox;
+    struct RICO_bbox bbox;
     enum widget_action action;
 };
 static struct widget widgets[3];
@@ -22,16 +22,16 @@ static void editor_init()
     const float offset = WIDGET_BOX_OFFSET;
     const float radius = WIDGET_BOX_RADIUS;
 
-    widgets[0].RICO_bbox.min = VEC3(offset - radius, -radius, -radius);
-    widgets[0].RICO_bbox.max = VEC3(offset + radius, radius, radius);
+    widgets[0].bbox.min = VEC3(offset - radius, -radius, -radius);
+    widgets[0].bbox.max = VEC3(offset + radius, radius, radius);
     widgets[0].action = WIDGET_TRANSLATE_X;
 
-    widgets[1].RICO_bbox.min = VEC3(-radius, offset - radius, -radius);
-    widgets[1].RICO_bbox.max = VEC3(radius, offset + radius, radius);
+    widgets[1].bbox.min = VEC3(-radius, offset - radius, -radius);
+    widgets[1].bbox.max = VEC3(radius, offset + radius, radius);
     widgets[1].action = WIDGET_TRANSLATE_Y;
 
-    widgets[2].RICO_bbox.min = VEC3(-radius, -radius, offset - radius);
-    widgets[2].RICO_bbox.max = VEC3(radius, radius, offset + radius);
+    widgets[2].bbox.min = VEC3(-radius, -radius, offset - radius);
+    widgets[2].bbox.max = VEC3(radius, radius, offset + radius);
     widgets[2].action = WIDGET_TRANSLATE_Z;
 }
 static void edit_object_create(struct pack *pack)
@@ -40,8 +40,8 @@ static void edit_object_create(struct pack *pack)
     const char *name = "new_obj";
 
     // Create new object and select it
-    pkid obj_pkid = RICO_load_object(pack, RICO_OBJECT_TYPE_START, 0, name);
-    struct RICO_object *obj = RICO_pack_lookup(obj_pkid);
+    pkid obj_id = RICO_load_object(pack, RICO_OBJECT_TYPE_START, 0, name);
+    struct RICO_object *obj = RICO_pack_lookup(obj_id);
     edit_object_select(obj, false);
 }
 static void edit_bbox_reset_all()
@@ -104,7 +104,7 @@ static void edit_translate(struct camera *camera, const struct vec3 *offset)
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
 
     // HACK: There's probably a better way to do this check
-    bool has_bbox = !v3_equals(&obj->RICO_bbox.min, &obj->RICO_bbox.max);
+    bool has_bbox = !v3_equals(&obj->bbox.min, &obj->bbox.max);
 
     if (v3_equals(offset, &VEC3_ZERO))
     {
@@ -165,11 +165,11 @@ static void edit_material_next()
         return;
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
-    struct RICO_material *next_material = pack_next(obj->material_pkid,
+    struct RICO_material *next_material = pack_next(obj->material_id,
                                                     RICO_HND_MATERIAL);
     if (next_material)
     {
-        obj->material_pkid = next_material->uid.pkid;
+        obj->material_id = next_material->uid.pkid;
         object_print(obj);
     }
 }
@@ -179,11 +179,11 @@ static void edit_material_prev()
         return;
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
-    struct RICO_material *prev_material = pack_prev(obj->material_pkid,
+    struct RICO_material *prev_material = pack_prev(obj->material_id,
                                                     RICO_HND_MATERIAL);
     if (prev_material)
     {
-        obj->material_pkid = prev_material->uid.pkid;
+        obj->material_id = prev_material->uid.pkid;
         object_print(obj);
     }
 }
@@ -193,12 +193,12 @@ static void edit_mesh_next()
         return;
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
-    struct RICO_mesh *next_mesh = pack_next(obj->mesh_pkid,
+    struct RICO_mesh *next_mesh = pack_next(obj->mesh_id,
                                             RICO_HND_MESH);
     if (next_mesh)
     {
-        obj->mesh_pkid = next_mesh->uid.pkid;
-        obj->RICO_bbox = next_mesh->RICO_bbox;
+        obj->mesh_id = next_mesh->uid.pkid;
+        obj->bbox = next_mesh->bbox;
         object_select(obj);
         object_print(obj);
     }
@@ -209,12 +209,12 @@ static void edit_mesh_prev()
         return;
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
-    struct RICO_mesh *prev_mesh = pack_prev(obj->mesh_pkid,
+    struct RICO_mesh *prev_mesh = pack_prev(obj->mesh_id,
                                             RICO_HND_MESH);
     if (prev_mesh)
     {
-        obj->mesh_pkid = prev_mesh->uid.pkid;
-        obj->RICO_bbox = prev_mesh->RICO_bbox;
+        obj->mesh_id = prev_mesh->uid.pkid;
+        obj->bbox = prev_mesh->bbox;
         object_select(obj);
         object_print(obj);
     }
@@ -225,8 +225,8 @@ static void edit_bbox_reset()
         return;
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
-    struct RICO_mesh *mesh = RICO_pack_lookup(obj->mesh_pkid);
-    obj->RICO_bbox = mesh->RICO_bbox;
+    struct RICO_mesh *mesh = RICO_pack_lookup(obj->mesh_id);
+    obj->bbox = mesh->bbox;
 
     object_select(obj);
     object_print(obj);
@@ -269,7 +269,7 @@ static struct widget *widget_test()
         for (u32 i = 0; i < ARRAY_COUNT(widgets); ++i)
         {
             float dist;
-            bool collide = collide_ray_bbox(&dist, &cam_ray, &widgets[i].RICO_bbox,
+            bool collide = collide_ray_bbox(&dist, &cam_ray, &widgets[i].bbox,
 											&xform);
             if (collide && dist < dist_min)
             {
@@ -419,9 +419,9 @@ static void edit_render()
         prim_draw_line(&VEC3_ZERO, &VEC3_Y, &xform, COLOR_GREEN);
         prim_draw_line(&VEC3_ZERO, &VEC3_Z, &xform, COLOR_BLUE);
         
-        prim_draw_bbox(&widgets[0].RICO_bbox, &xform, &COLOR_RED);
-        prim_draw_bbox(&widgets[1].RICO_bbox, &xform, &COLOR_GREEN);
-        prim_draw_bbox(&widgets[2].RICO_bbox, &xform, &COLOR_BLUE);
+        prim_draw_bbox(&widgets[0].bbox, &xform, &COLOR_RED);
+        prim_draw_bbox(&widgets[1].bbox, &xform, &COLOR_GREEN);
+        prim_draw_bbox(&widgets[2].bbox, &xform, &COLOR_BLUE);
     }
 
 #if 0

@@ -27,9 +27,9 @@ struct RICO_object
     struct uid uid;
     u32 type;
     struct RICO_transform xform;
-    struct RICO_bbox RICO_bbox;
-    pkid mesh_pkid;
-    pkid material_pkid;
+    struct RICO_bbox bbox;
+    pkid mesh_id;
+    pkid material_id;
 };
 
 #define RICO_OBJECT(name) struct name { struct RICO_object rico;

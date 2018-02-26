@@ -341,7 +341,7 @@ static void pack_build_default()
 
     struct RICO_font *font = RICO_pack_lookup(font_id);
     RICO_ASSERT(font_id == FONT_DEFAULT);
-    RICO_ASSERT(font->tex_pkid == FONT_DEFAULT_TEXTURE);
+    RICO_ASSERT(font->tex_id == FONT_DEFAULT_TEXTURE);
     RICO_ASSERT(diff_id == TEXTURE_DEFAULT_DIFF);
     RICO_ASSERT(spec_id == TEXTURE_DEFAULT_SPEC);
     RICO_ASSERT(emis_id == TEXTURE_DEFAULT_EMIS);
@@ -371,6 +371,7 @@ extern struct pack *RICO_pack_init(u32 id, const char *name, u32 blob_count,
     RICO_ASSERT(blob_count < MAX_PACK_BLOBS);
     RICO_ASSERT(buffer_size < MAX_PACK_BUF_SIZE);
     RICO_ASSERT(id < MAX_PACKS);
+    RICO_ASSERT(!RICO_packs[id]);
 
     perf_pack_tick_start = SDL_GetTicks();
 
@@ -589,13 +590,13 @@ extern pkid RICO_load_texture_file(struct pack *pack, const char *name,
         goto cleanup;
     }
 
-    pkid tex_pkid = RICO_load_texture(pack, name, GL_TEXTURE_2D, (u32)width,
+    pkid tex_id = RICO_load_texture(pack, name, GL_TEXTURE_2D, (u32)width,
                                  (u32)height, 32, pixels);
 
 cleanup:
     stbi_image_free(pixels);
-    if (err) blob_error(pack, &tex_pkid);
-    return tex_pkid;
+    if (err) blob_error(pack, &tex_id);
+    return tex_id;
 }
 extern pkid RICO_load_texture_color(struct pack *pack, const char *name,
                                     struct vec4 color)
@@ -625,7 +626,7 @@ extern pkid RICO_load_font_file(struct pack *pack, const char *name,
                                 const char *filename)
 {
     enum RICO_error err;
-    pkid font_pkid = 0;
+    pkid font_id = 0;
 
     // Read font file
     char *buffer = NULL;
@@ -687,7 +688,7 @@ extern pkid RICO_load_font_file(struct pack *pack, const char *name,
     // Store character widths
     memcpy(font->char_widths, &buffer[WIDTH_DATA_OFFSET], 256);
 
-    font_pkid = font->uid.pkid;
+    font_id = font->uid.pkid;
     blob_end(pack);
 
     //------------------------------------------------------------
@@ -703,15 +704,15 @@ extern pkid RICO_load_font_file(struct pack *pack, const char *name,
     push_data(pack, &buffer[MAP_DATA_OFFSET], tex_width * tex_height,
               tex_bpp / 8);
 
-    pkid tex0_pkid = tex0->uid.pkid;
+    pkid tex0_id = tex0->uid.pkid;
     blob_end(pack);
 
-    font = RICO_pack_lookup(font_pkid);
-    font->tex_pkid = tex0_pkid;
+    font = RICO_pack_lookup(font_id);
+    font->tex_id = tex0_id;
 
 cleanup:
     free(buffer);
-    return font_pkid;
+    return font_id;
 }
 extern pkid RICO_load_mesh(struct pack *pack, const char *name, u32 vertex_size,
                            u32 vertex_count, const void *vertex_data,
@@ -746,10 +747,10 @@ extern pkid RICO_load_string(struct pack *pack, enum RICO_string_slot slot,
     u32 font_tex_id;
     font_render(&font_mesh_id, &font_tex_id, font, x, y, color, text, name);
 
-    pkid str_object_pkid =
+    pkid str_object_id =
         RICO_load_object(pack, RICO_OBJECT_TYPE_STRING_SCREEN, 0, name);
-    struct RICO_object *str_object = RICO_pack_lookup(str_object_pkid);
-    str_object->mesh_pkid = font_mesh_id;
+    struct RICO_object *str_object = RICO_pack_lookup(str_object_id);
+    str_object->mesh_id = font_mesh_id;
 
     struct RICO_string *str = blob_start(pack, RICO_HND_STRING, 0, "bloop");
     str->slot = slot;
@@ -813,7 +814,7 @@ extern int RICO_load_obj_file(struct pack *pack, const char *filename,
                                          idx_vertex, vertices, idx_element,
                                          elements);
                 struct RICO_mesh *mesh = RICO_pack_lookup(last_mesh_id);
-                bbox_init_mesh(&mesh->RICO_bbox, mesh);
+                bbox_init_mesh(&mesh->bbox, mesh);
 
                 idx_mesh++;
                 if (idx_mesh > 10)
@@ -908,7 +909,7 @@ extern int RICO_load_obj_file(struct pack *pack, const char *filename,
         last_mesh_id = RICO_load_mesh(pack, name, sizeof(*vertices), idx_vertex,
                                  vertices, idx_element, elements);
         struct RICO_mesh *mesh = RICO_pack_lookup(last_mesh_id);
-        bbox_init_mesh(&mesh->RICO_bbox, mesh);
+        bbox_init_mesh(&mesh->bbox, mesh);
 
         idx_mesh++;
     }
