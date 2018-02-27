@@ -31,7 +31,7 @@ struct game_panel
 static struct game_panel panel_1;
 
 static const char *PATH_ALPHA = "packs/alpha.pak";
-static const char *PATH_ALPHA_SAV = "packs/alpha_sav.pak";
+//static const char *PATH_ALPHA_SAV = "packs/alpha_sav.pak";
 
 void pack_build_alpha(u32 id)
 {
@@ -67,13 +67,13 @@ void pack_build_alpha(u32 id)
     DLB_ASSERT(mesh_door);
     DLB_ASSERT(mesh_terrain);
 
-    struct pack *pack_sav = RICO_pack_init(id + 1, PATH_ALPHA_SAV, 512, MB(32));
-    pkid terrain_id = RICO_load_object(pack_sav, RICO_OBJECT_TYPE_TERRAIN, 0, "terrain");
+    //struct pack *pack_sav = RICO_pack_init(id + 1, PATH_ALPHA_SAV, 512, MB(32));
+    pkid terrain_id = RICO_load_object(pack, RICO_OBJECT_TYPE_TERRAIN, 0, "terrain");
     struct RICO_object *terrain = RICO_pack_lookup(terrain_id);
     terrain->mesh_id = mesh_terrain;
     terrain->material_id = mat_bricks;
 
-    pkid timmy_id = RICO_load_object(pack_sav, OBJ_TIMMY, sizeof(struct timmy), "timmy");
+    pkid timmy_id = RICO_load_object(pack, OBJ_TIMMY, sizeof(struct timmy), "timmy");
     struct timmy *timmy = RICO_pack_lookup(timmy_id);
     struct RICO_mesh *door_mesh = RICO_pack_lookup(mesh_door);
     timmy->rico.mesh_id = mesh_door;
@@ -82,10 +82,12 @@ void pack_build_alpha(u32 id)
     timmy->lights_on = true;
     timmy->audio_on = true;
 
+    RICO_load_object(pack, OBJ_GAME_BUTTON, sizeof(struct game_button), "button");
+
 	RICO_pack_save(pack, PATH_ALPHA, false);
     //RICO_pack_save(pack_sav, PATH_ALPHA_SAV, false);
     RICO_pack_free(pack->id);
-	RICO_pack_free(pack_sav->id);
+	//RICO_pack_free(pack_sav->id);
 }
 
 void pack_build_all()
@@ -98,8 +100,8 @@ int pack_load_all()
 {
 	enum RICO_error err;
 
-    err = RICO_pack_load(PATH_ALPHA, 0);
-    err = RICO_pack_load(PATH_ALPHA_SAV, &pack_active);
+    err = RICO_pack_load(PATH_ALPHA, &pack_active);
+    //err = RICO_pack_load(PATH_ALPHA_SAV, &pack_active);
 
 	for (u32 i = 0; i < ARRAY_COUNT(RICO_packs); ++i)
 	{
@@ -121,12 +123,23 @@ void timmy_interact(struct timmy *obj)
     (obj->audio_on) ? RICO_audio_unmute() : RICO_audio_mute();
 }
 
+struct RICO_audio_buffer audio_buffer_button;
+struct RICO_audio_source audio_source_button;
+void game_button_interact(struct game_button *obj)
+{
+    UNUSED(obj);
+    RICO_audio_source_play(&audio_source_button);
+}
+
 void object_interact(struct RICO_object *obj)
 {
     switch (obj->type)
     {
         case OBJ_TIMMY:
             timmy_interact((struct timmy *)obj);
+            break;
+        case OBJ_GAME_BUTTON:
+            game_button_interact((struct game_button *)obj);
             break;
     }
 }
@@ -140,8 +153,7 @@ DLB_ASSERT_HANDLER(handle_assert)
 DLB_assert_handler_def *DLB_assert_handler = handle_assert;
 #endif
 
-struct RICO_audio_buffer buffer;
-struct RICO_audio_source source;
+
 
 int main(int argc, char **argv)
 {
@@ -158,10 +170,16 @@ int main(int argc, char **argv)
     RICO_event_object_interact = &object_interact;
 
     // TODO: Add audio to pack
+    struct RICO_audio_buffer buffer;
+    struct RICO_audio_source source;
     RICO_audio_buffer_load_file(&buffer, "audio/thunder_storm.raw");
     RICO_audio_source_init(&source);
     RICO_audio_source_buffer(&source, &buffer);
     RICO_audio_source_play_loop(&source);
+
+    RICO_audio_buffer_load_file(&audio_buffer_button, "audio/door_bang.raw");
+    RICO_audio_source_init(&audio_source_button);
+    RICO_audio_source_buffer(&audio_source_button, &audio_buffer_button);
 
 	RICO_run();
 	RICO_quit();

@@ -210,10 +210,8 @@ static void *pack_prev(pkid pkid, enum RICO_hnd_type type)
     u32 idx = start_idx;
     do
     {
-        if (idx == 0)
-            idx = pack->blobs_used - 1;
-        else
-            idx--;
+        if (!idx) idx = pack->blobs_used;
+        idx--;
 
         if (pack->index[idx].type == type)
         {
