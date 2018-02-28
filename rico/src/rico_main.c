@@ -199,6 +199,10 @@ static void init_opengl()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
 }
+static void window_render()
+{
+    SDL_GL_SwapWindow(window);
+}
 
 int RICO_init()
 {
@@ -230,58 +234,7 @@ error:
     if (err) printf("Error: %s", RICO_error_string[err]);
     return err;
 }
-int RICO_run()
-{
-    enum RICO_error err = SUCCESS;
-
-    RICO_bind_action(ACTION_RICO_TEST, CHORD1(SDL_SCANCODE_Z));
-
-    while (!SDL_QuitRequested())
-    {
-        ////////////////////////////////////////////////////////////////////////
-        // TODO: How do I check for SDL resize window events?
-        ////////////////////////////////////////////////////////////////////////
-        /*
-        // Resize OpenGL viewport
-        else if (event.type == SDL_WINDOWEVENT_SIZE)
-        {
-        glViewport(0, 0, event.window.event.size.width,
-        event.window.event.size.height);
-        *handled = true;
-        }
-        */
-
-        err = engine_update();
-        if (err) break;
-
-        enum RICO_action action = RICO_key_event();
-        while (action)
-        {
-            switch (action)
-            {
-                case ACTION_RICO_TEST:
-                    RICO_ASSERT(0);
-                    break;
-                default: break;
-            }
-            action = RICO_key_event();
-        }
-
-        if (state_get() == STATE_ENGINE_SHUTDOWN)
-            break;
-
-        SDL_GL_SwapWindow(window);
-
-#if RICO_DEBUG
-        // HACK: Kill some time (a.k.a. save my computer from lighting itself on
-        //       fire when VSync is disabled)
-        SDL_Delay(1);
-#endif
-    }
-
-    return err;
-}
-void RICO_quit()
+void RICO_cleanup()
 {
     printf("------------------------------------------------------------\n");
     printf("[MAIN][term] Clean up\n");

@@ -5,9 +5,14 @@
 
 enum game_object_type
 {
-    OBJ_TIMMY = RICO_OBJECT_TYPE_START,
+    OBJ_TIMMY = RICO_OBJECT_TYPE_COUNT,
     OBJ_GAME_PANEL,
     OBJ_GAME_BUTTON
+};
+
+enum actions
+{
+    ACTION_RICO_TEST = ACTION_COUNT
 };
 
 struct timmy
@@ -153,14 +158,13 @@ DLB_ASSERT_HANDLER(handle_assert)
 DLB_assert_handler_def *DLB_assert_handler = handle_assert;
 #endif
 
-
-
 int main(int argc, char **argv)
 {
     UNUSED(argc);
     UNUSED(argv);
 
     UNUSED(panel_1);
+    enum RICO_error err = SUCCESS;
 
 	//main_nuklear(argc, argv);
     RICO_init();
@@ -168,6 +172,8 @@ int main(int argc, char **argv)
 	pack_load_all();
 
     RICO_event_object_interact = &object_interact;
+
+    RICO_bind_action(ACTION_RICO_TEST, CHORD1(SDL_SCANCODE_Z));
 
     // TODO: Add audio to pack
     struct RICO_audio_buffer buffer;
@@ -181,7 +187,27 @@ int main(int argc, char **argv)
     RICO_audio_source_init(&audio_source_button);
     RICO_audio_source_buffer(&audio_source_button, &audio_buffer_button);
 
-	RICO_run();
-	RICO_quit();
-	return 0;
+    while (!RICO_quit())
+    {
+        err = RICO_update();
+        if (err) break;
+
+        // TODO: Everything that happens here is delayed by a frame
+        enum RICO_action action = RICO_key_event();
+        while (action)
+        {
+            switch (action)
+            {
+                case ACTION_RICO_TEST:
+                    RICO_audio_source_play(&audio_source_button);
+                    break;
+                default:
+                    break;
+            }
+            action = RICO_key_event();
+        }
+    }
+
+    RICO_cleanup();
+    return err;
 }

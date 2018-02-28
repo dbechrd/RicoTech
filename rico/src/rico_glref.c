@@ -39,8 +39,9 @@ static void edit_object_create(struct pack *pack)
     // TODO: Prompt user for object name
     const char *name = "new_obj";
 
+    // HACK: Use first user-defined type
     // Create new object and select it
-    pkid obj_id = RICO_load_object(pack, RICO_OBJECT_TYPE_START, 0, name);
+    pkid obj_id = RICO_load_object(pack, RICO_OBJECT_TYPE_COUNT, 0, name);
     struct RICO_object *obj = RICO_pack_lookup(obj_id);
     edit_object_select(obj, false);
 }

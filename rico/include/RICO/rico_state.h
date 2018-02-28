@@ -124,12 +124,12 @@ enum RICO_action
     ACTION_EDIT_MESH_PREVIOUS,
     ACTION_EDIT_MESH_BBOX_RECALCULATE,
 
-    ACTION_RICO_TEST,
-
     ACTION_COUNT
 };
 
-enum RICO_action RICO_key_event();
-void RICO_bind_action(enum RICO_action action, struct RICO_keychord chord);
+extern int RICO_update();
+extern bool RICO_quit();
+extern u32 RICO_key_event();
+extern void RICO_bind_action(u32 action, struct RICO_keychord chord);
 
 #endif

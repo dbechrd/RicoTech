@@ -2,8 +2,13 @@ static const char *rico_state_string[] = { RICO_STATES(GEN_STRING) };
 
 #define LOAD_SAVE_FILE false
 
-static struct RICO_keychord action_chords[ACTION_COUNT] = { 0 };
-static enum RICO_action action_queue[32] = { 0 };
+#define MAX_ACTIONS 256
+#define MAX_ACTIONS_QUEUED 32
+
+// u32 action -> keychord
+static struct RICO_keychord action_chords[MAX_ACTIONS] = { 0 };
+// int index -> u32 action
+static u32 action_queue[MAX_ACTIONS_QUEUED] = { 0 };
 static u32 action_queue_count = 0;
 
 // Human walk speed empirically found to be 33 steps in 20 seconds. That is
@@ -86,34 +91,34 @@ static const RICO_key RICO_SCANCODE_RMB   = (RICO_key)306;
 #define KEY_PRESSED(key)  ( KEY_IS_DOWN(key) && !KEY_WAS_DOWN(key))
 #define KEY_RELEASED(key) (!KEY_IS_DOWN(key) &&  KEY_WAS_DOWN(key))
 
-static inline bool chord_is_down(enum RICO_action action)
-{
-    RICO_ASSERT(action_chords[action].keys[0] ||
-                action_chords[action].keys[1] ||
-                action_chords[action].keys[2]);
+#define CHORD_VALID(chord) (chord.keys[0] || chord.keys[1] || chord.keys[2])
 
+static inline bool chord_is_down(u32 action)
+{
     // All keys are down
-    return (KEY_IS_DOWN(action_chords[action].keys[0]) &&
+    return (CHORD_VALID(action_chords[action]) &&
+            KEY_IS_DOWN(action_chords[action].keys[0]) &&
             KEY_IS_DOWN(action_chords[action].keys[1]) &&
             KEY_IS_DOWN(action_chords[action].keys[2]));
 }
-static inline bool chord_was_down(enum RICO_action action)
+static inline bool chord_was_down(u32 action)
 {
     RICO_ASSERT(action_chords[action].keys[0] ||
                 action_chords[action].keys[1] ||
                 action_chords[action].keys[2]);
 
     // All keys were down last frame
-    return (KEY_WAS_DOWN(action_chords[action].keys[0]) &&
+    return (CHORD_VALID(action_chords[action]) &&
+            KEY_WAS_DOWN(action_chords[action].keys[0]) &&
             KEY_WAS_DOWN(action_chords[action].keys[1]) &&
             KEY_WAS_DOWN(action_chords[action].keys[2]));
 }
-static inline bool chord_pressed(enum RICO_action action)
+static inline bool chord_pressed(u32 action)
 {
     // All keys are down, and at least one was up last frame
     return chord_is_down(action) && !chord_was_down(action);
 }
-static inline bool chord_released(enum RICO_action action)
+static inline bool chord_released(u32 action)
 {
     // At least one key is up, and all were down last frame
     return !chord_is_down(action) && chord_was_down(action);
@@ -164,9 +169,22 @@ static void render_fps(r64 fps, r64 ms, r64 mcyc)
                 COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
 }
 
-static int engine_update()
+extern int RICO_update()
 {
     enum RICO_error err;
+
+    ////////////////////////////////////////////////////////////////////////
+    // TODO: How do I check for SDL resize window events?
+    ////////////////////////////////////////////////////////////////////////
+    /*
+    // Resize OpenGL viewport
+    else if (event.type == SDL_WINDOWEVENT_SIZE)
+    {
+    glViewport(0, 0, event.window.event.size.width,
+    event.window.event.size.height);
+    *handled = true;
+    }
+    */
 
     ///-------------------------------------------------------------------------
     //| Clear previous frame
@@ -204,8 +222,12 @@ static int engine_update()
     ///-------------------------------------------------------------------------
     //| State actions
     ///-------------------------------------------------------------------------
-    state_prev = state;
+    if (SDL_QuitRequested())
+    {
+        state = STATE_ENGINE_SHUTDOWN;
+    }
 
+    state_prev = state;
     err = state_handlers[state].run();
     if (err) return err;
 
@@ -303,6 +325,13 @@ static int engine_update()
 	object_render_all(alpha, &cam_player);
     edit_render();
     camera_render(&cam_player);
+    window_render();
+
+#if RICO_DEBUG
+    // HACK: Kill some time (a.k.a. save my computer from lighting itself on
+    //       fire when VSync is disabled)
+    SDL_Delay(1);
+#endif
 
     return err;
 }
@@ -954,7 +983,10 @@ static int state_engine_shutdown()
 }
 static void rico_check_key_events()
 {
-    for (enum RICO_action i = ACTION_RICO_TEST; i < ACTION_COUNT; ++i)
+    // NOTE: Starting at 1 because action 0 is ACTION_NULL
+    u32 i = 1;
+    while (i < ARRAY_COUNT(action_chords) &&
+           action_queue_count < ARRAY_COUNT(action_queue))
     {
         if (action_queue_count >= ARRAY_COUNT(action_queue))
             return;
@@ -964,11 +996,16 @@ static void rico_check_key_events()
             action_queue[action_queue_count] = i;
             action_queue_count++;
         }
+        i++;
     }
 }
-extern enum RICO_action RICO_key_event()
+extern bool RICO_quit()
 {
-    enum RICO_action action = ACTION_NULL;
+    return state_get() == STATE_ENGINE_SHUTDOWN;
+}
+extern u32 RICO_key_event()
+{
+    u32 action = 0;
     if (action_queue_count)
     {
         // TODO: Circular queue
@@ -978,9 +1015,9 @@ extern enum RICO_action RICO_key_event()
     }
     return action;
 }
-extern void RICO_bind_action(enum RICO_action action,
-                             struct RICO_keychord chord)
+extern void RICO_bind_action(u32 action, struct RICO_keychord chord)
 {
+    RICO_ASSERT(action < ARRAY_COUNT(action_chords));
     action_chords[action] = chord;
 }
 static int engine_init()

@@ -9,7 +9,7 @@
 enum RICO_object_type
 {
     RICO_OBJECT_TYPES(GEN_LIST)
-    RICO_OBJECT_TYPE_START = 16
+    RICO_OBJECT_TYPE_COUNT
 };
 extern const char *RICO_obj_type_string[];
 

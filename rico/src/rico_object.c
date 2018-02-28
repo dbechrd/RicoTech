@@ -47,7 +47,7 @@ static void object_bbox_recalculate_all(struct pack *pack)
             continue;
 
         obj = pack_read(pack, index);
-        if (obj->type < RICO_OBJECT_TYPE_START)
+        if (obj->type < RICO_OBJECT_TYPE_COUNT)
             continue;
 
         if (obj->mesh_id)

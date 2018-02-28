@@ -73,4 +73,6 @@ struct pack; // Cleanup: Can we move these to the top of this file or something?
 #include "tinyobjloader.h"
 #include "MurmurHash3.h"
 
+static void window_render();
+
 #endif
