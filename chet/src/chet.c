@@ -183,7 +183,7 @@ int main(int argc, char **argv)
     RICO_audio_source_buffer(&source, &buffer);
     RICO_audio_source_play_loop(&source);
 
-    RICO_audio_buffer_load_file(&audio_buffer_button, "audio/door_bang.raw");
+    RICO_audio_buffer_load_file(&audio_buffer_button, "audio/bloop2.raw");
     RICO_audio_source_init(&audio_source_button);
     RICO_audio_source_buffer(&audio_source_button, &audio_buffer_button);
 
