@@ -164,9 +164,9 @@ static void render_fps(r64 fps, r64 ms, r64 mcyc)
                        mcyc);
     string_truncate(buf, sizeof(buf), len);
     string_free_slot(STR_SLOT_FPS);
-    RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_FPS,
-                SCREEN_X(-(FONT_WIDTH * len)), SCREEN_Y(0),
-                COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
+    RICO_load_string(PACK_TRANSIENT, STR_SLOT_FPS,
+                     SCREEN_X(-(FONT_WIDTH * len)), SCREEN_Y(0),
+                     COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
 }
 
 extern int RICO_update()
@@ -255,7 +255,7 @@ extern int RICO_update()
         string_truncate(buf, sizeof(buf), len);
 
         string_free_slot(STR_SLOT_STATE);
-        RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_STATE,
+        RICO_load_string(PACK_TRANSIENT, STR_SLOT_STATE,
                          SCREEN_X(0), SCREEN_Y(0), COLOR_DARK_RED_HIGHLIGHT, 0,
                          0, buf);
     }
@@ -399,7 +399,7 @@ static int shared_engine_events()
             len = snprintf(buf, sizeof(buf), "Volume: 100%%");
         }
         string_truncate(buf, sizeof(buf), len);
-        RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_DYNAMIC,
+        RICO_load_string(PACK_TRANSIENT, STR_SLOT_DYNAMIC,
                          SCREEN_X(-FONT_WIDTH * 12), SCREEN_Y(0),
                          COLOR_DARK_GRAY, 1000, 0, buf);
     }
@@ -407,7 +407,7 @@ static int shared_engine_events()
     else if (chord_pressed(ACTION_ENGINE_QUIT))
     {
         string_free_slot(STR_SLOT_MENU_QUIT);
-        RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_MENU_QUIT,
+        RICO_load_string(PACK_TRANSIENT, STR_SLOT_MENU_QUIT,
                          SCREEN_X(SCREEN_W / 2 - 92),
                          SCREEN_Y(SCREEN_H / 2 - 128),
                          COLOR_DARK_GREEN_HIGHLIGHT, 0, 0,
@@ -548,7 +548,7 @@ static int shared_edit_events()
     // Create new object
     else if (chord_pressed(ACTION_EDIT_CREATE_OBJECT))
     {
-        edit_object_create(pack_active);
+        edit_object_create();
     }
     // Delete selected object
     else if (chord_pressed(ACTION_EDIT_SELECTED_DELETE))
@@ -558,7 +558,7 @@ static int shared_edit_events()
     // Save chunk
     else if (chord_pressed(ACTION_EDIT_SAVE))
     {
-		err = RICO_pack_save(pack_active, pack_active->name, false);
+		err = RICO_pack_save(RICO_pack_active, 0, false);
     }
 
 	if (cursor_moved || !v3_equals(&player_acc, &VEC3_ZERO))
@@ -684,7 +684,7 @@ static int state_edit_translate()
         int len = snprintf(buf, sizeof(buf), "Trans Delta: %f", trans_delta);
         string_truncate(buf, sizeof(buf), len);
         string_free_slot(STR_SLOT_DELTA);
-        RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_DELTA,
+        RICO_load_string(PACK_TRANSIENT, STR_SLOT_DELTA,
                          SCREEN_X(0), SCREEN_Y(0), COLOR_DARK_BLUE_HIGHLIGHT,
                          1000, 0, buf);
     }
@@ -776,7 +776,7 @@ static int state_edit_rotate()
         string_truncate(buf, sizeof(buf), len);
 
         string_free_slot(STR_SLOT_DELTA);
-        RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_DELTA,
+        RICO_load_string(PACK_TRANSIENT, STR_SLOT_DELTA,
                          SCREEN_X(0), SCREEN_Y(0), COLOR_DARK_BLUE_HIGHLIGHT,
                          1000, 0, buf);
     }
@@ -867,7 +867,7 @@ static int state_edit_scale()
         int len = snprintf(buf, sizeof(buf), "Scale Delta: %f", scale_delta);
         string_truncate(buf, sizeof(buf), len);
         string_free_slot(STR_SLOT_DELTA);
-        RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_DELTA,
+        RICO_load_string(PACK_TRANSIENT, STR_SLOT_DELTA,
                          SCREEN_X(0), SCREEN_Y(0), COLOR_DARK_BLUE_HIGHLIGHT,
                          1000, 0, buf);
     }
@@ -929,7 +929,7 @@ static int state_menu_quit()
     if (KEY_PRESSED(SDL_SCANCODE_Y) || KEY_PRESSED(SDL_SCANCODE_RETURN))
     {
         string_free_slot(STR_SLOT_MENU_QUIT);
-		err = RICO_pack_save(pack_active, pack_active->name, false);
+		err = RICO_pack_save(RICO_pack_active, 0, false);
         state = STATE_ENGINE_SHUTDOWN;
     }
     // [N] / [Escape]: Return to play mode

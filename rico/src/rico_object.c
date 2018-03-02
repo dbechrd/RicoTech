@@ -9,8 +9,7 @@ static void object_delete(struct RICO_object *obj)
     pack_delete(obj->material_id);
 }
 
-static struct RICO_object *object_copy(struct pack *pack,
-                                       struct RICO_object *other,
+static struct RICO_object *object_copy(u32 pack, struct RICO_object *other,
                                        const char *name)
 {
     pkid new_obj_id = RICO_load_object(pack, other->type, 0, name);
@@ -37,8 +36,9 @@ static void object_bbox_recalculate(struct RICO_object *obj)
     }
     obj->bbox = mesh->bbox;
 }
-static void object_bbox_recalculate_all(struct pack *pack)
+static void object_bbox_recalculate_all(u32 id)
 {
+    struct pack *pack = packs[id];
     struct RICO_object *obj;
     struct RICO_mesh *mesh;
     for (u32 index = 1; index < pack->blobs_used; ++index)
@@ -165,14 +165,14 @@ static bool object_collide_ray(float *_dist, struct RICO_object *rico,
 {
     return collide_ray_obb(_dist, ray, &rico->bbox, &rico->xform.matrix);
 }
-static bool object_collide_ray_type(struct pack *pack,
-                                    struct RICO_object **_object, float *_dist,
-                                    const struct ray *ray)
+static bool object_collide_ray_type(u32 id, struct RICO_object **_object,
+                                    float *_dist, const struct ray *ray)
 {
     bool collided;
     float distance;
     *_dist = Z_FAR; // Track closest object
 
+    struct pack *pack = packs[id];
     struct RICO_object *obj = 0;
     for (u32 index = 1; index < pack->blobs_used; ++index)
     {
@@ -404,13 +404,13 @@ static void object_render_all(r64 alpha, struct camera *camera)
 {
     UNUSED(alpha);
 
-	for (u32 i = PACK_COUNT; i < ARRAY_COUNT(RICO_packs); ++i)
+	for (u32 i = PACK_COUNT; i < ARRAY_COUNT(packs); ++i)
 	{
-		if (RICO_packs[i])
-			object_render(RICO_packs[i], camera);
+		if (packs[i])
+			object_render(packs[i], camera);
 	}
-	object_render(RICO_packs[PACK_TRANSIENT], camera);
-	object_render(RICO_packs[PACK_FRAME], camera);
+	object_render(packs[PACK_TRANSIENT], camera);
+	object_render(packs[PACK_FRAME], camera);
 }
 static void object_print(struct RICO_object *obj)
 {
@@ -509,7 +509,7 @@ static void object_print(struct RICO_object *obj)
     }
 
     string_truncate(buf, sizeof(buf), len);
-    RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_SELECTED_OBJ,
+    RICO_load_string(PACK_TRANSIENT, STR_SLOT_SELECTED_OBJ,
                      SCREEN_X(0), SCREEN_Y(FONT_HEIGHT),
                      COLOR_DARK_GRAY_HIGHLIGHT, 0, 0, buf);
 }

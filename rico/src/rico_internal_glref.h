@@ -19,7 +19,7 @@ static struct program_primitive *prog_prim;
 static struct program_text *prog_text;
 
 static void editor_init();
-static void edit_object_create(struct pack *pack);
+static void edit_object_create();
 static void edit_bbox_reset_all();
 static void edit_object_select(struct RICO_object *obj, bool force);
 static void edit_object_next();

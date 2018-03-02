@@ -130,8 +130,8 @@ static void font_render(u32 *mesh_id, u32 *tex_id, pkid font_id, float x,
     }
 
     pkid new_mesh_id =
-        RICO_load_mesh(RICO_packs[PACK_TRANSIENT], mesh_name, sizeof(*vertices),
-                       idx_vertex, vertices, idx_element, elements);
+        RICO_load_mesh(PACK_TRANSIENT, mesh_name, sizeof(*vertices), idx_vertex,
+                       vertices, idx_element, elements);
 
     RICO_ASSERT(new_mesh_id);
     *mesh_id = new_mesh_id;

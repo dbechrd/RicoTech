@@ -151,7 +151,7 @@ static void camera_update(struct camera *camera)
                        camera->fov_deg);
 	string_truncate(buf, sizeof(buf), len);
 	string_free_slot(STR_SLOT_DEBUG_CAMERA);
-	RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_DEBUG_CAMERA,
+	RICO_load_string(PACK_TRANSIENT, STR_SLOT_DEBUG_CAMERA,
                      SCREEN_X(-(FONT_WIDTH * 16)), SCREEN_Y(FONT_HEIGHT),
                      COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
 #endif

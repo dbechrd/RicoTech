@@ -34,20 +34,21 @@ static void editor_init()
     widgets[2].bbox.max = VEC3(radius, radius, offset + radius);
     widgets[2].action = WIDGET_TRANSLATE_Z;
 }
-static void edit_object_create(struct pack *pack)
+static void edit_object_create()
 {
     // TODO: Prompt user for object name
     const char *name = "new_obj";
 
     // HACK: Use first user-defined type
     // Create new object and select it
-    pkid obj_id = RICO_load_object(pack, RICO_OBJECT_TYPE_COUNT, 0, name);
+    pkid obj_id = RICO_load_object(RICO_pack_active, RICO_OBJECT_TYPE_COUNT, 0,
+                                   name);
     struct RICO_object *obj = RICO_pack_lookup(obj_id);
     edit_object_select(obj, false);
 }
 static void edit_bbox_reset_all()
 {
-    object_bbox_recalculate_all(pack_active);
+    object_bbox_recalculate_all(RICO_pack_active);
 
     // Reselect current object
     if (selected_obj_id)
@@ -241,8 +242,8 @@ static void edit_duplicate()
     const char *name = "Duplicate";
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
-    struct RICO_object *new_obj = object_copy(RICO_packs[PKID_PACK(selected_obj_id)],
-                                              obj, name);
+    struct RICO_object *new_obj = object_copy(PKID_PACK(selected_obj_id), obj,
+                                              name);
     edit_object_select(new_obj, false);
 }
 static void edit_delete()
@@ -284,7 +285,7 @@ static struct widget *widget_test()
         if (widget)
         {
             string_free_slot(STR_SLOT_WIDGET);
-            RICO_load_string(RICO_packs[PACK_TRANSIENT], STR_SLOT_WIDGET,
+            RICO_load_string(PACK_TRANSIENT, STR_SLOT_WIDGET,
                              SCREEN_X(0), SCREEN_Y(FONT_HEIGHT),
                              COLOR_DARK_CYAN, 0, 0,
                              widget_action_string[widget->action]);
@@ -301,7 +302,7 @@ static struct RICO_object *mouse_first_obj()
     // Camera forward ray v. scene
     struct ray cam_ray = { 0 };
     camera_fwd_ray(&cam_ray, &cam_player);
-    object_collide_ray_type(pack_active, &obj_collided, &dist, &cam_ray);
+    object_collide_ray_type(RICO_pack_active, &obj_collided, &dist, &cam_ray);
 
     return obj_collided;
 }
@@ -446,13 +447,13 @@ static void edit_render()
     //--------------------------------------------------------------------------
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    for (u32 i = PACK_COUNT; i < ARRAY_COUNT(RICO_packs); ++i)
+    for (u32 i = PACK_COUNT; i < ARRAY_COUNT(packs); ++i)
     {
-        if (RICO_packs[i])
-            object_render_ui(RICO_packs[i]);
+        if (packs[i])
+            object_render_ui(packs[i]);
     }
-    object_render_ui(RICO_packs[PACK_TRANSIENT]);
-    object_render_ui(RICO_packs[PACK_FRAME]);
+    object_render_ui(packs[PACK_TRANSIENT]);
+    object_render_ui(packs[PACK_FRAME]);
 }
 static void free_glref()
 {
@@ -460,7 +461,7 @@ static void free_glref()
     // TODO: What are chunks used for now? How/when do we need to free them?
     free(pack_frame);
     free(pack_transient);
-    free(pack_active);
+    free(RICO_pack_active);
     free(pack_default);
 
     // TODO: Free chunks/pools if still using any

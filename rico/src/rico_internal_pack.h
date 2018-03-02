@@ -10,25 +10,9 @@
 #define PKID_BLOB(id) (id & PKID_BLOB_MASK)
 #define PKID_GENERATE(pack, blob) ((pack << PKID_BLOB_BITS) | blob)
 
-enum PACK_IDS
-{
-    PACK_DEFAULT,
-    PACK_TRANSIENT,
-    PACK_FRAME,
-    PACK_COUNT
-};
-
-enum DEFAULT_IDS
-{
-    FONT_DEFAULT = 1,
-    FONT_DEFAULT_TEXTURE,
-    TEXTURE_DEFAULT_DIFF,
-    TEXTURE_DEFAULT_SPEC,
-    TEXTURE_DEFAULT_EMIS,
-    MATERIAL_DEFAULT,
-    MESH_DEFAULT_CUBE,
-    MESH_DEFAULT_SPHERE
-};
+#define MAX_PACKS 32
+struct pack *packs[MAX_PACKS];
+u32 packs_next;
 
 static void *pack_next(pkid pkid, enum RICO_hnd_type type);
 static void *pack_prev(pkid pkid, enum RICO_hnd_type type);
