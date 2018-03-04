@@ -32,10 +32,11 @@ struct RICO_object
     pkid material_id;
 };
 
+/* CLEANUP: Stuff
 #define RICO_OBJECT(name) struct name { struct RICO_object rico;
 
 #define RICO_EVENT_OBJECT(name) void name(struct RICO_object *obj)
 typedef RICO_EVENT_OBJECT(RICO_event_object_def);
 extern RICO_event_object_def *RICO_event_object_interact;
-
+*/
 #endif

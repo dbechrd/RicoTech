@@ -1,6 +1,4 @@
 const char *RICO_obj_type_string[] = { RICO_OBJECT_TYPES(GEN_STRING) };
-//const char *rico_prop_type_string[] = { RICO_PROP_TYPES(GEN_STRING) };
-RICO_event_object_def *RICO_event_object_interact;
 
 static void object_delete(struct RICO_object *obj)
 {
@@ -196,18 +194,6 @@ static bool object_collide_ray_type(u32 id, struct RICO_object **_object,
     }
 
     return collided;
-}
-static void object_interact(struct RICO_object *obj)
-{
-    if (state_is_edit())
-    {
-        object_select_toggle(obj);
-    }
-    else if (!state_is_paused())
-    {
-        if (RICO_event_object_interact)
-            RICO_event_object_interact(obj);
-    }
 }
 static void object_render(struct pack *pack, const struct camera *camera)
 {

@@ -1,16 +1,35 @@
 #ifndef RICO_STATE_H
 #define RICO_STATE_H
 
-typedef u16 RICO_key;
-
 struct RICO_keychord
 {
-    RICO_key keys[3];
+    u16 keys[3];
+    u8 repeat;
+    u8 on_release;
 };
 
-#define CHORD3(k0, k1, k2) (struct RICO_keychord) {{ k0, k1, k2 }}
+#define CHORD3(k0, k1, k2) (struct RICO_keychord) {{ k0, k1, k2 }, 0, 0 }
 #define CHORD2(k0, k1) CHORD3(k0, k1, 0)
 #define CHORD1(k0)     CHORD3(k0, 0, 0)
+
+#define CHORD_UP3(k0, k1, k2) (struct RICO_keychord) {{ k0, k1, k2 }, 0, 1 }
+#define CHORD_UP2(k0, k1) CHORD_UP3(k0, k1, 0)
+#define CHORD_UP1(k0)     CHORD_UP3(k0, 0, 0)
+
+#define CHORD_REPEAT3(k0, k1, k2) (struct RICO_keychord) {{ k0, k1, k2 }, 1, 0 }
+#define CHORD_REPEAT2(k0, k1) CHORD_REPEAT3(k0, k1, 0)
+#define CHORD_REPEAT1(k0)     CHORD_REPEAT3(k0, 0, 0)
+
+#define CHORD_UP_REPEAT3(k0, k1, k2) (struct RICO_keychord) {{ k0, k1, k2 }, 1, 1 }
+#define CHORD_UP_REPEAT2(k0, k1) CHORD_UP_REPEAT3(k0, k1, 0)
+#define CHORD_UP_REPEAT1(k0)     CHORD_UP_REPEAT3(k0, 0, 0)
+
+#define RICO_SCANCODE_ALT   ((u16)301)
+#define RICO_SCANCODE_CTRL  ((u16)302)
+#define RICO_SCANCODE_SHIFT ((u16)303)
+#define RICO_SCANCODE_LMB   ((u16)304)
+#define RICO_SCANCODE_MMB   ((u16)305)
+#define RICO_SCANCODE_RMB   ((u16)306)
 
 //#define CHORD_3(action, k0, k1, k2) action_chords[action] = CHORD3(k0, k1, k2)
 //#define CHORD_2(action, k0, k1)     action_chords[action] = CHORD2(k0, k1)
@@ -78,7 +97,9 @@ enum RICO_action
     ACTION_EDIT_SAVE,
     ACTION_EDIT_CYCLE,
     ACTION_EDIT_CYCLE_REVERSE,
-    ACTION_EDIT_MOUSE_PICK,
+    ACTION_EDIT_MOUSE_PICK_START,
+    ACTION_EDIT_MOUSE_PICK_MOVE,
+    ACTION_EDIT_MOUSE_PICK_END,
     ACTION_EDIT_BBOX_RECALCULATE,
     ACTION_EDIT_CREATE_OBJECT,
     ACTION_EDIT_SELECTED_DUPLICATE,
@@ -131,5 +152,6 @@ extern int RICO_update();
 extern bool RICO_quit();
 extern u32 RICO_key_event();
 extern void RICO_bind_action(u32 action, struct RICO_keychord chord);
+extern pkid RICO_mouse_raycast();
 
 #endif

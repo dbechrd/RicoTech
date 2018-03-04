@@ -7,6 +7,7 @@ static const char *rico_state_string[] = { RICO_STATES(GEN_STRING) };
 
 // u32 action -> keychord
 static struct RICO_keychord action_chords[MAX_ACTIONS] = { 0 };
+static u32 action_max = 0;
 // int index -> u32 action
 static u32 action_queue[MAX_ACTIONS_QUEUED] = { 0 };
 static u32 action_queue_count = 0;
@@ -65,13 +66,6 @@ static u8 keystate_buffers[2][SDL_NUM_SCANCODES] = { 0 };
 static u8 *keys      = keystate_buffers[0];
 static u8 *keys_prev = keystate_buffers[1];
 
-static const RICO_key RICO_SCANCODE_ALT   = (RICO_key)301;
-static const RICO_key RICO_SCANCODE_CTRL  = (RICO_key)302;
-static const RICO_key RICO_SCANCODE_SHIFT = (RICO_key)303;
-static const RICO_key RICO_SCANCODE_LMB   = (RICO_key)304;
-static const RICO_key RICO_SCANCODE_MMB   = (RICO_key)305;
-static const RICO_key RICO_SCANCODE_RMB   = (RICO_key)306;
-
 #define KEY_IS_DOWN(key) (key == 0 || keys[key] || \
 (key == RICO_SCANCODE_ALT   && (keys[SDL_SCANCODE_LALT]   || keys[SDL_SCANCODE_RALT]))  || \
 (key == RICO_SCANCODE_CTRL  && (keys[SDL_SCANCODE_LCTRL]  || keys[SDL_SCANCODE_RCTRL])) || \
@@ -113,6 +107,8 @@ static inline bool chord_was_down(u32 action)
             KEY_WAS_DOWN(action_chords[action].keys[1]) &&
             KEY_WAS_DOWN(action_chords[action].keys[2]));
 }
+#if 0
+// Cleanup, using keychord flags for this now
 static inline bool chord_pressed(u32 action)
 {
     // All keys are down, and at least one was up last frame
@@ -122,6 +118,24 @@ static inline bool chord_released(u32 action)
 {
     // At least one key is up, and all were down last frame
     return !chord_is_down(action) && chord_was_down(action);
+}
+#endif
+static inline bool chord_active(u32 action)
+{
+    // Chord is considered active when:
+    // 1) Is down and repeat
+    // 2) Pressed (is down and wasn't down last frame)
+    // 3) Released (is not down but was last frame)
+    bool active = false;
+    if (chord_is_down(action))
+    {
+        active = action_chords[action].repeat || !chord_was_down(action);
+    }
+    else
+    {
+        active = action_chords[action].on_release && chord_was_down(action);
+    }
+    return active;
 }
 
 // Current state
@@ -341,28 +355,28 @@ static int shared_engine_events()
 
 #if RICO_DEBUG
     // DEBUG: Toggle scene lighting
-    if (chord_pressed(ACTION_ENGINE_DEBUG_LIGHTING_TOGGLE))
+    if (chord_active(ACTION_ENGINE_DEBUG_LIGHTING_TOGGLE))
     {
         enable_lighting = !enable_lighting;
     }
     // DEBUG: Trigger breakpoint
-    else if (chord_pressed(ACTION_ENGINE_DEBUG_TRIGGER_BREAKPOINT))
+    else if (chord_active(ACTION_ENGINE_DEBUG_TRIGGER_BREAKPOINT))
     {
         SDL_TriggerBreakpoint();
     }
     // DEBUG: Change FOV
-    else if (chord_pressed(ACTION_ENGINE_DEBUG_FOV_INCREASE) ||
-             chord_pressed(ACTION_ENGINE_DEBUG_FOV_DECREASE))
+    else if (chord_active(ACTION_ENGINE_DEBUG_FOV_INCREASE) ||
+             chord_active(ACTION_ENGINE_DEBUG_FOV_DECREASE))
     {
         float fov = cam_player.fov_deg;
-        fov += chord_pressed(ACTION_ENGINE_DEBUG_FOV_INCREASE)
+        fov += chord_active(ACTION_ENGINE_DEBUG_FOV_INCREASE)
             ? 5.0f
             : -5.0f;
         camera_set_fov(&cam_player, fov);
     }
 #endif
     // Toggle FPS counter
-    else if (chord_pressed(ACTION_ENGINE_FPS_TOGGLE))
+    else if (chord_active(ACTION_ENGINE_FPS_TOGGLE))
     {
         fps_render = !fps_render;
         if (!fps_render)
@@ -371,19 +385,19 @@ static int shared_engine_events()
         }
     }
     // Toggle mouse lock-to-window
-    else if (chord_pressed(ACTION_ENGINE_MOUSE_LOCK_TOGGLE))
+    else if (chord_active(ACTION_ENGINE_MOUSE_LOCK_TOGGLE))
     {
         mouse_lock = !mouse_lock;
         SDL_SetRelativeMouseMode(mouse_lock);
     }
     // Toggle vsync
-    else if (chord_pressed(ACTION_ENGINE_VSYNC_TOGGLE))
+    else if (chord_active(ACTION_ENGINE_VSYNC_TOGGLE))
     {
         vsync = !vsync;
         SDL_GL_SetSwapInterval(vsync);
     }
     // Toggle audio
-    else if (chord_pressed(ACTION_ENGINE_MUTE_TOGGLE))
+    else if (chord_active(ACTION_ENGINE_MUTE_TOGGLE))
     {
         audio_muted = !audio_muted;
         (audio_muted) ? RICO_audio_mute() : RICO_audio_unmute();
@@ -404,7 +418,7 @@ static int shared_engine_events()
                          COLOR_DARK_GRAY, 1000, 0, buf);
     }
     // Save and exit
-    else if (chord_pressed(ACTION_ENGINE_QUIT))
+    else if (chord_active(ACTION_ENGINE_QUIT))
     {
         string_free_slot(STR_SLOT_MENU_QUIT);
         RICO_load_string(PACK_TRANSIENT, STR_SLOT_MENU_QUIT,
@@ -428,29 +442,29 @@ static int shared_camera_events()
     enum RICO_error err = SUCCESS;
 
     player_acc = VEC3_ZERO;
-    if (chord_is_down(ACTION_MOVE_UP))       player_acc.y += 1.0f;
-    if (chord_is_down(ACTION_MOVE_DOWN))     player_acc.y -= 1.0f;
-    if (chord_is_down(ACTION_MOVE_RIGHT))    player_acc.x += 1.0f;
-    if (chord_is_down(ACTION_MOVE_LEFT))     player_acc.x -= 1.0f;
-    if (chord_is_down(ACTION_MOVE_FORWARD))  player_acc.z += 1.0f;
-    if (chord_is_down(ACTION_MOVE_BACKWARD)) player_acc.z -= 1.0f;
+    if (chord_active(ACTION_MOVE_UP))       player_acc.y += 1.0f;
+    if (chord_active(ACTION_MOVE_DOWN))     player_acc.y -= 1.0f;
+    if (chord_active(ACTION_MOVE_RIGHT))    player_acc.x += 1.0f;
+    if (chord_active(ACTION_MOVE_LEFT))     player_acc.x -= 1.0f;
+    if (chord_active(ACTION_MOVE_FORWARD))  player_acc.z += 1.0f;
+    if (chord_active(ACTION_MOVE_BACKWARD)) player_acc.z -= 1.0f;
     v3_normalize(&player_acc);  // NOTE: Prevent faster movement on diagonal
 
-    player_sprint = chord_is_down(ACTION_MOVE_SPRINT);
+    player_sprint = chord_active(ACTION_MOVE_SPRINT);
 
-    if (chord_pressed(ACTION_CAMERA_SLOW_TOGGLE))
+    if (chord_active(ACTION_CAMERA_SLOW_TOGGLE))
     {
         camera_slow = !camera_slow;
     }
-    else if (chord_pressed(ACTION_CAMERA_RESET))
+    else if (chord_active(ACTION_CAMERA_RESET))
     {
         camera_reset(&cam_player);
     }
-    else if (chord_pressed(ACTION_CAMERA_LOCK_TOGGLE))
+    else if (chord_active(ACTION_CAMERA_LOCK_TOGGLE))
     {
         cam_player.locked = !cam_player.locked;
     }
-    else if (chord_pressed(ACTION_CAMERA_WIREFRAME_TOGGLE))
+    else if (chord_active(ACTION_CAMERA_WIREFRAME_TOGGLE))
     {
         cam_player.fill_mode = (cam_player.fill_mode == GL_FILL)
             ? GL_LINE
@@ -468,39 +482,39 @@ static int shared_edit_events()
 	bool cursor_moved = false;
 
     // Raycast object selection
-    if (chord_pressed(ACTION_EDIT_MOUSE_PICK))
+    if (chord_active(ACTION_EDIT_MOUSE_PICK_START))
     {
         edit_mouse_pressed();
     }
-    else if (chord_is_down(ACTION_EDIT_MOUSE_PICK))
+    else if (chord_active(ACTION_EDIT_MOUSE_PICK_MOVE))
     {
         if (mouse_dx || mouse_dy)
         {
 			cursor_moved = true;
         }
     }
-    else if (chord_released(ACTION_EDIT_MOUSE_PICK))
+    else if (chord_active(ACTION_EDIT_MOUSE_PICK_END))
     {
         edit_mouse_released();
     }
     // Recalculate bounding boxes of all objects
-    else if (chord_pressed(ACTION_EDIT_BBOX_RECALCULATE))
+    else if (chord_active(ACTION_EDIT_BBOX_RECALCULATE))
     {
         edit_bbox_reset_all();
     }
     // Duplicate selected object
-    else if (chord_pressed(ACTION_EDIT_SELECTED_DUPLICATE))
+    else if (chord_active(ACTION_EDIT_SELECTED_DUPLICATE))
     {
         edit_duplicate();
     }
     // Exit edit mode
-    else if (chord_pressed(ACTION_EDIT_QUIT))
+    else if (chord_active(ACTION_EDIT_QUIT))
     {
 		edit_object_select(0, false);
         state = STATE_PLAY_EXPLORE;
     }
     // Select previous edit mode
-    else if (chord_pressed(ACTION_EDIT_MODE_PREVIOUS))
+    else if (chord_active(ACTION_EDIT_MODE_PREVIOUS))
     {
         switch (state)
         {
@@ -518,7 +532,7 @@ static int shared_edit_events()
         }
     }
     // Select next edit mode
-    else if (chord_pressed(ACTION_EDIT_MODE_NEXT))
+    else if (chord_active(ACTION_EDIT_MODE_NEXT))
     {
         switch (state)
         {
@@ -536,27 +550,27 @@ static int shared_edit_events()
         }
     }
     // Cycle select through objects (in reverse)
-    else if (chord_pressed(ACTION_EDIT_CYCLE_REVERSE))
+    else if (chord_active(ACTION_EDIT_CYCLE_REVERSE))
     {
         edit_object_prev();
     }
     // Cycle select through objects
-    else if (chord_pressed(ACTION_EDIT_CYCLE))
+    else if (chord_active(ACTION_EDIT_CYCLE))
     {
         edit_object_next();
     }
     // Create new object
-    else if (chord_pressed(ACTION_EDIT_CREATE_OBJECT))
+    else if (chord_active(ACTION_EDIT_CREATE_OBJECT))
     {
         edit_object_create();
     }
     // Delete selected object
-    else if (chord_pressed(ACTION_EDIT_SELECTED_DELETE))
+    else if (chord_active(ACTION_EDIT_SELECTED_DELETE))
     {
         edit_delete();
     }
     // Save chunk
-    else if (chord_pressed(ACTION_EDIT_SAVE))
+    else if (chord_active(ACTION_EDIT_SAVE))
     {
 		err = RICO_pack_save(RICO_pack_active, 0, false);
     }
@@ -587,15 +601,9 @@ static int state_play_explore()
     err = shared_engine_events(); if (err || state != state_prev) return err;
     err = shared_camera_events(); if (err || state != state_prev) return err;
 
-    // Interact with clicked object
-    if (chord_pressed(ACTION_PLAY_INTERACT))
-    {
-        struct RICO_object *obj = mouse_first_obj();
-        if (obj)
-            object_interact(obj);
-    }
-    // Enter edit mode
-    else if (chord_pressed(ACTION_PLAY_EDITOR))
+    // CLEANUP: Interact with clicked object
+    // if (chord_active(ACTION_PLAY_INTERACT))
+    if (chord_active(ACTION_PLAY_EDITOR))
     {
         state = STATE_EDIT_TRANSLATE;
         edit_print_object();
@@ -627,28 +635,28 @@ static int state_edit_translate()
     bool trans_delta_changed = false;
 
     // Reset selected object's translation
-    if (chord_pressed(ACTION_EDIT_TRANSLATE_RESET))
+    if (chord_active(ACTION_EDIT_TRANSLATE_RESET))
         translate_reset = true;
     // Translate selected object up
-    else if (chord_pressed(ACTION_EDIT_TRANSLATE_UP))
+    else if (chord_active(ACTION_EDIT_TRANSLATE_UP))
         translate.y += trans_delta;
     // Translate selected object down
-    else if (chord_pressed(ACTION_EDIT_TRANSLATE_DOWN))
+    else if (chord_active(ACTION_EDIT_TRANSLATE_DOWN))
         translate.y -= trans_delta;
     // Translate selected object west
-    else if (chord_pressed(ACTION_EDIT_TRANSLATE_WEST))
+    else if (chord_active(ACTION_EDIT_TRANSLATE_WEST))
         translate.x -= trans_delta;
     // Translate selected object east
-    else if (chord_pressed(ACTION_EDIT_TRANSLATE_EAST))
+    else if (chord_active(ACTION_EDIT_TRANSLATE_EAST))
         translate.x += trans_delta;
     // Translate selected object north
-    else if (chord_pressed(ACTION_EDIT_TRANSLATE_NORTH))
+    else if (chord_active(ACTION_EDIT_TRANSLATE_NORTH))
         translate.z -= trans_delta;
     // Translate selected object south
-    else if (chord_pressed(ACTION_EDIT_TRANSLATE_SOUTH))
+    else if (chord_active(ACTION_EDIT_TRANSLATE_SOUTH))
         translate.z += trans_delta;
     // Increase translation delta
-    else if (chord_pressed(ACTION_EDIT_TRANSLATE_DELTA_INCREASE))
+    else if (chord_active(ACTION_EDIT_TRANSLATE_DELTA_INCREASE))
     {
         if (trans_delta < TRANS_DELTA_MAX)
         {
@@ -660,7 +668,7 @@ static int state_edit_translate()
         }
     }
     // Decrease translation delta
-    else if (chord_pressed(ACTION_EDIT_TRANSLATE_DELTA_DECREASE))
+    else if (chord_active(ACTION_EDIT_TRANSLATE_DELTA_DECREASE))
     {
         if (trans_delta > TRANS_DELTA_MIN)
         {
@@ -704,7 +712,7 @@ static int state_edit_rotate()
     bool rot_delta_changed = false;
 
     // Toggle heptagonal rotations
-    if (chord_pressed(ACTION_EDIT_ROTATE_HEPTAMODE_TOGGLE))
+    if (chord_active(ACTION_EDIT_ROTATE_HEPTAMODE_TOGGLE))
     {
         if (rot_delta == ROT_DELTA_DEFAULT)
             rot_delta = (float)M_SEVENTH_DEG;
@@ -712,28 +720,28 @@ static int state_edit_rotate()
             rot_delta = ROT_DELTA_DEFAULT;
     }
     // Reset selected object's rotation
-    else if (chord_pressed(ACTION_EDIT_ROTATE_RESET))
+    else if (chord_active(ACTION_EDIT_ROTATE_RESET))
         rotate_reset = true;
     // Rotate selected object up
-    else if (chord_pressed(ACTION_EDIT_ROTATE_UP))
+    else if (chord_active(ACTION_EDIT_ROTATE_UP))
         rotate.x -= rot_delta;
     // Rotate selected object down
-    else if (chord_pressed(ACTION_EDIT_ROTATE_DOWN))
+    else if (chord_active(ACTION_EDIT_ROTATE_DOWN))
         rotate.x += rot_delta;
     // Rotate selected object west
-    else if (chord_pressed(ACTION_EDIT_ROTATE_WEST))
+    else if (chord_active(ACTION_EDIT_ROTATE_WEST))
         rotate.y -= rot_delta;
     // Rotate selected object east
-    else if (chord_pressed(ACTION_EDIT_ROTATE_EAST))
+    else if (chord_active(ACTION_EDIT_ROTATE_EAST))
         rotate.y += rot_delta;
     // Rotate selected object north
-    else if (chord_pressed(ACTION_EDIT_ROTATE_NORTH))
+    else if (chord_active(ACTION_EDIT_ROTATE_NORTH))
         rotate.z -= rot_delta;
     // Rotate selected object south
-    else if (chord_pressed(ACTION_EDIT_ROTATE_SOUTH))
+    else if (chord_active(ACTION_EDIT_ROTATE_SOUTH))
         rotate.z += rot_delta;
     // Increase rotation delta
-    else if (chord_pressed(ACTION_EDIT_ROTATE_DELTA_INCREASE))
+    else if (chord_active(ACTION_EDIT_ROTATE_DELTA_INCREASE))
     {
         if (rot_delta < ROT_DELTA_MAX)
         {
@@ -745,7 +753,7 @@ static int state_edit_rotate()
         }
     }
     // Decrease rotation delta
-    else if (chord_pressed(ACTION_EDIT_ROTATE_DELTA_DECREASE))
+    else if (chord_active(ACTION_EDIT_ROTATE_DELTA_DECREASE))
     {
         if (rot_delta > ROT_DELTA_MIN)
         {
@@ -796,42 +804,42 @@ static int state_edit_scale()
     bool scale_delta_changed = false;
 
     // Reset selected object's scale
-    if (chord_pressed(ACTION_EDIT_SCALE_RESET))
+    if (chord_active(ACTION_EDIT_SCALE_RESET))
     {
         scale_reset = true;
     }
     // Scale selected object up
-    else if (chord_pressed(ACTION_EDIT_SCALE_UP))
+    else if (chord_active(ACTION_EDIT_SCALE_UP))
     {
         scale.y += scale_delta;
     }
     // Scale selected object down
-    else if (chord_pressed(ACTION_EDIT_SCALE_DOWN))
+    else if (chord_active(ACTION_EDIT_SCALE_DOWN))
     {
         scale.y -= scale_delta;
     }
     // Scale selected object west
-    else if (chord_pressed(ACTION_EDIT_SCALE_WEST))
+    else if (chord_active(ACTION_EDIT_SCALE_WEST))
     {
         scale.x -= scale_delta;
     }
     // Scale selected object east
-    else if (chord_pressed(ACTION_EDIT_SCALE_EAST))
+    else if (chord_active(ACTION_EDIT_SCALE_EAST))
     {
         scale.x += scale_delta;
     }
     // Scale selected object north
-    else if (chord_pressed(ACTION_EDIT_SCALE_NORTH))
+    else if (chord_active(ACTION_EDIT_SCALE_NORTH))
     {
         scale.z += scale_delta;
     }
     // Scale selected object south
-    else if (chord_pressed(ACTION_EDIT_SCALE_SOUTH))
+    else if (chord_active(ACTION_EDIT_SCALE_SOUTH))
     {
         scale.z -= scale_delta;
     }
     // Increase scale delta
-    else if (chord_pressed(ACTION_EDIT_SCALE_DELTA_INCREASE))
+    else if (chord_active(ACTION_EDIT_SCALE_DELTA_INCREASE))
     {
         if (scale_delta < SCALE_DELTA_MAX)
         {
@@ -843,7 +851,7 @@ static int state_edit_scale()
         }
     }
     // Decrease scale delta
-    else if (chord_pressed(ACTION_EDIT_SCALE_DELTA_DECREASE))
+    else if (chord_active(ACTION_EDIT_SCALE_DELTA_DECREASE))
     {
         if (scale_delta > SCALE_DELTA_MIN)
         {
@@ -883,12 +891,12 @@ static int state_edit_material()
     err = shared_camera_events(); if (err || state != state_prev) return err;
 
     // Cycle selected object's material
-    if (chord_pressed(ACTION_EDIT_MATERIAL_NEXT))
+    if (chord_active(ACTION_EDIT_MATERIAL_NEXT))
     {
         edit_material_next();
     }
     // Cycle selected object's material (in reverse)
-    else if (chord_pressed(ACTION_EDIT_MATERIAL_PREVIOUS))
+    else if (chord_active(ACTION_EDIT_MATERIAL_PREVIOUS))
     {
         edit_material_prev();
     }
@@ -904,17 +912,17 @@ static int state_edit_mesh()
     err = shared_camera_events(); if (err || state != state_prev) return err;
 
     // Cycle selected object's mesh
-    if (chord_pressed(ACTION_EDIT_MESH_NEXT))
+    if (chord_active(ACTION_EDIT_MESH_NEXT))
     {
         edit_mesh_next();
     }
     // Cycle selected object's mesh (in reverse)
-    else if (chord_pressed(ACTION_EDIT_MESH_PREVIOUS))
+    else if (chord_active(ACTION_EDIT_MESH_PREVIOUS))
     {
         edit_mesh_prev();
     }
     // Recalculate bounding box based on current mesh
-    else if (chord_pressed(ACTION_EDIT_MESH_BBOX_RECALCULATE))
+    else if (chord_active(ACTION_EDIT_MESH_BBOX_RECALCULATE))
     {
         edit_bbox_reset();
     }
@@ -985,14 +993,19 @@ static void rico_check_key_events()
 {
     // NOTE: Starting at 1 because action 0 is ACTION_NULL
     u32 i = 1;
-    while (i < ARRAY_COUNT(action_chords) &&
-           action_queue_count < ARRAY_COUNT(action_queue))
+    while (i < action_max && action_queue_count < ARRAY_COUNT(action_queue))
     {
-        if (action_queue_count >= ARRAY_COUNT(action_queue))
-            return;
-
-        if (chord_is_down(i))
+        // Trigger action if chord is down and repeat enabled, or chord down
+        // and wasn't down last frame (i.e. chord pressed).
+        if (chord_active(i))
         {
+            if (i == ACTION_PLAY_INTERACT)
+            {
+                u32 a = 4;
+                a++;
+                u32 b = a;
+                b++;
+            }
             action_queue[action_queue_count] = i;
             action_queue_count++;
         }
@@ -1019,6 +1032,12 @@ extern void RICO_bind_action(u32 action, struct RICO_keychord chord)
 {
     RICO_ASSERT(action < ARRAY_COUNT(action_chords));
     action_chords[action] = chord;
+    action_max = MAX(action_max, action);
+}
+extern pkid RICO_mouse_raycast()
+{
+    struct RICO_object *obj = mouse_first_obj();
+    return (obj) ? obj->uid.pkid : 0;
 }
 static int engine_init()
 {
@@ -1074,13 +1093,13 @@ static int engine_init()
     RICO_bind_action(ACTION_CAMERA_WIREFRAME_TOGGLE,         CHORD1(SDL_SCANCODE_1));
 
     // Player
-    RICO_bind_action(ACTION_MOVE_RIGHT,                      CHORD1(SDL_SCANCODE_D));
-    RICO_bind_action(ACTION_MOVE_LEFT,                       CHORD1(SDL_SCANCODE_A));
-    RICO_bind_action(ACTION_MOVE_UP,                         CHORD1(SDL_SCANCODE_E));
-    RICO_bind_action(ACTION_MOVE_DOWN,                       CHORD1(SDL_SCANCODE_Q));
-    RICO_bind_action(ACTION_MOVE_FORWARD,                    CHORD1(SDL_SCANCODE_W));
-    RICO_bind_action(ACTION_MOVE_BACKWARD,                   CHORD1(SDL_SCANCODE_S));
-    RICO_bind_action(ACTION_MOVE_SPRINT,                     CHORD1(RICO_SCANCODE_SHIFT));
+    RICO_bind_action(ACTION_MOVE_RIGHT,                      CHORD_REPEAT1(SDL_SCANCODE_D));
+    RICO_bind_action(ACTION_MOVE_LEFT,                       CHORD_REPEAT1(SDL_SCANCODE_A));
+    RICO_bind_action(ACTION_MOVE_UP,                         CHORD_REPEAT1(SDL_SCANCODE_E));
+    RICO_bind_action(ACTION_MOVE_DOWN,                       CHORD_REPEAT1(SDL_SCANCODE_Q));
+    RICO_bind_action(ACTION_MOVE_FORWARD,                    CHORD_REPEAT1(SDL_SCANCODE_W));
+    RICO_bind_action(ACTION_MOVE_BACKWARD,                   CHORD_REPEAT1(SDL_SCANCODE_S));
+    RICO_bind_action(ACTION_MOVE_SPRINT,                     CHORD_REPEAT1(RICO_SCANCODE_SHIFT));
 
     RICO_bind_action(ACTION_PLAY_EDITOR,                     CHORD1(SDL_SCANCODE_GRAVE));
     RICO_bind_action(ACTION_PLAY_INTERACT,                   CHORD1(RICO_SCANCODE_LMB));
@@ -1090,7 +1109,9 @@ static int engine_init()
     RICO_bind_action(ACTION_EDIT_SAVE,                       CHORD2(RICO_SCANCODE_CTRL,   SDL_SCANCODE_S));
     RICO_bind_action(ACTION_EDIT_CYCLE_REVERSE,              CHORD2(RICO_SCANCODE_SHIFT,  SDL_SCANCODE_TAB));
     RICO_bind_action(ACTION_EDIT_CYCLE,                      CHORD1(SDL_SCANCODE_TAB));
-    RICO_bind_action(ACTION_EDIT_MOUSE_PICK,                 CHORD1(RICO_SCANCODE_LMB));
+    RICO_bind_action(ACTION_EDIT_MOUSE_PICK_START,           CHORD1(RICO_SCANCODE_LMB));
+    RICO_bind_action(ACTION_EDIT_MOUSE_PICK_MOVE,            CHORD_REPEAT1(RICO_SCANCODE_LMB));
+    RICO_bind_action(ACTION_EDIT_MOUSE_PICK_END,             CHORD_UP1(RICO_SCANCODE_LMB));
     RICO_bind_action(ACTION_EDIT_BBOX_RECALCULATE,           CHORD2(RICO_SCANCODE_SHIFT,  SDL_SCANCODE_B));
     RICO_bind_action(ACTION_EDIT_CREATE_OBJECT,              CHORD1(SDL_SCANCODE_INSERT));
     RICO_bind_action(ACTION_EDIT_SELECTED_DUPLICATE,         CHORD2(RICO_SCANCODE_CTRL,   SDL_SCANCODE_D));
@@ -1099,33 +1120,33 @@ static int engine_init()
     RICO_bind_action(ACTION_EDIT_MODE_NEXT,                  CHORD1(SDL_SCANCODE_KP_0));
 
     RICO_bind_action(ACTION_EDIT_TRANSLATE_RESET,            CHORD1(SDL_SCANCODE_0));
-    RICO_bind_action(ACTION_EDIT_TRANSLATE_UP,               CHORD1(SDL_SCANCODE_UP));
-    RICO_bind_action(ACTION_EDIT_TRANSLATE_DOWN,             CHORD1(SDL_SCANCODE_DOWN));
-    RICO_bind_action(ACTION_EDIT_TRANSLATE_WEST,             CHORD1(SDL_SCANCODE_LEFT));
-    RICO_bind_action(ACTION_EDIT_TRANSLATE_EAST,             CHORD1(SDL_SCANCODE_RIGHT));
-    RICO_bind_action(ACTION_EDIT_TRANSLATE_NORTH,            CHORD1(SDL_SCANCODE_PAGEUP));
-    RICO_bind_action(ACTION_EDIT_TRANSLATE_SOUTH,            CHORD1(SDL_SCANCODE_PAGEDOWN));
+    RICO_bind_action(ACTION_EDIT_TRANSLATE_UP,               CHORD_REPEAT1(SDL_SCANCODE_UP));
+    RICO_bind_action(ACTION_EDIT_TRANSLATE_DOWN,             CHORD_REPEAT1(SDL_SCANCODE_DOWN));
+    RICO_bind_action(ACTION_EDIT_TRANSLATE_WEST,             CHORD_REPEAT1(SDL_SCANCODE_LEFT));
+    RICO_bind_action(ACTION_EDIT_TRANSLATE_EAST,             CHORD_REPEAT1(SDL_SCANCODE_RIGHT));
+    RICO_bind_action(ACTION_EDIT_TRANSLATE_NORTH,            CHORD_REPEAT1(SDL_SCANCODE_PAGEUP));
+    RICO_bind_action(ACTION_EDIT_TRANSLATE_SOUTH,            CHORD_REPEAT1(SDL_SCANCODE_PAGEDOWN));
     RICO_bind_action(ACTION_EDIT_TRANSLATE_DELTA_INCREASE,   CHORD1(SDL_SCANCODE_KP_PLUS));
     RICO_bind_action(ACTION_EDIT_TRANSLATE_DELTA_DECREASE,   CHORD1(SDL_SCANCODE_KP_MINUS));
 
     RICO_bind_action(ACTION_EDIT_ROTATE_RESET,               CHORD1(SDL_SCANCODE_0));
-    RICO_bind_action(ACTION_EDIT_ROTATE_UP,                  CHORD1(SDL_SCANCODE_UP));
-    RICO_bind_action(ACTION_EDIT_ROTATE_DOWN,                CHORD1(SDL_SCANCODE_DOWN));
-    RICO_bind_action(ACTION_EDIT_ROTATE_WEST,                CHORD1(SDL_SCANCODE_LEFT));
-    RICO_bind_action(ACTION_EDIT_ROTATE_EAST,                CHORD1(SDL_SCANCODE_RIGHT));
-    RICO_bind_action(ACTION_EDIT_ROTATE_NORTH,               CHORD1(SDL_SCANCODE_PAGEUP));
-    RICO_bind_action(ACTION_EDIT_ROTATE_SOUTH,               CHORD1(SDL_SCANCODE_PAGEDOWN));
+    RICO_bind_action(ACTION_EDIT_ROTATE_UP,                  CHORD_REPEAT1(SDL_SCANCODE_UP));
+    RICO_bind_action(ACTION_EDIT_ROTATE_DOWN,                CHORD_REPEAT1(SDL_SCANCODE_DOWN));
+    RICO_bind_action(ACTION_EDIT_ROTATE_WEST,                CHORD_REPEAT1(SDL_SCANCODE_LEFT));
+    RICO_bind_action(ACTION_EDIT_ROTATE_EAST,                CHORD_REPEAT1(SDL_SCANCODE_RIGHT));
+    RICO_bind_action(ACTION_EDIT_ROTATE_NORTH,               CHORD_REPEAT1(SDL_SCANCODE_PAGEUP));
+    RICO_bind_action(ACTION_EDIT_ROTATE_SOUTH,               CHORD_REPEAT1(SDL_SCANCODE_PAGEDOWN));
     RICO_bind_action(ACTION_EDIT_ROTATE_DELTA_INCREASE,      CHORD1(SDL_SCANCODE_KP_PLUS));
     RICO_bind_action(ACTION_EDIT_ROTATE_DELTA_DECREASE,      CHORD1(SDL_SCANCODE_KP_MINUS));
     RICO_bind_action(ACTION_EDIT_ROTATE_HEPTAMODE_TOGGLE,    CHORD1(SDL_SCANCODE_7));
 
     RICO_bind_action(ACTION_EDIT_SCALE_RESET,                CHORD1(SDL_SCANCODE_0));
-    RICO_bind_action(ACTION_EDIT_SCALE_UP,                   CHORD1(SDL_SCANCODE_UP));
-    RICO_bind_action(ACTION_EDIT_SCALE_DOWN,                 CHORD1(SDL_SCANCODE_DOWN));
-    RICO_bind_action(ACTION_EDIT_SCALE_WEST,                 CHORD1(SDL_SCANCODE_LEFT));
-    RICO_bind_action(ACTION_EDIT_SCALE_EAST,                 CHORD1(SDL_SCANCODE_RIGHT));
-    RICO_bind_action(ACTION_EDIT_SCALE_NORTH,                CHORD1(SDL_SCANCODE_PAGEUP));
-    RICO_bind_action(ACTION_EDIT_SCALE_SOUTH,                CHORD1(SDL_SCANCODE_PAGEDOWN));
+    RICO_bind_action(ACTION_EDIT_SCALE_UP,                   CHORD_REPEAT1(SDL_SCANCODE_UP));
+    RICO_bind_action(ACTION_EDIT_SCALE_DOWN,                 CHORD_REPEAT1(SDL_SCANCODE_DOWN));
+    RICO_bind_action(ACTION_EDIT_SCALE_WEST,                 CHORD_REPEAT1(SDL_SCANCODE_LEFT));
+    RICO_bind_action(ACTION_EDIT_SCALE_EAST,                 CHORD_REPEAT1(SDL_SCANCODE_RIGHT));
+    RICO_bind_action(ACTION_EDIT_SCALE_NORTH,                CHORD_REPEAT1(SDL_SCANCODE_PAGEUP));
+    RICO_bind_action(ACTION_EDIT_SCALE_SOUTH,                CHORD_REPEAT1(SDL_SCANCODE_PAGEDOWN));
     RICO_bind_action(ACTION_EDIT_SCALE_DELTA_INCREASE,       CHORD1(SDL_SCANCODE_KP_PLUS));
     RICO_bind_action(ACTION_EDIT_SCALE_DELTA_DECREASE,       CHORD1(SDL_SCANCODE_KP_MINUS));
 

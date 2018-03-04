@@ -133,12 +133,17 @@ void game_button_interact(struct game_button *obj)
 }
 
 static pkid last_clicked;
-void object_interact(struct RICO_object *obj)
+void object_interact()
 {
+    pkid id = RICO_mouse_raycast();
+    if (!id) return;
+    
+    struct RICO_object *obj = RICO_pack_lookup(id);
+    if (!obj) return;
+
     // HACK: Display name of last-clicked object
-    //static u32 last = obj->;
     last_clicked = obj->uid.pkid;
-    RICO_load_string(PACK_TRANSIENT, 0, 0, 0, COLOR_WHITE, 0, 0, obj->uid.name);
+    //RICO_load_string(PACK_TRANSIENT, 0, 0, 0, COLOR_WHITE, 0, 0, obj->uid.name);
 
     switch (obj->type)
     {
@@ -173,11 +178,9 @@ int main(int argc, char **argv)
 	pack_build_all();
 	pack_load_all();
 
-    RICO_event_object_interact = &object_interact;
-
-    RICO_bind_action(ACTION_RICO_TEST, CHORD1(SDL_SCANCODE_Z));
-    RICO_bind_action(ACTION_RICO_TEST, CHORD1(SDL_SCANCODE_Z));
-    RICO_bind_action(ACTION_RICO_TEST, CHORD1(SDL_SCANCODE_Z));
+    RICO_bind_action(ACTION_RICO_TEST, CHORD_REPEAT1(SDL_SCANCODE_Z));
+    RICO_bind_action(ACTION_TYPE_NEXT, CHORD1(SDL_SCANCODE_X));
+    RICO_bind_action(ACTION_TYPE_PREV, CHORD1(SDL_SCANCODE_C));
 
     // TODO: Add audio to pack
     struct RICO_audio_buffer buffer;
@@ -202,6 +205,9 @@ int main(int argc, char **argv)
         {
             switch (action)
             {
+                case ACTION_PLAY_INTERACT:
+                    object_interact();
+                    break;
                 case ACTION_RICO_TEST:
                     RICO_audio_source_play(&audio_source_button);
                     break;
