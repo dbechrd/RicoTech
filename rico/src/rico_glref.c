@@ -85,11 +85,17 @@ static void edit_object_select(struct RICO_object *rico, bool force)
 }
 static void edit_object_next()
 {
-    edit_object_select(pack_next(selected_obj_id, RICO_HND_OBJECT), false);
+    struct RICO_object *next_obj = (selected_obj_id)
+        ? RICO_pack_next(selected_obj_id)
+        : RICO_pack_first(PACK_DEFAULT, RICO_HND_OBJECT);
+    edit_object_select(next_obj, false);
 }
 static void edit_object_prev()
 {
-    edit_object_select(pack_prev(selected_obj_id, RICO_HND_OBJECT), false);
+    struct RICO_object *prev_obj = (selected_obj_id)
+        ? RICO_pack_prev(selected_obj_id)
+        : RICO_pack_last(PACK_DEFAULT, RICO_HND_OBJECT);
+    edit_object_select(prev_obj, false);
 }
 static void edit_print_object()
 {
@@ -167,8 +173,9 @@ static void edit_material_next()
         return;
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
-    struct RICO_material *next_material = pack_next(obj->material_id,
-                                                    RICO_HND_MATERIAL);
+    struct RICO_material *next_material = (obj->material_id)
+        ? RICO_pack_next(obj->material_id)
+        : RICO_pack_first(PACK_DEFAULT, RICO_HND_MATERIAL);
     if (next_material)
     {
         obj->material_id = next_material->uid.pkid;
@@ -181,8 +188,9 @@ static void edit_material_prev()
         return;
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
-    struct RICO_material *prev_material = pack_prev(obj->material_id,
-                                                    RICO_HND_MATERIAL);
+    struct RICO_material *prev_material = (obj->material_id)
+        ? RICO_pack_prev(obj->material_id)
+        : RICO_pack_last(PACK_DEFAULT, RICO_HND_MATERIAL);
     if (prev_material)
     {
         obj->material_id = prev_material->uid.pkid;
@@ -195,8 +203,9 @@ static void edit_mesh_next()
         return;
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
-    struct RICO_mesh *next_mesh = pack_next(obj->mesh_id,
-                                            RICO_HND_MESH);
+    struct RICO_mesh *next_mesh = (obj->mesh_id)
+        ? RICO_pack_next(obj->mesh_id)
+        : RICO_pack_first(PACK_DEFAULT, RICO_HND_MESH);
     if (next_mesh)
     {
         obj->mesh_id = next_mesh->uid.pkid;
@@ -211,8 +220,9 @@ static void edit_mesh_prev()
         return;
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
-    struct RICO_mesh *prev_mesh = pack_prev(obj->mesh_id,
-                                            RICO_HND_MESH);
+    struct RICO_mesh *prev_mesh = (obj->mesh_id)
+        ? RICO_pack_prev(obj->mesh_id)
+        : RICO_pack_last(PACK_DEFAULT, RICO_HND_MESH);
     if (prev_mesh)
     {
         obj->mesh_id = prev_mesh->uid.pkid;
@@ -254,7 +264,7 @@ static void edit_delete()
     u32 selected_prev = selected_obj_id;
     pack_delete(selected_obj_id);
     selected_obj_id = 0;
-    edit_object_select(pack_prev(selected_prev, RICO_HND_OBJECT), false);
+    edit_object_select(RICO_pack_prev(selected_prev), false);
 }
 static struct widget *widget_test()
 {

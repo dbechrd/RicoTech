@@ -326,7 +326,7 @@ static void object_render(struct pack *pack, const struct camera *camera)
         if (obj->type == RICO_OBJECT_TYPE_STRING_SCREEN)
             continue;
 
-        if (state_is_edit(state_get()))
+        if (RICO_state_is_edit())
         {
             struct vec4 color = COLOR_WHITE_HIGHLIGHT;
             if (obj->bbox.selected)

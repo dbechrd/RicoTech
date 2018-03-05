@@ -57,32 +57,36 @@ enum DEFAULT_IDS
     MESH_DEFAULT_SPHERE
 };
 
-
 extern u32 RICO_pack_active;
 
-extern u32 RICO_pack_init(u32 id, const char *name, u32 blob_count,
+extern u32 RICO_pack_init(u32 pack_id, const char *name, u32 blob_count,
                           u32 buffer_size);
 extern void *RICO_pack_lookup(pkid pkid);
-extern int RICO_pack_save(u32 id, const char *filename, bool shrink);
+extern void *RICO_pack_first(u32 pack_id, enum RICO_hnd_type type);
+extern void *RICO_pack_last(u32 pack_id, enum RICO_hnd_type type);
+extern void *RICO_pack_next(pkid pkid);
+extern void *RICO_pack_prev(pkid pkid);
+extern int RICO_pack_save(u32 pack_id, const char *filename, bool shrink);
 extern int RICO_pack_load(const char *filename, u32 *_pack);
-extern void RICO_pack_free(u32 id);
-extern pkid RICO_load_object(u32 id, u32 type, u32 size, const char *name);
-extern pkid RICO_load_texture(u32 id, const char *name, GLenum target,
+extern void RICO_pack_free(u32 pack_id);
+extern pkid RICO_load_object(u32 pack_id, u32 type, u32 size, const char *name);
+extern pkid RICO_load_texture(u32 pack_id, const char *name, GLenum target,
                               u32 width, u32 height, u8 bpp, u8 *pixels);
-extern pkid RICO_load_texture_file(u32 id, const char *name,
+extern pkid RICO_load_texture_file(u32 pack_id, const char *name,
                                    const char *filename);
-extern pkid RICO_load_texture_color(u32 id, const char *name,
+extern pkid RICO_load_texture_color(u32 pack_id, const char *name,
                                     struct vec4 color);
-extern pkid RICO_load_material(u32 id, const char *name, pkid tex_albedo,
+extern pkid RICO_load_material(u32 pack_id, const char *name, pkid tex_albedo,
                                pkid tex_mrao, pkid tex_emission);
-extern pkid RICO_load_font_file(u32 id, const char *name, const char *filename);
-extern pkid RICO_load_mesh(u32 id, const char *name, u32 vertex_size,
+extern pkid RICO_load_font_file(u32 pack_id, const char *name,
+                                const char *filename);
+extern pkid RICO_load_mesh(u32 pack_id, const char *name, u32 vertex_size,
                            u32 vertex_count, const void *vertex_data,
                            u32 element_count, const GLuint *element_data);
-extern pkid RICO_load_string(u32 id, enum RICO_string_slot slot, float x,
+extern pkid RICO_load_string(u32 pack_id, enum RICO_string_slot slot, float x,
                              float y, struct vec4 color, u32 lifespan,
                              pkid font, const char *text);
-extern int RICO_load_obj_file(u32 id, const char *filename,
+extern int RICO_load_obj_file(u32 pack_id, const char *filename,
                               pkid *_last_mesh_id);
 
 #endif

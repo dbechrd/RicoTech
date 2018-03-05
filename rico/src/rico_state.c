@@ -122,10 +122,10 @@ static inline bool chord_released(u32 action)
 #endif
 static inline bool chord_active(u32 action)
 {
-    // Chord is considered active when:
-    // 1) Is down and repeat
-    // 2) Pressed (is down and wasn't down last frame)
-    // 3) Released (is not down but was last frame)
+    // Chord is considered active when any of the following is true:
+    // 1) is down and repeat
+    // 2) pressed (is down and wasn't down last frame)
+    // 3) on_release and released (is not down but was last frame)
     bool active = false;
     if (chord_is_down(action))
     {
@@ -152,11 +152,11 @@ struct state_handlers
 };
 static struct state_handlers state_handlers[STATE_COUNT] = { 0 };
 
-static inline enum rico_state state_get()
+extern enum rico_state RICO_state_get()
 {
     return state;
 }
-static inline bool state_is_edit()
+extern bool RICO_state_is_edit()
 {
     return (state == STATE_EDIT_TRANSLATE ||
             state == STATE_EDIT_ROTATE ||
@@ -164,7 +164,7 @@ static inline bool state_is_edit()
             state == STATE_EDIT_MATERIAL ||
             state == STATE_EDIT_MESH);
 }
-static inline bool state_is_paused()
+extern bool RICO_state_is_paused()
 {
     return (state == STATE_MENU_QUIT);
 }
@@ -306,7 +306,7 @@ extern int RICO_update()
     sim_accum += MIN(frame_ms, SIM_MAX_FRAMESKIP_MS);
     while (sim_accum >= SIM_MS)
     {
-        if (!state_is_paused(state))
+        if (!RICO_state_is_paused(state))
         {
             struct vec3 camera_acc = player_acc;
             if (player_sprint) v3_scalef(&camera_acc, CAM_SPRINT_MULTIPLIER);
@@ -475,7 +475,7 @@ static int shared_camera_events()
 }
 static int shared_edit_events()
 {
-    RICO_ASSERT(state_is_edit(state));
+    RICO_ASSERT(RICO_state_is_edit(state));
 
     enum RICO_error err = SUCCESS;
 
@@ -615,7 +615,7 @@ static int state_edit_cleanup()
 {
     enum RICO_error err = SUCCESS;
 
-    if (!state_is_edit(state))
+    if (!RICO_state_is_edit(state))
     {
         string_free_slot(STR_SLOT_SELECTED_OBJ);
     }
@@ -1014,19 +1014,20 @@ static void rico_check_key_events()
 }
 extern bool RICO_quit()
 {
-    return state_get() == STATE_ENGINE_SHUTDOWN;
+    return state == STATE_ENGINE_SHUTDOWN;
 }
-extern u32 RICO_key_event()
+extern u32 RICO_key_event(u32 *action)
 {
-    u32 action = 0;
+    bool has_action = false;
     if (action_queue_count)
     {
         // TODO: Circular queue
         action_queue_count--;
-        action = action_queue[action_queue_count];
+        *action = action_queue[action_queue_count];
         action_queue[action_queue_count] = 0;
+        has_action = true;
     }
-    return action;
+    return has_action;
 }
 extern void RICO_bind_action(u32 action, struct RICO_keychord chord)
 {

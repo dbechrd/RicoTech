@@ -14,8 +14,6 @@
 struct pack *packs[MAX_PACKS];
 u32 packs_next;
 
-static void *pack_next(pkid pkid, enum RICO_hnd_type type);
-static void *pack_prev(pkid pkid, enum RICO_hnd_type type);
 static void pack_delete(pkid pkid);
 static void pack_build_default();
 

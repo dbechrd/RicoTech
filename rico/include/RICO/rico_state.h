@@ -63,6 +63,24 @@ struct rico_keyevent
 #define EVENT_CHORD(k0, k1) EVENT{ RICO_KEYEVENT_CHORD, k0, k1 }
 #endif
 
+#define RICO_STATES(f)       \
+    f(STATE_PLAY_EXPLORE)    \
+    f(STATE_EDIT_TRANSLATE)  \
+    f(STATE_EDIT_ROTATE)     \
+    f(STATE_EDIT_SCALE)      \
+    f(STATE_EDIT_MATERIAL)   \
+    f(STATE_EDIT_MESH)       \
+    f(STATE_MENU_QUIT)       \
+    f(STATE_TEXT_INPUT)      \
+    f(STATE_ENGINE_SHUTDOWN)
+
+enum rico_state
+{
+    RICO_STATES(GEN_LIST)
+    STATE_COUNT
+};
+extern const char *rico_state_string[STATE_COUNT];
+
 enum RICO_action
 {
     ACTION_NULL,
@@ -148,9 +166,12 @@ enum RICO_action
     ACTION_COUNT
 };
 
+extern enum rico_state RICO_state_get();
+extern bool RICO_state_is_paused();
+extern bool RICO_state_is_edit();
 extern int RICO_update();
 extern bool RICO_quit();
-extern u32 RICO_key_event();
+extern u32 RICO_key_event(u32 *action);
 extern void RICO_bind_action(u32 action, struct RICO_keychord chord);
 extern pkid RICO_mouse_raycast();
 

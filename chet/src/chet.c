@@ -196,13 +196,13 @@ int main(int argc, char **argv)
 
     while (!RICO_quit())
     {
-        err = RICO_update();
-        if (err) break;
-
         // TODO: Everything that happens here is delayed by a frame
-        enum RICO_action action = RICO_key_event();
-        while (action)
+        u32 action;
+        while (RICO_key_event(&action))
         {
+            if (RICO_state_is_edit() || RICO_state_is_paused())
+                continue;
+
             switch (action)
             {
                 case ACTION_PLAY_INTERACT:
@@ -214,8 +214,10 @@ int main(int argc, char **argv)
                 default:
                     break;
             }
-            action = RICO_key_event();
         }
+
+        err = RICO_update();
+        if (err) break;
     }
 
     RICO_cleanup();
