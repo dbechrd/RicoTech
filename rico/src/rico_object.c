@@ -166,7 +166,7 @@ static bool object_collide_ray(float *_dist, struct RICO_object *rico,
 static bool object_collide_ray_type(u32 id, struct RICO_object **_object,
                                     float *_dist, const struct ray *ray)
 {
-    bool collided;
+    bool collided = false;
     float distance;
     *_dist = Z_FAR; // Track closest object
 
@@ -265,7 +265,6 @@ static void object_render(struct pack *pack, const struct camera *camera)
             prev_type = obj->type;
         }
 
-#if 0
         // Set object-specific uniform values
 
         // UV-coord scale
@@ -274,22 +273,14 @@ static void object_render(struct pack *pack, const struct camera *camera)
         // TODO: UV scaling in general only works when object is uniformly
         //       scaled. Maybe I should only allow textured objects to be
         //       uniformly scaled?
-        if (obj->type == RICO_OBJECT_TYPE_STRING_WORLD)
-        {
-            // TODO: Why can't I just assume obj->xform.scale is always 1,1,1?
-            glUniform2f(prog->scale_uv, 1.0f, 1.0f);
-        }
-		else if (obj->type == RICO_OBJECT_TYPE_TERRAIN)
+        if (obj->type == RICO_OBJECT_TYPE_TERRAIN)
 		{
 			glUniform2f(prog->scale_uv, 100.0f, 100.0f);
 		}
         else
         {
-            glUniform2f(prog->scale_uv,
-                        obj->xform.scale.x,
-                        obj->xform.scale.y);
+            glUniform2f(prog->scale_uv, obj->xform.scale.x, obj->xform.scale.y);
         }
-#endif
 
         // Model matrix
         glUniformMatrix4fv(prog->model, 1, GL_TRUE,

@@ -39,7 +39,7 @@ struct game_panel
 static struct game_panel panel_1;
 
 static const char *PATH_ALPHA = "packs/alpha.pak";
-//static const char *PATH_ALPHA_SAV = "packs/alpha_sav.pak";
+static const char *PATH_ALPHA_SAV = "packs/alpha_sav.pak";
 
 void pack_build_alpha()
 {
@@ -74,14 +74,15 @@ void pack_build_alpha()
 
     DLB_ASSERT(mesh_door);
     DLB_ASSERT(mesh_terrain);
+   
 
-    //struct pack *pack_sav = RICO_pack_init(id + 1, PATH_ALPHA_SAV, 512, MB(32));
-    pkid terrain_id = RICO_load_object(pack, RICO_OBJECT_TYPE_TERRAIN, 0, "terrain");
+    u32 pack_sav = RICO_pack_init(0, PATH_ALPHA_SAV, 64, MB(32));
+    pkid terrain_id = RICO_load_object(pack_sav, RICO_OBJECT_TYPE_TERRAIN, 0, "terrain");
     struct RICO_object *terrain = RICO_pack_lookup(terrain_id);
     terrain->mesh_id = mesh_terrain;
     terrain->material_id = mat_bricks;
 
-    pkid timmy_id = RICO_load_object(pack, OBJ_TIMMY, sizeof(struct timmy), "timmy");
+    pkid timmy_id = RICO_load_object(pack_sav, OBJ_TIMMY, sizeof(struct timmy), "timmy");
     struct timmy *timmy = RICO_pack_lookup(timmy_id);
     struct RICO_mesh *door_mesh = RICO_pack_lookup(mesh_door);
     timmy->rico.mesh_id = mesh_door;
@@ -90,12 +91,12 @@ void pack_build_alpha()
     timmy->lights_on = true;
     timmy->audio_on = true;
 
-    RICO_load_object(pack, OBJ_GAME_BUTTON, sizeof(struct game_button), "button");
+    RICO_load_object(pack_sav, OBJ_GAME_BUTTON, sizeof(struct game_button), "button");
 
-	RICO_pack_save(pack, 0, false);
-    //RICO_pack_save(pack_sav, PATH_ALPHA_SAV, false);
+    RICO_pack_save(pack, 0, false);
     RICO_pack_free(pack);
-	//RICO_pack_free(pack_sav->id);
+    RICO_pack_save(pack_sav, PATH_ALPHA_SAV, false);
+	RICO_pack_free(pack_sav);
 }
 
 void pack_build_all()
@@ -107,10 +108,10 @@ int pack_load_all()
 {
 	enum RICO_error err;
 
-    err = RICO_pack_load(PATH_ALPHA, &RICO_pack_active);
+    err = RICO_pack_load(PATH_ALPHA, 0);
     if (err) return err;
-    //err = RICO_pack_load(PATH_ALPHA_SAV, &pack_active);
-    //if (err) return err;
+    err = RICO_pack_load(PATH_ALPHA_SAV, &RICO_pack_active);
+    if (err) return err;
 
 	return err;
 }

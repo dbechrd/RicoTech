@@ -167,6 +167,36 @@ static void edit_scale(const struct vec3 *offset)
 
     object_print(obj);
 }
+static void edit_material_next_pack()
+{
+    if (!selected_obj_id)
+        return;
+
+    struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
+    struct RICO_material *next_material = 0;
+
+    u32 pack_start = PKID_PACK(obj->material_id);
+    u32 pack_id = pack_start + 1;
+    while (pack_id != pack_start)
+    {
+        if (pack_id != PACK_TRANSIENT &&
+            pack_id != PACK_FRAME &&
+            packs[pack_id])
+        {
+            next_material = RICO_pack_last(pack_id, RICO_HND_MATERIAL);
+            if (next_material)
+                break;
+        }
+        pack_id++;
+        pack_id = pack_id % MAX_PACKS;
+    }
+
+    if (next_material)
+    {
+        obj->material_id = next_material->uid.pkid;
+        object_print(obj);
+    }
+}
 static void edit_material_next()
 {
     if (!selected_obj_id)
@@ -194,6 +224,38 @@ static void edit_material_prev()
     if (prev_material)
     {
         obj->material_id = prev_material->uid.pkid;
+        object_print(obj);
+    }
+}
+static void edit_mesh_next_pack()
+{
+    if (!selected_obj_id)
+        return;
+
+    struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
+    struct RICO_mesh *next_mesh = 0;
+
+    u32 pack_start = PKID_PACK(obj->mesh_id);
+    u32 pack_id = pack_start + 1;
+    while (pack_id != pack_start)
+    {
+        if (pack_id != PACK_TRANSIENT &&
+            pack_id != PACK_FRAME &&
+            packs[pack_id])
+        {
+            next_mesh = RICO_pack_last(pack_id, RICO_HND_MESH);
+            if (next_mesh)
+                break;
+        }
+        pack_id++;
+        pack_id = pack_id % MAX_PACKS;
+    }
+
+    if (next_mesh)
+    {
+        obj->mesh_id = next_mesh->uid.pkid;
+        obj->bbox = next_mesh->bbox;
+        object_select(obj);
         object_print(obj);
     }
 }

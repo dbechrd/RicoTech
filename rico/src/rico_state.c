@@ -900,6 +900,11 @@ static int state_edit_material()
     {
         edit_material_prev();
     }
+    // Cycle all packs looking for materials
+    else if (chord_active(ACTION_EDIT_MATERIAL_NEXT_PACK))
+    {
+        edit_material_next_pack();
+    }
 
     return err;
 }
@@ -920,6 +925,11 @@ static int state_edit_mesh()
     else if (chord_active(ACTION_EDIT_MESH_PREVIOUS))
     {
         edit_mesh_prev();
+    }
+    // Cycle all packs looking for meshes
+    else if (chord_active(ACTION_EDIT_MESH_NEXT_PACK))
+    {
+        edit_mesh_next_pack();
     }
     // Recalculate bounding box based on current mesh
     else if (chord_active(ACTION_EDIT_MESH_BBOX_RECALCULATE))
@@ -1153,9 +1163,11 @@ static int engine_init()
 
     RICO_bind_action(ACTION_EDIT_MATERIAL_NEXT,              CHORD1(SDL_SCANCODE_RIGHT));
     RICO_bind_action(ACTION_EDIT_MATERIAL_PREVIOUS,          CHORD1(SDL_SCANCODE_LEFT));
+    RICO_bind_action(ACTION_EDIT_MATERIAL_NEXT_PACK,         CHORD1(SDL_SCANCODE_UP));
 
     RICO_bind_action(ACTION_EDIT_MESH_NEXT,                  CHORD1(SDL_SCANCODE_RIGHT));
     RICO_bind_action(ACTION_EDIT_MESH_PREVIOUS,              CHORD1(SDL_SCANCODE_LEFT));
+    RICO_bind_action(ACTION_EDIT_MESH_NEXT_PACK,             CHORD1(SDL_SCANCODE_UP));
     RICO_bind_action(ACTION_EDIT_MESH_BBOX_RECALCULATE,      CHORD1(SDL_SCANCODE_B));
 
 	state_handlers[STATE_ENGINE_SHUTDOWN].run = &state_engine_shutdown;
