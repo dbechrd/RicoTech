@@ -1,4 +1,4 @@
-static const char *rico_state_string[] = { RICO_STATES(GEN_STRING) };
+const char *rico_state_string[] = { RICO_STATES(GEN_STRING) };
 
 #define LOAD_SAVE_FILE false
 

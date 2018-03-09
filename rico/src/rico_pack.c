@@ -12,7 +12,7 @@ static const u8 PACK_SIGNATURE[4] = { 'R', 'I', 'C', 'O' };
 
 struct pack *packs[MAX_PACKS] = { 0 };
 u32 packs_next = 0;
-extern u32 RICO_pack_active = 0;
+u32 RICO_pack_active = 0;
 
 static u32 perf_pack_tick_start;
 static u32 perf_pack_tick_end;

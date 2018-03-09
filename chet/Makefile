@@ -33,7 +33,7 @@ RESOURCES += $(wildcard $(RES_DIR)/shader/*.glsl)
 RESOURCES += $(wildcard $(RES_DIR)/mesh/*.obj)
 RESOURCES += $(wildcard $(RES_DIR)/texture/*.tga)
 RESOURCES += $(wildcard $(RES_DIR)/packs/*.pak)
-RESOURCES += $(wildcard $(RES_DIR)/audio/*.raw)
+RESOURCES += $(wildcard $(RES_DIR)/audio/*.ric)
 BIN_RESOURCES := $(subst $(RES_DIR)/,$(BIN_DIR)/,$(RESOURCES))
 
 # Compiler & flags

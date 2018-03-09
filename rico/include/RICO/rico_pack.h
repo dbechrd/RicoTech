@@ -1,6 +1,13 @@
 #ifndef RICO_PACK_H
 #define RICO_PACK_H
 
+#define PKID_BLOB_BITS 24
+#define PKID_BLOB_MASK ((1 << PKID_BLOB_BITS) - 1)
+#define PKID_PACK_MASK (0xffffffff ^ PKID_BLOB_MASK)
+#define PKID_PACK(id) ((id & PKID_PACK_MASK) >> PKID_BLOB_BITS)
+#define PKID_BLOB(id) (id & PKID_BLOB_MASK)
+#define PKID_GENERATE(pack, blob) ((pack << PKID_BLOB_BITS) | blob)
+
 struct blob_index
 {
     enum RICO_hnd_type type;

@@ -3,13 +3,6 @@
 
 #include "RICO/rico_pack.h"
 
-#define PKID_BLOB_BITS 24
-#define PKID_BLOB_MASK ((1 << PKID_BLOB_BITS) - 1)
-#define PKID_PACK_MASK (0xffffffff ^ PKID_BLOB_MASK)
-#define PKID_PACK(id) ((id & PKID_PACK_MASK) >> PKID_BLOB_BITS)
-#define PKID_BLOB(id) (id & PKID_BLOB_MASK)
-#define PKID_GENERATE(pack, blob) ((pack << PKID_BLOB_BITS) | blob)
-
 #define MAX_PACKS 32
 struct pack *packs[MAX_PACKS];
 u32 packs_next;
