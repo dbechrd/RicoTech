@@ -1,8 +1,6 @@
 #ifndef RICO_INTERNAL_H
 #define RICO_INTERNAL_H
 
-//#include "rico.h"
-
 #if defined(__GNUC__) || defined(__clang__)
 #include <x86intrin.h>
 #endif
@@ -11,7 +9,8 @@
 #include <stdio.h>
 #include <limits.h>
 #include <math.h>
-//#include <stdlib.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "dlb_types.h"
 #include "dlb_string.h"

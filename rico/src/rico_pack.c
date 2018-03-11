@@ -863,7 +863,7 @@ extern int RICO_load_obj_file(u32 pack_id, const char *filename, pkid *_last_mes
     char *buffer_ptr = buffer;
     while (*buffer_ptr)
     {
-        tok = strsep(&buffer_ptr, '\n');
+        tok = strsep(&buffer_ptr, "\n");
 
         // New object
         if (str_starts_with(tok, "o "))
@@ -932,10 +932,10 @@ extern int RICO_load_obj_file(u32 pack_id, const char *filename, pkid *_last_mes
             char *vert;
             while (*tok_ptr)
             {
-                vert = strsep(&tok_ptr, ' ');
-                vert_pos = fast_atol(strsep(&vert, '/'));
-                vert_tex = fast_atol(strsep(&vert, '/'));
-                vert_norm = fast_atol(strsep(&vert, '/'));
+                vert = strsep(&tok_ptr, " ");
+                vert_pos = fast_atol(strsep(&vert, "/"));
+                vert_tex = fast_atol(strsep(&vert, "/"));
+                vert_norm = fast_atol(strsep(&vert, "/"));
 
                 vertices[idx_vertex].col = COLOR_WHITE;
                 if (vert_pos > 0)

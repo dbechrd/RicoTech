@@ -46,8 +46,8 @@ static void font_render(u32 *mesh_id, u32 *tex_id, pkid font_id, float x,
 {
     // TODO: Use instanced quad?
     // Persistent buffers for font rendering
-    local struct text_vertex vertices[BFG_MAXSTRING * 4] = { 0 };
-    local GLuint elements[BFG_MAXSTRING * 6] = { 0 };
+    static struct text_vertex vertices[BFG_MAXSTRING * 4] = { 0 };
+    static GLuint elements[BFG_MAXSTRING * 6] = { 0 };
 
     struct RICO_font *font;
     if (font_id)

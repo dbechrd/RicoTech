@@ -5,6 +5,7 @@
 // Basic type redefinitions
 //------------------------------------------------------------------------------
 #include <stdint.h>
+#include <stdbool.h>
 #include <assert.h>
 // #include <stddef.h>
 // #include <limits.h>
@@ -23,13 +24,13 @@ typedef uint64_t u64;
 typedef float r32;
 typedef double r64;
 
-typedef u32 bool;
-#define true 1
-#define false 0
+//typedef u32 bool;
+//#define true 1
+//#define false 0
 
 // NOTE: internal and global are relative to translation unit
-#define local    static
 #if 0
+#define local    static
 #define internal static
 #define global   static
 #endif

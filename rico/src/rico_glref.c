@@ -485,7 +485,7 @@ static void edit_render()
 
         struct mat4 xform = MAT4_IDENT;
         mat4_translate(&xform, &obj->xform.position);
-        
+
         //struct vec3 *bbox = &obj->bbox.max;
         //prim_draw_line(&VEC3_ZERO, &VEC3(bbox->x, 0.0f, 0.0f), &xform, COLOR_RED);
         //prim_draw_line(&VEC3_ZERO, &VEC3(0.0f, bbox->y, 0.0f), &xform, COLOR_GREEN);
@@ -494,7 +494,7 @@ static void edit_render()
         prim_draw_line(&VEC3_ZERO, &VEC3_X, &xform, COLOR_RED);
         prim_draw_line(&VEC3_ZERO, &VEC3_Y, &xform, COLOR_GREEN);
         prim_draw_line(&VEC3_ZERO, &VEC3_Z, &xform, COLOR_BLUE);
-        
+
         prim_draw_bbox(&widgets[0].bbox, &xform, &COLOR_RED);
         prim_draw_bbox(&widgets[1].bbox, &xform, &COLOR_GREEN);
         prim_draw_bbox(&widgets[2].bbox, &xform, &COLOR_BLUE);

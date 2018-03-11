@@ -5,7 +5,7 @@ static int rico_convert(int argc, char **argv);
 static int rico_convert_obj(const char *filename);
 static int load_obj_file_new(const char *filename);
 
-static inline char *strsep(char **stringp, const char delim)
+static inline char *dlb_strsep(char **stringp, const char delim)
 {
     char *start = *stringp;
 

@@ -306,7 +306,7 @@ extern int RICO_update()
     sim_accum += MIN(frame_ms, SIM_MAX_FRAMESKIP_MS);
     while (sim_accum >= SIM_MS)
     {
-        if (!RICO_state_is_paused(state))
+        if (!RICO_state_is_paused())
         {
             struct vec3 camera_acc = player_acc;
             if (player_sprint) v3_scalef(&camera_acc, CAM_SPRINT_MULTIPLIER);
@@ -475,7 +475,7 @@ static int shared_camera_events()
 }
 static int shared_edit_events()
 {
-    RICO_ASSERT(RICO_state_is_edit(state));
+    RICO_ASSERT(RICO_state_is_edit());
 
     enum RICO_error err = SUCCESS;
 
@@ -615,7 +615,7 @@ static int state_edit_cleanup()
 {
     enum RICO_error err = SUCCESS;
 
-    if (!RICO_state_is_edit(state))
+    if (!RICO_state_is_edit())
     {
         string_free_slot(STR_SLOT_SELECTED_OBJ);
     }

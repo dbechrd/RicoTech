@@ -76,7 +76,7 @@ static void program_pbr_get_locations(struct program_pbr *p)
     p->model = program_get_uniform_location(p->prog_id, "model");
     p->view = program_get_uniform_location(p->prog_id, "view");
     p->proj = program_get_uniform_location(p->prog_id, "proj");
-    
+
     //RICO_ASSERT(p->u_time >= 0);
     RICO_ASSERT(p->scale_uv >= 0);
     RICO_ASSERT(p->model >= 0);
@@ -134,7 +134,7 @@ static void program_pbr_attribs()
 }
 static int make_program_pbr(struct program_pbr **_program)
 {
-    local struct program_pbr *prog_pbr = NULL;
+    static struct program_pbr *prog_pbr = NULL;
     enum RICO_error err;
 
     if (prog_pbr != NULL) {
@@ -211,7 +211,7 @@ static void program_primitive_attribs()
 }
 static int make_program_primitive(struct program_primitive **_program)
 {
-    local struct program_primitive *prog_primitive = NULL;
+    static struct program_primitive *prog_primitive = NULL;
     enum RICO_error err;
 
     if (prog_primitive != NULL) {
@@ -273,7 +273,7 @@ static void program_prim_cube_get_locations(struct program_prim_cube *p)
 }
 static int make_program_prim_cube(struct program_prim_cube **_program)
 {
-    local struct program_prim_cube *prog_prim_cube = NULL;
+    static struct program_prim_cube *prog_prim_cube = NULL;
     enum RICO_error err;
 
     if (prog_prim_cube != NULL) {
@@ -347,7 +347,7 @@ static void program_text_attribs()
 }
 static int make_program_text(struct program_text **_program)
 {
-    local struct program_text *prog_text = NULL;
+    static struct program_text *prog_text = NULL;
     enum RICO_error err;
 
     if (prog_text != NULL) {

@@ -30,9 +30,10 @@ DEPS := $(OBJECTS:.o=.d)
 # -O3 Extreme (Careful, might make EXE bigger or invoke undefined behavior!)
 SHARED_FLAGS = -std=c99 -g -MMD -O0 -Wall -Wextra -Werror -Wno-unused-function #-Wno-missing-field-initializers -Wno-missing-braces -Wno-deprecated-declarations #-Wno-error=incompatible-pointer-types
 GCC_FLAGS = -fmax-errors=3
-CLANG_FLAGS = -ferror-limit=3 -fcolor-diagnostics -Wno-macro-redefined
+#CLANG_FLAGS = -ferror-limit=3 -fcolor-diagnostics -Wno-macro-redefined -Wno-unknown-pragmas
+CLANG_FLAGS = -fcolor-diagnostics -Wno-macro-redefined -Wno-unknown-pragmas -Wno-missing-field-initializers -Wno-missing-braces
 CC = gcc #-v
-CFLAGS = $(GCC_FLAGS) $(SHARED_FLAGS)
+CFLAGS = $(SHARED_FLAGS) $(CLANG_FLAGS)
 LDFLAGS = # None
 
 default: prebuild build
