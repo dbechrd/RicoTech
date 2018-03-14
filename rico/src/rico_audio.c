@@ -40,6 +40,12 @@ static void init_openal()
     if (err) RICO_ERROR(ERR_OPENAL_INIT, "OpenAL error: %s\n", err);
 }
 
+extern float RICO_audio_volume()
+{
+    ALfloat volume = 0;
+    alGetListenerf(AL_GAIN, &volume);
+    return volume;
+}
 extern void RICO_audio_volume_set(float volume)
 {
     alListenerf(AL_GAIN, volume);
@@ -104,6 +110,8 @@ extern void RICO_audio_source_play_loop(struct RICO_audio_source *source)
     source->loop = true;
     alSourcei(source->al_source_id, AL_LOOPING, source->loop);
     alSourcePlay(source->al_source_id);
+    printf("Playing source id=%d pitch=%f gain=%f loop=%d\n",
+           source->al_source_id, source->pitch, source->gain, source->loop);
 }
 extern void RICO_audio_source_pause(struct RICO_audio_source *source)
 {

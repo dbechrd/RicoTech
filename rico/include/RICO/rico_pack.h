@@ -11,6 +11,7 @@
 struct blob_index
 {
     enum RICO_hnd_type type;
+    u32 name_hash;
     u32 offset;
     u32 size;
 };
@@ -69,6 +70,7 @@ extern u32 RICO_pack_active;
 extern u32 RICO_pack_init(u32 pack_id, const char *name, u32 blob_count,
                           u32 buffer_size);
 extern void *RICO_pack_lookup(pkid pkid);
+extern void *RICO_pack_lookup_by_name(u32 pack_id, const char *name);
 extern void *RICO_pack_first(u32 pack_id, enum RICO_hnd_type type);
 extern void *RICO_pack_last(u32 pack_id, enum RICO_hnd_type type);
 extern void *RICO_pack_next(pkid pkid);

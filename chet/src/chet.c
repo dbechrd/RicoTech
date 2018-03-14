@@ -40,6 +40,18 @@ struct game_panel
 
 static struct game_panel panel_1;
 
+enum audio_type
+{
+    AUDIO_WELCOME,
+    AUDIO_THUNDER,
+    AUDIO_BUTTON,
+    AUDIO_VICTORY,
+    AUDIO_COUNT
+};
+
+struct RICO_audio_buffer audio_buffers[AUDIO_COUNT];
+struct RICO_audio_source audio_sources[AUDIO_COUNT];
+
 static const char *PATH_ALPHA = "packs/alpha.pak";
 static const char *PATH_ALPHA_SAV = "packs/alpha_sav.pak";
 
@@ -137,29 +149,42 @@ void pack_build_all()
 	pack_build_alpha();
 }
 
+static u32 pack_alpha_id;
+static u32 pack_alpha_sav_id;
 int pack_load_all()
 {
 	enum RICO_error err;
 
-    err = RICO_pack_load(PATH_ALPHA, 0);
+    err = RICO_pack_load(PATH_ALPHA, &pack_alpha_id);
     if (err) return err;
-    err = RICO_pack_load(PATH_ALPHA_SAV, &RICO_pack_active);
+    err = RICO_pack_load(PATH_ALPHA_SAV, &pack_alpha_sav_id);
     if (err) return err;
 
+    RICO_pack_active = pack_alpha_sav_id;
+
 	return err;
+}
+
+void timmy_state_hacks(bool lights_on, bool audio_on)
+{
+    RICO_lighting_enabled = lights_on;
+    if (audio_on)
+    {
+        RICO_audio_unmute();
+    }
+    else
+    {
+        RICO_audio_mute();
+    }
 }
 
 void timmy_interact(struct timmy *timmy)
 {
     timmy->lights_on = !timmy->lights_on;
-    RICO_lighting_enabled = timmy->lights_on;
-
     timmy->audio_on = !timmy->audio_on;
-    (timmy->audio_on) ? RICO_audio_unmute() : RICO_audio_mute();
+    timmy_state_hacks(timmy->lights_on, timmy->audio_on);
 }
 
-struct RICO_audio_buffer audio_buffer_button;
-struct RICO_audio_source audio_source_button;
 void game_button_interact(struct game_button *button)
 {
     struct game_panel *panel = RICO_pack_lookup(button->panel_id);
@@ -213,7 +238,25 @@ void game_button_interact(struct game_button *button)
             : mat_on;
     }
 
-    RICO_audio_source_play(&audio_source_button);
+    bool victory = true;
+    for (int i = 0; i < ARRAY_COUNT(panel->buttons); i++)
+    {
+        struct game_button *button = RICO_pack_lookup(panel->buttons[i]);
+        if (button->rico.material_id == mat_on)
+        {
+            victory = false;
+            break;
+        }
+    }
+
+    if (victory)
+    {
+        RICO_audio_source_play(&audio_sources[AUDIO_VICTORY]);
+    }
+    else
+    {
+        RICO_audio_source_play(&audio_sources[AUDIO_BUTTON]);
+    }
 }
 
 static pkid last_clicked;
@@ -259,7 +302,7 @@ int main(int argc, char **argv)
 
 	//main_nuklear(argc, argv);
     RICO_init();
-	//pack_build_all();
+    //pack_build_all();
 	pack_load_all();
 
     RICO_bind_action(ACTION_RICO_TEST, CHORD_REPEAT1(SDL_SCANCODE_Z));
@@ -267,20 +310,32 @@ int main(int argc, char **argv)
     RICO_bind_action(ACTION_TYPE_PREV, CHORD1(SDL_SCANCODE_C));
 
     // TODO: Add audio to pack
-    struct RICO_audio_buffer buffer;
-    struct RICO_audio_source source;
-    RICO_audio_buffer_load_file(&buffer, "audio/thunder_storm.ric");
-    RICO_audio_source_init(&source);
-    RICO_audio_source_buffer(&source, &buffer);
-    RICO_audio_source_play_loop(&source);
+    RICO_audio_buffer_load_file(&audio_buffers[AUDIO_WELCOME], "audio/welcome.ric");
+    RICO_audio_source_init(&audio_sources[AUDIO_WELCOME]);
+    RICO_audio_source_buffer(&audio_sources[AUDIO_WELCOME], &audio_buffers[AUDIO_WELCOME]);
+    RICO_audio_source_play(&audio_sources[AUDIO_WELCOME]);
 
-    RICO_audio_buffer_load_file(&audio_buffer_button, "audio/bloop2.ric");
-    RICO_audio_source_init(&audio_source_button);
-    RICO_audio_source_buffer(&audio_source_button, &audio_buffer_button);
+    RICO_audio_buffer_load_file(&audio_buffers[AUDIO_THUNDER], "audio/thunder_storm.ric");
+    RICO_audio_source_init(&audio_sources[AUDIO_THUNDER]);
+    RICO_audio_source_buffer(&audio_sources[AUDIO_THUNDER], &audio_buffers[AUDIO_THUNDER]);
+    RICO_audio_source_play_loop(&audio_sources[AUDIO_THUNDER]);
+
+    RICO_audio_buffer_load_file(&audio_buffers[AUDIO_BUTTON], "audio/bloop2.ric");
+    RICO_audio_source_init(&audio_sources[AUDIO_BUTTON]);
+    RICO_audio_source_buffer(&audio_sources[AUDIO_BUTTON], &audio_buffers[AUDIO_BUTTON]);
+
+    RICO_audio_buffer_load_file(&audio_buffers[AUDIO_VICTORY], "audio/victory.ric");
+    RICO_audio_source_init(&audio_sources[AUDIO_VICTORY]);
+    RICO_audio_source_buffer(&audio_sources[AUDIO_VICTORY], &audio_buffers[AUDIO_VICTORY]);
+
+    // HACK: Find Timmy by name and use light/audio flags to determine start-up
+    //       state of lighting and audio.
+    struct timmy *timmy = RICO_pack_lookup_by_name(pack_alpha_sav_id, "timmy");
+    DLB_ASSERT(timmy);
+    timmy_state_hacks(timmy->lights_on, timmy->audio_on);
 
     while (!RICO_quit())
     {
-        // TODO: Everything that happens here is delayed by a frame
         u32 action;
         while (RICO_key_event(&action))
         {
@@ -293,7 +348,7 @@ int main(int argc, char **argv)
                     object_interact();
                     break;
                 case ACTION_RICO_TEST:
-                    RICO_audio_source_play(&audio_source_button);
+                    RICO_audio_source_play(&audio_sources[AUDIO_BUTTON]);
                     break;
                 default:
                     break;
@@ -303,6 +358,13 @@ int main(int argc, char **argv)
         err = RICO_update();
         if (err) break;
     }
+
+    RICO_audio_source_free(&audio_sources[AUDIO_WELCOME]);
+    RICO_audio_buffer_free(&audio_buffers[AUDIO_WELCOME]);
+    RICO_audio_source_free(&audio_sources[AUDIO_BUTTON]);
+    RICO_audio_buffer_free(&audio_buffers[AUDIO_BUTTON]);
+    RICO_audio_source_free(&audio_sources[AUDIO_THUNDER]);
+    RICO_audio_buffer_free(&audio_buffers[AUDIO_THUNDER]);
 
     RICO_cleanup();
     return err;

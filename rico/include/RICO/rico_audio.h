@@ -30,6 +30,7 @@ struct RICO_audio_buffer
     ALuint al_buffer_id;
 };
 
+extern float RICO_audio_volume();
 extern void RICO_audio_volume_set(float volume);
 extern void RICO_audio_mute();
 extern void RICO_audio_unmute();

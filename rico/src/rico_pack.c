@@ -36,9 +36,13 @@ static void *blob_start(struct pack *pack, enum RICO_hnd_type type, u32 size,
         id++;
     }
 
+    u32 name_hash = 0;
+    MurmurHash3_x86_32(name, dlb_strlen(name), &name_hash);
+
     pack->blob_current_id = id;
     pack->lookup[pack->blob_current_id] = pack->blobs_used;
     pack->index[pack->blobs_used].type = type;
+    pack->index[pack->blobs_used].name_hash = name_hash;
     pack->index[pack->blobs_used].offset = pack->buffer_used;
     pack->index[pack->blobs_used].size = 0;
 
@@ -312,6 +316,26 @@ extern void *RICO_pack_lookup(pkid pkid)
 
     u32 id = pack->lookup[blob_id];
     return pack_read(pack, id);
+}
+extern void *RICO_pack_lookup_by_name(u32 pack_id, const char *name)
+{
+    RICO_ASSERT(pack_id < MAX_PACKS);
+    struct pack *pack = packs[pack_id];
+
+    u32 name_hash;
+    MurmurHash3_x86_32(name, dlb_strlen(name), &name_hash);
+
+    u32 idx = 0;
+    while (idx < pack->blobs_used)
+    {
+        if (pack->index[idx].name_hash == name_hash)
+        {
+            return pack_read(pack, idx);
+        }
+        idx++;
+    }
+
+    return NULL;
 }
 extern void *RICO_pack_first(u32 pack_id, enum RICO_hnd_type type)
 {
@@ -863,7 +887,7 @@ extern int RICO_load_obj_file(u32 pack_id, const char *filename, pkid *_last_mes
     char *buffer_ptr = buffer;
     while (*buffer_ptr)
     {
-        tok = strsep(&buffer_ptr, "\n");
+        tok = dlb_strsep_c(&buffer_ptr, '\n');
 
         // New object
         if (str_starts_with(tok, "o "))
@@ -932,10 +956,10 @@ extern int RICO_load_obj_file(u32 pack_id, const char *filename, pkid *_last_mes
             char *vert;
             while (*tok_ptr)
             {
-                vert = strsep(&tok_ptr, " ");
-                vert_pos = fast_atol(strsep(&vert, "/"));
-                vert_tex = fast_atol(strsep(&vert, "/"));
-                vert_norm = fast_atol(strsep(&vert, "/"));
+                vert = dlb_strsep_c(&tok_ptr, ' ');
+                vert_pos = dlb_atol(dlb_strsep_c(&vert, '/'));
+                vert_tex = dlb_atol(dlb_strsep_c(&vert, '/'));
+                vert_norm = dlb_atol(dlb_strsep_c(&vert, '/'));
 
                 vertices[idx_vertex].col = COLOR_WHITE;
                 if (vert_pos > 0)

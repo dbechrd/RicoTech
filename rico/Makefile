@@ -33,7 +33,7 @@ GCC_FLAGS = -fmax-errors=3
 #CLANG_FLAGS = -ferror-limit=3 -fcolor-diagnostics -Wno-macro-redefined -Wno-unknown-pragmas
 CLANG_FLAGS = -fcolor-diagnostics -Wno-macro-redefined -Wno-unknown-pragmas -Wno-missing-field-initializers -Wno-missing-braces
 CC = gcc #-v
-CFLAGS = $(SHARED_FLAGS) $(CLANG_FLAGS)
+CFLAGS = $(SHARED_FLAGS) $(GCC_FLAGS)
 LDFLAGS = # None
 
 default: prebuild build
