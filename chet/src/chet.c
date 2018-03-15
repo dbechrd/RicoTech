@@ -239,7 +239,7 @@ void game_button_interact(struct game_button *button)
     }
 
     bool victory = true;
-    for (int i = 0; i < ARRAY_COUNT(panel->buttons); i++)
+    for (u32 i = 0; i < ARRAY_COUNT(panel->buttons); i++)
     {
         struct game_button *button = RICO_pack_lookup(panel->buttons[i]);
         if (button->rico.material_id == mat_on)
@@ -363,6 +363,8 @@ int main(int argc, char **argv)
     RICO_audio_buffer_free(&audio_buffers[AUDIO_WELCOME]);
     RICO_audio_source_free(&audio_sources[AUDIO_BUTTON]);
     RICO_audio_buffer_free(&audio_buffers[AUDIO_BUTTON]);
+    RICO_audio_source_free(&audio_sources[AUDIO_VICTORY]);
+    RICO_audio_buffer_free(&audio_buffers[AUDIO_VICTORY]);
     RICO_audio_source_free(&audio_sources[AUDIO_THUNDER]);
     RICO_audio_buffer_free(&audio_buffers[AUDIO_THUNDER]);
 
