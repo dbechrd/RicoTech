@@ -9,6 +9,7 @@ SRC_DIR := src
 INC_DIR := include ../dlb/include ../rico/include
 OBJ_DIR := obj
 LIB_DIR := lib ../rico/lib
+DLL_DIR := lib
 BIN_DIR := bin
 RES_DIR := res
 
@@ -35,6 +36,8 @@ RESOURCES += $(wildcard $(RES_DIR)/texture/*.tga)
 RESOURCES += $(wildcard $(RES_DIR)/packs/*.pak)
 RESOURCES += $(wildcard $(RES_DIR)/audio/*.ric)
 BIN_RESOURCES := $(subst $(RES_DIR)/,$(BIN_DIR)/,$(RESOURCES))
+DLLS := $(wildcard $(DLL_DIR)/*.dll)
+BIN_DLLS := $(subst $(DLL_DIR)/,$(BIN_DIR)/,$(DLLS))
 
 # Compiler & flags
 # Optimization flags:
@@ -77,7 +80,7 @@ build-compile: compile-banner
 build-link: link-banner $(BIN_EXE)
 build: make-build-dirs build-compile build-link
 
-postbuild-copyres: copyres-banner make-res-dirs $(BIN_RESOURCES)
+postbuild-copyres: copyres-banner make-res-dirs $(BIN_RESOURCES) $(BIN_DLLS)
 postbuild: postbuild-copyres
 
 ################################################################################
@@ -103,6 +106,11 @@ make-res-dirs:
 # Copy resources
 $(BIN_DIR)/%: $(RES_DIR)/%
 	$(info [RES] $^ -> $@)
+	@cp $^ $@
+
+# Copy dlls
+$(BIN_DIR)/%: $(DLL_DIR)/%
+	$(info [DLL] $^ -> $@)
 	@cp $^ $@
 
 # Include generated dependency files
