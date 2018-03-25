@@ -1045,11 +1045,6 @@ extern void RICO_bind_action(u32 action, struct RICO_keychord chord)
     action_chords[action] = chord;
     action_max = MAX(action_max, action);
 }
-extern pkid RICO_mouse_raycast()
-{
-    struct RICO_object *obj = mouse_first_obj();
-    return (obj) ? obj->uid.pkid : 0;
-}
 static int engine_init()
 {
     enum RICO_error err;

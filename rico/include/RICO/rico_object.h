@@ -32,6 +32,11 @@ struct RICO_object
     pkid material_id;
 };
 
+extern void RICO_object_trans(struct RICO_object *obj, const struct vec3 *v);
+extern const struct vec3 *RICO_object_trans_get(struct RICO_object *obj);
+extern void RICO_object_trans_set(struct RICO_object *obj,
+                                  const struct vec3 *v);
+
 /* CLEANUP: Stuff
 #define RICO_OBJECT(name) struct name { struct RICO_object rico;
 

@@ -59,24 +59,24 @@ static void object_bbox_recalculate_all(u32 id)
         obj->bbox = mesh->bbox;
     }
 }
-static bool object_selectable(struct RICO_object *rico)
+static bool object_selectable(struct RICO_object *obj)
 {
-    return (rico->type != RICO_OBJECT_TYPE_STRING_SCREEN);
+    return (obj->type != RICO_OBJECT_TYPE_STRING_SCREEN);
 }
-static void object_select_toggle(struct RICO_object *rico)
+static void object_select_toggle(struct RICO_object *obj)
 {
-    rico->bbox.selected = !rico->bbox.selected;
+    obj->bbox.selected = !obj->bbox.selected;
 }
-static void object_select(struct RICO_object *rico)
+static void object_select(struct RICO_object *obj)
 {
-    RICO_ASSERT(object_selectable(rico));
-    rico->bbox.selected = true;
+    RICO_ASSERT(object_selectable(obj));
+    obj->bbox.selected = true;
 }
-static void object_deselect(struct RICO_object *rico)
+static void object_deselect(struct RICO_object *obj)
 {
-    rico->bbox.selected = false;
+    obj->bbox.selected = false;
 }
-static void object_transform_update(struct RICO_object *rico)
+static void object_transform_update(struct RICO_object *obj)
 {
     //HACK: Order of these operations might not always be the same.. should
     //      probably just store the transformation matrix directly rather than
@@ -85,90 +85,89 @@ static void object_transform_update(struct RICO_object *rico)
     //      should have "edit mode" where the matrix is decomposed, then
     //      recomposed again when edit mode is ended?
     struct mat4 transform = MAT4_IDENT;
-    mat4_translate(&transform, &rico->xform.position);
-    mat4_rot_quat(&transform, &rico->xform.orientation);
-    mat4_scale(&transform, &rico->xform.scale);
-    rico->xform.matrix = transform;
+    mat4_translate(&transform, &obj->xform.position);
+    mat4_rot_quat(&transform, &obj->xform.orientation);
+    mat4_scale(&transform, &obj->xform.scale);
+    obj->xform.matrix = transform;
 
     struct vec3 scale_inv;
-    scale_inv.x = 1.0f / rico->xform.scale.x;
-    scale_inv.y = 1.0f / rico->xform.scale.y;
-    scale_inv.z = 1.0f / rico->xform.scale.z;
+    scale_inv.x = 1.0f / obj->xform.scale.x;
+    scale_inv.y = 1.0f / obj->xform.scale.y;
+    scale_inv.z = 1.0f / obj->xform.scale.z;
 
-    struct quat orientation_inv = rico->xform.orientation;
+    struct quat orientation_inv = obj->xform.orientation;
     quat_inverse(&orientation_inv);
 
-    struct vec3 position_inv = rico->xform.position;
+    struct vec3 position_inv = obj->xform.position;
     v3_negate(&position_inv);
 
     struct mat4 transform_inverse = MAT4_IDENT;
     mat4_scale(&transform_inverse, &scale_inv);
     mat4_rot_quat(&transform, &orientation_inv);
     mat4_translate(&transform_inverse, &position_inv);
-    rico->xform.matrix_inverse = transform_inverse;
+    obj->xform.matrix_inverse = transform_inverse;
 
     //struct mat4 mm = object->transform;
     //mat4_mul(&mm, &object->transform_inverse);
     //RICO_ASSERT(mat4_equals(&mm, &MAT4_IDENT));
 }
-static void object_trans(struct RICO_object *rico, const struct vec3 *v)
+extern void RICO_object_trans(struct RICO_object *obj, const struct vec3 *v)
 {
-    v3_add(&rico->xform.position, v);
-    object_transform_update(rico);
+    v3_add(&obj->xform.position, v);
+    object_transform_update(obj);
 }
-static const struct vec3 *object_trans_get(struct RICO_object *rico)
+extern const struct vec3 *RICO_object_trans_get(struct RICO_object *obj)
 {
-    return &rico->xform.position;
+    return &obj->xform.position;
 }
-static void object_trans_set(struct RICO_object *rico,
-                      const struct vec3 *v)
+extern void RICO_object_trans_set(struct RICO_object *obj,
+                                  const struct vec3 *v)
 {
-    rico->xform.position = *v;
-    object_transform_update(rico);
+    obj->xform.position = *v;
+    object_transform_update(obj);
 }
-static void object_rot(struct RICO_object *rico, const struct quat *q)
+static void object_rot(struct RICO_object *obj, const struct quat *q)
 {
-    quat_mul(&rico->xform.orientation, q);
-    object_transform_update(rico);
+    quat_mul(&obj->xform.orientation, q);
+    object_transform_update(obj);
 }
-static void object_rot_set(struct RICO_object *rico, const struct quat *q)
+static void object_rot_set(struct RICO_object *obj, const struct quat *q)
 {
-    rico->xform.orientation = *q;
-    object_transform_update(rico);
+    obj->xform.orientation = *q;
+    object_transform_update(obj);
 }
-static const struct quat *object_rot_get(struct RICO_object *rico)
+static const struct quat *object_rot_get(struct RICO_object *obj)
 {
-    return &rico->xform.orientation;
+    return &obj->xform.orientation;
 }
-static void object_scale(struct RICO_object *rico, const struct vec3 *v)
+static void object_scale(struct RICO_object *obj, const struct vec3 *v)
 {
-    v3_add(&rico->xform.scale, v);
-    object_transform_update(rico);
+    v3_add(&obj->xform.scale, v);
+    object_transform_update(obj);
 }
-static void object_scale_set(struct RICO_object *rico, const struct vec3 *v)
+static void object_scale_set(struct RICO_object *obj, const struct vec3 *v)
 {
-    rico->xform.scale = *v;
-    object_transform_update(rico);
+    obj->xform.scale = *v;
+    object_transform_update(obj);
 }
-static const struct vec3 *object_scale_get(struct RICO_object *rico)
+static const struct vec3 *object_scale_get(struct RICO_object *obj)
 {
-    return &rico->xform.scale;
+    return &obj->xform.scale;
 }
-static const struct mat4 *object_matrix_get(struct RICO_object *rico)
+static const struct mat4 *object_matrix_get(struct RICO_object *obj)
 {
-    return &rico->xform.matrix;
+    return &obj->xform.matrix;
 }
-static bool object_collide_ray(float *_dist, struct RICO_object *rico,
+static bool object_collide_ray(float *_dist, struct RICO_object *obj,
                                const struct ray *ray)
 {
-    return collide_ray_obb(_dist, ray, &rico->bbox, &rico->xform.matrix);
+    return collide_ray_obb(_dist, ray, &obj->bbox, &obj->xform.matrix);
 }
-static bool object_collide_ray_type(u32 id, struct RICO_object **_object,
-                                    float *_dist, const struct ray *ray)
+static bool object_collide_ray_type(u32 id, pkid *_object_id, float *_dist,
+                                    const struct ray *ray)
 {
     bool collided = false;
-    float distance;
-    *_dist = Z_FAR; // Track closest object
+    float closest = Z_FAR; // Track closest object
 
     struct pack *pack = packs[id];
     struct RICO_object *obj = 0;
@@ -181,21 +180,23 @@ static bool object_collide_ray_type(u32 id, struct RICO_object **_object,
         if (obj->type == RICO_OBJECT_TYPE_TERRAIN)
             continue;
 
-        collided = collide_ray_obb(&distance, ray, &obj->bbox,
-                                   &obj->xform.matrix);
+        float dist;
+        bool col = collide_ray_obb(&dist, ray, &obj->bbox, &obj->xform.matrix);
 
         // If closest so far, save info
-        if (collided && distance < *_dist)
+        if (col && dist < closest)
         {
             // Record object handle and distance
-            *_object = obj;
-            *_dist = distance;
+            *_object_id = obj->uid.pkid;
+            collided = true;
+            closest = dist;
         }
     }
 
+    if (_dist) *_dist = closest;
     return collided;
 }
-static void object_render(struct pack *pack, const struct camera *camera)
+static void object_render(struct pack *pack, const struct RICO_camera *camera)
 {
     struct program_pbr *prog = prog_pbr;
     RICO_ASSERT(prog->prog_id);
@@ -377,7 +378,7 @@ static void object_render_ui(struct pack *pack)
     }
     glUseProgram(0);
 }
-static void object_render_all(r64 alpha, struct camera *camera)
+static void object_render_all(r64 alpha, struct RICO_camera *camera)
 {
     UNUSED(alpha);
 

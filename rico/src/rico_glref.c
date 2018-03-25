@@ -57,10 +57,10 @@ static void edit_bbox_reset_all()
         edit_object_select(obj, true);
     }
 }
-static void edit_object_select(struct RICO_object *rico, bool force)
+static void edit_object_select(struct RICO_object *obj, bool force)
 {
     // NULL already selected
-    if (!force && !rico && !selected_obj_id)
+    if (!force && !obj && !selected_obj_id)
         return;
 
     // Deselect current object
@@ -71,10 +71,10 @@ static void edit_object_select(struct RICO_object *rico, bool force)
     }
 
     // Select requested object
-    if (rico && (force || rico->uid.pkid != selected_obj_id))
+    if (obj && (force || obj->uid.pkid != selected_obj_id))
     {
-        object_select(rico);
-        selected_obj_id = rico->uid.pkid;
+        object_select(obj);
+        selected_obj_id = obj->uid.pkid;
     }
     else
     {
@@ -104,7 +104,7 @@ static void edit_print_object()
         obj = RICO_pack_lookup(selected_obj_id);
     object_print(obj);
 }
-static void edit_translate(struct camera *camera, const struct vec3 *offset)
+static void edit_translate(struct RICO_camera *camera, const struct vec3 *offset)
 {
     if (!selected_obj_id)
         return;
@@ -120,7 +120,7 @@ static void edit_translate(struct camera *camera, const struct vec3 *offset)
         {
             camera->pos = VEC3_ZERO;
         }
-        object_trans_set(obj, &VEC3_ZERO);
+        RICO_object_trans_set(obj, &VEC3_ZERO);
     }
     else
     {
@@ -128,7 +128,7 @@ static void edit_translate(struct camera *camera, const struct vec3 *offset)
         {
             camera_translate_world(camera, offset);
         }
-        object_trans(obj, offset);
+        RICO_object_trans(obj, offset);
     }
 
     object_print(obj);
@@ -366,17 +366,12 @@ static struct widget *widget_test()
 
     return widget;
 }
-static struct RICO_object *mouse_first_obj()
+extern bool RICO_mouse_raycast(pkid *_obj_id, float *_dist)
 {
-    struct RICO_object *obj_collided = { 0 };
-    float dist;
-
     // Camera forward ray v. scene
     struct ray cam_ray = { 0 };
     camera_fwd_ray(&cam_ray, &cam_player);
-    object_collide_ray_type(RICO_pack_active, &obj_collided, &dist, &cam_ray);
-
-    return obj_collided;
+    return object_collide_ray_type(RICO_pack_active, _obj_id, _dist, &cam_ray);
 }
 static void edit_mouse_pressed()
 {
@@ -385,7 +380,10 @@ static void edit_mouse_pressed()
     if (widget) return;
 
     // Select first object w/ ray pick
-    edit_object_select(mouse_first_obj(), false);
+    pkid obj_collided_id = 0;
+    RICO_mouse_raycast(&obj_collided_id, 0);
+    struct RICO_object *obj_collided = RICO_pack_lookup(obj_collided_id);
+    edit_object_select(obj_collided, false);
 }
 static void edit_mouse_move()
 {
@@ -456,7 +454,7 @@ static void edit_mouse_move()
 
     if (collide)
     {
-        object_trans_set(obj, &trans);
+        RICO_object_trans_set(obj, &trans);
         object_print(obj);
     }
 }

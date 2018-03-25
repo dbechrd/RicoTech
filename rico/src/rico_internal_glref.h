@@ -25,7 +25,7 @@ static void edit_object_select(struct RICO_object *obj, bool force);
 static void edit_object_next();
 static void edit_object_prev();
 static void edit_print_object();
-static void edit_translate(struct camera *camera, const struct vec3 *offset);
+static void edit_translate(struct RICO_camera *camera, const struct vec3 *offset);
 static void edit_rotate(const struct quat *offset);
 static void edit_scale(const struct vec3 *offset);
 static void edit_mesh_next();

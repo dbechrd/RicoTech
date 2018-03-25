@@ -1,4 +1,6 @@
-static struct camera cam_player;
+#include "RICO/rico_camera.h"
+
+static struct RICO_camera cam_player;
 
 // Note: Height of player's eyes in meters
 #define CAMERA_POS_Y_MIN 1.68f
@@ -10,7 +12,12 @@ static struct camera cam_player;
 #define LOOK_SENSITIVITY_X 0.1f
 #define LOOK_SENSITIVITY_Y 0.1f
 
-static void camera_init(struct camera *camera, struct vec3 position,
+extern struct RICO_camera* RICO_get_camera_hack()
+{
+    return &cam_player;
+}
+
+static void camera_init(struct RICO_camera *camera, struct vec3 position,
                         struct quat view, float fov_deg)
 {
     camera->pos = position;
@@ -36,18 +43,19 @@ static void camera_init(struct camera *camera, struct vec3 position,
     camera_rotate(camera, 0.0f, 0.0f, 0.0f);
     camera_update(camera);
 }
-static void camera_reset(struct camera *camera)
+static void camera_reset(struct RICO_camera *camera)
 {
     const struct vec3 CAMERA_POS_INITIAL = VEC3(0.0f, CAMERA_POS_Y_MIN, 3.0f);
     camera_init(camera, CAMERA_POS_INITIAL, QUAT_IDENT, CAMERA_FOV_DEG);
 }
-static void camera_set_fov(struct camera *camera, float fov_deg)
+static void camera_set_fov(struct RICO_camera *camera, float fov_deg)
 {
     camera->fov_deg = fov_deg;
     camera->proj_matrix = mat4_init_perspective(SCREEN_W, SCREEN_H, Z_NEAR,
                                                 Z_FAR, fov_deg);
 }
-static void camera_translate_world(struct camera *camera, const struct vec3 *v)
+static void camera_translate_world(struct RICO_camera *camera,
+                                   const struct vec3 *v)
 {
     v3_add(&camera->pos, v);
 
@@ -57,7 +65,8 @@ static void camera_translate_world(struct camera *camera, const struct vec3 *v)
 
     camera->need_update = true;
 }
-static void camera_translate_local(struct camera *camera, const struct vec3 *v)
+static void camera_translate_local(struct RICO_camera *camera,
+                                   const struct vec3 *v)
 {
     struct vec3 right = VEC3_RIGHT;
     struct vec3 fwd = VEC3_FWD;
@@ -82,7 +91,8 @@ static void camera_translate_local(struct camera *camera, const struct vec3 *v)
 
     camera->need_update = true;
 }
-static void camera_rotate(struct camera *camera, float dx, float dy, float dz)
+static void camera_rotate(struct RICO_camera *camera, float dx, float dy,
+                          float dz)
 {
     camera->pitch += dx;
     camera->yaw   += dy;
@@ -101,7 +111,7 @@ static void camera_rotate(struct camera *camera, float dx, float dy, float dz)
 
     camera->need_update = true;
 }
-static void camera_update(struct camera *camera)
+static void camera_update(struct RICO_camera *camera)
 {
     if (!camera->need_update)
         return;
@@ -158,7 +168,7 @@ static void camera_update(struct camera *camera)
 
     camera->need_update = false;
 }
-static void camera_player_update(struct camera *camera, r32 dx, r32 dy,
+static void camera_player_update(struct RICO_camera *camera, r32 dx, r32 dy,
                                  struct vec3 delta_acc)
 {
     //---------------------------------------------------
@@ -225,7 +235,7 @@ static void camera_player_update(struct camera *camera, r32 dx, r32 dy,
 
     camera_update(&cam_player);
 }
-static void camera_render(struct camera *camera)
+static void camera_render(struct RICO_camera *camera)
 {
 #if RICO_DEBUG_CAMERA
     struct vec3 x = VEC3_RIGHT;
@@ -239,13 +249,13 @@ static void camera_render(struct camera *camera)
     prim_draw_line(&camera->pos, &y, &MAT4_IDENT, COLOR_GREEN);
 #endif
 }
-static void camera_fwd(struct vec3 *_fwd, struct camera *camera)
+extern void RICO_camera_fwd(struct vec3 *_fwd, struct RICO_camera *camera)
 {
     *_fwd = VEC3_FWD;
     v3_mul_quat(_fwd, &camera->view);
 }
-static void camera_fwd_ray(struct ray *_ray, struct camera *camera)
+static void camera_fwd_ray(struct ray *_ray, struct RICO_camera *camera)
 {
-    camera_fwd(&_ray->dir, camera);
+    RICO_camera_fwd(&_ray->dir, camera);
     _ray->orig = camera->pos;
 }

@@ -162,7 +162,7 @@ struct quat
 
 #define QUAT_IDENT QUAT(1.0f, 0.0f, 0.0f, 0.0f)
 
-const struct mat4 MAT4_IDENT;
+static const struct mat4 MAT4_IDENT;
 
 //--- Vectors --------------------------
 DLB_MATH_DEF struct vec3 *v3_add(struct vec3 *a, const struct vec3 *b);
@@ -299,7 +299,7 @@ DLB_MATH_DEF void quat_print(struct quat *q);
 //-- implementation ------------------------------------------------------------
 #ifdef DLB_MATH_IMPLEMENTATION
 #if 1
-const struct mat4 MAT4_IDENT = {{{
+static const struct mat4 MAT4_IDENT = {{{
     1.0f, 0.0f, 0.0f, 0.0f,
     0.0f, 1.0f, 0.0f, 0.0f,
     0.0f, 0.0f, 1.0f, 0.0f,

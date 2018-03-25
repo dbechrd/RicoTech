@@ -175,6 +175,6 @@ extern int RICO_update();
 extern bool RICO_quit();
 extern u32 RICO_key_event(u32 *action);
 extern void RICO_bind_action(u32 action, struct RICO_keychord chord);
-extern pkid RICO_mouse_raycast();
+extern bool RICO_mouse_raycast(pkid *_obj_id, float *_dist);
 
 #endif

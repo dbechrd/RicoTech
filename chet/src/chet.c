@@ -1,3 +1,4 @@
+#define DLB_MATH_IMPLEMENTATION
 #include "RICO/rico.h"
 
 //int main_nuklear(int argc, char* argv[]);
@@ -8,6 +9,7 @@ enum game_object_type
     OBJ_TIMMY = RICO_OBJECT_TYPE_COUNT,
     OBJ_GAME_PANEL,
     OBJ_GAME_BUTTON,
+    OBJ_RAY_VISUALIZER,
     OBJ_COUNT
 };
 
@@ -36,6 +38,12 @@ struct game_panel
 {
     struct RICO_object rico;
     pkid buttons[9];
+};
+
+struct ray_visualizer
+{
+    struct RICO_object rico;
+    u32 lifetime;
 };
 
 static struct game_panel panel_1;
@@ -260,12 +268,43 @@ void game_button_interact(struct game_button *button)
 }
 
 static pkid last_clicked;
+static pkid mat_rayviz_id;
 void object_interact()
 {
-    pkid id = RICO_mouse_raycast();
-    if (!id) return;
+    pkid obj_id = 0;
+    float dist;
+    bool collided = RICO_mouse_raycast(&obj_id, &dist);
+    if (!collided)
+        return;
+
+    float scale = 0.05f;
     
-    struct RICO_object *obj = RICO_pack_lookup(id);
+    struct RICO_camera *camera = RICO_get_camera_hack();
+    struct vec3 pos = camera->pos;
+    struct vec3 fwd;
+    RICO_camera_fwd(&fwd, camera);
+    v3_add(&pos, v3_scalef(&fwd, dist));
+    
+    // TODO: Subtract (dot(dist, surface.normal) * scale) to place exactly on
+    //       surface of mesh? This will place origin of new mesh on surface of
+    //       existing mesh.. also need to somehow calculate and subtract
+    //       distance from original to edge of new mesh and dot that with the
+    //       ray to prevent it from being placed inside.
+    //pos.z += scale / 2.0f;
+
+    pkid rayviz_id = RICO_load_object(RICO_pack_active, OBJ_RAY_VISUALIZER,
+                                      sizeof(struct ray_visualizer), "Ray Viz");
+    struct ray_visualizer *rayviz = RICO_pack_lookup(rayviz_id);
+    rayviz->lifetime = 30;  // TODO: Add these objects to a temp buffer, then
+                            //       scan it each frame to remove dead object.
+    rayviz->rico.material_id = mat_rayviz_id;
+    rayviz->rico.xform.scale = VEC3(scale, scale, scale);
+    RICO_object_trans_set(&rayviz->rico, &pos);
+
+    if (dist > 3.0f)
+        return;
+    
+    struct RICO_object *obj = RICO_pack_lookup(obj_id);
     if (!obj) return;
 
     // HACK: Display name of last-clicked object
@@ -327,6 +366,9 @@ int main(int argc, char **argv)
     RICO_audio_buffer_load_file(&audio_buffers[AUDIO_VICTORY], "audio/victory.ric");
     RICO_audio_source_init(&audio_sources[AUDIO_VICTORY]);
     RICO_audio_source_buffer(&audio_sources[AUDIO_VICTORY], &audio_buffers[AUDIO_VICTORY]);
+
+    pkid tex_rayviz_id = RICO_load_texture_color(RICO_pack_active, "rayviz", COLOR_RED);
+    mat_rayviz_id = RICO_load_material(RICO_pack_active, "rayviz", tex_rayviz_id, 0, 0);
 
     // HACK: Find Timmy by name and use light/audio flags to determine start-up
     //       state of lighting and audio.
