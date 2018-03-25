@@ -1,6 +1,8 @@
 #ifndef RICO_INTERNAL_CAMERA_H
 #define RICO_INTERNAL_CAMERA_H
 
+#include "RICO/rico_camera.h"
+
 //TODO: Probably should prefix these? Possibly move to const.h?
 #define SCREEN_W 1600
 #define SCREEN_H 900
