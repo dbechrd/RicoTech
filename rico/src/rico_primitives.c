@@ -77,8 +77,9 @@ static int prim_init()
 }
 // TODO: Queue up primitive requests and batch them within a single
 //       glUseProgram() call.
-static void prim_draw_line(const struct vec3 *p0, const struct vec3 *p1,
-                           const struct mat4 *matrix, const struct vec4 color)
+extern void RICO_prim_draw_line(const struct vec3 *p0, const struct vec3 *p1,
+                                const struct mat4 *matrix,
+                                const struct vec4 color)
 {
     struct vec3 vertices[2] = { *p0, *p1 };
 
@@ -102,15 +103,16 @@ static void prim_draw_line(const struct vec3 *p0, const struct vec3 *p1,
     glUseProgram(0);
 }
 // Render ray as line segment
-static void prim_draw_ray(const struct ray *ray, const struct mat4 *matrix,
-                          const struct vec4 color)
+extern void RICO_prim_draw_ray(const struct ray *ray, const struct mat4 *matrix,
+                               const struct vec4 color)
 {
     struct vec3 ray_end = ray->orig;
     v3_add(&ray_end, &ray->dir);
-    prim_draw_line(&ray->orig, &ray->dir, matrix, color);
+    RICO_prim_draw_line(&ray->orig, &ray->dir, matrix, color);
 }
-static void prim_draw_quad(const struct quad *quad, const struct mat4 *matrix,
-                           const struct vec4 *color)
+extern void RICO_prim_draw_quad(const struct quad *quad,
+                                const struct mat4 *matrix,
+                                const struct vec4 *color)
 {
     RICO_ASSERT(prog_prim->prog_id);
     glUseProgram(prog_prim->prog_id);
@@ -136,8 +138,9 @@ static void prim_draw_quad(const struct quad *quad, const struct mat4 *matrix,
     // Clean up
     glUseProgram(0);
 }
-static void prim_draw_plane(const struct vec3 *n, const struct mat4 *matrix,
-                            const struct vec4 *color)
+extern void RICO_prim_draw_plane(const struct vec3 *n,
+                                 const struct mat4 *matrix,
+                                 const struct vec4 *color)
 {
     struct vec3 tx = VEC3(n->y - n->z, n->z - n->x, n->x - n->y);
     struct vec3 ty = v3_cross(&tx, n);
@@ -153,20 +156,21 @@ static void prim_draw_plane(const struct vec3 *n, const struct mat4 *matrix,
         v3_scalef(&quad.verts[i], 10.0f);
     }
 
-    prim_draw_quad(&quad, matrix, color);
+    RICO_prim_draw_quad(&quad, matrix, color);
 }
-static void prim_draw_bbox(const struct RICO_bbox *RICO_bbox, const struct mat4 *matrix,
-                           const struct vec4 *color)
+extern void RICO_prim_draw_bbox(const struct RICO_bbox *bbox,
+                                const struct mat4 *matrix,
+                                const struct vec4 *color)
 {
     GLfloat vertices[] = {
-        RICO_bbox->min.x, RICO_bbox->min.y, RICO_bbox->min.z,
-        RICO_bbox->max.x, RICO_bbox->min.y, RICO_bbox->min.z,
-        RICO_bbox->max.x, RICO_bbox->max.y, RICO_bbox->min.z,
-        RICO_bbox->min.x, RICO_bbox->max.y, RICO_bbox->min.z,
-        RICO_bbox->min.x, RICO_bbox->min.y, RICO_bbox->max.z,
-        RICO_bbox->max.x, RICO_bbox->min.y, RICO_bbox->max.z,
-        RICO_bbox->max.x, RICO_bbox->max.y, RICO_bbox->max.z,
-        RICO_bbox->min.x, RICO_bbox->max.y, RICO_bbox->max.z,
+        bbox->min.x, bbox->min.y, bbox->min.z,
+        bbox->max.x, bbox->min.y, bbox->min.z,
+        bbox->max.x, bbox->max.y, bbox->min.z,
+        bbox->min.x, bbox->max.y, bbox->min.z,
+        bbox->min.x, bbox->min.y, bbox->max.z,
+        bbox->max.x, bbox->min.y, bbox->max.z,
+        bbox->max.x, bbox->max.y, bbox->max.z,
+        bbox->min.x, bbox->max.y, bbox->max.z,
     };
 
     RICO_ASSERT(prog_prim->prog_id);
@@ -176,7 +180,7 @@ static void prim_draw_bbox(const struct RICO_bbox *RICO_bbox, const struct mat4 
     glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
     glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, matrix->a);
 
-    if (RICO_bbox->selected)
+    if (bbox->selected)
         glUniform4fv(prog_prim->u_col, 1, (const GLfloat *)&COLOR_RED);
     else
         glUniform4fv(prog_prim->u_col, 1, (const GLfloat *)color);
@@ -192,8 +196,10 @@ static void prim_draw_bbox(const struct RICO_bbox *RICO_bbox, const struct mat4 
     // Based loosely on:
     // https://en.wikibooks.org/wiki/OpenGL_Programming/Bounding_box
     glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0);
-    glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, (GLvoid*)(4 * sizeof(GLushort)));
-    glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT, (GLvoid*)(8 * sizeof(GLushort)));
+    glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT,
+                   (GLvoid*)(4 * sizeof(GLushort)));
+    glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT,
+                   (GLvoid*)(8 * sizeof(GLushort)));
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -202,7 +208,8 @@ static void prim_draw_bbox(const struct RICO_bbox *RICO_bbox, const struct mat4 
     // Clean up
     glUseProgram(0);
 }
-static void prim_draw_sphere(const struct sphere *sphere, const struct vec4 *color)
+extern void RICO_prim_draw_sphere(const struct sphere *sphere,
+                                  const struct vec4 *color)
 {
     if (cam_player.fill_mode != GL_LINE)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

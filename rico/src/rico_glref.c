@@ -468,9 +468,9 @@ static void edit_render()
     //--------------------------------------------------------------------------
     // Origin axes
     //--------------------------------------------------------------------------
-    prim_draw_line(&VEC3_ZERO, &VEC3_X, &MAT4_IDENT, COLOR_RED);
-    prim_draw_line(&VEC3_ZERO, &VEC3_Y, &MAT4_IDENT, COLOR_GREEN);
-    prim_draw_line(&VEC3_ZERO, &VEC3_Z, &MAT4_IDENT, COLOR_BLUE);
+    RICO_prim_draw_line(&VEC3_ZERO, &VEC3_X, &MAT4_IDENT, COLOR_RED);
+    RICO_prim_draw_line(&VEC3_ZERO, &VEC3_Y, &MAT4_IDENT, COLOR_GREEN);
+    RICO_prim_draw_line(&VEC3_ZERO, &VEC3_Z, &MAT4_IDENT, COLOR_BLUE);
 
     //--------------------------------------------------------------------------
     // Selected object widget
@@ -489,13 +489,13 @@ static void edit_render()
         //prim_draw_line(&VEC3_ZERO, &VEC3(0.0f, bbox->y, 0.0f), &xform, COLOR_GREEN);
         //prim_draw_line(&VEC3_ZERO, &VEC3(0.0f, 0.0f, bbox->z), &xform, COLOR_BLUE);
 
-        prim_draw_line(&VEC3_ZERO, &VEC3_X, &xform, COLOR_RED);
-        prim_draw_line(&VEC3_ZERO, &VEC3_Y, &xform, COLOR_GREEN);
-        prim_draw_line(&VEC3_ZERO, &VEC3_Z, &xform, COLOR_BLUE);
+        RICO_prim_draw_line(&VEC3_ZERO, &VEC3_X, &xform, COLOR_RED);
+        RICO_prim_draw_line(&VEC3_ZERO, &VEC3_Y, &xform, COLOR_GREEN);
+        RICO_prim_draw_line(&VEC3_ZERO, &VEC3_Z, &xform, COLOR_BLUE);
 
-        prim_draw_bbox(&widgets[0].bbox, &xform, &COLOR_RED);
-        prim_draw_bbox(&widgets[1].bbox, &xform, &COLOR_GREEN);
-        prim_draw_bbox(&widgets[2].bbox, &xform, &COLOR_BLUE);
+        RICO_prim_draw_bbox(&widgets[0].bbox, &xform, &COLOR_RED);
+        RICO_prim_draw_bbox(&widgets[1].bbox, &xform, &COLOR_GREEN);
+        RICO_prim_draw_bbox(&widgets[2].bbox, &xform, &COLOR_BLUE);
     }
 
 #if 0

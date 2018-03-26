@@ -323,8 +323,7 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
             struct vec4 color = COLOR_WHITE_HIGHLIGHT;
             if (obj->bbox.selected)
                 color = COLOR_RED;
-            prim_draw_bbox(&obj->bbox,
-                           &obj->xform.matrix, &color);
+            RICO_prim_draw_bbox(&obj->bbox, &obj->xform.matrix, &color);
         }
     }
 }

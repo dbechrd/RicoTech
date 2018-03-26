@@ -46,6 +46,7 @@ static bool audio_muted = false;
 
 // Simulation params
 static r64 sim_accum = 0;
+static r64 sim_alpha = 0;
 
 // Performance timing
 static u64 perfs_frequency;
@@ -201,14 +202,6 @@ extern int RICO_update()
     */
 
     ///-------------------------------------------------------------------------
-    //| Clear previous frame
-    ///-------------------------------------------------------------------------
-    glClearColor(0.1f, 0.1f, 0.2f, 1.0f);
-    //glClearColor(0.46f, 0.70f, 1.0f, 1.0f);
-    //glClearDepth(0.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    ///-------------------------------------------------------------------------
     //| Query input state
     ///-------------------------------------------------------------------------
 	// Get mouse state
@@ -328,26 +321,46 @@ extern int RICO_update()
         sim_accum -= SIM_MS;
     }
 
-    ///-------------------------------------------------------------------------
-    //| Render
-    ///-------------------------------------------------------------------------
-    r64 alpha = (r64)sim_accum / SIM_MS;
+    sim_alpha = (r64)sim_accum / SIM_MS;
 
+    return err;
+}
+extern void RICO_render_objects()
+{
     // glPolygonMode(GL_FRONT_AND_BACK, cam_player.fill_mode);
-    glPolygonMode(GL_FRONT, cam_player.fill_mode);
-
-	object_render_all(alpha, &cam_player);
+    //glPolygonMode(GL_FRONT, cam_player.fill_mode);
+    object_render_all(sim_alpha, &cam_player);
+}
+extern void RICO_render_editor()
+{
     edit_render();
+}
+extern void RICO_render_ui()
+{
     camera_render(&cam_player);
+}
+extern void RICO_frame_swap()
+{
     window_render();
+
+    // Clear previous frame
+    //glClearColor(0.46f, 0.70f, 1.0f, 1.0f);
+    //glClearDepth(0.0f);
+    glClearColor(0.1f, 0.1f, 0.2f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 #if RICO_DEBUG
     // HACK: Kill some time (a.k.a. save my computer from lighting itself on
     //       fire when VSync is disabled)
     SDL_Delay(1);
 #endif
-
-    return err;
+}
+extern void RICO_render()
+{
+    RICO_render_objects();
+    RICO_render_editor();
+    // TODO: RICO_render_primitives();
+    RICO_render_ui();
 }
 static int shared_engine_events()
 {

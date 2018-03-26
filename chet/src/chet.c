@@ -257,20 +257,20 @@ void game_button_interact(struct game_button *button)
         }
     }
 
+    RICO_audio_source_play(&audio_sources[AUDIO_BUTTON]);
     if (victory)
     {
         RICO_audio_source_play(&audio_sources[AUDIO_VICTORY]);
-    }
-    else
-    {
-        RICO_audio_source_play(&audio_sources[AUDIO_BUTTON]);
     }
 }
 
 static pkid last_clicked;
 static pkid mat_rayviz_id;
+static struct sphere rayviz_sphere;
 void object_interact()
 {
+    rayviz_sphere.radius = 0.0f;
+
     pkid obj_id = 0;
     float dist;
     bool collided = RICO_mouse_raycast(&obj_id, &dist);
@@ -292,6 +292,7 @@ void object_interact()
     //       ray to prevent it from being placed inside.
     //pos.z += scale / 2.0f;
 
+#if 0
     pkid rayviz_id = RICO_load_object(RICO_pack_active, OBJ_RAY_VISUALIZER,
                                       sizeof(struct ray_visualizer), "Ray Viz");
     struct ray_visualizer *rayviz = RICO_pack_lookup(rayviz_id);
@@ -300,6 +301,10 @@ void object_interact()
     rayviz->rico.material_id = mat_rayviz_id;
     rayviz->rico.xform.scale = VEC3(scale, scale, scale);
     RICO_object_trans_set(&rayviz->rico, &pos);
+#else
+    rayviz_sphere.orig = pos;
+    rayviz_sphere.radius = scale;
+#endif
 
     if (dist > 3.0f)
         return;
@@ -399,6 +404,18 @@ int main(int argc, char **argv)
 
         err = RICO_update();
         if (err) break;
+
+#if 0
+        RICO_render();
+#else
+        RICO_render_objects();
+        RICO_render_editor();
+        if (rayviz_sphere.radius > 0.0f)
+            RICO_prim_draw_sphere(&rayviz_sphere, &COLOR_YELLOW);
+        RICO_render_ui();
+
+        RICO_frame_swap();
+#endif
     }
 
     RICO_audio_source_free(&audio_sources[AUDIO_WELCOME]);

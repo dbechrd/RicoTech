@@ -9,6 +9,7 @@
 #include "rico_error.h"
 #include "rico_hnd.h"
 #include "rico_bbox.h"
+#include "rico_primitives.h"
 #include "rico_mesh.h"
 #include "rico_light.h"
 #include "rico_audio.h"
