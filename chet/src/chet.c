@@ -1,67 +1,4 @@
-#define DLB_MATH_IMPLEMENTATION
-#include "RICO/rico.h"
-
-//int main_nuklear(int argc, char* argv[]);
-//#include "3rdparty/main_nuke.c"
-
-enum game_object_type
-{
-    OBJ_TIMMY = RICO_OBJECT_TYPE_COUNT,
-    OBJ_GAME_PANEL,
-    OBJ_GAME_BUTTON,
-    OBJ_RAY_VISUALIZER,
-    OBJ_COUNT
-};
-
-enum actions
-{
-    ACTION_RICO_TEST = ACTION_COUNT,
-    ACTION_TYPE_NEXT,
-    ACTION_TYPE_PREV
-};
-
-struct timmy
-{
-    struct RICO_object rico;
-    bool lights_on;
-    bool audio_on;
-};
-
-struct game_button
-{
-    struct RICO_object rico;
-    pkid panel_id;
-    u32 index;
-};
-
-struct game_panel
-{
-    struct RICO_object rico;
-    pkid buttons[9];
-};
-
-struct ray_visualizer
-{
-    struct RICO_object rico;
-    u32 lifetime;
-};
-
-static struct game_panel panel_1;
-
-enum audio_type
-{
-    AUDIO_WELCOME,
-    AUDIO_THUNDER,
-    AUDIO_BUTTON,
-    AUDIO_VICTORY,
-    AUDIO_COUNT
-};
-
-struct RICO_audio_buffer audio_buffers[AUDIO_COUNT];
-struct RICO_audio_source audio_sources[AUDIO_COUNT];
-
-static const char *PATH_ALPHA = "packs/alpha.pak";
-static const char *PATH_ALPHA_SAV = "packs/alpha_sav.pak";
+#include "chet.h"
 
 void pack_build_alpha()
 {
@@ -152,13 +89,46 @@ void pack_build_alpha()
 	RICO_pack_free(pack_sav);
 }
 
+void pack_build_clash_of_cubes()
+{
+    u32 pack = RICO_pack_init(0, PATH_CLASH, 64, MB(32));
+
+    pkid cube_mesh_id;
+    RICO_load_obj_file(pack, "mesh/alpha_game_button.obj", &cube_mesh_id);
+    DLB_ASSERT(cube_mesh_id);
+
+    u32 pack_sav = RICO_pack_init(0, PATH_CLASH_SAV, 64, MB(32));
+    pkid cube_id;
+    struct small_cube *cube;
+    struct RICO_mesh *cube_mesh = RICO_pack_lookup(cube_mesh_id);
+    for (u32 i = 0; i < ARRAY_COUNT(small_cubes); i++)
+    {
+        cube_id = RICO_load_object(pack_sav, OBJ_SMALL_CUBE,
+                                   sizeof(struct small_cube), "small_cube");
+        cube = RICO_pack_lookup(cube_id);
+        cube->rico.mesh_id = cube_mesh_id;
+        cube->rico.bbox = cube_mesh->bbox;
+        RICO_object_trans_set(&cube->rico, &VEC3(-2.0f, 20.0f, 0.0f));
+        cube->acc.y = GRAVITY;
+        small_cubes[i] = cube_id;
+    }
+
+    RICO_pack_save(pack, 0, false);
+    RICO_pack_free(pack);
+    RICO_pack_save(pack_sav, 0, false);
+    RICO_pack_free(pack_sav);
+}
+
 void pack_build_all()
 {
 	pack_build_alpha();
+    pack_build_clash_of_cubes();
 }
 
 static u32 pack_alpha_id;
 static u32 pack_alpha_sav_id;
+static u32 pack_clash_id;
+static u32 pack_clash_sav_id;
 int pack_load_all()
 {
 	enum RICO_error err;
@@ -167,8 +137,12 @@ int pack_load_all()
     if (err) return err;
     err = RICO_pack_load(PATH_ALPHA_SAV, &pack_alpha_sav_id);
     if (err) return err;
+    err = RICO_pack_load(PATH_CLASH, &pack_clash_id);
+    if (err) return err;
+    err = RICO_pack_load(PATH_CLASH_SAV, &pack_clash_sav_id);
+    if (err) return err;
 
-    RICO_pack_active = pack_alpha_sav_id;
+    RICO_pack_active = pack_clash_sav_id;
 
 	return err;
 }
@@ -336,6 +310,50 @@ DLB_ASSERT_HANDLER(handle_assert)
 DLB_assert_handler_def *DLB_assert_handler = handle_assert;
 #endif
 
+void clash_simulate()
+{
+    struct small_cube *last = RICO_pack_last(pack_clash_sav_id,
+                                             RICO_HND_OBJECT);
+    struct small_cube *obj = RICO_pack_first(pack_clash_sav_id,
+                                             RICO_HND_OBJECT);
+    for (;;)
+    {
+        DLB_ASSERT(obj->rico.type == OBJ_SMALL_CUBE);
+
+        if (!v3_equals(&obj->acc, &VEC3_ZERO))
+        {
+            v3_add(&obj->vel, &obj->acc);
+            // TODO: Drag coef
+
+            // TODO: Collision detection
+            if (obj->rico.xform.position.y + obj->vel.y <= 0.0f)
+            {
+                if (obj->vel.y < 0.0f)
+                    obj->vel.y *= -1.0f;
+                obj->vel.y *= COEF_COLLIDE;
+
+                // TODO: Epsilon (must be bigger than GRAVITY * friction)
+                if (fabs(obj->vel.y) < 0.01f)
+                {
+                    obj->acc = VEC3_ZERO;
+                    obj->vel = VEC3_ZERO;
+                    obj->rico.xform.position.y = 0.0f;
+                }
+            }
+            else
+            {
+                v3_add(&obj->rico.xform.position, &obj->vel);
+            }
+
+            RICO_object_trans_set(&obj->rico, &obj->rico.xform.position);
+        }
+        
+        if (obj == last)
+            break;
+        obj = RICO_pack_next(obj->rico.uid.pkid);
+    }
+}
+
 int main(int argc, char **argv)
 {
     UNUSED(argc);
@@ -346,7 +364,7 @@ int main(int argc, char **argv)
 
 	//main_nuklear(argc, argv);
     RICO_init();
-    //pack_build_all();
+    pack_build_all();
 	pack_load_all();
 
     RICO_bind_action(ACTION_RICO_TEST, CHORD_REPEAT1(SDL_SCANCODE_Z));
@@ -401,6 +419,8 @@ int main(int argc, char **argv)
                     break;
             }
         }
+
+        clash_simulate();
 
         err = RICO_update();
         if (err) break;

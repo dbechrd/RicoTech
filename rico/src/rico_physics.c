@@ -1,4 +1,4 @@
-struct rico_physics *make_physics(struct vec3 size)
+static struct rico_physics *make_physics(struct vec3 size)
 {
     struct rico_physics *phys = calloc(1, sizeof(struct rico_physics));
     phys->size = size;

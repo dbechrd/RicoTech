@@ -21,6 +21,9 @@
   <ItemGroup>
     <ClCompile Include="src\chet.c" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\chet.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{23C0F16E-D850-4F2E-9E38-81D3703954F7}</ProjectGuid>
     <RootNamespace>chet</RootNamespace>

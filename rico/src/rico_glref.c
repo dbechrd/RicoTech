@@ -382,7 +382,12 @@ static void edit_mouse_pressed()
     // Select first object w/ ray pick
     pkid obj_collided_id = 0;
     RICO_mouse_raycast(&obj_collided_id, 0);
-    struct RICO_object *obj_collided = RICO_pack_lookup(obj_collided_id);
+
+    struct RICO_object *obj_collided = NULL;
+    if (obj_collided_id)
+    {
+        obj_collided = RICO_pack_lookup(obj_collided_id);
+    }
     edit_object_select(obj_collided, false);
 }
 static void edit_mouse_move()
