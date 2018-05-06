@@ -2,6 +2,5 @@
 !res/mesh/*
 
 # Blacklist
+bin/*
 **/ignore
-bin/chunks/cereal_*
-bin/out.txt
