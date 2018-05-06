@@ -1,7 +1,7 @@
 #ifndef RICO_INTERNAL_OBJECT_H
 #define RICO_INTERNAL_OBJECT_H
 
-#include "RICO/rico_object.h"
+#include "rico_object.h"
 
 static void object_delete(struct RICO_object *obj);
 static struct RICO_object *object_copy(u32 pack, struct RICO_object *other,

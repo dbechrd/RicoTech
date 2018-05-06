@@ -1,7 +1,7 @@
 #ifndef RICO_INTERNAL_PACK_BUILDER_H
 #define RICO_INTERNAL_PACK_BUILDER_H
 
-#include "RICO/rico_pack.h"
+#include "rico_pack.h"
 
 #define MAX_PACKS 32
 struct pack *packs[MAX_PACKS];

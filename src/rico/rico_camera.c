@@ -1,4 +1,4 @@
-#include "RICO/rico_camera.h"
+#include "rico_camera.h"
 
 static struct RICO_camera cam_player;
 

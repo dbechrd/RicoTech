@@ -1,148 +1,77 @@
 #include "chet.h"
+#include "chet_packs.h"
 
-void pack_build_alpha()
+enum actions
 {
-    // TOOD: Refactor object data out into text files that can be read in and
-    //       compiled into pack files. E.g. packs/alpha/objects/timmy.txt which
-    //       references packs/alpha/textures/timmy.tga as "textures/timmy.tga"
-    //       or just "timmy.tga".
+    ACTION_RICO_TEST = ACTION_COUNT,
+    ACTION_TYPE_NEXT,
+    ACTION_TYPE_PREV
+};
 
-	// TODO: Split objects (state) from resources (materials, textures, audio).
-	//       pack_state: all world objects (for now)
-	//       pack_alpha: textures, materials, audio, etc. specific to alpha
-
-	u32 pack = RICO_pack_init(0, PATH_ALPHA, 64, MB(32));
-	pkid tex_bricks_diff = RICO_load_texture_file(pack, "bricks_diff",
-                                                  "texture/cobble_diff.tga");
-	pkid tex_bricks_mrao = RICO_load_texture_file(pack, "bricks_mrao",
-                                                  "texture/cobble_mrao.tga");
-	pkid tex_bricks_emis = RICO_load_texture_color(pack, "bricks_emis",
-                                                   COLOR_TRANSPARENT);
-	pkid mat_bricks = RICO_load_material(pack, "bricks", tex_bricks_diff,
-                                         tex_bricks_mrao, tex_bricks_emis);
-    pkid mat_timmy = RICO_load_material(pack, "timmy", 0, 0, 0);
-
-    DLB_ASSERT(tex_bricks_mrao);
-    DLB_ASSERT(tex_bricks_diff);
-    DLB_ASSERT(tex_bricks_emis);
-    DLB_ASSERT(mat_bricks);
-
-    pkid mesh_door_id;
-    pkid mesh_terrain_id;
-    pkid mesh_panel_id;
-    pkid mesh_button_id;
-    RICO_load_obj_file(pack, "mesh/alpha_terrain_001.obj", &mesh_terrain_id);
-	RICO_load_obj_file(pack, "mesh/alpha_door_001.obj", &mesh_door_id);
-    RICO_load_obj_file(pack, "mesh/alpha_staircase_001.obj", 0);
-	RICO_load_obj_file(pack, "mesh/alpha_wall_001.obj", 0);
-	RICO_load_obj_file(pack, "mesh/alpha_game_panel.obj", &mesh_panel_id);
-	RICO_load_obj_file(pack, "mesh/alpha_game_button.obj", &mesh_button_id);
-
-    DLB_ASSERT(mesh_door_id);
-    DLB_ASSERT(mesh_terrain_id);
-    DLB_ASSERT(mesh_panel_id);
-    DLB_ASSERT(mesh_button_id);
-
-    u32 pack_sav = RICO_pack_init(0, PATH_ALPHA_SAV, 64, MB(32));
-    pkid terrain_id = RICO_load_object(pack_sav, RICO_OBJECT_TYPE_TERRAIN, 0,
-                                       "terrain");
-    struct RICO_object *terrain = RICO_pack_lookup(terrain_id);
-    terrain->mesh_id = mesh_terrain_id;
-    terrain->material_id = mat_bricks;
-
-    pkid timmy_id = RICO_load_object(pack_sav, OBJ_TIMMY, sizeof(struct timmy),
-                                     "timmy");
-    struct timmy *timmy = RICO_pack_lookup(timmy_id);
-    struct RICO_mesh *mesh_door = RICO_pack_lookup(mesh_door_id);
-    timmy->rico.mesh_id = mesh_door_id;
-    timmy->rico.material_id = mat_timmy;
-    timmy->rico.bbox = mesh_door->bbox;
-    timmy->lights_on = true;
-    timmy->audio_on = true;
-
-    pkid panel_id = RICO_load_object(pack_sav, OBJ_GAME_PANEL,
-                                    sizeof(struct game_panel), "panel");
-    struct game_panel *panel = RICO_pack_lookup(panel_id);
-    struct RICO_mesh *mesh_panel = RICO_pack_lookup(mesh_panel_id);
-    panel->rico.mesh_id = mesh_panel_id;
-    panel->rico.bbox = mesh_panel->bbox;
-
-    pkid button_id;
-    struct game_button *button;
-    struct RICO_mesh *mesh_button = RICO_pack_lookup(mesh_button_id);
-    for (u32 i = 0; i < ARRAY_COUNT(panel->buttons); i++)
-    {
-        button_id = RICO_load_object(pack_sav, OBJ_GAME_BUTTON,
-                                     sizeof(struct game_button), "button");
-        button = RICO_pack_lookup(button_id);
-        button->rico.mesh_id = mesh_button_id;
-        button->rico.bbox = mesh_button->bbox;
-        button->panel_id = panel_id;
-        button->index = i;
-        panel->buttons[i] = button_id;
-    }
-
-    RICO_pack_save(pack, 0, false);
-    RICO_pack_free(pack);
-    RICO_pack_save(pack_sav, PATH_ALPHA_SAV, false);
-	RICO_pack_free(pack_sav);
-}
-
-void pack_build_clash_of_cubes()
+struct ray_visualizer
 {
-    u32 pack = RICO_pack_init(0, PATH_CLASH, 64, MB(32));
+    struct RICO_object rico;
+    u32 lifetime;
+};
 
-    pkid cube_mesh_id;
-    RICO_load_obj_file(pack, "mesh/alpha_game_button.obj", &cube_mesh_id);
-    DLB_ASSERT(cube_mesh_id);
 
-    u32 pack_sav = RICO_pack_init(0, PATH_CLASH_SAV, 64, MB(32));
-    pkid cube_id;
-    struct small_cube *cube;
-    struct RICO_mesh *cube_mesh = RICO_pack_lookup(cube_mesh_id);
-    for (u32 i = 0; i < ARRAY_COUNT(small_cubes); i++)
-    {
-        cube_id = RICO_load_object(pack_sav, OBJ_SMALL_CUBE,
-                                   sizeof(struct small_cube), "small_cube");
-        cube = RICO_pack_lookup(cube_id);
-        cube->rico.mesh_id = cube_mesh_id;
-        cube->rico.bbox = cube_mesh->bbox;
-        RICO_object_trans_set(&cube->rico, &VEC3(-2.0f, 20.0f, 0.0f));
-        cube->acc.y = GRAVITY;
-        small_cubes[i] = cube_id;
-    }
+enum audio_type
+{
+    AUDIO_WELCOME,
+    AUDIO_THUNDER,
+    AUDIO_BUTTON,
+    AUDIO_VICTORY,
+    AUDIO_COUNT
+};
 
-    RICO_pack_save(pack, 0, false);
-    RICO_pack_free(pack);
-    RICO_pack_save(pack_sav, 0, false);
-    RICO_pack_free(pack_sav);
-}
+//-------------------------------------------------------------------
+
+static struct game_panel panel_1;
+
+static struct RICO_audio_buffer audio_buffers[AUDIO_COUNT];
+static struct RICO_audio_source audio_sources[AUDIO_COUNT];
+
+#define PACK_ALPHA 0
+#define PACK_CLASH 1
+
+static struct pack_info pack_table[] =
+{
+    { "packs/alpha.pak" , "packs/alpha.sav", 0 },
+    { "packs/clash.pak" , "packs/clash.sav", 0 }
+};
+
+//-------------------------------------------------------------------
+
+static const float GRAVITY = -0.0098f; // TODO: Scale by delta_time properly
+static const float COEF_COLLIDE = 0.15f; // TODO: Elastic collision coef
 
 void pack_build_all()
 {
-	pack_build_alpha();
-    pack_build_clash_of_cubes();
+    pack_build_alpha(&pack_table[PACK_ALPHA]);
+    pack_build_clash_of_cubes(&pack_table[PACK_CLASH]);
 }
 
-static u32 pack_alpha_id;
-static u32 pack_alpha_sav_id;
-static u32 pack_clash_id;
-static u32 pack_clash_sav_id;
+int pack_load(u32 pack_idx)
+{
+    enum RICO_error err;
+    err = RICO_pack_load(pack_table[pack_idx].path_pak,
+                         &pack_table[pack_idx].pak_id);
+    if (err) return err;
+    err = RICO_pack_load(pack_table[pack_idx].path_sav,
+                         &pack_table[pack_idx].sav_id);
+    return err;
+}
+
 int pack_load_all()
 {
 	enum RICO_error err;
 
-    err = RICO_pack_load(PATH_ALPHA, &pack_alpha_id);
+    err = pack_load(PACK_ALPHA);
     if (err) return err;
-    err = RICO_pack_load(PATH_ALPHA_SAV, &pack_alpha_sav_id);
-    if (err) return err;
-    err = RICO_pack_load(PATH_CLASH, &pack_clash_id);
-    if (err) return err;
-    err = RICO_pack_load(PATH_CLASH_SAV, &pack_clash_sav_id);
+    err = pack_load(PACK_CLASH);
     if (err) return err;
 
-    RICO_pack_active = pack_clash_sav_id;
-
+    RICO_pack_active = pack_table[PACK_CLASH].sav_id;
 	return err;
 }
 
@@ -311,9 +240,9 @@ DLB_assert_handler_def *DLB_assert_handler = handle_assert;
 
 void clash_simulate()
 {
-    struct small_cube *last = RICO_pack_last(pack_clash_sav_id,
+    struct small_cube *last = RICO_pack_last(pack_table[PACK_CLASH].sav_id,
                                              RICO_HND_OBJECT);
-    struct small_cube *obj = RICO_pack_first(pack_clash_sav_id,
+    struct small_cube *obj = RICO_pack_first(pack_table[PACK_CLASH].sav_id,
                                              RICO_HND_OBJECT);
     for (;;)
     {
@@ -394,7 +323,8 @@ int main(int argc, char **argv)
 
     // HACK: Find Timmy by name and use light/audio flags to determine start-up
     //       state of lighting and audio.
-    struct timmy *timmy = RICO_pack_lookup_by_name(pack_alpha_sav_id, "timmy");
+    struct timmy *timmy =
+        RICO_pack_lookup_by_name(pack_table[PACK_ALPHA].sav_id, "timmy");
     DLB_ASSERT(timmy);
     timmy_state_hacks(timmy->lights_on, timmy->audio_on);
 

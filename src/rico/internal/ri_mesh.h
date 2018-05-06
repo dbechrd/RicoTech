@@ -1,7 +1,7 @@
 #ifndef RICO_INTERNAL_MESH_H
 #define RICO_INTERNAL_MESH_H
 
-#include "RICO/rico_mesh.h"
+#include "rico_mesh.h"
 
 enum rico_vbo
 {

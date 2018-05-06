@@ -1,7 +1,7 @@
 #ifndef RICO_INTERNAL_STRING_H
 #define RICO_INTERNAL_STRING_H
 
-#include "RICO/rico_string.h"
+#include "rico_string.h"
 
 struct RICO_string
 {

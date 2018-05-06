@@ -1,4 +1,4 @@
-#include "rico_internal_main.h"
+#include "internal/ri_main.h"
 #include "gl3w.c"
 
 #define DLB_MATH_IMPLEMENTATION
@@ -32,7 +32,6 @@
 //#include "rico_pool.c"
 #include "rico_pack.c"
 
-#include <time.h>
 #include "rico_state.c"
 
 #include "rico_string.c"

@@ -585,7 +585,7 @@ static int shared_edit_events()
     // Save chunk
     else if (chord_active(ACTION_EDIT_SAVE))
     {
-		err = RICO_pack_save(RICO_pack_active, 0, false);
+		err = RICO_pack_save(RICO_pack_active, false);
     }
 
 	if (cursor_moved || !v3_equals(&player_acc, &VEC3_ZERO))
@@ -960,7 +960,7 @@ static int state_menu_quit()
     if (KEY_PRESSED(SDL_SCANCODE_Y) || KEY_PRESSED(SDL_SCANCODE_RETURN))
     {
         string_free_slot(STR_SLOT_MENU_QUIT);
-		err = RICO_pack_save(RICO_pack_active, 0, false);
+		err = RICO_pack_save(RICO_pack_active, false);
         state = STATE_ENGINE_SHUTDOWN;
     }
     // [N] / [Escape]: Return to play mode

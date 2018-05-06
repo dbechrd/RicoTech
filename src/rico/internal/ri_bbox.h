@@ -1,7 +1,7 @@
 #ifndef RICO_INTERNAL_BBOX_H
 #define RICO_INTERNAL_BBOX_H
 
-#include "RICO/rico_bbox.h"
+#include "rico_bbox.h"
 
 struct RICO_mesh;
 

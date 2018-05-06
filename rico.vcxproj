@@ -19,8 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\chet\chet_packs.c" />
     <ClCompile Include="src\chet\chet.c" />
-    <ClCompile Include="src\main.c" />
+    <ClCompile Include="src\rico\rico.c" />
     <ClCompile Include="src\rico\rico_audio.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -125,52 +126,52 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="src\tests.c">
+    <ClCompile Include="src\rico\tests.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\chet\chet_packs.h" />
     <ClInclude Include="src\chet\chet.h" />
     <ClInclude Include="src\dlb\dlb_math.h" />
     <ClInclude Include="src\dlb\dlb_string.h" />
     <ClInclude Include="src\dlb\dlb_types.h" />
+    <ClInclude Include="src\rico\internal\ri_audio.h" />
+    <ClInclude Include="src\rico\internal\ri_bbox.h" />
+    <ClInclude Include="src\rico\internal\ri_camera.h" />
+    <ClInclude Include="src\rico\internal\ri_collision.h" />
+    <ClInclude Include="src\rico\internal\ri_const.h" />
+    <ClInclude Include="src\rico\internal\ri_convert.h" />
+    <ClInclude Include="src\rico\internal\ri_error.h" />
+    <ClInclude Include="src\rico\internal\ri_file.h" />
+    <ClInclude Include="src\rico\internal\ri_font.h" />
+    <ClInclude Include="src\rico\internal\ri_glref.h" />
+    <ClInclude Include="src\rico\internal\ri_hash.h" />
+    <ClInclude Include="src\rico\internal\ri_hnd.h" />
+    <ClInclude Include="src\rico\internal\ri_light.h" />
+    <ClInclude Include="src\rico\internal\ri_main.h" />
+    <ClInclude Include="src\rico\internal\ri_material.h" />
+    <ClInclude Include="src\rico\internal\ri_mesh.h" />
+    <ClInclude Include="src\rico\internal\ri_object.h" />
+    <ClInclude Include="src\rico\internal\ri_pack.h" />
+    <ClInclude Include="src\rico\internal\ri_physics.h" />
+    <ClInclude Include="src\rico\internal\ri_pool.h" />
+    <ClInclude Include="src\rico\internal\ri_primitives.h" />
+    <ClInclude Include="src\rico\internal\ri_program.h" />
+    <ClInclude Include="src\rico\internal\ri_regularpoly.h" />
+    <ClInclude Include="src\rico\internal\ri_shader.h" />
+    <ClInclude Include="src\rico\internal\ri_state.h" />
+    <ClInclude Include="src\rico\internal\ri_string.h" />
+    <ClInclude Include="src\rico\internal\ri_texture.h" />
+    <ClInclude Include="src\rico\internal\ri_util.h" />
     <ClInclude Include="src\rico\rico.h" />
     <ClInclude Include="src\rico\rico_audio.h" />
     <ClInclude Include="src\rico\rico_bbox.h" />
     <ClInclude Include="src\rico\rico_camera.h" />
     <ClInclude Include="src\rico\rico_error.h" />
     <ClInclude Include="src\rico\rico_hnd.h" />
-    <ClInclude Include="src\rico\rico_internal_audio.h" />
-    <ClInclude Include="src\rico\rico_internal_bbox.h" />
-    <ClInclude Include="src\rico\rico_internal_camera.h" />
-    <ClInclude Include="src\rico\rico_internal_collision.h" />
-    <ClInclude Include="src\rico\rico_internal_const.h" />
-    <ClInclude Include="src\rico\rico_internal_convert.h" />
-    <ClInclude Include="src\rico\rico_internal_error.h" />
-    <ClInclude Include="src\rico\rico_internal_file.h" />
-    <ClInclude Include="src\rico\rico_internal_font.h" />
-    <ClInclude Include="src\rico\rico_internal_glref.h" />
-    <ClInclude Include="src\rico\rico_internal_hash.h" />
-    <ClInclude Include="src\rico\rico_internal_hnd.h" />
-    <ClInclude Include="src\rico\rico_internal_light.h" />
-    <ClInclude Include="src\rico\rico_internal_main.h" />
-    <ClInclude Include="src\rico\rico_internal_material.h" />
-    <ClInclude Include="src\rico\rico_internal_mesh.h" />
-    <ClInclude Include="src\rico\rico_internal_object.h" />
-    <ClInclude Include="src\rico\rico_internal_pack.h" />
-    <ClInclude Include="src\rico\rico_internal_physics.h" />
-    <ClInclude Include="src\rico\rico_internal_pool.h" />
-    <ClInclude Include="src\rico\rico_internal_primitives.h" />
-    <ClInclude Include="src\rico\rico_internal_program.h" />
-    <ClInclude Include="src\rico\rico_internal_regularpoly.h" />
-    <ClInclude Include="src\rico\rico_internal_shader.h" />
-    <ClInclude Include="src\rico\rico_internal_state.h" />
-    <ClInclude Include="src\rico\rico_internal_string.h" />
-    <ClInclude Include="src\rico\rico_internal_texture.h" />
-    <ClInclude Include="src\rico\rico_internal_util.h" />
     <ClInclude Include="src\rico\rico_light.h" />
-    <ClInclude Include="src\rico\rico_main.h" />
     <ClInclude Include="src\rico\rico_mesh.h" />
     <ClInclude Include="src\rico\rico_object.h" />
     <ClInclude Include="src\rico\rico_pack.h" />

@@ -1,7 +1,7 @@
 #ifndef RICO_INTERNAL_ERROR_H
 #define RICO_INTERNAL_ERROR_H
 
-#include "RICO/rico_error.h"
+#include "rico_error.h"
 
 static enum RICO_error rico_error_print(const char *file, int line,
                                         enum RICO_error err, const char *fmt,

@@ -301,7 +301,7 @@ static void pack_build_default()
     RICO_ASSERT(cube == MESH_DEFAULT_CUBE);
     RICO_ASSERT(sphere == MESH_DEFAULT_SPHERE);
 
-    RICO_pack_save(pack, 0, true);
+    RICO_pack_save(pack, true);
     RICO_pack_free(pack);
 }
 
@@ -372,6 +372,8 @@ extern void *RICO_pack_last(u32 pack_id, enum RICO_hnd_type type)
 }
 extern void *RICO_pack_next(pkid pkid)
 {
+    // TODO: Make this version not loop and add RICO_pack_next_or_first, same
+    //       for RICO_pack_prev_or_last
     RICO_ASSERT(pkid);
     u32 pack_id = PKID_PACK(pkid);
     u32 blob_id = PKID_BLOB(pkid);
@@ -489,15 +491,19 @@ extern u32 RICO_pack_init(u32 pack_id, const char *name, u32 blob_count,
     packs[pack->id] = pack;
     return pack->id;
 }
-extern int RICO_pack_save(u32 pack_id, const char *filename, bool shrink)
+extern int RICO_pack_save(u32 pack_id, bool shrink)
+{
+    struct pack *pack = packs[pack_id];
+    RICO_ASSERT(pack->blob_current_id == 0);
+
+    return RICO_pack_save_as(pack_id, pack->name, shrink);
+}
+extern int RICO_pack_save_as(u32 pack_id, const char *filename, bool shrink)
 {
     enum RICO_error err = SUCCESS;
 
     struct pack *pack = packs[pack_id];
     RICO_ASSERT(pack->blob_current_id == 0);
-
-    if (!filename)
-        filename = pack->name;
 
     pack_compact_buffer(pack);
 

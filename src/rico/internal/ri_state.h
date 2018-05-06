@@ -1,7 +1,7 @@
 #ifndef RICO_INTERNAL_STATE_H
 #define RICO_INTERNAL_STATE_H
 
-#include "RICO/rico_state.h"
+#include "rico_state.h"
 
 static float trans_delta;
 
