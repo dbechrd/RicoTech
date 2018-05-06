@@ -141,6 +141,7 @@ static inline bool chord_active(u32 action)
 
 // Current state
 static enum rico_state state_prev;
+static enum rico_state state_last_frame;
 static enum rico_state state;
 
 // State change handlers
@@ -234,19 +235,22 @@ extern int RICO_update()
         state = STATE_ENGINE_SHUTDOWN;
     }
 
-    state_prev = state;
+    state_last_frame = state;
     err = state_handlers[state].run();
     if (err) return err;
 
     if (state == STATE_ENGINE_SHUTDOWN)
         return SUCCESS;
 
-    if (state != state_prev)
+    if (state != state_last_frame)
     {
+        // Store last state before it changed
+        state_prev = state_last_frame;
+
         // Clean up old state
-        if (state_handlers[state_prev].cleanup)
+        if (state_handlers[state_last_frame].cleanup)
         {
-            err = state_handlers[state_prev].cleanup();
+            err = state_handlers[state_last_frame].cleanup();
             if (err) return err;
         }
         // Initialize new state
@@ -611,8 +615,8 @@ static int state_play_explore()
     // state_stack.push(WALK);
     // state_stack.push(JUMP);
     // state_stack.pop(JUMP);
-    err = shared_engine_events(); if (err || state != state_prev) return err;
-    err = shared_camera_events(); if (err || state != state_prev) return err;
+    err = shared_engine_events(); if (err || state != state_last_frame) return err;
+    err = shared_camera_events(); if (err || state != state_last_frame) return err;
 
     // CLEANUP: Interact with clicked object
     // if (chord_active(ACTION_PLAY_INTERACT))
@@ -639,9 +643,9 @@ static int state_edit_translate()
 {
     enum RICO_error err = SUCCESS;
 
-    err = shared_edit_events();   if (err || state != state_prev) return err;
-    err = shared_engine_events(); if (err || state != state_prev) return err;
-    err = shared_camera_events(); if (err || state != state_prev) return err;
+    err = shared_edit_events();   if (err || state != state_last_frame) return err;
+    err = shared_engine_events(); if (err || state != state_last_frame) return err;
+    err = shared_camera_events(); if (err || state != state_last_frame) return err;
 
     struct vec3 translate = VEC3_ZERO;
     bool translate_reset = false;
@@ -716,9 +720,9 @@ static int state_edit_rotate()
 {
     enum RICO_error err = SUCCESS;
 
-    err = shared_edit_events();   if (err || state != state_prev) return err;
-    err = shared_engine_events(); if (err || state != state_prev) return err;
-    err = shared_camera_events(); if (err || state != state_prev) return err;
+    err = shared_edit_events();   if (err || state != state_last_frame) return err;
+    err = shared_engine_events(); if (err || state != state_last_frame) return err;
+    err = shared_camera_events(); if (err || state != state_last_frame) return err;
 
     struct vec3 rotate = VEC3_ZERO;
     bool rotate_reset = false;
@@ -808,9 +812,9 @@ static int state_edit_scale()
 {
     enum RICO_error err = SUCCESS;
 
-    err = shared_edit_events();   if (err || state != state_prev) return err;
-    err = shared_engine_events(); if (err || state != state_prev) return err;
-    err = shared_camera_events(); if (err || state != state_prev) return err;
+    err = shared_edit_events();   if (err || state != state_last_frame) return err;
+    err = shared_engine_events(); if (err || state != state_last_frame) return err;
+    err = shared_camera_events(); if (err || state != state_last_frame) return err;
 
     struct vec3 scale = VEC3_ZERO;
     bool scale_reset = false;
@@ -899,9 +903,9 @@ static int state_edit_material()
 {
     enum RICO_error err = SUCCESS;
 
-    err = shared_edit_events();   if (err || state != state_prev) return err;
-    err = shared_engine_events(); if (err || state != state_prev) return err;
-    err = shared_camera_events(); if (err || state != state_prev) return err;
+    err = shared_edit_events();   if (err || state != state_last_frame) return err;
+    err = shared_engine_events(); if (err || state != state_last_frame) return err;
+    err = shared_camera_events(); if (err || state != state_last_frame) return err;
 
     // Cycle selected object's material
     if (chord_active(ACTION_EDIT_MATERIAL_NEXT))
@@ -925,9 +929,9 @@ static int state_edit_mesh()
 {
     enum RICO_error err = SUCCESS;
 
-    err = shared_edit_events();   if (err || state != state_prev) return err;
-    err = shared_engine_events(); if (err || state != state_prev) return err;
-    err = shared_camera_events(); if (err || state != state_prev) return err;
+    err = shared_edit_events();   if (err || state != state_last_frame) return err;
+    err = shared_engine_events(); if (err || state != state_last_frame) return err;
+    err = shared_camera_events(); if (err || state != state_last_frame) return err;
 
     // Cycle selected object's mesh
     if (chord_active(ACTION_EDIT_MESH_NEXT))
@@ -967,7 +971,7 @@ static int state_menu_quit()
     else if (KEY_PRESSED(SDL_SCANCODE_N) || KEY_PRESSED(SDL_SCANCODE_ESCAPE))
     {
         string_free_slot(STR_SLOT_MENU_QUIT);
-        state = STATE_PLAY_EXPLORE;
+        state = state_prev;
     }
     // [Q]: Exit without saving
     else if (KEY_PRESSED(SDL_SCANCODE_Q))
@@ -982,9 +986,9 @@ static int state_text_input()
 {
     enum RICO_error err = SUCCESS;
 
-    err = shared_edit_events();   if (err || state != state_prev) return err;
-    err = shared_engine_events(); if (err || state != state_prev) return err;
-    err = shared_camera_events(); if (err || state != state_prev) return err;
+    err = shared_edit_events();   if (err || state != state_last_frame) return err;
+    err = shared_engine_events(); if (err || state != state_last_frame) return err;
+    err = shared_camera_events(); if (err || state != state_last_frame) return err;
 
     // TODO: Handle text input
 

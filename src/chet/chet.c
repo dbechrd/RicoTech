@@ -41,9 +41,10 @@ static struct pack_info pack_table[] =
 };
 
 //-------------------------------------------------------------------
-
-static const float GRAVITY = -0.0098f; // TODO: Scale by delta_time properly
-static const float COEF_COLLIDE = 0.15f; // TODO: Elastic collision coef
+// TODO: Scale by delta_time properly
+static const struct vec3 GRAVITY = { 0.0f, -0.0098f, 0.0f };
+// TODO: Elastic collision coef
+static const float COEF_COLLIDE = 0.15f;
 
 void pack_build_all()
 {
@@ -248,8 +249,19 @@ void clash_simulate()
     {
         DLB_ASSERT(obj->rico.type == OBJ_SMALL_CUBE);
 
-        if (!v3_equals(&obj->acc, &VEC3_ZERO))
+        if (obj->resting)
         {
+            if (!(v3_equals(&obj->acc, &VEC3_ZERO) &&
+                  v3_equals(&obj->vel, &VEC3_ZERO) &&
+                  obj->rico.xform.position.y == 0.0f))
+            {
+                obj->resting = false;
+            }
+        }
+
+        if (!obj->resting)
+        {
+            obj->acc = GRAVITY;
             v3_add(&obj->vel, &obj->acc);
             // TODO: Drag coef
 
@@ -266,6 +278,7 @@ void clash_simulate()
                     obj->acc = VEC3_ZERO;
                     obj->vel = VEC3_ZERO;
                     obj->rico.xform.position.y = 0.0f;
+                    obj->resting = true;
                 }
             }
             else
@@ -349,7 +362,8 @@ int main(int argc, char **argv)
             }
         }
 
-        clash_simulate();
+        if (!(RICO_state_is_edit() || RICO_state_is_paused()))
+            clash_simulate();
 
         err = RICO_update();
         if (err) break;
