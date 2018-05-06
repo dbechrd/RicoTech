@@ -29,9 +29,6 @@
     <ClCompile Include="src\main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\notes.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\tests.c">
       <Filter>Source Files</Filter>
     </ClCompile>
