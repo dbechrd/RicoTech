@@ -21,7 +21,7 @@ static struct program_text *prog_text;
 static void editor_init();
 static void edit_object_create();
 static void edit_bbox_reset_all();
-static void edit_object_select(struct RICO_object *obj, bool force);
+static void edit_object_select(pkid id, bool force);
 static void edit_object_next();
 static void edit_object_prev();
 static void edit_print_object();

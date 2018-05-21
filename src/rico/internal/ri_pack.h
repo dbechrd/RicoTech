@@ -3,6 +3,7 @@
 
 #include "rico_pack.h"
 
+#define PACK_ALLOC_ZERO_MEMORY
 #define MAX_PACKS 32
 struct pack *packs[MAX_PACKS];
 u32 packs_next;
@@ -14,6 +15,9 @@ static inline void *pack_push(struct pack *pack, u32 bytes)
 {
     RICO_ASSERT(pack->buffer_used + bytes < pack->buffer_size);
     void *ptr = pack->buffer + pack->buffer_used;
+#ifdef PACK_ALLOC_ZERO_MEMORY
+    memset(ptr, 0, bytes); // Re-zero memory
+#endif
     pack->buffer_used += bytes;
     pack->index[pack->lookup[pack->blob_current_id]].size += bytes;
     return ptr;
@@ -63,7 +67,7 @@ static inline void *pack_pop(struct pack *pack, u32 id)
 
 static inline void *pack_read(struct pack *pack, u32 index)
 {
-    RICO_ASSERT(index > 0);
+    RICO_ASSERT(index >= 0);
     RICO_ASSERT(index < pack->blobs_used);
     RICO_ASSERT(pack->index[index].type);
     return pack->buffer + pack->index[index].offset;

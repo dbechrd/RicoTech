@@ -41,7 +41,7 @@ static void camera_init(struct RICO_camera *camera, struct vec3 position,
 
     camera_translate_local(camera, &VEC3_ZERO);
     camera_rotate(camera, 0.0f, 0.0f, 0.0f);
-    camera_update(camera);
+    camera_update(camera, 0.0f);
 }
 static void camera_reset(struct RICO_camera *camera)
 {
@@ -111,9 +111,9 @@ static void camera_rotate(struct RICO_camera *camera, float dx, float dy,
 
     camera->need_update = true;
 }
-static void camera_update(struct RICO_camera *camera)
+static void camera_update(struct RICO_camera *camera, r64 sim_alpha)
 {
-    if (!camera->need_update)
+    if (!camera->need_update && sim_alpha == 0.0f)
         return;
 
     struct quat pitch, yaw, roll;
@@ -233,7 +233,7 @@ static void camera_player_update(struct RICO_camera *camera, r32 dx, r32 dy,
         camera_rotate(&cam_player, delta.y, delta.x, 0.0f);
     }
 
-    camera_update(&cam_player);
+    camera_update(&cam_player, 0.0f);
 }
 static void camera_render(struct RICO_camera *camera)
 {

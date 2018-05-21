@@ -21,7 +21,7 @@ static const struct vec3 *object_scale_get(struct RICO_object *obj);
 static const struct mat4 *object_matrix_get(struct RICO_object *obj);
 static bool object_collide_ray(float *_dist, struct RICO_object *obj,
                                const struct ray *ray);
-static bool object_collide_ray_type(u32 id, pkid *_object_id, float *_dist,
+static bool object_collide_ray_type(pkid *_object_id, float *_dist,
                                     const struct ray *ray);
 static void object_render(struct pack *pack, const struct RICO_camera *camera);
 static void object_render_ui(struct pack *pack);

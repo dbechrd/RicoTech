@@ -43,8 +43,7 @@ static void edit_object_create()
     // Create new object and select it
     pkid obj_id = RICO_load_object(RICO_pack_active, RICO_OBJECT_TYPE_COUNT, 0,
                                    name);
-    struct RICO_object *obj = RICO_pack_lookup(obj_id);
-    edit_object_select(obj, false);
+    edit_object_select(obj_id, false);
 }
 static void edit_bbox_reset_all()
 {
@@ -53,14 +52,13 @@ static void edit_bbox_reset_all()
     // Reselect current object
     if (selected_obj_id)
     {
-        struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
-        edit_object_select(obj, true);
+        edit_object_select(selected_obj_id, true);
     }
 }
-static void edit_object_select(struct RICO_object *obj, bool force)
+static void edit_object_select(pkid id, bool force)
 {
     // NULL already selected
-    if (!force && !obj && !selected_obj_id)
+    if (!force && !id && !selected_obj_id)
         return;
 
     // Deselect current object
@@ -71,10 +69,11 @@ static void edit_object_select(struct RICO_object *obj, bool force)
     }
 
     // Select requested object
-    if (obj && (force || obj->uid.pkid != selected_obj_id))
+    if (id && (force || id != selected_obj_id))
     {
+        struct RICO_object *obj = RICO_pack_lookup(id);
         object_select(obj);
-        selected_obj_id = obj->uid.pkid;
+        selected_obj_id = id;
     }
     else
     {
@@ -83,18 +82,54 @@ static void edit_object_select(struct RICO_object *obj, bool force)
 
     edit_print_object();
 }
+static pkid find_first_selectable_object(u32 pack_id)
+{
+    struct pack *pack = packs[pack_id];
+    RICO_ASSERT(pack);
+
+    pkid id = RICO_pack_first(pack_id);
+    while (id)
+    {
+        struct RICO_object *obj = RICO_pack_lookup(id);
+        if (obj->uid.type == RICO_HND_OBJECT && object_selectable(obj))
+        {
+            break;
+        }
+        id = RICO_pack_next(id);
+    }
+    return id;
+}
+static void edit_pack_next()
+{
+    u32 start_id = PKID_PACK(selected_obj_id);
+    u32 pack_id = (start_id + 1) % MAX_PACKS;
+
+    pkid id;
+    while (pack_id != start_id)
+    {
+        if (packs[pack_id])
+        {
+            id = find_first_selectable_object(pack_id);
+            if (id)
+                break;
+        }
+        pack_id = (pack_id + 1) % MAX_PACKS;
+    }
+
+    edit_object_select(id, false);
+}
 static void edit_object_next()
 {
-    struct RICO_object *next_obj = (selected_obj_id)
-        ? RICO_pack_next(selected_obj_id)
-        : RICO_pack_first(PACK_DEFAULT, RICO_HND_OBJECT);
+    pkid next_obj = (selected_obj_id)
+        ? RICO_pack_next_loop(selected_obj_id)
+        : RICO_pack_first_type(PACK_DEFAULT, RICO_HND_OBJECT);
     edit_object_select(next_obj, false);
 }
 static void edit_object_prev()
 {
-    struct RICO_object *prev_obj = (selected_obj_id)
-        ? RICO_pack_prev(selected_obj_id)
-        : RICO_pack_last(PACK_DEFAULT, RICO_HND_OBJECT);
+    pkid prev_obj = (selected_obj_id)
+        ? RICO_pack_prev_loop(selected_obj_id)
+        : RICO_pack_last_type(PACK_DEFAULT, RICO_HND_OBJECT);
     edit_object_select(prev_obj, false);
 }
 static void edit_print_object()
@@ -173,7 +208,7 @@ static void edit_material_next_pack()
         return;
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
-    struct RICO_material *next_material = 0;
+    pkid next_material_id = 0;
 
     u32 pack_start = PKID_PACK(obj->material_id);
     u32 pack_id = pack_start + 1;
@@ -183,17 +218,17 @@ static void edit_material_next_pack()
             pack_id != PACK_FRAME &&
             packs[pack_id])
         {
-            next_material = RICO_pack_last(pack_id, RICO_HND_MATERIAL);
-            if (next_material)
+            next_material_id = RICO_pack_last_type(pack_id, RICO_HND_MATERIAL);
+            if (next_material_id)
                 break;
         }
         pack_id++;
         pack_id = pack_id % MAX_PACKS;
     }
 
-    if (next_material)
+    if (next_material_id)
     {
-        obj->material_id = next_material->uid.pkid;
+        obj->material_id = next_material_id;
         object_print(obj);
     }
 }
@@ -203,9 +238,10 @@ static void edit_material_next()
         return;
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
-    struct RICO_material *next_material = (obj->material_id)
-        ? RICO_pack_next(obj->material_id)
-        : RICO_pack_first(PACK_DEFAULT, RICO_HND_MATERIAL);
+    pkid next_material_id = (obj->material_id)
+        ? RICO_pack_next_loop(obj->material_id)
+        : RICO_pack_first_type(PACK_DEFAULT, RICO_HND_MATERIAL);
+    struct RICO_material *next_material = RICO_pack_lookup(next_material_id);
     if (next_material)
     {
         obj->material_id = next_material->uid.pkid;
@@ -218,9 +254,10 @@ static void edit_material_prev()
         return;
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
-    struct RICO_material *prev_material = (obj->material_id)
-        ? RICO_pack_prev(obj->material_id)
-        : RICO_pack_last(PACK_DEFAULT, RICO_HND_MATERIAL);
+    pkid prev_material_id = (obj->material_id)
+        ? RICO_pack_prev_loop(obj->material_id)
+        : RICO_pack_last_type(PACK_DEFAULT, RICO_HND_MATERIAL);
+    struct RICO_material *prev_material = RICO_pack_lookup(prev_material_id);
     if (prev_material)
     {
         obj->material_id = prev_material->uid.pkid;
@@ -233,7 +270,7 @@ static void edit_mesh_next_pack()
         return;
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
-    struct RICO_mesh *next_mesh = 0;
+    pkid next_mesh_id = 0;
 
     u32 pack_start = PKID_PACK(obj->mesh_id);
     u32 pack_id = pack_start + 1;
@@ -243,17 +280,18 @@ static void edit_mesh_next_pack()
             pack_id != PACK_FRAME &&
             packs[pack_id])
         {
-            next_mesh = RICO_pack_last(pack_id, RICO_HND_MESH);
-            if (next_mesh)
+            next_mesh_id = RICO_pack_last_type(pack_id, RICO_HND_MESH);
+            if (next_mesh_id)
                 break;
         }
         pack_id++;
         pack_id = pack_id % MAX_PACKS;
     }
 
-    if (next_mesh)
+    if (next_mesh_id)
     {
-        obj->mesh_id = next_mesh->uid.pkid;
+        struct RICO_mesh *next_mesh = RICO_pack_lookup(next_mesh_id);
+        obj->mesh_id = next_mesh_id;
         obj->bbox = next_mesh->bbox;
         object_select(obj);
         object_print(obj);
@@ -265,9 +303,10 @@ static void edit_mesh_next()
         return;
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
-    struct RICO_mesh *next_mesh = (obj->mesh_id)
-        ? RICO_pack_next(obj->mesh_id)
-        : RICO_pack_first(PACK_DEFAULT, RICO_HND_MESH);
+    pkid next_mesh_id = (obj->mesh_id)
+        ? RICO_pack_next_loop(obj->mesh_id)
+        : RICO_pack_first_type(PACK_DEFAULT, RICO_HND_MESH);
+    struct RICO_mesh *next_mesh = RICO_pack_lookup(next_mesh_id);
     if (next_mesh)
     {
         obj->mesh_id = next_mesh->uid.pkid;
@@ -282,9 +321,10 @@ static void edit_mesh_prev()
         return;
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
-    struct RICO_mesh *prev_mesh = (obj->mesh_id)
-        ? RICO_pack_prev(obj->mesh_id)
-        : RICO_pack_last(PACK_DEFAULT, RICO_HND_MESH);
+    pkid prev_mesh_id = (obj->mesh_id)
+        ? RICO_pack_prev_loop(obj->mesh_id)
+        : RICO_pack_last_type(PACK_DEFAULT, RICO_HND_MESH);
+    struct RICO_mesh *prev_mesh = RICO_pack_lookup(prev_mesh_id);
     if (prev_mesh)
     {
         obj->mesh_id = prev_mesh->uid.pkid;
@@ -316,17 +356,17 @@ static void edit_duplicate()
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
     struct RICO_object *new_obj = object_copy(PKID_PACK(selected_obj_id), obj,
                                               name);
-    edit_object_select(new_obj, false);
+    edit_object_select(new_obj->uid.pkid, false);
 }
 static void edit_delete()
 {
     if (!selected_obj_id)
         return;
 
-    u32 selected_prev = selected_obj_id;
+    pkid prev_obj = RICO_pack_prev_loop(selected_obj_id);
     pack_delete(selected_obj_id);
     selected_obj_id = 0;
-    edit_object_select(RICO_pack_prev(selected_prev), false);
+    edit_object_select(prev_obj, false);
 }
 static struct widget *widget_test()
 {
@@ -371,7 +411,7 @@ extern bool RICO_mouse_raycast(pkid *_obj_id, float *_dist)
     // Camera forward ray v. scene
     struct ray cam_ray = { 0 };
     camera_fwd_ray(&cam_ray, &cam_player);
-    return object_collide_ray_type(RICO_pack_active, _obj_id, _dist, &cam_ray);
+    return object_collide_ray_type(_obj_id, _dist, &cam_ray);
 }
 static void edit_mouse_pressed()
 {
@@ -382,13 +422,7 @@ static void edit_mouse_pressed()
     // Select first object w/ ray pick
     pkid obj_collided_id = 0;
     RICO_mouse_raycast(&obj_collided_id, 0);
-
-    struct RICO_object *obj_collided = NULL;
-    if (obj_collided_id)
-    {
-        obj_collided = RICO_pack_lookup(obj_collided_id);
-    }
-    edit_object_select(obj_collided, false);
+    edit_object_select(obj_collided_id, false);
 }
 static void edit_mouse_move()
 {

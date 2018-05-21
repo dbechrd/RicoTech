@@ -14,7 +14,6 @@ struct ray_visualizer
     u32 lifetime;
 };
 
-
 enum audio_type
 {
     AUDIO_WELCOME,
@@ -44,7 +43,7 @@ static struct pack_info pack_table[] =
 // TODO: Scale by delta_time properly
 static const struct vec3 GRAVITY = { 0.0f, -0.0098f, 0.0f };
 // TODO: Elastic collision coef
-static const float COEF_COLLIDE = 0.15f;
+static const float COEF_ELASTICITY = 0.15f;
 
 void pack_build_all()
 {
@@ -168,7 +167,6 @@ void game_button_interact(struct game_button *button)
 }
 
 static pkid last_clicked;
-static pkid mat_rayviz_id;
 static struct sphere rayviz_sphere;
 void object_interact()
 {
@@ -193,21 +191,8 @@ void object_interact()
     //       existing mesh.. also need to somehow calculate and subtract
     //       distance from original to edge of new mesh and dot that with the
     //       ray to prevent it from being placed inside.
-    //pos.z += scale / 2.0f;
-
-#if 0
-    pkid rayviz_id = RICO_load_object(RICO_pack_active, OBJ_RAY_VISUALIZER,
-                                      sizeof(struct ray_visualizer), "Ray Viz");
-    struct ray_visualizer *rayviz = RICO_pack_lookup(rayviz_id);
-    rayviz->lifetime = 30;  // TODO: Add these objects to a temp buffer, then
-                            //       scan it each frame to remove dead object.
-    rayviz->rico.material_id = mat_rayviz_id;
-    rayviz->rico.xform.scale = VEC3(scale, scale, scale);
-    RICO_object_trans_set(&rayviz->rico, &pos);
-#else
     rayviz_sphere.orig = pos;
     rayviz_sphere.radius = scale;
-#endif
 
     if (dist > 3.0f)
         return;
@@ -239,21 +224,77 @@ DLB_ASSERT_HANDLER(handle_assert)
 DLB_assert_handler_def *DLB_assert_handler = handle_assert;
 #endif
 
-void clash_simulate()
+void RICO_object_bbox_world(const struct RICO_object *obj,
+                            struct RICO_bbox *bbox)
 {
-    struct small_cube *last = RICO_pack_last(pack_table[PACK_CLASH].sav_id,
-                                             RICO_HND_OBJECT);
-    struct small_cube *obj = RICO_pack_first(pack_table[PACK_CLASH].sav_id,
-                                             RICO_HND_OBJECT);
-    for (;;)
+    *bbox = obj->bbox;
+    RICO_bbox_transform(bbox, &obj->xform.matrix);
+}
+
+bool intersect_objects(const struct RICO_object *a, const struct RICO_object *b)
+{
+    struct RICO_bbox world_a = { 0 };
+    struct RICO_bbox world_b = { 0 };
+    RICO_object_bbox_world(a, &world_a);
+    RICO_object_bbox_world(b, &world_b);
+
+    return RICO_bbox_intersects(&world_a, &world_b);
+}
+
+bool RICO_object_has_physics(pkid id)
+{
+    struct RICO_object *obj = RICO_pack_lookup(id);
+    // TODO: Implement a proper physics flag
+    return !v3_equals(&obj->bbox.min, &obj->bbox.max);
+}
+
+pkid RICO_physics_next(pkid id)
+{
+    pkid next_id = id;
+    do
     {
-        DLB_ASSERT(obj->rico.type == OBJ_SMALL_CUBE);
+        next_id = RICO_pack_next_loop(next_id);
+    } while (next_id && next_id != id && !RICO_object_has_physics(next_id));
+    return id;
+}
+
+void clash_detect()
+{
+    //struct RICO_bbox *a, b;
+    //
+    //const int pack_count = ARRAY_COUNT(pack_table);
+    //for (int pack_idx_a = 0; pack_idx_a < pack_count; pack_idx_a++)
+    //{
+    //    struct pack_info *pack_info_a = &pack_table[pack_idx_a];
+    //    pack_info_a->pak_id
+    //    struct RICO_object *obj_a = RICO_pack_first(
+    //}
+
+    pkid a = RICO_pack_first(RICO_pack_active);
+    while (RICO_physics_next(a))
+    {
+
+    }
+}
+
+void clash_simulate(struct timmy *timmy)
+{
+    pkid id = RICO_pack_first_type(pack_table[PACK_CLASH].sav_id,
+                                   RICO_HND_OBJECT);
+
+    while (id)
+    {
+        struct small_cube *obj = RICO_pack_lookup(id);
+
+        //if (obj->rico.type != OBJ_SMALL_CUBE)
+        //    continue;
 
         if (obj->resting)
         {
             if (!(v3_equals(&obj->acc, &VEC3_ZERO) &&
                   v3_equals(&obj->vel, &VEC3_ZERO) &&
-                  obj->rico.xform.position.y == 0.0f))
+                  (obj->rico.xform.position.y == 0.0f) ||
+                  intersect_objects(&obj->rico, &timmy->rico)))
             {
                 obj->resting = false;
             }
@@ -263,14 +304,42 @@ void clash_simulate()
         {
             obj->acc = GRAVITY;
             v3_add(&obj->vel, &obj->acc);
+            v3_add(&obj->rico.xform.position, &obj->vel);
             // TODO: Drag coef
 
             // TODO: Collision detection
-            if (obj->rico.xform.position.y + obj->vel.y <= 0.0f)
+            if (obj->rico.xform.position.y <= 0.0f)
             {
+                struct vec3 p0 = obj->rico.xform.position;
+                v3_sub(&p0, &obj->vel);
+
+                struct vec3 v0 = obj->vel;
+                struct vec3 v_test;
+                float t = 0.5f;
+                for (int i = 0; i < 10; i++)
+                {
+                    obj->rico.xform.position = p0;
+                    v_test = v0;
+                    v3_scalef(&v_test, t);
+                    v3_add(&obj->rico.xform.position, &v_test);
+                    RICO_object_trans_set(&obj->rico, &obj->rico.xform.position);
+                    if (obj->rico.xform.position.y <= 0.0f)
+                    {
+                        t -= t * 0.5f;
+                    }
+                    else
+                    {
+                        t += t * 0.5f;
+                    }
+                }
                 if (obj->vel.y < 0.0f)
                     obj->vel.y *= -1.0f;
-                obj->vel.y *= COEF_COLLIDE;
+                obj->vel.y *= COEF_ELASTICITY;
+
+                v_test = obj->vel;
+                v3_scalef(&v_test, 1.0f - t);
+                v3_add(&obj->rico.xform.position, &v_test);
+                RICO_object_trans_set(&obj->rico, &obj->rico.xform.position);
 
                 // TODO: Epsilon (must be bigger than GRAVITY * friction)
                 if (fabs(obj->vel.y) < 0.01f)
@@ -281,17 +350,93 @@ void clash_simulate()
                     obj->resting = true;
                 }
             }
-            else
+            else if (intersect_objects(&obj->rico, &timmy->rico))
             {
-                v3_add(&obj->rico.xform.position, &obj->vel);
+                struct vec3 p0 = obj->rico.xform.position;
+                v3_sub(&p0, &obj->vel);
+
+                struct vec3 v0 = obj->vel;
+                struct vec3 v_test;
+                float t = 0.5f;
+                for (int i = 0; i < 10; i++)
+                {
+                    obj->rico.xform.position = p0;
+                    v_test = v0;
+                    v3_scalef(&v_test, t);
+                    v3_add(&obj->rico.xform.position, &v_test);
+                    RICO_object_trans_set(&obj->rico, &obj->rico.xform.position);
+                    if (intersect_objects(&obj->rico, &timmy->rico))
+                    {
+                        t -= t * 0.5f;
+                    }
+                    else
+                    {
+                        t += t * 0.5f;
+                    }
+                }
+                obj->vel.y *= -1.0f;
+                obj->vel.y *= COEF_ELASTICITY;
+
+                v_test = obj->vel;
+                v3_scalef(&v_test, 1.0f - t);
+                v3_add(&obj->rico.xform.position, &v_test);
+                RICO_object_trans_set(&obj->rico, &obj->rico.xform.position);
+
+                // TODO: Epsilon (must be bigger than GRAVITY * friction)
+                if (fabs(obj->vel.y) < 0.01f)
+                {
+                    obj->acc = VEC3_ZERO;
+                    obj->vel = VEC3_ZERO;
+                    obj->resting = true;
+                }
             }
 
             RICO_object_trans_set(&obj->rico, &obj->rico.xform.position);
         }
         
-        if (obj == last)
-            break;
-        obj = RICO_pack_next(obj->rico.uid.pkid);
+        id = RICO_pack_next_type(id, RICO_HND_OBJECT);
+    }
+}
+
+void debug_render_bboxes(struct timmy *timmy)
+{
+    struct RICO_bbox timmy_bbox = { 0 };
+    RICO_object_bbox_world(&timmy->rico, &timmy_bbox);
+    RICO_prim_draw_bbox(&timmy_bbox, &MAT4_IDENT, &COLOR_MAGENTA);
+
+    pkid id = RICO_pack_first_type(pack_table[PACK_CLASH].sav_id,
+                                   RICO_HND_OBJECT);
+
+    while (id)
+    {
+        struct small_cube *obj = RICO_pack_lookup(id);
+
+        switch (obj->rico.type)
+        {
+            case OBJ_SMALL_CUBE:
+            case OBJ_TIMMY:
+            {
+                if (obj->resting)
+                {
+                    struct RICO_bbox world_bbox = { 0 };
+                    RICO_object_bbox_world(&obj->rico, &world_bbox);
+                    RICO_prim_draw_bbox(&world_bbox, &MAT4_IDENT,
+                                        &COLOR_GREEN);
+                }
+                else
+                {
+                    struct RICO_bbox world_bbox = { 0 };
+                    RICO_object_bbox_world(&obj->rico, &world_bbox);
+                    RICO_prim_draw_bbox(&world_bbox, &MAT4_IDENT,
+                                        &COLOR_YELLOW);
+                }
+                break;
+            }
+            default:
+                break;
+        }
+
+        id = RICO_pack_next_type(id, RICO_HND_OBJECT);
     }
 }
 
@@ -331,9 +476,6 @@ int main(int argc, char **argv)
     RICO_audio_source_init(&audio_sources[AUDIO_VICTORY]);
     RICO_audio_source_buffer(&audio_sources[AUDIO_VICTORY], &audio_buffers[AUDIO_VICTORY]);
 
-    pkid tex_rayviz_id = RICO_load_texture_color(RICO_pack_active, "rayviz", COLOR_RED);
-    mat_rayviz_id = RICO_load_material(RICO_pack_active, "rayviz", tex_rayviz_id, 0, 0);
-
     // HACK: Find Timmy by name and use light/audio flags to determine start-up
     //       state of lighting and audio.
     struct timmy *timmy =
@@ -363,7 +505,7 @@ int main(int argc, char **argv)
         }
 
         if (!(RICO_state_is_edit() || RICO_state_is_paused()))
-            clash_simulate();
+            clash_simulate(timmy);
 
         err = RICO_update();
         if (err) break;
@@ -373,6 +515,7 @@ int main(int argc, char **argv)
 #else
         RICO_render_objects();
         RICO_render_editor();
+        debug_render_bboxes(timmy);
         if (rayviz_sphere.radius > 0.0f)
             RICO_prim_draw_sphere(&rayviz_sphere, &COLOR_YELLOW);
         RICO_render_ui();

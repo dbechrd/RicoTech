@@ -61,7 +61,7 @@ static void object_bbox_recalculate_all(u32 id)
 }
 static bool object_selectable(struct RICO_object *obj)
 {
-    return (obj->type != RICO_OBJECT_TYPE_STRING_SCREEN);
+    return obj->type != RICO_OBJECT_TYPE_STRING_SCREEN;
 }
 static void object_select_toggle(struct RICO_object *obj)
 {
@@ -163,33 +163,39 @@ static bool object_collide_ray(float *_dist, struct RICO_object *obj,
 {
     return collide_ray_obb(_dist, ray, &obj->bbox, &obj->xform.matrix);
 }
-static bool object_collide_ray_type(u32 id, pkid *_object_id, float *_dist,
+static bool object_collide_ray_type(pkid *_object_id, float *_dist,
                                     const struct ray *ray)
 {
     bool collided = false;
     float closest = Z_FAR; // Track closest object
 
-    struct pack *pack = packs[id];
     struct RICO_object *obj = 0;
-    for (u32 index = 1; index < pack->blobs_used; ++index)
+    for (u32 i = PACK_COUNT; i < ARRAY_COUNT(packs); ++i)
     {
-        if (pack->index[index].type != RICO_HND_OBJECT)
+        if (!packs[i])
             continue;
 
-        obj = pack_read(pack, index);
-        if (obj->type == RICO_OBJECT_TYPE_TERRAIN)
-            continue;
-
-        float dist;
-        bool col = collide_ray_obb(&dist, ray, &obj->bbox, &obj->xform.matrix);
-
-        // If closest so far, save info
-        if (col && dist < closest)
+        for (u32 index = 1; index < packs[i]->blobs_used; ++index)
         {
-            // Record object handle and distance
-            *_object_id = obj->uid.pkid;
-            collided = true;
-            closest = dist;
+            if (packs[i]->index[index].type != RICO_HND_OBJECT)
+                continue;
+
+            obj = pack_read(packs[i], index);
+            if (obj->type == RICO_OBJECT_TYPE_TERRAIN)
+                continue;
+
+            float dist;
+            bool col = collide_ray_obb(&dist, ray, &obj->bbox,
+                                       &obj->xform.matrix);
+
+            // If closest so far, save info
+            if (col && dist < closest)
+            {
+                // Record object handle and distance
+                *_object_id = obj->uid.pkid;
+                collided = true;
+                closest = dist;
+            }
         }
     }
 
@@ -379,6 +385,7 @@ static void object_render_ui(struct pack *pack)
 }
 static void object_render_all(r64 alpha, struct RICO_camera *camera)
 {
+    // TODO: Interpolate / extrapolate physics
     UNUSED(alpha);
 
 	for (u32 i = PACK_COUNT; i < ARRAY_COUNT(packs); ++i)

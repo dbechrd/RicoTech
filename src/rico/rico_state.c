@@ -327,6 +327,8 @@ extern int RICO_update()
 
     sim_alpha = (r64)sim_accum / SIM_MS;
 
+    camera_update(&cam_player, sim_alpha);
+
     return err;
 }
 extern void RICO_render_objects()
@@ -566,13 +568,18 @@ static int shared_edit_events()
             RICO_ASSERT("WTF");
         }
     }
+    // Cycle select through packs
+    else if (chord_active(ACTION_EDIT_CYCLE_PACK))
+    {
+        edit_pack_next();
+    }
     // Cycle select through objects (in reverse)
-    else if (chord_active(ACTION_EDIT_CYCLE_REVERSE))
+    else if (chord_active(ACTION_EDIT_CYCLE_BLOB_REVERSE))
     {
         edit_object_prev();
     }
     // Cycle select through objects
-    else if (chord_active(ACTION_EDIT_CYCLE))
+    else if (chord_active(ACTION_EDIT_CYCLE_BLOB))
     {
         edit_object_next();
     }
@@ -1130,8 +1137,9 @@ static int engine_init()
     // Editor
     RICO_bind_action(ACTION_EDIT_QUIT,                       CHORD1(SDL_SCANCODE_GRAVE));
     RICO_bind_action(ACTION_EDIT_SAVE,                       CHORD2(RICO_SCANCODE_CTRL,   SDL_SCANCODE_S));
-    RICO_bind_action(ACTION_EDIT_CYCLE_REVERSE,              CHORD2(RICO_SCANCODE_SHIFT,  SDL_SCANCODE_TAB));
-    RICO_bind_action(ACTION_EDIT_CYCLE,                      CHORD1(SDL_SCANCODE_TAB));
+    RICO_bind_action(ACTION_EDIT_CYCLE_PACK,                 CHORD2(RICO_SCANCODE_CTRL,   SDL_SCANCODE_TAB));
+    RICO_bind_action(ACTION_EDIT_CYCLE_BLOB_REVERSE,         CHORD2(RICO_SCANCODE_SHIFT,  SDL_SCANCODE_TAB));
+    RICO_bind_action(ACTION_EDIT_CYCLE_BLOB,                 CHORD1(SDL_SCANCODE_TAB));
     RICO_bind_action(ACTION_EDIT_MOUSE_PICK_START,           CHORD1(RICO_SCANCODE_LMB));
     RICO_bind_action(ACTION_EDIT_MOUSE_PICK_MOVE,            CHORD_REPEAT1(RICO_SCANCODE_LMB));
     RICO_bind_action(ACTION_EDIT_MOUSE_PICK_END,             CHORD_UP1(RICO_SCANCODE_LMB));
