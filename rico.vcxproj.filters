@@ -119,6 +119,9 @@
     <ClCompile Include="src\rico\tests.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
+    <ClCompile Include="src\chet\chet_obb.c">
+      <Filter>Source Files\chet</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dlb\dlb_math.h">
@@ -258,6 +261,9 @@
     </ClInclude>
     <ClInclude Include="src\rico\internal\ri_util.h">
       <Filter>Header Files\rico\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\chet\chet_obb.h">
+      <Filter>Header Files\chet</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

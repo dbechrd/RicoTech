@@ -73,19 +73,19 @@
 #define HALT() SDL_TriggerBreakpoint()
 
 #if RICO_DEBUG
-    #define FILE_LOC __FILE__, __LINE__
-    #define RICO_ASSERT(exp) if(!(exp)) HALT();
-    #define RICO_FATAL(err, desc, ...) rico_fatal_print(FILE_LOC, err, desc, ##__VA_ARGS__)
-
-    #if RICO_DEBUG_ALL_ERRORS_FATAL
-      #define RICO_ERROR(err, desc, ...) RICO_FATAL(err, desc, ##__VA_ARGS__)
-    #else
-      #define RICO_ERROR(err, desc, ...) rico_error_print(FILE_LOC, err, desc)
-    #endif
+#  define FILE_LOC __FILE__, __LINE__
+#  define RICO_ASSERT(exp) if(!(exp)) HALT();
+#  define RICO_FATAL(err, desc, ...) rico_fatal_print(FILE_LOC, err, desc, ##__VA_ARGS__)
+#
+#  if RICO_DEBUG_ALL_ERRORS_FATAL
+#    define RICO_ERROR(err, desc, ...) RICO_FATAL(err, desc, ##__VA_ARGS__)
+#  else
+#    define RICO_ERROR(err, desc, ...) rico_error_print(FILE_LOC, err, desc)
+#  endif
 #else
-    #define RICO_ASSERT(exp) UNUSED(exp)
-    #define RICO_FATAL(err, desc, ...) err
-    #define RICO_ERROR(err, desc, ...) err
+#  define RICO_ASSERT(exp) UNUSED(exp)
+#  define RICO_FATAL(err, desc, ...) err
+#  define RICO_ERROR(err, desc, ...) err
 #endif
 
 //------------------------------------------------------------------------------

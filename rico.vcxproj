@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\chet\chet_obb.c" />
     <ClCompile Include="src\chet\chet_packs.c" />
     <ClCompile Include="src\chet\chet.c" />
     <ClCompile Include="src\rico\rico.c" />
@@ -132,6 +133,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\chet\chet_obb.h" />
     <ClInclude Include="src\chet\chet_packs.h" />
     <ClInclude Include="src\chet\chet.h" />
     <ClInclude Include="src\dlb\dlb_math.h" />

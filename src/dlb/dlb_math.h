@@ -40,9 +40,10 @@
 #define MB(bytes) (1024 * KB(bytes))
 #define GB(bytes) (1024 * MB(bytes))
 
-#define VEC3_EPSILON 0.00001f
-#define MAT4_EPSILON 0.00001f
-#define QUAT_EPSILON 0.00001f
+#define MATH_EPSILON 0.00001f
+#define VEC3_EPSILON MATH_EPSILON
+#define MAT4_EPSILON MATH_EPSILON
+#define QUAT_EPSILON MATH_EPSILON
 
 struct vec2
 {
@@ -60,6 +61,7 @@ struct vec3
         struct { float x, y, z; };
         struct { float u, v, w; };
         struct { float r, g, b; };
+        float a[3];
     };
 };
 
