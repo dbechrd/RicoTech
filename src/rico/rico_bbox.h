@@ -14,7 +14,20 @@ struct RICO_bbox
 {
     struct vec3 min;
     struct vec3 max;
-    bool selected;
+};
+
+struct RICO_aabb
+{
+    struct vec3 c;
+    struct vec3 e;  // half-width extents
+};
+
+struct RICO_obb
+{
+    // PERF: Only store two of the axes and calculate third using cross product
+    struct vec3 c;     // center
+    struct vec3 u[3];  // normalized axes
+    struct vec3 e;     // half-width extents
 };
 
 void RICO_bbox_transform(struct RICO_bbox *bbox, const struct mat4 *m);

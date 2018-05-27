@@ -259,6 +259,7 @@ pkid RICO_physics_next(pkid id)
     return id;
 }
 
+#if 0
 void clash_detect()
 {
     //struct RICO_bbox *a, b;
@@ -275,6 +276,65 @@ void clash_detect()
     while (RICO_physics_next(a))
     {
 
+    }
+}
+#endif
+
+void DEBUG_calculate_obb(const struct RICO_object *obj, struct RICO_obb *obb)
+{
+    obb->e = VEC3(
+        (obj->bbox.max.x - obj->bbox.min.x) / 2.0f,
+        (obj->bbox.max.y - obj->bbox.min.y) / 2.0f,
+        (obj->bbox.max.z - obj->bbox.min.z) / 2.0f
+    );
+    obb->c = VEC3(
+        obj->bbox.min.x + obb->e.x,
+        obj->bbox.min.y + obb->e.y,
+        obj->bbox.min.z + obb->e.z
+    );
+    obb->u[0] = VEC3_X;
+    obb->u[1] = VEC3_Y;
+    obb->u[2] = VEC3_Z;
+    // TODO: Calculate third axis using cross product to save memory
+    //test_obb.u[2] = v3_cross(&test_obb.u[0], &test_obb.u[1]);
+
+    v3_mul_mat4(&obb->c, &obj->xform.matrix);
+    struct quat obb_rot = obj->xform.orientation;
+    quat_inverse(&obb_rot);  // TODO: Why do I have to flip this?
+    v3_mul_quat(&obb->u[0], &obb_rot);
+    v3_mul_quat(&obb->u[1], &obb_rot);
+    v3_mul_quat(&obb->u[2], &obb_rot);
+    v3_normalize(&obb->u[0]);
+    v3_normalize(&obb->u[1]);
+    v3_normalize(&obb->u[2]);
+    v3_scalef(&obb->u[0], obj->xform.scale.x);
+    v3_scalef(&obb->u[1], obj->xform.scale.y);
+    v3_scalef(&obb->u[2], obj->xform.scale.z);
+
+    // Make sure we still have a proper box!
+    float dot = v3_dot(&obb->u[0], &obb->u[1]);
+    DLB_ASSERT(dot == 0.0f);
+}
+
+void clash_detect(struct timmy *timmy)
+{
+    pkid id = RICO_pack_first_type(pack_table[PACK_CLASH].sav_id,
+                                   RICO_HND_OBJECT);
+
+    DEBUG_calculate_obb(&timmy->rico, &timmy->rico.obb);
+
+    while (id)
+    {
+        struct small_cube *obj = RICO_pack_lookup(id);
+        if (obj->rico.type != OBJ_SMALL_CUBE)
+            continue;
+
+        obj->collide_aabb = intersect_objects(&obj->rico, &timmy->rico);
+
+        DEBUG_calculate_obb(&obj->rico, &obj->rico.obb);
+        obj->collide_obb = obb_v_obb(&obj->rico.obb, &timmy->rico.obb);
+        
+        id = RICO_pack_next_type(id, RICO_HND_OBJECT);
     }
 }
 
@@ -405,8 +465,69 @@ void debug_render_bboxes(struct timmy *timmy)
     RICO_object_bbox_world(&timmy->rico, &timmy_bbox);
     RICO_prim_draw_bbox(&timmy_bbox, &MAT4_IDENT, &COLOR_MAGENTA);
 
+    struct RICO_obb test_obb;
+    DEBUG_calculate_obb(&timmy->rico, &test_obb);
+    RICO_prim_draw_obb(&test_obb, &COLOR_LIME);
+
     pkid id = RICO_pack_first_type(pack_table[PACK_CLASH].sav_id,
                                    RICO_HND_OBJECT);
+    struct vec4 colors[] = {
+        COLOR_RED,
+        COLOR_GREEN,
+        COLOR_BLUE,
+        COLOR_YELLOW,
+        COLOR_CYAN,
+        COLOR_MAGENTA,
+        COLOR_WHITE,
+        COLOR_TRANSPARENT,
+
+        COLOR_DARK_RED,
+        COLOR_DARK_GREEN,
+        COLOR_DARK_BLUE,
+        COLOR_DARK_YELLOW,
+        COLOR_DARK_CYAN,
+        COLOR_DARK_MAGENTA,
+        COLOR_DARK_WHITE,
+        COLOR_TRANSPARENT,
+
+        COLOR_DARK_RED_HIGHLIGHT,
+        COLOR_DARK_GREEN_HIGHLIGHT,
+        COLOR_DARK_BLUE_HIGHLIGHT,
+        COLOR_DARK_YELLOW_HIGHLIGHT,
+        COLOR_DARK_CYAN_HIGHLIGHT,
+        COLOR_DARK_MAGENTA_HIGHLIGHT,
+        COLOR_DARK_WHITE_HIGHLIGHT,
+        COLOR_TRANSPARENT,
+
+        COLOR_ORANGE,
+        COLOR_PINK,
+        COLOR_PURPLE,
+        COLOR_LIME,
+        COLOR_AQUA,
+        COLOR_DODGER,
+        COLOR_WHEAT,
+        COLOR_BROWN,
+        COLOR_BLACK,
+    };
+
+    struct RICO_bbox color_test = { 0 };
+    float x = 0.0f;
+    float y = 2.0f;
+    const float width = 0.1f;
+    const float padding = width / 2.0f;
+    for (int i = 0; i < ARRAY_COUNT(colors); ++i)
+    {
+        if (colors[i].a == 0.0f)
+        {
+            x = 0.0f;
+            y += width + padding;
+            continue;
+        }
+        x -= width + padding;
+        color_test.min = VEC3(x - width, y - width,   0.0f);
+        color_test.max = VEC3(x        , y        , -width);
+        RICO_prim_draw_bbox(&color_test, &MAT4_IDENT, &colors[i]);
+    }
 
     while (id)
     {
@@ -414,23 +535,46 @@ void debug_render_bboxes(struct timmy *timmy)
 
         switch (obj->rico.type)
         {
-            case OBJ_SMALL_CUBE:
+            case OBJ_SMALL_CUBE:  // fall through
             case OBJ_TIMMY:
             {
-                if (obj->resting)
+                //struct RICO_bbox obb_bbox = { 0 };
+                //obb_bbox.min = obj->rico.bbox.min;
+                //v3_mul_mat4(&obb_bbox.min, &obj->rico.xform.matrix);
+                //obb_bbox.max = obj->rico.bbox.max;
+                //v3_mul_mat4(&obb_bbox.max, &obj->rico.xform.matrix);
+                //RICO_prim_draw_bbox(&obb_bbox, &MAT4_IDENT, &COLOR_ORANGE);
+
+                if (obj->collide_obb)
                 {
-                    struct RICO_bbox world_bbox = { 0 };
-                    RICO_object_bbox_world(&obj->rico, &world_bbox);
-                    RICO_prim_draw_bbox(&world_bbox, &MAT4_IDENT,
-                                        &COLOR_GREEN);
+                    RICO_prim_draw_obb(&obj->rico.obb, &COLOR_PURPLE);
                 }
                 else
                 {
-                    struct RICO_bbox world_bbox = { 0 };
-                    RICO_object_bbox_world(&obj->rico, &world_bbox);
-                    RICO_prim_draw_bbox(&world_bbox, &MAT4_IDENT,
-                                        &COLOR_YELLOW);
+                    RICO_prim_draw_obb(&obj->rico.obb, &COLOR_YELLOW);
                 }
+
+                //struct RICO_bbox world_bbox = { 0 };
+                //RICO_object_bbox_world(&obj->rico, &world_bbox);
+                //
+                //if (obj->collide_aabb)
+                //{
+                //    if (obj->resting)
+                //    {
+                //        RICO_prim_draw_bbox(&world_bbox, &MAT4_IDENT,
+                //                            &COLOR_GREEN);
+                //    }
+                //    else
+                //    {
+                //        RICO_prim_draw_bbox(&world_bbox, &MAT4_IDENT,
+                //                            &COLOR_RED);
+                //    }
+                //}
+                //else
+                //{
+                //    RICO_prim_draw_bbox(&world_bbox, &MAT4_IDENT,
+                //                        &COLOR_YELLOW);
+                //}
                 break;
             }
             default:
@@ -457,6 +601,8 @@ int main(int argc, char **argv)
     RICO_bind_action(ACTION_RICO_TEST, CHORD_REPEAT1(SDL_SCANCODE_Z));
     RICO_bind_action(ACTION_TYPE_NEXT, CHORD1(SDL_SCANCODE_X));
     RICO_bind_action(ACTION_TYPE_PREV, CHORD1(SDL_SCANCODE_C));
+
+    RICO_audio_volume_set(0.1f);
 
     // TODO: Add audio to pack
     RICO_audio_buffer_load_file(&audio_buffers[AUDIO_WELCOME], "audio/welcome.ric");
@@ -506,7 +652,10 @@ int main(int argc, char **argv)
         }
 
         if (!(RICO_state_is_edit() || RICO_state_is_paused()))
-            clash_simulate(timmy);
+        {
+            //clash_simulate(timmy);
+        }
+        clash_detect(timmy);
 
         err = RICO_update();
         if (err) break;

@@ -6,7 +6,6 @@ static void bbox_init(struct RICO_bbox *bbox, struct vec3 min, struct vec3 max)
 {
     bbox->min = min;
     bbox->max = max;
-    bbox->selected = false;
 }
 static void bbox_init_mesh(struct RICO_bbox *bbox, struct RICO_mesh *mesh)
 {

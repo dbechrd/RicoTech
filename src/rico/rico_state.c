@@ -434,7 +434,7 @@ static int shared_engine_events()
         string_truncate(buf, sizeof(buf), len);
         RICO_load_string(PACK_TRANSIENT, STR_SLOT_DYNAMIC,
                          SCREEN_X(-FONT_WIDTH * 12), SCREEN_Y(0),
-                         COLOR_DARK_GRAY, 1000, 0, buf);
+                         COLOR_DARK_WHITE, 1000, 0, buf);
     }
     // Save and exit
     else if (chord_active(ACTION_ENGINE_QUIT))
@@ -746,24 +746,24 @@ static int state_edit_rotate()
     // Reset selected object's rotation
     else if (chord_active(ACTION_EDIT_ROTATE_RESET))
         rotate_reset = true;
-    // Rotate selected object up
-    else if (chord_active(ACTION_EDIT_ROTATE_UP))
-        rotate.x -= rot_delta;
-    // Rotate selected object down
-    else if (chord_active(ACTION_EDIT_ROTATE_DOWN))
+    // Rotate selected object CCW around positive x-axis
+    else if (chord_active(ACTION_EDIT_ROTATE_X_POS))
         rotate.x += rot_delta;
-    // Rotate selected object west
-    else if (chord_active(ACTION_EDIT_ROTATE_WEST))
-        rotate.y -= rot_delta;
-    // Rotate selected object east
-    else if (chord_active(ACTION_EDIT_ROTATE_EAST))
+    // Rotate selected object CCW around negative x-axis
+    else if (chord_active(ACTION_EDIT_ROTATE_X_NEG))
+        rotate.x -= rot_delta;
+    // Rotate selected object CCW around positive y-axis
+    else if (chord_active(ACTION_EDIT_ROTATE_Y_NEG))
         rotate.y += rot_delta;
-    // Rotate selected object north
-    else if (chord_active(ACTION_EDIT_ROTATE_NORTH))
-        rotate.z -= rot_delta;
-    // Rotate selected object south
-    else if (chord_active(ACTION_EDIT_ROTATE_SOUTH))
+    // Rotate selected object CCW around negative y-axis
+    else if (chord_active(ACTION_EDIT_ROTATE_Y_POS))
+        rotate.y -= rot_delta;
+    // Rotate selected object CCW around positive z-axis
+    else if (chord_active(ACTION_EDIT_ROTATE_Z_POS))
         rotate.z += rot_delta;
+    // Rotate selected object CCW around negative z-axis
+    else if (chord_active(ACTION_EDIT_ROTATE_Z_NEG))
+        rotate.z -= rot_delta;
     // Increase rotation delta
     else if (chord_active(ACTION_EDIT_ROTATE_DELTA_INCREASE))
     {
@@ -1151,22 +1151,22 @@ static int engine_init()
     RICO_bind_action(ACTION_EDIT_MODE_NEXT,                  CHORD1(SDL_SCANCODE_KP_0));
 
     RICO_bind_action(ACTION_EDIT_TRANSLATE_RESET,            CHORD1(SDL_SCANCODE_0));
-    RICO_bind_action(ACTION_EDIT_TRANSLATE_UP,               CHORD_REPEAT1(SDL_SCANCODE_UP));
-    RICO_bind_action(ACTION_EDIT_TRANSLATE_DOWN,             CHORD_REPEAT1(SDL_SCANCODE_DOWN));
+    RICO_bind_action(ACTION_EDIT_TRANSLATE_UP,               CHORD_REPEAT1(SDL_SCANCODE_PAGEUP));
+    RICO_bind_action(ACTION_EDIT_TRANSLATE_DOWN,             CHORD_REPEAT1(SDL_SCANCODE_PAGEDOWN));
     RICO_bind_action(ACTION_EDIT_TRANSLATE_WEST,             CHORD_REPEAT1(SDL_SCANCODE_LEFT));
     RICO_bind_action(ACTION_EDIT_TRANSLATE_EAST,             CHORD_REPEAT1(SDL_SCANCODE_RIGHT));
-    RICO_bind_action(ACTION_EDIT_TRANSLATE_NORTH,            CHORD_REPEAT1(SDL_SCANCODE_PAGEUP));
-    RICO_bind_action(ACTION_EDIT_TRANSLATE_SOUTH,            CHORD_REPEAT1(SDL_SCANCODE_PAGEDOWN));
+    RICO_bind_action(ACTION_EDIT_TRANSLATE_NORTH,            CHORD_REPEAT1(SDL_SCANCODE_UP));
+    RICO_bind_action(ACTION_EDIT_TRANSLATE_SOUTH,            CHORD_REPEAT1(SDL_SCANCODE_DOWN));
     RICO_bind_action(ACTION_EDIT_TRANSLATE_DELTA_INCREASE,   CHORD1(SDL_SCANCODE_KP_PLUS));
     RICO_bind_action(ACTION_EDIT_TRANSLATE_DELTA_DECREASE,   CHORD1(SDL_SCANCODE_KP_MINUS));
 
     RICO_bind_action(ACTION_EDIT_ROTATE_RESET,               CHORD1(SDL_SCANCODE_0));
-    RICO_bind_action(ACTION_EDIT_ROTATE_UP,                  CHORD_REPEAT1(SDL_SCANCODE_UP));
-    RICO_bind_action(ACTION_EDIT_ROTATE_DOWN,                CHORD_REPEAT1(SDL_SCANCODE_DOWN));
-    RICO_bind_action(ACTION_EDIT_ROTATE_WEST,                CHORD_REPEAT1(SDL_SCANCODE_LEFT));
-    RICO_bind_action(ACTION_EDIT_ROTATE_EAST,                CHORD_REPEAT1(SDL_SCANCODE_RIGHT));
-    RICO_bind_action(ACTION_EDIT_ROTATE_NORTH,               CHORD_REPEAT1(SDL_SCANCODE_PAGEUP));
-    RICO_bind_action(ACTION_EDIT_ROTATE_SOUTH,               CHORD_REPEAT1(SDL_SCANCODE_PAGEDOWN));
+    RICO_bind_action(ACTION_EDIT_ROTATE_X_POS,               CHORD_REPEAT1(SDL_SCANCODE_DOWN));
+    RICO_bind_action(ACTION_EDIT_ROTATE_X_NEG,               CHORD_REPEAT1(SDL_SCANCODE_UP));
+    RICO_bind_action(ACTION_EDIT_ROTATE_Y_POS,               CHORD_REPEAT1(SDL_SCANCODE_PAGEUP));
+    RICO_bind_action(ACTION_EDIT_ROTATE_Y_NEG,               CHORD_REPEAT1(SDL_SCANCODE_PAGEDOWN));
+    RICO_bind_action(ACTION_EDIT_ROTATE_Z_POS,               CHORD_REPEAT1(SDL_SCANCODE_LEFT));
+    RICO_bind_action(ACTION_EDIT_ROTATE_Z_NEG,               CHORD_REPEAT1(SDL_SCANCODE_RIGHT));
     RICO_bind_action(ACTION_EDIT_ROTATE_DELTA_INCREASE,      CHORD1(SDL_SCANCODE_KP_PLUS));
     RICO_bind_action(ACTION_EDIT_ROTATE_DELTA_DECREASE,      CHORD1(SDL_SCANCODE_KP_MINUS));
     RICO_bind_action(ACTION_EDIT_ROTATE_HEPTAMODE_TOGGLE,    CHORD1(SDL_SCANCODE_7));

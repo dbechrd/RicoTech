@@ -79,7 +79,7 @@ static int prim_init()
 //       glUseProgram() call.
 extern void RICO_prim_draw_line(const struct vec3 *p0, const struct vec3 *p1,
                                 const struct mat4 *matrix,
-                                const struct vec4 color)
+                                const struct vec4 *color)
 {
     struct vec3 vertices[2] = { *p0, *p1 };
 
@@ -88,7 +88,7 @@ extern void RICO_prim_draw_line(const struct vec3 *p0, const struct vec3 *p1,
     glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
     glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
     glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, matrix->a);
-    glUniform4f(prog_prim->u_col, color.r, color.g, color.b, color.a);
+    glUniform4f(prog_prim->u_col, color->r, color->g, color->b, color->a);
 
     RICO_ASSERT(prim_line_vao);
     RICO_ASSERT(prim_line_vbo);
@@ -104,7 +104,7 @@ extern void RICO_prim_draw_line(const struct vec3 *p0, const struct vec3 *p1,
 }
 // Render ray as line segment
 extern void RICO_prim_draw_ray(const struct ray *ray, const struct mat4 *matrix,
-                               const struct vec4 color)
+                               const struct vec4 *color)
 {
     struct vec3 ray_end = ray->orig;
     v3_add(&ray_end, &ray->dir);
@@ -180,10 +180,7 @@ extern void RICO_prim_draw_bbox(const struct RICO_bbox *bbox,
     glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
     glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, matrix->a);
 
-    if (bbox->selected)
-        glUniform4fv(prog_prim->u_col, 1, (const GLfloat *)&COLOR_RED);
-    else
-        glUniform4fv(prog_prim->u_col, 1, (const GLfloat *)color);
+    glUniform4fv(prog_prim->u_col, 1, (const GLfloat *)color);
 
     RICO_ASSERT(prim_bbox_vao);
     RICO_ASSERT(prim_bbox_vbo[0]);
@@ -200,6 +197,103 @@ extern void RICO_prim_draw_bbox(const struct RICO_bbox *bbox,
                    (GLvoid*)(4 * sizeof(GLushort)));
     glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT,
                    (GLvoid*)(8 * sizeof(GLushort)));
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    // Clean up
+    glUseProgram(0);
+}
+extern void RICO_prim_draw_obb(const struct RICO_obb *obb,
+                               const struct vec4 *color)
+{
+    struct vec3 e0 = obb->u[0];
+    v3_scalef(&e0, obb->e.a[0]);
+    struct vec3 e1 = obb->u[1];
+    v3_scalef(&e1, obb->e.a[1]);
+    struct vec3 e2 = obb->u[2];
+    v3_scalef(&e2, obb->e.a[2]);
+
+    // DEBUG: Draw obb axes
+    struct vec3 axis0 = obb->c;
+    struct vec3 axis1 = obb->c;
+    struct vec3 axis2 = obb->c;
+    v3_add(&axis0, &e0);
+    v3_add(&axis1, &e1);
+    v3_add(&axis2, &e2);
+    RICO_prim_draw_line(&obb->c, &axis0, &MAT4_IDENT, &COLOR_RED);
+    RICO_prim_draw_line(&obb->c, &axis1, &MAT4_IDENT, &COLOR_GREEN);
+    RICO_prim_draw_line(&obb->c, &axis2, &MAT4_IDENT, &COLOR_BLUE);
+
+    struct vec3 p0 = obb->c; // 000
+    v3_sub(&p0, &e0);
+    v3_sub(&p0, &e1);
+    v3_sub(&p0, &e2);
+    struct vec3 p1 = obb->c; // 100
+    v3_add(&p1, &e0);
+    v3_sub(&p1, &e1);
+    v3_sub(&p1, &e2);
+    struct vec3 p2 = obb->c; // 110
+    v3_add(&p2, &e0);
+    v3_add(&p2, &e1);
+    v3_sub(&p2, &e2);
+    struct vec3 p3 = obb->c; // 010
+    v3_sub(&p3, &e0);
+    v3_add(&p3, &e1);
+    v3_sub(&p3, &e2);
+    struct vec3 p4 = obb->c; // 001
+    v3_sub(&p4, &e0);
+    v3_sub(&p4, &e1);
+    v3_add(&p4, &e2);
+    struct vec3 p5 = obb->c; // 101
+    v3_add(&p5, &e0);
+    v3_sub(&p5, &e1);
+    v3_add(&p5, &e2);
+    struct vec3 p6 = obb->c; // 111
+    v3_add(&p6, &e0);
+    v3_add(&p6, &e1);
+    v3_add(&p6, &e2);
+    struct vec3 p7 = obb->c; // 011
+    v3_sub(&p7, &e0);
+    v3_add(&p7, &e1);
+    v3_add(&p7, &e2);
+
+    GLfloat vertices[] = {
+        p0.x, p0.y, p0.z,
+        p1.x, p1.y, p1.z,
+        p2.x, p2.y, p2.z,
+        p3.x, p3.y, p3.z,
+        p4.x, p4.y, p4.z,
+        p5.x, p5.y, p5.z,
+        p6.x, p6.y, p6.z,
+        p7.x, p7.y, p7.z
+    };
+
+    RICO_ASSERT(prog_prim->prog_id);
+    glUseProgram(prog_prim->prog_id);
+
+    glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
+    glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
+    glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, MAT4_IDENT.a);
+
+    glUniform4fv(prog_prim->u_col, 1, (const GLfloat *)color);
+
+    RICO_ASSERT(prim_bbox_vao);
+    RICO_ASSERT(prim_bbox_vbo[0]);
+    RICO_ASSERT(prim_bbox_vbo[1]);
+    glBindVertexArray(prim_bbox_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, prim_bbox_vbo[0]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, prim_bbox_vbo[1]);
+
+    // Based loosely on:
+    // https://en.wikibooks.org/wiki/OpenGL_Programming/Bounding_box
+    glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0);
+    glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT,
+        (GLvoid*)(4 * sizeof(GLushort)));
+    glDrawElements(GL_LINES, 8, GL_UNSIGNED_SHORT,
+        (GLvoid*)(8 * sizeof(GLushort)));
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);

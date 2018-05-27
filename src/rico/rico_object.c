@@ -65,16 +65,16 @@ static bool object_selectable(struct RICO_object *obj)
 }
 static void object_select_toggle(struct RICO_object *obj)
 {
-    obj->bbox.selected = !obj->bbox.selected;
+    obj->selected = !obj->selected;
 }
 static void object_select(struct RICO_object *obj)
 {
     RICO_ASSERT(object_selectable(obj));
-    obj->bbox.selected = true;
+    obj->selected = true;
 }
 static void object_deselect(struct RICO_object *obj)
 {
-    obj->bbox.selected = false;
+    obj->selected = false;
 }
 static void object_transform_update(struct RICO_object *obj)
 {
@@ -326,10 +326,10 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
 
         if (RICO_state_is_edit())
         {
-            struct vec4 color = COLOR_WHITE_HIGHLIGHT;
-            if (obj->bbox.selected)
+            struct vec4 color = COLOR_DARK_WHITE_HIGHLIGHT;
+            if (obj->selected)
                 color = COLOR_RED;
-            RICO_prim_draw_bbox(&obj->bbox, &obj->xform.matrix, &color);
+            //RICO_prim_draw_bbox(&obj->bbox, &obj->xform.matrix, &color);
         }
     }
 }
@@ -495,5 +495,5 @@ static void object_print(struct RICO_object *obj)
     string_truncate(buf, sizeof(buf), len);
     RICO_load_string(PACK_TRANSIENT, STR_SLOT_SELECTED_OBJ,
                      SCREEN_X(0), SCREEN_Y(FONT_HEIGHT),
-                     COLOR_DARK_GRAY_HIGHLIGHT, 0, 0, buf);
+                     COLOR_DARK_WHITE_HIGHLIGHT, 0, 0, buf);
 }

@@ -3,30 +3,12 @@
 
 #include "dlb_types.h"
 
-typedef struct vec3 Vector3;
-typedef struct vec3 Point3;
-
-struct sat_aabb
-{
-    Point3 c;
-    Vector3 e;  // half-width extents
-};
-
-typedef struct sat_obb OBB;
-struct sat_obb
-{
-    // PERF: Only store two of the axes and calculate third using cross product
-    Point3 c;      // center
-    Vector3 u[3];  // normalized axes
-    Vector3 e;     // half-width extents
-};
-
-typedef struct mat4 Mat4;
-
-bool obb_v_obb(const OBB *a, const OBB *b)
+bool obb_v_obb(const struct RICO_obb *a, const struct RICO_obb *b)
 {
     float ra, rb;
-    Mat4 R, AbsR;
+    struct mat4 R, AbsR;
+
+    DLB_ASSERT(v3_length(&a->e) > 0.0f);
 
     // Rotation matrix of b in a's coordinate space
     for (int i = 0; i < 3; ++i) {
@@ -35,13 +17,13 @@ bool obb_v_obb(const OBB *a, const OBB *b)
         }
     }
 
-    Vector3 t = b->c;
+    struct vec3 t = b->c;
     v3_sub(&t, &a->c);
     t = VEC3(v3_dot(&t, &a->u[0]), v3_dot(&t, &a->u[1]), v3_dot(&t, &a->u[2]));
 
     for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 3; ++j) {
-            AbsR.m[i][j] = ABS(R.m[i][j]) + MATH_EPSILON;
+            AbsR.m[i][j] = ABS(R.m[i][j]) + 0.01f;
         }
     }
 

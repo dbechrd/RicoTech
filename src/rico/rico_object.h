@@ -28,6 +28,8 @@ struct RICO_object
     u32 type;
     struct RICO_transform xform;
     struct RICO_bbox bbox;
+    struct RICO_obb obb;
+    bool selected;
     pkid mesh_id;
     pkid material_id;
 };
