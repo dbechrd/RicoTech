@@ -312,8 +312,12 @@ void DEBUG_calculate_obb(const struct RICO_object *obj, struct RICO_obb *obb)
     v3_scalef(&obb->u[2], obj->xform.scale.z);
 
     // Make sure we still have a proper box!
-    float dot = v3_dot(&obb->u[0], &obb->u[1]);
-    DLB_ASSERT(dot == 0.0f);
+    float dot1 = v3_dot(&obb->u[0], &obb->u[1]);
+    float dot2 = v3_dot(&obb->u[0], &obb->u[2]);
+    float dot3 = v3_dot(&obb->u[1], &obb->u[2]);
+    DLB_ASSERT(dot1 == 0.0f);
+    DLB_ASSERT(dot2 == 0.0f);
+    DLB_ASSERT(dot3 == 0.0f);
 }
 
 void clash_detect(struct timmy *timmy)
@@ -332,9 +336,10 @@ void clash_detect(struct timmy *timmy)
         obj->collide_aabb = intersect_objects(&obj->rico, &timmy->rico);
 
         DEBUG_calculate_obb(&obj->rico, &obj->rico.obb);
-        obj->collide_obb = obb_v_obb(&obj->rico.obb, &timmy->rico.obb);
+        int obb_code = obb_v_obb_eberly(&obj->rico.obb, &timmy->rico.obb);
+        obj->collide_obb = obb_code;
         
-        id = RICO_pack_next_type(id, RICO_HND_OBJECT);
+        id = 0; //RICO_pack_next_type(id, RICO_HND_OBJECT);
     }
 }
 
@@ -461,13 +466,11 @@ void clash_simulate(struct timmy *timmy)
 
 void debug_render_bboxes(struct timmy *timmy)
 {
-    struct RICO_bbox timmy_bbox = { 0 };
-    RICO_object_bbox_world(&timmy->rico, &timmy_bbox);
-    RICO_prim_draw_bbox(&timmy_bbox, &MAT4_IDENT, &COLOR_MAGENTA);
-
-    struct RICO_obb test_obb;
-    DEBUG_calculate_obb(&timmy->rico, &test_obb);
-    RICO_prim_draw_obb(&test_obb, &COLOR_LIME);
+    //struct RICO_bbox timmy_bbox = { 0 };
+    //RICO_object_bbox_world(&timmy->rico, &timmy_bbox);
+    //RICO_prim_draw_bbox(&timmy_bbox, &MAT4_IDENT, &COLOR_MAGENTA);
+    
+    RICO_prim_draw_obb(&timmy->rico.obb, &COLOR_LIME);
 
     pkid id = RICO_pack_first_type(pack_table[PACK_CLASH].sav_id,
                                    RICO_HND_OBJECT);
@@ -553,28 +556,6 @@ void debug_render_bboxes(struct timmy *timmy)
                 {
                     RICO_prim_draw_obb(&obj->rico.obb, &COLOR_YELLOW);
                 }
-
-                //struct RICO_bbox world_bbox = { 0 };
-                //RICO_object_bbox_world(&obj->rico, &world_bbox);
-                //
-                //if (obj->collide_aabb)
-                //{
-                //    if (obj->resting)
-                //    {
-                //        RICO_prim_draw_bbox(&world_bbox, &MAT4_IDENT,
-                //                            &COLOR_GREEN);
-                //    }
-                //    else
-                //    {
-                //        RICO_prim_draw_bbox(&world_bbox, &MAT4_IDENT,
-                //                            &COLOR_RED);
-                //    }
-                //}
-                //else
-                //{
-                //    RICO_prim_draw_bbox(&world_bbox, &MAT4_IDENT,
-                //                        &COLOR_YELLOW);
-                //}
                 break;
             }
             default:
@@ -584,6 +565,27 @@ void debug_render_bboxes(struct timmy *timmy)
         id = RICO_pack_next_type(id, RICO_HND_OBJECT);
     }
 }
+
+#if 0
+float circle(in vec2 _st, in float _radius){
+    float thickness = 8.0;
+    vec2 dist = _st-vec2(0.5);
+    float a = 0.0
+        + smoothstep(_radius-(_radius*0.5),
+                     _radius+(_radius*0.5),
+                     dot(dist,dist)*thickness)
+        - smoothstep(_radius,
+                     _radius+(_radius),
+                     dot(dist,dist)*thickness/1.0);
+    return a;
+}
+
+void mainImage(out vec4 fragColor, in vec2 fragCoord){
+    vec2 st = gl_FragCoord.xy;
+    vec3 color = vec3(circle(st, 0.9));
+    fragColor = vec4(color, 1.0);
+}
+#endif
 
 int main(int argc, char **argv)
 {
@@ -595,7 +597,7 @@ int main(int argc, char **argv)
 
 	//main_nuklear(argc, argv);
     RICO_init();
-    pack_build_all();
+    //pack_build_all();
 	pack_load_all();
 
     RICO_bind_action(ACTION_RICO_TEST, CHORD_REPEAT1(SDL_SCANCODE_Z));
@@ -655,10 +657,11 @@ int main(int argc, char **argv)
         {
             //clash_simulate(timmy);
         }
-        clash_detect(timmy);
 
         err = RICO_update();
         if (err) break;
+
+        clash_detect(timmy);
 
 #if 0
         RICO_render();
