@@ -336,8 +336,8 @@ void clash_detect(struct timmy *timmy)
         obj->collide_aabb = intersect_objects(&obj->rico, &timmy->rico);
 
         DEBUG_calculate_obb(&obj->rico, &obj->rico.obb);
-        int obb_code = obb_v_obb_eberly(&obj->rico.obb, &timmy->rico.obb);
-        obj->collide_obb = obb_code;
+        int separating_axis = obb_v_obb(&obj->rico.obb, &timmy->rico.obb);
+        obj->collide_obb = (separating_axis == 0);
         
         id = 0; //RICO_pack_next_type(id, RICO_HND_OBJECT);
     }
@@ -550,7 +550,7 @@ void debug_render_bboxes(struct timmy *timmy)
 
                 if (obj->collide_obb)
                 {
-                    RICO_prim_draw_obb(&obj->rico.obb, &COLOR_PURPLE);
+                    RICO_prim_draw_obb(&obj->rico.obb, &COLOR_RED);
                 }
                 else
                 {
