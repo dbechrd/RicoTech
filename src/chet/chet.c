@@ -225,23 +225,6 @@ DLB_ASSERT_HANDLER(handle_assert)
 DLB_assert_handler_def *DLB_assert_handler = handle_assert;
 #endif
 
-void RICO_object_bbox_world(const struct RICO_object *obj,
-                            struct RICO_bbox *bbox)
-{
-    *bbox = obj->bbox;
-    RICO_bbox_transform(bbox, &obj->xform.matrix);
-}
-
-bool intersect_objects(const struct RICO_object *a, const struct RICO_object *b)
-{
-    struct RICO_bbox world_a = { 0 };
-    struct RICO_bbox world_b = { 0 };
-    RICO_object_bbox_world(a, &world_a);
-    RICO_object_bbox_world(b, &world_b);
-
-    return RICO_bbox_intersects(&world_a, &world_b);
-}
-
 bool RICO_object_has_physics(pkid id)
 {
     struct RICO_object *obj = RICO_pack_lookup(id);
@@ -280,44 +263,13 @@ void clash_detect()
 }
 #endif
 
-void DEBUG_calculate_obb(const struct RICO_object *obj, struct RICO_obb *obb)
+bool DEBUG_sphere_v_sphere(const struct sphere *a, const struct sphere *b)
 {
-    obb->e = VEC3(
-        (obj->bbox.max.x - obj->bbox.min.x) / 2.0f,
-        (obj->bbox.max.y - obj->bbox.min.y) / 2.0f,
-        (obj->bbox.max.z - obj->bbox.min.z) / 2.0f
-    );
-    obb->c = VEC3(
-        obj->bbox.min.x + obb->e.x,
-        obj->bbox.min.y + obb->e.y,
-        obj->bbox.min.z + obb->e.z
-    );
-    obb->u[0] = VEC3_X;
-    obb->u[1] = VEC3_Y;
-    obb->u[2] = VEC3_Z;
-    // TODO: Calculate third axis using cross product to save memory
-    //test_obb.u[2] = v3_cross(&test_obb.u[0], &test_obb.u[1]);
+    struct vec3 D = a->orig;
+    v3_sub(&D, &b->orig);
+    float dist = v3_length(&D);
 
-    v3_mul_mat4(&obb->c, &obj->xform.matrix);
-    struct quat obb_rot = obj->xform.orientation;
-    quat_inverse(&obb_rot);  // TODO: Why do I have to flip this?
-    v3_mul_quat(&obb->u[0], &obb_rot);
-    v3_mul_quat(&obb->u[1], &obb_rot);
-    v3_mul_quat(&obb->u[2], &obb_rot);
-    v3_normalize(&obb->u[0]);
-    v3_normalize(&obb->u[1]);
-    v3_normalize(&obb->u[2]);
-    v3_scalef(&obb->u[0], obj->xform.scale.x);
-    v3_scalef(&obb->u[1], obj->xform.scale.y);
-    v3_scalef(&obb->u[2], obj->xform.scale.z);
-
-    // Make sure we still have a proper box!
-    float dot1 = v3_dot(&obb->u[0], &obb->u[1]);
-    float dot2 = v3_dot(&obb->u[0], &obb->u[2]);
-    float dot3 = v3_dot(&obb->u[1], &obb->u[2]);
-    DLB_ASSERT(dot1 == 0.0f);
-    DLB_ASSERT(dot2 == 0.0f);
-    DLB_ASSERT(dot3 == 0.0f);
+    return (dist < a->radius + b->radius);
 }
 
 void clash_detect(struct timmy *timmy)
@@ -325,22 +277,30 @@ void clash_detect(struct timmy *timmy)
     pkid id = RICO_pack_first_type(pack_table[PACK_CLASH].sav_id,
                                    RICO_HND_OBJECT);
 
-    DEBUG_calculate_obb(&timmy->rico, &timmy->rico.obb);
-
     while (id)
     {
         struct small_cube *obj = RICO_pack_lookup(id);
         if (obj->rico.type != OBJ_SMALL_CUBE)
             continue;
 
-        obj->collide_aabb = intersect_objects(&obj->rico, &timmy->rico);
+        obj->collide_sphere = DEBUG_sphere_v_sphere(&obj->rico.sphere,
+                                                    &timmy->rico.sphere);
 
-        DEBUG_calculate_obb(&obj->rico, &obj->rico.obb);
+        obj->collide_aabb = obj->collide_sphere &&
+            RICO_bbox_intersects(&obj->rico.bbox_world,
+                                 &timmy->rico.bbox_world);
+
         int separating_axis = obb_v_obb(&obj->rico.obb, &timmy->rico.obb);
-        obj->collide_obb = (separating_axis == 0);
+        obj->collide_obb = obj->collide_sphere && (separating_axis == 0);
         
-        id = 0; //RICO_pack_next_type(id, RICO_HND_OBJECT);
+        id = RICO_pack_next_type(id, RICO_HND_OBJECT);
     }
+}
+
+bool object_intersects(const struct RICO_object *a, const struct RICO_object *b)
+{
+    // TODO: check sphere, then aabb, then obb
+    return RICO_bbox_intersects(&a->bbox_world, &b->bbox_world);
 }
 
 void clash_simulate(struct timmy *timmy)
@@ -360,7 +320,7 @@ void clash_simulate(struct timmy *timmy)
             if (!(v3_equals(&obj->acc, &VEC3_ZERO) &&
                   v3_equals(&obj->vel, &VEC3_ZERO) &&
                   (obj->rico.xform.position.y == 0.0f) ||
-                  intersect_objects(&obj->rico, &timmy->rico)))
+                  object_intersects(&obj->rico, &timmy->rico)))
             {
                 obj->resting = false;
             }
@@ -416,7 +376,7 @@ void clash_simulate(struct timmy *timmy)
                     obj->resting = true;
                 }
             }
-            else if (intersect_objects(&obj->rico, &timmy->rico))
+            else if (object_intersects(&obj->rico, &timmy->rico))
             {
                 struct vec3 p0 = obj->rico.xform.position;
                 v3_sub(&p0, &obj->vel);
@@ -431,7 +391,7 @@ void clash_simulate(struct timmy *timmy)
                     v3_scalef(&v_test, t);
                     v3_add(&obj->rico.xform.position, &v_test);
                     RICO_object_trans_set(&obj->rico, &obj->rico.xform.position);
-                    if (intersect_objects(&obj->rico, &timmy->rico))
+                    if (object_intersects(&obj->rico, &timmy->rico))
                     {
                         t -= t * 0.5f;
                     }
@@ -464,16 +424,8 @@ void clash_simulate(struct timmy *timmy)
     }
 }
 
-void debug_render_bboxes(struct timmy *timmy)
+void DEBUG_render_color_test()
 {
-    //struct RICO_bbox timmy_bbox = { 0 };
-    //RICO_object_bbox_world(&timmy->rico, &timmy_bbox);
-    //RICO_prim_draw_bbox(&timmy_bbox, &MAT4_IDENT, &COLOR_MAGENTA);
-    
-    RICO_prim_draw_obb(&timmy->rico.obb, &COLOR_LIME);
-
-    pkid id = RICO_pack_first_type(pack_table[PACK_CLASH].sav_id,
-                                   RICO_HND_OBJECT);
     struct vec4 colors[] = {
         COLOR_RED,
         COLOR_GREEN,
@@ -529,9 +481,18 @@ void debug_render_bboxes(struct timmy *timmy)
         x -= width + padding;
         color_test.min = VEC3(x - width, y - width,   0.0f);
         color_test.max = VEC3(x        , y        , -width);
-        RICO_prim_draw_bbox(&color_test, &MAT4_IDENT, &colors[i]);
+        RICO_prim_draw_bbox(&color_test, &colors[i]);
     }
+}
 
+void DEBUG_render_bboxes(struct timmy *timmy)
+{
+    RICO_prim_draw_sphere(&timmy->rico.sphere, &COLOR_DARK_WHITE_HIGHLIGHT);
+    RICO_prim_draw_bbox(&timmy->rico.bbox_world, &COLOR_AQUA);
+    RICO_prim_draw_obb(&timmy->rico.obb, &COLOR_LIME);
+
+    pkid id = RICO_pack_first_type(pack_table[PACK_CLASH].sav_id,
+                                   RICO_HND_OBJECT);
     while (id)
     {
         struct small_cube *obj = RICO_pack_lookup(id);
@@ -550,11 +511,27 @@ void debug_render_bboxes(struct timmy *timmy)
 
                 if (obj->collide_obb)
                 {
+                    RICO_prim_draw_sphere(&obj->rico.sphere, &COLOR_DARK_WHITE_HIGHLIGHT);
+                    RICO_prim_draw_bbox(&obj->rico.bbox_world, &COLOR_DARK_WHITE_HIGHLIGHT);
                     RICO_prim_draw_obb(&obj->rico.obb, &COLOR_RED);
+                }
+                else if (obj->collide_aabb)
+                {
+                    RICO_prim_draw_sphere(&obj->rico.sphere, &COLOR_DARK_WHITE_HIGHLIGHT);
+                    RICO_prim_draw_bbox(&obj->rico.bbox_world, &COLOR_ORANGE);
+                    RICO_prim_draw_obb(&obj->rico.obb, &COLOR_DARK_WHITE_HIGHLIGHT);
+                }
+                else if (obj->collide_sphere)
+                {
+                    RICO_prim_draw_sphere(&obj->rico.sphere, &COLOR_YELLOW);
+                    RICO_prim_draw_bbox(&obj->rico.bbox_world, &COLOR_DARK_WHITE_HIGHLIGHT);
+                    RICO_prim_draw_obb(&obj->rico.obb, &COLOR_DARK_WHITE_HIGHLIGHT);
                 }
                 else
                 {
-                    RICO_prim_draw_obb(&obj->rico.obb, &COLOR_YELLOW);
+                    RICO_prim_draw_sphere(&obj->rico.sphere, &COLOR_DARK_WHITE_HIGHLIGHT);
+                    RICO_prim_draw_bbox(&obj->rico.bbox_world, &COLOR_AQUA);
+                    RICO_prim_draw_obb(&obj->rico.obb, &COLOR_LIME);
                 }
                 break;
             }
@@ -668,7 +645,7 @@ int main(int argc, char **argv)
 #else
         RICO_render_objects();
         RICO_render_editor();
-        debug_render_bboxes(timmy);
+        DEBUG_render_bboxes(timmy);
         if (rayviz_sphere.radius > 0.0f)
             RICO_prim_draw_sphere(&rayviz_sphere, &COLOR_YELLOW);
         RICO_render_ui();

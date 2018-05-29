@@ -40,6 +40,7 @@ struct small_cube
     struct vec3 acc;
     struct vec3 vel;
     bool resting;
+    bool collide_sphere;
     bool collide_aabb;
     bool collide_obb;
 };

@@ -47,36 +47,30 @@ void pack_build_alpha(struct pack_info *pack_info)
     pkid terrain_id = RICO_load_object(pack_sav, RICO_OBJECT_TYPE_TERRAIN, 0,
                                        "terrain");
     struct RICO_object *terrain = RICO_pack_lookup(terrain_id);
-    terrain->mesh_id = mesh_terrain_id;
+    RICO_object_mesh_set(terrain, mesh_terrain_id);
     terrain->material_id = mat_bricks;
 
     pkid timmy_id = RICO_load_object(pack_sav, OBJ_TIMMY, sizeof(struct timmy),
                                      "timmy");
     struct timmy *timmy = RICO_pack_lookup(timmy_id);
-    struct RICO_mesh *mesh_door = RICO_pack_lookup(mesh_door_id);
-    timmy->rico.mesh_id = mesh_door_id;
+    RICO_object_mesh_set(&timmy->rico, mesh_door_id);
     timmy->rico.material_id = mat_timmy;
-    timmy->rico.bbox = mesh_door->bbox;
     timmy->lights_on = true;
     timmy->audio_on = true;
 
     pkid panel_id = RICO_load_object(pack_sav, OBJ_GAME_PANEL,
                                      sizeof(struct game_panel), "panel");
     struct game_panel *panel = RICO_pack_lookup(panel_id);
-    struct RICO_mesh *mesh_panel = RICO_pack_lookup(mesh_panel_id);
-    panel->rico.mesh_id = mesh_panel_id;
-    panel->rico.bbox = mesh_panel->bbox;
+    RICO_object_mesh_set(&panel->rico, mesh_panel_id);
 
     pkid button_id;
     struct game_button *button;
-    struct RICO_mesh *mesh_button = RICO_pack_lookup(mesh_button_id);
     for (u32 i = 0; i < ARRAY_COUNT(panel->buttons); i++)
     {
         button_id = RICO_load_object(pack_sav, OBJ_GAME_BUTTON,
                                      sizeof(struct game_button), "button");
         button = RICO_pack_lookup(button_id);
-        button->rico.mesh_id = mesh_button_id;
-        button->rico.bbox = mesh_button->bbox;
+        RICO_object_mesh_set(&button->rico, mesh_button_id);
         button->panel_id = panel_id;
         button->index = i;
         panel->buttons[i] = button_id;

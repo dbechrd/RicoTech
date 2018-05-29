@@ -7,7 +7,7 @@ static u32 *mesh_elements(struct RICO_mesh *mesh)
     return (u32 *)((u8 *)mesh + mesh->elements_offset);
 }
 static void mesh_upload(struct RICO_mesh *mesh, GLenum hint,
-                 enum program_type prog_type)
+                        enum program_type prog_type)
 {
 #if RICO_DEBUG_MESH
     printf("[mesh][upld] name=%s\n", mesh_name(mesh));
@@ -28,8 +28,7 @@ static void mesh_upload(struct RICO_mesh *mesh, GLenum hint,
     // Vertex buffer
     //--------------------------------------------------------------------------
     glBindBuffer(GL_ARRAY_BUFFER, rgl_mesh.vbos[VBO_VERTEX]);
-    glBufferData(GL_ARRAY_BUFFER,
-                 rgl_mesh.vertices * mesh->vertex_size,
+    glBufferData(GL_ARRAY_BUFFER, rgl_mesh.vertices * mesh->vertex_size,
                  mesh_vertices(mesh), hint);
 
     //--------------------------------------------------------------------------
@@ -38,8 +37,7 @@ static void mesh_upload(struct RICO_mesh *mesh, GLenum hint,
     if (rgl_mesh.elements)
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rgl_mesh.vbos[VBO_ELEMENT]);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                     rgl_mesh.elements * sizeof(u32),
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, rgl_mesh.elements * sizeof(u32),
                      mesh_elements(mesh), hint);
     }
 

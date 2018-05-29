@@ -124,7 +124,7 @@ struct quat
 #define COLOR_PURPLE                  VEC4(0.541f, 0.169f, 0.886f, 1.0f)
 #define COLOR_LIME                    VEC4(0.678f, 1.000f, 0.184f, 1.0f)
 #define COLOR_AQUA                    VEC4(0.400f, 0.804f, 0.667f, 1.0f)
-#define COLOR_DODGER                   VEC4(0.118f, 0.565f, 1.000f, 1.0f)
+#define COLOR_DODGER                  VEC4(0.118f, 0.565f, 1.000f, 1.0f)
 #define COLOR_WHEAT                   VEC4(0.961f, 0.871f, 0.702f, 1.0f)
 #define COLOR_BROWN                   VEC4(0.545f, 0.271f, 0.075f, 1.0f)
 

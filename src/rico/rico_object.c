@@ -21,44 +21,6 @@ static struct RICO_object *object_copy(u32 pack, struct RICO_object *other,
 
     return new_obj;
 }
-static void object_bbox_recalculate(struct RICO_object *obj)
-{
-    struct RICO_mesh *mesh;
-    if (obj->mesh_id)
-    {
-        mesh = RICO_pack_lookup(obj->mesh_id);
-    }
-    else
-    {
-        mesh = RICO_pack_lookup(MESH_DEFAULT_CUBE);
-    }
-    obj->bbox = mesh->bbox;
-}
-static void object_bbox_recalculate_all(u32 id)
-{
-    struct pack *pack = packs[id];
-    struct RICO_object *obj;
-    struct RICO_mesh *mesh;
-    for (u32 index = 1; index < pack->blobs_used; ++index)
-    {
-        if (pack->index[index].type != RICO_HND_OBJECT)
-            continue;
-
-        obj = pack_read(pack, index);
-        if (obj->type < RICO_OBJECT_TYPE_COUNT)
-            continue;
-
-        if (obj->mesh_id)
-        {
-            mesh = RICO_pack_lookup(obj->mesh_id);
-        }
-        else
-        {
-            mesh = RICO_pack_lookup(MESH_DEFAULT_CUBE);
-        }
-        obj->bbox = mesh->bbox;
-    }
-}
 static bool object_selectable(struct RICO_object *obj)
 {
     return obj->type != RICO_OBJECT_TYPE_STRING_SCREEN;
@@ -76,8 +38,101 @@ static void object_deselect(struct RICO_object *obj)
 {
     obj->selected = false;
 }
+static void object_update_bbox_world(struct RICO_object *obj)
+{
+    obj->bbox_world = obj->bbox;
+    RICO_bbox_transform(&obj->bbox_world, &obj->xform.matrix);
+}
+static void object_update_obb(struct RICO_object *obj)
+{
+    struct RICO_obb *obb = &obj->obb;
+    obb->e = VEC3(
+        (obj->bbox.max.x - obj->bbox.min.x) / 2.0f,
+        (obj->bbox.max.y - obj->bbox.min.y) / 2.0f,
+        (obj->bbox.max.z - obj->bbox.min.z) / 2.0f
+    );
+    obb->c = VEC3(
+        obj->bbox.min.x + obb->e.x,
+        obj->bbox.min.y + obb->e.y,
+        obj->bbox.min.z + obb->e.z
+    );
+    obb->u[0] = VEC3_X;
+    obb->u[1] = VEC3_Y;
+    obb->u[2] = VEC3_Z;
+    // TODO: Calculate third axis using cross product to save memory
+    //test_obb.u[2] = v3_cross(&test_obb.u[0], &test_obb.u[1]);
+
+    v3_mul_mat4(&obb->c, &obj->xform.matrix);
+    struct quat obb_rot = obj->xform.orientation;
+    quat_inverse(&obb_rot);  // TODO: Why do I have to flip this?
+    v3_mul_quat(&obb->u[0], &obb_rot);
+    v3_mul_quat(&obb->u[1], &obb_rot);
+    v3_mul_quat(&obb->u[2], &obb_rot);
+    v3_normalize(&obb->u[0]);
+    v3_normalize(&obb->u[1]);
+    v3_normalize(&obb->u[2]);
+    v3_scalef(&obb->u[0], obj->xform.scale.x);
+    v3_scalef(&obb->u[1], obj->xform.scale.y);
+    v3_scalef(&obb->u[2], obj->xform.scale.z);
+
+    // Make sure we still have a proper box!
+    float dot1 = v3_dot(&obb->u[0], &obb->u[1]);
+    float dot2 = v3_dot(&obb->u[0], &obb->u[2]);
+    float dot3 = v3_dot(&obb->u[1], &obb->u[2]);
+    DLB_ASSERT(dot1 == 0.0f);
+    DLB_ASSERT(dot2 == 0.0f);
+    DLB_ASSERT(dot3 == 0.0f);
+}
+static void object_update_sphere(struct RICO_object *obj)
+{
+    struct sphere *sphere = &obj->sphere;
+    sphere->orig = obj->obb.c;
+    sphere->radius = sqrtf((obj->obb.e.x * obj->obb.e.x +
+                            obj->obb.e.y * obj->obb.e.y + 
+                            obj->obb.e.z * obj->obb.e.z));
+}
+static void object_update_colliders(struct RICO_object *obj)
+{
+    if (obj->type == RICO_OBJECT_TYPE_STRING_SCREEN)
+        return;
+
+    object_update_bbox_world(obj);
+    object_update_obb(obj);
+    object_update_sphere(obj);
+}
+static void object_bbox_recalculate(struct RICO_object *obj)
+{
+    struct RICO_mesh *mesh;
+    if (obj->mesh_id)
+    {
+        mesh = RICO_pack_lookup(obj->mesh_id);
+    }
+    else
+    {
+        mesh = RICO_pack_lookup(MESH_DEFAULT_CUBE);
+    }
+    RICO_object_bbox_set(obj, &mesh->bbox);
+}
+static void object_bbox_recalculate_all(u32 id)
+{
+    struct pack *pack = packs[id];
+    struct RICO_object *obj;
+    for (u32 index = 1; index < pack->blobs_used; ++index)
+    {
+        if (pack->index[index].type != RICO_HND_OBJECT)
+            continue;
+
+        obj = pack_read(pack, index);
+        if (obj->type < RICO_OBJECT_TYPE_COUNT)
+            continue;
+
+        object_bbox_recalculate(obj);
+    }
+}
 static void object_transform_update(struct RICO_object *obj)
 {
+    struct RICO_transform *xform = &obj->xform;
+
     //HACK: Order of these operations might not always be the same.. should
     //      probably just store the transformation matrix directly rather than
     //      trying to figure out which order to do what. Unfortunately, doing
@@ -85,31 +140,45 @@ static void object_transform_update(struct RICO_object *obj)
     //      should have "edit mode" where the matrix is decomposed, then
     //      recomposed again when edit mode is ended?
     struct mat4 transform = MAT4_IDENT;
-    mat4_translate(&transform, &obj->xform.position);
-    mat4_rot_quat(&transform, &obj->xform.orientation);
-    mat4_scale(&transform, &obj->xform.scale);
-    obj->xform.matrix = transform;
+    mat4_translate(&transform, &xform->position);
+    mat4_rot_quat(&transform, &xform->orientation);
+    mat4_scale(&transform, &xform->scale);
+    xform->matrix = transform;
 
     struct vec3 scale_inv;
-    scale_inv.x = 1.0f / obj->xform.scale.x;
-    scale_inv.y = 1.0f / obj->xform.scale.y;
-    scale_inv.z = 1.0f / obj->xform.scale.z;
+    scale_inv.x = 1.0f / xform->scale.x;
+    scale_inv.y = 1.0f / xform->scale.y;
+    scale_inv.z = 1.0f / xform->scale.z;
 
-    struct quat orientation_inv = obj->xform.orientation;
+    struct quat orientation_inv = xform->orientation;
     quat_inverse(&orientation_inv);
 
-    struct vec3 position_inv = obj->xform.position;
+    struct vec3 position_inv = xform->position;
     v3_negate(&position_inv);
 
     struct mat4 transform_inverse = MAT4_IDENT;
     mat4_scale(&transform_inverse, &scale_inv);
     mat4_rot_quat(&transform, &orientation_inv);
     mat4_translate(&transform_inverse, &position_inv);
-    obj->xform.matrix_inverse = transform_inverse;
+    xform->matrix_inverse = transform_inverse;
 
     //struct mat4 mm = object->transform;
     //mat4_mul(&mm, &object->transform_inverse);
     //RICO_ASSERT(mat4_equals(&mm, &MAT4_IDENT));
+
+    object_update_colliders(obj);
+}
+extern void RICO_object_bbox_set(struct RICO_object *obj,
+                                 const struct RICO_bbox *bbox)
+{
+    obj->bbox = *bbox;
+    object_update_colliders(obj);
+}
+extern void RICO_object_mesh_set(struct RICO_object *obj,
+                                 pkid mesh_id)
+{
+    obj->mesh_id = mesh_id;
+    object_bbox_recalculate(obj);
 }
 extern void RICO_object_trans(struct RICO_object *obj, const struct vec3 *v)
 {
@@ -460,7 +529,7 @@ static void object_print(struct RICO_object *obj)
             "  Pos   %f %f %f\n"    \
             "  Rot   %f %f %f %f\n" \
             "  Scale %f %f %f\n"    \
-            "  BBox  %f %f %f\n"    \
+            "  AABB  %f %f %f\n"    \
             "        %f %f %f\n"    \
             "\n"                    \
             "Mesh [%u|%u] %s\n"     \
@@ -476,8 +545,8 @@ static void object_print(struct RICO_object *obj)
             obj->xform.orientation.w, obj->xform.orientation.x,
             obj->xform.orientation.y, obj->xform.orientation.z,
             obj->xform.scale.x, obj->xform.scale.y, obj->xform.scale.z,
-            obj->bbox.min.x, obj->bbox.min.y, obj->bbox.min.z,
-            obj->bbox.max.x, obj->bbox.max.y, obj->bbox.max.z,
+            obj->bbox_world.min.x, obj->bbox_world.min.y, obj->bbox_world.min.z,
+            obj->bbox_world.max.x, obj->bbox_world.max.y, obj->bbox_world.max.z,
             PKID_PACK(obj->mesh_id), PKID_BLOB(obj->mesh_id), mesh_str,
             mesh_verts,
             PKID_PACK(obj->material_id), PKID_BLOB(obj->material_id),

@@ -19,8 +19,7 @@ void pack_build_clash_of_cubes(struct pack_info *pack_info)
         cube_id = RICO_load_object(pack_sav, OBJ_SMALL_CUBE,
                                    sizeof(struct small_cube), "small_cube");
         cube = RICO_pack_lookup(cube_id);
-        cube->rico.mesh_id = cube_mesh_id;
-        cube->rico.bbox = cube_mesh->bbox;
+        RICO_object_mesh_set(&cube->rico, cube_mesh_id);
         RICO_object_trans_set(&cube->rico, &VEC3(-2.0f, i * 1.0f, 0.0f));
         small_cubes[i] = cube_id;
     }

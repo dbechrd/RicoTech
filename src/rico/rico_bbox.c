@@ -43,4 +43,12 @@ void RICO_bbox_transform(struct RICO_bbox *bbox, const struct mat4 *m)
 {
     v3_mul_mat4(&bbox->min, m);
     v3_mul_mat4(&bbox->max, m);
+
+    struct vec3 tmp = bbox->min;
+    bbox->min = VEC3(MIN(tmp.x, bbox->max.x),
+                     MIN(tmp.y, bbox->max.y),
+                     MIN(tmp.z, bbox->max.z));
+    bbox->max = VEC3(MAX(tmp.x, bbox->max.x),
+                     MAX(tmp.y, bbox->max.y),
+                     MAX(tmp.z, bbox->max.z));
 }

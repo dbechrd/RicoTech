@@ -290,9 +290,7 @@ static void edit_mesh_next_pack()
 
     if (next_mesh_id)
     {
-        struct RICO_mesh *next_mesh = RICO_pack_lookup(next_mesh_id);
-        obj->mesh_id = next_mesh_id;
-        obj->bbox = next_mesh->bbox;
+        RICO_object_mesh_set(obj, next_mesh_id);
         object_select(obj);
         object_print(obj);
     }
@@ -306,11 +304,9 @@ static void edit_mesh_next()
     pkid next_mesh_id = (obj->mesh_id)
         ? RICO_pack_next_loop(obj->mesh_id)
         : RICO_pack_first_type(PACK_DEFAULT, RICO_HND_MESH);
-    struct RICO_mesh *next_mesh = RICO_pack_lookup(next_mesh_id);
-    if (next_mesh)
+    if (next_mesh_id)
     {
-        obj->mesh_id = next_mesh->uid.pkid;
-        obj->bbox = next_mesh->bbox;
+        RICO_object_mesh_set(obj, next_mesh_id);
         object_select(obj);
         object_print(obj);
     }
@@ -324,11 +320,9 @@ static void edit_mesh_prev()
     pkid prev_mesh_id = (obj->mesh_id)
         ? RICO_pack_prev_loop(obj->mesh_id)
         : RICO_pack_last_type(PACK_DEFAULT, RICO_HND_MESH);
-    struct RICO_mesh *prev_mesh = RICO_pack_lookup(prev_mesh_id);
-    if (prev_mesh)
+    if (prev_mesh_id)
     {
-        obj->mesh_id = prev_mesh->uid.pkid;
-        obj->bbox = prev_mesh->bbox;
+        RICO_object_mesh_set(obj, prev_mesh_id);
         object_select(obj);
         object_print(obj);
     }
@@ -339,8 +333,7 @@ static void edit_bbox_reset()
         return;
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
-    struct RICO_mesh *mesh = RICO_pack_lookup(obj->mesh_id);
-    obj->bbox = mesh->bbox;
+    object_bbox_recalculate(obj);
 
     object_select(obj);
     object_print(obj);
@@ -507,9 +500,9 @@ static void edit_render()
     //--------------------------------------------------------------------------
     // Origin axes
     //--------------------------------------------------------------------------
-    RICO_prim_draw_line(&VEC3_ZERO, &VEC3_X, &MAT4_IDENT, &COLOR_RED);
-    RICO_prim_draw_line(&VEC3_ZERO, &VEC3_Y, &MAT4_IDENT, &COLOR_GREEN);
-    RICO_prim_draw_line(&VEC3_ZERO, &VEC3_Z, &MAT4_IDENT, &COLOR_BLUE);
+    RICO_prim_draw_line(&VEC3_ZERO, &VEC3_X, &COLOR_RED);
+    RICO_prim_draw_line(&VEC3_ZERO, &VEC3_Y, &COLOR_GREEN);
+    RICO_prim_draw_line(&VEC3_ZERO, &VEC3_Z, &COLOR_BLUE);
 
     //--------------------------------------------------------------------------
     // Selected object widget
@@ -528,13 +521,13 @@ static void edit_render()
         //prim_draw_line(&VEC3_ZERO, &VEC3(0.0f, bbox->y, 0.0f), &xform, COLOR_GREEN);
         //prim_draw_line(&VEC3_ZERO, &VEC3(0.0f, 0.0f, bbox->z), &xform, COLOR_BLUE);
 
-        RICO_prim_draw_line(&VEC3_ZERO, &VEC3_X, &xform, &COLOR_RED);
-        RICO_prim_draw_line(&VEC3_ZERO, &VEC3_Y, &xform, &COLOR_GREEN);
-        RICO_prim_draw_line(&VEC3_ZERO, &VEC3_Z, &xform, &COLOR_BLUE);
+        RICO_prim_draw_line_xform(&VEC3_ZERO, &VEC3_X, &COLOR_RED, &xform);
+        RICO_prim_draw_line_xform(&VEC3_ZERO, &VEC3_Y, &COLOR_GREEN, &xform);
+        RICO_prim_draw_line_xform(&VEC3_ZERO, &VEC3_Z, &COLOR_BLUE, &xform);
 
-        RICO_prim_draw_bbox(&widgets[0].bbox, &xform, &COLOR_RED);
-        RICO_prim_draw_bbox(&widgets[1].bbox, &xform, &COLOR_GREEN);
-        RICO_prim_draw_bbox(&widgets[2].bbox, &xform, &COLOR_BLUE);
+        RICO_prim_draw_bbox_xform(&widgets[0].bbox, &COLOR_RED, &xform);
+        RICO_prim_draw_bbox_xform(&widgets[1].bbox, &COLOR_GREEN, &xform);
+        RICO_prim_draw_bbox_xform(&widgets[2].bbox, &COLOR_BLUE, &xform);
     }
 
 #if 0

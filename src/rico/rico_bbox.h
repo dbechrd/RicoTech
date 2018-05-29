@@ -2,12 +2,12 @@
 #define RICO_BBOX_H
 
 ////////////////////////////////////////////////////////////////////////////////
-// TODO: Move this to primitives
+// TODO: Move this to rico_primitives
 
+// TODO: Replace bbox with aabb
 // TODO: Implement reuse of data for bounding boxes.. no need to initialize
 //       an entirely new vao/vbo for every bbox.
 // TODO: Don't serialize vao/vbo!
-// TODO: Refactor selected out into linked list of selected objects
 
 // IMPORTANT: *DO NOT* add pointers in this struct, it will break cereal!
 struct RICO_bbox

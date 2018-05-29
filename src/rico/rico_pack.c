@@ -691,10 +691,10 @@ extern pkid RICO_load_object(u32 pack_id, u32 type, u32 size, const char *name)
     obj->xform.position = VEC3_ZERO;
     obj->xform.orientation = QUAT_IDENT;
     obj->xform.scale = VEC3_ONE;
-    object_transform_update(obj);
-    object_bbox_recalculate(obj);
     obj->mesh_id = 0;
     obj->material_id = 0;
+
+    object_transform_update(obj);
 
     pkid pkid = obj->uid.pkid;
     blob_end(pack);

@@ -245,8 +245,8 @@ static void camera_render(struct RICO_camera *camera)
     v3_add(&x, &camera->pos);
     v3_add(&y, &camera->pos);
 
-    RICO_prim_draw_line(&camera->pos, &x, &MAT4_IDENT, &COLOR_RED);
-    RICO_prim_draw_line(&camera->pos, &y, &MAT4_IDENT, &COLOR_GREEN);
+    RICO_prim_draw_line(&camera->pos, &x, &COLOR_RED);
+    RICO_prim_draw_line(&camera->pos, &y, &COLOR_GREEN);
 #endif
 }
 extern void RICO_camera_fwd(struct vec3 *_fwd, struct RICO_camera *camera)

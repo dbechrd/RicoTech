@@ -6,7 +6,7 @@
 static void object_delete(struct RICO_object *obj);
 static struct RICO_object *object_copy(u32 pack, struct RICO_object *other,
                                        const char *name);
-static void object_bbox_recalculate(struct RICO_object *obj);
+static void object_update_colliders(struct RICO_object *obj);
 static void object_bbox_recalculate_all(u32 id);
 static bool object_selectable(struct RICO_object *obj);
 static void object_select(struct RICO_object *obj);
