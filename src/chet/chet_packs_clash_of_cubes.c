@@ -1,4 +1,4 @@
-#include "chet.h"
+#include "chet_packs.h"
 
 void pack_build_clash_of_cubes(struct pack_info *pack_info)
 {

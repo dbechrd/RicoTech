@@ -1,4 +1,4 @@
-#include "chet.h"
+#include "chet_packs.h"
 
 void pack_build_alpha(struct pack_info *pack_info)
 {

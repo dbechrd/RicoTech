@@ -19,8 +19,14 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\chet\chet_obb.c" />
-    <ClCompile Include="src\chet\chet_packs.c" />
+    <ClCompile Include="src\chet\chet_collision.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\chet\chet_packs.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="src\chet\chet.c" />
     <ClCompile Include="src\rico\rico.c" />
     <ClCompile Include="src\rico\rico_audio.c">
@@ -133,7 +139,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\chet\chet_obb.h" />
+    <ClInclude Include="src\chet\chet_collision.h" />
     <ClInclude Include="src\chet\chet_packs.h" />
     <ClInclude Include="src\chet\chet.h" />
     <ClInclude Include="src\dlb\dlb_math.h" />

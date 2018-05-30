@@ -93,6 +93,7 @@ enum RICO_action
     ACTION_ENGINE_MOUSE_LOCK_TOGGLE,
     ACTION_ENGINE_VSYNC_TOGGLE,
     ACTION_ENGINE_MUTE_TOGGLE,
+    ACTION_ENGINE_SIM_PAUSE,
     ACTION_ENGINE_QUIT,
 
     ACTION_CAMERA_SLOW_TOGGLE,
@@ -169,8 +170,11 @@ enum RICO_action
     ACTION_COUNT
 };
 
+extern void RICO_simulation_pause();
+extern void RICO_simulation_play();
+extern bool RICO_simulation_prev();
 extern enum rico_state RICO_state_get();
-extern bool RICO_state_is_paused();
+extern bool RICO_simulation_paused();
 extern bool RICO_state_is_edit();
 extern int RICO_update();
 extern void RICO_render_objects();

@@ -3,6 +3,9 @@ const char *RICO_audio_state_string[] = { RICO_AUDIO_STATE(GEN_STRING) };
 static ALCdevice *audio_device = 0;
 static ALCcontext *audio_context = 0;
 
+static ALfloat global_audio_volume = 0;
+static bool global_audio_muted = false;
+
 static void init_openal()
 {
     ALenum err;
@@ -40,7 +43,6 @@ static void init_openal()
     if (err) RICO_ERROR(ERR_OPENAL_INIT, "OpenAL error: %s\n", err);
 }
 
-static ALfloat global_audio_volume = 0;
 extern float RICO_audio_volume()
 {
     //ALfloat volume = 0;
@@ -53,13 +55,23 @@ extern void RICO_audio_volume_set(float volume)
     global_audio_volume = volume;
     alListenerf(AL_GAIN, global_audio_volume);
 }
+extern bool RICO_audio_muted()
+{
+    return global_audio_muted;
+}
 extern void RICO_audio_mute()
 {
-    RICO_audio_volume_set(0.0f);
+    global_audio_muted = true;
+    alListenerf(AL_GAIN, 0.0f);
 }
 extern void RICO_audio_unmute()
 {
+    global_audio_muted = false;
     RICO_audio_volume_set(global_audio_volume);
+}
+extern void RICO_audio_toggle()
+{
+    global_audio_muted ? RICO_audio_unmute() : RICO_audio_mute();
 }
 extern void RICO_audio_source_init(struct RICO_audio_source *source)
 {

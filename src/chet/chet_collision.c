@@ -1,6 +1,4 @@
-#ifndef CHET_OBB_H
-#define CHET_OBB_H
-
+#include "chet_collision.h"
 #include "dlb_types.h"
 #include "math.h"
 
@@ -215,7 +213,7 @@ int obb_v_obb_eberly(struct RICO_obb *a, struct RICO_obb *b)
     t0 = *A2;
     t1 = *A1;
     R = fabsf(v3_dot(v3_scalef(&t0, c10), &D) -
-            v3_dot(v3_scalef(&t1, c20), &D));
+              v3_dot(v3_scalef(&t1, c20), &D));
     if (R > R0 + R1)
         return true;
 
@@ -224,7 +222,7 @@ int obb_v_obb_eberly(struct RICO_obb *a, struct RICO_obb *b)
     t0 = *A2;
     t1 = *A1;
     R = fabsf(v3_dot(v3_scalef(&t0, c11), &D) -
-            v3_dot(v3_scalef(&t1, c21), &D));
+              v3_dot(v3_scalef(&t1, c21), &D));
     if (R > R0 + R1)
         return true;
 
@@ -233,7 +231,7 @@ int obb_v_obb_eberly(struct RICO_obb *a, struct RICO_obb *b)
     t0 = *A2;
     t1 = *A1;
     R = fabsf(v3_dot(v3_scalef(&t0, c12), &D) -
-            v3_dot(v3_scalef(&t1, c22), &D));
+              v3_dot(v3_scalef(&t1, c22), &D));
     if (R > R0 + R1)
         return true;
 
@@ -244,7 +242,7 @@ int obb_v_obb_eberly(struct RICO_obb *a, struct RICO_obb *b)
     t0 = *A0;
     t1 = *A2;
     R = fabsf(v3_dot(v3_scalef(&t0, c20), &D) -
-            v3_dot(v3_scalef(&t1, c00), &D));
+              v3_dot(v3_scalef(&t1, c00), &D));
     if (R > R0 + R1)
         return true;
 
@@ -253,7 +251,7 @@ int obb_v_obb_eberly(struct RICO_obb *a, struct RICO_obb *b)
     t0 = *A0;
     t1 = *A2;
     R = fabsf(v3_dot(v3_scalef(&t0, c21), &D) -
-            v3_dot(v3_scalef(&t1, c01), &D));
+              v3_dot(v3_scalef(&t1, c01), &D));
     if (R > R0 + R1)
         return true;
 
@@ -262,7 +260,7 @@ int obb_v_obb_eberly(struct RICO_obb *a, struct RICO_obb *b)
     t0 = *A0;
     t1 = *A2;
     R = fabsf(v3_dot(v3_scalef(&t0, c22), &D) -
-            v3_dot(v3_scalef(&t1, c02), &D));
+              v3_dot(v3_scalef(&t1, c02), &D));
     if (R > R0 + R1)
         return true;
 
@@ -273,7 +271,7 @@ int obb_v_obb_eberly(struct RICO_obb *a, struct RICO_obb *b)
     t0 = *A1;
     t1 = *A0;
     R = fabsf(v3_dot(v3_scalef(&t0, c00), &D) -
-            v3_dot(v3_scalef(&t1, c10), &D));
+              v3_dot(v3_scalef(&t1, c10), &D));
     if (R > R0 + R1)
         return true;
 
@@ -282,7 +280,7 @@ int obb_v_obb_eberly(struct RICO_obb *a, struct RICO_obb *b)
     t0 = *A1;
     t1 = *A0;
     R = fabsf(v3_dot(v3_scalef(&t0, c01), &D) -
-            v3_dot(v3_scalef(&t1, c11), &D));
+              v3_dot(v3_scalef(&t1, c11), &D));
     if (R > R0 + R1)
         return true;
 
@@ -291,7 +289,7 @@ int obb_v_obb_eberly(struct RICO_obb *a, struct RICO_obb *b)
     t0 = *A1;
     t1 = *A0;
     R = fabsf(v3_dot(v3_scalef(&t0, c02), &D) -
-            v3_dot(v3_scalef(&t1, c12), &D));
+              v3_dot(v3_scalef(&t1, c12), &D));
     if (R > R0 + R1)
         return true;
 
@@ -328,5 +326,3 @@ int obb_v_obb_eberly(struct RICO_obb *a, struct RICO_obb *b)
 
     return false;
 }
-
-#endif

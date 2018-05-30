@@ -119,7 +119,7 @@
     <ClCompile Include="src\rico\tests.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
-    <ClCompile Include="src\chet\chet_obb.c">
+    <ClCompile Include="src\chet\chet_collision.c">
       <Filter>Source Files\chet</Filter>
     </ClCompile>
   </ItemGroup>
@@ -262,7 +262,7 @@
     <ClInclude Include="src\rico\internal\ri_util.h">
       <Filter>Header Files\rico\internal</Filter>
     </ClInclude>
-    <ClInclude Include="src\chet\chet_obb.h">
+    <ClInclude Include="src\chet\chet_collision.h">
       <Filter>Header Files\chet</Filter>
     </ClInclude>
   </ItemGroup>

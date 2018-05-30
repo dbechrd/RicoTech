@@ -38,17 +38,12 @@ static void bbox_init_mesh(struct RICO_bbox *bbox, struct RICO_mesh *mesh)
 
     bbox_init(bbox, min, max);
 }
-
 void RICO_bbox_transform(struct RICO_bbox *bbox, const struct mat4 *m)
 {
     v3_mul_mat4(&bbox->min, m);
     v3_mul_mat4(&bbox->max, m);
 
-    struct vec3 tmp = bbox->min;
-    bbox->min = VEC3(MIN(tmp.x, bbox->max.x),
-                     MIN(tmp.y, bbox->max.y),
-                     MIN(tmp.z, bbox->max.z));
-    bbox->max = VEC3(MAX(tmp.x, bbox->max.x),
-                     MAX(tmp.y, bbox->max.y),
-                     MAX(tmp.z, bbox->max.z));
+    if (bbox->min.x > bbox->max.x) swapf(&bbox->min.x, &bbox->max.x);
+    if (bbox->min.y > bbox->max.y) swapf(&bbox->min.y, &bbox->max.y);
+    if (bbox->min.z > bbox->max.z) swapf(&bbox->min.z, &bbox->max.z);
 }

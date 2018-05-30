@@ -37,6 +37,8 @@ struct game_panel
 struct small_cube
 {
     struct RICO_object rico;
+    // TODO: Move collision/physics info to RICO_object
+    //       e.g. u32 collision, u32 physics
     struct vec3 acc;
     struct vec3 vel;
     bool resting;
@@ -51,6 +53,30 @@ struct pack_info
     const char *path_sav;
     u32 pak_id;
     u32 sav_id;
+};
+
+enum body_type
+{
+    BODY_PLANE,
+    BODY_SPHERE,
+    BODY_AABB,
+    BODY_OBB,
+    BODY_COUNT
+};
+
+struct contact
+{
+    struct vec3 position;
+    struct vec3 normal;
+    float penetration;
+};
+
+struct manifold
+{
+    struct contact contacts[1];  // TODO: Multiple contact points
+    u32 contact_count;
+    const struct RICO_object *body_a;
+    const struct RICO_object *body_b;
 };
 
 #endif

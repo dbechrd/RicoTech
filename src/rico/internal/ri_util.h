@@ -17,6 +17,13 @@
 static void string_truncate(char *buf, int buf_count, int length);
 static int file_contents(const char *filename, u32 *_length, char **_buffer);
 
+static inline void swapf(float *a, float *b)
+{
+    float t = *a;
+    *a = *b;
+    *b = t;
+}
+
 static inline int str_starts_with(const char *str, const char *prefix)
 {
     return strncmp(str, prefix, strlen(prefix)) == 0;

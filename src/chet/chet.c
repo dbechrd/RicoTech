@@ -1,6 +1,6 @@
 #include "chet.h"
-#include "chet_packs.h"
-#include "chet_obb.h"
+#include "chet_packs.c"
+#include "chet_collision.c"
 
 enum actions
 {
@@ -263,13 +263,51 @@ void clash_detect()
 }
 #endif
 
-bool DEBUG_sphere_v_sphere(const struct sphere *a, const struct sphere *b)
+bool DEBUG_sphere_v_sphere(const struct sphere *a, const struct sphere *b,
+                           struct manifold *manifold)
 {
     struct vec3 D = a->orig;
     v3_sub(&D, &b->orig);
     float dist = v3_length(&D);
+    float r_sum = a->radius + b->radius;
+    bool collide = (dist < r_sum);
 
-    return (dist < a->radius + b->radius);
+    if (collide)
+    {
+        float pen = r_sum - dist;
+        struct vec3 normal = D;
+        v3_normalize(&normal);
+        struct vec3 position = normal;
+        v3_scalef(&position, b->radius - pen);
+        v3_add(&position, &b->orig);
+
+        manifold->contacts[0].penetration = pen;
+        manifold->contacts[0].normal = normal;
+        manifold->contacts[0].position = position;
+        manifold->contact_count = 1;
+    }
+
+    return collide;
+}
+
+void DEBUG_render_manifold(struct manifold *manifold)
+{
+    if (manifold->contact_count > 0)
+    {
+        for (u32 i = 0; i < manifold->contact_count; ++i)
+        {
+            struct sphere manifold_pos;
+            manifold_pos.orig = manifold->contacts[i].position;
+            manifold_pos.radius = 0.01f;
+            RICO_prim_draw_sphere(&manifold_pos, &COLOR_PINK);
+
+            struct vec3 p0 = manifold->contacts[i].position;
+            struct vec3 p1 = manifold->contacts[i].normal;
+            v3_scalef(&p1, manifold->contacts[i].penetration);
+            v3_add(&p1, &p0);
+            RICO_prim_draw_line(&p0, &p1, &COLOR_ORANGE);
+        }
+    }
 }
 
 void clash_detect(struct timmy *timmy)
@@ -283,24 +321,39 @@ void clash_detect(struct timmy *timmy)
         if (obj->rico.type != OBJ_SMALL_CUBE)
             continue;
 
+        struct manifold manifold = { 0 };
+        manifold.body_a = &obj->rico;
+        manifold.body_b = &timmy->rico;
         obj->collide_sphere = DEBUG_sphere_v_sphere(&obj->rico.sphere,
-                                                    &timmy->rico.sphere);
+                                                    &timmy->rico.sphere,
+                                                    &manifold);
+        DEBUG_render_manifold(&manifold);
+        if (manifold.contact_count > 0)
+        {
+            struct vec3 resolve = manifold.contacts[0].normal;
+            v3_scalef(&resolve, manifold.contacts[0].penetration);
+            RICO_object_trans(&obj->rico, &resolve);
+        }
 
-        obj->collide_aabb = obj->collide_sphere &&
-            RICO_bbox_intersects(&obj->rico.bbox_world,
-                                 &timmy->rico.bbox_world);
-
-        int separating_axis = obb_v_obb(&obj->rico.obb, &timmy->rico.obb);
-        obj->collide_obb = obj->collide_sphere && (separating_axis == 0);
+        //obj->collide_aabb = obj->collide_sphere &&
+        //    RICO_bbox_intersects(&obj->rico.bbox_world,
+        //                         &timmy->rico.bbox_world);
+        //
+        //int separating_axis = obb_v_obb(&obj->rico.obb, &timmy->rico.obb);
+        //obj->collide_obb = obj->collide_sphere && (separating_axis == 0);
         
         id = RICO_pack_next_type(id, RICO_HND_OBJECT);
     }
 }
 
-bool object_intersects(const struct RICO_object *a, const struct RICO_object *b)
+bool object_intersects(const struct RICO_object *a, const struct RICO_object *b,
+                       struct manifold *manifold)
 {
     // TODO: check sphere, then aabb, then obb
-    return RICO_bbox_intersects(&a->bbox_world, &b->bbox_world);
+    manifold->body_a = a;
+    manifold->body_b = b;
+    DEBUG_sphere_v_sphere(&a->sphere, &b->sphere, manifold);
+    return manifold->contact_count > 0;
 }
 
 void clash_simulate(struct timmy *timmy)
@@ -308,9 +361,12 @@ void clash_simulate(struct timmy *timmy)
     pkid id = RICO_pack_first_type(pack_table[PACK_CLASH].sav_id,
                                    RICO_HND_OBJECT);
 
+    struct small_cube *obj;
+    struct manifold manifold = { 0 };
+
     while (id)
     {
-        struct small_cube *obj = RICO_pack_lookup(id);
+        obj = RICO_pack_lookup(id);
 
         //if (obj->rico.type != OBJ_SMALL_CUBE)
         //    continue;
@@ -320,7 +376,7 @@ void clash_simulate(struct timmy *timmy)
             if (!(v3_equals(&obj->acc, &VEC3_ZERO) &&
                   v3_equals(&obj->vel, &VEC3_ZERO) &&
                   (obj->rico.xform.position.y == 0.0f) ||
-                  object_intersects(&obj->rico, &timmy->rico)))
+                  object_intersects(&obj->rico, &timmy->rico, &manifold)))
             {
                 obj->resting = false;
             }
@@ -372,15 +428,19 @@ void clash_simulate(struct timmy *timmy)
                 {
                     obj->acc = VEC3_ZERO;
                     obj->vel = VEC3_ZERO;
-                    obj->rico.xform.position.y = 0.0f;
+                    //obj->rico.xform.position.y = 0.0f;
+                    obj->rico.xform.position = VEC3(0.1f, 4.0f, 0.1f);
                     obj->resting = true;
                 }
             }
-            else if (object_intersects(&obj->rico, &timmy->rico))
+            else if (object_intersects(&obj->rico, &timmy->rico, &manifold))
             {
+#if 0
+                // Continuous collision detection to find time of impact,
+                // doesn't play particularly well with manifold resolution atm.
                 struct vec3 p0 = obj->rico.xform.position;
                 v3_sub(&p0, &obj->vel);
-
+                
                 struct vec3 v0 = obj->vel;
                 struct vec3 v_test;
                 float t = 0.5f;
@@ -391,7 +451,7 @@ void clash_simulate(struct timmy *timmy)
                     v3_scalef(&v_test, t);
                     v3_add(&obj->rico.xform.position, &v_test);
                     RICO_object_trans_set(&obj->rico, &obj->rico.xform.position);
-                    if (object_intersects(&obj->rico, &timmy->rico))
+                    if (object_intersects(&obj->rico, &timmy->rico, &manifold))
                     {
                         t -= t * 0.5f;
                     }
@@ -402,11 +462,19 @@ void clash_simulate(struct timmy *timmy)
                 }
                 obj->vel.y *= -1.0f;
                 obj->vel.y *= COEF_ELASTICITY;
-
+                
                 v_test = obj->vel;
                 v3_scalef(&v_test, 1.0f - t);
                 v3_add(&obj->rico.xform.position, &v_test);
                 RICO_object_trans_set(&obj->rico, &obj->rico.xform.position);
+#endif
+
+                if (manifold.contact_count > 0)
+                {
+                    struct vec3 resolve = manifold.contacts[0].normal;
+                    v3_scalef(&resolve, manifold.contacts[0].penetration);
+                    RICO_object_trans(&obj->rico, &resolve);
+                }
 
                 // TODO: Epsilon (must be bigger than GRAVITY * friction)
                 if (fabs(obj->vel.y) < 0.01f)
@@ -416,6 +484,15 @@ void clash_simulate(struct timmy *timmy)
                     obj->resting = true;
                 }
             }
+
+            DEBUG_render_manifold(&manifold);
+
+            //if (manifold->contact_count > 0)
+            //{
+            //    struct vec3 resolve = manifold->contacts[0].normal;
+            //    v3_scalef(&resolve, manifold->contacts[0].penetration);
+            //    RICO_object_trans(a, &resolve);
+            //}
 
             RICO_object_trans_set(&obj->rico, &obj->rico.xform.position);
         }
@@ -614,7 +691,7 @@ int main(int argc, char **argv)
         u32 action;
         while (RICO_key_event(&action))
         {
-            if (RICO_state_is_edit() || RICO_state_is_paused())
+            if (RICO_state_is_edit() || RICO_simulation_paused())
                 continue;
 
             switch (action)
@@ -630,15 +707,15 @@ int main(int argc, char **argv)
             }
         }
 
-        if (!(RICO_state_is_edit() || RICO_state_is_paused()))
+        if (!RICO_simulation_paused())
         {
-            //clash_simulate(timmy);
+            clash_simulate(timmy);
         }
 
         err = RICO_update();
         if (err) break;
 
-        clash_detect(timmy);
+        //clash_detect(timmy);
 
 #if 0
         RICO_render();

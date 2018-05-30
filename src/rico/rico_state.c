@@ -42,11 +42,12 @@ static float scale_delta = 1.0f;
 
 static bool mouse_lock = true;
 static bool enable_lighting = true;
-static bool audio_muted = false;
 
 // Simulation params
 static r64 sim_accum = 0;
 static r64 sim_alpha = 0;
+static bool sim_paused_prev = false;
+static bool sim_paused = false;
 
 // Performance timing
 static u64 perfs_frequency;
@@ -154,6 +155,27 @@ struct state_handlers
 };
 static struct state_handlers state_handlers[STATE_COUNT] = { 0 };
 
+extern bool RICO_simulation_paused()
+{
+    return sim_paused;
+}
+extern void RICO_simulation_pause()
+{
+    sim_paused_prev = sim_paused;
+    sim_paused = true;
+}
+extern void RICO_simulation_play()
+{
+    sim_paused_prev = sim_paused;
+    sim_paused = false;
+}
+extern bool RICO_simulation_prev()
+{
+    bool prev = sim_paused_prev;
+    sim_paused_prev = sim_paused;
+    sim_paused = prev;
+    return sim_paused;
+}
 extern enum rico_state RICO_state_get()
 {
     return state;
@@ -165,10 +187,6 @@ extern bool RICO_state_is_edit()
             state == STATE_EDIT_SCALE ||
             state == STATE_EDIT_MATERIAL ||
             state == STATE_EDIT_MESH);
-}
-extern bool RICO_state_is_paused()
-{
-    return (state == STATE_MENU_QUIT);
 }
 
 static void render_fps(r64 fps, r64 ms, r64 mcyc)
@@ -303,7 +321,7 @@ extern int RICO_update()
     sim_accum += MIN(frame_ms, SIM_MAX_FRAMESKIP_MS);
     while (sim_accum >= SIM_MS)
     {
-        if (!RICO_state_is_paused())
+        if (!RICO_simulation_paused())
         {
             struct vec3 camera_acc = player_acc;
             if (player_sprint) v3_scalef(&camera_acc, CAM_SPRINT_MULTIPLIER);
@@ -418,27 +436,33 @@ static int shared_engine_events()
     // Toggle audio
     else if (chord_active(ACTION_ENGINE_MUTE_TOGGLE))
     {
-        audio_muted = !audio_muted;
-        (audio_muted) ? RICO_audio_mute() : RICO_audio_unmute();
+        RICO_audio_toggle();
 
         char buf[16] = { 0 };
         int len;
-        if (audio_muted)
+        if (RICO_audio_muted())
         {
             len = snprintf(buf, sizeof(buf), "Volume:   0%%");
         }
         else
         {
-            len = snprintf(buf, sizeof(buf), "Volume: 100%%");
+            len = snprintf(buf, sizeof(buf), "Volume: %3.f%%",
+                           global_audio_volume * 100.0f);
         }
         string_truncate(buf, sizeof(buf), len);
         RICO_load_string(PACK_TRANSIENT, STR_SLOT_DYNAMIC,
                          SCREEN_X(-FONT_WIDTH * 12), SCREEN_Y(0),
                          COLOR_DARK_WHITE, 1000, 0, buf);
     }
+    // Pause simulation
+    else if (chord_active(ACTION_ENGINE_SIM_PAUSE))
+    {
+        sim_paused = !sim_paused;
+    }
     // Save and exit
     else if (chord_active(ACTION_ENGINE_QUIT))
     {
+        RICO_simulation_pause();
         string_free_slot(STR_SLOT_MENU_QUIT);
         RICO_load_string(PACK_TRANSIENT, STR_SLOT_MENU_QUIT,
                          SCREEN_X(SCREEN_W / 2 - 92),
@@ -977,6 +1001,7 @@ static int state_menu_quit()
     // [N] / [Escape]: Return to play mode
     else if (KEY_PRESSED(SDL_SCANCODE_N) || KEY_PRESSED(SDL_SCANCODE_ESCAPE))
     {
+        RICO_simulation_prev();
         string_free_slot(STR_SLOT_MENU_QUIT);
         state = state_prev;
     }
@@ -1107,13 +1132,14 @@ static int engine_init()
 
     // Engine
     RICO_bind_action(ACTION_ENGINE_DEBUG_LIGHTING_TOGGLE,    CHORD1(SDL_SCANCODE_L));
-    RICO_bind_action(ACTION_ENGINE_DEBUG_TRIGGER_BREAKPOINT, CHORD1(SDL_SCANCODE_P));
+    RICO_bind_action(ACTION_ENGINE_DEBUG_TRIGGER_BREAKPOINT, CHORD1(SDL_SCANCODE_F9));
     RICO_bind_action(ACTION_ENGINE_DEBUG_FOV_INCREASE,       CHORD1(SDL_SCANCODE_3));
     RICO_bind_action(ACTION_ENGINE_DEBUG_FOV_DECREASE,       CHORD1(SDL_SCANCODE_4));
     RICO_bind_action(ACTION_ENGINE_FPS_TOGGLE,               CHORD1(SDL_SCANCODE_2));
     RICO_bind_action(ACTION_ENGINE_MOUSE_LOCK_TOGGLE,        CHORD1(SDL_SCANCODE_M));
     RICO_bind_action(ACTION_ENGINE_VSYNC_TOGGLE,             CHORD1(SDL_SCANCODE_V));
     RICO_bind_action(ACTION_ENGINE_MUTE_TOGGLE,              CHORD1(SDL_SCANCODE_PERIOD));
+    RICO_bind_action(ACTION_ENGINE_SIM_PAUSE,                CHORD1(SDL_SCANCODE_P));
     RICO_bind_action(ACTION_ENGINE_QUIT,                     CHORD1(SDL_SCANCODE_ESCAPE));
 
     // Camera
