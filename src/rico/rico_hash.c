@@ -1,21 +1,11 @@
-typedef u32 hash;
-typedef u8 hkey[32];
-typedef u8 hval[64];
-
-// "dog" -> struct *texture
 struct hash_kv
 {
-    hkey key; // ['d', 'o', 'g', 'g', 'o', '\0']
-    u32 klen; // 6
-    hval val; // 0x8b1453a3
-    u32 vlen; // 4
+    u32 key;
+    void *value;
 };
 
-static inline bool keys_equal(struct hash_kv *kv, const void *key, u32 klen)
-{
-    return kv->klen == klen &&
-           memcmp(kv->key, key, MIN(sizeof(hkey), klen)) == 0;
-}
+//dlb_hash_table_insert(dlb_hash_str("Test"), &texture)
+//dlb_hash_table_insert(dlb_hash_u32(texture.uid.pkid), &texture)
 
 static void hashtable_init(struct hash_table *table, const char *name,
                            u32 count)
@@ -36,23 +26,20 @@ static void hashtable_free(struct hash_table *table)
 
     free(table->slots);
 }
-static void *hashtable_search(struct hash_table *table, const void *key,
-                              u32 klen)
+static void *hashtable_search(struct hash_table *table, const u32 key)
 {
-    hash hash;
-    MurmurHash3_x86_32(key, MIN(sizeof(hkey), klen), &hash);
-
+    u32 hash = hash_u32(key);
     u32 start = hash % table->count;
     u32 index = start;
 
     do
     {
-        if (!table->slots[index].vlen)
+        if (table->slots[index].value == NULL)
             break;
 
         // Compare keys; return if match
-        if (keys_equal(&table->slots[index], key, klen))
-            return table->slots[index].val;
+        if (table->slots[index].key == key)
+            return table->slots[index].value;
 
         // Next slot
 		index++;
@@ -64,19 +51,15 @@ static void *hashtable_search(struct hash_table *table, const void *key,
 }
 // TODO: Replace linear search/insert with quadratic if necessary, or use
 //       external chaining.
-static int hashtable_insert(struct hash_table *table, const void *key, u32 klen,
-                            const void *val, u32 vlen)
+static int hashtable_insert(struct hash_table *table, const u32 key,
+                            void *value)
 {
-    RICO_ASSERT(klen);
-
-    hash hash;
-    MurmurHash3_x86_32(key, MIN(sizeof(hkey), klen), &hash);
-
+    u32 hash = hash_u32(key);
     u32 start = hash % table->count;
     u32 index = start;
 
-    while (table->slots[index].klen > 0 &&
-           !keys_equal(&table->slots[index], key, klen))
+    while (table->slots[index].key != key &&
+           table->slots[index].value != NULL)
     {
         // Next slot
         index++;
@@ -101,34 +84,27 @@ static int hashtable_insert(struct hash_table *table, const void *key, u32 klen,
 #endif
 
     // Empty slot found; insert
-    table->slots[index].klen = klen;
-    memcpy(table->slots[index].key, key, klen);
-    table->slots[index].vlen = vlen;
-    memcpy(table->slots[index].val, val, vlen);
+    table->slots[index].key = key;
+    table->slots[index].value = value;
 
     return SUCCESS;
 }
-static bool hashtable_delete(struct hash_table *table, const void *key,
-                             u32 klen)
+static bool hashtable_delete(struct hash_table *table, const u32 key)
 {
-    hash hash;
-    MurmurHash3_x86_32(key, MIN(sizeof(hkey), klen), &hash);
-
+    u32 hash = hash_u32(key);
     u32 start = hash % table->count;
     u32 index = start;
 
     do
     {
-        if (!table->slots[index].vlen)
+        if (table->slots[index].value == NULL)
             break;
 
         // Compare keys; return if match
-        if (keys_equal(&table->slots[index], key, klen))
+        if (table->slots[index].key == key)
         {
-            table->slots[index].klen = 0;
-            memset(table->slots[index].key, 0, sizeof(hkey));
-            table->slots[index].vlen = 0;
-            memset(table->slots[index].val, 0, sizeof(hval));
+            table->slots[index].key = 0;
+            table->slots[index].value = 0;
             return true;
         }
 
@@ -140,6 +116,7 @@ static bool hashtable_delete(struct hash_table *table, const void *key,
     // Back at start; not found
     return false;
 }
+#if 0
 static void *hashtable_search_str(struct hash_table *table, const char *str)
 {
     void *val = hashtable_search(table, (u8 *)str, dlb_strlen(str));
@@ -168,7 +145,6 @@ static bool hashtable_delete_str(struct hash_table *table, const char *str)
 #endif
     return success;
 }
-#if 0
 static void *hashtable_search_uid(struct hash_table *table,
                                   const struct uid *uid)
 {
@@ -198,7 +174,6 @@ static bool hashtable_delete_uid(struct hash_table *table,
 #endif
     return success;
 }
-#endif
 static void *hashtable_search_pkid(struct hash_table *table, pkid pkid)
 {
     void *val = hashtable_search(table, (u8 *)&pkid, sizeof(pkid));
@@ -226,6 +201,7 @@ static bool hashtable_delete_pkid(struct hash_table *table, pkid pkid)
 #endif
     return success;
 }
+#endif
 
 ///|////////////////////////////////////////////////////////////////////////////
 

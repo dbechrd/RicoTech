@@ -21,29 +21,41 @@ static struct hash_table global_string_slots;
 static void hashtable_init(struct hash_table *table, const char *name,
                            u32 count);
 static void hashtable_free(struct hash_table *table);
-static void *hashtable_search(struct hash_table *table, const void *key,
-                              u32 klen);
-static int hashtable_insert(struct hash_table *table, const void *key, u32 klen,
-                            const void *val, u32 vlen);
-static bool hashtable_delete(struct hash_table *table, const void *key,
-                             u32 klen);
+static void *hashtable_search(struct hash_table *table, const u32 key);
+static int hashtable_insert(struct hash_table *table, const u32 key,
+                            void *value);
+static bool hashtable_delete(struct hash_table *table, const u32 key);
 
+static inline const u32 hash_u32(const u32 key)
+{
+    u32 hash;
+    MurmurHash3_x86_32(&key, sizeof(key), &hash);
+    return hash;
+}
+
+static inline const u32 hash_string(const u32 len, const void *str)
+{
+    u32 hash;
+    MurmurHash3_x86_32(str, len, &hash);
+    return hash;
+}
+
+#if 0
 static void *hashtable_search_str(struct hash_table *table, const char *str);
 static int hashtable_insert_str(struct hash_table *table, const char *str,
                                 const void *val, u32 len);
 static bool hashtable_delete_str(struct hash_table *table, const char *str);
-#if 0
 static void *hashtable_search_uid(struct hash_table *table,
                                   const struct uid *uid);
 static int hashtable_insert_uid(struct hash_table *table, const struct uid *uid,
                          const void *val, u32 len);
 static bool hashtable_delete_uid(struct hash_table *table,
                                  const struct uid *uid);
-#endif
 static void *hashtable_search_pkid(struct hash_table *table, pkid pkid);
 static int hashtable_insert_pkid(struct hash_table *table, pkid pkid,
                                  const void *val, u32 vlen);
 static bool hashtable_delete_pkid(struct hash_table *table, pkid pkid);
+#endif
 
 static void rico_hashtable_init();
 

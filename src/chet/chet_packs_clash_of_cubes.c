@@ -11,7 +11,6 @@ void pack_build_clash_of_cubes(struct pack_info *pack_info)
     u32 pack_sav = RICO_pack_init(0, pack_info->path_sav, 64, MB(32));
     pkid cube_id;
     struct small_cube *cube;
-    struct RICO_mesh *cube_mesh = RICO_pack_lookup(cube_mesh_id);
 
     static pkid small_cubes[2];
     for (u32 i = 0; i < ARRAY_COUNT(small_cubes); i++)

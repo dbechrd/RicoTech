@@ -42,20 +42,21 @@ static void test_hashtable()
     int data = 123;
 
     const char key_str[] = "blah blah";
-    hashtable_insert_str(table, key_str, &data, sizeof(data));
+    u32 key_hash = hash_string(sizeof(key_str), key_str);
+    hashtable_insert(table, key_hash, &data);
 
-    int *lookup_str = hashtable_search_str(table, key_str);
+    int *lookup_str = hashtable_search(table, key_hash);
     RICO_ASSERT(*lookup_str == data);
-    RICO_ASSERT(hashtable_delete_str(table, key_str));
+    RICO_ASSERT(hashtable_delete(table, key_hash));
 
     //=================================================
 
     pkid key_id = 12345;
-    hashtable_insert_pkid(table, key_id, &data, sizeof(data));
+    hashtable_insert(table, key_id, &data);
 
-    int *lookup_uid = hashtable_search_pkid(table, key_id);
+    int *lookup_uid = hashtable_search(table, key_id);
     RICO_ASSERT(*lookup_uid == data);
-    RICO_ASSERT(hashtable_delete_pkid(table, key_id));
+    RICO_ASSERT(hashtable_delete(table, key_id));
 }
 static void test_ndc_macros()
 {

@@ -15,7 +15,7 @@
 #define RICO_DEBUG 1
 #define RICO_DEBUG_FATAL_ASSERT     RICO_DEBUG && 0
 #define RICO_DEBUG_ALL_ERRORS_FATAL RICO_DEBUG && 1
-#define RICO_DEBUG_RUN_TESTS        RICO_DEBUG && 0
+#define RICO_DEBUG_RUN_TESTS        RICO_DEBUG && 1
 #define RICO_DEBUG_HND              RICO_DEBUG && 0
 #define RICO_DEBUG_POOL             RICO_DEBUG && 0
 #define RICO_DEBUG_CHUNK            RICO_DEBUG && 0

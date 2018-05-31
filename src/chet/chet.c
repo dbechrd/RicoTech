@@ -36,13 +36,13 @@ static struct RICO_audio_source audio_sources[AUDIO_COUNT];
 
 static struct pack_info pack_table[] =
 {
-    { "packs/alpha.pak" , "packs/alpha.sav", 0 },
-    { "packs/clash.pak" , "packs/clash.sav", 0 }
+    { "packs/alpha.pak" , "packs/alpha.sav", 0, 0 },
+    { "packs/clash.pak" , "packs/clash.sav", 0, 0 }
 };
 
 //-------------------------------------------------------------------
 // TODO: Scale by delta_time properly
-static const struct vec3 GRAVITY = { 0.0f, -0.0098f, 0.0f };
+#define GRAVITY VEC3(0.0f, -0.0098f, 0.0f);
 // TODO: Elastic collision coef
 static const float COEF_ELASTICITY = 0.15f;
 
@@ -180,13 +180,13 @@ void object_interact()
         return;
 
     float scale = 0.05f;
-    
+
     struct RICO_camera *camera = RICO_get_camera_hack();
     struct vec3 pos = camera->pos;
     struct vec3 fwd;
     RICO_camera_fwd(&fwd, camera);
     v3_add(&pos, v3_scalef(&fwd, dist));
-    
+
     // TODO: Subtract (dot(dist, surface.normal) * scale) to place exactly on
     //       surface of mesh? This will place origin of new mesh on surface of
     //       existing mesh.. also need to somehow calculate and subtract
@@ -197,7 +197,7 @@ void object_interact()
 
     if (dist > 3.0f)
         return;
-    
+
     struct RICO_object *obj = RICO_pack_lookup(obj_id);
     if (!obj) return;
 
@@ -341,7 +341,7 @@ void clash_detect(struct timmy *timmy)
         //
         //int separating_axis = obb_v_obb(&obj->rico.obb, &timmy->rico.obb);
         //obj->collide_obb = obj->collide_sphere && (separating_axis == 0);
-        
+
         id = RICO_pack_next_type(id, RICO_HND_OBJECT);
     }
 }
@@ -375,8 +375,8 @@ void clash_simulate(struct timmy *timmy)
         {
             if (!(v3_equals(&obj->acc, &VEC3_ZERO) &&
                   v3_equals(&obj->vel, &VEC3_ZERO) &&
-                  (obj->rico.xform.position.y == 0.0f) ||
-                  object_intersects(&obj->rico, &timmy->rico, &manifold)))
+                  (obj->rico.xform.position.y == 0.0f ||
+                  object_intersects(&obj->rico, &timmy->rico, &manifold))))
             {
                 obj->resting = false;
             }
@@ -440,7 +440,7 @@ void clash_simulate(struct timmy *timmy)
                 // doesn't play particularly well with manifold resolution atm.
                 struct vec3 p0 = obj->rico.xform.position;
                 v3_sub(&p0, &obj->vel);
-                
+
                 struct vec3 v0 = obj->vel;
                 struct vec3 v_test;
                 float t = 0.5f;
@@ -462,7 +462,7 @@ void clash_simulate(struct timmy *timmy)
                 }
                 obj->vel.y *= -1.0f;
                 obj->vel.y *= COEF_ELASTICITY;
-                
+
                 v_test = obj->vel;
                 v3_scalef(&v_test, 1.0f - t);
                 v3_add(&obj->rico.xform.position, &v_test);
@@ -496,7 +496,7 @@ void clash_simulate(struct timmy *timmy)
 
             RICO_object_trans_set(&obj->rico, &obj->rico.xform.position);
         }
-        
+
         id = RICO_pack_next_type(id, RICO_HND_OBJECT);
     }
 }
@@ -547,7 +547,7 @@ void DEBUG_render_color_test()
     float y = 2.0f;
     const float width = 0.1f;
     const float padding = width / 2.0f;
-    for (int i = 0; i < ARRAY_COUNT(colors); ++i)
+    for (u32 i = 0; i < ARRAY_COUNT(colors); ++i)
     {
         if (colors[i].a == 0.0f)
         {

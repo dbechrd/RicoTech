@@ -1,13 +1,13 @@
 #ifndef RICO_INTERNAL_TEXTURE_H
 #define RICO_INTERNAL_TEXTURE_H
 
-// NOTE: Must fit in hash value
 struct rgl_texture
 {
-    GLenum gl_target;
     GLuint gl_id;
+    GLenum gl_target;
     GLenum format_internal;
     GLenum format;
+    struct rgl_texture *next;
 };
 
 struct RICO_texture
@@ -21,6 +21,7 @@ struct RICO_texture
     u32 pixels_offset;
 };
 
+extern void rico_texture_init();
 static void texture_delete(struct RICO_texture *texture);
 static void texture_bind(pkid pkid, GLenum texture_unit);
 static void texture_unbind(pkid pkid, GLenum texture_unit);

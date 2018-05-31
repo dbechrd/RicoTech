@@ -1,26 +1,43 @@
 ################################################################################
 #|  Project: RicoTech
-#|     Date: 2016-11-03
+#|     Date: 2018-02-05
 #|   Author: Dan Bechard
 ################################################################################
 
 # Directories
 SRC_DIR := src
-INC_DIR := include include/SDL include/GL include/AL ../dlb/include
+INC_DIR := src/chet src/dlb src/rico src/tools
 OBJ_DIR := obj
 LIB_DIR := lib
+DLL_DIR := lib
+BIN_DIR := bin
+RES_DIR := res
 
-SRC_FILE := rico_main.c
-OUT_FILE := $(LIB_DIR)/rico.lib
+SRC_FILES := chet/chet.c
+#LIBS = -lmingw32 -lSDL2main -lSDL2 -lopengl32 -mwindows # Use this with MinGW libs
+LIBS = -lrico -lSDL2main -lSDL2 -lopengl32 -lopenal32 # Use this with MSVC libs
+LIB_DIRS := $(LIB_DIR:%=-L%)
+LIBS := $(LIB_DIRS) $(LIBS)
+BIN_EXE := $(BIN_DIR)/chet.exe
+RES_SUBDIRS := audio font mesh packs shader texture
 
 INCLUDE_DIRS := $(INC_DIR:%=-I%)
 
-#SOURCES := $(wildcard $(SRC_DIR)/*.c)
-#SOURCES := $(filter-out $(SRC_DIR)/notes.c, $(SOURCES))
-#OBJECTS := $(patsubst $(SRC_DIR)/%,$(OBJ_DIR)/%,$(SOURCES:.c=.o))
-SOURCES := $(SRC_FILE:%=$(SRC_DIR)/%)
+SOURCES := $(SRC_FILES:%=$(SRC_DIR)/%)
 OBJECTS := $(subst $(SRC_DIR)/,$(OBJ_DIR)/,$(SOURCES:.c=.o))
 DEPS := $(OBJECTS:.o=.d)
+
+RESOURCE_DIRS := $(RES_SUBDIRS:%=$(BIN_DIR)/%)
+RESOURCES := $(wildcard $(RES_DIR)/chunks/*.bin)
+RESOURCES += $(wildcard $(RES_DIR)/font/*.bff)
+RESOURCES += $(wildcard $(RES_DIR)/shader/*.glsl)
+RESOURCES += $(wildcard $(RES_DIR)/mesh/*.obj)
+RESOURCES += $(wildcard $(RES_DIR)/texture/*.tga)
+RESOURCES += $(wildcard $(RES_DIR)/packs/*.pak)
+RESOURCES += $(wildcard $(RES_DIR)/audio/*.ric)
+BIN_RESOURCES := $(subst $(RES_DIR)/,$(BIN_DIR)/,$(RESOURCES))
+DLLS := $(wildcard $(DLL_DIR)/*.dll)
+BIN_DLLS := $(subst $(DLL_DIR)/,$(BIN_DIR)/,$(DLLS))
 
 # Compiler & flags
 # Optimization flags:
@@ -29,16 +46,15 @@ DEPS := $(OBJECTS:.o=.d)
 # -O2 Release
 # -O3 Extreme (Careful, might make EXE bigger or invoke undefined behavior!)
 SHARED_FLAGS = -std=c99 -g -MMD -O0 -Wall -Wextra -Werror -Wno-unused-function #-Wno-missing-field-initializers -Wno-missing-braces -Wno-deprecated-declarations #-Wno-error=incompatible-pointer-types
-GCC_FLAGS = -fmax-errors=3
-#CLANG_FLAGS = -ferror-limit=3 -fcolor-diagnostics -Wno-macro-redefined -Wno-unknown-pragmas
-CLANG_FLAGS = -fcolor-diagnostics -Wno-macro-redefined -Wno-unknown-pragmas -Wno-missing-field-initializers -Wno-missing-braces
+GCC_FLAGS = -fmax-errors=3 -fsanitize=address -fno-omit-frame-pointer
+CLANG_FLAGS = -ferror-limit=3 -fcolor-diagnostics -Wno-macro-redefined
 CC = gcc #-v
-CFLAGS = $(SHARED_FLAGS) $(GCC_FLAGS)
+CFLAGS = $(GCC_FLAGS) $(SHARED_FLAGS)
 LDFLAGS = # None
 
-default: prebuild build
+default: prebuild build postbuild
 
-copyright:
+prebuild:
 	$(info =========================================================)
 	$(info #        ______            _______        _             #)
 	$(info #        |  __ \ O        |__   __|      | |            #)
@@ -50,15 +66,29 @@ copyright:
 	$(info #              Copyright 2018  Dan Bechard              #)
 	$(info =========================================================)
 
-prebuild: copyright make-build-dirs
-build: $(OUT_FILE)
+compile-banner:
+	$(info )
+	$(info ---- Compile [build-compile] ---------------------------------------)
+link-banner:
+	$(info )
+	$(info ---- Link [build-link] ---------------------------------------------)
+copyres-banner:
+	$(info )
+	$(info ---- Copy resources [postbuild-copyres] ----------------------------)
+
+build-compile: compile-banner
+build-link: link-banner $(BIN_EXE)
+build: make-build-dirs build-compile build-link
+
+postbuild-copyres: copyres-banner make-res-dirs $(BIN_RESOURCES) $(BIN_DLLS)
+postbuild: postbuild-copyres
 
 ################################################################################
-# Link library
-$(OUT_FILE): $(OBJECTS)
-	$(info [LIB] $@)
+# Link executable
+$(BIN_EXE): $(OBJECTS)
+	$(info [EXE] $@)
 	$(foreach O,$^,$(info +  [OBJ] ${O}))
-	@ar rcs $@ $^
+	@$(CC) -o $@ $^ $(LIBS)
 
 # Compile C files into OBJ files and generate dependencies
 $(OBJECTS): $(SOURCES)
@@ -67,7 +97,21 @@ $(OBJECTS): $(SOURCES)
 	@$(CC) $(CFLAGS) $(INCLUDE_DIRS) -o $@ -c $<
 
 make-build-dirs:
-	@mkdir -p $(LIB_DIR) $(OBJ_DIR)
+	@mkdir -p $(BIN_DIR) $(OBJ_DIR)
+
+make-res-dirs:
+#	$(foreach O,$(RESOURCE_DIRS),$(info [MKDIR] ${O}))
+	@mkdir -p $(RESOURCE_DIRS)
+
+# Copy resources
+$(BIN_DIR)/%: $(RES_DIR)/%
+	$(info [RES] $^ -> $@)
+	@cp $^ $@
+
+# Copy dlls
+$(BIN_DIR)/%: $(DLL_DIR)/%
+	$(info [DLL] $^ -> $@)
+	@cp $^ $@
 
 # Include generated dependency files
 -include $(DEPS)
@@ -77,12 +121,12 @@ make-build-dirs:
 clean:
 	$(info )
 	$(info ---- Clean [clean] -------------------------------------------------)
-	$(info [DEL] $(OUT_FILE))
-	-@rm $(OUT_FILE)
+	$(info [DEL] $(BIN_EXE))
+	-@rm $(BIN_EXE)
 	$(info [DEL] $(OBJ_DIR)/*)
-	-@rm -r $(OBJ_DIR)
-	$(info [DEL] $(LIB_DIR)/*)
-	-@rm -r $(LIB_DIR)
+	-@rm -r $(OBJ_DIR)/*
+	$(info [DEL] $(BIN_DIR)/*)
+	-@rm -r $(BIN_DIR)/*
 
 ################################################################################
 # Miscellaneous notes

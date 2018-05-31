@@ -9,7 +9,7 @@ static void string_delete(struct RICO_string *str)
     if (str->slot != STR_SLOT_DYNAMIC)
     {
         // Look for slot string and delete it
-        hashtable_delete(&global_string_slots, &str->slot, sizeof(str->slot));
+        hashtable_delete(&global_string_slots, str->slot);
     }
 
     pack_delete(str->object_id);
@@ -19,7 +19,7 @@ static bool string_free_slot(enum RICO_string_slot slot)
     if (slot != STR_SLOT_DYNAMIC)
     {
         // Look for previous slot string and delete it
-        u32 *id = hashtable_search(&global_string_slots, &slot, sizeof(slot));
+        u32 *id = hashtable_search(&global_string_slots, slot);
         if (id)
         {
             pack_delete(*id);

@@ -1,3 +1,14 @@
+static struct rgl_texture texture_pool[256];
+static struct rgl_texture *texture_freelist;
+
+extern void rico_texture_init()
+{
+    for (u32 i = 0; i < ARRAY_COUNT(texture_pool) - 1; ++i)
+    {
+        texture_pool[i].next = &texture_pool[i + 1];
+    }
+    texture_freelist = texture_pool;
+}
 static u8 *texture_pixels(struct RICO_texture *tex)
 {
     return (u8 *)tex + tex->pixels_offset;
@@ -10,8 +21,11 @@ static int texture_upload(struct RICO_texture *texture)
     printf("[ tex][upld] name=%s\n", texture_name(texture));
 #endif
 
-    struct rgl_texture rgl_tex = { 0 };
-    rgl_tex.gl_target = texture->gl_target;
+    RICO_ASSERT(texture_freelist);
+    struct rgl_texture *rgl_tex = texture_freelist;
+    texture_freelist = rgl_tex->next;
+
+    rgl_tex->gl_target = texture->gl_target;
 
     /*************************************************************************
     | Frequency of access:
@@ -48,9 +62,9 @@ static int texture_upload(struct RICO_texture *texture)
     | GL_TEXTURE_CUBE_MAP_ARRAY         v
     |
     *************************************************************************/
-    glCreateTextures(rgl_tex.gl_target, 1, &rgl_tex.gl_id);
+    glCreateTextures(rgl_tex->gl_target, 1, &rgl_tex->gl_id);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(rgl_tex.gl_target, rgl_tex.gl_id);
+    glBindTexture(rgl_tex->gl_target, rgl_tex->gl_id);
 
     //--------------------------------------------------------------------------
     // Configure texture wrapping (for uv-coords outside range 0.0f - 1.0f)
@@ -64,8 +78,8 @@ static int texture_upload(struct RICO_texture *texture)
     | GL_CLAMP_TO_BORDER   Clamp to edge of texture (no stretching).
     |
     *************************************************************************/
-    glTexParameteri(rgl_tex.gl_target, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(rgl_tex.gl_target, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(rgl_tex->gl_target, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(rgl_tex->gl_target, GL_TEXTURE_WRAP_T, GL_REPEAT);
     //glTexParameteri(texture->gl_target, GL_TEXTURE_WRAP_R, GL_REPEAT);
 
     // For GL_CLAMP_TO_BORDER
@@ -88,8 +102,8 @@ static int texture_upload(struct RICO_texture *texture)
     |                           pixels.
     |
     *************************************************************************/
-    glTexParameteri(rgl_tex.gl_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(rgl_tex.gl_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(rgl_tex->gl_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(rgl_tex->gl_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     /*************************************************************************
     | GLenum    target
@@ -106,63 +120,65 @@ static int texture_upload(struct RICO_texture *texture)
     switch (texture->bpp)
     {
     case 8: // Greyscale (assume not gamma-corrected???)
-        rgl_tex.format          = GL_RED;
-        rgl_tex.format_internal = GL_RED;
+        rgl_tex->format          = GL_RED;
+        rgl_tex->format_internal = GL_RED;
         break;
     case 24: // RGB
-        rgl_tex.format          = GL_RGB;
+        rgl_tex->format          = GL_RGB;
         // TODO: Store processed texture data in linear space and change this
         //       back to GL_RGB.
-        rgl_tex.format_internal = GL_SRGB;
+        rgl_tex->format_internal = GL_SRGB;
         break;
     case 32: // RGBA
-        rgl_tex.format          = GL_RGBA;
+        rgl_tex->format          = GL_RGBA;
         // TODO: Store processed texture data in linear space and change this
         //       back to GL_RGBA.
-        rgl_tex.format_internal = GL_SRGB_ALPHA;
+        rgl_tex->format_internal = GL_SRGB_ALPHA;
         break;
     default: // Unsupported BPP
         return RICO_ERROR(ERR_TEXTURE_UNSUPPORTED_BPP, NULL);
     }
 
-    glTexImage2D(rgl_tex.gl_target, 0, rgl_tex.format_internal, texture->width,
-                 texture->height, 0, rgl_tex.format, GL_UNSIGNED_BYTE,
-                 texture_pixels(texture));
+    glTexImage2D(rgl_tex->gl_target, 0, rgl_tex->format_internal,
+                 texture->width, texture->height, 0, rgl_tex->format,
+                 GL_UNSIGNED_BYTE, texture_pixels(texture));
 
     //--------------------------------------------------------------------------
     // Generate mipmaps
     //--------------------------------------------------------------------------
-    glGenerateMipmap(rgl_tex.gl_target);
+    glGenerateMipmap(rgl_tex->gl_target);
 
     //--------------------------------------------------------------------------
     // Clean up
     //--------------------------------------------------------------------------
-    glBindTexture(rgl_tex.gl_target, 0);
+    glBindTexture(rgl_tex->gl_target, 0);
 
     // Store in hash table
-    hashtable_insert_pkid(&global_textures, texture->uid.pkid, &rgl_tex,
-                         sizeof(rgl_tex));
+    hashtable_insert(&global_textures, texture->uid.pkid, rgl_tex);
     return err;
 }
 static void texture_delete(struct RICO_texture *texture)
 {
     struct rgl_texture *rgl_tex =
-        hashtable_search_pkid(&global_textures, texture->uid.pkid);
+        hashtable_search(&global_textures, texture->uid.pkid);
     if (!rgl_tex) return;
 
     glDeleteTextures(1, &rgl_tex->gl_id);
 
-    hashtable_delete_pkid(&global_textures, texture->uid.pkid);
+    hashtable_delete(&global_textures, texture->uid.pkid);
+
+    rgl_tex->next = texture_freelist;
+    texture_freelist = rgl_tex;
 }
 static void texture_bind(pkid pkid, GLenum texture_unit)
 {
-    struct rgl_texture *rgl_tex = hashtable_search_pkid(&global_textures, pkid);
+    struct rgl_texture *rgl_tex = hashtable_search(&global_textures, pkid);
     if (!rgl_tex)
     {
         struct RICO_texture *texture = RICO_pack_lookup(pkid);
         RICO_ASSERT(texture);
         texture_upload(texture);
-        rgl_tex = hashtable_search_pkid(&global_textures, pkid);
+        rgl_tex = hashtable_search(&global_textures, pkid);
     }
     RICO_ASSERT(rgl_tex);
     RICO_ASSERT(rgl_tex->gl_id);
@@ -173,11 +189,11 @@ static void texture_bind(pkid pkid, GLenum texture_unit)
 #endif
 
     glActiveTexture(texture_unit);
-    glBindTexture(rgl_tex->gl_target, rgl_tex->gl_id);
+    glBindTexture(rgl_tex->gl_target, rgl_tex->gl_id); 
 }
 static void texture_unbind(pkid pkid, GLenum texture_unit)
 {
-    struct rgl_texture *rgl_tex = hashtable_search_pkid(&global_textures, pkid);
+    struct rgl_texture *rgl_tex = hashtable_search(&global_textures, pkid);
     RICO_ASSERT(rgl_tex);
 
 #if RICO_DEBUG_TEXTURE

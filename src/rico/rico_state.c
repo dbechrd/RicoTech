@@ -1237,7 +1237,9 @@ static int engine_init()
 	printf("----------------------------------------------------------\n");
 	printf("[MAIN][init] Initializing hash tables\n");
 	printf("----------------------------------------------------------\n");
-	rico_hashtable_init();
+    rico_texture_init();
+    rico_mesh_init();
+    rico_hashtable_init();
 
 	printf("----------------------------------------------------------\n");
 	printf("[MAIN][init] Initializing shaders\n");
