@@ -37,7 +37,7 @@ static void test_geom()
 }
 static void test_hashtable()
 {
-    struct hash_table *table = &global_textures;
+    struct dlb_hash *table = &global_textures;
 
     int data = 123;
 

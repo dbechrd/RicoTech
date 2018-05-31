@@ -180,6 +180,10 @@ extern enum rico_state RICO_state_get()
 {
     return state;
 }
+extern bool RICO_state_is_menu()
+{
+    return (state == STATE_MENU_QUIT);
+}
 extern bool RICO_state_is_edit()
 {
     return (state == STATE_EDIT_TRANSLATE ||
@@ -321,20 +325,22 @@ extern int RICO_update()
     sim_accum += MIN(frame_ms, SIM_MAX_FRAMESKIP_MS);
     while (sim_accum >= SIM_MS)
     {
-        if (!RICO_simulation_paused())
+        // TODO: Handle mouse movements in the state callbacks. Camera movement
+        //       is not the correct response to mouse movement in all states.
+        if (!RICO_state_is_menu())
         {
             struct vec3 camera_acc = player_acc;
             if (player_sprint) v3_scalef(&camera_acc, CAM_SPRINT_MULTIPLIER);
             if (camera_slow)   v3_scalef(&camera_acc, CAM_SLOW_MULTIPLIER);
             camera_player_update(&cam_player, mouse_dx, mouse_dy, camera_acc);
-
-            // TODO: Move this to this program.c
-            // Update uniforms
-            RICO_ASSERT(prog_pbr->prog_id);
-            glUseProgram(prog_pbr->prog_id);
-            glUniform1f(prog_pbr->time, (r32)SIM_SEC);
-            glUseProgram(0);
         }
+
+        // TODO: Move this to this program.c
+        // Update uniforms
+        RICO_ASSERT(prog_pbr->prog_id);
+        glUseProgram(prog_pbr->prog_id);
+        glUniform1f(prog_pbr->time, (r32)SIM_SEC);
+        glUseProgram(0);
 
         string_update();
 
@@ -342,7 +348,6 @@ extern int RICO_update()
         mouse_dy = 0;
         sim_accum -= SIM_MS;
     }
-
     sim_alpha = (r64)sim_accum / SIM_MS;
 
     camera_update(&cam_player, sim_alpha);
