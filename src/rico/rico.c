@@ -1,8 +1,10 @@
 #include "internal/ri_main.h"
 #include "gl3w.c"
 
-#define DLB_MATH_IMPLEMENTATION
+#include "rico.h"
+
 #define DLB_MATH_PRINT
+#define DLB_MATH_IMPLEMENTATION
 #include "dlb_math.h"
 
 #include "rico_error.c"

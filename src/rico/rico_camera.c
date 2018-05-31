@@ -167,10 +167,6 @@ static void camera_update(struct RICO_camera *camera, r64 sim_alpha)
 #endif
 
     camera->need_update = false;
-
-    static int hack = 0;
-    hack++;
-    if (hack == 1) exit(0);
 }
 static void camera_player_update(struct RICO_camera *camera, r32 dx, r32 dy,
                                  struct vec3 delta_acc)

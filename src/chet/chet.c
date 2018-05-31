@@ -1,4 +1,5 @@
 #include "chet.h"
+#include "rico.c"
 #include "chet_packs.c"
 #include "chet_collision.c"
 
@@ -651,7 +652,7 @@ int main(int argc, char **argv)
 
 	//main_nuklear(argc, argv);
     RICO_init();
-    //pack_build_all();
+    pack_build_all();
 	pack_load_all();
 
     RICO_bind_action(ACTION_RICO_TEST, CHORD_REPEAT1(SDL_SCANCODE_Z));

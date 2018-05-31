@@ -1,7 +1,6 @@
 #ifndef CHET_H
 #define CHET_H
 
-#define DLB_MATH_IMPLEMENTATION
 #include "rico.h"
 
 enum game_object_type

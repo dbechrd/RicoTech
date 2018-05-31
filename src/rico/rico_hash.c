@@ -26,7 +26,7 @@ static void hashtable_free(struct hash_table *table)
 
     free(table->slots);
 }
-static void *hashtable_search(struct hash_table *table, const u32 key)
+static void *hashtable_search(struct hash_table *table, u32 key)
 {
     u32 hash = hash_u32(key);
     u32 start = hash % table->count;
@@ -51,8 +51,7 @@ static void *hashtable_search(struct hash_table *table, const u32 key)
 }
 // TODO: Replace linear search/insert with quadratic if necessary, or use
 //       external chaining.
-static int hashtable_insert(struct hash_table *table, const u32 key,
-                            void *value)
+static int hashtable_insert(struct hash_table *table, u32 key, void *value)
 {
     u32 hash = hash_u32(key);
     u32 start = hash % table->count;
@@ -89,7 +88,7 @@ static int hashtable_insert(struct hash_table *table, const u32 key,
 
     return SUCCESS;
 }
-static bool hashtable_delete(struct hash_table *table, const u32 key)
+static bool hashtable_delete(struct hash_table *table, u32 key)
 {
     u32 hash = hash_u32(key);
     u32 start = hash % table->count;
@@ -217,21 +216,21 @@ static struct hash_table global_string_slots;
 
 static void rico_hashtable_init()
 {
-    const int strings   = 256;
-    const int fonts     = 256;
-    const int textures  = 256;
-    const int materials = 256;
-    const int meshes    = 256;
-    const int objects   = 256;
-    //const int uids = strings + fonts + textures + materials + meshes + objects;
-    const int string_slots = 16;
+    u32 strings   = 256;
+    u32 fonts     = 256;
+    u32 textures  = 256;
+    u32 materials = 256;
+    u32 meshes    = 256;
+    u32 objects   = 256;
+    u32 string_slots = 16;
+    //int uids = strings + fonts + textures + materials + meshes + objects;
 
-    hashtable_init(&global_strings,   "global_strings",   strings);
-    hashtable_init(&global_fonts,     "global_fonts",     fonts);
-    hashtable_init(&global_textures,  "global_textures",  textures);
-    hashtable_init(&global_materials, "global_materials", materials);
-    hashtable_init(&global_meshes,    "global_meshes",    meshes);
-    hashtable_init(&global_objects,   "global_objects",   objects);
-    //hashtable_init(&global_uids,      "global_uids",      uids);
+    hashtable_init(&global_strings,      "global_strings",      strings);
+    hashtable_init(&global_fonts,        "global_fonts",        fonts);
+    hashtable_init(&global_textures,     "global_textures",     textures);
+    hashtable_init(&global_materials,    "global_materials",    materials);
+    hashtable_init(&global_meshes,       "global_meshes",       meshes);
+    hashtable_init(&global_objects,      "global_objects",      objects);
     hashtable_init(&global_string_slots, "global_string_slots", string_slots);
+    //hashtable_init(&global_uids,      "global_uids",      uids);
 }

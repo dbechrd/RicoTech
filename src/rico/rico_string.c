@@ -19,10 +19,10 @@ static bool string_free_slot(enum RICO_string_slot slot)
     if (slot != STR_SLOT_DYNAMIC)
     {
         // Look for previous slot string and delete it
-        u32 *id = hashtable_search(&global_string_slots, slot);
+        pkid id = (pkid)hashtable_search(&global_string_slots, slot);
         if (id)
         {
-            pack_delete(*id);
+            pack_delete(id);
             return true;
         }
     }

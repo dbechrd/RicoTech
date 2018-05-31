@@ -203,6 +203,7 @@ DLB_MATH_DEF struct mat4 *mat4_mul(struct mat4 *a, const struct mat4 *b);
 DLB_MATH_DEF void mat4_translate(struct mat4 *m, const struct vec3 *v);
 DLB_MATH_DEF void mat4_scale(struct mat4 *m, const struct vec3 *s);
 DLB_MATH_DEF void mat4_scalef(struct mat4 *m, float s);
+DLB_MATH_DEF void mat4_rot_quat(struct mat4 *m, struct quat *q);
 DLB_MATH_DEF void mat4_rotx(struct mat4 *m, float deg);
 DLB_MATH_DEF void mat4_roty(struct mat4 *m, float deg);
 DLB_MATH_DEF void mat4_rotz(struct mat4 *m, float deg);
@@ -210,6 +211,8 @@ DLB_MATH_DEF void mat4_transpose(struct mat4 *m);
 DLB_MATH_DEF struct mat4 mat4_init_perspective(float width, float height,
                                                float z_near, float z_far,
                                                float fov_deg);
+DLB_MATH_DEF struct mat4 mat4_init_ortho(float width, float height,
+                                         float z_near, float z_far);
 DLB_MATH_DEF struct mat4 mat4_init_lookat(struct vec3 *pos, struct vec3 *view,
                                           struct vec3 *up);
 
@@ -702,6 +705,12 @@ DLB_MATH_DEF void mat4_scalef(struct mat4 *m, float s)
     mat4_mul(m, &scale);
 }
 
+DLB_MATH_DEF void mat4_rot_quat(struct mat4 *m, struct quat *q)
+{
+    struct mat4 rot = mat4_init_quat(q);
+    mat4_mul(m, &rot);
+}
+
 DLB_MATH_DEF void mat4_rotx(struct mat4 *m, float deg)
 {
     struct mat4 rot = mat4_init_rotx(deg);
@@ -711,12 +720,6 @@ DLB_MATH_DEF void mat4_rotx(struct mat4 *m, float deg)
 DLB_MATH_DEF void mat4_roty(struct mat4 *m, float deg)
 {
     struct mat4 rot = mat4_init_roty(deg);
-    mat4_mul(m, &rot);
-}
-
-DLB_MATH_DEF void mat4_rot_quat(struct mat4 *m, struct quat *q)
-{
-    struct mat4 rot = mat4_init_quat(q);
     mat4_mul(m, &rot);
 }
 

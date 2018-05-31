@@ -67,7 +67,7 @@ static inline void *pack_pop(struct pack *pack, u32 id)
 
 static inline void *pack_read(struct pack *pack, u32 index)
 {
-    RICO_ASSERT(index >= 0);
+    //RICO_ASSERT(index > 0);  // Cleanup: Disallow reading null blob
     RICO_ASSERT(index < pack->blobs_used);
     RICO_ASSERT(pack->index[index].type);
     return pack->buffer + pack->index[index].offset;

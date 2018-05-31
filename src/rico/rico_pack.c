@@ -906,7 +906,7 @@ extern pkid RICO_load_string(u32 pack_id, enum RICO_string_slot slot, float x,
     // Store in slot table if not dynamic
     if (str->slot != STR_SLOT_DYNAMIC)
     {
-        hashtable_insert(&global_string_slots, str->slot, &str->uid.pkid);
+        hashtable_insert(&global_string_slots, str->slot, (void *)str->uid.pkid);
     }
 
     pkid pkid = str->uid.pkid;

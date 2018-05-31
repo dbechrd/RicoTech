@@ -2,6 +2,7 @@
 #define RICO_H
 
 #include "dlb_types.h"
+#define DLB_MATH_PRINT
 #include "dlb_math.h"
 #include "SDL/SDL.h"
 #include "GL/gl3w.h"

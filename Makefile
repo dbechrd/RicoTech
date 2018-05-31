@@ -15,7 +15,7 @@ RES_DIR := res
 
 SRC_FILES := chet/chet.c
 #LIBS = -lmingw32 -lSDL2main -lSDL2 -lopengl32 -mwindows # Use this with MinGW libs
-LIBS = -lrico -lSDL2main -lSDL2 -lopengl32 -lopenal32 # Use this with MSVC libs
+LIBS = -lSDL2main -lSDL2 -lopengl32 -lopenal32 # Use this with MSVC libs
 LIB_DIRS := $(LIB_DIR:%=-L%)
 LIBS := $(LIB_DIRS) $(LIBS)
 BIN_EXE := $(BIN_DIR)/chet.exe
@@ -46,7 +46,8 @@ BIN_DLLS := $(subst $(DLL_DIR)/,$(BIN_DIR)/,$(DLLS))
 # -O2 Release
 # -O3 Extreme (Careful, might make EXE bigger or invoke undefined behavior!)
 SHARED_FLAGS = -std=c99 -g -MMD -O0 -Wall -Wextra -Werror -Wno-unused-function #-Wno-missing-field-initializers -Wno-missing-braces -Wno-deprecated-declarations #-Wno-error=incompatible-pointer-types
-GCC_FLAGS = -fmax-errors=3 -fsanitize=address -fno-omit-frame-pointer
+GCC_FLAGS = -fmax-errors=3
+GCC_FLAGS_LINUX = -fsanitize=address -fno-omit-frame-pointer
 CLANG_FLAGS = -ferror-limit=3 -fcolor-diagnostics -Wno-macro-redefined
 CC = gcc #-v
 CFLAGS = $(GCC_FLAGS) $(SHARED_FLAGS)
@@ -80,7 +81,7 @@ build-compile: compile-banner
 build-link: link-banner $(BIN_EXE)
 build: make-build-dirs build-compile build-link
 
-postbuild-copyres: copyres-banner make-res-dirs $(BIN_RESOURCES) $(BIN_DLLS)
+postbuild-copyres: copyres-banner $(BIN_DLLS)
 postbuild: postbuild-copyres
 
 ################################################################################
@@ -97,16 +98,7 @@ $(OBJECTS): $(SOURCES)
 	@$(CC) $(CFLAGS) $(INCLUDE_DIRS) -o $@ -c $<
 
 make-build-dirs:
-	@mkdir -p $(BIN_DIR) $(OBJ_DIR)
-
-make-res-dirs:
-#	$(foreach O,$(RESOURCE_DIRS),$(info [MKDIR] ${O}))
-	@mkdir -p $(RESOURCE_DIRS)
-
-# Copy resources
-$(BIN_DIR)/%: $(RES_DIR)/%
-	$(info [RES] $^ -> $@)
-	@cp $^ $@
+	@mkdir -p $(BIN_DIR) $(OBJ_DIR) $(OBJ_DIR)/chet
 
 # Copy dlls
 $(BIN_DIR)/%: $(DLL_DIR)/%
@@ -125,8 +117,6 @@ clean:
 	-@rm $(BIN_EXE)
 	$(info [DEL] $(OBJ_DIR)/*)
 	-@rm -r $(OBJ_DIR)/*
-	$(info [DEL] $(BIN_DIR)/*)
-	-@rm -r $(BIN_DIR)/*
 
 ################################################################################
 # Miscellaneous notes

@@ -67,7 +67,7 @@ static void mesh_upload(struct RICO_mesh *mesh, GLenum hint,
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     // Store in hash table
-    hashtable_insert(&global_meshes, mesh->uid.pkid, &rgl_mesh);
+    hashtable_insert(&global_meshes, mesh->uid.pkid, rgl_mesh);
 }
 static void mesh_delete(struct RICO_mesh *mesh)
 {

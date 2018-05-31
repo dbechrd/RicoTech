@@ -21,19 +21,19 @@ static struct hash_table global_string_slots;
 static void hashtable_init(struct hash_table *table, const char *name,
                            u32 count);
 static void hashtable_free(struct hash_table *table);
-static void *hashtable_search(struct hash_table *table, const u32 key);
-static int hashtable_insert(struct hash_table *table, const u32 key,
+static void *hashtable_search(struct hash_table *table, u32 key);
+static int hashtable_insert(struct hash_table *table, u32 key,
                             void *value);
-static bool hashtable_delete(struct hash_table *table, const u32 key);
+static bool hashtable_delete(struct hash_table *table, u32 key);
 
-static inline const u32 hash_u32(const u32 key)
+static inline u32 hash_u32(u32 key)
 {
     u32 hash;
     MurmurHash3_x86_32(&key, sizeof(key), &hash);
     return hash;
 }
 
-static inline const u32 hash_string(const u32 len, const void *str)
+static inline u32 hash_string(u32 len, const void *str)
 {
     u32 hash;
     MurmurHash3_x86_32(str, len, &hash);
