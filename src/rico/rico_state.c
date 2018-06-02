@@ -470,8 +470,8 @@ static int shared_engine_events()
         RICO_simulation_pause();
         string_free_slot(STR_SLOT_MENU_QUIT);
         RICO_load_string(PACK_TRANSIENT, STR_SLOT_MENU_QUIT,
-                         SCREEN_X(SCREEN_W / 2 - 92),
-                         SCREEN_Y(SCREEN_H / 2 - 128),
+                         SCREEN_X(SCREEN_WIDTH / 2 - 92),
+                         SCREEN_Y(SCREEN_HEIGHT / 2 - 128),
                          COLOR_DARK_GREEN_HIGHLIGHT, 0, 0,
                          "                       \n" \
                          "  Save and quit?       \n" \
@@ -627,6 +627,12 @@ static int shared_edit_events()
     {
 		err = RICO_pack_save(RICO_pack_active, false);
     }
+    // Toggle camera project (perspective/orthographic)
+    // TODO: Reset to perspective when leaving edit mode?
+    else if (chord_active(ACTION_EDIT_CAMERA_TOGGLE_PROJECTION))
+    {
+        camera_toggle_projection(&cam_player);
+    }
 
 	if (cursor_moved || !v3_equals(&player_acc, &VEC3_ZERO))
 	{
@@ -643,7 +649,7 @@ static int state_play_explore()
     // Check global engine / editor chords after the more specific checks run
     // to allow overriding the global keybinds while in more specific states.
     // This is like doing base.Foo() at the end of an overridden Foo() method.
-    // It might also be useful to have a stack of states, e.g.:
+    // TODO: It might also be useful to have a stack of states, e.g.:
     // active_states = { ENGINE, EDITOR, TEXTURE }
     // active_states = { ENGINE, GAME, FLY }
     // Alternatively, stack can be used for "pushdown automata", where you
@@ -651,8 +657,11 @@ static int state_play_explore()
     // state_stack.push(WALK);
     // state_stack.push(JUMP);
     // state_stack.pop(JUMP);
-    err = shared_engine_events(); if (err || state != state_last_frame) return err;
-    err = shared_camera_events(); if (err || state != state_last_frame) return err;
+    err = shared_engine_events();
+    if (err || state != state_last_frame) return err;
+
+    err = shared_camera_events();
+    if (err || state != state_last_frame) return err;
 
     // CLEANUP: Interact with clicked object
     // if (chord_active(ACTION_PLAY_INTERACT))
@@ -1180,6 +1189,7 @@ static int engine_init()
     RICO_bind_action(ACTION_EDIT_SELECTED_DELETE,            CHORD1(SDL_SCANCODE_DELETE));
     RICO_bind_action(ACTION_EDIT_MODE_PREVIOUS,              CHORD1(SDL_SCANCODE_KP_PERIOD));
     RICO_bind_action(ACTION_EDIT_MODE_NEXT,                  CHORD1(SDL_SCANCODE_KP_0));
+    RICO_bind_action(ACTION_EDIT_CAMERA_TOGGLE_PROJECTION,   CHORD1(SDL_SCANCODE_O));
 
     RICO_bind_action(ACTION_EDIT_TRANSLATE_RESET,            CHORD1(SDL_SCANCODE_0));
     RICO_bind_action(ACTION_EDIT_TRANSLATE_UP,               CHORD_REPEAT1(SDL_SCANCODE_PAGEUP));
@@ -1240,11 +1250,12 @@ static int engine_init()
 	state = STATE_PLAY_EXPLORE;
 
 	printf("----------------------------------------------------------\n");
-	printf("[MAIN][init] Initializing hash tables\n");
+	printf("[MAIN][init] Initializing storage\n");
 	printf("----------------------------------------------------------\n");
+    rico_hashtable_init();
     rico_texture_init();
     rico_mesh_init();
-    rico_hashtable_init();
+    rico_ui_init();
 
 	printf("----------------------------------------------------------\n");
 	printf("[MAIN][init] Initializing shaders\n");

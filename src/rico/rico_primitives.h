@@ -1,6 +1,8 @@
 #ifndef RICO_PRIMITIVES_H
 #define RICO_PRIMITIVES_H
 
+extern void RICO_prim_draw_line2d(float x, float y, float w, float h,
+                                  const struct vec4 *color);
 extern void RICO_prim_draw_line(const struct vec3 *p0, const struct vec3 *p1,
                                 const struct vec4 *color);
 extern void RICO_prim_draw_line_xform(const struct vec3 *p0,

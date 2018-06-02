@@ -39,6 +39,7 @@
 #include "rico_string.c"
 #include "rico_texture.c"
 #include "rico_file.c"
+#include "rico_ui.c"
 #if RICO_DEBUG
     #include "tests.c"
 #endif
@@ -124,7 +125,7 @@ static int init_sdl()
 
     // Create window
     window = SDL_CreateWindow("RicoTech", SDL_WINDOWPOS_CENTERED,
-                              SDL_WINDOWPOS_CENTERED, SCREEN_W, SCREEN_H,
+                              SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT,
                               SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
     if (window == NULL) {
         return RICO_FATAL(ERR_SDL_INIT, "SDL_CreateWindow error: %s",
@@ -189,8 +190,8 @@ static void init_opengl()
     // Depth buffer
     glDepthFunc(GL_LEQUAL);  // Default GL_LESS.
     glEnable(GL_DEPTH_TEST); // Default off.
-    glEnable(GL_CULL_FACE); // Backface culling
-    glCullFace(GL_BACK);
+    //glEnable(GL_CULL_FACE); // Backface culling
+    //glCullFace(GL_BACK);
 
     // Multi-sampling
     glEnable(GL_MULTISAMPLE);

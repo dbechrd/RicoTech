@@ -122,6 +122,9 @@
     <ClCompile Include="src\chet\chet_collision.c">
       <Filter>Source Files\chet</Filter>
     </ClCompile>
+    <ClCompile Include="src\rico\rico_ui.c">
+      <Filter>Source Files\rico</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dlb\dlb_math.h">
@@ -264,6 +267,12 @@
     </ClInclude>
     <ClInclude Include="src\chet\chet_collision.h">
       <Filter>Header Files\chet</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rico\rico_ui.h">
+      <Filter>Header Files\rico</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rico\internal\ri_ui.h">
+      <Filter>Header Files\rico\internal</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

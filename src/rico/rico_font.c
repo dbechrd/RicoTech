@@ -76,7 +76,7 @@ static void font_render(u32 *mesh_id, u32 *tex_id, pkid font_id, float x,
     for (int i = 0; i < text_len; i++)
     {
         if (text[i] == '\n') {
-            screen_y -= PIXEL_NORMALIZE_Y(font->y_offset);
+            screen_y += SCREEN_H(font->y_offset);
             screen_x = x;
             continue;
         }
@@ -90,32 +90,26 @@ static void font_render(u32 *mesh_id, u32 *tex_id, pkid font_id, float x,
         GLfloat v1 = v0 + font->row_factor;
 
         int char_width = font->char_widths[(int)text[i]];
-        float offset_x = PIXEL_NORMALIZE_X(char_width);
-        float offset_y = PIXEL_NORMALIZE_Y(font->cell_y);
+        float offset_x = SCREEN_W(char_width);
+        float offset_y = SCREEN_H(font->cell_y);
 
         // Vertices for this character's quad
         vertices[idx_vertex++] = (struct text_vertex) {
-            VEC3(screen_x, screen_y - offset_y, 0.0f), bg,
-            VEC2(u0, v1)
+            VEC2F(screen_x, screen_y - offset_y), bg,
+            VEC2F(u0, v0)
         };
         vertices[idx_vertex++] = (struct text_vertex) {
-            VEC3(screen_x + offset_x, screen_y - offset_y, 0.0f), bg,
-            VEC2(u1, v1)
+            VEC2F(screen_x + offset_x, screen_y - offset_y), bg,
+            VEC2F(u1, v0)
         };
         vertices[idx_vertex++] = (struct text_vertex) {
-            VEC3(screen_x + offset_x, screen_y, 0.0f), bg,
-            VEC2(u1, v0)
+            VEC2F(screen_x + offset_x, screen_y), bg,
+            VEC2F(u1, v1)
         };
         vertices[idx_vertex++] = (struct text_vertex) {
-            VEC3(screen_x, screen_y, 0.0f), bg,
-            VEC2(u0, v0)
+            VEC2F(screen_x, screen_y), bg,
+            VEC2F(u0, v1)
         };
-
-        //3  2
-        //0  1
-
-        //idx_vertex-1  idx_vertex-2
-        //idx_vertex-4  idx_vertex-3
 
         // Triangles using this character's vertices
         elements[idx_element++] = idx_vertex - 4;

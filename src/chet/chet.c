@@ -353,8 +353,7 @@ bool object_intersects(const struct RICO_object *a, const struct RICO_object *b,
     // TODO: check sphere, then aabb, then obb
     manifold->body_a = a;
     manifold->body_b = b;
-    DEBUG_sphere_v_sphere(&a->sphere, &b->sphere, manifold);
-    return manifold->contact_count > 0;
+    return DEBUG_sphere_v_sphere(&a->sphere, &b->sphere, manifold);
 }
 
 void clash_simulate(struct timmy *timmy)
@@ -487,14 +486,6 @@ void clash_simulate(struct timmy *timmy)
             }
 
             DEBUG_render_manifold(&manifold);
-
-            //if (manifold->contact_count > 0)
-            //{
-            //    struct vec3 resolve = manifold->contacts[0].normal;
-            //    v3_scalef(&resolve, manifold->contacts[0].penetration);
-            //    RICO_object_trans(a, &resolve);
-            //}
-
             RICO_object_trans_set(&obj->rico, &obj->rico.xform.position);
         }
 
@@ -621,26 +612,33 @@ void DEBUG_render_bboxes(struct timmy *timmy)
     }
 }
 
-#if 0
-float circle(in vec2 _st, in float _radius){
-    float thickness = 8.0;
-    vec2 dist = _st-vec2(0.5);
-    float a = 0.0
-        + smoothstep(_radius-(_radius*0.5),
-                     _radius+(_radius*0.5),
-                     dot(dist,dist)*thickness)
-        - smoothstep(_radius,
-                     _radius+(_radius),
-                     dot(dist,dist)*thickness/1.0);
-    return a;
-}
+void game_render_ui()
+{
+    // HACK: Reset ui stack each frame
+    // TODO: Reset this in the engine
+    ui_stack_ptr = ui_stack;
 
-void mainImage(out vec4 fragColor, in vec2 fragCoord){
-    vec2 st = gl_FragCoord.xy;
-    vec3 color = vec3(circle(st, 0.9));
-    fragColor = vec4(color, 1.0);
+    struct RICO_ui_hud *hud = RICO_ui_push_hud(
+        &RECT(8, 4, 0, 0),
+        &RECT_ZERO,
+        &RECT(2, 2, 2, 2)
+    );
+
+    int buttons = 10;
+    for (int i = 0; i < buttons; ++i)
+    {
+        struct RICO_ui_label *label = RICO_ui_push_label(
+            &hud->element,
+            &RECT(0, 0, 32, 32),
+            &RECT(4, 4, 4, 4),
+            &RECT_ZERO
+        );
+    }
+
+    RICO_ui_draw(&hud->element);
+
+    //RICO_ui_push_label(hud, 0.2f, 0.2f, 0.6f, 0.6f);
 }
-#endif
 
 int main(int argc, char **argv)
 {
@@ -726,6 +724,7 @@ int main(int argc, char **argv)
         DEBUG_render_bboxes(timmy);
         if (rayviz_sphere.radius > 0.0f)
             RICO_prim_draw_sphere(&rayviz_sphere, &COLOR_YELLOW);
+        game_render_ui();
         RICO_render_ui();
 
         RICO_frame_swap();

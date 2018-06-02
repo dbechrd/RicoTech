@@ -75,25 +75,25 @@ static void test_hashtable()
 }
 static void test_ndc_macros()
 {
-    const struct vec2 top_left = VEC2(
-        SCREEN_X(0.0f),
-        SCREEN_Y(0.0f)
+    const struct vec2f top_left = VEC2F(
+        SCREEN_X(0),
+        SCREEN_Y(0)
     );
-    const struct vec2 bottom_right = VEC2(
-        SCREEN_X(SCREEN_W),
-        SCREEN_Y(SCREEN_H)
+    const struct vec2f bottom_right = VEC2F(
+        SCREEN_X(SCREEN_WIDTH),
+        SCREEN_Y(SCREEN_HEIGHT)
     );
-    const struct vec2 center = VEC2(
-        SCREEN_X(SCREEN_W / 2.0f),
-        SCREEN_Y(SCREEN_H / 2.0f)
+    const struct vec2f center = VEC2F(
+        SCREEN_X(SCREEN_WIDTH / 2),
+        SCREEN_Y(SCREEN_HEIGHT / 2)
     );
-    const struct vec2 top_left_neg = VEC2(
-        SCREEN_X(-SCREEN_W),
-        SCREEN_Y(-SCREEN_H)
+    const struct vec2f top_left_neg = VEC2F(
+        SCREEN_X(-SCREEN_WIDTH),
+        SCREEN_Y(-SCREEN_HEIGHT)
     );
-    const struct vec2 center_neg = VEC2(
-        SCREEN_X(-SCREEN_W / 2.0f),
-        SCREEN_Y(-SCREEN_H / 2.0f)
+    const struct vec2f center_neg = VEC2F(
+        SCREEN_X(-SCREEN_WIDTH / 2),
+        SCREEN_Y(-SCREEN_HEIGHT / 2)
     );
     RICO_ASSERT(top_left.x == -1.0f);
     RICO_ASSERT(top_left.y == 1.0f);

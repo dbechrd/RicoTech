@@ -552,10 +552,10 @@ static void edit_render()
     for (u32 i = PACK_COUNT; i < ARRAY_COUNT(packs); ++i)
     {
         if (packs[i])
-            object_render_ui(packs[i]);
+            object_render_ui(packs[i], &cam_player);
     }
-    object_render_ui(packs[PACK_TRANSIENT]);
-    object_render_ui(packs[PACK_FRAME]);
+    object_render_ui(packs[PACK_TRANSIENT], &cam_player);
+    object_render_ui(packs[PACK_FRAME], &cam_player);
 }
 static void free_glref()
 {

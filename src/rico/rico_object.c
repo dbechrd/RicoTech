@@ -328,15 +328,8 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
         {
             glPolygonMode(GL_FRONT_AND_BACK, camera->fill_mode);
 
-            // Model transform
-            struct mat4 proj_matrix;
-            struct mat4 view_matrix;
-
-            proj_matrix = camera->proj_matrix;
-            view_matrix = camera->view_matrix;
-
-            glUniformMatrix4fv(prog->proj, 1, GL_TRUE, proj_matrix.a);
-            glUniformMatrix4fv(prog->view, 1, GL_TRUE, view_matrix.a);
+            glUniformMatrix4fv(prog->proj, 1, GL_TRUE, camera->proj_matrix->a);
+            glUniformMatrix4fv(prog->view, 1, GL_TRUE, camera->view_matrix.a);
 
             prev_type = obj->type;
         }
@@ -403,13 +396,17 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
         }
     }
 }
-static void object_render_ui(struct pack *pack)
+static void object_render_ui(struct pack *pack,
+                             const struct RICO_camera *camera)
 {
     struct program_text *prog = prog_text;
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     RICO_ASSERT(prog->prog_id);
     glUseProgram(prog->prog_id);
+
+    // Projection matrix
+    glUniformMatrix4fv(prog->proj, 1, GL_TRUE, camera->ortho_matrix.a);
 
     // Font texture
     // Note: We don't have to do this every time as long as we make sure
@@ -432,8 +429,9 @@ static void object_render_ui(struct pack *pack)
 #endif
 
         // Model matrix
-        glUniformMatrix4fv(prog->model, 1, GL_TRUE,
-                           obj->xform.matrix.a);
+        //obj->xform.position = VEC3(0.5, 0.5, -1.0f);
+        //object_transform_update(obj);
+        glUniformMatrix4fv(prog->model, 1, GL_TRUE, obj->xform.matrix.a);
 
         // Bind texture
         pkid tex_id = FONT_DEFAULT_TEXTURE;

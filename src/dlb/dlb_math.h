@@ -45,12 +45,31 @@
 #define MAT4_EPSILON MATH_EPSILON
 #define QUAT_EPSILON MATH_EPSILON
 
-struct vec2
+struct rect
+{
+    union
+    {
+        struct { s32 x, y, w, h; };
+        struct { s32 left, top, right, bottom; };
+    };
+};
+
+struct vec2f
 {
     union
     {
         struct { float x, y; };
         struct { float u, v; };
+        struct { float w, h; };
+    };
+};
+
+struct vec2i
+{
+    union
+    {
+        struct { s32 x, y; };
+        struct { s32 w, h; };
     };
 };
 
@@ -106,16 +125,39 @@ struct quat
 // HACK: Make gcc shut up about missing braces bug. While this syntax is
 //       technically valid in VS, it makes Intellisense whine and misbehave.
 #if defined(__GNUC__) || defined(__clang__) // || defined(_MSC_VER)
+#define RECT(x, y, w, h) ((const struct rect) {{{ x, y, w, h }}})
 #define VEC2(x, y)       ((const struct vec2) {{{ x, y }}})
 #define VEC3(x, y, z)    ((const struct vec3) {{{ x, y, z }}})
 #define VEC4(x, y, z, w) ((const struct vec4) {{{ x, y, z, w }}})
 #define QUAT(w, x, y, z) ((const struct quat) { w, {{ x, y, z }}})
 #else
-#define VEC2(x, y)       ((const struct vec2) { x, y })
+#define RECT(x, y, w, h) ((const struct rect) { x, y, w, h })
+#define VEC2F(x, y)      ((const struct vec2f) { x, y })
+#define VEC2I(x, y)      ((const struct vec2i) { x, y })
 #define VEC3(x, y, z)    ((const struct vec3) { x, y, z })
 #define VEC4(x, y, z, w) ((const struct vec4) { x, y, z, w })
 #define QUAT(w, x, y, z) ((const struct quat) { w, x, y, z })
 #endif
+
+#define RECT_ZERO                     RECT(0, 0, 0, 0)
+
+#define VEC2_ZERO                     VEC2F(0.0f, 0.0f)
+#define VEC2_RIGHT                    VEC2F(1.0f, 0.0f)
+#define VEC2_LEFT                     VEC2F(-1.0f, 0.0f)
+#define VEC2_UP                       VEC2F(0.0f, 1.0f)
+#define VEC2_DOWN                     VEC2F(0.0f, -1.0f)
+
+#define VEC3_ZERO                     VEC3(0.0f, 0.0f, 0.0f)
+#define VEC3_ONE                      VEC3(1.0f, 1.0f, 1.0f)
+#define VEC3_UNIT                     VEC3(0.577350259f, 0.577350259f, 0.577350259f)
+#define VEC3_X                        VEC3(1.0f, 0.0f, 0.0f)
+#define VEC3_Y                        VEC3(0.0f, 1.0f, 0.0f)
+#define VEC3_Z                        VEC3(0.0f, 0.0f, 1.0f)
+#define VEC3_RIGHT                    VEC3(1.0f, 0.0f, 0.0f)
+#define VEC3_UP                       VEC3(0.0f, 1.0f, 0.0f)
+#define VEC3_FWD                      VEC3(0.0f, 0.0f,-1.0f)
+#define VEC3_DOWN                     VEC3(0.0f,-1.0f, 0.0f)
+#define VEC3_SMALL                    VEC3(0.01f, 0.01f, 0.01f)
 
 #define COLOR_TRANSPARENT             VEC4(0.000f, 0.000f, 0.000f, 0.0f)
 
@@ -152,18 +194,6 @@ struct quat
 #define COLOR_DARK_CYAN_HIGHLIGHT     VEC4(0.000f, 0.500f, 0.500f, 0.5f)
 #define COLOR_DARK_MAGENTA_HIGHLIGHT  VEC4(0.500f, 0.000f, 0.500f, 0.5f)
 #define COLOR_DARK_WHITE_HIGHLIGHT    VEC4(0.500f, 0.500f, 0.500f, 0.5f)
-
-#define VEC3_ZERO                     VEC3(0.0f, 0.0f, 0.0f)
-#define VEC3_ONE                      VEC3(1.0f, 1.0f, 1.0f)
-#define VEC3_UNIT                     VEC3(0.577350259f, 0.577350259f, 0.577350259f)
-#define VEC3_X                        VEC3(1.0f, 0.0f, 0.0f)
-#define VEC3_Y                        VEC3(0.0f, 1.0f, 0.0f)
-#define VEC3_Z                        VEC3(0.0f, 0.0f, 1.0f)
-#define VEC3_RIGHT                    VEC3(1.0f, 0.0f, 0.0f)
-#define VEC3_UP                       VEC3(0.0f, 1.0f, 0.0f)
-#define VEC3_FWD                      VEC3(0.0f, 0.0f,-1.0f)
-#define VEC3_DOWN                     VEC3(0.0f,-1.0f, 0.0f)
-#define VEC3_SMALL                    VEC3(0.01f, 0.01f, 0.01f)
 
 #define QUAT_IDENT QUAT(1.0f, 0.0f, 0.0f, 0.0f)
 
@@ -212,7 +242,8 @@ DLB_MATH_DEF struct mat4 mat4_init_perspective(float width, float height,
                                                float z_near, float z_far,
                                                float fov_deg);
 DLB_MATH_DEF struct mat4 mat4_init_ortho(float width, float height,
-                                         float z_near, float z_far);
+                                         float z_near, float z_far,
+                                         float fudge);
 DLB_MATH_DEF struct mat4 mat4_init_lookat(struct vec3 *pos, struct vec3 *view,
                                           struct vec3 *up);
 
@@ -778,17 +809,31 @@ DLB_MATH_DEF struct mat4 mat4_init_perspective(float width, float height,
 
 //Calculate ORTHOGRAPHIC projection
 DLB_MATH_DEF struct mat4 mat4_init_ortho(float width, float height,
-                                         float z_near, float z_far)
+                                         float z_near, float z_far, float fudge)
 {
     float aspect = width / height;
     float dz = z_far - z_near;
 
     struct mat4 mat = MAT4_IDENT;
-    mat.m[0][0] = 1.0f / aspect;
-    mat.m[1][1] = 1.0f;
-    mat.m[2][2] = -2.0f / dz;
-    mat.m[2][3] = (z_far + z_near) / dz;
-    mat.m[3][3] = 500.0f;
+    //mat.m[0][0] = 1.0f / aspect;
+    //mat.m[1][1] = 1.0f;
+    //mat.m[2][2] = -2.0f / dz;
+    //mat.m[2][3] = (z_far + z_near) / dz;
+    //mat.m[3][3] = fudge;  // TODO: What is fudge?
+
+    float right = 1.0f;
+    float left = -1.0f;
+    float top = 1.0f;
+    float bottom = -1.0f;
+
+    mat.m[0][0] = 2.0f / (right - left);
+    mat.m[1][1] = 2.0f / (top - bottom);
+    mat.m[2][2] = -2.0f / z_far - z_near;
+    mat.m[0][3] = -((right + left) / (right - left));
+    mat.m[1][3] = -((top + bottom) / (top - bottom));
+    mat.m[2][3] = -((z_far + z_near) / (z_far - z_near));
+    mat.m[3][3] = 1.0f;
+
     return mat;
 }
 

@@ -19,6 +19,7 @@
 #include "rico_state.h"
 #include "rico_pack.h"
 #include "rico_camera.h"
+#include "rico_ui.h"
 
 extern int RICO_init();
 extern void RICO_cleanup();

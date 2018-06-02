@@ -132,6 +132,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="src\rico\rico_ui.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="src\rico\rico_util.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -175,6 +179,7 @@
     <ClInclude Include="src\rico\internal\ri_state.h" />
     <ClInclude Include="src\rico\internal\ri_string.h" />
     <ClInclude Include="src\rico\internal\ri_texture.h" />
+    <ClInclude Include="src\rico\internal\ri_ui.h" />
     <ClInclude Include="src\rico\internal\ri_util.h" />
     <ClInclude Include="src\rico\rico.h" />
     <ClInclude Include="src\rico\rico_audio.h" />
@@ -189,6 +194,7 @@
     <ClInclude Include="src\rico\rico_primitives.h" />
     <ClInclude Include="src\rico\rico_state.h" />
     <ClInclude Include="src\rico\rico_string.h" />
+    <ClInclude Include="src\rico\rico_ui.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{13382442-3368-4BCD-A10F-E82012C2DB89}</ProjectGuid>

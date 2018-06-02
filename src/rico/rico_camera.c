@@ -35,9 +35,11 @@ static void camera_init(struct RICO_camera *camera, struct vec3 position,
 
     bbox_init(&camera->RICO_bbox, VEC3(0.f, 0.f, 0.f), VEC3(1.f, 1.f, 1.f));
 
-    camera->proj_matrix = mat4_init_perspective(SCREEN_W, SCREEN_H, Z_NEAR,
-                                                Z_FAR, fov_deg);
-    camera->ortho_matrix = mat4_init_ortho(SCREEN_W, SCREEN_H, Z_NEAR, Z_FAR);
+    camera->persp_matrix = mat4_init_perspective(SCREEN_WIDTH, SCREEN_HEIGHT, Z_NEAR,
+                                                 Z_FAR, fov_deg);
+    camera->ortho_matrix = mat4_init_ortho(SCREEN_WIDTH, SCREEN_HEIGHT, Z_NEAR, Z_FAR,
+                                           0.0f);
+    camera->proj_matrix = &camera->persp_matrix;
 
     camera_translate_local(camera, &VEC3_ZERO);
     camera_rotate(camera, 0.0f, 0.0f, 0.0f);
@@ -51,8 +53,19 @@ static void camera_reset(struct RICO_camera *camera)
 static void camera_set_fov(struct RICO_camera *camera, float fov_deg)
 {
     camera->fov_deg = fov_deg;
-    camera->proj_matrix = mat4_init_perspective(SCREEN_W, SCREEN_H, Z_NEAR,
-                                                Z_FAR, fov_deg);
+    camera->persp_matrix = mat4_init_perspective(SCREEN_WIDTH, SCREEN_HEIGHT, Z_NEAR,
+                                                 Z_FAR, fov_deg);
+}
+static void camera_toggle_projection(struct RICO_camera *camera)
+{
+    if (camera->proj_matrix == &camera->persp_matrix)
+    {
+        camera->proj_matrix = &camera->ortho_matrix;
+    }
+    else
+    {
+        camera->proj_matrix = &camera->persp_matrix;
+    }
 }
 static void camera_translate_world(struct RICO_camera *camera,
                                    const struct vec3 *v)
@@ -134,7 +147,7 @@ static void camera_update(struct RICO_camera *camera, r64 sim_alpha)
 
     // HACK: Scale view matrix to decrease quaternion rotation radius. I don't
     //       really understand what this is doing.
-    mat4_scalef(&camera->view_matrix, QUAT_SCALE_HACK);
+    //mat4_scalef(&camera->view_matrix, QUAT_SCALE_HACK);
 
     struct vec3 pos = camera->pos;
     mat4_translate(&camera->view_matrix, v3_negate(&pos));
@@ -237,7 +250,7 @@ static void camera_player_update(struct RICO_camera *camera, r32 dx, r32 dy,
 }
 static void camera_render(struct RICO_camera *camera)
 {
-#if RICO_DEBUG_CAMERA
+#if 0
     struct vec3 x = VEC3_RIGHT;
     struct vec3 y = VEC3_UP;
     v3_mul_quat(v3_scalef(&x, 0.01f / QUAT_SCALE_HACK), &camera->view);
@@ -247,6 +260,9 @@ static void camera_render(struct RICO_camera *camera)
 
     RICO_prim_draw_line(&camera->pos, &x, &COLOR_RED);
     RICO_prim_draw_line(&camera->pos, &y, &COLOR_GREEN);
+#else
+    RICO_prim_draw_line2d(0.0f, 0.0f, SCREEN_W(10), 0.0f, &COLOR_RED);
+    RICO_prim_draw_line2d(0.0f, 0.0f, 0.0f, SCREEN_H(10), &COLOR_GREEN);
 #endif
 }
 extern void RICO_camera_fwd(struct vec3 *_fwd, struct RICO_camera *camera)

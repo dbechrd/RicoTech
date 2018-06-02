@@ -4,19 +4,28 @@
 #include "rico_camera.h"
 
 //TODO: Probably should prefix these? Possibly move to const.h?
-#define SCREEN_W 1600
-#define SCREEN_H 900
-#define SCREEN_ASPECT (float)SCREEN_W / SCREEN_H
+#define SCREEN_WIDTH 1600
+#define SCREEN_HEIGHT 900
+#define SCREEN_ASPECT (float)SCREEN_WIDTH / SCREEN_HEIGHT
 
-#define PIXEL_NORMALIZE_X(x) (((float)x / SCREEN_W * 2.0f))
-#define PIXEL_NORMALIZE_Y(y) (((float)y / SCREEN_H * 2.0f))
 
-// Convert pixel coordinates to normalized device coordinates
-#define ABS_SCREEN_X(x) (x) / (SCREEN_W / 2.0f) - 1.0f
-#define SCREEN_X(x) (x >= 0.0f ? ABS_SCREEN_X(x) : ABS_SCREEN_X(x + SCREEN_W))
+#define X_TO_NDC(x) ((x) / (SCREEN_WIDTH / 2.0f) - 1.0f)
+#define Y_TO_NDC(y) (-(y) / (SCREEN_HEIGHT / 2.0f) + 1.0f)
 
-#define ABS_SCREEN_Y(y) -(y) / (SCREEN_H / 2.0f) + 1.0f
-#define SCREEN_Y(y) (y >= 0.0f ? ABS_SCREEN_Y(y) : ABS_SCREEN_Y(y + SCREEN_H))
+// NOTE: Pixel origin is top-left of screen
+// NOTE: NDC origin is center of screen
+// e.g. [0, 0]     -> [-1.0f, 1.0f]
+// e.g. [800, 450] -> [0.0f, 0.0f]
+
+// Calculate relative x/y in pixels, returns x/y in normalized device
+// coordinates (negative values are relative to right and bottom edges of
+// screen)
+#define SCREEN_X(x) (x >= 0.0f ? X_TO_NDC(x) : X_TO_NDC(x + SCREEN_WIDTH))
+#define SCREEN_Y(y) (y >= 0.0f ? Y_TO_NDC(y) : Y_TO_NDC(y + SCREEN_HEIGHT))
+
+// Takes width/height in pixels, returns width/height in NDC
+#define SCREEN_W(x) ((float)(x) / SCREEN_WIDTH * 2.0f)
+#define SCREEN_H(y) (-(float)(y) / SCREEN_HEIGHT * 2.0f)
 
 #define Z_NEAR 0.01f
 #define Z_FAR 1000.0f
@@ -25,6 +34,7 @@ static void camera_init(struct RICO_camera *camera, struct vec3 position,
                         struct quat view, float fov_deg);
 static void camera_reset(struct RICO_camera *camera);
 static void camera_set_fov(struct RICO_camera *camera, float fov_deg);
+static void camera_toggle_projection(struct RICO_camera *camera);
 static void camera_translate_world(struct RICO_camera *camera,
                                    const struct vec3 *v);
 static void camera_translate_local(struct RICO_camera *camera,

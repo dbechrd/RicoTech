@@ -21,8 +21,9 @@ struct RICO_camera
 
     struct RICO_bbox RICO_bbox; //TODO: Replace with vec3 and do v3_render()
     struct mat4 view_matrix;
-    struct mat4 proj_matrix;
+    struct mat4 persp_matrix;
     struct mat4 ortho_matrix;
+    struct mat4 *proj_matrix;
 };
 
 extern struct RICO_camera* RICO_get_camera_hack();

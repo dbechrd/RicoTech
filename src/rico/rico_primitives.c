@@ -77,22 +77,37 @@ static int prim_init()
 }
 // TODO: Queue up primitive requests and batch them within a single
 //       glUseProgram() call.
+extern void RICO_prim_draw_line2d(float x, float y, float w, float h,
+                                  const struct vec4 *color)
+{
+    const float ortho_z = -1.0f;
+    prim_draw_line(&VEC3(x, y, ortho_z), &VEC3(w, h, ortho_z),
+                   color, &MAT4_IDENT, &MAT4_IDENT, &cam_player.ortho_matrix);
+}
 extern void RICO_prim_draw_line(const struct vec3 *p0, const struct vec3 *p1,
                                 const struct vec4 *color)
 {
-    RICO_prim_draw_line_xform(p0, p1, color, &MAT4_IDENT);
+    prim_draw_line(p0, p1, color, &MAT4_IDENT, &cam_player.view_matrix,
+                   cam_player.proj_matrix);
 }
 extern void RICO_prim_draw_line_xform(const struct vec3 *p0,
                                       const struct vec3 *p1,
                                       const struct vec4 *color,
                                       const struct mat4 *xform)
 {
+    prim_draw_line(p0, p1, color, xform, &cam_player.view_matrix,
+                   cam_player.proj_matrix);
+}
+static void prim_draw_line(const struct vec3 *p0, const struct vec3 *p1,
+                           const struct vec4 *color, const struct mat4 *xform,
+                           const struct mat4 *view, const struct mat4 *proj)
+{
     struct vec3 vertices[2] = { *p0, *p1 };
 
     RICO_ASSERT(prog_prim->prog_id);
     glUseProgram(prog_prim->prog_id);
-    glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
-    glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
+    glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, proj->a);
+    glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, view->a);
     glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, xform->a);
     glUniform4f(prog_prim->u_col, color->r, color->g, color->b, color->a);
 
@@ -131,7 +146,7 @@ extern void RICO_prim_draw_quad_xform(const struct quad *quad,
 {
     RICO_ASSERT(prog_prim->prog_id);
     glUseProgram(prog_prim->prog_id);
-    glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
+    glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix->a);
     glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
     glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, xform->a);
     glUniform4fv(prog_prim->u_col, 1, (const GLfloat *)color);
@@ -201,7 +216,7 @@ extern void RICO_prim_draw_bbox_xform(const struct RICO_bbox *bbox,
     RICO_ASSERT(prog_prim->prog_id);
     glUseProgram(prog_prim->prog_id);
 
-    glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
+    glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix->a);
     glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
     glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, xform->a);
 
@@ -304,7 +319,7 @@ extern void RICO_prim_draw_obb_xform(const struct RICO_obb *obb,
     RICO_ASSERT(prog_prim->prog_id);
     glUseProgram(prog_prim->prog_id);
 
-    glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
+    glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix->a);
     glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
     glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, xform->a);
 
@@ -360,7 +375,7 @@ extern void RICO_prim_draw_sphere_xform(const struct sphere *sphere,
     RICO_ASSERT(prog_prim->prog_id);
     glUseProgram(prog_prim->prog_id);
 
-    glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix.a);
+    glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix->a);
     glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
     glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, model_matrix.a);
     glUniform4f(prog_prim->u_col, color->r, color->g, color->b, color->a);

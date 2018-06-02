@@ -26,7 +26,7 @@ struct RICO_font
     float col_factor;
     float row_factor;
     s32 y_offset;
-    bool y_invert;
+    bool y_invert;  // Cleanup: This shit don't do shit.
     u8 render_style;
     u8 char_widths[256];
     pkid tex_id;

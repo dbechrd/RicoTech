@@ -26,7 +26,7 @@ struct pbr_vertex
     struct vec3 pos;
     struct vec4 col;
     struct vec3 normal;
-    struct vec2 uv;
+    struct vec2f uv;
 };
 
 struct pbr_attrib
@@ -163,9 +163,9 @@ static void free_program_prim_cube(struct program_prim_cube **program);
 
 struct text_vertex
 {
-    struct vec3 pos;
+    struct vec2f pos;
     struct vec4 col;
-    struct vec2 uv;
+    struct vec2f uv;
 };
 
 struct program_text_attrib
@@ -182,6 +182,7 @@ struct program_text
 
     // Vertex shader
     GLint model; // mat4
+    GLint proj;  // mat4
 
     struct program_text_attrib attrs;
 

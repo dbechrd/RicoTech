@@ -324,9 +324,15 @@ static void program_text_get_locations(struct program_text *p)
 {
     // Vertex shader
     p->model = program_get_uniform_location(p->prog_id, "model");
+    p->proj = program_get_uniform_location(p->prog_id, "proj");
+
+    RICO_ASSERT(p->model >= 0);
+    RICO_ASSERT(p->proj >= 0);
 
     // Fragment shader
     p->tex = program_get_uniform_location(p->prog_id, "tex");
+
+    RICO_ASSERT(p->tex >= 0);
 }
 static void program_text_attribs()
 {
