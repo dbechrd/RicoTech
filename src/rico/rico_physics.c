@@ -10,9 +10,9 @@ static void free_physics(struct rico_physics *phys)
     free(phys);
     phys = NULL;
 }
-static void update_physics(struct rico_physics *phys, int count)
+static void update_physics(struct rico_physics *phys, int bucket_count)
 {
-    for (int i = 0; i < count; i++)
+    for (int i = 0; i < bucket_count; i++)
     {
         phys->vel.x += phys->acc.x;
         phys->vel.y += phys->acc.y;

@@ -23,9 +23,9 @@ static inline void *pack_push(struct pack *pack, u32 bytes)
     return ptr;
 }
 static inline void *pack_push_data(struct pack *pack, const void *data,
-                                     u32 count, u32 size)
+                                     u32 bucket_count, u32 size)
 {
-    u32 bytes = count * size;
+    u32 bytes = bucket_count * size;
     void *ptr = pack_push(pack, bytes);
     memcpy(ptr, data, bytes);
     return ptr;
@@ -40,7 +40,7 @@ static inline void *pack_push_str(struct pack *pack, const char *str)
 #define push_struct(pack, type) ((type *)pack_push(pack, sizeof(type)))
 #define push_bytes(pack, bytes) (pack_push(pack, bytes))
 #define push_string(pack, str) (pack_push_str(pack, str))
-#define push_data(pack, data, count, size) (pack_push_data(pack, data, count, size))
+#define push_data(pack, data, bucket_count, size) (pack_push_data(pack, data, bucket_count, size))
 
 static inline void *pack_pop(struct pack *pack, u32 id)
 {

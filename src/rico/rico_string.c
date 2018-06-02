@@ -8,26 +8,19 @@ static void string_delete(struct RICO_string *str)
 
     if (str->slot != STR_SLOT_DYNAMIC)
     {
-        // Look for slot string and delete it
-        hashtable_delete(&global_string_slots, str->slot);
+        // Remove from slot table
+        global_string_slots[str->slot] = 0;
     }
 
     pack_delete(str->object_id);
 }
-static bool string_free_slot(enum RICO_string_slot slot)
+static void string_free_slot(enum RICO_string_slot slot)
 {
-    if (slot != STR_SLOT_DYNAMIC)
+    if (global_string_slots[slot])
     {
-        // Look for previous slot string and delete it
-        pkid id = (pkid)hashtable_search(&global_string_slots, slot);
-        if (id)
-        {
-            pack_delete(id);
-            return true;
-        }
+        pack_delete(global_string_slots[slot]);
+        global_string_slots[slot] = 0;
     }
-
-    return false;
 }
 // TODO: Lifespan objects shouldn't be string-specific; refactor this logic out
 //       into something more relevant, e.g. an object delete queue, sorted by

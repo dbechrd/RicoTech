@@ -37,8 +37,9 @@ typedef double r64;
 
 // Enums generators
 #define GEN_LIST(e, ...) e,
+#define GEN_LIST_VALUES(e, val) e = val,
 #define GEN_STRING(e, ...) #e,
-#define GEN_VALUE(e, str) str,
+#define GEN_STRING_VALUES(e, str) str,
 
 // Useful macros
 #define UNUSED(x) ((void)x)

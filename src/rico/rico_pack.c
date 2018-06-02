@@ -611,7 +611,7 @@ extern int RICO_pack_save_as(u32 pack_id, const char *filename, bool shrink)
 
         if (shrink)
         {
-            // Restore actual blob count / buffer size in memory
+            // Restore actual blob bucket_count / buffer size in memory
             pack->buffer_size = buffer_size;
         }
     }
@@ -906,7 +906,7 @@ extern pkid RICO_load_string(u32 pack_id, enum RICO_string_slot slot, float x,
     // Store in slot table if not dynamic
     if (str->slot != STR_SLOT_DYNAMIC)
     {
-        hashtable_insert(&global_string_slots, str->slot, (void *)str->uid.pkid);
+        global_string_slots[str->slot] = str->uid.pkid;
     }
 
     pkid pkid = str->uid.pkid;
@@ -919,7 +919,7 @@ extern int RICO_load_obj_file(u32 pack_id, const char *filename,
     enum RICO_error err;
     u32 last_mesh_id = 0;
 
-    // TODO: Colossal waste of memory, just preprocess the file and count them!
+    // TODO: Colossal waste of memory, just preprocess the file and bucket_count them!
     struct vec3 *positions = calloc(MESH_VERTICES_MAX, sizeof(*positions));
     struct vec2 *texcoords = calloc(MESH_VERTICES_MAX, sizeof(*texcoords));
     struct vec3 *normals = calloc(MESH_VERTICES_MAX, sizeof(*normals));

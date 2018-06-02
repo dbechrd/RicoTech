@@ -12,7 +12,7 @@ struct RICO_string
 };
 
 static void string_delete(struct RICO_string *str);
-static bool string_free_slot(enum RICO_string_slot slot);
+static void string_free_slot(enum RICO_string_slot slot);
 static void string_update();
 
 #endif

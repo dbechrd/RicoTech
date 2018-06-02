@@ -37,7 +37,9 @@ static void test_geom()
 }
 static void test_hashtable()
 {
-    struct dlb_hash *table = &global_textures;
+    struct dlb_hash table_;
+    struct dlb_hash *table = &table_;
+    hashtable_init(table, "test table 1", 1, 8);
 
     int data = 123;
 
@@ -53,10 +55,23 @@ static void test_hashtable()
 
     pkid key_id = 12345;
     hashtable_insert(table, key_id, &data);
+    hashtable_insert(table, key_id + 1, &data);
+    hashtable_insert(table, key_id + 2, &data);
+    hashtable_insert(table, key_id + 3, &data);
 
     int *lookup_uid = hashtable_search(table, key_id);
     RICO_ASSERT(*lookup_uid == data);
+    int *lookup_uid1 = hashtable_search(table, key_id + 1);
+    RICO_ASSERT(*lookup_uid1 == data);
+    int *lookup_uid2 = hashtable_search(table, key_id + 2);
+    RICO_ASSERT(*lookup_uid2 == data);
+    int *lookup_uid3 = hashtable_search(table, key_id + 3);
+    RICO_ASSERT(*lookup_uid3 == data);
+
     RICO_ASSERT(hashtable_delete(table, key_id));
+    RICO_ASSERT(hashtable_delete(table, key_id + 1));
+    RICO_ASSERT(hashtable_delete(table, key_id + 2));
+    RICO_ASSERT(hashtable_delete(table, key_id + 3));
 }
 static void test_ndc_macros()
 {

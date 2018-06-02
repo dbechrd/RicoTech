@@ -7,7 +7,7 @@ struct regularpoly
     GLfloat radius;
 
     struct vec3 *vertices;
-    unsigned int count;
+    unsigned int bucket_count;
     GLuint vao;
     bool dirty_vao;
 };

@@ -1,7 +1,7 @@
 #ifndef DLB_HASH_H
 #define DLB_HASH_H
 
-// S = "slot" (struct dlb_hash_kv, a key/value bucket)
+// S = "slot" (struct dlb_hash_entry, a key/value bucket)
 // S0 = First bucket, w/ linked list which points to tail
 // S0[1] = Second element of slot 0's chain (first in external chain)
 //
@@ -13,19 +13,18 @@
 //      \-----------------------------------------------/
 
 // Key/value slot (a.k.a. "bucket")
-struct dlb_hash_kv
+struct dlb_hash_entry
 {
     u32 key;
     void *value;
-    struct dlb_hash_kv *next;
 };
 
 struct dlb_hash
 {
     const char *name;
-    u32 count;
-    // TODO: Replace linear search/insert with internal chaining
-    struct dlb_hash_kv *slots;
+    u32 bucket_count;
+    u32 chain_length;
+    struct dlb_hash_entry *buckets;
 };
 
 static inline u32 hash_u32(u32 key)
@@ -42,38 +41,22 @@ static inline u32 hash_string(u32 len, const void *str)
     return hash;
 }
 
-static void hashtable_init(struct dlb_hash *table, const char *name,
-                           u32 count, u32 chain_length)
+static inline struct dlb_hash_entry *chains(struct dlb_hash *table)
 {
+    return table->buckets + table->bucket_count;
+}
+
+static void hashtable_init(struct dlb_hash *table, const char *name,
+                           u32 bucket_count, u32 chain_length)
+{
+    RICO_ASSERT(bucket_count);
+    RICO_ASSERT(chain_length >= 2);
+
     table->name = name;
-    table->count = count;
-    table->slots = calloc(count * chain_length, sizeof(table->slots[0]));
-
-    // Chains are stored at end of hash table memory:
-    // Hash table        | Chains (kv[0][1] == kv[0].next)
-    // kv[0] kv[1] kv[2] | kv[0][1] kv[0][2] ... kv[1][1] kv[1][2] ...
-    struct dlb_hash_kv *chains = table->slots + count;
-    struct dlb_hash_kv *kv;
-    for (u32 slot = 0; slot < count; ++slot)
-    {
-        // Find start of this slot's chain tail
-        kv = chains + (slot * (chain_length - 1));
-        for (u32 i = 0; i < chain_length - 2; ++i)
-        {
-            // DEBUG: Delete me
-            //kv->key = slot;
-            //kv->value = (void *)(i + 1);
-
-            kv->next = kv + 1;
-            kv = kv->next;
-        }
-
-        // DEBUG: Delete me
-        //kv->key = slot;
-        //kv->value = (void *)(chain_length - 1);
-
-        kv->next = 0;
-    }
+    table->bucket_count = bucket_count;
+    table->chain_length = chain_length;
+    table->buckets = calloc(bucket_count * (1 + chain_length),
+                            sizeof(table->buckets[0]));
 
 #if RICO_DEBUG_HASH
     printf("[hash][init] %s\n", table->hnd.name);
@@ -86,73 +69,117 @@ void hashtable_free(struct dlb_hash *table)
     printf("[hash][free] %s\n", table->hnd.name);
 #endif
 
-    free(table->slots);
+    free(table->buckets);
 }
 
 void *hashtable_search(struct dlb_hash *table, u32 key)
 {
+    RICO_ASSERT(key);
     u32 hash = hash_u32(key);
-    u32 index = hash % table->count;
+    u32 index = hash % table->bucket_count;
 
-    struct dlb_hash_kv *kv = &table->slots[index];
-    while (kv && kv->key != key)
+    // Check if bucket empty
+    if (!table->buckets[index].key)
     {
-        kv = kv->next;
+        return NULL;
     }
 
-    return kv ? kv->value : NULL;
+    // Check bucket head
+    if (table->buckets[index].key == key)
+    {
+        return table->buckets[index].value;
+    }
+
+    u32 i = 0;
+    struct dlb_hash_entry *entry = chains(table);
+    while (i++ < table->chain_length && entry->key && entry->key != key)
+    {
+        entry++;
+    }
+
+    if (i < table->chain_length && entry->key)
+    {
+        return entry->value;
+    }
+    return NULL;
 }
 
 bool hashtable_insert(struct dlb_hash *table, u32 key, void *value)
 {
+    RICO_ASSERT(key);
     u32 hash = hash_u32(key);
-    u32 index = hash % table->count;
+    u32 index = hash % table->bucket_count;
 
-    struct dlb_hash_kv *kv = &table->slots[index];
-    while (kv && kv->key != key)
+    // Prevent dupe keys
+    RICO_ASSERT(table->buckets[index].key != key);
+
+    // Check bucket head
+    if (!table->buckets[index].key)
     {
-        kv = kv->next;
+        table->buckets[index].key = key;
+        table->buckets[index].value = value;
+        return true;
     }
 
-    // Enforce unique key constraint
-    RICO_ASSERT(!(kv && kv->key == key));
-
-    if (kv)
+    u32 i = 0;
+    struct dlb_hash_entry *entry = chains(table);
+    while (i++ < table->chain_length && entry->key)
     {
-        kv->key = key;
-        kv->value = value;
+        RICO_ASSERT(entry->key != key);  // Prevent dupe keys
+        entry++;
     }
 
-    return kv != NULL;
+    if (i < table->chain_length)
+    {
+        entry->key = key;
+        entry->value = value;
+        return true;
+    }
+    return false;
 }
 static bool hashtable_delete(struct dlb_hash *table, u32 key)
 {
+    RICO_ASSERT(key);
     u32 hash = hash_u32(key);
-    u32 index = hash % table->count;
+    u32 index = hash % table->bucket_count;
 
-    struct dlb_hash_kv *kv = &table->slots[index];
-    while (kv && kv->key != key)
+    // Check if bucket empty
+    if (!table->buckets[index].key)
     {
-        kv = kv->next;
+        return false;
     }
 
-    if (kv)
-    {
-        kv->key = 0;
-        kv->value = 0;
-    }
-    bool found = kv != NULL;
+    struct dlb_hash_entry *prev_entry = chains(table);
+    struct dlb_hash_entry *entry = prev_entry + 1;
+    bool found = false;
 
-    // Keep kv tightly packed
-    while (kv && kv->next)
+    // Check bucket head
+    if (table->buckets[index].key == key)
     {
-        kv->key = kv->next->key;
-        kv->value = kv->next->value;
+        table->buckets[index].key = prev_entry->key;
+        table->buckets[index].value = prev_entry->value;
+        found = true;
     }
-    if (kv)
+
+    // Keep chain tightly packed
+    u32 i = 0;
+    while (i++ < table->chain_length)
     {
-        kv->key = 0;
-        kv->value = 0;
+        if (found)
+        {
+            prev_entry->key = entry->key;
+            prev_entry->value = entry->value;
+        }
+        else
+        {
+            found = entry->key == key;
+        }
+
+        // The rest of the list is empty, skip it
+        if (!entry->key) break;
+
+        prev_entry++;
+        entry++;
     }
 
     return found;

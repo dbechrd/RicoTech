@@ -174,7 +174,7 @@ static void pool_print_handles(struct rico_pool *pool)
     }
 
     // Print pool
-    u32 count = 0;
+    u32 bucket_count = 0;
     u32 free = pool->next_free;
     for (u32 i = 0; i < pool->block_count; i++)
     {
@@ -185,8 +185,8 @@ static void pool_print_handles(struct rico_pool *pool)
         }
 
         printf("%u", pool->tags[i].block);
-        count++;
-        if (count == pool->blocks_used) break;
+        bucket_count++;
+        if (bucket_count == pool->blocks_used) break;
         printf(" ");
     }
     printf("]\n");
@@ -368,10 +368,10 @@ SERIAL(pool_serialize_0)
     enum rico_error err;
 
     const struct rico_pool *pool = handle;
-    fwrite(&pool->count,        sizeof(pool->count),        1, file->fs);
+    fwrite(&pool->bucket_count,        sizeof(pool->bucket_count),        1, file->fs);
     fwrite(&pool->size,         sizeof(pool->size),         1, file->fs);
     fwrite(&pool->active,       sizeof(pool->active),       1, file->fs);
-    fwrite(pool->handles, sizeof(*pool->handles), pool->count, file->fs);
+    fwrite(pool->handles, sizeof(*pool->handles), pool->bucket_count, file->fs);
     for (u32 i = 0; i < pool->active; ++i)
     {
         err = rico_serialize(pool_read(pool, pool->handles[i]), file);
@@ -390,24 +390,24 @@ DESERIAL(pool_deserialize_0)
     enum rico_error err;
 
     struct rico_pool *pool = *_handle;
-    fread(&pool->count,        sizeof(pool->count),        1, file->fs);
+    fread(&pool->bucket_count,        sizeof(pool->bucket_count),        1, file->fs);
     fread(&pool->size,         sizeof(pool->size),         1, file->fs);
     fread(&pool->active,       sizeof(pool->active),       1, file->fs);
 
-    if(pool->count > 0)
+    if(pool->bucket_count > 0)
     {
-        pool->handles = calloc(pool->count, sizeof(u32));
+        pool->handles = calloc(pool->bucket_count, sizeof(u32));
         if (!pool->handles)
             return RICO_ERROR(ERR_BAD_ALLOC,
                               "Failed to alloc handles for pool %s",
                               pool->name);
 
-        pool->data = calloc(pool->count, pool->size);
+        pool->data = calloc(pool->bucket_count, pool->size);
         if (!pool->data)
             return RICO_ERROR(ERR_BAD_ALLOC, "Failed to alloc data for pool %s",
                               pool->name);
 
-        fread(pool->handles, sizeof(*pool->handles), pool->count, file->fs);
+        fread(pool->handles, sizeof(*pool->handles), pool->bucket_count, file->fs);
         for (u32 i = 0; i < pool->active; ++i)
         {
             err = rico_deserialize(pool_read(pool, pool->handles[i]), file);
