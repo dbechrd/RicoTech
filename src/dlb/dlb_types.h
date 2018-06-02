@@ -47,6 +47,7 @@ typedef double r64;
 #define ABS(x) (((x) > 0) ? (x) : -(x))
 #define ARRAY_COUNT(a) (sizeof(a) / sizeof(a[0]))
 #define SIZEOF_MEMBER(type, member) sizeof(((type *)0)->member)
+#define STRING(s) (#s)
 
 #define DLB_ASSERT_HANDLER(name) \
     void name(const char *expr, const char *file, u32 line)
