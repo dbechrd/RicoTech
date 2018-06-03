@@ -262,7 +262,7 @@ static void camera_render(struct RICO_camera *camera)
     RICO_prim_draw_line(&camera->pos, &y, &COLOR_GREEN);
 #else
     RICO_prim_draw_line2d(0.0f, 0.0f, SCREEN_W(10), 0.0f, &COLOR_RED);
-    RICO_prim_draw_line2d(0.0f, 0.0f, 0.0f, SCREEN_H(10), &COLOR_GREEN);
+    RICO_prim_draw_line2d(0.0f, 0.0f, 0.0f, SCREEN_H(-10), &COLOR_GREEN);
 #endif
 }
 extern void RICO_camera_fwd(struct vec3 *_fwd, struct RICO_camera *camera)

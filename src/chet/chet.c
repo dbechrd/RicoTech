@@ -619,9 +619,9 @@ void game_render_ui()
     ui_stack_ptr = ui_stack;
 
     struct RICO_ui_hud *hud = RICO_ui_push_hud(
-        &RECT(8, 4, 0, 0),
-        &RECT_ZERO,
-        &RECT(2, 2, 2, 2)
+        &VEC2I(0, 0),
+        &RECT1(2),
+        &RECT1(2)
     );
 
     int buttons = 10;
@@ -629,13 +629,13 @@ void game_render_ui()
     {
         struct RICO_ui_label *label = RICO_ui_push_label(
             &hud->element,
-            &RECT(0, 0, 32, 32),
-            &RECT(4, 4, 4, 4),
+            &VEC2I(32, 32),
+            &RECT1(2),
             &RECT_ZERO
         );
     }
 
-    RICO_ui_draw(&hud->element);
+    RICO_ui_draw(&hud->element, 0, 0);
 
     //RICO_ui_push_label(hud, 0.2f, 0.2f, 0.6f, 0.6f);
 }

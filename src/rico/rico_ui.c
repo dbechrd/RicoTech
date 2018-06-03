@@ -8,6 +8,8 @@ enum ui_rect_fill_mode
     UI_RECT_OUTLINE
 };
 
+static void ui_draw_element(struct RICO_ui_element *element, s32 x, s32 y);
+
 static void rico_ui_init()
 {
     ui_stack_ptr = ui_stack;
@@ -53,53 +55,15 @@ static void ui_draw_rect(const struct rect *rect,
     }
 }
 
-static void ui_element_set_width(struct RICO_ui_element *element, s32 w)
-{
-    // HUD is root element; it has no parent
-    if (element->type == RICO_UI_ELEMENT_HUD)
-        return;
-
-    // Already big enough to contain children
-    if (w < element->location.w)
-        return;
-
-    // Resize element, and parent(s) if necessary
-    element->location.w = w;
-    if (element->parent)
-    {
-        ui_element_set_width(element->parent, element->margin.left +
-                             element->location.w + element->margin.right);
-    }
-}
-
-static void ui_element_set_height(struct RICO_ui_element *element, s32 h)
-{
-    // HUD is root element; it has no parent
-    if (element->type == RICO_UI_ELEMENT_HUD)
-        return;
-
-    // Already big enough to contain children
-    if (h < element->location.h)
-        return;
-
-    // Resize element, and parent(s) if necessary
-    element->location.h = h;
-    if (element->parent)
-    {
-        ui_element_set_height(element->parent, element->margin.top +
-                              element->location.h + element->margin.bottom);
-    }
-}
-
 static void *ui_push_element(u32 bytes, enum RICO_ui_element_type type,
-                             const struct rect *location,
+                             const struct vec2i *size,
                              const struct rect *margin,
                              const struct rect *padding,
                              struct RICO_ui_element *parent)
 {
     struct RICO_ui_element *element = ui_stack_push(bytes);
     element->type = type;
-    element->location = RECT(location->x, location->y, 0, 0);
+    element->size = *size;
     element->margin = *margin;
     element->padding = *padding;
     element->parent = parent;
@@ -113,90 +77,158 @@ static void *ui_push_element(u32 bytes, enum RICO_ui_element_type type,
         else
         {
             element->parent->last_child->next = element;
+            element->prev = element->parent->last_child;
         }
         element->parent->last_child = element;
     }
 
-    ui_element_set_width(element, location->w);
-    ui_element_set_height(element, location->h);
-
     return element;
 }
 
-extern struct RICO_ui_hud *RICO_ui_push_hud(const struct rect *location,
+extern struct RICO_ui_hud *RICO_ui_push_hud(const struct vec2i *size,
                                             const struct rect *margin,
                                             const struct rect *padding)
 {
     return ui_push_element(sizeof(struct RICO_ui_hud), RICO_UI_ELEMENT_HUD,
-                           location, margin, padding, NULL);
+                           size, margin, padding, NULL);
 }
 
 extern struct RICO_ui_row *RICO_ui_push_row(struct RICO_ui_element *parent,
-                                            const struct rect *location,
+                                            const struct vec2i *size,
                                             const struct rect *margin,
                                             const struct rect *padding)
 {
     return ui_push_element(sizeof(struct RICO_ui_row), RICO_UI_ELEMENT_ROW,
-                           location, margin, padding, parent);
+                           size, margin, padding, parent);
 }
 
 extern struct RICO_ui_label *RICO_ui_push_label(struct RICO_ui_element *parent,
-                                                const struct rect *location,
+                                                const struct vec2i *size,
                                                 const struct rect *margin,
                                                 const struct rect *padding)
 {
     return ui_push_element(sizeof(struct RICO_ui_label), RICO_UI_ELEMENT_LABEL,
-                           location, margin, padding, parent);
+                           size, margin, padding, parent);
 }
 
-static void ui_draw_hud(struct RICO_ui_hud *hud)
+static void ui_layout_element(struct RICO_ui_element *element, s32 x, s32 y)
 {
-    ui_draw_rect(&hud->element.location, UI_RECT_FILLED, &COLOR_RED);
+    struct rect *rect = &element->rect;
+    rect->x = x + element->margin.left;
+    rect->y = y + element->margin.top;
+    rect->w = element->size.w;
+    rect->h = element->size.h;
+
+    s32 min_width = 0;
+    s32 min_height = 0;
+
+    struct RICO_ui_element *child = element->first_child;
+    if (child)
+    {
+        s32 current_x = rect->x + element->padding.left;
+        s32 current_y = rect->y + element->padding.top;
+        s32 child_w;
+        s32 child_h;
+
+        while (child)
+        {
+            // Calculate child bounds
+            ui_layout_element(child, current_x, current_y);
+
+            child_w = child->margin.left + child->rect.w + child->margin.right;
+            child_h = child->margin.top + child->rect.h + child->margin.bottom;
+        
+            current_x += child_w;
+            min_width += child_w;
+        
+            // TODO: Wrapping (check max_width, increment y by margins+height)
+            //current_y += child_h;
+            //min_height += child_h;
+
+            if (child_h > min_height)
+                min_height = child_h;
+
+            child = child->next;
+        }
+    }
+
+    min_width += element->padding.left + element->padding.right;
+    min_height += element->padding.top + element->padding.bottom;
+
+    // Expand region by child's margins
+    if (min_width > rect->w)
+    {
+        rect->w = min_width;
+    }
+    if (min_height > rect->h)
+    {
+        rect->h = min_height;
+    }
+}
+
+static void ui_draw_hud(struct RICO_ui_hud *hud, s32 x, s32 y)
+{
+    struct rect rect = hud->element.rect;
+    rect.x += x;
+    rect.y += y;
+    ui_draw_rect(&rect, UI_RECT_FILLED, &COLOR_DARK_RED);
 
     struct RICO_ui_element *child = hud->element.first_child;
     while (child)
     {
-        RICO_ui_draw(child);
+        ui_draw_element(child, rect.x, rect.y);
         child = child->next;
     }
 }
 
-static void ui_draw_row(struct RICO_ui_row *row)
+static void ui_draw_row(struct RICO_ui_row *row, s32 x, s32 y)
 {
-    ui_draw_rect(&row->element.location, UI_RECT_FILLED, &COLOR_GREEN);
+    struct rect rect = row->element.rect;
+    rect.x += x;
+    rect.y += y;
+    ui_draw_rect(&row->element.rect, UI_RECT_FILLED, &COLOR_DARK_GREEN);
 
     struct RICO_ui_element *child = row->element.first_child;
     while (child)
     {
-        RICO_ui_draw(child);
+        ui_draw_element(child, rect.x, rect.y);
         child = child->next;
     }
 }
 
-static void ui_draw_label(struct RICO_ui_label *label)
+static void ui_draw_label(struct RICO_ui_label *label, s32 x, s32 y)
 {
-    ui_draw_rect(&label->element.location, UI_RECT_FILLED, &COLOR_BLUE);
+    struct rect rect = label->element.rect;
+    rect.x += x;
+    rect.y += y;
+    ui_draw_rect(&label->element.rect, UI_RECT_FILLED, &COLOR_DARK_YELLOW);
 
     struct RICO_ui_element *child = label->element.first_child;
     while (child)
     {
-        RICO_ui_draw(child);
+        ui_draw_element(child, rect.x, rect.y);
         child = child->next;
     }
 }
 
-extern void RICO_ui_draw(struct RICO_ui_element *element)
+static void ui_draw_element(struct RICO_ui_element *element, s32 x, s32 y)
 {
     switch (element->type)
     {
         case RICO_UI_ELEMENT_HUD:
-            ui_draw_hud((struct RICO_ui_hud *)element);
+            ui_draw_hud((struct RICO_ui_hud *)element, x, y);
             break;
         case RICO_UI_ELEMENT_ROW:
-            ui_draw_row((struct RICO_ui_row *)element);
+            ui_draw_row((struct RICO_ui_row *)element, x, y);
             break;
         case RICO_UI_ELEMENT_LABEL:
-            ui_draw_label((struct RICO_ui_label *)element);
+            ui_draw_label((struct RICO_ui_label *)element, x, y);
             break;
     }
+}
+
+extern void RICO_ui_draw(struct RICO_ui_element *element, s32 x, s32 y)
+{
+    ui_layout_element(element, x, y);
+    ui_draw_element(element, x, y);
 }

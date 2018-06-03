@@ -131,6 +131,8 @@ struct quat
 #define VEC4(x, y, z, w) ((const struct vec4) {{{ x, y, z, w }}})
 #define QUAT(w, x, y, z) ((const struct quat) { w, {{ x, y, z }}})
 #else
+#define RECT1(x)         ((const struct rect) { x, x, x, x })
+#define RECT2(x, y)      ((const struct rect) { x, y, x, y })
 #define RECT(x, y, w, h) ((const struct rect) { x, y, w, h })
 #define VEC2F(x, y)      ((const struct vec2f) { x, y })
 #define VEC2I(x, y)      ((const struct vec2i) { x, y })
