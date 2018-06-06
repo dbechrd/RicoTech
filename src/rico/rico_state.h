@@ -185,6 +185,7 @@ extern void RICO_render_ui();
 extern void RICO_render();
 extern void RICO_frame_swap();
 extern bool RICO_quit();
+extern void RICO_mouse_coords(u32 *x, u32 *y);
 extern u32 RICO_key_event(u32 *action);
 extern void RICO_bind_action(u32 action, struct RICO_keychord chord);
 extern bool RICO_mouse_raycast(pkid *_obj_id, float *_dist);

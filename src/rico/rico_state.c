@@ -1089,6 +1089,10 @@ extern bool RICO_quit()
 {
     return state == STATE_ENGINE_SHUTDOWN;
 }
+extern void RICO_mouse_coords(u32 *x, u32 *y)
+{
+    SDL_GetMouseState(x, y);
+}
 extern u32 RICO_key_event(u32 *action)
 {
     bool has_action = false;

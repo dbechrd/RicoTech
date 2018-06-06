@@ -27,6 +27,8 @@ enum audio_type
 
 //-------------------------------------------------------------------
 
+static u32 mouse_x, mouse_y;
+
 static struct game_panel panel_1;
 
 static struct RICO_audio_buffer audio_buffers[AUDIO_COUNT];
@@ -618,31 +620,41 @@ void game_render_ui()
     // TODO: Reset this in the engine
     ui_stack_ptr = ui_stack;
 
-    struct RICO_ui_hud *hud = RICO_ui_push_hud(
-        &VEC2I(0, 0),
-        &RECT1(2),
-        &RECT1(2)
-    );
+    struct RICO_ui_element *hud;
+    struct RICO_ui_element *row;
+    struct RICO_ui_element *label[10];
 
-    int buttons = 10;
-    for (int i = 0; i < buttons; ++i)
+    hud = (struct RICO_ui_element *)RICO_ui_push_hud(&VEC2I(0, 0), &RECT1(2), &RECT1(2));
+    for (int i = 0; i < 1; ++i)
     {
-        struct RICO_ui_label *label = RICO_ui_push_label(
-            &hud->element,
-            &VEC2I(32, 32),
-            &RECT1(2),
-            &RECT_ZERO
-        );
+        row = (struct RICO_ui_element *)RICO_ui_push_row(hud, &VEC2I(0, 0), &RECT1(2), &RECT1(2));
+        for (int i = 0; i < ARRAY_COUNT(label); ++i)
+        {
+            label[i] = (struct RICO_ui_element *)RICO_ui_push_label(row, &VEC2I(32, 32), &RECT1(2), &RECT_ZERO);
+        }
     }
 
-    RICO_ui_draw(&hud->element, 0, 0);
+    //mouse_x
+    RICO_ui_draw(hud, 0, 0, mouse_x, mouse_y);
+    //RICO_ui_draw(hud, 0, 0, mouse_x, SCREEN_HEIGHT);
 
-    //RICO_ui_push_label(hud, 0.2f, 0.2f, 0.6f, 0.6f);
+    //DLB_ASSERT(hud->rect.x == 2);
+    //DLB_ASSERT(hud->rect.y == 2);
+    //DLB_ASSERT(hud->rect.w == 120);
+    //DLB_ASSERT(hud->rect.h == 48);
+    //DLB_ASSERT(row->rect.x == 6);
+    //DLB_ASSERT(row->rect.y == 6);
+    //DLB_ASSERT(row->rect.w == 112);
+    //DLB_ASSERT(row->rect.h == 40);
+    //DLB_ASSERT(label[0]->rect.x == 10);
+    //DLB_ASSERT(label[0]->rect.y == 10);
+    //DLB_ASSERT(label[0]->rect.w == 32);
+    //DLB_ASSERT(label[0]->rect.h == 32);
 }
 
 int main(int argc, char **argv)
 {
-    UNUSED(argc);
+    UNUSED(argc); 
     UNUSED(argv);
 
     UNUSED(panel_1);
@@ -687,6 +699,8 @@ int main(int argc, char **argv)
 
     while (!RICO_quit())
     {
+        RICO_mouse_coords(&mouse_x, &mouse_y);
+
         u32 action;
         while (RICO_key_event(&action))
         {

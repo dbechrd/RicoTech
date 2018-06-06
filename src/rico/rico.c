@@ -188,9 +188,10 @@ static void init_opengl()
 #endif
 
     // Depth buffer
-    glDepthFunc(GL_LEQUAL);  // Default GL_LESS.
-    glEnable(GL_DEPTH_TEST); // Default off.
-    //glEnable(GL_CULL_FACE); // Backface culling
+    glDepthFunc(GL_LEQUAL);  // Default GL_LESS
+    glEnable(GL_DEPTH_TEST); // Default off
+    // TODO: Fix font meshes and turn culling back on
+    //glEnable(GL_CULL_FACE);  // Backface culling
     //glCullFace(GL_BACK);
 
     // Multi-sampling

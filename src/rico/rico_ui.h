@@ -61,6 +61,7 @@ extern struct RICO_ui_label *RICO_ui_push_label(struct RICO_ui_element *parent,
                                                 const struct vec2i *size,
                                                 const struct rect *margin,
                                                 const struct rect *padding);
-extern void RICO_ui_draw(struct RICO_ui_element *element, s32 x, s32 y);
+extern void RICO_ui_draw(struct RICO_ui_element *element, s32 x, s32 y,
+                         s32 max_w, s32 max_h);
 
 #endif
