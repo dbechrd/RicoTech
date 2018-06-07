@@ -19,28 +19,28 @@ static inline void *pack_push(struct pack *pack, u32 bytes)
     memset(ptr, 0, bytes); // Re-zero memory
 #endif
     pack->buffer_used += bytes;
-    pack->index[pack->lookup[pack->blob_current_id]].size += bytes;
+    pack->index[pack->lookup[pack->blob_current_id]].min_size += bytes;
     return ptr;
 }
 static inline void *pack_push_data(struct pack *pack, const void *data,
-                                     u32 bucket_count, u32 size)
+                                     u32 bucket_count, u32 min_size)
 {
-    u32 bytes = bucket_count * size;
+    u32 bytes = bucket_count * min_size;
     void *ptr = pack_push(pack, bytes);
     memcpy(ptr, data, bytes);
     return ptr;
 }
 static inline void *pack_push_str(struct pack *pack, const char *str)
 {
-    u32 size = (u32)strlen(str) + 1;
-    void *ptr = pack_push(pack, size);
-    memcpy(ptr, str, size);
+    u32 min_size = (u32)strlen(str) + 1;
+    void *ptr = pack_push(pack, min_size);
+    memcpy(ptr, str, min_size);
     return ptr;
 }
 #define push_struct(pack, type) ((type *)pack_push(pack, sizeof(type)))
 #define push_bytes(pack, bytes) (pack_push(pack, bytes))
 #define push_string(pack, str) (pack_push_str(pack, str))
-#define push_data(pack, data, bucket_count, size) (pack_push_data(pack, data, bucket_count, size))
+#define push_data(pack, data, bucket_count, min_size) (pack_push_data(pack, data, bucket_count, min_size))
 
 static inline void *pack_pop(struct pack *pack, u32 id)
 {

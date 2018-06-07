@@ -218,8 +218,8 @@ extern int RICO_update()
     // Resize OpenGL viewport
     else if (event.type == SDL_WINDOWEVENT_SIZE)
     {
-    glViewport(0, 0, event.window.event.size.width,
-    event.window.event.size.height);
+    glViewport(0, 0, event.window.event.min_size.width,
+    event.window.event.min_size.height);
     *handled = true;
     }
     */

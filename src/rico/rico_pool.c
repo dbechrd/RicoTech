@@ -369,7 +369,7 @@ SERIAL(pool_serialize_0)
 
     const struct rico_pool *pool = handle;
     fwrite(&pool->bucket_count,        sizeof(pool->bucket_count),        1, file->fs);
-    fwrite(&pool->size,         sizeof(pool->size),         1, file->fs);
+    fwrite(&pool->min_size,         sizeof(pool->min_size),         1, file->fs);
     fwrite(&pool->active,       sizeof(pool->active),       1, file->fs);
     fwrite(pool->handles, sizeof(*pool->handles), pool->bucket_count, file->fs);
     for (u32 i = 0; i < pool->active; ++i)
@@ -391,7 +391,7 @@ DESERIAL(pool_deserialize_0)
 
     struct rico_pool *pool = *_handle;
     fread(&pool->bucket_count,        sizeof(pool->bucket_count),        1, file->fs);
-    fread(&pool->size,         sizeof(pool->size),         1, file->fs);
+    fread(&pool->min_size,         sizeof(pool->min_size),         1, file->fs);
     fread(&pool->active,       sizeof(pool->active),       1, file->fs);
 
     if(pool->bucket_count > 0)
@@ -402,7 +402,7 @@ DESERIAL(pool_deserialize_0)
                               "Failed to alloc handles for pool %s",
                               pool->name);
 
-        pool->data = calloc(pool->bucket_count, pool->size);
+        pool->data = calloc(pool->bucket_count, pool->min_size);
         if (!pool->data)
             return RICO_ERROR(ERR_BAD_ALLOC, "Failed to alloc data for pool %s",
                               pool->name);

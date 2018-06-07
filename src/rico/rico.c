@@ -215,7 +215,7 @@ int RICO_init()
     printf("[MAIN][init] Initializing third party\n");
     printf("------------------------------------------------------------\n");
     //size_t cacheSize = CacheLineSize();
-    //printf("Cache line size: %d bytes\n", cacheSize);
+    //printf("Cache line min_size: %d bytes\n", cacheSize);
     init_stb();
     init_murmurhash3();
 

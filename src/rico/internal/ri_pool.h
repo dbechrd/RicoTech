@@ -82,7 +82,7 @@ static inline void *pool_read(const struct rico_pool *pool, u32 value)
     RICO_ASSERT(value <= pool->bucket_count);
 
     // Note: Handle values start at 1; 0 is reserved
-    return (void *)&((pool->data)[pool->size * (value - 1)]);
+    return (void *)&((pool->data)[pool->min_size * (value - 1)]);
 }
 #endif
 

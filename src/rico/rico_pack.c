@@ -19,13 +19,13 @@ static u32 perf_pack_tick_end;
 
 static void pack_compact_buffer(struct pack *pack);
 
-static void *blob_start(struct pack *pack, enum RICO_hnd_type type, u32 size,
+static void *blob_start(struct pack *pack, enum RICO_hnd_type type, u32 min_size,
                         const char *name)
 {
     RICO_ASSERT(pack->blob_current_id == 0);
     RICO_ASSERT(pack->blobs_used < pack->blob_count);
 
-    if (!size) size = RICO_hnd_type_size[type];
+    if (!min_size) min_size = RICO_hnd_type_size[type];
 
     // TODO: Free list instead of loop?
     // Find first available lookup id
@@ -44,11 +44,11 @@ static void *blob_start(struct pack *pack, enum RICO_hnd_type type, u32 size,
     pack->index[pack->blobs_used].type = type;
     pack->index[pack->blobs_used].name_hash = name_hash;
     pack->index[pack->blobs_used].offset = pack->buffer_used;
-    pack->index[pack->blobs_used].size = 0;
+    pack->index[pack->blobs_used].min_size = 0;
 
     pkid pkid = PKID_GENERATE(pack->id, id);
 
-    struct uid *uid = push_bytes(pack, size);
+    struct uid *uid = push_bytes(pack, min_size);
     uid->pkid = pkid;
     uid->type = type;
     memcpy(uid->name, name, MIN(sizeof(uid->name) - 1, dlb_strlen(name)));
@@ -70,19 +70,19 @@ static void blob_end(struct pack *pack)
 {
 	RICO_ASSERT(pack->blob_current_id);
 	RICO_ASSERT(pack->lookup[pack->blob_current_id] == pack->blobs_used);
-	u32 size = blob_offset(pack);
+	u32 min_size = blob_offset(pack);
 
 #if RICO_DEBUG_PACK
 	static u32 max_alloc = 0;
-	if (size > max_alloc)
+	if (min_size > max_alloc)
 	{
-		max_alloc = size;
+		max_alloc = min_size;
 		printf("[PERF][Pack] New max alloc for '%s': %u bytes\n", pack->name,
 			   max_alloc);
 	}
 #endif
 
-	pack->index[pack->blobs_used].size = size;
+	pack->index[pack->blobs_used].min_size = min_size;
 	pack->blobs_used++;
 	pack->blob_current_id = 0;
 
@@ -107,13 +107,13 @@ static void blob_error(struct pack *pack, u32 *pack_idx)
 static void null_blob(struct pack *pack)
 {
     push_string(pack, "[This page intentionally left blank]");
-    pack->index[0].size = pack->buffer_used;
+    pack->index[0].min_size = pack->buffer_used;
     pack->blobs_used++;
 }
 
 static void pack_expand(struct pack *pack)
 {
-    // TODO: Expand pack by min(size * 2, MAX_EXPAND)
+    // TODO: Expand pack by min(min_size * 2, MAX_EXPAND)
     UNUSED(pack);
 }
 static void pack_compact_buffer(struct pack *pack)
@@ -129,7 +129,7 @@ static void pack_compact_buffer(struct pack *pack)
 #endif
 
     // Skip NULL blob
-    u32 offset = pack->index[0].size;
+    u32 offset = pack->index[0].min_size;
 
     u32 index = 1;
     while (index < pack->blob_count && pack->index[index].type)
@@ -143,10 +143,10 @@ static void pack_compact_buffer(struct pack *pack)
         {
             memcpy(pack->buffer + offset,
                    pack->buffer + pack->index[index].offset,
-                   pack->index[index].size);
+                   pack->index[index].min_size);
             pack->index[index].offset = offset;
         }
-        offset += pack->index[index].size;
+        offset += pack->index[index].min_size;
         index++;
     }
     pack->buffer_used = offset;
@@ -611,7 +611,7 @@ extern int RICO_pack_save_as(u32 pack_id, const char *filename, bool shrink)
 
         if (shrink)
         {
-            // Restore actual blob bucket_count / buffer size in memory
+            // Restore actual blob bucket_count / buffer min_size in memory
             pack->buffer_size = buffer_size;
         }
     }
@@ -642,11 +642,11 @@ extern int RICO_pack_load(const char *filename, u32 *_pack)
         fread(&tmp_pack, 1, sizeof(tmp_pack), pack_file);
         rewind(pack_file);
 
-        u32 size = tmp_pack.data_offset + tmp_pack.buffer_size;
+        u32 min_size = tmp_pack.data_offset + tmp_pack.buffer_size;
         u32 size_on_disk = tmp_pack.data_offset + tmp_pack.buffer_used;
 
-        struct pack *pack = calloc(1, size);
-        u32 bytes_read = (u32)fread(pack, 1, size, pack_file);
+        struct pack *pack = calloc(1, min_size);
+        u32 bytes_read = (u32)fread(pack, 1, min_size, pack_file);
         fclose(pack_file);
         RICO_ASSERT(bytes_read == size_on_disk);
         RICO_ASSERT(pack->blob_current_id == 0); // If not zero, WTF??
@@ -683,10 +683,10 @@ extern void RICO_pack_free(u32 pack_id)
     free(packs[pack_id]);
     packs[pack_id] = 0;
 }
-extern pkid RICO_load_object(u32 pack_id, u32 type, u32 size, const char *name)
+extern pkid RICO_load_object(u32 pack_id, u32 type, u32 min_size, const char *name)
 {
     struct pack *pack = packs[pack_id];
-    struct RICO_object *obj = blob_start(pack, RICO_HND_OBJECT, size, name);
+    struct RICO_object *obj = blob_start(pack, RICO_HND_OBJECT, min_size, name);
     obj->type = type;
     obj->xform.position = VEC3_ZERO;
     obj->xform.orientation = QUAT_IDENT;

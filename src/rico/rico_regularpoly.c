@@ -42,7 +42,7 @@ static void rebuild_vao(struct regularpoly *poly)
 
     //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, poly_elements);
 
-    //(GLuint index, GLint size, GLenum type,
+    //(GLuint index, GLint min_size, GLenum type,
     // GLboolean normalized, GLsizei stride, const void *pointer);
     glVertexAttribPointer(regularpoly_program->prog_id, 4, GL_FLOAT,
                           GL_FALSE, 0, 0);

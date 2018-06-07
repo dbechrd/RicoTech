@@ -17,7 +17,7 @@ struct RICO_ui_element
 {
     enum RICO_ui_element_type type;
     
-    struct vec2i size;
+    struct vec2i min_size;
     struct rect margin;
     struct rect padding;
     struct rect rect;
@@ -50,18 +50,18 @@ struct RICO_ui_label
     pkid material_id;
 };
 
-extern struct RICO_ui_hud *RICO_ui_push_hud(const struct vec2i *size,
+extern struct RICO_ui_hud *RICO_ui_push_hud(const struct vec2i *min_size,
                                             const struct rect *margin,
                                             const struct rect *padding);
 extern struct RICO_ui_row *RICO_ui_push_row(struct RICO_ui_element *parent,
-                                            const struct vec2i *size,
+                                            const struct vec2i *min_size,
                                             const struct rect *margin,
                                             const struct rect *padding);
 extern struct RICO_ui_label *RICO_ui_push_label(struct RICO_ui_element *parent,
-                                                const struct vec2i *size,
+                                                const struct vec2i *min_size,
                                                 const struct rect *margin,
                                                 const struct rect *padding);
-extern void RICO_ui_draw(struct RICO_ui_element *element, s32 x, s32 y,
+extern bool RICO_ui_draw(struct RICO_ui_element *element, s32 x, s32 y,
                          s32 max_w, s32 max_h);
 
 #endif

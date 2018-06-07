@@ -624,18 +624,26 @@ void game_render_ui()
     struct RICO_ui_element *row;
     struct RICO_ui_element *label[10];
 
-    hud = (struct RICO_ui_element *)RICO_ui_push_hud(&VEC2I(0, 0), &RECT1(2), &RECT1(2));
+    hud = (struct RICO_ui_element *)RICO_ui_push_hud(&VEC2I(0, 0), &RECT1(0), &RECT1(0));
     for (int i = 0; i < 1; ++i)
     {
-        row = (struct RICO_ui_element *)RICO_ui_push_row(hud, &VEC2I(0, 0), &RECT1(2), &RECT1(2));
-        for (int i = 0; i < ARRAY_COUNT(label); ++i)
+        row = (struct RICO_ui_element *)RICO_ui_push_row(hud, &VEC2I(0, 0), &RECT1(4), &RECT1(4));
+        for (int j = 0; j < ARRAY_COUNT(label); ++j)
         {
-            label[i] = (struct RICO_ui_element *)RICO_ui_push_label(row, &VEC2I(32, 32), &RECT1(2), &RECT_ZERO);
+            label[j] = (struct RICO_ui_element *)RICO_ui_push_label(row, &VEC2I(32, 32), &RECT1(0), &RECT1(0));
         }
     }
 
-    //mouse_x
-    RICO_ui_draw(hud, 0, 0, mouse_x, mouse_y);
+    if (!RICO_ui_draw(hud, 0, 0, mouse_x, mouse_y))
+    //if (!RICO_ui_draw(hud, 0, 0, 400, 67))
+    {
+        float x = SCREEN_X(20);
+        float y = SCREEN_Y(20);
+        float w = SCREEN_W(10);
+        float h = SCREEN_H(10);
+        RICO_prim_draw_line2d(x, y, x + w, y + h, &COLOR_ORANGE);
+        RICO_prim_draw_line2d(x + w, y, x, y + h, &COLOR_ORANGE);
+    }
     //RICO_ui_draw(hud, 0, 0, mouse_x, SCREEN_HEIGHT);
 
     //DLB_ASSERT(hud->rect.x == 2);

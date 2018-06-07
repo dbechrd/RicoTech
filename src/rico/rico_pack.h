@@ -13,7 +13,7 @@ struct blob_index
     enum RICO_hnd_type type;
     u32 name_hash;
     u32 offset;
-    u32 size;
+    u32 min_size;
 };
 
 // Memory layout
@@ -85,7 +85,7 @@ extern int RICO_pack_save(u32 pack_id, bool shrink);
 extern int RICO_pack_save_as(u32 pack_id, const char *filename, bool shrink);
 extern int RICO_pack_load(const char *filename, u32 *_pack);
 extern void RICO_pack_free(u32 pack_id);
-extern pkid RICO_load_object(u32 pack_id, u32 type, u32 size, const char *name);
+extern pkid RICO_load_object(u32 pack_id, u32 type, u32 min_size, const char *name);
 extern pkid RICO_load_texture(u32 pack_id, const char *name, GLenum target,
                               u32 width, u32 height, u8 bpp, u8 *pixels);
 extern pkid RICO_load_texture_file(u32 pack_id, const char *name,

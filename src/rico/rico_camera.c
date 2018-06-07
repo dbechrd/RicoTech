@@ -160,7 +160,11 @@ static void camera_update(struct RICO_camera *camera, r64 sim_alpha)
     alListenerfv(AL_VELOCITY, (float *)&camera->vel);
 
 #if RICO_DEBUG_CAMERA
-	char buf[128] = { 0 };
+
+    u32 mouse_x, mouse_y;
+    RICO_mouse_coords(&mouse_x, &mouse_y);
+
+	char buf[256] = { 0 };
 	int len = snprintf(buf, sizeof(buf),
 					   "    x:%6.1f    \n"
 					   "    y:%6.1f    \n"
@@ -168,10 +172,11 @@ static void camera_update(struct RICO_camera *camera, r64 sim_alpha)
 					   "pitch:%6.1f deg\n"
                        "  yaw:%6.1f deg\n"
                        " roll:%6.1f deg\n"
-					   "  fov:%6.1f deg",
+					   "  fov:%6.1f deg\n"
+                       "mouse:%d, %d\n",
 					   camera->pos.x, camera->pos.y, camera->pos.z,
 					   camera->pitch, camera->yaw, camera->roll,
-                       camera->fov_deg);
+                       camera->fov_deg, mouse_x, mouse_y);
 	string_truncate(buf, sizeof(buf), len);
 	string_free_slot(STR_SLOT_DEBUG_CAMERA);
 	RICO_load_string(PACK_TRANSIENT, STR_SLOT_DEBUG_CAMERA,
