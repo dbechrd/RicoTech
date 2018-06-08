@@ -34,6 +34,8 @@ static struct game_panel panel_1;
 static struct RICO_audio_buffer audio_buffers[AUDIO_COUNT];
 static struct RICO_audio_source audio_sources[AUDIO_COUNT];
 
+static pkid tex_toolbar;
+
 #define PACK_ALPHA 0
 #define PACK_CLASH 1
 
@@ -624,27 +626,39 @@ void game_render_ui()
     struct RICO_ui_element *row;
     struct RICO_ui_element *label[10];
 
-    hud = (struct RICO_ui_element *)RICO_ui_push_hud(&VEC2I(0, 0), &RECT1(0), &RECT1(0));
+    hud = (struct RICO_ui_element *)RICO_ui_push_hud(&VEC2I(0, 0), &RECT1(2), &RECT1(4));
     for (int i = 0; i < 1; ++i)
     {
-        row = (struct RICO_ui_element *)RICO_ui_push_row(hud, &VEC2I(0, 0), &RECT1(4), &RECT1(4));
+        row = (struct RICO_ui_element *)RICO_ui_push_row(hud, &VEC2I(0, 0), &RECT1(6), &RECT1(8));
         for (int j = 0; j < ARRAY_COUNT(label); ++j)
         {
-            label[j] = (struct RICO_ui_element *)RICO_ui_push_label(row, &VEC2I(32, 32), &RECT1(0), &RECT1(0));
+            label[j] = (struct RICO_ui_element *)RICO_ui_push_label(row, &VEC2I(32, 32), &RECT1(10), &RECT1(0));
         }
     }
 
     if (!RICO_ui_draw(hud, 0, 0, mouse_x, mouse_y))
     //if (!RICO_ui_draw(hud, 0, 0, 400, 67))
     {
-        float x = SCREEN_X(20);
-        float y = SCREEN_Y(20);
-        float w = SCREEN_W(10);
-        float h = SCREEN_H(10);
+        struct rect x_rect = { 16, 16, 32, 32 };
+        float x = SCREEN_X(x_rect.x);
+        float y = SCREEN_Y(x_rect.y);
+        float w = SCREEN_W(x_rect.w);
+        float h = SCREEN_H(x_rect.h);
         RICO_prim_draw_line2d(x, y, x + w, y + h, &COLOR_ORANGE);
         RICO_prim_draw_line2d(x + w, y, x, y + h, &COLOR_ORANGE);
     }
     //RICO_ui_draw(hud, 0, 0, mouse_x, SCREEN_HEIGHT);
+
+    // TODO: Load debug colors as a 1xN palette texture, then make the constants
+    //       an enumeration of palette indices?
+    //static pkid tex_green = 0;
+    //if (!tex_green)
+    //{
+    //    tex_green = RICO_load_texture_color(PACK_TRANSIENT, "", &COLOR_GREEN);
+    //}
+
+    struct rect cursor_rect = { mouse_x - 16, mouse_y - 16, 32, 32 };
+    RICO_prim_draw_rect_tex(&cursor_rect, &COLOR_RED, tex_toolbar);
 
     //DLB_ASSERT(hud->rect.x == 2);
     //DLB_ASSERT(hud->rect.y == 2);
@@ -697,6 +711,8 @@ int main(int argc, char **argv)
     RICO_audio_buffer_load_file(&audio_buffers[AUDIO_VICTORY], "audio/victory.ric");
     RICO_audio_source_init(&audio_sources[AUDIO_VICTORY]);
     RICO_audio_source_buffer(&audio_sources[AUDIO_VICTORY], &audio_buffers[AUDIO_VICTORY]);
+
+    tex_toolbar = RICO_load_texture_file(PACK_TRANSIENT, "toolbar", "texture/toolbar.tga");
 
     // HACK: Find Timmy by name and use light/audio flags to determine start-up
     //       state of lighting and audio.

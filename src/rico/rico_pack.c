@@ -742,13 +742,13 @@ cleanup:
     return tex_id;
 }
 extern pkid RICO_load_texture_color(u32 pack_id, const char *name,
-                                    struct vec4 color)
+                                    const struct vec4 *color)
 {
     u8 rgba[4] = {
-        (u8)(color.r * 255),
-        (u8)(color.g * 255),
-        (u8)(color.b * 255),
-        (u8)(color.a * 255)
+        (u8)(color->r * 255),
+        (u8)(color->g * 255),
+        (u8)(color->b * 255),
+        (u8)(color->a * 255)
     };
     return RICO_load_texture(pack_id, name, GL_TEXTURE_2D, 1, 1, 32, rgba);
 }

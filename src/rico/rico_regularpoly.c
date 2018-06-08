@@ -1,4 +1,4 @@
-static struct program_primitive *regularpoly_program = NULL;
+static struct prim_program *regularpoly_program = NULL;
 
 static int init_regularpoly_program()
 {
@@ -44,9 +44,9 @@ static void rebuild_vao(struct regularpoly *poly)
 
     //(GLuint index, GLint min_size, GLenum type,
     // GLboolean normalized, GLsizei stride, const void *pointer);
-    glVertexAttribPointer(regularpoly_program->prog_id, 4, GL_FLOAT,
+    glVertexAttribPointer(regularpoly_program->program.gl_id, 4, GL_FLOAT,
                           GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(regularpoly_program->attrs.position);
+    glEnableVertexAttribArray(regularpoly_program->vert.attrs.position);
 
     glBindVertexArray(0);
     glDeleteBuffers(1, &poly_vbo);
@@ -95,7 +95,7 @@ static void set_regularpoly_pos(struct regularpoly *poly, GLfloat x, GLfloat y,
 }
 static void render_regularpoly(struct regularpoly *poly)
 {
-    RICO_ASSERT(regularpoly_program->prog_id);
+    RICO_ASSERT(regularpoly_program->program.gl_id);
 
     if (poly->dirty_vao)
     {
@@ -103,8 +103,8 @@ static void render_regularpoly(struct regularpoly *poly)
         rebuild_vao(poly);
     }
 
-    RICO_ASSERT(regularpoly_program->prog_id);
-    glUseProgram(regularpoly_program->prog_id);
+    RICO_ASSERT(regularpoly_program->program.gl_id);
+    glUseProgram(regularpoly_program->program.gl_id);
     glBindVertexArray(poly->vao);
 
     //(GLenum mode, GLint first, GLsizei bucket_count)

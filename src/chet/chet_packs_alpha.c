@@ -17,7 +17,7 @@ void pack_build_alpha(struct pack_info *pack_info)
     pkid tex_bricks_mrao = RICO_load_texture_file(pack_dat, "bricks_mrao",
                                                   "texture/cobble_mrao.tga");
     pkid tex_bricks_emis = RICO_load_texture_color(pack_dat, "bricks_emis",
-                                                   COLOR_TRANSPARENT);
+                                                   &COLOR_TRANSPARENT);
     pkid mat_bricks = RICO_load_material(pack_dat, "bricks", tex_bricks_diff,
                                          tex_bricks_mrao, tex_bricks_emis);
     pkid mat_timmy = RICO_load_material(pack_dat, "timmy", 0, 0, 0);

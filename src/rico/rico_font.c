@@ -95,20 +95,20 @@ static void font_render(u32 *mesh_id, u32 *tex_id, pkid font_id, float x,
 
         // Vertices for this character's quad
         vertices[idx_vertex++] = (struct text_vertex) {
-            VEC2F(screen_x, screen_y - offset_y), bg,
-            VEC2F(u0, v0)
+            VEC2F(screen_x, screen_y - offset_y),
+            VEC2F(u0, v0), bg
         };
         vertices[idx_vertex++] = (struct text_vertex) {
-            VEC2F(screen_x + offset_x, screen_y - offset_y), bg,
-            VEC2F(u1, v0)
+            VEC2F(screen_x + offset_x, screen_y - offset_y),
+            VEC2F(u1, v0), bg
         };
         vertices[idx_vertex++] = (struct text_vertex) {
-            VEC2F(screen_x + offset_x, screen_y), bg,
-            VEC2F(u1, v1)
+            VEC2F(screen_x + offset_x, screen_y),
+            VEC2F(u1, v1), bg
         };
         vertices[idx_vertex++] = (struct text_vertex) {
-            VEC2F(screen_x, screen_y), bg,
-            VEC2F(u0, v1)
+            VEC2F(screen_x, screen_y),
+            VEC2F(u0, v1), bg
         };
 
         // Triangles using this character's vertices

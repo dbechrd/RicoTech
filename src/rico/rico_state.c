@@ -337,9 +337,9 @@ extern int RICO_update()
 
         // TODO: Move this to this program.c
         // Update uniforms
-        RICO_ASSERT(prog_pbr->prog_id);
-        glUseProgram(prog_pbr->prog_id);
-        glUniform1f(prog_pbr->time, (r32)SIM_SEC);
+        RICO_ASSERT(prog_pbr->program.gl_id);
+        glUseProgram(prog_pbr->program.gl_id);
+        //glUniform1f(prog_pbr->time, (r32)SIM_SEC);  // Cleanup: Shader time
         glUseProgram(0);
 
         string_update();

@@ -68,47 +68,42 @@ static GLint program_get_uniform_location(GLuint program,
 ///=============================================================================
 //| PBR program
 ///=============================================================================
-static void program_pbr_get_locations(struct program_pbr *p)
+static void program_pbr_get_locations(struct pbr_program *p)
 {
     // Vertex shader
-    p->time = program_get_uniform_location(p->prog_id, "time");
-    p->scale_uv = program_get_uniform_location(p->prog_id, "scale_uv");
-    p->model = program_get_uniform_location(p->prog_id, "model");
-    p->view = program_get_uniform_location(p->prog_id, "view");
-    p->proj = program_get_uniform_location(p->prog_id, "proj");
+    p->vert.scale_uv = program_get_uniform_location(p->program.gl_id, "scale_uv");
+    p->vert.proj = program_get_uniform_location(p->program.gl_id, "proj");
+    p->vert.view = program_get_uniform_location(p->program.gl_id, "view");
+    p->vert.model = program_get_uniform_location(p->program.gl_id, "model");
+    RICO_ASSERT(p->vert.scale_uv >= 0);
+    RICO_ASSERT(p->vert.model >= 0);
+    RICO_ASSERT(p->vert.view >= 0);
+    RICO_ASSERT(p->vert.proj >= 0);
 
-    //RICO_ASSERT(p->u_time >= 0);
-    RICO_ASSERT(p->scale_uv >= 0);
-    RICO_ASSERT(p->model >= 0);
-    RICO_ASSERT(p->view >= 0);
-    RICO_ASSERT(p->proj >= 0);
-
-    p->attrs.position = program_get_attrib_location(p->prog_id,"attr_position");
-    p->attrs.color = program_get_attrib_location(p->prog_id, "attr_color");
-    p->attrs.normal = program_get_attrib_location(p->prog_id, "attr_normal");
-    p->attrs.uv = program_get_attrib_location(p->prog_id, "attr_uv");
-
-    RICO_ASSERT(p->attrs.position == LOCATION_PBR_POSITION);
-    //RICO_ASSERT(p->attrs.color == RICO_SHADER_COL_LOC);
-    RICO_ASSERT(p->attrs.normal == LOCATION_PBR_NORMAL);
-    RICO_ASSERT(p->attrs.uv == LOCATION_PBR_UV);
+    p->vert.attrs.position = program_get_attrib_location(p->program.gl_id,"attr_position");
+    p->vert.attrs.uv = program_get_attrib_location(p->program.gl_id, "attr_uv");
+    p->vert.attrs.color = program_get_attrib_location(p->program.gl_id, "attr_color");
+    p->vert.attrs.normal = program_get_attrib_location(p->program.gl_id, "attr_normal");
+    RICO_ASSERT(p->vert.attrs.position == LOCATION_PBR_POSITION);
+    RICO_ASSERT(p->vert.attrs.uv == LOCATION_PBR_UV);
+    //RICO_ASSERT(p->vert.attrs.color == LOCATION_PBR_COLOR);
+    RICO_ASSERT(p->vert.attrs.normal == LOCATION_PBR_NORMAL);
 
     // Fragment shader
-    p->camera.pos = program_get_uniform_location(p->prog_id, "camera.P");
-    p->material.tex0 = program_get_uniform_location(p->prog_id, "material.tex0");
-    p->material.tex1 = program_get_uniform_location(p->prog_id, "material.tex1");
-    p->material.tex2 = program_get_uniform_location(p->prog_id, "material.tex2");
-    p->light.pos = program_get_uniform_location(p->prog_id, "light.P");
-    p->light.color = program_get_uniform_location(p->prog_id, "light.color");
-    p->light.intensity = program_get_uniform_location(p->prog_id, "light.intensity");
-
-    RICO_ASSERT(p->camera.pos >= 0);
-    RICO_ASSERT(p->material.tex0 >= 0);
-    RICO_ASSERT(p->material.tex1 >= 0);
-    RICO_ASSERT(p->material.tex2 >= 0);
-    RICO_ASSERT(p->light.pos >= 0);
-    RICO_ASSERT(p->light.color >= 0);
-    RICO_ASSERT(p->light.intensity >= 0);
+    p->frag.camera.pos = program_get_uniform_location(p->program.gl_id, "camera.P");
+    p->frag.material.tex0 = program_get_uniform_location(p->program.gl_id, "material.tex0");
+    p->frag.material.tex1 = program_get_uniform_location(p->program.gl_id, "material.tex1");
+    p->frag.material.tex2 = program_get_uniform_location(p->program.gl_id, "material.tex2");
+    p->frag.light.pos = program_get_uniform_location(p->program.gl_id, "light.P");
+    p->frag.light.color = program_get_uniform_location(p->program.gl_id, "light.color");
+    p->frag.light.intensity = program_get_uniform_location(p->program.gl_id, "light.intensity");
+    RICO_ASSERT(p->frag.camera.pos >= 0);
+    RICO_ASSERT(p->frag.material.tex0 >= 0);
+    RICO_ASSERT(p->frag.material.tex1 >= 0);
+    RICO_ASSERT(p->frag.material.tex2 >= 0);
+    RICO_ASSERT(p->frag.light.pos >= 0);
+    RICO_ASSERT(p->frag.light.color >= 0);
+    RICO_ASSERT(p->frag.light.intensity >= 0);
 }
 static void program_pbr_attribs()
 {
@@ -117,24 +112,24 @@ static void program_pbr_attribs()
                           (GLvoid *)offsetof(struct pbr_vertex, pos));
     glEnableVertexAttribArray(LOCATION_PBR_POSITION);
 
-    glVertexAttribPointer(LOCATION_PBR_NORMAL, 4, GL_FLOAT, GL_FALSE,
+    glVertexAttribPointer(LOCATION_PBR_UV, 2, GL_FLOAT, GL_FALSE,
                           sizeof(struct pbr_vertex),
-                          (GLvoid *)offsetof(struct pbr_vertex, normal));
-    glEnableVertexAttribArray(LOCATION_PBR_NORMAL);
+                          (GLvoid *)offsetof(struct pbr_vertex, uv));
+    glEnableVertexAttribArray(LOCATION_PBR_UV);
 
     glVertexAttribPointer(LOCATION_PBR_COLOR, 3, GL_FLOAT, GL_FALSE,
                           sizeof(struct pbr_vertex),
                           (GLvoid *)offsetof(struct pbr_vertex, col));
     glEnableVertexAttribArray(LOCATION_PBR_COLOR);
 
-    glVertexAttribPointer(LOCATION_PBR_UV, 2, GL_FLOAT, GL_FALSE,
+    glVertexAttribPointer(LOCATION_PBR_NORMAL, 4, GL_FLOAT, GL_FALSE,
                           sizeof(struct pbr_vertex),
-                          (GLvoid *)offsetof(struct pbr_vertex, uv));
-    glEnableVertexAttribArray(LOCATION_PBR_UV);
+                          (GLvoid *)offsetof(struct pbr_vertex, normal));
+    glEnableVertexAttribArray(LOCATION_PBR_NORMAL);
 }
-static int make_program_pbr(struct program_pbr **_program)
+static int make_program_pbr(struct pbr_program **_program)
 {
-    static struct program_pbr *prog_pbr = NULL;
+    static struct pbr_program *prog_pbr = NULL;
     enum RICO_error err;
 
     if (prog_pbr != NULL) {
@@ -159,8 +154,8 @@ static int make_program_pbr(struct program_pbr **_program)
 
     // Create program object
     prog_pbr = calloc(1, sizeof(*prog_pbr));
-    prog_pbr->type = PROG_PBR;
-    prog_pbr->prog_id = program;
+    prog_pbr->program.type = PROG_PBR;
+    prog_pbr->program.gl_id = program;
 
     // Query shader locations
     program_pbr_get_locations(prog_pbr);
@@ -171,15 +166,15 @@ cleanup:
     *_program = prog_pbr;
     return err;
 }
-static void free_program_pbr(struct program_pbr **program)
+static void free_program_pbr(struct pbr_program **program)
 {
     //TODO: Handle error
-    if ((*program)->ref_count > 0) {
+    if ((*program)->program.ref_count > 0) {
         printf("Cannot delete a program in use!");
         //TODO: crash;
     }
 
-    glDeleteProgram((*program)->prog_id);
+    glDeleteProgram((*program)->program.gl_id);
     free(*program);
     *program = NULL;
 }
@@ -187,31 +182,47 @@ static void free_program_pbr(struct program_pbr **program)
 ///=============================================================================
 //| Primitive program
 ///=============================================================================
-static void program_primitive_get_locations(struct program_primitive *p)
+static void program_primitive_get_locations(struct prim_program *p)
 {
     // Vertex shader
-    p->u_model = program_get_uniform_location(p->prog_id, "u_model");
-    p->u_view = program_get_uniform_location(p->prog_id, "u_view");
-    p->u_proj = program_get_uniform_location(p->prog_id, "u_proj");
+    p->vert.proj = program_get_uniform_location(p->program.gl_id, "proj");
+    p->vert.view = program_get_uniform_location(p->program.gl_id, "view");
+    p->vert.model = program_get_uniform_location(p->program.gl_id, "model");
+    RICO_ASSERT(p->vert.proj >= 0);
+    RICO_ASSERT(p->vert.view >= 0);
+    RICO_ASSERT(p->vert.model >= 0);
 
-    p->attrs.position = program_get_attrib_location(p->prog_id, "vert_pos");
-
-    RICO_ASSERT(p->attrs.position == LOCATION_PRIM_POSITION);
+    p->vert.attrs.position = program_get_attrib_location(p->program.gl_id, "attr_position");
+    p->vert.attrs.uv =  program_get_attrib_location(p->program.gl_id, "attr_uv");
+    p->vert.attrs.color = program_get_attrib_location(p->program.gl_id, "attr_color");
+    RICO_ASSERT(p->vert.attrs.position == LOCATION_PBR_POSITION);
+    //RICO_ASSERT(p->vert.attrs.uv == LOCATION_PBR_UV);
+    //RICO_ASSERT(p->vert.attrs.color == LOCATION_PBR_COLOR);
 
     // Fragment shader
-    p->u_col = program_get_uniform_location(p->prog_id, "u_col");
+    p->frag.tex = program_get_uniform_location(p->program.gl_id, "tex");
+    //RICO_ASSERT(p->frag.tex >= 0);
 }
 static void program_primitive_attribs()
 {
-    // TODO: This should have it's own vertex type.. not even sure if this works
     glVertexAttribPointer(LOCATION_PRIM_POSITION, 3, GL_FLOAT, GL_FALSE,
-                          sizeof(struct pbr_vertex),
-                          (GLvoid *)offsetof(struct pbr_vertex, pos));
+                          sizeof(struct prim_vertex),
+                          (GLvoid *)offsetof(struct prim_vertex, pos));
     glEnableVertexAttribArray(LOCATION_PRIM_POSITION);
+
+    glVertexAttribPointer(LOCATION_PRIM_UV, 2, GL_FLOAT, GL_FALSE,
+                          sizeof(struct prim_vertex),
+                          (GLvoid *)offsetof(struct prim_vertex, uv));
+    glEnableVertexAttribArray(LOCATION_PRIM_UV);
+
+    glVertexAttribPointer(LOCATION_PRIM_COLOR, 3, GL_FLOAT, GL_FALSE,
+                          sizeof(struct prim_vertex),
+                          (GLvoid *)offsetof(struct prim_vertex, col));
+    glEnableVertexAttribArray(LOCATION_PRIM_COLOR);
 }
-static int make_program_primitive(struct program_primitive **_program)
+static int make_program_primitive(struct prim_program **_program)
 {
-    static struct program_primitive *prog_primitive = NULL;
+    static struct prim_program *prog_primitive = NULL;
     enum RICO_error err;
 
     if (prog_primitive != NULL) {
@@ -224,10 +235,10 @@ static int make_program_primitive(struct program_primitive **_program)
     GLuint program = 0;
 
     // Compile shaders
-    err = make_shader(GL_VERTEX_SHADER, "shader/prim.vert.glsl", &vshader);
+    err = make_shader(GL_VERTEX_SHADER, "shader/prim_v.glsl", &vshader);
     if (err) goto cleanup;
 
-    err = make_shader(GL_FRAGMENT_SHADER, "shader/prim.frag.glsl", &fshader);
+    err = make_shader(GL_FRAGMENT_SHADER, "shader/prim_f.glsl", &fshader);
     if (err) goto cleanup;
 
     // Link shader program
@@ -236,8 +247,8 @@ static int make_program_primitive(struct program_primitive **_program)
 
     // Create program object
     prog_primitive = calloc(1, sizeof(*prog_primitive));
-    prog_primitive->type = PROG_PRIM;
-    prog_primitive->prog_id = program;
+    prog_primitive->program.type = PROG_PRIM;
+    prog_primitive->program.gl_id = program;
 
     // Query shader locations
     program_primitive_get_locations(prog_primitive);
@@ -248,71 +259,9 @@ cleanup:
     *_program = prog_primitive;
     return err;
 }
-static void free_program_primitive(struct program_primitive **program)
+static void free_program_primitive(struct prim_program **program)
 {
-    glDeleteProgram((*program)->prog_id);
-    free(*program);
-    *program = NULL;
-}
-
-///=============================================================================
-//| Primitive cube program
-///=============================================================================
-static void program_prim_cube_get_locations(struct program_prim_cube *p)
-{
-    // Vertex shader
-    p->model = program_get_uniform_location(p->prog_id, "model");
-    p->view = program_get_uniform_location(p->prog_id, "view");
-    p->proj = program_get_uniform_location(p->prog_id, "proj");
-
-    p->p0 = program_get_attrib_location(p->prog_id, "p0");
-    p->p1 = program_get_attrib_location(p->prog_id, "p1");
-
-    // Fragment shader
-    p->color = program_get_uniform_location(p->prog_id, "color");
-}
-static int make_program_prim_cube(struct program_prim_cube **_program)
-{
-    static struct program_prim_cube *prog_prim_cube = NULL;
-    enum RICO_error err;
-
-    if (prog_prim_cube != NULL) {
-        *_program = prog_prim_cube;
-        return SUCCESS;
-    }
-
-    GLuint vshader = 0;
-    GLuint fshader = 0;
-    GLuint program = 0;
-
-    // Compile shaders
-    err = make_shader(GL_VERTEX_SHADER, "shader/prim.vert.glsl", &vshader);
-    if (err) goto cleanup;
-
-    err = make_shader(GL_FRAGMENT_SHADER, "shader/prim.frag.glsl", &fshader);
-    if (err) goto cleanup;
-
-    // Link shader program
-    err = make_program(vshader, fshader, &program);
-    if (err) goto cleanup;
-
-    // Create program object
-    prog_prim_cube = calloc(1, sizeof(*prog_prim_cube));
-    prog_prim_cube->type = PROG_PRIM;
-    prog_prim_cube->prog_id = program;
-
-    // Query shader locations
-    program_prim_cube_get_locations(prog_prim_cube);
-
-cleanup:
-    free_shader(fshader);
-    free_shader(vshader);
-    *_program = prog_prim_cube;
-    return err;
-}
-static void free_program_prim_cube(struct program_prim_cube **program)
-{
-    glDeleteProgram((*program)->prog_id);
+    glDeleteProgram((*program)->program.gl_id);
     free(*program);
     *program = NULL;
 }
@@ -320,19 +269,19 @@ static void free_program_prim_cube(struct program_prim_cube **program)
 ///=============================================================================
 //| Text program
 ///=============================================================================
-static void program_text_get_locations(struct program_text *p)
+static void program_text_get_locations(struct text_program *p)
 {
     // Vertex shader
-    p->model = program_get_uniform_location(p->prog_id, "model");
-    p->proj = program_get_uniform_location(p->prog_id, "proj");
+    p->vert.model = program_get_uniform_location(p->program.gl_id, "model");
+    p->vert.proj = program_get_uniform_location(p->program.gl_id, "proj");
 
-    RICO_ASSERT(p->model >= 0);
-    RICO_ASSERT(p->proj >= 0);
+    RICO_ASSERT(p->vert.model >= 0);
+    RICO_ASSERT(p->vert.proj >= 0);
 
     // Fragment shader
-    p->tex = program_get_uniform_location(p->prog_id, "tex");
+    p->frag.tex = program_get_uniform_location(p->program.gl_id, "tex");
 
-    RICO_ASSERT(p->tex >= 0);
+    RICO_ASSERT(p->frag.tex >= 0);
 }
 static void program_text_attribs()
 {
@@ -351,9 +300,9 @@ static void program_text_attribs()
                           (GLvoid *)offsetof(struct text_vertex, uv));
     glEnableVertexAttribArray(LOCATION_TEXT_UV);
 }
-static int make_program_text(struct program_text **_program)
+static int make_program_text(struct text_program **_program)
 {
-    static struct program_text *prog_text = NULL;
+    static struct text_program *prog_text = NULL;
     enum RICO_error err;
 
     if (prog_text != NULL) {
@@ -378,8 +327,8 @@ static int make_program_text(struct program_text **_program)
 
     // Create program object
     prog_text = calloc(1, sizeof(*prog_text));
-    prog_text->type = PROG_TEXT;
-    prog_text->prog_id = program;
+    prog_text->program.type = PROG_TEXT;
+    prog_text->program.gl_id = program;
 
     // Query shader locations
     program_text_get_locations(prog_text);
@@ -390,9 +339,9 @@ cleanup:
     *_program = prog_text;
     return err;
 }
-static void free_program_text(struct program_text **program)
+static void free_program_text(struct text_program **program)
 {
-    glDeleteProgram((*program)->prog_id);
+    glDeleteProgram((*program)->program.gl_id);
     free(*program);
     *program = NULL;
 }

@@ -17,13 +17,13 @@
 #include "dlb_types.h"
 #include <math.h>
 #ifdef DLB_MATH_PRINT
-    #include <stdio.h>
+#  include <stdio.h>
 #endif
 
 #ifdef DLB_MATH_EXTERN
-    #define DLB_MATH_DEF extern
+#  define DLB_MATH_DEF extern
 #else
-    #define DLB_MATH_DEF static inline
+#  define DLB_MATH_DEF static inline
 #endif
 
 #define M_PI 3.14159265358979323846264338327950288
@@ -91,6 +91,29 @@ struct vec4
         struct { float x, y, z, w; };
         struct { float r, g, b, a; };
     };
+};
+
+struct ray
+{
+    struct vec3 orig;
+    struct vec3 dir;
+};
+
+struct triangle
+{
+    struct vec3 verts[3];
+};
+
+struct quad
+{
+    // (0,0) (0,1) (1,0) (1,1)
+    struct vec3 verts[4];
+};
+
+struct sphere
+{
+    struct vec3 orig;
+    float radius;
 };
 
 struct mat4
@@ -308,25 +331,6 @@ quat quat_exp(q) // "Exponential"
 quat quat_ln(q) // "Natural logarithm"
 quat quat_between_vec(vec3 a, vec3 b, vec3 fallback) // ????
 #endif
-
-//--- Miscellaneous --------------------
-struct ray
-{
-    struct vec3 orig;
-    struct vec3 dir;
-};
-
-struct quad
-{
-    // (0,0) (0,1) (1,0) (1,1)
-    struct vec3 verts[4];
-};
-
-struct sphere
-{
-    struct vec3 orig;
-    float radius;
-};
 
 #ifdef DLB_MATH_PRINT
 DLB_MATH_DEF void v3_print(struct vec3 *v);

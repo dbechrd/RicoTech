@@ -273,9 +273,9 @@ static bool object_collide_ray_type(pkid *_object_id, float *_dist,
 }
 static void object_render(struct pack *pack, const struct RICO_camera *camera)
 {
-    struct program_pbr *prog = prog_pbr;
-    RICO_ASSERT(prog->prog_id);
-    glUseProgram(prog->prog_id);
+    struct pbr_program *prog = prog_pbr;
+    RICO_ASSERT(prog->program.gl_id);
+    glUseProgram(prog->program.gl_id);
 
     // TODO: Get the light out of here!!! It should't be updating its position
     //       in the render function, argh!
@@ -292,22 +292,22 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
     light.kl = 0.05f;
     light.kq = 0.001f;
 
-    glUniform3fv(prog->camera.pos, 1, (const GLfloat *)&camera->pos);
+    glUniform3fv(prog->frag.camera.pos, 1, (const GLfloat *)&camera->pos);
 
     // Material textures
     // Note: We don't have to do this every time as long as we make sure
     //       the correct textures are bound before each draw to the texture
     //       index assumed when the program was initialized.
-    glUniform1i(prog->material.tex0, 0);
-    glUniform1i(prog->material.tex1, 1);
-    glUniform1i(prog->material.tex2, 2);
+    glUniform1i(prog->frag.material.tex0, 0);
+    glUniform1i(prog->frag.material.tex1, 1);
+    glUniform1i(prog->frag.material.tex2, 2);
 
     // Lighting
-    glUniform3fv(prog->light.pos, 1, (const GLfloat *)&light.position);
-    glUniform3fv(prog->light.color, 1, (const GLfloat *)&light.color);
-    glUniform1f(prog->light.intensity, light.intensity);
+    glUniform3fv(prog->frag.light.pos, 1, (const GLfloat *)&light.position);
+    glUniform3fv(prog->frag.light.color, 1, (const GLfloat *)&light.color);
+    glUniform1f(prog->frag.light.intensity, light.intensity);
 
-    glUniform2f(prog->scale_uv, 1.0f, 1.0f);
+    glUniform2f(prog->vert.scale_uv, 1.0f, 1.0f);
 
     struct RICO_object *obj = 0;
     enum RICO_object_type prev_type = RICO_OBJECT_TYPE_NULL;
@@ -328,8 +328,8 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
         {
             glPolygonMode(GL_FRONT_AND_BACK, camera->fill_mode);
 
-            glUniformMatrix4fv(prog->proj, 1, GL_TRUE, camera->proj_matrix->a);
-            glUniformMatrix4fv(prog->view, 1, GL_TRUE, camera->view_matrix.a);
+            glUniformMatrix4fv(prog->vert.proj, 1, GL_TRUE, camera->proj_matrix->a);
+            glUniformMatrix4fv(prog->vert.view, 1, GL_TRUE, camera->view_matrix.a);
 
             prev_type = obj->type;
         }
@@ -344,15 +344,15 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
         //       uniformly scaled?
         if (obj->type == RICO_OBJECT_TYPE_TERRAIN)
 		{
-			glUniform2f(prog->scale_uv, 100.0f, 100.0f);
+			glUniform2f(prog->vert.scale_uv, 100.0f, 100.0f);
 		}
         else
         {
-            glUniform2f(prog->scale_uv, obj->xform.scale.x, obj->xform.scale.y);
+            glUniform2f(prog->vert.scale_uv, obj->xform.scale.x, obj->xform.scale.y);
         }
 
         // Model matrix
-        glUniformMatrix4fv(prog->model, 1, GL_TRUE,
+        glUniformMatrix4fv(prog->vert.model, 1, GL_TRUE,
                            obj->xform.matrix.a);
 
         // Bind material
@@ -369,7 +369,7 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
         {
             mesh_id = obj->mesh_id;
         }
-        mesh_render(mesh_id, prog->type);
+        mesh_render(mesh_id, prog->program.type);
 
         // Clean up
         material_unbind(mat_id);
@@ -399,20 +399,20 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
 static void object_render_ui(struct pack *pack,
                              const struct RICO_camera *camera)
 {
-    struct program_text *prog = prog_text;
+    struct text_program *prog = prog_text;
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    RICO_ASSERT(prog->prog_id);
-    glUseProgram(prog->prog_id);
+    RICO_ASSERT(prog->program.gl_id);
+    glUseProgram(prog->program.gl_id);
 
     // Projection matrix
-    glUniformMatrix4fv(prog->proj, 1, GL_TRUE, camera->ortho_matrix.a);
+    glUniformMatrix4fv(prog->vert.proj, 1, GL_TRUE, camera->ortho_matrix.a);
 
     // Font texture
     // Note: We don't have to do this every time as long as we make sure
     //       the correct textures are bound before each draw to the texture
     //       index assumed when the program was initialized.
-    glUniform1i(prog->tex, 0);
+    glUniform1i(prog->frag.tex, 0);
 
     struct RICO_object *obj = 0;
     for (u32 index = 1; index < pack->blobs_used; ++index)
@@ -431,7 +431,7 @@ static void object_render_ui(struct pack *pack,
         // Model matrix
         //obj->xform.position = VEC3(0.5, 0.5, -1.0f);
         //object_transform_update(obj);
-        glUniformMatrix4fv(prog->model, 1, GL_TRUE, obj->xform.matrix.a);
+        glUniformMatrix4fv(prog->vert.model, 1, GL_TRUE, obj->xform.matrix.a);
 
         // Bind texture
         pkid tex_id = FONT_DEFAULT_TEXTURE;
@@ -444,7 +444,7 @@ static void object_render_ui(struct pack *pack,
             mesh_id = obj->mesh_id;
         }
         RICO_ASSERT(mesh_id);
-        mesh_render(mesh_id, prog->type);
+        mesh_render(mesh_id, prog->program.type);
 
         // Clean up
         texture_unbind(tex_id, GL_TEXTURE0);

@@ -13,9 +13,9 @@ static struct widget *widget;
 
 static pkid selected_obj_id;
 
-static struct program_pbr *prog_pbr;
-static struct program_primitive *prog_prim;
-static struct program_text *prog_text;
+static struct pbr_program *prog_pbr;
+static struct prim_program *prog_prim;
+static struct text_program *prog_text;
 
 static void editor_init()
 {

@@ -91,7 +91,7 @@ extern pkid RICO_load_texture(u32 pack_id, const char *name, GLenum target,
 extern pkid RICO_load_texture_file(u32 pack_id, const char *name,
                                    const char *filename);
 extern pkid RICO_load_texture_color(u32 pack_id, const char *name,
-                                    struct vec4 color);
+                                    const struct vec4 *color);
 extern pkid RICO_load_material(u32 pack_id, const char *name, pkid tex_albedo,
                                pkid tex_mrao, pkid tex_emission);
 extern pkid RICO_load_font_file(u32 pack_id, const char *name,

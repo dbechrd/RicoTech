@@ -4,6 +4,9 @@
 static GLuint prim_line_vao;
 static GLuint prim_line_vbo;
 
+static GLuint prim_quad_vao;
+static GLuint prim_quad_vbo;
+
 static GLuint prim_bbox_vao;
 static GLuint prim_bbox_vbo[VBO_COUNT];
 
@@ -11,12 +14,12 @@ static int prim_init()
 {
     enum RICO_error err;
 
-    ///-------------------------------------------------------------------------
-    //| Line / Ray
-    ///-------------------------------------------------------------------------
     err = make_program_primitive(&prog_prim);
     if (err) return err;
 
+    ///-------------------------------------------------------------------------
+    //| Line / Ray
+    ///-------------------------------------------------------------------------
     // Generate VAO and buffers
     glGenVertexArrays(1, &prim_line_vao);
     glBindVertexArray(prim_line_vao);
@@ -39,6 +42,32 @@ static int prim_init()
                           (GLvoid *)offsetof(struct prim_vertex, col));
     glEnableVertexAttribArray(LOCATION_PRIM_COLOR);
 #endif
+
+    ///-------------------------------------------------------------------------
+    //| Quad
+    ///-------------------------------------------------------------------------
+    // Generate VAO and buffers
+    glGenVertexArrays(1, &prim_quad_vao);
+    glBindVertexArray(prim_quad_vao);
+
+    glGenBuffers(1, &prim_quad_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, prim_quad_vbo);
+
+    // Shader attribute pointers
+    glVertexAttribPointer(LOCATION_PRIM_POSITION, 3, GL_FLOAT, GL_FALSE,
+                          sizeof(struct prim_vertex),
+                          (GLvoid *)offsetof(struct prim_vertex, pos));
+    glEnableVertexAttribArray(LOCATION_PRIM_POSITION);
+
+    glVertexAttribPointer(LOCATION_PRIM_UV, 2, GL_FLOAT, GL_FALSE,
+                          sizeof(struct prim_vertex),
+                          (GLvoid *)offsetof(struct prim_vertex, uv));
+    glEnableVertexAttribArray(LOCATION_PRIM_UV);
+
+    glVertexAttribPointer(LOCATION_PRIM_COLOR, 3, GL_FLOAT, GL_FALSE,
+                          sizeof(struct prim_vertex),
+                          (GLvoid *)offsetof(struct prim_vertex, col));
+    glEnableVertexAttribArray(LOCATION_PRIM_COLOR);
 
     ///-------------------------------------------------------------------------
     //| Bounding box
@@ -77,11 +106,11 @@ static int prim_init()
 }
 // TODO: Queue up primitive requests and batch them within a single
 //       glUseProgram() call.
-extern void RICO_prim_draw_line2d(float x, float y, float w, float h,
+extern void RICO_prim_draw_line2d(float x0, float y0, float x1, float y1,
                                   const struct vec4 *color)
 {
     const float ortho_z = -1.0f;
-    prim_draw_line(&VEC3(x, y, ortho_z), &VEC3(w, h, ortho_z),
+    prim_draw_line(&VEC3(x0, y0, ortho_z), &VEC3(x1, y1, ortho_z),
                    color, &MAT4_IDENT, &MAT4_IDENT, &cam_player.ortho_matrix);
 }
 extern void RICO_prim_draw_line(const struct vec3 *p0, const struct vec3 *p1,
@@ -104,12 +133,14 @@ static void prim_draw_line(const struct vec3 *p0, const struct vec3 *p1,
 {
     struct vec3 vertices[2] = { *p0, *p1 };
 
-    RICO_ASSERT(prog_prim->prog_id);
-    glUseProgram(prog_prim->prog_id);
-    glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, proj->a);
-    glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, view->a);
-    glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, xform->a);
-    glUniform4f(prog_prim->u_col, color->r, color->g, color->b, color->a);
+    RICO_ASSERT(prog_prim->program.gl_id);
+    glUseProgram(prog_prim->program.gl_id);
+    glUniformMatrix4fv(prog_prim->vert.proj, 1, GL_TRUE, proj->a);
+    glUniformMatrix4fv(prog_prim->vert.view, 1, GL_TRUE, view->a);
+    glUniformMatrix4fv(prog_prim->vert.model, 1, GL_TRUE, xform->a);
+
+    //glUniform4f(prog_prim->col, color->r, color->g, color->b, color->a);
+    // TODO: Bind texture
 
     RICO_ASSERT(prim_line_vao);
     RICO_ASSERT(prim_line_vbo);
@@ -135,32 +166,97 @@ extern void RICO_prim_draw_ray_xform(const struct ray *ray,
     v3_add(&ray_end, &ray->dir);
     RICO_prim_draw_line_xform(&ray->orig, &ray->dir, color, xform);
 }
+extern void RICO_prim_draw_rect(const struct rect *rect,
+                                const struct vec4 *color)
+{
+    RICO_prim_draw_rect_tex(rect, color, 0);
+}
+extern void RICO_prim_draw_rect_tex(const struct rect *rect,
+                                    const struct vec4 *color, pkid tex_pkid)
+{
+    // (0,0) (0,1) (1,0) (1,1)
+    float x0 = SCREEN_X(rect->x);
+    float y0 = SCREEN_Y(rect->y);
+    float x1 = SCREEN_X(rect->x + rect->w);
+    float y1 = SCREEN_Y(rect->y + rect->h);
+    const float ortho_z = -1.0f;
+
+    struct quad quad;
+    quad.verts[0] = VEC3(x0, y1, ortho_z);
+    quad.verts[1] = VEC3(x0, y0, ortho_z);
+    quad.verts[2] = VEC3(x1, y1, ortho_z);
+    quad.verts[3] = VEC3(x1, y0, ortho_z);
+    prim_draw_quad(&quad, color, &MAT4_IDENT, &MAT4_IDENT,
+                   &cam_player.ortho_matrix, tex_pkid);
+}
 extern void RICO_prim_draw_quad(const struct quad *quad,
                                 const struct vec4 *color)
 {
-    RICO_prim_draw_quad_xform(quad, color, &MAT4_IDENT);
+    prim_draw_quad(quad, color, &MAT4_IDENT, &cam_player.view_matrix,
+                   cam_player.proj_matrix, 0);
 }
 extern void RICO_prim_draw_quad_xform(const struct quad *quad,
                                       const struct vec4 *color,
                                       const struct mat4 *xform)
 {
-    RICO_ASSERT(prog_prim->prog_id);
-    glUseProgram(prog_prim->prog_id);
-    glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix->a);
-    glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
-    glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, xform->a);
-    glUniform4fv(prog_prim->u_col, 1, (const GLfloat *)color);
+    prim_draw_quad(quad, color, xform, &cam_player.view_matrix,
+                   cam_player.proj_matrix, 0);
+}
+static void prim_draw_quad(const struct quad *quad, const struct vec4 *color,
+                           const struct mat4 *xform, const struct mat4 *view,
+                           const struct mat4 *proj, pkid tex_pkid)
+{
+    enum toolbar_icon {
+        TOOLBAR_SELECT,
+        TOOLBAR_TRANSLATE,
+        TOOLBAR_ROTATE,
+        TOOLBAR_SCALE,
+        TOOLBAR_MESH,
+        TOOLBAR_TEXTURE,
+        TOOLBAR_NEW,
+        TOOLBAR_COPY,
+        TOOLBAR_DELETE,
+        TOOLBAR_UNDO,
+        TOOLBAR_REDO,
+        TOOLBAR_SAVE,
+        TOOLBAR_EXIT,
+    };
 
-    RICO_ASSERT(prim_line_vao);
-    RICO_ASSERT(prim_line_vbo);
-    glBindVertexArray(prim_line_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, prim_line_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(quad->verts), quad->verts,
-                 GL_STATIC_DRAW);
+    enum toolbar_icon icon = TOOLBAR_TRANSLATE;
 
+    struct prim_vertex verts[4] = { 0 };
+    verts[0].pos = quad->verts[0];
+    verts[1].pos = quad->verts[1];
+    verts[2].pos = quad->verts[2];
+    verts[3].pos = quad->verts[3];
+
+    float x0 = 1.0f / 16.0f * (float)icon;
+    float y0 = 0.0f;
+    float x1 = 1.0f / 16.0f * (float)(icon + 1);
+    float y1 = 1.0f;
+    verts[0].uv = VEC2F(x0, y0);
+    verts[1].uv = VEC2F(x0, y1);
+    verts[2].uv = VEC2F(x1, y0);
+    verts[3].uv = VEC2F(x1, y1);
+
+    RICO_ASSERT(prog_prim->program.gl_id);
+    glUseProgram(prog_prim->program.gl_id);
+    glUniformMatrix4fv(prog_prim->vert.proj, 1, GL_TRUE, proj->a);
+    glUniformMatrix4fv(prog_prim->vert.view, 1, GL_TRUE, view->a);
+    glUniformMatrix4fv(prog_prim->vert.model, 1, GL_TRUE, xform->a);
+
+    RICO_ASSERT(prim_quad_vao);
+    RICO_ASSERT(prim_quad_vbo);
+    glBindVertexArray(prim_quad_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, prim_quad_vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+    //glBufferData(GL_ARRAY_BUFFER, sizeof(quad->verts), quad->verts, GL_STATIC_DRAW);
+
+    texture_bind(tex_pkid, GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glEnable(GL_CULL_FACE);
+    texture_unbind(tex_pkid, GL_TEXTURE_2D);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -213,14 +309,15 @@ extern void RICO_prim_draw_bbox_xform(const struct RICO_bbox *bbox,
         bbox->min.x, bbox->max.y, bbox->max.z,
     };
 
-    RICO_ASSERT(prog_prim->prog_id);
-    glUseProgram(prog_prim->prog_id);
+    RICO_ASSERT(prog_prim->program.gl_id);
+    glUseProgram(prog_prim->program.gl_id);
 
-    glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix->a);
-    glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
-    glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, xform->a);
+    glUniformMatrix4fv(prog_prim->vert.proj, 1, GL_TRUE, cam_player.proj_matrix->a);
+    glUniformMatrix4fv(prog_prim->vert.view, 1, GL_TRUE, cam_player.view_matrix.a);
+    glUniformMatrix4fv(prog_prim->vert.model, 1, GL_TRUE, xform->a);
 
-    glUniform4fv(prog_prim->u_col, 1, (const GLfloat *)color);
+    //glUniform4fv(prog_prim->col, 1, (const GLfloat *)color);
+    // TODO: Bind texture
 
     RICO_ASSERT(prim_bbox_vao);
     RICO_ASSERT(prim_bbox_vbo[0]);
@@ -316,14 +413,15 @@ extern void RICO_prim_draw_obb_xform(const struct RICO_obb *obb,
         p7.x, p7.y, p7.z
     };
 
-    RICO_ASSERT(prog_prim->prog_id);
-    glUseProgram(prog_prim->prog_id);
+    RICO_ASSERT(prog_prim->program.gl_id);
+    glUseProgram(prog_prim->program.gl_id);
 
-    glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix->a);
-    glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
-    glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, xform->a);
+    glUniformMatrix4fv(prog_prim->vert.proj, 1, GL_TRUE, cam_player.proj_matrix->a);
+    glUniformMatrix4fv(prog_prim->vert.view, 1, GL_TRUE, cam_player.view_matrix.a);
+    glUniformMatrix4fv(prog_prim->vert.model, 1, GL_TRUE, xform->a);
 
-    glUniform4fv(prog_prim->u_col, 1, (const GLfloat *)color);
+    //glUniform4fv(prog_prim->col, 1, (const GLfloat *)color);
+    // TODO: Bind texture
 
     RICO_ASSERT(prim_bbox_vao);
     RICO_ASSERT(prim_bbox_vbo[0]);
@@ -372,14 +470,16 @@ extern void RICO_prim_draw_sphere_xform(const struct sphere *sphere,
     mat4_mul(&model_matrix, xform);
 #endif
 
-    RICO_ASSERT(prog_prim->prog_id);
-    glUseProgram(prog_prim->prog_id);
+    RICO_ASSERT(prog_prim->program.gl_id);
+    glUseProgram(prog_prim->program.gl_id);
 
-    glUniformMatrix4fv(prog_prim->u_proj, 1, GL_TRUE, cam_player.proj_matrix->a);
-    glUniformMatrix4fv(prog_prim->u_view, 1, GL_TRUE, cam_player.view_matrix.a);
-    glUniformMatrix4fv(prog_prim->u_model, 1, GL_TRUE, model_matrix.a);
-    glUniform4f(prog_prim->u_col, color->r, color->g, color->b, color->a);
-
+    glUniformMatrix4fv(prog_prim->vert.proj, 1, GL_TRUE, cam_player.proj_matrix->a);
+    glUniformMatrix4fv(prog_prim->vert.view, 1, GL_TRUE, cam_player.view_matrix.a);
+    glUniformMatrix4fv(prog_prim->vert.model, 1, GL_TRUE, model_matrix.a);
+    
+    //glUniform4f(prog_prim->col, color->r, color->g, color->b, color->a);
+    // TODO: Bind texture
+    
     mesh_render(MESH_DEFAULT_SPHERE, PROG_PRIM);
 
     // Clean up
