@@ -1268,11 +1268,6 @@ static int engine_init()
 	if (err) return err;
 
 	printf("----------------------------------------------------------\n");
-	printf("[MAIN][init] Initializing primitives\n");
-	printf("----------------------------------------------------------\n");
-	prim_init();
-
-	printf("----------------------------------------------------------\n");
 	printf("[MAIN][init] Initializing editor\n");
 	printf("----------------------------------------------------------\n");
 	editor_init();
@@ -1284,6 +1279,11 @@ static int engine_init()
 	if (err) return err;
 	RICO_pack_init(PACK_TRANSIENT, "pack_transient", 512, MB(4));
 	RICO_pack_init(PACK_FRAME, "pack_frame", 0, 0);
+
+    printf("----------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing primitives\n");
+    printf("----------------------------------------------------------\n");
+    prim_init();
 
 	printf("----------------------------------------------------------\n");
 	printf("[MAIN][init] Initializing camera\n");

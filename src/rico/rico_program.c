@@ -9,7 +9,7 @@ static program_attribs_helper program_attribs[PROG_COUNT] = {
 //| General-purpose
 ///=============================================================================
 static int make_program(GLuint vertex_shader, GLuint fragment_shader,
-                          GLuint *_program)
+                        GLuint *_program)
 {
     GLint status;
     GLuint program = glCreateProgram();

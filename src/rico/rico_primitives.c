@@ -43,6 +43,9 @@ static int prim_init()
     glEnableVertexAttribArray(LOCATION_PRIM_COLOR);
 #endif
 
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
     ///-------------------------------------------------------------------------
     //| Quad
     ///-------------------------------------------------------------------------
@@ -64,10 +67,13 @@ static int prim_init()
                           (GLvoid *)offsetof(struct prim_vertex, uv));
     glEnableVertexAttribArray(LOCATION_PRIM_UV);
 
-    glVertexAttribPointer(LOCATION_PRIM_COLOR, 3, GL_FLOAT, GL_FALSE,
+    glVertexAttribPointer(LOCATION_PRIM_COLOR, 4, GL_FLOAT, GL_FALSE,
                           sizeof(struct prim_vertex),
                           (GLvoid *)offsetof(struct prim_vertex, col));
     glEnableVertexAttribArray(LOCATION_PRIM_COLOR);
+
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     ///-------------------------------------------------------------------------
     //| Bounding box
@@ -98,9 +104,9 @@ static int prim_init()
     glEnableVertexAttribArray(LOCATION_PRIM_POSITION);
 
     ///-------------------------------------------------------------------------
+    glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
 
     return err;
 }
@@ -480,15 +486,11 @@ extern void RICO_prim_draw_sphere_xform(const struct sphere *sphere,
     //glUniform4fv(prog_prim->col, 1, (const GLfloat *)color);
     // TODO: Bind texture
     
-    
-
-    //glEnableVertexAttribArray(LOCATION_PRIM_POSITION);
-    //glEnableVertexAttribArray(LOCATION_PRIM_UV);
-    //glEnableVertexAttribArray(LOCATION_PRIM_COLOR);
-
-    //glBindVertexArray(mesh_vao(MESH_DEFAULT_SPHERE));
-    mesh_clusterfuck(MESH_DEFAULT_SPHERE);
-    //glBindVertexArray(0);
+    // TODO: Render spheres with primitive shader rather than PBR shader? Need
+    //       to store vertex data as prim_vertex instead of pbr_vertex.
+    glBindVertexArray(mesh_vao(MESH_DEFAULT_SPHERE));
+    mesh_render(MESH_DEFAULT_SPHERE);
+    glBindVertexArray(0);
 
     // Clean up
     glUseProgram(0);

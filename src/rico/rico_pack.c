@@ -287,9 +287,9 @@ static void pack_build_default()
 
     // HACK: This is a bit of a gross way to get the id of the last mesh
     pkid cube;
-    RICO_load_obj_file(pack, "mesh/prim_cube.obj", &cube, PROG_PRIM);
+    RICO_load_obj_file(pack, "mesh/prim_cube.obj", &cube, PROG_PBR);
     pkid sphere;
-    RICO_load_obj_file(pack, "mesh/prim_sphere.obj", &sphere, PROG_PRIM);
+    RICO_load_obj_file(pack, "mesh/prim_sphere.obj", &sphere, PROG_PBR);
 
     struct RICO_font *font = RICO_pack_lookup(font_id);
     RICO_ASSERT(font_id == FONT_DEFAULT);

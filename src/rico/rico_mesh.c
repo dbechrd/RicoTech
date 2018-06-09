@@ -99,6 +99,15 @@ static struct rgl_mesh *mesh_rgl(pkid pkid)
     }
     return rgl_mesh;
 }
+static void mesh_bind_buffers(pkid pkid)
+{
+    struct rgl_mesh *rgl_mesh = mesh_rgl(pkid);
+    glBindBuffer(GL_ARRAY_BUFFER, rgl_mesh->vbos[VBO_VERTEX]);
+    if (rgl_mesh->elements)
+    {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rgl_mesh->vbos[VBO_ELEMENT]);
+    }
+}
 static GLuint mesh_vao(pkid pkid)
 {
     GLuint vao = mesh_rgl(pkid)->vao;
