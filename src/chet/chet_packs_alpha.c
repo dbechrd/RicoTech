@@ -31,12 +31,18 @@ void pack_build_alpha(struct pack_info *pack_info)
     pkid mesh_terrain_id;
     pkid mesh_panel_id;
     pkid mesh_button_id;
-    RICO_load_obj_file(pack_dat, "mesh/alpha_terrain_001.obj", &mesh_terrain_id);
-    RICO_load_obj_file(pack_dat, "mesh/alpha_door_001.obj", &mesh_door_id);
-    RICO_load_obj_file(pack_dat, "mesh/alpha_staircase_001.obj", 0);
-    RICO_load_obj_file(pack_dat, "mesh/alpha_wall_001.obj", 0);
-    RICO_load_obj_file(pack_dat, "mesh/alpha_game_panel.obj", &mesh_panel_id);
-    RICO_load_obj_file(pack_dat, "mesh/alpha_game_button.obj", &mesh_button_id);
+    RICO_load_obj_file(pack_dat, "mesh/alpha_terrain_001.obj", &mesh_terrain_id,
+                       PROG_PBR);
+    RICO_load_obj_file(pack_dat, "mesh/alpha_door_001.obj", &mesh_door_id,
+                       PROG_PBR);
+    RICO_load_obj_file(pack_dat, "mesh/alpha_staircase_001.obj", 0,
+                       PROG_PBR);
+    RICO_load_obj_file(pack_dat, "mesh/alpha_wall_001.obj", 0, 
+                      PROG_PBR);
+    RICO_load_obj_file(pack_dat, "mesh/alpha_game_panel.obj", &mesh_panel_id,
+                       PROG_PBR);
+    RICO_load_obj_file(pack_dat, "mesh/alpha_game_button.obj", &mesh_button_id,
+                       PROG_PBR);
 
     DLB_ASSERT(mesh_door_id);
     DLB_ASSERT(mesh_terrain_id);

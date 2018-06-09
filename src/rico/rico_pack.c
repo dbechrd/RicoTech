@@ -287,9 +287,9 @@ static void pack_build_default()
 
     // HACK: This is a bit of a gross way to get the id of the last mesh
     pkid cube;
-    RICO_load_obj_file(pack, "mesh/prim_cube.obj", &cube);
+    RICO_load_obj_file(pack, "mesh/prim_cube.obj", &cube, PROG_PRIM);
     pkid sphere;
-    RICO_load_obj_file(pack, "mesh/prim_sphere.obj", &sphere);
+    RICO_load_obj_file(pack, "mesh/prim_sphere.obj", &sphere, PROG_PRIM);
 
     struct RICO_font *font = RICO_pack_lookup(font_id);
     RICO_ASSERT(font_id == FONT_DEFAULT);
@@ -860,13 +860,15 @@ cleanup:
 }
 extern pkid RICO_load_mesh(u32 pack_id, const char *name, u32 vertex_size,
                            u32 vertex_count, const void *vertex_data,
-                           u32 element_count, const GLuint *element_data)
+                           u32 element_count, const GLuint *element_data,
+                           enum program_type prog_type)
 {
     struct pack *pack = packs[pack_id];
     struct RICO_mesh *mesh = blob_start(pack, RICO_HND_MESH, 0, name);
     mesh->vertex_size = vertex_size;
     mesh->vertex_count = vertex_count;
     mesh->element_count = element_count;
+    mesh->prog_type = prog_type;
     mesh->vertices_offset = blob_offset(pack);
     push_data(pack, vertex_data, vertex_count, vertex_size);
     mesh->elements_offset = blob_offset(pack);
@@ -914,7 +916,7 @@ extern pkid RICO_load_string(u32 pack_id, enum RICO_string_slot slot, float x,
     return pkid;
 }
 extern int RICO_load_obj_file(u32 pack_id, const char *filename,
-                              pkid *_last_mesh_id)
+                              pkid *_last_mesh_id, enum program_type prog_type)
 {
     enum RICO_error err;
     u32 last_mesh_id = 0;
@@ -957,7 +959,7 @@ extern int RICO_load_obj_file(u32 pack_id, const char *filename,
             {
                 last_mesh_id =
                     RICO_load_mesh(pack_id, name, sizeof(*vertices), idx_vertex,
-                                   vertices, idx_element, elements);
+                                   vertices, idx_element, elements, prog_type);
                 struct RICO_mesh *mesh = RICO_pack_lookup(last_mesh_id);
                 bbox_init_mesh(&mesh->bbox, mesh);
 
@@ -1053,7 +1055,7 @@ extern int RICO_load_obj_file(u32 pack_id, const char *filename,
     {
         last_mesh_id =
             RICO_load_mesh(pack_id, name, sizeof(*vertices), idx_vertex,
-                           vertices, idx_element, elements);
+                           vertices, idx_element, elements, prog_type);
         struct RICO_mesh *mesh = RICO_pack_lookup(last_mesh_id);
         bbox_init_mesh(&mesh->bbox, mesh);
 

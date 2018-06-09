@@ -369,7 +369,9 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
         {
             mesh_id = obj->mesh_id;
         }
-        mesh_render(mesh_id, prog->program.type);
+        glBindVertexArray(mesh_vao(mesh_id));
+        mesh_render(mesh_id);
+        glBindVertexArray(0);
 
         // Clean up
         material_unbind(mat_id);
@@ -444,7 +446,9 @@ static void object_render_ui(struct pack *pack,
             mesh_id = obj->mesh_id;
         }
         RICO_ASSERT(mesh_id);
-        mesh_render(mesh_id, prog->program.type);
+        glBindVertexArray(mesh_vao(mesh_id));
+        mesh_render(mesh_id);
+        glBindVertexArray(0);
 
         // Clean up
         texture_unbind(tex_id, GL_TEXTURE0);

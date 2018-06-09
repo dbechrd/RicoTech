@@ -98,11 +98,12 @@ extern pkid RICO_load_font_file(u32 pack_id, const char *name,
                                 const char *filename);
 extern pkid RICO_load_mesh(u32 pack_id, const char *name, u32 vertex_size,
                            u32 vertex_count, const void *vertex_data,
-                           u32 element_count, const GLuint *element_data);
+                           u32 element_count, const GLuint *element_data,
+                           enum program_type prog_type);
 extern pkid RICO_load_string(u32 pack_id, enum RICO_string_slot slot, float x,
                              float y, struct vec4 color, u32 lifespan,
                              pkid font, const char *text);
 extern int RICO_load_obj_file(u32 pack_id, const char *filename,
-                              pkid *_last_mesh_id);
+                              pkid *_last_mesh_id, enum program_type prog_type);
 
 #endif

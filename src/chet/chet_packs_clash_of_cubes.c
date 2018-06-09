@@ -5,7 +5,8 @@ void pack_build_clash_of_cubes(struct pack_info *pack_info)
     u32 pack = RICO_pack_init(0, pack_info->path_pak, 64, MB(32));
 
     pkid cube_mesh_id;
-    RICO_load_obj_file(pack, "mesh/alpha_game_button.obj", &cube_mesh_id);
+    RICO_load_obj_file(pack, "mesh/alpha_game_button.obj", &cube_mesh_id,
+                       PROG_PBR);
     DLB_ASSERT(cube_mesh_id);
 
     u32 pack_sav = RICO_pack_init(0, pack_info->path_sav, 64, MB(32));

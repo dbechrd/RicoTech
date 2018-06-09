@@ -290,15 +290,15 @@ static void program_text_attribs()
                           (GLvoid *)offsetof(struct text_vertex, pos));
     glEnableVertexAttribArray(LOCATION_TEXT_POSITION);
 
-    glVertexAttribPointer(LOCATION_TEXT_COLOR, 4, GL_FLOAT, GL_FALSE,
-                          sizeof(struct text_vertex),
-                          (GLvoid *)offsetof(struct text_vertex, col));
-    glEnableVertexAttribArray(LOCATION_TEXT_COLOR);
-
     glVertexAttribPointer(LOCATION_TEXT_UV, 2, GL_FLOAT, GL_FALSE,
                           sizeof(struct text_vertex),
                           (GLvoid *)offsetof(struct text_vertex, uv));
     glEnableVertexAttribArray(LOCATION_TEXT_UV);
+
+    glVertexAttribPointer(LOCATION_TEXT_COLOR, 4, GL_FLOAT, GL_FALSE,
+                          sizeof(struct text_vertex),
+                          (GLvoid *)offsetof(struct text_vertex, col));
+    glEnableVertexAttribArray(LOCATION_TEXT_COLOR);
 }
 static int make_program_text(struct text_program **_program)
 {

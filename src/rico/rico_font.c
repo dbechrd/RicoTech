@@ -89,26 +89,33 @@ static void font_render(u32 *mesh_id, u32 *tex_id, pkid font_id, float x,
         GLfloat u1 = u0 + font->col_factor;
         GLfloat v1 = v0 + font->row_factor;
 
+        if (font->y_invert)
+        {
+            GLfloat tmp = v0;
+            v0 = v1;
+            v1 = tmp;
+        }
+
         int char_width = font->char_widths[(int)text[i]];
         float offset_x = SCREEN_W(char_width);
         float offset_y = SCREEN_H(font->cell_y);
 
         // Vertices for this character's quad
         vertices[idx_vertex++] = (struct text_vertex) {
-            VEC2F(screen_x, screen_y - offset_y),
-            VEC2F(u0, v0), bg
+            VEC2F(screen_x, screen_y + offset_y),
+            VEC2F(u0, v1), bg
         };
         vertices[idx_vertex++] = (struct text_vertex) {
-            VEC2F(screen_x + offset_x, screen_y - offset_y),
-            VEC2F(u1, v0), bg
-        };
-        vertices[idx_vertex++] = (struct text_vertex) {
-            VEC2F(screen_x + offset_x, screen_y),
+            VEC2F(screen_x + offset_x, screen_y + offset_y),
             VEC2F(u1, v1), bg
         };
         vertices[idx_vertex++] = (struct text_vertex) {
+            VEC2F(screen_x + offset_x, screen_y),
+            VEC2F(u1, v0), bg
+        };
+        vertices[idx_vertex++] = (struct text_vertex) {
             VEC2F(screen_x, screen_y),
-            VEC2F(u0, v1), bg
+            VEC2F(u0, v0), bg
         };
 
         // Triangles using this character's vertices
@@ -125,7 +132,7 @@ static void font_render(u32 *mesh_id, u32 *tex_id, pkid font_id, float x,
 
     pkid new_mesh_id =
         RICO_load_mesh(PACK_TRANSIENT, mesh_name, sizeof(*vertices), idx_vertex,
-                       vertices, idx_element, elements);
+                       vertices, idx_element, elements, PROG_TEXT);
 
     RICO_ASSERT(new_mesh_id);
     *mesh_id = new_mesh_id;

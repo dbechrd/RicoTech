@@ -139,7 +139,7 @@ static void prim_draw_line(const struct vec3 *p0, const struct vec3 *p1,
     glUniformMatrix4fv(prog_prim->vert.view, 1, GL_TRUE, view->a);
     glUniformMatrix4fv(prog_prim->vert.model, 1, GL_TRUE, xform->a);
 
-    //glUniform4f(prog_prim->col, color->r, color->g, color->b, color->a);
+    //glUniform4fv(prog_prim->col, 1, (const GLfloat *)color);
     // TODO: Bind texture
 
     RICO_ASSERT(prim_line_vao);
@@ -477,10 +477,18 @@ extern void RICO_prim_draw_sphere_xform(const struct sphere *sphere,
     glUniformMatrix4fv(prog_prim->vert.view, 1, GL_TRUE, cam_player.view_matrix.a);
     glUniformMatrix4fv(prog_prim->vert.model, 1, GL_TRUE, model_matrix.a);
     
-    //glUniform4f(prog_prim->col, color->r, color->g, color->b, color->a);
+    //glUniform4fv(prog_prim->col, 1, (const GLfloat *)color);
     // TODO: Bind texture
     
-    mesh_render(MESH_DEFAULT_SPHERE, PROG_PRIM);
+    
+
+    //glEnableVertexAttribArray(LOCATION_PRIM_POSITION);
+    //glEnableVertexAttribArray(LOCATION_PRIM_UV);
+    //glEnableVertexAttribArray(LOCATION_PRIM_COLOR);
+
+    //glBindVertexArray(mesh_vao(MESH_DEFAULT_SPHERE));
+    mesh_clusterfuck(MESH_DEFAULT_SPHERE);
+    //glBindVertexArray(0);
 
     // Clean up
     glUseProgram(0);

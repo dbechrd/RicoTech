@@ -7,6 +7,7 @@ struct RICO_mesh
     u32 vertex_size;
     u32 vertex_count;
     u32 element_count;
+    enum program_type prog_type;
     struct RICO_bbox bbox;
 
     u32 vertices_offset;

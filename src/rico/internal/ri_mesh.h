@@ -21,9 +21,10 @@ struct rgl_mesh
 
 extern void rico_mesh_init();
 static void *mesh_vertices(struct RICO_mesh *mesh);
-static void mesh_upload(struct RICO_mesh *mesh, GLenum hint,
-                        enum program_type prog_type);
+static void mesh_upload(struct RICO_mesh *mesh, GLenum hint);
 static void mesh_delete(struct RICO_mesh *mesh);
-static void mesh_render(pkid pkid, enum program_type prog_type);
+static GLuint mesh_vao(pkid pkid);
+static void mesh_render(pkid pkid);
+static void mesh_clusterfuck(pkid pkid);
 
 #endif
