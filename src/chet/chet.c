@@ -658,7 +658,7 @@ void game_render_ui()
     //}
 
     struct rect cursor_rect = { mouse_x - 16, mouse_y - 16, 32, 32 };
-    RICO_prim_draw_rect_tex(&cursor_rect, &COLOR_RED, tex_toolbar);
+    RICO_prim_draw_rect_tex(&cursor_rect, &COLOR_TRANSPARENT, tex_toolbar);
 
     //DLB_ASSERT(hud->rect.x == 2);
     //DLB_ASSERT(hud->rect.y == 2);

@@ -137,6 +137,7 @@ struct prim_program_vert
 struct prim_program_frag
 {
     // Fragment shader
+    GLint color;  // vec4
     GLint tex;  // sampler2D
 };
 

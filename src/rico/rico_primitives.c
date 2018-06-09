@@ -144,8 +144,7 @@ static void prim_draw_line(const struct vec3 *p0, const struct vec3 *p1,
     glUniformMatrix4fv(prog_prim->vert.proj, 1, GL_TRUE, proj->a);
     glUniformMatrix4fv(prog_prim->vert.view, 1, GL_TRUE, view->a);
     glUniformMatrix4fv(prog_prim->vert.model, 1, GL_TRUE, xform->a);
-
-    //glUniform4fv(prog_prim->col, 1, (const GLfloat *)color);
+    glUniform4fv(prog_prim->frag.color, 1, (const GLfloat *)color);
     // TODO: Bind texture
 
     RICO_ASSERT(prim_line_vao);
@@ -181,8 +180,8 @@ extern void RICO_prim_draw_rect_tex(const struct rect *rect,
                                     const struct vec4 *color, pkid tex_pkid)
 {
     // (0,0) (0,1) (1,0) (1,1)
-    float x0 = SCREEN_X(rect->x);
-    float y0 = SCREEN_Y(rect->y);
+    float x0 = X_TO_NDC(rect->x);
+    float y0 = Y_TO_NDC(rect->y);
     float x1 = SCREEN_X(rect->x + rect->w);
     float y1 = SCREEN_Y(rect->y + rect->h);
     const float ortho_z = -1.0f;
@@ -250,6 +249,7 @@ static void prim_draw_quad(const struct quad *quad, const struct vec4 *color,
     glUniformMatrix4fv(prog_prim->vert.proj, 1, GL_TRUE, proj->a);
     glUniformMatrix4fv(prog_prim->vert.view, 1, GL_TRUE, view->a);
     glUniformMatrix4fv(prog_prim->vert.model, 1, GL_TRUE, xform->a);
+    glUniform4fv(prog_prim->frag.color, 1, (const GLfloat *)color);
 
     RICO_ASSERT(prim_quad_vao);
     RICO_ASSERT(prim_quad_vbo);
@@ -321,8 +321,7 @@ extern void RICO_prim_draw_bbox_xform(const struct RICO_bbox *bbox,
     glUniformMatrix4fv(prog_prim->vert.proj, 1, GL_TRUE, cam_player.proj_matrix->a);
     glUniformMatrix4fv(prog_prim->vert.view, 1, GL_TRUE, cam_player.view_matrix.a);
     glUniformMatrix4fv(prog_prim->vert.model, 1, GL_TRUE, xform->a);
-
-    //glUniform4fv(prog_prim->col, 1, (const GLfloat *)color);
+    glUniform4fv(prog_prim->frag.color, 1, (const GLfloat *)color);
     // TODO: Bind texture
 
     RICO_ASSERT(prim_bbox_vao);
@@ -425,8 +424,7 @@ extern void RICO_prim_draw_obb_xform(const struct RICO_obb *obb,
     glUniformMatrix4fv(prog_prim->vert.proj, 1, GL_TRUE, cam_player.proj_matrix->a);
     glUniformMatrix4fv(prog_prim->vert.view, 1, GL_TRUE, cam_player.view_matrix.a);
     glUniformMatrix4fv(prog_prim->vert.model, 1, GL_TRUE, xform->a);
-
-    //glUniform4fv(prog_prim->col, 1, (const GLfloat *)color);
+    glUniform4fv(prog_prim->frag.color, 1, (const GLfloat *)color);
     // TODO: Bind texture
 
     RICO_ASSERT(prim_bbox_vao);
@@ -482,8 +480,7 @@ extern void RICO_prim_draw_sphere_xform(const struct sphere *sphere,
     glUniformMatrix4fv(prog_prim->vert.proj, 1, GL_TRUE, cam_player.proj_matrix->a);
     glUniformMatrix4fv(prog_prim->vert.view, 1, GL_TRUE, cam_player.view_matrix.a);
     glUniformMatrix4fv(prog_prim->vert.model, 1, GL_TRUE, model_matrix.a);
-    
-    //glUniform4fv(prog_prim->col, 1, (const GLfloat *)color);
+    glUniform4fv(prog_prim->frag.color, 1, (const GLfloat *)color);
     // TODO: Bind texture
     
     // TODO: Render spheres with primitive shader rather than PBR shader? Need

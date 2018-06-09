@@ -200,7 +200,9 @@ static void program_primitive_get_locations(struct prim_program *p)
     //RICO_ASSERT(p->vert.attrs.color == LOCATION_PBR_COLOR);
 
     // Fragment shader
+    p->frag.color = program_get_uniform_location(p->program.gl_id, "color");
     p->frag.tex = program_get_uniform_location(p->program.gl_id, "tex");
+    //RICO_ASSERT(p->frag.color >= 0);
     //RICO_ASSERT(p->frag.tex >= 0);
 }
 static void program_primitive_attribs()

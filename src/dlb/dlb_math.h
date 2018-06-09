@@ -184,6 +184,8 @@ struct quat
 #define VEC3_DOWN                     VEC3(0.0f,-1.0f, 0.0f)
 #define VEC3_SMALL                    VEC3(0.01f, 0.01f, 0.01f)
 
+#define VEC4_ZERO                     VEC4(0.0f, 0.0f, 0.0f, 0.0f)
+
 #define COLOR_TRANSPARENT             VEC4(0.000f, 0.000f, 0.000f, 0.0f)
 
 #define COLOR_ORANGE                  VEC4(1.000f, 0.549f, 0.000f, 1.0f)
