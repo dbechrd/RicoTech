@@ -35,10 +35,12 @@ static void camera_init(struct RICO_camera *camera, struct vec3 position,
 
     bbox_init(&camera->RICO_bbox, VEC3(0.f, 0.f, 0.f), VEC3(1.f, 1.f, 1.f));
 
-    camera->persp_matrix = mat4_init_perspective(SCREEN_WIDTH, SCREEN_HEIGHT, Z_NEAR,
-                                                 Z_FAR, fov_deg);
-    camera->ortho_matrix = mat4_init_ortho(SCREEN_WIDTH, SCREEN_HEIGHT, Z_NEAR, Z_FAR,
-                                           0.0f);
+    camera->persp_matrix = mat4_init_perspective(
+        (r32)SCREEN_WIDTH, (r32)SCREEN_HEIGHT, Z_NEAR, Z_FAR, fov_deg
+    );
+    camera->ortho_matrix = mat4_init_ortho(
+        (r32)SCREEN_WIDTH, (r32)SCREEN_HEIGHT, Z_NEAR, Z_FAR, 0.0f
+    );
     camera->proj_matrix = &camera->persp_matrix;
 
     camera_translate_local(camera, &VEC3_ZERO);
@@ -53,8 +55,9 @@ static void camera_reset(struct RICO_camera *camera)
 static void camera_set_fov(struct RICO_camera *camera, float fov_deg)
 {
     camera->fov_deg = fov_deg;
-    camera->persp_matrix = mat4_init_perspective(SCREEN_WIDTH, SCREEN_HEIGHT, Z_NEAR,
-                                                 Z_FAR, fov_deg);
+    camera->persp_matrix = mat4_init_perspective(
+        (r32)SCREEN_WIDTH, (r32)SCREEN_HEIGHT, Z_NEAR, Z_FAR, fov_deg
+    );
 }
 static void camera_toggle_projection(struct RICO_camera *camera)
 {

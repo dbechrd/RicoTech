@@ -4,13 +4,13 @@
 #include "rico_camera.h"
 
 //TODO: Probably should prefix these? Possibly move to const.h?
-#define SCREEN_WIDTH 1600
-#define SCREEN_HEIGHT 900
+static s32 SCREEN_WIDTH = 1600;
+static s32 SCREEN_HEIGHT = 900;
 #define SCREEN_ASPECT (float)SCREEN_WIDTH / SCREEN_HEIGHT
 
 
-#define X_TO_NDC(x) ((x) / (SCREEN_WIDTH / 2.0f) - 1.0f)
-#define Y_TO_NDC(y) (-(y) / (SCREEN_HEIGHT / 2.0f) + 1.0f)
+#define X_TO_NDC(x) ((float)(x) / (SCREEN_WIDTH / 2.0f) - 1.0f)
+#define Y_TO_NDC(y) (-(float)(y) / (SCREEN_HEIGHT / 2.0f) + 1.0f)
 
 // NOTE: Pixel origin is top-left of screen
 // NOTE: NDC origin is center of screen

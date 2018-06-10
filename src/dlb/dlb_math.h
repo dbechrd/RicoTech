@@ -49,8 +49,13 @@ struct rect
 {
     union
     {
-        struct { s32 x, y, w, h; };
-        struct { s32 left, top, right, bottom; };
+        struct {
+            s32 x, y;
+            u32 w, h;
+        };
+        struct {
+            s32 left, top, right, bottom;
+        };
     };
 };
 
@@ -68,8 +73,8 @@ struct vec2i
 {
     union
     {
-        struct { s32 x, y; };
-        struct { s32 w, h; };
+        struct { u32 x, y; };
+        struct { u32 w, h; };
     };
 };
 
@@ -148,7 +153,7 @@ struct quat
 // HACK: Make gcc shut up about missing braces bug. While this syntax is
 //       technically valid in VS, it makes Intellisense whine and misbehave.
 #if defined(__GNUC__) || defined(__clang__) // || defined(_MSC_VER)
-#define RECT(x, y, w, h) ((const struct rect) {{{ x, y, w, h }}})
+#define RECT(x, y, w, h) ((const struct size) {{{ x, y, w, h }}})
 #define VEC2(x, y)       ((const struct vec2) {{{ x, y }}})
 #define VEC3(x, y, z)    ((const struct vec3) {{{ x, y, z }}})
 #define VEC4(x, y, z, w) ((const struct vec4) {{{ x, y, z, w }}})

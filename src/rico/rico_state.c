@@ -17,6 +17,8 @@ static u32 action_queue_count = 0;
 // frame. Typical walking stride is ~0.762 meters (30 inches). Distance traveled
 // per frame (60hz) is 0.762 * 0.0275 = 0.020955 ~= 0.021
 
+static s32 mouse_x;
+static s32 mouse_y;
 static r32 mouse_dx = 0;
 static r32 mouse_dy = 0;
 
@@ -87,27 +89,23 @@ static u8 *keys_prev = keystate_buffers[1];
 #define KEY_PRESSED(key)  ( KEY_IS_DOWN(key) && !KEY_WAS_DOWN(key))
 #define KEY_RELEASED(key) (!KEY_IS_DOWN(key) &&  KEY_WAS_DOWN(key))
 
-#define CHORD_VALID(chord) (chord.keys[0] || chord.keys[1] || chord.keys[2])
+#define CHORD_VALID(chord) (chord->keys[0] || chord->keys[1] || chord->keys[2])
 
-static inline bool chord_is_down(u32 action)
+static inline bool chord_is_down(struct RICO_keychord *chord)
 {
     // All keys are down
-    return (CHORD_VALID(action_chords[action]) &&
-            KEY_IS_DOWN(action_chords[action].keys[0]) &&
-            KEY_IS_DOWN(action_chords[action].keys[1]) &&
-            KEY_IS_DOWN(action_chords[action].keys[2]));
+    return (CHORD_VALID(chord) &&
+            KEY_IS_DOWN(chord->keys[0]) &&
+            KEY_IS_DOWN(chord->keys[1]) &&
+            KEY_IS_DOWN(chord->keys[2]));
 }
-static inline bool chord_was_down(u32 action)
+static inline bool chord_was_down(struct RICO_keychord *chord)
 {
-    RICO_ASSERT(action_chords[action].keys[0] ||
-                action_chords[action].keys[1] ||
-                action_chords[action].keys[2]);
-
     // All keys were down last frame
-    return (CHORD_VALID(action_chords[action]) &&
-            KEY_WAS_DOWN(action_chords[action].keys[0]) &&
-            KEY_WAS_DOWN(action_chords[action].keys[1]) &&
-            KEY_WAS_DOWN(action_chords[action].keys[2]));
+    return (CHORD_VALID(chord) &&
+            KEY_WAS_DOWN(chord->keys[0]) &&
+            KEY_WAS_DOWN(chord->keys[1]) &&
+            KEY_WAS_DOWN(chord->keys[2]));
 }
 #if 0
 // Cleanup, using keychord flags for this now
@@ -122,22 +120,26 @@ static inline bool chord_released(u32 action)
     return !chord_is_down(action) && chord_was_down(action);
 }
 #endif
-static inline bool chord_active(u32 action)
+static inline bool chord_active(struct RICO_keychord *chord)
 {
     // Chord is considered active when any of the following is true:
     // 1) is down and repeat
     // 2) pressed (is down and wasn't down last frame)
-    // 3) on_release and released (is not down but was last frame)
+    // 3) on_release and released (is not down but was last frame).
     bool active = false;
-    if (chord_is_down(action))
+    if (chord_is_down(chord))
     {
-        active = action_chords[action].repeat || !chord_was_down(action);
+        active = chord->repeat || !chord_was_down(chord);
     }
     else
     {
-        active = action_chords[action].on_release && chord_was_down(action);
+        active = chord->on_release && chord_was_down(chord);
     }
     return active;
+}
+static inline bool action_active(u32 action)
+{
+    return chord_active(&action_chords[action]);
 }
 
 // Current state
@@ -240,6 +242,8 @@ extern int RICO_update()
 	{
 		mouse_dx = mouse_dy = 0;
 	}
+
+    SDL_GetMouseState(&mouse_x, &mouse_y);
 
 	// Get keyboard state
 	u8 *keys_tmp = keys_prev;
@@ -397,28 +401,28 @@ static int shared_engine_events()
 
 #if RICO_DEBUG
     // DEBUG: Toggle scene lighting
-    if (chord_active(ACTION_ENGINE_DEBUG_LIGHTING_TOGGLE))
+    if (action_active(ACTION_ENGINE_DEBUG_LIGHTING_TOGGLE))
     {
         enable_lighting = !enable_lighting;
     }
     // DEBUG: Trigger breakpoint
-    else if (chord_active(ACTION_ENGINE_DEBUG_TRIGGER_BREAKPOINT))
+    else if (action_active(ACTION_ENGINE_DEBUG_TRIGGER_BREAKPOINT))
     {
         SDL_TriggerBreakpoint();
     }
     // DEBUG: Change FOV
-    else if (chord_active(ACTION_ENGINE_DEBUG_FOV_INCREASE) ||
-             chord_active(ACTION_ENGINE_DEBUG_FOV_DECREASE))
+    else if (action_active(ACTION_ENGINE_DEBUG_FOV_INCREASE) ||
+             action_active(ACTION_ENGINE_DEBUG_FOV_DECREASE))
     {
         float fov = cam_player.fov_deg;
-        fov += chord_active(ACTION_ENGINE_DEBUG_FOV_INCREASE)
+        fov += action_active(ACTION_ENGINE_DEBUG_FOV_INCREASE)
             ? 5.0f
             : -5.0f;
         camera_set_fov(&cam_player, fov);
     }
 #endif
     // Toggle FPS counter
-    else if (chord_active(ACTION_ENGINE_FPS_TOGGLE))
+    else if (action_active(ACTION_ENGINE_FPS_TOGGLE))
     {
         fps_render = !fps_render;
         if (!fps_render)
@@ -427,19 +431,19 @@ static int shared_engine_events()
         }
     }
     // Toggle mouse lock-to-window
-    else if (chord_active(ACTION_ENGINE_MOUSE_LOCK_TOGGLE))
+    else if (action_active(ACTION_ENGINE_MOUSE_LOCK_TOGGLE))
     {
         mouse_lock = !mouse_lock;
         SDL_SetRelativeMouseMode(mouse_lock);
     }
     // Toggle vsync
-    else if (chord_active(ACTION_ENGINE_VSYNC_TOGGLE))
+    else if (action_active(ACTION_ENGINE_VSYNC_TOGGLE))
     {
         vsync = !vsync;
         SDL_GL_SetSwapInterval(vsync);
     }
     // Toggle audio
-    else if (chord_active(ACTION_ENGINE_MUTE_TOGGLE))
+    else if (action_active(ACTION_ENGINE_MUTE_TOGGLE))
     {
         RICO_audio_toggle();
 
@@ -460,12 +464,12 @@ static int shared_engine_events()
                          COLOR_DARK_WHITE, 1000, 0, buf);
     }
     // Pause simulation
-    else if (chord_active(ACTION_ENGINE_SIM_PAUSE))
+    else if (action_active(ACTION_ENGINE_SIM_PAUSE))
     {
         sim_paused = !sim_paused;
     }
     // Save and exit
-    else if (chord_active(ACTION_ENGINE_QUIT))
+    else if (action_active(ACTION_ENGINE_QUIT))
     {
         RICO_simulation_pause();
         string_free_slot(STR_SLOT_MENU_QUIT);
@@ -490,29 +494,29 @@ static int shared_camera_events()
     enum RICO_error err = SUCCESS;
 
     player_acc = VEC3_ZERO;
-    if (chord_active(ACTION_MOVE_UP))       player_acc.y += 1.0f;
-    if (chord_active(ACTION_MOVE_DOWN))     player_acc.y -= 1.0f;
-    if (chord_active(ACTION_MOVE_RIGHT))    player_acc.x += 1.0f;
-    if (chord_active(ACTION_MOVE_LEFT))     player_acc.x -= 1.0f;
-    if (chord_active(ACTION_MOVE_FORWARD))  player_acc.z += 1.0f;
-    if (chord_active(ACTION_MOVE_BACKWARD)) player_acc.z -= 1.0f;
+    if (action_active(ACTION_MOVE_UP))       player_acc.y += 1.0f;
+    if (action_active(ACTION_MOVE_DOWN))     player_acc.y -= 1.0f;
+    if (action_active(ACTION_MOVE_RIGHT))    player_acc.x += 1.0f;
+    if (action_active(ACTION_MOVE_LEFT))     player_acc.x -= 1.0f;
+    if (action_active(ACTION_MOVE_FORWARD))  player_acc.z += 1.0f;
+    if (action_active(ACTION_MOVE_BACKWARD)) player_acc.z -= 1.0f;
     v3_normalize(&player_acc);  // NOTE: Prevent faster movement on diagonal
 
-    player_sprint = chord_active(ACTION_MOVE_SPRINT);
+    player_sprint = action_active(ACTION_MOVE_SPRINT);
 
-    if (chord_active(ACTION_CAMERA_SLOW_TOGGLE))
+    if (action_active(ACTION_CAMERA_SLOW_TOGGLE))
     {
         camera_slow = !camera_slow;
     }
-    else if (chord_active(ACTION_CAMERA_RESET))
+    else if (action_active(ACTION_CAMERA_RESET))
     {
         camera_reset(&cam_player);
     }
-    else if (chord_active(ACTION_CAMERA_LOCK_TOGGLE))
+    else if (action_active(ACTION_CAMERA_LOCK_TOGGLE))
     {
         cam_player.locked = !cam_player.locked;
     }
-    else if (chord_active(ACTION_CAMERA_WIREFRAME_TOGGLE))
+    else if (action_active(ACTION_CAMERA_WIREFRAME_TOGGLE))
     {
         cam_player.fill_mode = (cam_player.fill_mode == GL_FILL)
             ? GL_LINE
@@ -530,39 +534,39 @@ static int shared_edit_events()
 	bool cursor_moved = false;
 
     // Raycast object selection
-    if (chord_active(ACTION_EDIT_MOUSE_PICK_START))
+    if (action_active(ACTION_EDIT_MOUSE_PICK_START))
     {
         edit_mouse_pressed();
     }
-    else if (chord_active(ACTION_EDIT_MOUSE_PICK_MOVE))
+    else if (action_active(ACTION_EDIT_MOUSE_PICK_MOVE))
     {
         if (mouse_dx || mouse_dy)
         {
 			cursor_moved = true;
         }
     }
-    else if (chord_active(ACTION_EDIT_MOUSE_PICK_END))
+    else if (action_active(ACTION_EDIT_MOUSE_PICK_END))
     {
         edit_mouse_released();
     }
     // Recalculate bounding boxes of all objects
-    else if (chord_active(ACTION_EDIT_BBOX_RECALCULATE))
+    else if (action_active(ACTION_EDIT_BBOX_RECALCULATE))
     {
         edit_bbox_reset_all();
     }
     // Duplicate selected object
-    else if (chord_active(ACTION_EDIT_SELECTED_DUPLICATE))
+    else if (action_active(ACTION_EDIT_SELECTED_DUPLICATE))
     {
         edit_duplicate();
     }
     // Exit edit mode
-    else if (chord_active(ACTION_EDIT_QUIT))
+    else if (action_active(ACTION_EDIT_QUIT))
     {
 		edit_object_select(0, false);
         state = STATE_PLAY_EXPLORE;
     }
     // Select previous edit mode
-    else if (chord_active(ACTION_EDIT_MODE_PREVIOUS))
+    else if (action_active(ACTION_EDIT_MODE_PREVIOUS))
     {
         switch (state)
         {
@@ -580,7 +584,7 @@ static int shared_edit_events()
         }
     }
     // Select next edit mode
-    else if (chord_active(ACTION_EDIT_MODE_NEXT))
+    else if (action_active(ACTION_EDIT_MODE_NEXT))
     {
         switch (state)
         {
@@ -598,38 +602,38 @@ static int shared_edit_events()
         }
     }
     // Cycle select through packs
-    else if (chord_active(ACTION_EDIT_CYCLE_PACK))
+    else if (action_active(ACTION_EDIT_CYCLE_PACK))
     {
         edit_pack_next();
     }
     // Cycle select through objects (in reverse)
-    else if (chord_active(ACTION_EDIT_CYCLE_BLOB_REVERSE))
+    else if (action_active(ACTION_EDIT_CYCLE_BLOB_REVERSE))
     {
         edit_object_prev();
     }
     // Cycle select through objects
-    else if (chord_active(ACTION_EDIT_CYCLE_BLOB))
+    else if (action_active(ACTION_EDIT_CYCLE_BLOB))
     {
         edit_object_next();
     }
     // Create new object
-    else if (chord_active(ACTION_EDIT_CREATE_OBJECT))
+    else if (action_active(ACTION_EDIT_CREATE_OBJECT))
     {
         edit_object_create();
     }
     // Delete selected object
-    else if (chord_active(ACTION_EDIT_SELECTED_DELETE))
+    else if (action_active(ACTION_EDIT_SELECTED_DELETE))
     {
         edit_delete();
     }
     // Save chunk
-    else if (chord_active(ACTION_EDIT_SAVE))
+    else if (action_active(ACTION_EDIT_SAVE))
     {
 		err = RICO_pack_save(RICO_pack_active, false);
     }
     // Toggle camera project (perspective/orthographic)
     // TODO: Reset to perspective when leaving edit mode?
-    else if (chord_active(ACTION_EDIT_CAMERA_TOGGLE_PROJECTION))
+    else if (action_active(ACTION_EDIT_CAMERA_TOGGLE_PROJECTION))
     {
         camera_toggle_projection(&cam_player);
     }
@@ -664,8 +668,8 @@ static int state_play_explore()
     if (err || state != state_last_frame) return err;
 
     // CLEANUP: Interact with clicked object
-    // if (chord_active(ACTION_PLAY_INTERACT))
-    if (chord_active(ACTION_PLAY_EDITOR))
+    // if (action_active(ACTION_PLAY_INTERACT))
+    if (action_active(ACTION_PLAY_EDITOR))
     {
         state = STATE_EDIT_TRANSLATE;
         edit_print_object();
@@ -697,28 +701,28 @@ static int state_edit_translate()
     bool trans_delta_changed = false;
 
     // Reset selected object's translation
-    if (chord_active(ACTION_EDIT_TRANSLATE_RESET))
+    if (action_active(ACTION_EDIT_TRANSLATE_RESET))
         translate_reset = true;
     // Translate selected object up
-    else if (chord_active(ACTION_EDIT_TRANSLATE_UP))
+    else if (action_active(ACTION_EDIT_TRANSLATE_UP))
         translate.y += trans_delta;
     // Translate selected object down
-    else if (chord_active(ACTION_EDIT_TRANSLATE_DOWN))
+    else if (action_active(ACTION_EDIT_TRANSLATE_DOWN))
         translate.y -= trans_delta;
     // Translate selected object west
-    else if (chord_active(ACTION_EDIT_TRANSLATE_WEST))
+    else if (action_active(ACTION_EDIT_TRANSLATE_WEST))
         translate.x -= trans_delta;
     // Translate selected object east
-    else if (chord_active(ACTION_EDIT_TRANSLATE_EAST))
+    else if (action_active(ACTION_EDIT_TRANSLATE_EAST))
         translate.x += trans_delta;
     // Translate selected object north
-    else if (chord_active(ACTION_EDIT_TRANSLATE_NORTH))
+    else if (action_active(ACTION_EDIT_TRANSLATE_NORTH))
         translate.z -= trans_delta;
     // Translate selected object south
-    else if (chord_active(ACTION_EDIT_TRANSLATE_SOUTH))
+    else if (action_active(ACTION_EDIT_TRANSLATE_SOUTH))
         translate.z += trans_delta;
     // Increase translation delta
-    else if (chord_active(ACTION_EDIT_TRANSLATE_DELTA_INCREASE))
+    else if (action_active(ACTION_EDIT_TRANSLATE_DELTA_INCREASE))
     {
         if (trans_delta < TRANS_DELTA_MAX)
         {
@@ -730,7 +734,7 @@ static int state_edit_translate()
         }
     }
     // Decrease translation delta
-    else if (chord_active(ACTION_EDIT_TRANSLATE_DELTA_DECREASE))
+    else if (action_active(ACTION_EDIT_TRANSLATE_DELTA_DECREASE))
     {
         if (trans_delta > TRANS_DELTA_MIN)
         {
@@ -774,7 +778,7 @@ static int state_edit_rotate()
     bool rot_delta_changed = false;
 
     // Toggle heptagonal rotations
-    if (chord_active(ACTION_EDIT_ROTATE_HEPTAMODE_TOGGLE))
+    if (action_active(ACTION_EDIT_ROTATE_HEPTAMODE_TOGGLE))
     {
         if (rot_delta == ROT_DELTA_DEFAULT)
             rot_delta = (float)M_SEVENTH_DEG;
@@ -782,28 +786,28 @@ static int state_edit_rotate()
             rot_delta = ROT_DELTA_DEFAULT;
     }
     // Reset selected object's rotation
-    else if (chord_active(ACTION_EDIT_ROTATE_RESET))
+    else if (action_active(ACTION_EDIT_ROTATE_RESET))
         rotate_reset = true;
     // Rotate selected object CCW around positive x-axis
-    else if (chord_active(ACTION_EDIT_ROTATE_X_POS))
+    else if (action_active(ACTION_EDIT_ROTATE_X_POS))
         rotate.x += rot_delta;
     // Rotate selected object CCW around negative x-axis
-    else if (chord_active(ACTION_EDIT_ROTATE_X_NEG))
+    else if (action_active(ACTION_EDIT_ROTATE_X_NEG))
         rotate.x -= rot_delta;
     // Rotate selected object CCW around positive y-axis
-    else if (chord_active(ACTION_EDIT_ROTATE_Y_NEG))
+    else if (action_active(ACTION_EDIT_ROTATE_Y_NEG))
         rotate.y += rot_delta;
     // Rotate selected object CCW around negative y-axis
-    else if (chord_active(ACTION_EDIT_ROTATE_Y_POS))
+    else if (action_active(ACTION_EDIT_ROTATE_Y_POS))
         rotate.y -= rot_delta;
     // Rotate selected object CCW around positive z-axis
-    else if (chord_active(ACTION_EDIT_ROTATE_Z_POS))
+    else if (action_active(ACTION_EDIT_ROTATE_Z_POS))
         rotate.z += rot_delta;
     // Rotate selected object CCW around negative z-axis
-    else if (chord_active(ACTION_EDIT_ROTATE_Z_NEG))
+    else if (action_active(ACTION_EDIT_ROTATE_Z_NEG))
         rotate.z -= rot_delta;
     // Increase rotation delta
-    else if (chord_active(ACTION_EDIT_ROTATE_DELTA_INCREASE))
+    else if (action_active(ACTION_EDIT_ROTATE_DELTA_INCREASE))
     {
         if (rot_delta < ROT_DELTA_MAX)
         {
@@ -815,7 +819,7 @@ static int state_edit_rotate()
         }
     }
     // Decrease rotation delta
-    else if (chord_active(ACTION_EDIT_ROTATE_DELTA_DECREASE))
+    else if (action_active(ACTION_EDIT_ROTATE_DELTA_DECREASE))
     {
         if (rot_delta > ROT_DELTA_MIN)
         {
@@ -866,42 +870,42 @@ static int state_edit_scale()
     bool scale_delta_changed = false;
 
     // Reset selected object's scale
-    if (chord_active(ACTION_EDIT_SCALE_RESET))
+    if (action_active(ACTION_EDIT_SCALE_RESET))
     {
         scale_reset = true;
     }
     // Scale selected object up
-    else if (chord_active(ACTION_EDIT_SCALE_UP))
+    else if (action_active(ACTION_EDIT_SCALE_UP))
     {
         scale.y += scale_delta;
     }
     // Scale selected object down
-    else if (chord_active(ACTION_EDIT_SCALE_DOWN))
+    else if (action_active(ACTION_EDIT_SCALE_DOWN))
     {
         scale.y -= scale_delta;
     }
     // Scale selected object west
-    else if (chord_active(ACTION_EDIT_SCALE_WEST))
+    else if (action_active(ACTION_EDIT_SCALE_WEST))
     {
         scale.x -= scale_delta;
     }
     // Scale selected object east
-    else if (chord_active(ACTION_EDIT_SCALE_EAST))
+    else if (action_active(ACTION_EDIT_SCALE_EAST))
     {
         scale.x += scale_delta;
     }
     // Scale selected object north
-    else if (chord_active(ACTION_EDIT_SCALE_NORTH))
+    else if (action_active(ACTION_EDIT_SCALE_NORTH))
     {
         scale.z += scale_delta;
     }
     // Scale selected object south
-    else if (chord_active(ACTION_EDIT_SCALE_SOUTH))
+    else if (action_active(ACTION_EDIT_SCALE_SOUTH))
     {
         scale.z -= scale_delta;
     }
     // Increase scale delta
-    else if (chord_active(ACTION_EDIT_SCALE_DELTA_INCREASE))
+    else if (action_active(ACTION_EDIT_SCALE_DELTA_INCREASE))
     {
         if (scale_delta < SCALE_DELTA_MAX)
         {
@@ -913,7 +917,7 @@ static int state_edit_scale()
         }
     }
     // Decrease scale delta
-    else if (chord_active(ACTION_EDIT_SCALE_DELTA_DECREASE))
+    else if (action_active(ACTION_EDIT_SCALE_DELTA_DECREASE))
     {
         if (scale_delta > SCALE_DELTA_MIN)
         {
@@ -953,17 +957,17 @@ static int state_edit_material()
     err = shared_camera_events(); if (err || state != state_last_frame) return err;
 
     // Cycle selected object's material
-    if (chord_active(ACTION_EDIT_MATERIAL_NEXT))
+    if (action_active(ACTION_EDIT_MATERIAL_NEXT))
     {
         edit_material_next();
     }
     // Cycle selected object's material (in reverse)
-    else if (chord_active(ACTION_EDIT_MATERIAL_PREVIOUS))
+    else if (action_active(ACTION_EDIT_MATERIAL_PREVIOUS))
     {
         edit_material_prev();
     }
     // Cycle all packs looking for materials
-    else if (chord_active(ACTION_EDIT_MATERIAL_NEXT_PACK))
+    else if (action_active(ACTION_EDIT_MATERIAL_NEXT_PACK))
     {
         edit_material_next_pack();
     }
@@ -979,22 +983,22 @@ static int state_edit_mesh()
     err = shared_camera_events(); if (err || state != state_last_frame) return err;
 
     // Cycle selected object's mesh
-    if (chord_active(ACTION_EDIT_MESH_NEXT))
+    if (action_active(ACTION_EDIT_MESH_NEXT))
     {
         edit_mesh_next();
     }
     // Cycle selected object's mesh (in reverse)
-    else if (chord_active(ACTION_EDIT_MESH_PREVIOUS))
+    else if (action_active(ACTION_EDIT_MESH_PREVIOUS))
     {
         edit_mesh_prev();
     }
     // Cycle all packs looking for meshes
-    else if (chord_active(ACTION_EDIT_MESH_NEXT_PACK))
+    else if (action_active(ACTION_EDIT_MESH_NEXT_PACK))
     {
         edit_mesh_next_pack();
     }
     // Recalculate bounding box based on current mesh
-    else if (chord_active(ACTION_EDIT_MESH_BBOX_RECALCULATE))
+    else if (action_active(ACTION_EDIT_MESH_BBOX_RECALCULATE))
     {
         edit_bbox_reset();
     }
@@ -1070,7 +1074,7 @@ static void rico_check_key_events()
     {
         // Trigger action if chord is down and repeat enabled, or chord down
         // and wasn't down last frame (i.e. chord pressed).
-        if (chord_active(i))
+        if (action_active(i))
         {
             if (i == ACTION_PLAY_INTERACT)
             {
@@ -1091,7 +1095,8 @@ extern bool RICO_quit()
 }
 extern void RICO_mouse_coords(u32 *x, u32 *y)
 {
-    SDL_GetMouseState(x, y);
+    *x = mouse_x;
+    *y = mouse_y;
 }
 extern u32 RICO_key_event(u32 *action)
 {

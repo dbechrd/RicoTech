@@ -88,12 +88,12 @@ static void test_ndc_macros()
         SCREEN_Y(SCREEN_HEIGHT / 2)
     );
     const struct vec2f top_left_neg = VEC2F(
-        SCREEN_X(-SCREEN_WIDTH),
-        SCREEN_Y(-SCREEN_HEIGHT)
+        SCREEN_X(-(r32)SCREEN_WIDTH),
+        SCREEN_Y(-(r32)SCREEN_HEIGHT)
     );
     const struct vec2f center_neg = VEC2F(
-        SCREEN_X(-SCREEN_WIDTH / 2),
-        SCREEN_Y(-SCREEN_HEIGHT / 2)
+        SCREEN_X(-(r32)SCREEN_WIDTH / 2),
+        SCREEN_Y(-(r32)SCREEN_HEIGHT / 2)
     );
     RICO_ASSERT(top_left.x == -1.0f);
     RICO_ASSERT(top_left.y == 1.0f);

@@ -27,8 +27,6 @@ enum audio_type
 
 //-------------------------------------------------------------------
 
-static u32 mouse_x, mouse_y;
-
 static struct game_panel panel_1;
 
 static struct RICO_audio_buffer audio_buffers[AUDIO_COUNT];
@@ -636,8 +634,7 @@ void game_render_ui()
         }
     }
 
-    if (!RICO_ui_draw(hud, 0, 0, mouse_x, mouse_y))
-    //if (!RICO_ui_draw(hud, 0, 0, 400, 67))
+    if (!RICO_ui_draw(hud, 100, 100, 0, 0)) //mouse_x, mouse_y))
     {
         struct rect x_rect = { 16, 16, 32, 32 };
         float x = SCREEN_X(x_rect.x);
@@ -647,31 +644,42 @@ void game_render_ui()
         RICO_prim_draw_line2d(x, y, x + w, y + h, &COLOR_ORANGE);
         RICO_prim_draw_line2d(x + w, y, x, y + h, &COLOR_ORANGE);
     }
-    //RICO_ui_draw(hud, 0, 0, mouse_x, SCREEN_HEIGHT);
 
-    // TODO: Load debug colors as a 1xN palette texture, then make the constants
-    //       an enumeration of palette indices?
-    //static pkid tex_green = 0;
-    //if (!tex_green)
-    //{
-    //    tex_green = RICO_load_texture_color(PACK_TRANSIENT, "", &COLOR_GREEN);
-    //}
+    enum toolbar_icon {
+        TOOLBAR_CURSOR,
+        TOOLBAR_TRANSLATE,
+        TOOLBAR_ROTATE,
+        TOOLBAR_SCALE,
+        TOOLBAR_MESH,
+        TOOLBAR_TEXTURE,
+        TOOLBAR_NEW,
+        TOOLBAR_COPY,
+        TOOLBAR_DELETE,
+        TOOLBAR_UNDO,
+        TOOLBAR_REDO,
+        TOOLBAR_SAVE,
+        TOOLBAR_EXIT,
+        TOOLBAR_COUNT,
+    };
 
-    struct rect cursor_rect = { mouse_x - 16, mouse_y - 16, 32, 32 };
-    RICO_prim_draw_rect_tex(&cursor_rect, &COLOR_TRANSPARENT, tex_toolbar);
+    u32 toolbar_x = (SCREEN_WIDTH / 2) - ((32 * 16) / 2);
+    u32 toolbar_y = 16;
+    for (u32 i = TOOLBAR_CURSOR; i < TOOLBAR_COUNT; ++i)
+    {
+        const struct vec4 *icon_color = &COLOR_DARK_WHITE;
+        const struct rect *icon_rect = &RECT(toolbar_x, toolbar_y, 32, 32);
+        if (rect_intersects(icon_rect, mouse_x, mouse_y))
+        {
+            icon_color = &COLOR_ORANGE;
+        }
+        RICO_prim_draw_sprite(icon_rect, icon_color, tex_toolbar, i);
+        toolbar_x += 32;
+    }
 
-    //DLB_ASSERT(hud->rect.x == 2);
-    //DLB_ASSERT(hud->rect.y == 2);
-    //DLB_ASSERT(hud->rect.w == 120);
-    //DLB_ASSERT(hud->rect.h == 48);
-    //DLB_ASSERT(row->rect.x == 6);
-    //DLB_ASSERT(row->rect.y == 6);
-    //DLB_ASSERT(row->rect.w == 112);
-    //DLB_ASSERT(row->rect.h == 40);
-    //DLB_ASSERT(label[0]->rect.x == 10);
-    //DLB_ASSERT(label[0]->rect.y == 10);
-    //DLB_ASSERT(label[0]->rect.w == 32);
-    //DLB_ASSERT(label[0]->rect.h == 32);
+    //struct rect cursor_rect = { mouse_x - 16, mouse_y - 16, 32, 32 };
+    //struct rect cursor_rect = { mouse_x, mouse_y, 32, 32 };
+    //RICO_prim_draw_rect_tex(&cursor_rect, &COLOR_TRANSPARENT, tex_toolbar);
+    //RICO_prim_draw_rect(&RECT(mouse_x - 1, mouse_y - 1, 1, 1), &COLOR_RED);
 }
 
 int main(int argc, char **argv)

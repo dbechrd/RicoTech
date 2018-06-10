@@ -18,9 +18,10 @@ struct RICO_ui_element
     enum RICO_ui_element_type type;
     
     struct vec2i min_size;
+    struct rect size;    // includes margin
     struct rect margin;
+    struct rect bounds;  // excludes margin
     struct rect padding;
-    struct rect rect;
 
     struct RICO_ui_element *parent;
     struct RICO_ui_element *prev;
@@ -61,7 +62,7 @@ extern struct RICO_ui_label *RICO_ui_push_label(struct RICO_ui_element *parent,
                                                 const struct vec2i *min_size,
                                                 const struct rect *margin,
                                                 const struct rect *padding);
-extern bool RICO_ui_draw(struct RICO_ui_element *element, s32 x, s32 y,
-                         s32 max_w, s32 max_h);
+extern bool RICO_ui_draw(struct RICO_ui_element *element, u32 x, u32 y,
+                         u32 max_w, u32 max_h);
 
 #endif

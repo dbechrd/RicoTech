@@ -9,7 +9,7 @@ enum ui_rect_fill_mode
     UI_RECT_OUTLINE
 };
 
-static void ui_draw_element(struct RICO_ui_element *element, s32 x, s32 y);
+static void ui_draw_element(struct RICO_ui_element *element, u32 x, u32 y);
 
 static void rico_ui_init()
 {
@@ -31,30 +31,25 @@ static inline void *ui_stack_pop(void *data)
     ui_stack_ptr = data;
 }
 
-static void ui_draw_rect(const struct rect *rect,
+static void ui_draw_rect(u32 x, u32 y, const struct rect *rect,
                          enum ui_rect_fill_mode fill_mode,
                          const struct vec4 *color)
 {
-    float x = SCREEN_X(rect->x);
-    float y = SCREEN_Y(rect->y);
-    float w = SCREEN_W(rect->w);
-    float h = SCREEN_H(rect->h);
-
-    // HACK: Override filled mode max_w/ outline
-    // TODO: Draw filled rectangles
-    if (fill_mode == UI_RECT_FILLED)
-        fill_mode = UI_RECT_OUTLINE;
-
     if (fill_mode == UI_RECT_OUTLINE)
     {
-        RICO_prim_draw_line2d(x    , y    , x + w,  y    , color);
-        RICO_prim_draw_line2d(x + w, y    , x + w,  y + h, color);
-        RICO_prim_draw_line2d(x + w, y + h, x    ,  y + h, color);
-        RICO_prim_draw_line2d(x    , y + h, x    ,  y    , color);
+        float sx = SCREEN_X(rect->x + x);
+        float sy = SCREEN_Y(rect->y + y);
+        float sw = SCREEN_W(rect->w);
+        float sh = SCREEN_H(rect->h);
+        RICO_prim_draw_line2d(sx    , sy    , sx + sw,  sy    , color);
+        RICO_prim_draw_line2d(sx + sw, sy    , sx + sw,  sy + sh, color);
+        RICO_prim_draw_line2d(sx + sw, sy + sh, sx    ,  sy + sh, color);
+        RICO_prim_draw_line2d(sx    , sy + sh, sx    ,  sy    , color);
     }
     else
     {
-        RICO_ASSERT(0); // Unhandled fill_mode
+        RICO_prim_draw_rect(&RECT(rect->x + x, rect->y + y, rect->w, rect->h),
+                            color);
     }
 }
 
@@ -114,38 +109,38 @@ extern struct RICO_ui_label *RICO_ui_push_label(struct RICO_ui_element *parent,
                            min_size, margin, padding, parent);
 }
 
-static bool ui_layout_element(struct RICO_ui_element *element, s32 x, s32 y,
-                              s32 max_w, s32 max_h)
+static bool ui_layout_element(struct RICO_ui_element *element, u32 x, u32 y,
+                              u32 max_w, u32 max_h)
 {
-    s32 margin_w = element->margin.left + element->margin.right;
-    s32 margin_h = element->margin.top + element->margin.bottom;
+    u32 margin_w = element->margin.left + element->margin.right;
+    u32 margin_h = element->margin.top + element->margin.bottom;
 
-    s32 pad_w = element->padding.left + element->padding.right;
-    s32 pad_h = element->padding.top + element->padding.bottom;
+    u32 pad_w = element->padding.left + element->padding.right;
+    u32 pad_h = element->padding.top + element->padding.bottom;
 
-    struct rect *rect = &element->rect;
-    rect->x = x;
-    rect->y = y;
+    struct rect *size = &element->size;
+    size->x = x;
+    size->y = y;
 
-    rect->w = margin_w + MAX(element->min_size.w, pad_w);
-    rect->h = margin_h + MAX(element->min_size.h, pad_h);
+    size->w = margin_w + MAX(element->min_size.w, pad_w);
+    size->h = margin_h + MAX(element->min_size.h, pad_h);
 
-    s32 start_x = rect->x + element->margin.left + element->padding.left;
-    s32 start_y = rect->y + element->margin.top + element->padding.top;
-    s32 start_w = margin_w + pad_w;
-    s32 start_h = margin_h + pad_h;
+    u32 start_x = size->x + element->margin.left + element->padding.left;
+    u32 start_y = size->y + element->margin.top + element->padding.top;
+    u32 start_w = margin_w + pad_w;
+    u32 start_h = margin_h + pad_h;
 
     ////////////////////////////////////////////////////////////////////////////
     
-    s32 next_x = start_x;
-    s32 next_y = start_y;
+    u32 next_x = start_x;
+    u32 next_y = start_y;
 
     // TODO: Use rect->w and rect->h directly?
-    s32 max_row_w = start_w;
-    s32 used_h = start_h;
+    u32 max_row_w = start_w;
+    u32 used_h = start_h;
 
-    s32 row_used_w = start_w;
-    s32 row_max_h = 0;
+    u32 row_used_w = start_w;
+    u32 row_max_h = 0;
 
     struct RICO_ui_element *child = element->first_child;
     if (child)
@@ -158,19 +153,19 @@ static bool ui_layout_element(struct RICO_ui_element *element, s32 x, s32 y,
             if (fit)
             {
                 // Move to next column
-                next_x += child->rect.w;
+                next_x += child->size.w;
 
                 // Track max row width
-                row_used_w += child->rect.w;
+                row_used_w += child->size.w;
                 if (row_used_w > max_row_w)
                 {
                     max_row_w = row_used_w;
                 }
 
                 // Track height of tallest child element in this row
-                if (child->rect.h > row_max_h)
+                if (child->size.h > row_max_h)
                 {
-                    row_max_h = child->rect.h;
+                    row_max_h = child->size.h;
                 }
 
                 child = child->next;
@@ -195,76 +190,84 @@ static bool ui_layout_element(struct RICO_ui_element *element, s32 x, s32 y,
         used_h += row_max_h;
     }
 
-    if (max_row_w > rect->w)
+    if (max_row_w > size->w)
     {
-        rect->w = max_row_w;
+        size->w = max_row_w;
     }
-    if (used_h > rect->h)
+    if (used_h > size->h)
     {
-        rect->h = used_h;
+        size->h = used_h;
     }
 
-    // Expand region to fit children, then enforce maximum min_size
-    //if (rect->w > max_w) rect->w = MAX(max_w, 0);
-    //if (rect->h > max_h) rect->h = MAX(max_h, 0);
-    //if (min_w > rect->w) rect->w = min_w;
-    //if (min_h > rect->h) rect->h = min_h;
-
-    return (rect->w <= max_w && rect->h <= max_h);
+    bool fit = size->w <= max_w && size->h <= max_h;
+    if (fit)
+    {
+        element->bounds = element->size;
+        element->bounds.x += element->margin.left;
+        element->bounds.y += element->margin.top;
+        element->bounds.w -= margin_w;
+        element->bounds.h -= margin_h;
+    }
+    return fit;
 }
 
-static void ui_draw_hud(struct RICO_ui_hud *ctrl, s32 x, s32 y)
+static inline bool rect_intersects(const struct rect *rect, s32 x, s32 y)
 {
-    struct rect rect = ctrl->element.rect;
-    rect.x += x + ctrl->element.margin.left;
-    rect.y += y + ctrl->element.margin.top;
-    rect.w -= (ctrl->element.margin.left + ctrl->element.margin.right);
-    rect.h -= (ctrl->element.margin.top + ctrl->element.margin.bottom);
-    ui_draw_rect(&rect, UI_RECT_FILLED, &COLOR_DARK_RED);
-
-    struct RICO_ui_element *child = ctrl->element.first_child;
-    while (child)
-    {
-        ui_draw_element(child, x, y);
-        child = child->next;
-    }
+    bool hover = x >= rect->x &&
+                 y >= rect->y &&
+                 x < rect->x + (s32)rect->w &&
+                 y < rect->y + (s32)rect->h;
+    return hover;
 }
 
-static void ui_draw_row(struct RICO_ui_row *ctrl, s32 x, s32 y)
+static inline bool ui_element_hover(struct RICO_ui_element *element)
 {
-    struct rect rect = ctrl->element.rect;
-    rect.x += x + ctrl->element.margin.left;
-    rect.y += y + ctrl->element.margin.top;
-    rect.w -= (ctrl->element.margin.left + ctrl->element.margin.right);
-    rect.h -= (ctrl->element.margin.top + ctrl->element.margin.bottom);
-    ui_draw_rect(&rect, UI_RECT_FILLED, &COLOR_DARK_GREEN);
-
-    struct RICO_ui_element *child = ctrl->element.first_child;
-    while (child)
-    {
-        ui_draw_element(child, x, y);
-        child = child->next;
-    }
+    return rect_intersects(&element->bounds, mouse_x, mouse_y);
 }
 
-static void ui_draw_label(struct RICO_ui_label *ctrl, s32 x, s32 y)
+static inline bool ui_element_left_click(struct RICO_ui_element *element)
 {
-    struct rect rect = ctrl->element.rect;
-    rect.x += x + ctrl->element.margin.left;
-    rect.y += y + ctrl->element.margin.top;
-    rect.w -= (ctrl->element.margin.left + ctrl->element.margin.right);
-    rect.h -= (ctrl->element.margin.top + ctrl->element.margin.bottom);
-    ui_draw_rect(&rect, UI_RECT_FILLED, &COLOR_DARK_YELLOW);
-
-    struct RICO_ui_element *child = ctrl->element.first_child;
-    while (child)
-    {
-        ui_draw_element(child, x, y);
-        child = child->next;
-    }
+    bool left_click = rect_intersects(&element->bounds, mouse_x, mouse_y) &&
+                      chord_active(&CHORD_REPEAT1(RICO_SCANCODE_LMB));
+    return left_click;
 }
 
-static void ui_draw_element(struct RICO_ui_element *element, s32 x, s32 y)
+static inline bool ui_element_right_click(struct RICO_ui_element *element)
+{
+    bool left_click = rect_intersects(&element->bounds, mouse_x, mouse_y) &&
+        chord_active(&CHORD_REPEAT1(RICO_SCANCODE_RMB));
+    return left_click;
+}
+
+static void ui_draw_hud(struct RICO_ui_hud *ctrl, u32 x, u32 y)
+{
+    const struct vec4 *color = ui_element_hover(&ctrl->element)
+        ? &COLOR_RED
+        : &COLOR_DARK_RED;
+    ui_draw_rect(x, y, &ctrl->element.bounds, UI_RECT_FILLED, color);
+}
+
+static void ui_draw_row(struct RICO_ui_row *ctrl, u32 x, u32 y)
+{
+    const struct vec4 *color = ui_element_hover(&ctrl->element)
+        ? &COLOR_GREEN
+        : &COLOR_DARK_GREEN;
+    ui_draw_rect(x, y, &ctrl->element.bounds, UI_RECT_FILLED, color);
+}
+
+static void ui_draw_label(struct RICO_ui_label *ctrl, u32 x, u32 y)
+{
+    const struct vec4 *color = ui_element_hover(&ctrl->element)
+        ? &COLOR_YELLOW
+        : &COLOR_DARK_YELLOW;
+    if (ui_element_left_click(&ctrl->element))
+    {
+        color = &COLOR_DODGER;
+    }
+    ui_draw_rect(x, y, &ctrl->element.bounds, UI_RECT_FILLED, color);
+}
+
+static void ui_draw_element(struct RICO_ui_element *element, u32 x, u32 y)
 {
     switch (element->type)
     {
@@ -278,15 +281,31 @@ static void ui_draw_element(struct RICO_ui_element *element, s32 x, s32 y)
             ui_draw_label((struct RICO_ui_label *)element, x, y);
             break;
     }
+
+    struct RICO_ui_element *child = element->first_child;
+    while (child)
+    {
+        ui_draw_element(child, x, y);
+        child = child->next;
+    }
 }
 
-extern bool RICO_ui_draw(struct RICO_ui_element *element, s32 x, s32 y,
-                         s32 max_w, s32 max_h)
+extern bool RICO_ui_draw(struct RICO_ui_element *element, u32 x, u32 y,
+                         u32 max_w, u32 max_h)
 {
+    if (!max_w)
+    {
+        max_w = SCREEN_WIDTH - x;
+    }
+    if (!max_h)
+    {
+        max_h = SCREEN_HEIGHT - y;
+    }
+
     bool fit = ui_layout_element(element, x, y, max_w, max_h);
     if (fit)
     {
-        ui_draw_element(element, x, y);
+        ui_draw_element(element, 0, 0);
     }
     return fit;
 }

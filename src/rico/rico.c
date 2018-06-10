@@ -110,7 +110,7 @@ static int init_sdl()
 
     err = sdl_gl_attrib(SDL_GL_MULTISAMPLEBUFFERS, 1);  if (err) return err;
     err = sdl_gl_attrib(SDL_GL_MULTISAMPLESAMPLES, 16); if (err) return err;
-    //err = sdl_gl_attrib(SDL_GL_ACCELERATED_VISUAL, 1);  if (err) return err;
+    err = sdl_gl_attrib(SDL_GL_ACCELERATED_VISUAL, 1);  if (err) return err;
 
 	err = sdl_gl_attrib(SDL_GL_CONTEXT_FLAGS,
 						SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
@@ -124,9 +124,25 @@ static int init_sdl()
     err = sdl_gl_attrib(SDL_GL_CONTEXT_MINOR_VERSION, 2); if (err) return err;
 
     // Create window
-    window = SDL_CreateWindow("RicoTech", SDL_WINDOWPOS_CENTERED,
-                              SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT,
-                              SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
+    bool fullscreen = false;
+    if (fullscreen)
+    {
+        window = SDL_CreateWindow(
+            "RicoTech", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+            0, 0, SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI |
+            SDL_WINDOW_FULLSCREEN_DESKTOP
+        );
+        SDL_GetWindowSize(window, &SCREEN_WIDTH, &SCREEN_HEIGHT);
+    }
+    else
+    {
+        window = SDL_CreateWindow(
+            "RicoTech", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+            SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL |
+            SDL_WINDOW_ALLOW_HIGHDPI
+        );
+    }
+
     if (window == NULL) {
         return RICO_FATAL(ERR_SDL_INIT, "SDL_CreateWindow error: %s",
                           SDL_GetError());
