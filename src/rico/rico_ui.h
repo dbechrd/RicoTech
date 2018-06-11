@@ -31,7 +31,6 @@ struct ui_string
 
 #define RICO_UI_ELEMENT_TYPES(f) \
     f(RICO_UI_ELEMENT_HUD)    \
-    f(RICO_UI_ELEMENT_ROW)    \
     f(RICO_UI_ELEMENT_BUTTON) \
     f(RICO_UI_ELEMENT_LABEL)
 
@@ -94,11 +93,6 @@ struct RICO_ui_hud
     struct RICO_ui_element element;
 };
 
-struct RICO_ui_row
-{
-    struct RICO_ui_element element;
-};
-
 struct RICO_ui_button
 {
     struct RICO_ui_element element;
@@ -113,7 +107,6 @@ struct RICO_ui_label
 };
 
 extern struct RICO_ui_hud *RICO_ui_hud();
-extern struct RICO_ui_row *RICO_ui_row(struct RICO_ui_element *parent);
 extern struct RICO_ui_label *RICO_ui_label(struct RICO_ui_element *parent);
 extern bool RICO_ui_layout(struct RICO_ui_element *element, u32 x, u32 y,
                            u32 max_w, u32 max_h);

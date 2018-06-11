@@ -22,6 +22,7 @@
 #include "rico_ui.h"
 
 extern int RICO_init();
+extern void RICO_window_size(s32 *x, s32 *y);
 extern void RICO_cleanup();
 
 #endif

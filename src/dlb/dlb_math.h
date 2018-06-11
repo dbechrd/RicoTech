@@ -212,6 +212,8 @@ struct quat
 #define COLOR_MAGENTA                 VEC4(1.000f, 0.000f, 1.000f, 1.0f)
 #define COLOR_WHITE                   VEC4(1.000f, 1.000f, 1.000f, 1.0f)
 
+#define COLOR_DARK_ORANGE             VEC4(0.500f, 0.279f, 0.000f, 1.0f)
+
 #define COLOR_DARK_RED                VEC4(0.500f, 0.000f, 0.000f, 1.0f)
 #define COLOR_DARK_GREEN              VEC4(0.000f, 0.500f, 0.000f, 1.0f)
 #define COLOR_DARK_BLUE               VEC4(0.000f, 0.000f, 0.500f, 1.0f)

@@ -1,7 +1,11 @@
 // TODO: Alignment
-static u8 ui_stack[KB(32)];
+static u8 ui_stack[KB(16)];
+static u8 *ui_stack_start;
 static u8 *ui_stack_ptr;
 static u32 ui_stack_bytes_used;
+
+static struct RICO_ui_hud *ui_debug_usage_hud;
+static struct RICO_ui_label *ui_debug_usage_bar;
 
 enum ui_rect_fill_mode
 {
@@ -9,11 +13,34 @@ enum ui_rect_fill_mode
     UI_RECT_OUTLINE
 };
 
-static void ui_draw_element(struct RICO_ui_element *element, u32 x, u32 y);
-
 static void rico_ui_init()
 {
     ui_stack_ptr = ui_stack;
+    ui_debug_usage_hud = RICO_ui_hud();
+    ui_debug_usage_bar = RICO_ui_label(&ui_debug_usage_hud->element);
+    ui_debug_stack_usage();
+
+    ui_stack_start = ui_stack_ptr;
+    rico_ui_reset();
+}
+
+static void rico_ui_reset()
+{
+    ui_stack_ptr = ui_stack_start;
+}
+
+static void ui_debug_stack_usage()
+{
+    u32 ui_stack_used = (ui_stack_ptr - ui_stack) * 100 / sizeof(ui_stack);
+
+    u32 bar_pad = 2;
+    ui_debug_usage_bar->element.min_size = VEC2I(ui_stack_used, 8);
+    ui_debug_usage_bar->element.margin = RECT1(bar_pad);
+    ui_debug_usage_bar->element.color_default = COLOR_DARK_YELLOW;
+
+    ui_debug_usage_hud->element.min_size = VEC2I(100 + bar_pad * 2,
+                                                 8 + bar_pad * 2);
+    ui_debug_usage_hud->element.color_default = COLOR_DARK_WHITE_HIGHLIGHT;
 }
 
 static inline void *ui_stack_push(u32 bytes)
@@ -81,12 +108,6 @@ extern struct RICO_ui_hud *RICO_ui_hud()
 {
     return ui_push_element(sizeof(struct RICO_ui_hud), RICO_UI_ELEMENT_HUD,
                            NULL);
-}
-
-extern struct RICO_ui_row *RICO_ui_row(struct RICO_ui_element *parent)
-{
-    return ui_push_element(sizeof(struct RICO_ui_row), RICO_UI_ELEMENT_ROW,
-                           parent);
 }
 
 extern struct RICO_ui_button *RICO_ui_button(struct RICO_ui_element *parent)
@@ -223,12 +244,6 @@ static void ui_draw_hud(struct RICO_ui_hud *ctrl, u32 x, u32 y)
                  &ctrl->element.color);
 }
 
-static void ui_draw_row(struct RICO_ui_row *ctrl, u32 x, u32 y)
-{
-    ui_draw_rect(x, y, &ctrl->element.bounds, UI_RECT_FILLED,
-                 &ctrl->element.color);
-}
-
 static void ui_draw_button(struct RICO_ui_button *ctrl, u32 x, u32 y)
 {
     struct rect rect = ctrl->element.bounds;
@@ -239,13 +254,6 @@ static void ui_draw_button(struct RICO_ui_button *ctrl, u32 x, u32 y)
 
 static void ui_draw_label(struct RICO_ui_label *ctrl, u32 x, u32 y)
 {
-    //const struct vec4 *color = ui_element_hover(&ctrl->element)
-    //    ? &COLOR_YELLOW
-    //    : &COLOR_DARK_YELLOW;
-    //if (ui_element_left_click(&ctrl->element))
-    //{
-    //    color = &COLOR_DODGER;
-    //}
     ui_draw_rect(x, y, &ctrl->element.bounds, UI_RECT_FILLED,
                  &ctrl->element.color);
 }
@@ -337,9 +345,6 @@ static void ui_draw_element(struct RICO_ui_element *element, u32 x, u32 y)
     {
         case RICO_UI_ELEMENT_HUD:
             ui_draw_hud((struct RICO_ui_hud *)element, x, y);
-            break;
-        case RICO_UI_ELEMENT_ROW:
-            ui_draw_row((struct RICO_ui_row *)element, x, y);
             break;
         case RICO_UI_ELEMENT_BUTTON:
             ui_draw_button((struct RICO_ui_button *)element, x, y);

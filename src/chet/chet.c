@@ -661,16 +661,17 @@ void game_toolbar_init()
 }
 
 static struct RICO_ui_element *hud;
-static struct RICO_ui_element *row;
 static struct RICO_ui_element *buttons[ARRAY_COUNT(toolbar_sprites)];
+static u32 pointless_buttons = 0;
 
 void game_button_click(const struct RICO_ui_event_data *data)
 {
     if (data->element == buttons[0] &&
         data->event_type == RICO_UI_EVENT_LMB_CLICK)
     {
-        data->element->color = COLOR_ORANGE;
+        //data->element->color = COLOR_ORANGE;
         RICO_audio_source_play(&audio_sources[AUDIO_BUTTON]);
+        pointless_buttons++;
     }
 }
 
@@ -678,40 +679,40 @@ void game_render_ui()
 {
     // HACK: Reset ui stack each frame
     // TODO: Reset this in the engine
-    ui_stack_ptr = ui_stack;
+    rico_ui_reset();
 
     hud = (struct RICO_ui_element *)RICO_ui_hud();
-    hud->margin = RECT1(2);
     hud->padding = RECT1(2);
-    hud->color_default = COLOR_DARK_RED;
-    hud->color_hover = COLOR_RED;
+    hud->color_default = COLOR_DARK_WHITE_HIGHLIGHT;
 
-    for (int i = 0; i < 1; ++i)
+    for (int i = 0; i < ARRAY_COUNT(buttons); ++i)
     {
-        row = (struct RICO_ui_element *)RICO_ui_row(hud);
-        row->margin = RECT1(2);
-        row->padding = RECT1(2);
-        row->color_default = COLOR_DARK_GREEN;
-        row->color_hover = COLOR_GREEN;
-
-        for (int j = 0; j < ARRAY_COUNT(buttons); ++j)
-        {
-            struct RICO_ui_button *button = RICO_ui_button(row);
-            button->element.min_size = VEC2I(32, 32);
-            button->element.margin = RECT1(2);
-            button->element.color_default = COLOR_DARK_YELLOW;
-            button->element.color_hover = COLOR_YELLOW;
-            button->element.color_click = COLOR_DODGER;
-            button->sprite = toolbar_sheet.sprites[j];
-            button->element.event = game_button_click;
-            buttons[j] = (struct RICO_ui_element *)button;
-        }
+        struct RICO_ui_button *button = RICO_ui_button(hud);
+        button->element.min_size = VEC2I(32, 32);
+        button->element.margin = RECT1(2);
+        button->element.color_default = COLOR_DARK_WHITE;
+        button->element.color_hover = COLOR_ORANGE;
+        button->element.color_click = COLOR_DARK_ORANGE;
+        button->sprite = toolbar_sheet.sprites[i];
+        button->element.event = game_button_click;
+        buttons[i] = (struct RICO_ui_element *)button;
     }
 
-    if (RICO_ui_layout(hud, 0, 0, 0, 0)) //mouse_x, mouse_y))
+    for (u32 i = 0; i < pointless_buttons; ++i)
+    {
+        struct RICO_ui_button *button = RICO_ui_button(hud);
+        button->element.min_size = VEC2I(32, 32);
+        button->element.margin = RECT1(2);
+        button->element.color_default = COLOR_DARK_WHITE;
+        button->element.color_hover = COLOR_ORANGE;
+        button->element.color_click = COLOR_DARK_ORANGE;
+        button->sprite = toolbar_sheet.sprites[0];
+    }
+
+    if (RICO_ui_layout(hud, 0, 0, 580, 0)) //mouse_x, mouse_y))
     {
         u32 start_x = (SCREEN_WIDTH / 2) - (hud->size.w / 2);
-        RICO_ui_draw(hud, start_x, 10);
+        RICO_ui_draw(hud, start_x, 20);
     }
     else
     {
@@ -723,6 +724,11 @@ void game_render_ui()
         RICO_prim_draw_line2d(x, y, x + w, y + h, &COLOR_ORANGE);
         RICO_prim_draw_line2d(x + w, y, x, y + h, &COLOR_ORANGE);
     }
+
+    ui_debug_stack_usage();
+    RICO_ui_layout(&ui_debug_usage_hud->element, 300, 60, 0, 0);
+    u32 ui_debug_stack_x = (SCREEN_WIDTH / 2) - (ui_debug_usage_hud->element.size.w / 2);
+    RICO_ui_draw(&ui_debug_usage_hud->element, ui_debug_stack_x, 2);
 
     //struct rect cursor_rect = { mouse_x - 16, mouse_y - 16, 32, 32 };
     //struct rect cursor_rect = { mouse_x, mouse_y, 32, 32 };
@@ -740,7 +746,7 @@ int main(int argc, char **argv)
 
 	//main_nuklear(argc, argv);
     RICO_init();
-    pack_build_all();
+    //pack_build_all();
 	pack_load_all();
 
     RICO_bind_action(ACTION_RICO_TEST, CHORD_REPEAT1(SDL_SCANCODE_Z));

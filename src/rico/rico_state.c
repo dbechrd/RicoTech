@@ -213,18 +213,18 @@ extern int RICO_update()
 {
     enum RICO_error err;
 
-    ////////////////////////////////////////////////////////////////////////
-    // TODO: How do I check for SDL resize window events?
-    ////////////////////////////////////////////////////////////////////////
-    /*
-    // Resize OpenGL viewport
-    else if (event.type == SDL_WINDOWEVENT_SIZE)
+    ///-------------------------------------------------------------------------
+    //| Check for window resizes
+    ///-------------------------------------------------------------------------
+    s32 window_w, window_h;
+    RICO_window_size(&window_w, &window_h);
+    if (window_w != SCREEN_WIDTH || window_h != SCREEN_HEIGHT)
     {
-    glViewport(0, 0, event.window.event.min_size.width,
-    event.window.event.min_size.height);
-    *handled = true;
+        // Resize OpenGL viewport
+        glViewport(0, 0, window_w, window_h);
+        SCREEN_WIDTH = window_w;
+        SCREEN_HEIGHT = window_h;
     }
-    */
 
     ///-------------------------------------------------------------------------
     //| Query input state

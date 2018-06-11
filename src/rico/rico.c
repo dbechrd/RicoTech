@@ -139,7 +139,7 @@ static int init_sdl()
         window = SDL_CreateWindow(
             "RicoTech", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
             SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL |
-            SDL_WINDOW_ALLOW_HIGHDPI
+            SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE
         );
     }
 
@@ -252,6 +252,10 @@ int RICO_init()
 error:
     if (err) printf("Error: %s", RICO_error_string[err]);
     return err;
+}
+void RICO_window_size(s32 *w, s32 *h)
+{
+    SDL_GetWindowSize(window, w, h);
 }
 void RICO_cleanup()
 {
