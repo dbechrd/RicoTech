@@ -12,10 +12,10 @@ extern void RICO_prim_draw_line_xform(const struct vec3 *p0,
 extern void RICO_prim_draw_rect(const struct rect *rect,
                                 const struct vec4 *color);
 extern void RICO_prim_draw_sprite(const struct rect *rect,
-                                  const struct vec4 *color, pkid tex_pkid,
-                                  u32 index);
+                                  const struct RICO_sprite *sprite,
+                                  const struct vec4 *color);
 extern void RICO_prim_draw_rect_tex(const struct rect *rect,
-                                    const struct vec4 *color, pkid tex_pkid);
+                                    const struct vec4 *color, pkid tex_id);
 extern void RICO_prim_draw_ray(const struct ray *ray, const struct vec4 *color);
 extern void RICO_prim_draw_ray_xform(const struct ray *ray,
                                      const struct vec4 *color,

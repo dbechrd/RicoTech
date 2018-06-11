@@ -14,6 +14,6 @@ static void prim_draw_line(const struct vec3 *p0, const struct vec3 *p1,
 static void prim_draw_quad(u32 vertex_count, const struct prim_vertex *vertices,
                            const struct vec4 *color, const struct mat4 *xform,
                            const struct mat4 *view, const struct mat4 *proj,
-                           pkid tex_pkid);
+                           pkid tex_id);
 
 #endif

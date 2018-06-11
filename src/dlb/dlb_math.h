@@ -201,6 +201,7 @@ struct quat
 #define COLOR_DODGER                  VEC4(0.118f, 0.565f, 1.000f, 1.0f)
 #define COLOR_WHEAT                   VEC4(0.961f, 0.871f, 0.702f, 1.0f)
 #define COLOR_BROWN                   VEC4(0.545f, 0.271f, 0.075f, 1.0f)
+#define COLOR_GRAY                    VEC4(0.250f, 0.250f, 0.250f, 1.0f)
 
 #define COLOR_BLACK                   VEC4(0.000f, 0.000f, 0.000f, 1.0f)
 #define COLOR_RED                     VEC4(1.000f, 0.000f, 0.000f, 1.0f)
@@ -564,6 +565,11 @@ DLB_MATH_DEF int v3_equals(struct vec3 a, struct vec3 b)
     return (a.x == b.x && a.y == b.y && a.z == b.z);
 }
 #endif
+
+DLB_MATH_DEF int v4_equals(const struct vec4 *a, const struct vec4 *b)
+{
+    return (a->x == b->x && a->y == b->y && a->z == b->z && a->w == b->w);
+}
 
 //Store as row-major, one-dimensional array of floats
 DLB_MATH_DEF struct mat4 mat4_init(

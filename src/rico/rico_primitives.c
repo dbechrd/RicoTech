@@ -177,8 +177,8 @@ extern void RICO_prim_draw_rect(const struct rect *rect,
     RICO_prim_draw_rect_tex(rect, color, 0);
 }
 extern void RICO_prim_draw_sprite(const struct rect *rect,
-                                  const struct vec4 *color, pkid tex_pkid,
-                                  u32 index)
+                                  const struct RICO_sprite *sprite,
+                                  const struct vec4 *color)
 {
     // (0,0) (0,1) (1,0) (1,1)
     float x0 = X_TO_NDC(rect->x);
@@ -193,34 +193,35 @@ extern void RICO_prim_draw_sprite(const struct rect *rect,
     verts[2].pos = VEC3(x1, y1, ortho_z);
     verts[3].pos = VEC3(x1, y0, ortho_z);
 
-    struct RICO_texture *tex = RICO_pack_lookup(tex_pkid);
+    struct RICO_texture *tex = RICO_pack_lookup(sprite->sheet->tex_id);
     RICO_ASSERT(tex);
-    
-    // TODO: Create spritesheets to store coords and size for each icon
-    //struct RICO_spritesheet
-    //{
-    //    struct RICO_texture tex;
-    //    u32 sprite_count;
-    //    struct rect *sprite_coords;
-    //};
 
-    u32 sprite_cols = tex->width / 32;  // 16
-    u32 sprite_rows = tex->height / 32; // 1
+    //u32 sprite_cols = tex->width / 32;  // 16
+    //u32 sprite_rows = tex->height / 32; // 1
+    //
+    //float u0 = (1.0f / sprite_cols) * (index % sprite_cols);
+    //float v0 = (1.0f / sprite_rows) * (index / sprite_cols);
+    //float u1 = (1.0f / sprite_cols) * ((index % sprite_cols) + 1);
+    //float v1 = (1.0f / sprite_rows) * ((index / sprite_cols) + 1);
+    //verts[0].uv = VEC2F(u0, v0);
+    //verts[1].uv = VEC2F(u0, v1);
+    //verts[2].uv = VEC2F(u1, v0);
+    //verts[3].uv = VEC2F(u1, v1);
 
-    float u0 = (1.0f / sprite_cols) * (index % sprite_cols);
-    float v0 = (1.0f / sprite_rows) * (index / sprite_cols);
-    float u1 = (1.0f / sprite_cols) * ((index % sprite_cols) + 1);
-    float v1 = (1.0f / sprite_rows) * ((index / sprite_cols) + 1);
+    float u0 = ((float)sprite->coords.x / tex->width);
+    float v0 = ((float)sprite->coords.y / tex->height);
+    float u1 = ((float)(sprite->coords.x + sprite->coords.w) / tex->width);
+    float v1 = ((float)(sprite->coords.y + sprite->coords.h) / tex->height);
     verts[0].uv = VEC2F(u0, v0);
     verts[1].uv = VEC2F(u0, v1);
     verts[2].uv = VEC2F(u1, v0);
     verts[3].uv = VEC2F(u1, v1);
 
     prim_draw_quad(ARRAY_COUNT(verts), verts, color, &MAT4_IDENT, &MAT4_IDENT,
-                   &cam_player.ortho_matrix, tex_pkid);
+                   &cam_player.ortho_matrix, sprite->sheet->tex_id);
 }
 extern void RICO_prim_draw_rect_tex(const struct rect *rect,
-                                    const struct vec4 *color, pkid tex_pkid)
+                                    const struct vec4 *color, pkid tex_id)
 {
     // (0,0) (0,1) (1,0) (1,1)
     float x0 = X_TO_NDC(rect->x);
@@ -235,7 +236,7 @@ extern void RICO_prim_draw_rect_tex(const struct rect *rect,
     verts[2].pos = VEC3(x1, y1, ortho_z);
     verts[3].pos = VEC3(x1, y0, ortho_z);
     prim_draw_quad(ARRAY_COUNT(verts), verts, color, &MAT4_IDENT, &MAT4_IDENT,
-                   &cam_player.ortho_matrix, tex_pkid);
+                   &cam_player.ortho_matrix, tex_id);
 }
 extern void RICO_prim_draw_quad(const struct quad *quad,
                                 const struct vec4 *color)
@@ -257,7 +258,7 @@ extern void RICO_prim_draw_quad_xform(const struct quad *quad,
 static void prim_draw_quad(u32 vertex_count, const struct prim_vertex *vertices,
                            const struct vec4 *color, const struct mat4 *xform,
                            const struct mat4 *view, const struct mat4 *proj,
-                           pkid tex_pkid)
+                           pkid tex_id)
 {
     RICO_ASSERT(prog_prim->program.gl_id);
     glUseProgram(prog_prim->program.gl_id);
@@ -273,11 +274,11 @@ static void prim_draw_quad(u32 vertex_count, const struct prim_vertex *vertices,
     glBufferData(GL_ARRAY_BUFFER, vertex_count * sizeof(struct prim_vertex),
                  vertices, GL_STATIC_DRAW);
 
-    if (tex_pkid) texture_bind(tex_pkid, GL_TEXTURE_2D);
+    if (tex_id) texture_bind(tex_id, GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glEnable(GL_CULL_FACE);
-    if (tex_pkid) texture_unbind(tex_pkid, GL_TEXTURE_2D);
+    if (tex_id) texture_unbind(tex_id, GL_TEXTURE_2D);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
