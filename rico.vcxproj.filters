@@ -131,6 +131,9 @@
     <ClCompile Include="src\chet\chet_packs_clash_of_cubes.c">
       <Filter>Source Files\chet</Filter>
     </ClCompile>
+    <ClCompile Include="src\rico\rico_cereal.c">
+      <Filter>Source Files\rico</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dlb\dlb_math.h">
@@ -278,6 +281,9 @@
       <Filter>Header Files\rico</Filter>
     </ClInclude>
     <ClInclude Include="src\rico\internal\ri_ui.h">
+      <Filter>Header Files\rico\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rico\internal\ri_cereal.h">
       <Filter>Header Files\rico\internal</Filter>
     </ClInclude>
   </ItemGroup>

@@ -749,6 +749,8 @@ int main(int argc, char **argv)
     //pack_build_all();
 	pack_load_all();
 
+    cereal_test();
+
     RICO_bind_action(ACTION_RICO_TEST, CHORD_REPEAT1(SDL_SCANCODE_Z));
     RICO_bind_action(ACTION_TYPE_NEXT, CHORD1(SDL_SCANCODE_X));
     RICO_bind_action(ACTION_TYPE_PREV, CHORD1(SDL_SCANCODE_C));

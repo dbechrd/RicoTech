@@ -52,6 +52,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="src\rico\rico_cereal.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="src\rico\rico_collision.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -163,6 +167,7 @@
     <ClInclude Include="src\rico\internal\ri_audio.h" />
     <ClInclude Include="src\rico\internal\ri_bbox.h" />
     <ClInclude Include="src\rico\internal\ri_camera.h" />
+    <ClInclude Include="src\rico\internal\ri_cereal.h" />
     <ClInclude Include="src\rico\internal\ri_collision.h" />
     <ClInclude Include="src\rico\internal\ri_const.h" />
     <ClInclude Include="src\rico\internal\ri_convert.h" />

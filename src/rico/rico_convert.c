@@ -257,7 +257,7 @@ static int load_obj_file_new(const char *filename)
     }
 
 #if 0
-    struct obj_token *token = file.tokens;
+    struct obj_token *token = fp.tokens;
     for (int i = 0 ; i < tok_idx; ++i)
     {
         printf("%s ", obj_token_type_string[token->type]);

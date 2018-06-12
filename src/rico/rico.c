@@ -40,6 +40,7 @@
 #include "rico_texture.c"
 #include "rico_file.c"
 #include "rico_ui.c"
+#include "rico_cereal.c"
 #if RICO_DEBUG
     #include "tests.c"
 #endif

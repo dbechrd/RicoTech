@@ -368,13 +368,13 @@ SERIAL(pool_serialize_0)
     enum rico_error err;
 
     const struct rico_pool *pool = handle;
-    fwrite(&pool->bucket_count,        sizeof(pool->bucket_count),        1, file->fs);
-    fwrite(&pool->min_size,         sizeof(pool->min_size),         1, file->fs);
-    fwrite(&pool->active,       sizeof(pool->active),       1, file->fs);
-    fwrite(pool->handles, sizeof(*pool->handles), pool->bucket_count, file->fs);
+    fwrite(&pool->bucket_count,        sizeof(pool->bucket_count),        1, fp->fs);
+    fwrite(&pool->min_size,         sizeof(pool->min_size),         1, fp->fs);
+    fwrite(&pool->active,       sizeof(pool->active),       1, fp->fs);
+    fwrite(pool->handles, sizeof(*pool->handles), pool->bucket_count, fp->fs);
     for (u32 i = 0; i < pool->active; ++i)
     {
-        err = rico_serialize(pool_read(pool, pool->handles[i]), file);
+        err = rico_serialize(pool_read(pool, pool->handles[i]), fp);
         if (err == ERR_SERIALIZE_DISABLED)
             continue;
         if (err)
@@ -390,9 +390,9 @@ DESERIAL(pool_deserialize_0)
     enum rico_error err;
 
     struct rico_pool *pool = *_handle;
-    fread(&pool->bucket_count,        sizeof(pool->bucket_count),        1, file->fs);
-    fread(&pool->min_size,         sizeof(pool->min_size),         1, file->fs);
-    fread(&pool->active,       sizeof(pool->active),       1, file->fs);
+    fread(&pool->bucket_count,        sizeof(pool->bucket_count),        1, fp->fs);
+    fread(&pool->min_size,         sizeof(pool->min_size),         1, fp->fs);
+    fread(&pool->active,       sizeof(pool->active),       1, fp->fs);
 
     if(pool->bucket_count > 0)
     {
@@ -407,10 +407,10 @@ DESERIAL(pool_deserialize_0)
             return RICO_ERROR(ERR_BAD_ALLOC, "Failed to alloc data for pool %s",
                               pool->name);
 
-        fread(pool->handles, sizeof(*pool->handles), pool->bucket_count, file->fs);
+        fread(pool->handles, sizeof(*pool->handles), pool->bucket_count, fp->fs);
         for (u32 i = 0; i < pool->active; ++i)
         {
-            err = rico_deserialize(pool_read(pool, pool->handles[i]), file);
+            err = rico_deserialize(pool_read(pool, pool->handles[i]), fp);
             if (err == ERR_SERIALIZE_DISABLED)
                 continue;
             if (err)
@@ -440,7 +440,7 @@ DESERIAL(pool_deserialize_0)
 
 #if RICO_DEBUG_POOL
     printf("[pool][load] %s file %s\n",
-           pool->name, file->filename);
+           pool->name, fp->filename);
     pool_print_handles(pool);
 #endif
 

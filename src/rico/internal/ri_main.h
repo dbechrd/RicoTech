@@ -56,6 +56,7 @@ struct pack; // Cleanup: Can we move these to the top of this file or something?
 #include "ri_shader.h"
 #include "ri_glref.h"
 #include "ri_ui.h"
+#include "ri_cereal.h"
 
 #ifdef __APPLE__
 #define __gl_h_

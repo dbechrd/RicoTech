@@ -531,13 +531,13 @@ static void edit_render()
     }
 
 #if 0
-    struct quad test = {
+    struct quad flag1 = {
         VEC3(2.0f, 2.0f, 0.0f),
         VEC3(3.0f, 2.0f, 0.0f),
         VEC3(2.0f, 3.0f, 0.0f),
         VEC3(3.0f, 3.0f, 0.0f)
     };
-    prim_draw_quad(&test, &MAT4_IDENT, &COLOR_CYAN_HIGHLIGHT);
+    prim_draw_quad(&flag1, &MAT4_IDENT, &COLOR_CYAN_HIGHLIGHT);
 
     struct vec3 n = VEC3(0.1f, 0.5f, 0.8f);
     struct vec3 p = VEC3(2.0f, 2.0f, 2.0f);
