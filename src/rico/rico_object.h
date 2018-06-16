@@ -25,7 +25,7 @@ struct RICO_transform
 struct RICO_object
 {
     struct uid uid;
-    u32 type;
+    enum RICO_object_type type;
     struct RICO_transform xform;
     struct RICO_bbox bbox;       // TODO: Rename this bbox_local
     struct RICO_bbox bbox_world; // TODO: Rename this bbox
