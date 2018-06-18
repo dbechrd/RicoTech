@@ -21,11 +21,13 @@ enum RICO_hnd_type
 extern const char *RICO_hnd_type_string[];
 extern const u32 RICO_hnd_type_size[];
 
+typedef u8 buf32[32];
+
 struct uid
 {
     pkid pkid;
     enum RICO_hnd_type type;
-    char name[32];
+    buf32 name;
 };
 
 #endif
