@@ -463,27 +463,51 @@ extern pkid RICO_pack_last_type(u32 pack_id, enum RICO_hnd_type type)
 }
 extern pkid RICO_pack_next_type(pkid id, enum RICO_hnd_type type)
 {
-    pkid next = RICO_pack_next(id);
-    while (next)
-    {
-        struct uid *uid = RICO_pack_lookup(next);
-        if (uid->type == type)
-            break;
+    RICO_ASSERT(id);
+    u32 pack_id = PKID_PACK(id);
+    u32 blob_id = PKID_BLOB(id);
 
-        next = RICO_pack_next(id);
+    struct pack *pack = packs[pack_id];
+    RICO_ASSERT(pack);
+    RICO_ASSERT(blob_id < pack->blobs_used);
+
+    if (pack->blobs_used <= 1)
+        return 0;
+
+    pkid next = 0;
+    for (u32 idx = pack->lookup[blob_id] + 1; idx < pack->blobs_used; ++idx)
+    {
+        if (pack->index[idx].type == type)
+        {
+            struct uid *uid = pack_read(pack, idx);
+            next = uid->pkid;
+            break;
+        }
     }
     return next;
 }
 extern pkid RICO_pack_prev_type(pkid id, enum RICO_hnd_type type)
 {
-    pkid prev = RICO_pack_prev(id);
-    while (prev)
-    {
-        struct uid *uid = RICO_pack_lookup(prev);
-        if (uid->type == type)
-            break;
+    RICO_ASSERT(id);
+    u32 pack_id = PKID_PACK(id);
+    u32 blob_id = PKID_BLOB(id);
 
-        prev = RICO_pack_prev(id);
+    struct pack *pack = packs[pack_id];
+    RICO_ASSERT(pack);
+    RICO_ASSERT(blob_id < pack->blobs_used);
+
+    if (pack->blobs_used == 0)
+        return 0;
+
+    pkid prev = 0;
+    for (u32 idx = pack->lookup[blob_id] - 1; idx > 0; --idx)
+    {
+        if (pack->index[idx].type == type)
+        {
+            struct uid *uid = pack_read(pack, idx);
+            prev = uid->pkid;
+            break;
+        }
     }
     return prev;
 }
