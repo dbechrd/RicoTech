@@ -21,6 +21,7 @@
     f(ERR_SDL_INIT)                \
     f(ERR_GL3W_INIT)               \
     f(ERR_OPENAL_INIT)             \
+    f(ERR_FREETYPE_INIT)           \
     f(ERR_PRIM_UNSUPPORTED)        \
     f(ERR_OBJ_TOO_MANY_VERTS)      \
     f(ERR_CHUNK_NULL)              \
@@ -36,6 +37,9 @@
     f(ERR_INVALID_PARAMS)          \
     f(ERR_CHUNK_FREE_FAILED)       \
     f(ERR_OBJ_PARSE_FAILED)        \
+    f(ERR_FREETYPE_FACE)           \
+    f(ERR_FREETYPE_SIZE)           \
+    f(ERR_FREETYPE_CHAR)           \
     f(ERR_COUNT)
 
 enum RICO_error { RICO_ERRORS(GEN_LIST) };

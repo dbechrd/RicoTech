@@ -50,8 +50,7 @@ struct rect
     union
     {
         struct {
-            s32 x, y;
-            u32 w, h;
+            s32 x, y, w, h;
         };
         struct {
             s32 left, top, right, bottom;
@@ -73,8 +72,8 @@ struct vec2i
 {
     union
     {
-        struct { u32 x, y; };
-        struct { u32 w, h; };
+        struct { s32 x, y; };
+        struct { s32 w, h; };
     };
 };
 
@@ -154,13 +153,12 @@ struct quat
 //       technically valid in VS, it makes Intellisense whine and misbehave.
 #if defined(__GNUC__) || defined(__clang__) // || defined(_MSC_VER)
 #define RECT(x, y, w, h) ((const struct size) {{{ x, y, w, h }}})
-#define VEC2(x, y)       ((const struct vec2) {{{ x, y }}})
+#define VEC2F(x, y)      ((const struct vec2f) {{{ x, y }}})
+#define VEC2I(x, y)      ((const struct vec2i) {{{ x, y }}})
 #define VEC3(x, y, z)    ((const struct vec3) {{{ x, y, z }}})
 #define VEC4(x, y, z, w) ((const struct vec4) {{{ x, y, z, w }}})
 #define QUAT(w, x, y, z) ((const struct quat) { w, {{ x, y, z }}})
 #else
-#define RECT1(x)         ((const struct rect) { x, x, x, x })
-#define RECT2(x, y)      ((const struct rect) { x, y, x, y })
 #define RECT(x, y, w, h) ((const struct rect) { x, y, w, h })
 #define VEC2F(x, y)      ((const struct vec2f) { x, y })
 #define VEC2I(x, y)      ((const struct vec2i) { x, y })
@@ -169,58 +167,70 @@ struct quat
 #define QUAT(w, x, y, z) ((const struct quat) { w, x, y, z })
 #endif
 
-#define RECT_ZERO                     RECT(0, 0, 0, 0)
+#define RECT_ZERO   RECT(0, 0, 0, 0)
+#define RECT1(x)    RECT(x, x, x, x)
+#define RECT2(x, y) RECT(x, y, x, y)
 
-#define VEC2_ZERO                     VEC2F(0.0f, 0.0f)
-#define VEC2_RIGHT                    VEC2F(1.0f, 0.0f)
-#define VEC2_LEFT                     VEC2F(-1.0f, 0.0f)
-#define VEC2_UP                       VEC2F(0.0f, 1.0f)
-#define VEC2_DOWN                     VEC2F(0.0f, -1.0f)
+#define PAD1(pad)                     RECT(pad, pad, pad, pad)
+#define PAD2(horiz, vert)             RECT(horiz, vert, horiz, vert)
+#define PAD(left, top, right, buttom) RECT(left, top, right, buttom)
 
-#define VEC3_ZERO                     VEC3(0.0f, 0.0f, 0.0f)
-#define VEC3_ONE                      VEC3(1.0f, 1.0f, 1.0f)
-#define VEC3_UNIT                     VEC3(0.577350259f, 0.577350259f, 0.577350259f)
-#define VEC3_X                        VEC3(1.0f, 0.0f, 0.0f)
-#define VEC3_Y                        VEC3(0.0f, 1.0f, 0.0f)
-#define VEC3_Z                        VEC3(0.0f, 0.0f, 1.0f)
-#define VEC3_RIGHT                    VEC3(1.0f, 0.0f, 0.0f)
-#define VEC3_UP                       VEC3(0.0f, 1.0f, 0.0f)
-#define VEC3_FWD                      VEC3(0.0f, 0.0f,-1.0f)
-#define VEC3_DOWN                     VEC3(0.0f,-1.0f, 0.0f)
-#define VEC3_SMALL                    VEC3(0.01f, 0.01f, 0.01f)
 
-#define VEC4_ZERO                     VEC4(0.0f, 0.0f, 0.0f, 0.0f)
+#define VEC2_ZERO          VEC2F(0.0f, 0.0f)
+#define VEC2_RIGHT         VEC2F(1.0f, 0.0f)
+#define VEC2_LEFT          VEC2F(-1.0f, 0.0f)
+#define VEC2_UP            VEC2F(0.0f, 1.0f)
+#define VEC2_DOWN          VEC2F(0.0f, -1.0f)
 
-#define COLOR_TRANSPARENT             VEC4(0.000f, 0.000f, 0.000f, 0.0f)
+#define VEC3_ZERO          VEC3(0.0f, 0.0f, 0.0f)
+#define VEC3_ONE           VEC3(1.0f, 1.0f, 1.0f)
+#define VEC3_HEPT          VEC3(0.577350259f, 0.577350259f, 0.577350259f)
+#define VEC3_X             VEC3(1.0f, 0.0f, 0.0f)
+#define VEC3_Y             VEC3(0.0f, 1.0f, 0.0f)
+#define VEC3_Z             VEC3(0.0f, 0.0f, 1.0f)
+#define VEC3_RIGHT         VEC3(1.0f, 0.0f, 0.0f)
+#define VEC3_UP            VEC3(0.0f, 1.0f, 0.0f)
+#define VEC3_FWD           VEC3(0.0f, 0.0f,-1.0f)
+#define VEC3_DOWN          VEC3(0.0f,-1.0f, 0.0f)
+#define VEC3_SMALL         VEC3(0.01f, 0.01f, 0.01f)
 
-#define COLOR_ORANGE                  VEC4(1.000f, 0.549f, 0.000f, 1.0f)
-#define COLOR_PINK                    VEC4(0.933f, 0.510f, 0.933f, 1.0f)
-#define COLOR_PURPLE                  VEC4(0.541f, 0.169f, 0.886f, 1.0f)
-#define COLOR_LIME                    VEC4(0.678f, 1.000f, 0.184f, 1.0f)
-#define COLOR_AQUA                    VEC4(0.400f, 0.804f, 0.667f, 1.0f)
-#define COLOR_DODGER                  VEC4(0.118f, 0.565f, 1.000f, 1.0f)
-#define COLOR_WHEAT                   VEC4(0.961f, 0.871f, 0.702f, 1.0f)
-#define COLOR_BROWN                   VEC4(0.545f, 0.271f, 0.075f, 1.0f)
-#define COLOR_GRAY                    VEC4(0.250f, 0.250f, 0.250f, 1.0f)
+#define VEC4_ZERO          VEC4(0.0f, 0.0f, 0.0f, 0.0f)
 
-#define COLOR_BLACK                   VEC4(0.000f, 0.000f, 0.000f, 1.0f)
-#define COLOR_RED                     VEC4(1.000f, 0.000f, 0.000f, 1.0f)
-#define COLOR_GREEN                   VEC4(0.000f, 1.000f, 0.000f, 1.0f)
-#define COLOR_BLUE                    VEC4(0.000f, 0.000f, 1.000f, 1.0f)
-#define COLOR_YELLOW                  VEC4(1.000f, 1.000f, 0.000f, 1.0f)
-#define COLOR_CYAN                    VEC4(0.000f, 1.000f, 1.000f, 1.0f)
-#define COLOR_MAGENTA                 VEC4(1.000f, 0.000f, 1.000f, 1.0f)
-#define COLOR_WHITE                   VEC4(1.000f, 1.000f, 1.000f, 1.0f)
+#define COLOR_TRANSPARENT  VEC4(0.0f, 0.0f, 0.0f, 0.0f)
+#define COLOR_WHITE        VEC4(1.0f, 1.0f, 1.0f, 1.0f)
+#define COLOR_GRAY_9       VEC4(0.9f, 0.9f, 0.9f, 1.0f)
+#define COLOR_GRAY_8       VEC4(0.8f, 0.8f, 0.8f, 1.0f)
+#define COLOR_GRAY_7       VEC4(0.7f, 0.7f, 0.7f, 1.0f)
+#define COLOR_GRAY_6       VEC4(0.6f, 0.6f, 0.6f, 1.0f)
+#define COLOR_GRAY_5       VEC4(0.5f, 0.5f, 0.5f, 1.0f)
+#define COLOR_GRAY_4       VEC4(0.4f, 0.4f, 0.4f, 1.0f)
+#define COLOR_GRAY_3       VEC4(0.3f, 0.3f, 0.3f, 1.0f)
+#define COLOR_GRAY_2       VEC4(0.2f, 0.2f, 0.2f, 1.0f)
+#define COLOR_GRAY_1       VEC4(0.1f, 0.1f, 0.1f, 1.0f)
+#define COLOR_BLACK        VEC4(0.0f, 0.0f, 0.0f, 1.0f)
 
-#define COLOR_DARK_ORANGE             VEC4(0.500f, 0.279f, 0.000f, 1.0f)
+#define COLOR_RED          VEC4(1.000f, 0.000f, 0.000f, 1.0f)
+#define COLOR_GREEN        VEC4(0.000f, 1.000f, 0.000f, 1.0f)
+#define COLOR_BLUE         VEC4(0.000f, 0.000f, 1.000f, 1.0f)
+#define COLOR_YELLOW       VEC4(1.000f, 1.000f, 0.000f, 1.0f)
+#define COLOR_CYAN         VEC4(0.000f, 1.000f, 1.000f, 1.0f)
+#define COLOR_MAGENTA      VEC4(1.000f, 0.000f, 1.000f, 1.0f)
+#define COLOR_ORANGE       VEC4(1.000f, 0.549f, 0.000f, 1.0f)
+#define COLOR_PINK         VEC4(0.933f, 0.510f, 0.933f, 1.0f)
+#define COLOR_PURPLE       VEC4(0.541f, 0.169f, 0.886f, 1.0f)
+#define COLOR_LIME         VEC4(0.678f, 1.000f, 0.184f, 1.0f)
+#define COLOR_AQUA         VEC4(0.400f, 0.804f, 0.667f, 1.0f)
+#define COLOR_DODGER       VEC4(0.118f, 0.565f, 1.000f, 1.0f)
+#define COLOR_WHEAT        VEC4(0.961f, 0.871f, 0.702f, 1.0f)
+#define COLOR_BROWN        VEC4(0.545f, 0.271f, 0.075f, 1.0f)
 
-#define COLOR_DARK_RED                VEC4(0.500f, 0.000f, 0.000f, 1.0f)
-#define COLOR_DARK_GREEN              VEC4(0.000f, 0.500f, 0.000f, 1.0f)
-#define COLOR_DARK_BLUE               VEC4(0.000f, 0.000f, 0.500f, 1.0f)
-#define COLOR_DARK_YELLOW             VEC4(0.500f, 0.500f, 0.000f, 1.0f)
-#define COLOR_DARK_CYAN               VEC4(0.000f, 0.500f, 0.500f, 1.0f)
-#define COLOR_DARK_MAGENTA            VEC4(0.500f, 0.000f, 0.500f, 1.0f)
-#define COLOR_DARK_WHITE              VEC4(0.500f, 0.500f, 0.500f, 1.0f)
+#define COLOR_DARK_RED     VEC4(0.500f, 0.000f, 0.000f, 1.0f)
+#define COLOR_DARK_GREEN   VEC4(0.000f, 0.500f, 0.000f, 1.0f)
+#define COLOR_DARK_BLUE    VEC4(0.000f, 0.000f, 0.500f, 1.0f)
+#define COLOR_DARK_YELLOW  VEC4(0.500f, 0.500f, 0.000f, 1.0f)
+#define COLOR_DARK_CYAN    VEC4(0.000f, 0.500f, 0.500f, 1.0f)
+#define COLOR_DARK_MAGENTA VEC4(0.500f, 0.000f, 0.500f, 1.0f)
+#define COLOR_DARK_ORANGE  VEC4(0.500f, 0.279f, 0.000f, 1.0f)
 
 #define COLOR_DARK_RED_HIGHLIGHT      VEC4(0.500f, 0.000f, 0.000f, 0.5f)
 #define COLOR_DARK_GREEN_HIGHLIGHT    VEC4(0.000f, 0.500f, 0.000f, 0.5f)
@@ -229,6 +239,8 @@ struct quat
 #define COLOR_DARK_CYAN_HIGHLIGHT     VEC4(0.000f, 0.500f, 0.500f, 0.5f)
 #define COLOR_DARK_MAGENTA_HIGHLIGHT  VEC4(0.500f, 0.000f, 0.500f, 0.5f)
 #define COLOR_DARK_WHITE_HIGHLIGHT    VEC4(0.500f, 0.500f, 0.500f, 0.5f)
+#define COLOR_DARK_ORANGE_HIGHTLIGHT  VEC4(0.500f, 0.279f, 0.000f, 0.5f)
+#define COLOR_ORANGE_HIGHLIGHT        VEC4(1.000f, 0.549f, 0.000f, 0.5f)
 
 #define QUAT_IDENT QUAT(1.0f, 0.0f, 0.0f, 0.0f)
 

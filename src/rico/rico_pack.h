@@ -81,6 +81,8 @@ extern pkid RICO_pack_first_type(u32 pack_id, enum RICO_hnd_type type);
 extern pkid RICO_pack_last_type(u32 pack_id, enum RICO_hnd_type type);
 extern pkid RICO_pack_next_type(pkid id, enum RICO_hnd_type type);
 extern pkid RICO_pack_prev_type(pkid id, enum RICO_hnd_type type);
+extern pkid RICO_pack_next_type_loop(pkid id, enum RICO_hnd_type type);
+extern pkid RICO_pack_prev_type_loop(pkid id, enum RICO_hnd_type type);
 extern int RICO_pack_save(u32 pack_id, bool shrink);
 extern int RICO_pack_save_as(u32 pack_id, const char *filename, bool shrink);
 extern int RICO_pack_load(const char *filename, u32 *_pack);

@@ -18,6 +18,7 @@ struct RICO_texture
     u8 bpp;
     GLenum gl_target;
 
+    // TODO: Remove this field. Load data directly into VRAM then free buffer.
     u32 pixels_offset;
 };
 

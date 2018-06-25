@@ -174,10 +174,22 @@ extern void RICO_object_bbox_set(struct RICO_object *obj,
     obj->bbox = *bbox;
     object_update_colliders(obj);
 }
-extern void RICO_object_mesh_set(struct RICO_object *obj,
-                                 pkid mesh_id)
+extern void RICO_object_mesh_set(struct RICO_object *obj, pkid mesh_id)
 {
+#if RICO_DEBUG
+    struct uid *uid = RICO_pack_lookup(mesh_id);
+    RICO_ASSERT(uid->type == RICO_HND_MESH);
+#endif
     obj->mesh_id = mesh_id;
+    object_bbox_recalculate(obj);
+}
+extern void RICO_object_material_set(struct RICO_object *obj, pkid material_id)
+{
+#if RICO_DEBUG
+    struct uid *uid = RICO_pack_lookup(material_id);
+    RICO_ASSERT(uid->type == RICO_HND_MATERIAL);
+#endif
+    obj->material_id = material_id;
     object_bbox_recalculate(obj);
 }
 extern void RICO_object_trans(struct RICO_object *obj, const struct vec3 *v)

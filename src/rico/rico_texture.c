@@ -172,6 +172,9 @@ static void texture_delete(struct RICO_texture *texture)
 }
 static void texture_bind(pkid pkid, GLenum texture_unit)
 {
+    // Catch dumb mistakes, texture unit should be e.g. GL_TEXTURE0
+    RICO_ASSERT(texture_unit != GL_TEXTURE_2D);
+
     struct rgl_texture *rgl_tex = hashtable_search(&global_textures, pkid);
     if (!rgl_tex)
     {

@@ -130,6 +130,8 @@ static inline void *ric_arena_push(struct ric_arena *arena, u32 bytes)
     return ptr;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 static size_t ric_fwrite(void const* buf, size_t size,
                          struct ric_stream *stream)
 {
@@ -229,7 +231,7 @@ static void ric_close(struct ric_stream *stream)
 #define TEST_OBJECTS 10
 #define IGNORE_ME 0x4f434952
 
-static void ric_test_write(struct ric_arena *arena)
+static void ric_test_write(struct ric_arena *arena, const char *filename)
 {
     struct ric_stream stream_ = { 0 };
     struct ric_stream *stream = &stream_;
@@ -238,7 +240,7 @@ static void ric_test_write(struct ric_arena *arena)
     stream->arena = arena;
     stream->version = V_CURRENT;
     stream->mode = RIC_WRITE;
-    stream->fp = fopen("ric_test.bin", stream->mode ? "wb" : "rb");
+    stream->fp = fopen(filename, stream->mode ? "wb" : "rb");
     RICO_ASSERT(stream->fp);
 
     // Generate data
@@ -278,13 +280,13 @@ static void ric_test_write(struct ric_arena *arena)
     fflush(stdout);
 }
 
-static void ric_test_read(struct ric_arena *arena)
+static void ric_test_read(struct ric_arena *arena, const char *filename)
 {
     struct ric_stream stream_ = { 0 };
     struct ric_stream *stream = &stream_;
     stream->arena = arena;
     stream->mode = RIC_READ;
-    stream->fp = fopen("ric_test.bin", stream->mode ? "wb" : "rb");
+    stream->fp = fopen(filename, stream->mode ? "wb" : "rb");
     RICO_ASSERT(stream->fp);
 
     struct ric_scene file = { 0 };
@@ -333,7 +335,7 @@ static void ric_test_current()
     // Write file into arena
     struct ric_arena arena = { 0 };
     ric_arena_alloc(&arena, arena_size);
-    ric_test_write(&arena);
+    ric_test_write(&arena, "ric_test.bin");
     
     // Save copy and clear
     struct ric_arena arena_copy = { 0 };
@@ -341,7 +343,7 @@ static void ric_test_current()
     ric_arena_clear(&arena);
 
     // Read file into arena
-    ric_test_read(&arena);
+    ric_test_read(&arena, "ric_1.bin");
 
     // Validate that data read is exactly the same as data written (aside from 
     // IGNORE_ME values, which are intentionally not serialized to the file)
@@ -382,5 +384,5 @@ static void ric_test()
 
     //ric_test_1();
     ric_test_current();
-    RICO_ASSERT(0);
+    RICO_ASSERT(1);
 }

@@ -80,6 +80,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="src\rico\rico_heiro.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="src\rico\rico_hash.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -175,10 +179,11 @@
     <ClInclude Include="src\rico\internal\ri_file.h" />
     <ClInclude Include="src\rico\internal\ri_font.h" />
     <ClInclude Include="src\rico\internal\ri_glref.h" />
+    <ClInclude Include="src\rico\internal\ri_heiro.h" />
     <ClInclude Include="src\rico\internal\ri_hash.h" />
     <ClInclude Include="src\rico\internal\ri_hnd.h" />
     <ClInclude Include="src\rico\internal\ri_light.h" />
-    <ClInclude Include="src\rico\internal\ri_main.h" />
+    <ClInclude Include="src\rico\internal\ri.h" />
     <ClInclude Include="src\rico\internal\ri_material.h" />
     <ClInclude Include="src\rico\internal\ri_mesh.h" />
     <ClInclude Include="src\rico\internal\ri_object.h" />
@@ -290,7 +295,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>SDL2main.lib;SDL2.lib;opengl32.lib;openal32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2main.lib;SDL2.lib;opengl32.lib;openal32.lib;freetype.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
@@ -318,7 +323,7 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>SDL2main.lib;SDL2.lib;opengl32.lib;openal32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2main.lib;SDL2.lib;opengl32.lib;openal32.lib;freetype.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>

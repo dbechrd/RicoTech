@@ -3,7 +3,6 @@
 
 static void rico_ui_init();
 static void rico_ui_reset();
-static void ui_debug_stack_usage();
-static void ui_draw_element(struct RICO_ui_element *element, u32 x, u32 y);
+static void ui_draw_element(struct RICO_ui_element *element, s32 x, s32 y);
 
 #endif

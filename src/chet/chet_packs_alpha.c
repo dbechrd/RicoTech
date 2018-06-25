@@ -54,13 +54,13 @@ void pack_build_alpha(struct pack_info *pack_info)
                                        "terrain");
     struct RICO_object *terrain = RICO_pack_lookup(terrain_id);
     RICO_object_mesh_set(terrain, mesh_terrain_id);
-    terrain->material_id = mat_bricks;
+    RICO_object_material_set(terrain, mat_bricks);
 
     pkid timmy_id = RICO_load_object(pack_sav, OBJ_TIMMY, sizeof(struct timmy),
                                      "timmy");
     struct timmy *timmy = RICO_pack_lookup(timmy_id);
     RICO_object_mesh_set(&timmy->rico, mesh_door_id);
-    timmy->rico.material_id = mat_timmy;
+    RICO_object_material_set(terrain, mat_timmy);
     timmy->lights_on = true;
     timmy->audio_on = true;
 

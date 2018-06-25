@@ -487,6 +487,24 @@ extern pkid RICO_pack_prev_type(pkid id, enum RICO_hnd_type type)
     }
     return prev;
 }
+extern pkid RICO_pack_next_type_loop(pkid id, enum RICO_hnd_type type)
+{
+    pkid next = RICO_pack_next_type(id, type);
+    if (!next)
+    {
+        next = RICO_pack_first_type(PKID_PACK(id), type);
+    }
+    return next;
+}
+extern pkid RICO_pack_prev_type_loop(pkid id, enum RICO_hnd_type type)
+{
+    pkid prev = RICO_pack_prev_type(id, type);
+    if (!prev)
+    {
+        prev = RICO_pack_last_type(PKID_PACK(id), type);
+    }
+    return prev;
+}
 extern u32 RICO_pack_init(u32 pack_id, const char *name, u32 blob_count,
                           u32 buffer_size)
 {
@@ -898,7 +916,7 @@ extern pkid RICO_load_string(u32 pack_id, enum RICO_string_slot slot, float x,
     pkid str_object_id =
         RICO_load_object(pack_id, RICO_OBJECT_TYPE_STRING_SCREEN, 0, name);
     struct RICO_object *str_object = RICO_pack_lookup(str_object_id);
-    str_object->mesh_id = font_mesh_id;
+    RICO_object_mesh_set(str_object, font_mesh_id);
 
     struct RICO_string *str = blob_start(pack, RICO_HND_STRING, 0, "bloop");
     str->slot = slot;

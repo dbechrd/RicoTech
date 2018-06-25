@@ -38,8 +38,8 @@ struct RICO_object
 
 extern void RICO_object_bbox_set(struct RICO_object *obj,
                                  const struct RICO_bbox *bbox);
-extern void RICO_object_mesh_set(struct RICO_object *obj,
-                                 pkid mesh_id);
+extern void RICO_object_mesh_set(struct RICO_object *obj, pkid mesh_id);
+extern void RICO_object_material_set(struct RICO_object *obj, pkid material_id);
 extern void RICO_object_trans(struct RICO_object *obj, const struct vec3 *v);
 extern const struct vec3 *RICO_object_trans_get(struct RICO_object *obj);
 extern void RICO_object_trans_set(struct RICO_object *obj,

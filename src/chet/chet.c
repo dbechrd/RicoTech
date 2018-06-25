@@ -33,7 +33,7 @@ static struct RICO_audio_buffer audio_buffers[AUDIO_COUNT];
 static struct RICO_audio_source audio_sources[AUDIO_COUNT];
 
 enum toolbar_icon {
-    TOOLBAR_CURSOR,
+    TOOLBAR_CURSOR = 1,
     TOOLBAR_TRANSLATE,
     TOOLBAR_ROTATE,
     TOOLBAR_SCALE,
@@ -45,8 +45,7 @@ enum toolbar_icon {
     TOOLBAR_UNDO,
     TOOLBAR_REDO,
     TOOLBAR_SAVE,
-    TOOLBAR_EXIT,
-    TOOLBAR_COUNT,
+    TOOLBAR_EXIT
 };
 
 static struct RICO_sprite toolbar_sprites[16];
@@ -126,9 +125,8 @@ void game_button_interact(struct game_button *button)
     pkid mat_off = PKID_GENERATE(3, 5);
 
     // Toggle this button
-    button->rico.material_id = button->rico.material_id == mat_on
-        ? mat_off
-        : mat_on;
+    u32 mat = button->rico.material_id == mat_on ? mat_off : mat_on;
+    RICO_object_material_set(&button->rico, mat);
 
     // Toggle neighbor buttons
     pkid button_id;
@@ -138,36 +136,32 @@ void game_button_interact(struct game_button *button)
     {
         button_id = panel->buttons[button->index - 3];
         other = RICO_pack_lookup(button_id);
-        other->rico.material_id = other->rico.material_id == mat_on
-            ? mat_off
-            : mat_on;
+        u32 mat = other->rico.material_id == mat_on ? mat_off : mat_on;
+        RICO_object_material_set(&other->rico, mat);
     }
     // DOWN
     if (button->index < 6)
     {
         button_id = panel->buttons[button->index + 3];
         other = RICO_pack_lookup(button_id);
-        other->rico.material_id = other->rico.material_id == mat_on
-            ? mat_off
-            : mat_on;
+        u32 mat = other->rico.material_id == mat_on ? mat_off : mat_on;
+        RICO_object_material_set(&other->rico, mat);
     }
     // LEFT
     if (button->index % 3 > 0)
     {
         button_id = panel->buttons[button->index - 1];
         other = RICO_pack_lookup(button_id);
-        other->rico.material_id = other->rico.material_id == mat_on
-            ? mat_off
-            : mat_on;
+        u32 mat = other->rico.material_id == mat_on ? mat_off : mat_on;
+        RICO_object_material_set(&other->rico, mat);
     }
     // RIGHT
     if (button->index % 3 < 2)
     {
         button_id = panel->buttons[button->index + 1];
         other = RICO_pack_lookup(button_id);
-        other->rico.material_id = other->rico.material_id == mat_on
-            ? mat_off
-            : mat_on;
+        u32 mat = other->rico.material_id == mat_on ? mat_off : mat_on;
+        RICO_object_material_set(&other->rico, mat);
     }
 
     bool victory = true;
@@ -531,7 +525,7 @@ void DEBUG_render_color_test()
         COLOR_DARK_YELLOW,
         COLOR_DARK_CYAN,
         COLOR_DARK_MAGENTA,
-        COLOR_DARK_WHITE,
+        COLOR_GRAY_5,
         COLOR_TRANSPARENT,
 
         COLOR_DARK_RED_HIGHLIGHT,
@@ -660,62 +654,60 @@ void game_toolbar_init()
     }
 }
 
-static struct RICO_ui_element *hud;
-static struct RICO_ui_element *buttons[ARRAY_COUNT(toolbar_sprites)];
 static u32 pointless_buttons = 0;
 
-void game_button_click(const struct RICO_ui_event_data *data)
+void toolbar_button_click(const struct RICO_ui_event *e)
 {
-    if (data->element == buttons[0] &&
-        data->event_type == RICO_UI_EVENT_LMB_CLICK)
+    if ((u32)e->element->metadata == TOOLBAR_CURSOR &&
+        e->event_type == RICO_UI_EVENT_LMB_CLICK)
     {
-        //data->element->color = COLOR_ORANGE;
+        //e->element->color = COLOR_ORANGE;
         RICO_audio_source_play(&audio_sources[AUDIO_BUTTON]);
         pointless_buttons++;
     }
 }
 
-void game_render_ui()
+void game_render_ui_toolbar()
 {
-    // HACK: Reset ui stack each frame
-    // TODO: Reset this in the engine
-    rico_ui_reset();
+    struct RICO_ui_hud *toolbar_hud;
+    struct RICO_ui_button *toolbar_buttons[ARRAY_COUNT(toolbar_sprites)];
 
-    hud = (struct RICO_ui_element *)RICO_ui_hud();
-    hud->padding = RECT1(2);
-    hud->color_default = COLOR_DARK_WHITE_HIGHLIGHT;
+    toolbar_hud = RICO_ui_hud();
+    toolbar_hud->element.padding = PAD(2, 2, 0, 0);
+    toolbar_hud->color = COLOR_GRAY_4;
 
-    for (int i = 0; i < ARRAY_COUNT(buttons); ++i)
+    for (int i = 0; i < ARRAY_COUNT(toolbar_buttons); ++i)
     {
-        struct RICO_ui_button *button = RICO_ui_button(hud);
-        button->element.min_size = VEC2I(32, 32);
-        button->element.margin = RECT1(2);
-        button->element.color_default = COLOR_DARK_WHITE;
-        button->element.color_hover = COLOR_ORANGE;
-        button->element.color_click = COLOR_DARK_ORANGE;
-        button->sprite = toolbar_sheet.sprites[i];
-        button->element.event = game_button_click;
-        buttons[i] = (struct RICO_ui_element *)button;
+        toolbar_buttons[i] = RICO_ui_button(&toolbar_hud->element);
+        toolbar_buttons[i]->element.min_size = VEC2I(32, 32);
+        toolbar_buttons[i]->element.margin = PAD(0, 0, 2, 2);
+        toolbar_buttons[i]->element.metadata = (void *)(TOOLBAR_CURSOR + i);
+        toolbar_buttons[i]->element.event = toolbar_button_click;
+        toolbar_buttons[i]->color[RICO_UI_BUTTON_DEFAULT] = COLOR_GRAY_2;
+        toolbar_buttons[i]->color[RICO_UI_BUTTON_HOVERED] = COLOR_ORANGE;
+        toolbar_buttons[i]->color[RICO_UI_BUTTON_PRESSED] = COLOR_DARK_ORANGE;
+        toolbar_buttons[i]->sprite = &toolbar_sheet.sprites[i];
     }
 
     for (u32 i = 0; i < pointless_buttons; ++i)
     {
-        struct RICO_ui_button *button = RICO_ui_button(hud);
+        struct RICO_ui_button *button = RICO_ui_button(&toolbar_hud->element);
         button->element.min_size = VEC2I(32, 32);
-        button->element.margin = RECT1(2);
-        button->element.color_default = COLOR_DARK_WHITE;
-        button->element.color_hover = COLOR_ORANGE;
-        button->element.color_click = COLOR_DARK_ORANGE;
-        button->sprite = toolbar_sheet.sprites[0];
+        button->element.margin = PAD(0, 0, 2, 2);
+        button->color[RICO_UI_BUTTON_DEFAULT] = COLOR_GRAY_2;
+        button->color[RICO_UI_BUTTON_HOVERED] = COLOR_ORANGE;
+        button->color[RICO_UI_BUTTON_PRESSED] = COLOR_DARK_ORANGE;
+        button->sprite = &toolbar_sheet.sprites[0];
     }
 
-    if (RICO_ui_layout(hud, 0, 0, 580, 0)) //mouse_x, mouse_y))
+    if (RICO_ui_layout(&toolbar_hud->element, 0, 0, 546, 0)) //mouse_x, mouse_y))
     {
-        u32 start_x = (SCREEN_WIDTH / 2) - (hud->size.w / 2);
-        RICO_ui_draw(hud, start_x, 20);
+        u32 start_x = (SCREEN_WIDTH / 2) - (toolbar_hud->element.size.w / 2);
+        RICO_ui_draw(&toolbar_hud->element, start_x, 20);
     }
     else
     {
+        // Draw silly X to represent layout step failing to fit in min rect
         struct rect x_rect = { 16, 16, 32, 32 };
         float x = SCREEN_X(x_rect.x);
         float y = SCREEN_Y(x_rect.y);
@@ -724,16 +716,116 @@ void game_render_ui()
         RICO_prim_draw_line2d(x, y, x + w, y + h, &COLOR_ORANGE);
         RICO_prim_draw_line2d(x + w, y, x, y + h, &COLOR_ORANGE);
     }
+}
 
-    ui_debug_stack_usage();
-    RICO_ui_layout(&ui_debug_usage_hud->element, 300, 60, 0, 0);
-    u32 ui_debug_stack_x = (SCREEN_WIDTH / 2) - (ui_debug_usage_hud->element.size.w / 2);
-    RICO_ui_draw(&ui_debug_usage_hud->element, ui_debug_stack_x, 2);
+void debug_render_ui_stack()
+{
+    struct RICO_ui_hud *ui_debug_usage_hud;
+    struct RICO_ui_label *ui_debug_usage_bar;
 
+    ui_debug_usage_hud = RICO_ui_hud();
+    
+    // TODO: Make progress bar control
+    ui_debug_usage_bar = RICO_ui_label(&ui_debug_usage_hud->element);
+    
+    u32 ui_stack_used = (ui_stack_ptr - ui_stack) * 100 / sizeof(ui_stack);
+    u32 bar_pad = 2;
+    ui_debug_usage_bar->element.min_size = VEC2I(ui_stack_used, 8);
+    ui_debug_usage_bar->element.margin = RECT1(bar_pad);
+    ui_debug_usage_bar->color = COLOR_DARK_YELLOW;
+    ui_debug_usage_hud->element.min_size = VEC2I(100 + bar_pad * 2,
+                                                 8 + bar_pad * 2);
+    ui_debug_usage_hud->color = COLOR_DARK_WHITE_HIGHLIGHT;
+
+    // Layout and draw
+    if (RICO_ui_layout(&ui_debug_usage_hud->element, 300, 60, 0, 0))
+    {
+        u32 ui_debug_stack_x =
+            (SCREEN_WIDTH / 2) - (ui_debug_usage_hud->element.size.w / 2);
+        RICO_ui_draw(&ui_debug_usage_hud->element, ui_debug_stack_x, 2);
+    }
+}
+
+#define LIGHTS_X 12
+#define LIGHT_STATES 2
+static u32 lights_board[LIGHTS_X][LIGHTS_X];
+static struct vec4 colors[LIGHT_STATES][2];
+
+void lights_init()
+{
+    colors[0][0] = COLOR_GRAY_3;
+    colors[0][1] = COLOR_GRAY_2;
+    
+    colors[1][0] = COLOR_ORANGE_HIGHLIGHT;
+    colors[1][1] = COLOR_ORANGE;
+}
+
+void lights_button_click(const struct RICO_ui_event *e)
+{
+    u32 i = (u32)e->element->metadata;
+    if (e->event_type == RICO_UI_EVENT_LMB_CLICK)
+    {
+        //e->element->color = COLOR_ORANGE;
+        RICO_audio_source_play(&audio_sources[AUDIO_BUTTON]);
+        lights_board[i % LIGHTS_X][i / LIGHTS_X]++;
+        lights_board[i % LIGHTS_X][i / LIGHTS_X] %= LIGHT_STATES;
+    }
+}
+
+void game_render_ui_lights()
+{
+    struct RICO_ui_hud *lights_hud;
+    struct RICO_ui_button *lights_buttons[LIGHTS_X * LIGHTS_X];
+
+    s32 button_w = 32;
+    s32 pad = 2;
+    s32 margin = 2;
+
+    lights_hud = RICO_ui_hud();
+    lights_hud->element.padding = PAD(pad, pad, 0, 0);
+    lights_hud->color = COLOR_GRAY_4;
+
+    for (int i = 0; i < ARRAY_COUNT(lights_buttons); ++i)
+    {
+        u32 light_state = lights_board[i % LIGHTS_X][i / LIGHTS_X];
+
+        lights_buttons[i] = RICO_ui_button(&lights_hud->element);
+        lights_buttons[i]->element.min_size = VEC2I(button_w, button_w);
+        lights_buttons[i]->element.margin = PAD(0, 0, margin, margin);
+        lights_buttons[i]->color[RICO_UI_BUTTON_HOVERED] = colors[light_state][0];
+        lights_buttons[i]->color[RICO_UI_BUTTON_DEFAULT] = colors[light_state][1];
+        lights_buttons[i]->element.metadata = (void *)i;
+        lights_buttons[i]->sprite = &toolbar_sheet.sprites[15];
+        lights_buttons[i]->element.event = lights_button_click;
+    }
+
+    s32 min_x = (s32)(pad + LIGHTS_X * (button_w + margin));
+    s32 min_y = (s32)(pad + LIGHTS_X * (button_w + margin));
+    if (RICO_ui_layout(&lights_hud->element, min_x, min_y, min_x, min_y))
+    {
+        s32 start_x = (SCREEN_WIDTH / 2) - (lights_hud->element.size.w / 2);
+        RICO_ui_draw(&lights_hud->element, start_x, 100);
+    }
+}
+
+void debug_render_cursor()
+{
     //struct rect cursor_rect = { mouse_x - 16, mouse_y - 16, 32, 32 };
     //struct rect cursor_rect = { mouse_x, mouse_y, 32, 32 };
     //RICO_prim_draw_rect_tex(&cursor_rect, &COLOR_TRANSPARENT, tex_toolbar);
     //RICO_prim_draw_rect(&RECT(mouse_x - 1, mouse_y - 1, 1, 1), &COLOR_RED);
+}
+
+void game_render_ui()
+{
+    // HACK: Reset ui stack each frame
+    // TODO: Reset this in the engine
+    rico_ui_reset();
+
+    game_render_ui_toolbar();
+    //game_render_ui_lights();
+    debug_render_ui_stack();
+    debug_render_cursor();
 }
 
 int main(int argc, char **argv)
@@ -757,7 +849,6 @@ int main(int argc, char **argv)
 
     RICO_audio_volume_set(0.1f);
 
-    // TODO: Add audio to pack
     RICO_audio_buffer_load_file(&audio_buffers[AUDIO_WELCOME], "audio/welcome.ric");
     RICO_audio_source_init(&audio_sources[AUDIO_WELCOME]);
     RICO_audio_source_buffer(&audio_sources[AUDIO_WELCOME], &audio_buffers[AUDIO_WELCOME]);
@@ -777,6 +868,7 @@ int main(int argc, char **argv)
     RICO_audio_source_buffer(&audio_sources[AUDIO_VICTORY], &audio_buffers[AUDIO_VICTORY]);
 
     game_toolbar_init();
+    lights_init();
 
     // HACK: Find Timmy by name and use light/audio flags to determine start-up
     //       state of lighting and audio.
@@ -784,6 +876,8 @@ int main(int argc, char **argv)
         RICO_pack_lookup_by_name(pack_table[PACK_ALPHA].sav_id, "timmy");
     DLB_ASSERT(timmy);
     timmy_state_hacks(timmy->lights_on, timmy->audio_on);
+
+    RICO_simulation_pause();
 
     while (!RICO_quit())
     {
@@ -818,19 +912,19 @@ int main(int argc, char **argv)
 
         //clash_detect(timmy);
 
-#if 0
-        RICO_render();
-#else
+        // Render world
         RICO_render_objects();
-        RICO_render_editor();
         DEBUG_render_bboxes(timmy);
         if (rayviz_sphere.radius > 0.0f)
             RICO_prim_draw_sphere(&rayviz_sphere, &COLOR_YELLOW);
-        game_render_ui();
-        RICO_render_ui();
 
+        // Render overlays
+        game_render_ui();
+        RICO_render_editor();
+        RICO_render_crosshair();
+
+        // Swap buffers
         RICO_frame_swap();
-#endif
     }
 
     RICO_audio_source_free(&audio_sources[AUDIO_WELCOME]);

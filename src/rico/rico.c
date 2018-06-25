@@ -1,4 +1,4 @@
-#include "internal/ri_main.h"
+#include "internal/ri.h"
 #include "gl3w.c"
 
 #include "rico.h"
@@ -41,11 +41,12 @@
 #include "rico_file.c"
 #include "rico_ui.c"
 #include "rico_cereal.c"
+#include "rico_heiro.c"
 #if RICO_DEBUG
     #include "tests.c"
 #endif
 
-//#include "CacheLineSize.c"
+#include "CacheLineSize.c"
 //#include "main_nuke.c"
 #include "MurmurHash3.c"
 
@@ -231,8 +232,8 @@ int RICO_init()
     printf("------------------------------------------------------------\n");
     printf("[MAIN][init] Initializing third party\n");
     printf("------------------------------------------------------------\n");
-    //size_t cacheSize = CacheLineSize();
-    //printf("Cache line min_size: %d bytes\n", cacheSize);
+    size_t cacheSize = CacheLineSize();
+    printf("Cache line min_size: %d bytes\n", cacheSize);
     init_stb();
     init_murmurhash3();
 

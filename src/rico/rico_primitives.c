@@ -274,11 +274,11 @@ static void prim_draw_quad(u32 vertex_count, const struct prim_vertex *vertices,
     glBufferData(GL_ARRAY_BUFFER, vertex_count * sizeof(struct prim_vertex),
                  vertices, GL_STATIC_DRAW);
 
-    if (tex_id) texture_bind(tex_id, GL_TEXTURE_2D);
+    if (tex_id) texture_bind(tex_id, GL_TEXTURE0);
     glDisable(GL_CULL_FACE);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glEnable(GL_CULL_FACE);
-    if (tex_id) texture_unbind(tex_id, GL_TEXTURE_2D);
+    if (tex_id) texture_unbind(tex_id, GL_TEXTURE0);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);

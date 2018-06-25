@@ -134,6 +134,9 @@
     <ClCompile Include="src\rico\rico_cereal.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
+    <ClCompile Include="src\rico\rico_heiro.c">
+      <Filter>Source Files\rico</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dlb\dlb_math.h">
@@ -229,9 +232,6 @@
     <ClInclude Include="src\rico\internal\ri_light.h">
       <Filter>Header Files\rico\internal</Filter>
     </ClInclude>
-    <ClInclude Include="src\rico\internal\ri_main.h">
-      <Filter>Header Files\rico\internal</Filter>
-    </ClInclude>
     <ClInclude Include="src\rico\internal\ri_material.h">
       <Filter>Header Files\rico\internal</Filter>
     </ClInclude>
@@ -284,6 +284,12 @@
       <Filter>Header Files\rico\internal</Filter>
     </ClInclude>
     <ClInclude Include="src\rico\internal\ri_cereal.h">
+      <Filter>Header Files\rico\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rico\internal\ri.h">
+      <Filter>Header Files\rico\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rico\internal\ri_heiro.h">
       <Filter>Header Files\rico\internal</Filter>
     </ClInclude>
   </ItemGroup>

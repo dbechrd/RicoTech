@@ -150,7 +150,7 @@ static void camera_update(struct RICO_camera *camera, r64 sim_alpha)
 
     // HACK: Scale view matrix to decrease quaternion rotation radius. I don't
     //       really understand what this is doing.
-    //mat4_scalef(&camera->view_matrix, QUAT_SCALE_HACK);
+    mat4_scalef(&camera->view_matrix, QUAT_SCALE_HACK);
 
     struct vec3 pos = camera->pos;
     mat4_translate(&camera->view_matrix, v3_negate(&pos));
@@ -189,8 +189,8 @@ static void camera_update(struct RICO_camera *camera, r64 sim_alpha)
 
     camera->need_update = false;
 }
-static void camera_player_update(struct RICO_camera *camera, r32 dx, r32 dy,
-                                 struct vec3 delta_acc)
+static void camera_player_update(struct RICO_camera *camera, s32 dx, s32 dy,
+                                 struct vec3 delta_acc, float sim_alpha)
 {
     //---------------------------------------------------
     // Acceleration
@@ -203,11 +203,11 @@ static void camera_player_update(struct RICO_camera *camera, r32 dx, r32 dy,
     // Calculate delta velocity
     // dv' = at;
     struct vec3 acc = camera->acc;
-    v3_scalef(&acc, (r32)SIM_SEC);
+    v3_scalef(&acc, sim_alpha);
 
     // HACK: Other manual adjustments to cam velocity
     // TODO: Adjust acceleration instead?
-    v3_scalef(&acc, CAM_ACC / (r32)SIM_SEC);
+    v3_scalef(&acc, CAM_ACC / sim_alpha);
 
     v3_add(&camera->vel, &acc);
 
@@ -235,10 +235,10 @@ static void camera_player_update(struct RICO_camera *camera, r32 dx, r32 dy,
     // Calculate delta position
     // dp' = 1/2at^2 + vt
     struct vec3 vel = camera->acc;
-    v3_scalef(&vel, 0.5f * (r32)SIM_SEC * (r32)SIM_SEC);
+    v3_scalef(&vel, 0.5f * sim_alpha * sim_alpha);
 
     struct vec3 vt = camera->vel;
-    v3_scalef(&vt, (r32)SIM_SEC);
+    v3_scalef(&vt, sim_alpha);
 
     v3_add(&vel, &vt);
 
@@ -248,9 +248,10 @@ static void camera_player_update(struct RICO_camera *camera, r32 dx, r32 dy,
     // TODO: Smooth mouse look somehow
     if (dx != 0 || dy != 0)
     {
-        struct vec3 delta;
+        struct vec3 delta = { 0 };
         delta.x = dx * LOOK_SENSITIVITY_X;
         delta.y = dy * LOOK_SENSITIVITY_Y;
+        //v3_scalef(&delta, sim_alpha * 100.0f);
         camera_rotate(&cam_player, delta.y, delta.x, 0.0f);
     }
 

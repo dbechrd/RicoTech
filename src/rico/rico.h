@@ -4,6 +4,8 @@
 #include "dlb_types.h"
 #define DLB_MATH_PRINT
 #include "dlb_math.h"
+#include "ft2build.h"
+#include FT_FREETYPE_H
 #include "SDL/SDL.h"
 #include "GL/gl3w.h"
 

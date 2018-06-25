@@ -228,7 +228,7 @@ static void edit_material_next_pack()
 
     if (next_material_id)
     {
-        obj->material_id = next_material_id;
+        RICO_object_material_set(obj, next_material_id);
         object_print(obj);
     }
 }
@@ -239,12 +239,12 @@ static void edit_material_next()
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
     pkid next_material_id = (obj->material_id)
-        ? RICO_pack_next_loop(obj->material_id)
+        ? RICO_pack_next_type_loop(obj->material_id, RICO_HND_MATERIAL)
         : RICO_pack_first_type(PACK_DEFAULT, RICO_HND_MATERIAL);
     struct RICO_material *next_material = RICO_pack_lookup(next_material_id);
     if (next_material)
     {
-        obj->material_id = next_material->uid.pkid;
+        RICO_object_material_set(obj, next_material->uid.pkid);
         object_print(obj);
     }
 }
@@ -255,12 +255,12 @@ static void edit_material_prev()
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
     pkid prev_material_id = (obj->material_id)
-        ? RICO_pack_prev_loop(obj->material_id)
+        ? RICO_pack_prev_type_loop(obj->material_id, RICO_HND_MATERIAL)
         : RICO_pack_last_type(PACK_DEFAULT, RICO_HND_MATERIAL);
     struct RICO_material *prev_material = RICO_pack_lookup(prev_material_id);
     if (prev_material)
     {
-        obj->material_id = prev_material->uid.pkid;
+        RICO_object_material_set(obj, prev_material->uid.pkid);
         object_print(obj);
     }
 }
@@ -302,7 +302,7 @@ static void edit_mesh_next()
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
     pkid next_mesh_id = (obj->mesh_id)
-        ? RICO_pack_next_loop(obj->mesh_id)
+        ? RICO_pack_next_type_loop(obj->mesh_id, RICO_HND_MESH)
         : RICO_pack_first_type(PACK_DEFAULT, RICO_HND_MESH);
     if (next_mesh_id)
     {
@@ -318,7 +318,7 @@ static void edit_mesh_prev()
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
     pkid prev_mesh_id = (obj->mesh_id)
-        ? RICO_pack_prev_loop(obj->mesh_id)
+        ? RICO_pack_prev_type_loop(obj->mesh_id, RICO_HND_MESH)
         : RICO_pack_last_type(PACK_DEFAULT, RICO_HND_MESH);
     if (prev_mesh_id)
     {

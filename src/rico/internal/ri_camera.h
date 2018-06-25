@@ -42,6 +42,8 @@ static void camera_translate_local(struct RICO_camera *camera,
 static void camera_rotate(struct RICO_camera *camera, float dx, float dy,
                           float dz);
 static void camera_update(struct RICO_camera *camera, r64 sim_alpha);
+static void camera_player_update(struct RICO_camera *camera, s32 dx, s32 dy,
+                                 struct vec3 delta_acc, float sim_alpha);
 static void camera_render(struct RICO_camera *camera);
 static void camera_fwd_ray(struct ray *_ray, struct RICO_camera *camera);
 

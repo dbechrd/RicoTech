@@ -52,18 +52,16 @@ enum RICO_ui_event_type
     RICO_UI_EVENT_MMB_UP,
     RICO_UI_EVENT_RMB_CLICK,
     RICO_UI_EVENT_RMB_DOWN,
-    RICO_UI_EVENT_RMB_UP,
-
-    RICO_UI_EVENT_COUNT
+    RICO_UI_EVENT_RMB_UP
 };
 
-struct RICO_ui_event_data
+struct RICO_ui_event
 {
     struct RICO_ui_element *element;
     enum RICO_ui_event_type event_type;
 };
 
-typedef void (*RICO_ui_event)(const struct RICO_ui_event_data *data);
+typedef void (*RICO_ui_event_handler)(const struct RICO_ui_event *e);
 
 struct RICO_ui_element
 {
@@ -74,42 +72,51 @@ struct RICO_ui_element
     struct rect margin;
     struct rect bounds;  // excludes margin
     struct rect padding;
-    struct vec4 color;
-    struct vec4 color_default;
-    struct vec4 color_hover;
-    struct vec4 color_click;
+    void *metadata;
 
-    struct RICO_ui_element *parent;
-    struct RICO_ui_element *prev;
+    //struct RICO_ui_element *parent;
+    //struct RICO_ui_element *prev;
     struct RICO_ui_element *next;
     struct RICO_ui_element *first_child;
     struct RICO_ui_element *last_child;
 
-    RICO_ui_event event;
+    RICO_ui_event_handler event;
 };
 
 struct RICO_ui_hud
 {
     struct RICO_ui_element element;
+    struct vec4 color;
+};
+
+enum RICO_ui_button_state
+{
+    RICO_UI_BUTTON_DEFAULT,
+    RICO_UI_BUTTON_HOVERED,
+    RICO_UI_BUTTON_PRESSED,
+    
+    RICO_UI_BUTTON_COUNT
 };
 
 struct RICO_ui_button
 {
     struct RICO_ui_element element;
-    struct ui_string string;
-    struct RICO_sprite sprite;
+    struct RICO_sprite *sprite;
+    enum RICO_ui_button_state state;
+    struct vec4 color[RICO_UI_BUTTON_COUNT];
 };
 
 struct RICO_ui_label
 {
     struct RICO_ui_element element;
-    struct ui_string string;
+    struct vec4 color;
+    struct ui_string *string;
 };
 
 extern struct RICO_ui_hud *RICO_ui_hud();
 extern struct RICO_ui_label *RICO_ui_label(struct RICO_ui_element *parent);
-extern bool RICO_ui_layout(struct RICO_ui_element *element, u32 x, u32 y,
-                           u32 max_w, u32 max_h);
-extern void RICO_ui_draw(struct RICO_ui_element *element, u32 x, u32 y);
+extern bool RICO_ui_layout(struct RICO_ui_element *element, s32 x, s32 y,
+                           s32 max_w, s32 max_h);
+extern void RICO_ui_draw(struct RICO_ui_element *element, s32 x, s32 y);
 
 #endif

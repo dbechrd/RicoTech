@@ -181,7 +181,7 @@ extern bool RICO_state_is_edit();
 extern int RICO_update();
 extern void RICO_render_objects();
 extern void RICO_render_editor();
-extern void RICO_render_ui();
+extern void RICO_render_crosshair();
 extern void RICO_render();
 extern void RICO_frame_swap();
 extern bool RICO_quit();

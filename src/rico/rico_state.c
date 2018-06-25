@@ -19,8 +19,8 @@ static u32 action_queue_count = 0;
 
 static s32 mouse_x;
 static s32 mouse_y;
-static r32 mouse_dx = 0;
-static r32 mouse_dy = 0;
+static s32 mouse_dx = 0;
+static s32 mouse_dy = 0;
 
 static struct vec3 player_acc;
 
@@ -60,7 +60,7 @@ static u64 last_cycles;
 static u64 fps_last_render;
 static u64 fps_render_delta = 200000;  // 200 ms
 static bool fps_render = false;
-static bool vsync = true;
+static bool vsync = false;
 
 // Mouse and keyboard state
 static u32 mouse_buttons = 0;
@@ -230,20 +230,16 @@ extern int RICO_update()
     //| Query input state
     ///-------------------------------------------------------------------------
 	// Get mouse state
-	int dx, dy;
-	mouse_buttons_prev = mouse_buttons;
-	mouse_buttons = SDL_GetRelativeMouseState(&dx, &dy);
-	if (mouse_lock)
-	{
-		mouse_dx += (r32)dx;
-		mouse_dy += (r32)dy;
-	}
-	else
-	{
-		mouse_dx = mouse_dy = 0;
-	}
-
     SDL_GetMouseState(&mouse_x, &mouse_y);
+
+	mouse_buttons_prev = mouse_buttons;
+	mouse_buttons = SDL_GetRelativeMouseState(&mouse_dx, &mouse_dy);
+
+	//if (mouse_lock)
+	//{
+	//	mouse_dx = (r32)dx;
+	//	mouse_dy = (r32)dy;
+	//}
 
 	// Get keyboard state
 	u8 *keys_tmp = keys_prev;
@@ -329,16 +325,6 @@ extern int RICO_update()
     sim_accum += MIN(frame_ms, SIM_MAX_FRAMESKIP_MS);
     while (sim_accum >= SIM_MS)
     {
-        // TODO: Handle mouse movements in the state callbacks. Camera movement
-        //       is not the correct response to mouse movement in all states.
-        if (!RICO_state_is_menu())
-        {
-            struct vec3 camera_acc = player_acc;
-            if (player_sprint) v3_scalef(&camera_acc, CAM_SPRINT_MULTIPLIER);
-            if (camera_slow)   v3_scalef(&camera_acc, CAM_SLOW_MULTIPLIER);
-            camera_player_update(&cam_player, mouse_dx, mouse_dy, camera_acc);
-        }
-
         // TODO: Move this to this program.c
         // Update uniforms
         RICO_ASSERT(prog_pbr->program.gl_id);
@@ -347,12 +333,20 @@ extern int RICO_update()
         glUseProgram(0);
 
         string_update();
-
-        mouse_dx = 0;
-        mouse_dy = 0;
         sim_accum -= SIM_MS;
     }
     sim_alpha = (r64)sim_accum / SIM_MS;
+
+    // TODO: Handle mouse movements in the state callbacks. Camera movement
+    //       is not the correct response to mouse movement in all states.
+    if (mouse_lock && !RICO_state_is_menu())
+    {
+        struct vec3 camera_acc = player_acc;
+        if (player_sprint) v3_scalef(&camera_acc, CAM_SPRINT_MULTIPLIER);
+        if (camera_slow)   v3_scalef(&camera_acc, CAM_SLOW_MULTIPLIER);
+        camera_player_update(&cam_player, mouse_dx, mouse_dy, camera_acc,
+                             (r32)frame_dt);
+    }
 
     camera_update(&cam_player, sim_alpha);
 
@@ -368,7 +362,7 @@ extern void RICO_render_editor()
 {
     edit_render();
 }
-extern void RICO_render_ui()
+extern void RICO_render_crosshair()
 {
     camera_render(&cam_player);
 }
@@ -383,9 +377,9 @@ extern void RICO_frame_swap()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 #if RICO_DEBUG
-    // HACK: Kill some time (a.k.a. save my computer from lighting itself on
+    // HACK: Kill some time (a.k.a. prevent my computer from lighting itself on
     //       fire when VSync is disabled)
-    SDL_Delay(1);
+    //SDL_Delay(1);
 #endif
 }
 extern void RICO_render()
@@ -393,7 +387,7 @@ extern void RICO_render()
     RICO_render_objects();
     RICO_render_editor();
     // TODO: RICO_render_primitives();
-    RICO_render_ui();
+    RICO_render_crosshair();
 }
 static int shared_engine_events()
 {
@@ -440,6 +434,8 @@ static int shared_engine_events()
     else if (action_active(ACTION_ENGINE_VSYNC_TOGGLE))
     {
         vsync = !vsync;
+        // TODO: This causes stuttering, not sure how to make sure frame update
+        //       loop stays in sync with monitor refresh.
         SDL_GL_SetSwapInterval(vsync);
     }
     // Toggle audio
@@ -461,7 +457,7 @@ static int shared_engine_events()
         string_truncate(buf, sizeof(buf), len);
         RICO_load_string(PACK_TRANSIENT, STR_SLOT_DYNAMIC,
                          SCREEN_X(-FONT_WIDTH * 12), SCREEN_Y(0),
-                         COLOR_DARK_WHITE, 1000, 0, buf);
+                         COLOR_GRAY_5, 1000, 0, buf);
     }
     // Pause simulation
     else if (action_active(ACTION_ENGINE_SIM_PAUSE))
@@ -1265,6 +1261,12 @@ static int engine_init()
     rico_texture_init();
     rico_mesh_init();
     rico_ui_init();
+
+    printf("----------------------------------------------------------\n");
+    printf("[MAIN][init] Initializing heiro\n");
+    printf("----------------------------------------------------------\n");
+    err = rico_heiro_init();
+    if (err) return err;
 
 	printf("----------------------------------------------------------\n");
 	printf("[MAIN][init] Initializing shaders\n");
