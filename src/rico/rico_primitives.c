@@ -272,7 +272,8 @@ static void prim_draw_quad(u32 vertex_count, const struct prim_vertex *vertices,
     glBindVertexArray(prim_quad_vao);
     glBindBuffer(GL_ARRAY_BUFFER, prim_quad_vbo);
     glBufferData(GL_ARRAY_BUFFER, vertex_count * sizeof(struct prim_vertex),
-                 vertices, GL_STATIC_DRAW);
+                 vertices, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     if (tex_id) texture_bind(tex_id, GL_TEXTURE0);
     glDisable(GL_CULL_FACE);
@@ -280,10 +281,7 @@ static void prim_draw_quad(u32 vertex_count, const struct prim_vertex *vertices,
     glEnable(GL_CULL_FACE);
     if (tex_id) texture_unbind(tex_id, GL_TEXTURE0);
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-
-    // Clean up
     glUseProgram(0);
 }
 extern void RICO_prim_draw_plane(const struct vec3 *n,
@@ -345,7 +343,7 @@ extern void RICO_prim_draw_bbox_xform(const struct RICO_bbox *bbox,
     RICO_ASSERT(prim_bbox_vbo[1]);
     glBindVertexArray(prim_bbox_vao);
     glBindBuffer(GL_ARRAY_BUFFER, prim_bbox_vbo[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, prim_bbox_vbo[1]);
 
     // Based loosely on:
@@ -448,7 +446,7 @@ extern void RICO_prim_draw_obb_xform(const struct RICO_obb *obb,
     RICO_ASSERT(prim_bbox_vbo[1]);
     glBindVertexArray(prim_bbox_vao);
     glBindBuffer(GL_ARRAY_BUFFER, prim_bbox_vbo[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, prim_bbox_vbo[1]);
 
     // Based loosely on:

@@ -292,5 +292,8 @@
     <ClInclude Include="src\rico\internal\ri_heiro.h">
       <Filter>Header Files\rico\internal</Filter>
     </ClInclude>
+    <ClInclude Include="src\rico\rico_heiro.h">
+      <Filter>Header Files\rico</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

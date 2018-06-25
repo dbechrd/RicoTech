@@ -210,7 +210,7 @@ static void init_opengl()
     glEnable(GL_DEPTH_TEST); // Default off
     // TODO: Fix font meshes and turn culling back on
     //glEnable(GL_CULL_FACE);  // Backface culling
-    //glCullFace(GL_BACK);
+    glCullFace(GL_BACK);
 
     // Multi-sampling
     glEnable(GL_MULTISAMPLE);

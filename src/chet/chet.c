@@ -879,6 +879,8 @@ int main(int argc, char **argv)
 
     RICO_simulation_pause();
 
+    const char test_str[] = "RicoTech Engine";
+
     while (!RICO_quit())
     {
         RICO_mouse_coords(&mouse_x, &mouse_y);
@@ -922,6 +924,7 @@ int main(int argc, char **argv)
         game_render_ui();
         RICO_render_editor();
         RICO_render_crosshair();
+        RICO_heiro_render_string(200, 40, test_str, sizeof(test_str) - 1);
 
         // Swap buffers
         RICO_frame_swap();

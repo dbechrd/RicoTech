@@ -204,6 +204,7 @@
     <ClInclude Include="src\rico\rico_bbox.h" />
     <ClInclude Include="src\rico\rico_camera.h" />
     <ClInclude Include="src\rico\rico_error.h" />
+    <ClInclude Include="src\rico\rico_heiro.h" />
     <ClInclude Include="src\rico\rico_hnd.h" />
     <ClInclude Include="src\rico\rico_light.h" />
     <ClInclude Include="src\rico\rico_mesh.h" />
