@@ -7,7 +7,8 @@ struct RICO_heiro_glyph
     s32 height;
     s32 bearing_left;
     s32 bearing_top;
-    u32 advance;
+    s32 advance_x;
+    s32 advance_y;
 
     u32 gl_id;
 };

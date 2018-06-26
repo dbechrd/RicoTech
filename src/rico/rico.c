@@ -216,7 +216,7 @@ static void init_opengl()
     glEnable(GL_MULTISAMPLE);
 
     // Alpha-blending
-    glBlendEquation(GL_FUNC_ADD);
+    glBlendEquation(GL_FUNC_ADD);  // GL_FUNC_SUBTRACT w/ green for night vision
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
 }

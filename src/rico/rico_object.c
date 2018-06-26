@@ -421,7 +421,10 @@ static void object_render_ui(struct pack *pack,
 
     // Projection matrix
     glUniformMatrix4fv(prog->vert.proj, 1, GL_TRUE, camera->ortho_matrix.a);
+    glUniformMatrix4fv(prog->vert.view, 1, GL_TRUE, MAT4_IDENT.a);
 
+    glUniform4fv(prog->frag.color, 1, &COLOR_WHITE.r);
+    glUniform1i(prog->frag.grayscale, false);
     // Font texture
     // Note: We don't have to do this every time as long as we make sure
     //       the correct textures are bound before each draw to the texture

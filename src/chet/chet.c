@@ -879,7 +879,17 @@ int main(int argc, char **argv)
 
     RICO_simulation_pause();
 
-    const char test_str[] = "RicoTech Engine";
+    const char test_str[] =
+    "==========================================================\n"
+    "#        ______            _______        _              #\n"
+    "#        |  __ \\ O        |__   __|      | |             #\n"
+    "#        | |__| |_  ___ ___  | | ___  ___| |__           #\n"
+    "#        |  _  /| |/ __/ _ \\ | |/ _ \\/ __| '_ \\          #\n"
+    "#        | | \\ \\| | |_| (_) || |  __/ |__| | | |         #\n"
+    "#        |_|  \\_\\_|\\___\\___/ |_|\\___|\\___|_| |_|         #\n"
+    "#                                                        #\n"
+    "#              Copyright 2018 Dan Bechard                #\n"
+    "==========================================================\n";
 
     while (!RICO_quit())
     {
@@ -924,7 +934,8 @@ int main(int argc, char **argv)
         game_render_ui();
         RICO_render_editor();
         RICO_render_crosshair();
-        RICO_heiro_render_string(200, 40, test_str, sizeof(test_str) - 1);
+        RICO_heiro_render_string(SCREEN_WIDTH / 2 - (580 / 2), 200, test_str,
+                                 sizeof(test_str) - 1);
 
         // Swap buffers
         RICO_frame_swap();

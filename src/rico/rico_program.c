@@ -1,4 +1,5 @@
-static program_attribs_helper program_attribs[PROG_COUNT] = {
+static program_attribs_helper program_attribs[PROG_COUNT] =
+{
     0,
     program_pbr_attribs,
     program_primitive_attribs,
@@ -40,8 +41,7 @@ static void free_program(GLuint program)
 {
     if (program) glDeleteProgram(program);
 }
-static GLint program_get_attrib_location(GLuint program,
-                                                const char* name)
+static GLint program_get_attrib_location(GLuint program, const char* name)
 {
     GLint location = glGetAttribLocation(program, name);
     if (location < 0)
@@ -52,8 +52,7 @@ static GLint program_get_attrib_location(GLuint program,
 
     return location;
 }
-static GLint program_get_uniform_location(GLuint program,
-                                                 const char* name)
+static GLint program_get_uniform_location(GLuint program, const char* name)
 {
     GLint location = glGetUniformLocation(program, name);
     if (location < 0)
@@ -86,6 +85,7 @@ static void program_pbr_get_locations(struct pbr_program *p)
     p->vert.attrs.normal = program_get_attrib_location(p->program.gl_id, "attr_normal");
     RICO_ASSERT(p->vert.attrs.position == LOCATION_PBR_POSITION);
     RICO_ASSERT(p->vert.attrs.uv == LOCATION_PBR_UV);
+    // TODO: Turn these back on when they're being used
     //RICO_ASSERT(p->vert.attrs.color == LOCATION_PBR_COLOR);
     RICO_ASSERT(p->vert.attrs.normal == LOCATION_PBR_NORMAL);
 
@@ -196,12 +196,14 @@ static void program_primitive_get_locations(struct prim_program *p)
     p->vert.attrs.uv =  program_get_attrib_location(p->program.gl_id, "attr_uv");
     p->vert.attrs.color = program_get_attrib_location(p->program.gl_id, "attr_color");
     RICO_ASSERT(p->vert.attrs.position == LOCATION_PBR_POSITION);
+    // TODO: Turn these back on when they're being used
     //RICO_ASSERT(p->vert.attrs.uv == LOCATION_PBR_UV);
     //RICO_ASSERT(p->vert.attrs.color == LOCATION_PBR_COLOR);
 
     // Fragment shader
     p->frag.color = program_get_uniform_location(p->program.gl_id, "color");
     p->frag.tex = program_get_uniform_location(p->program.gl_id, "tex");
+    // TODO: Turn these back on when they're being used
     //RICO_ASSERT(p->frag.color >= 0);
     //RICO_ASSERT(p->frag.tex >= 0);
 }
@@ -275,15 +277,20 @@ static void program_text_get_locations(struct text_program *p)
 {
     // Vertex shader
     p->vert.model = program_get_uniform_location(p->program.gl_id, "model");
+    p->vert.view = program_get_uniform_location(p->program.gl_id, "view");
     p->vert.proj = program_get_uniform_location(p->program.gl_id, "proj");
-
     RICO_ASSERT(p->vert.model >= 0);
+    RICO_ASSERT(p->vert.view >= 0);
     RICO_ASSERT(p->vert.proj >= 0);
 
     // Fragment shader
-    p->frag.tex = program_get_uniform_location(p->program.gl_id, "tex");
-
-    RICO_ASSERT(p->frag.tex >= 0);
+    p->frag.color = program_get_uniform_location(p->program.gl_id, "u_color");
+    p->frag.grayscale = program_get_uniform_location(p->program.gl_id,
+                                                     "u_grayscale");
+    p->frag.tex = program_get_uniform_location(p->program.gl_id, "u_tex");
+    //RICO_ASSERT(p->frag.color >= 0);
+    //RICO_ASSERT(p->frag.grayscale >= 0);
+    //RICO_ASSERT(p->frag.tex >= 0);
 }
 static void program_text_attribs()
 {

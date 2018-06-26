@@ -1,3 +1,5 @@
+#define HEIRO_HEIGHT 16
+
 static GLuint glyph_vao;
 static GLuint glyph_vbo;
 
@@ -28,7 +30,7 @@ int rico_heiro_init()
     // Note: Use this if the font data is already loaded into a memory buffer
     //FREETYPE_TRY(FT_New_Memory_Face(ft_lib, buffer, buffer_size, 0, &ft_face),
     //             ERR_FREETYPE_FACE;
-    FT_TRY(FT_Set_Pixel_Sizes(ft_face, 0, 14), ERR_FREETYPE_SIZE);
+    FT_TRY(FT_Set_Pixel_Sizes(ft_face, 0, HEIRO_HEIGHT), ERR_FREETYPE_SIZE);
 
     // TODO: Do I need to set cmap or encoding?
     //FT_Set_Charmap(ft_face, charmap);
@@ -46,7 +48,7 @@ int rico_heiro_init()
     glBindBuffer(GL_ARRAY_BUFFER, glyph_vbo);
 
     // Reserve enough buffer space for a single glyph quad's vertices
-    glBufferData(GL_ARRAY_BUFFER, sizeof(struct prim_vertex[6]), 0,
+    glBufferData(GL_ARRAY_BUFFER, sizeof(struct text_vertex[6]), 0,
                  GL_DYNAMIC_DRAW);
     program_attribs[PROG_PRIM]();
     // Cleanup: Placeholder
@@ -98,7 +100,8 @@ int heiro_load_glyph(struct RICO_heiro_glyph *glyph, FT_Face ft_face,
     glyph->height       = ft_face->glyph->bitmap.rows;
     glyph->bearing_left = ft_face->glyph->bitmap_left;
     glyph->bearing_top  = ft_face->glyph->bitmap_top;
-    glyph->advance      = ft_face->glyph->advance.x;
+    glyph->advance_x    = ft_face->glyph->advance.x;
+    glyph->advance_y    = ft_face->glyph->advance.y;
 
     heiro_upload_glyph(glyph, ft_face->glyph->bitmap.buffer);
 
@@ -123,14 +126,18 @@ void heiro_upload_glyph(struct RICO_heiro_glyph *glyph, const void *pixels)
 
 extern void RICO_heiro_render_string(s32 sx, s32 sy, const u8 *str, u32 len)
 {
-    struct prim_program *prog = prog_prim;
+    struct text_program *prog = prog_text;
     RICO_ASSERT(prog->program.gl_id);
     glUseProgram(prog->program.gl_id);
 
     glUniformMatrix4fv(prog->vert.proj, 1, GL_TRUE, cam_player.ortho_matrix.a);
+    glUniformMatrix4fv(prog->vert.view, 1, GL_TRUE, MAT4_IDENT.a);
     glUniformMatrix4fv(prog->vert.model, 1, GL_TRUE, MAT4_IDENT.a);
     
+    glUniform4fv(prog->frag.color, 1, &COLOR_WHITE.r);
+    glUniform1i(prog->frag.grayscale, true);
     glUniform1i(prog->frag.tex, 0);
+
     glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(glyph_vao);
 
@@ -138,12 +145,19 @@ extern void RICO_heiro_render_string(s32 sx, s32 sy, const u8 *str, u32 len)
     float y = (float)sy;
     float scale = 1.0f;
 
-    struct vec4 color = COLOR_TRANSPARENT;
-    struct prim_vertex vertices[6];
+    struct vec4 color = COLOR_BLUE;
+    struct text_vertex vertices[6];
 
     u32 prev_tex = 0;
     for (u32 i = 0; i < len; ++i)
     {
+        if (str[i] == '\n')
+        {
+            x = (float)sx;
+            y += HEIRO_HEIGHT;
+            continue;
+        }
+
         struct RICO_heiro_glyph *glyph = &glyphs[str[i]];
 
         float xpos = x + glyph->bearing_left;
@@ -163,22 +177,22 @@ extern void RICO_heiro_render_string(s32 sx, s32 sy, const u8 *str, u32 len)
         float v0 = 1.0f;
         float v1 = 0.0f;
 
-        vertices[0] = (struct prim_vertex) {
+        vertices[0] = (struct text_vertex) {
             VEC3(x0, y1, z), VEC2F(u0, v0), color
         };
-        vertices[1] = (struct prim_vertex) {
+        vertices[1] = (struct text_vertex) {
             VEC3(x1, y0, z), VEC2F(u1, v1), color
         };
-        vertices[2] = (struct prim_vertex) {
+        vertices[2] = (struct text_vertex) {
             VEC3(x0, y0, z), VEC2F(u0, v1), color
         };
-        vertices[3] = (struct prim_vertex) {
+        vertices[3] = (struct text_vertex) {
             VEC3(x0, y1, z), VEC2F(u0, v0), color
         };
-        vertices[4] = (struct prim_vertex) {
+        vertices[4] = (struct text_vertex) {
             VEC3(x1, y1, z), VEC2F(u1, v0), color
         };
-        vertices[5] = (struct prim_vertex) {
+        vertices[5] = (struct text_vertex) {
             VEC3(x1, y0, z), VEC2F(u1, v1), color
         };
 
@@ -192,7 +206,7 @@ extern void RICO_heiro_render_string(s32 sx, s32 sy, const u8 *str, u32 len)
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
-        u32 adv = (glyph->advance >> 6);
+        u32 adv = (glyph->advance_x >> 6);
         x += adv * scale;
     }
 
