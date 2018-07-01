@@ -7,7 +7,7 @@
 struct RICO_sprite
 {
     struct RICO_spritesheet *sheet;
-    struct rect coords;
+    struct vec2f uvs[2];
 };
 
 struct RICO_spritesheet

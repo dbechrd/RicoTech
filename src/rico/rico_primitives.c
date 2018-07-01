@@ -180,6 +180,7 @@ extern void RICO_prim_draw_sprite(const struct rect *rect,
                                   const struct RICO_sprite *sprite,
                                   const struct vec4 *color)
 {
+    // Triangle strip CCW winding order:
     // (0,0) (0,1) (1,0) (1,1)
     float x0 = X_TO_NDC(rect->x);
     float y0 = Y_TO_NDC(rect->y);
@@ -188,30 +189,15 @@ extern void RICO_prim_draw_sprite(const struct rect *rect,
     const float ortho_z = -1.0f;
 
     struct prim_vertex verts[4] = { 0 };
-    verts[0].pos = VEC3(x0, y1, ortho_z);
-    verts[1].pos = VEC3(x0, y0, ortho_z);
-    verts[2].pos = VEC3(x1, y1, ortho_z);
-    verts[3].pos = VEC3(x1, y0, ortho_z);
+    verts[0].pos = VEC3(x0, y0, ortho_z);
+    verts[1].pos = VEC3(x0, y1, ortho_z);
+    verts[2].pos = VEC3(x1, y0, ortho_z);
+    verts[3].pos = VEC3(x1, y1, ortho_z);
 
-    struct RICO_texture *tex = RICO_pack_lookup(sprite->sheet->tex_id);
-    RICO_ASSERT(tex);
-
-    //u32 sprite_cols = tex->width / 32;  // 16
-    //u32 sprite_rows = tex->height / 32; // 1
-    //
-    //float u0 = (1.0f / sprite_cols) * (index % sprite_cols);
-    //float v0 = (1.0f / sprite_rows) * (index / sprite_cols);
-    //float u1 = (1.0f / sprite_cols) * ((index % sprite_cols) + 1);
-    //float v1 = (1.0f / sprite_rows) * ((index / sprite_cols) + 1);
-    //verts[0].uv = VEC2F(u0, v0);
-    //verts[1].uv = VEC2F(u0, v1);
-    //verts[2].uv = VEC2F(u1, v0);
-    //verts[3].uv = VEC2F(u1, v1);
-
-    float u0 = ((float)sprite->coords.x / tex->width);
-    float v0 = ((float)sprite->coords.y / tex->height);
-    float u1 = ((float)(sprite->coords.x + sprite->coords.w) / tex->width);
-    float v1 = ((float)(sprite->coords.y + sprite->coords.h) / tex->height);
+    float u0 = sprite->uvs[0].u;
+    float v0 = sprite->uvs[0].v;
+    float u1 = sprite->uvs[1].u;
+    float v1 = sprite->uvs[1].v;
     verts[0].uv = VEC2F(u0, v0);
     verts[1].uv = VEC2F(u0, v1);
     verts[2].uv = VEC2F(u1, v0);
@@ -223,6 +209,7 @@ extern void RICO_prim_draw_sprite(const struct rect *rect,
 extern void RICO_prim_draw_rect_tex(const struct rect *rect,
                                     const struct vec4 *color, pkid tex_id)
 {
+    // Triangle strip CCW winding order:
     // (0,0) (0,1) (1,0) (1,1)
     float x0 = X_TO_NDC(rect->x);
     float y0 = Y_TO_NDC(rect->y);
@@ -231,10 +218,20 @@ extern void RICO_prim_draw_rect_tex(const struct rect *rect,
     const float ortho_z = -1.0f;
 
     struct prim_vertex verts[4] = { 0 };
-    verts[0].pos = VEC3(x0, y1, ortho_z);
-    verts[1].pos = VEC3(x0, y0, ortho_z);
-    verts[2].pos = VEC3(x1, y1, ortho_z);
-    verts[3].pos = VEC3(x1, y0, ortho_z);
+    verts[0].pos = VEC3(x0, y0, ortho_z);
+    verts[1].pos = VEC3(x0, y1, ortho_z);
+    verts[2].pos = VEC3(x1, y0, ortho_z);
+    verts[3].pos = VEC3(x1, y1, ortho_z);
+
+    float u0 = 0.0f;
+    float v0 = 0.0f;
+    float u1 = 1.0f;
+    float v1 = 1.0f;
+    verts[0].uv = VEC2F(u0, v0);
+    verts[1].uv = VEC2F(u0, v1);
+    verts[2].uv = VEC2F(u1, v0);
+    verts[3].uv = VEC2F(u1, v1);
+
     prim_draw_quad(ARRAY_COUNT(verts), verts, color, &MAT4_IDENT, &MAT4_IDENT,
                    &cam_player.ortho_matrix, tex_id);
 }
@@ -276,9 +273,7 @@ static void prim_draw_quad(u32 vertex_count, const struct prim_vertex *vertices,
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     if (tex_id) texture_bind(tex_id, GL_TEXTURE0);
-    glDisable(GL_CULL_FACE);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    glEnable(GL_CULL_FACE);
     if (tex_id) texture_unbind(tex_id, GL_TEXTURE0);
 
     glBindVertexArray(0);

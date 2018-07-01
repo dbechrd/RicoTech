@@ -1,4 +1,4 @@
-#include "chet.h"
+﻿#include "chet.h"
 #include "rico.c"
 #include "chet_packs.c"
 #include "chet_collision.c"
@@ -644,7 +644,10 @@ void game_toolbar_init()
     for (u32 i = 0; i < sprite_count; ++i)
     {
         toolbar_sprites[i].sheet = &toolbar_sheet;
-        toolbar_sprites[i].coords = RECT(sprite_x, sprite_y, sprite_w, sprite_h);
+        toolbar_sprites[i].uvs[0].u = (float)sprite_x / tex_sheet->width;
+        toolbar_sprites[i].uvs[0].v = ((float)sprite_y + sprite_h) / tex_sheet->height;
+        toolbar_sprites[i].uvs[1].u = ((float)sprite_x + sprite_w) / tex_sheet->width;
+        toolbar_sprites[i].uvs[1].v = (float)sprite_y / tex_sheet->height;
         sprite_x += sprite_w;
         if (sprite_x >= tex_sheet->width)
         {
@@ -879,6 +882,8 @@ int main(int argc, char **argv)
 
     RICO_simulation_pause();
 
+    // TODO: Figure out how to handle UTF-8
+    //const char test_str[] = "\u30A2\u30CB\u30E1";
     const char test_str[] =
     "==========================================================\n"
     "#        ______            _______        _              #\n"
@@ -934,8 +939,8 @@ int main(int argc, char **argv)
         game_render_ui();
         RICO_render_editor();
         RICO_render_crosshair();
-        RICO_heiro_render_string(SCREEN_WIDTH / 2 - (580 / 2), 200, test_str,
-                                 sizeof(test_str) - 1);
+        RICO_heiro_render(SCREEN_WIDTH / 2 - (580 / 2), 200, test_str,
+                          sizeof(test_str) - 1);
 
         // Swap buffers
         RICO_frame_swap();
