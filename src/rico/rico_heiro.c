@@ -3,8 +3,12 @@
 static GLuint glyph_vao;
 static GLuint glyph_vbo;
 
+#define HEIRO_CODEPOINT_FIRST (u32)' '
+#define HEIRO_CODEPOINT_LAST (u32)'~'
+
 // TODO: Use hash table instead
-static struct RICO_heiro_glyph glyphs[128];
+static struct RICO_heiro_glyph glyphs[(HEIRO_CODEPOINT_LAST + 1) -
+                                      HEIRO_CODEPOINT_FIRST];
 //static struct dlb_hash glyphs;
 
 #define FT_TRY(expr, code) \
@@ -70,76 +74,96 @@ cleanup:
 
 int heiro_load_glyphs(FT_Face ft_face)
 {
+#define ATLAS_WIDTH 256
+#define ATLAS_HEIGHT 256
+#define ATLAS_PAD 1
+
     enum rico_error err = SUCCESS;
 
-#define TEX_WIDTH 32
-#define TEX_HEIGHT 1024
-    u32 tex_x = 0;
-    u32 tex_y = 0;
+    u32 atlas_x = 0;
+    u32 atlas_y = 0;
     u32 row_max_y = 0;
-    u8 *texture = calloc(1, sizeof(u8) * TEX_WIDTH * TEX_HEIGHT);
+    u8 *atlas = calloc(1, sizeof(u8) * ATLAS_WIDTH * ATLAS_HEIGHT);
 
     FT_ULong c;
     for (c = 0; c < ARRAY_COUNT(glyphs); ++c)
     {
         u8 *buffer;
-        err = heiro_load_glyph(&buffer, &glyphs[c], ft_face, c);
+        err = heiro_load_glyph(&buffer, &glyphs[c], ft_face,
+                               HEIRO_CODEPOINT_FIRST + c);
         // TODO: Use placeholder character when glyph is missing and keep going
         if (err) break;
+
+        if (!buffer) continue;
+
+        u32 w = glyphs[c].width + ATLAS_PAD;
+        u32 h = glyphs[c].height + ATLAS_PAD;
 
         // Store max glyph height so we know how much to advance y at end of row
         if (glyphs[c].height > row_max_y)
         {
-            row_max_y = glyphs[c].height;
+            row_max_y = h;
         }
 
         // If texture doesn't fit, start a new row
-        if (tex_x + glyphs[c].width > TEX_WIDTH)
+        if (atlas_x + w > ATLAS_WIDTH)
         {
-            tex_x = 0;
-            tex_y += row_max_y;
+            atlas_x = 0;
+            atlas_y += row_max_y;
             row_max_y = 0;
         }
 
         // TODO: Resize texture or create a second one
         // If texture still doesn't fit, uh-oh
-        if (tex_x + glyphs[c].width > TEX_WIDTH ||
-            tex_y + glyphs[c].height > TEX_HEIGHT)
+        if (atlas_x + w > ATLAS_WIDTH || atlas_y + h > ATLAS_HEIGHT)
         {
             RICO_ASSERT(0);  // Texture not big enough to hold font glyphs
         }
 
-        glyphs[c].uvs[0].u = (float)tex_x / TEX_WIDTH;
-        glyphs[c].uvs[0].v = (float)tex_y / TEX_HEIGHT;
-        glyphs[c].uvs[1].u = (float)(tex_x + glyphs[c].width) / TEX_WIDTH;
-        glyphs[c].uvs[1].v = (float)(tex_y + glyphs[c].height) / TEX_HEIGHT;
+        glyphs[c].uvs[0].u = ((float)atlas_x + ATLAS_PAD) / ATLAS_WIDTH;
+        glyphs[c].uvs[0].v = ((float)atlas_y + ATLAS_PAD) / ATLAS_HEIGHT;
+        glyphs[c].uvs[1].u = (float)(atlas_x + w) / ATLAS_WIDTH;
+        glyphs[c].uvs[1].v = (float)(atlas_y + h) / ATLAS_HEIGHT;
 
         // Copy glyph into texture buffer
-        for (u32 src_y = 0; src_y < glyphs[c].height; ++src_y)
+        for (u32 y = 0; y < h; ++y)
         {
-            for (u32 src_x = 0; src_x < glyphs[c].width; ++src_x)
+            for (u32 x = 0; x < w; ++x)
             {
-                u32 dst_x = tex_x + src_x;
-                u32 dst_y = tex_y + src_y;
+                u32 dst_x = atlas_x + x;
+                u32 dst_y = atlas_y + y;
+                u8 *dst = atlas + (dst_y * ATLAS_WIDTH) + dst_x;
+
+                // Pad trailing edges with black
+                if (x < ATLAS_PAD || y < ATLAS_PAD)
+                {
+                    *dst = 0;
+                    continue;
+                }
+
+                u32 src_x = x - ATLAS_PAD;
+                u32 src_y = y - ATLAS_PAD;
                 u8 *src = buffer + (src_y * glyphs[c].width) + src_x;
-                u8 *dst = texture + (dst_y * TEX_WIDTH) + dst_x;
+
                 *dst = *src;
             }
         }
 
-        tex_x += glyphs[c].width;
+        atlas_x += w;
     }
 
-    GLuint gl_id = heiro_upload_texture(TEX_WIDTH, TEX_HEIGHT, texture);
+    GLuint gl_id = heiro_upload_texture(ATLAS_WIDTH, ATLAS_HEIGHT, atlas);
     for (FT_ULong c = 0; c < ARRAY_COUNT(glyphs); ++c)
     {
         glyphs[c].gl_id = gl_id;
     }
 
+    free(atlas);
+    return err;
+
 #undef TEX_WIDTH
 #undef TEX_HEIGHT
-    free(texture);
-    return err;
+#undef ATLAS_PAD
 }
 
 int heiro_load_glyph(u8 **buffer, struct RICO_heiro_glyph *glyph,
@@ -218,7 +242,12 @@ extern void RICO_heiro_render(s32 sx, s32 sy, const u8 *str, u32 len)
             continue;
         }
 
-        struct RICO_heiro_glyph *glyph = &glyphs[str[i]];
+        if (str[i] < HEIRO_CODEPOINT_FIRST || str[i] > HEIRO_CODEPOINT_LAST)
+        {
+            continue;
+        }
+        //RICO_ASSERT(str[i] >= HEIRO_CODEPOINT_FIRST);
+        struct RICO_heiro_glyph *glyph = &glyphs[str[i] - HEIRO_CODEPOINT_FIRST];
 
         float xpos = x + glyph->bearing_left;
         float ypos = (y - glyph->height) +
