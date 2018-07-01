@@ -2,5 +2,5 @@
 #!res/mesh/*
 
 # Blacklist
-bin/*
+bin/*.*
 **/ignore
