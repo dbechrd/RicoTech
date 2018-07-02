@@ -184,7 +184,8 @@ extern enum rico_state RICO_state_get()
 }
 extern bool RICO_state_is_menu()
 {
-    return (state == STATE_MENU_QUIT);
+    return (state == STATE_MENU_QUIT ||
+            state == STATE_TEXT_INPUT);
 }
 extern bool RICO_state_is_edit()
 {
@@ -211,7 +212,7 @@ static void render_fps(r64 fps, r64 ms, r64 mcyc)
 
 extern int RICO_update()
 {
-    enum RICO_error err;
+    enum RICO_error err = SUCCESS;
 
     ///-------------------------------------------------------------------------
     //| Check for window resizes
@@ -247,8 +248,6 @@ extern int RICO_update()
 	keys = keys_tmp;
 	memcpy(keys, SDL_GetKeyboardState(0), SDL_NUM_SCANCODES);
 
-    rico_check_key_events();
-
     ///-------------------------------------------------------------------------
     //| State actions
     ///-------------------------------------------------------------------------
@@ -257,15 +256,24 @@ extern int RICO_update()
         state = STATE_ENGINE_SHUTDOWN;
     }
 
+    if (state != STATE_TEXT_INPUT)
+    {
+        rico_check_key_events();
+    }
+
     state_last_frame = state;
-    err = state_handlers[state].run();
-    if (err) return err;
+    if (state_handlers[state].run)
+    {
+        err = state_handlers[state].run();
+        if (err) return err;
+    }
 
-    if (state == STATE_ENGINE_SHUTDOWN)
-        return SUCCESS;
-
+    RICO_ASSERT(state >= 0);
     if (state != state_last_frame)
     {
+        if (state == STATE_ENGINE_SHUTDOWN)
+            return SUCCESS;
+
         // Store last state before it changed
         state_prev = state_last_frame;
 
@@ -282,15 +290,15 @@ extern int RICO_update()
             if (err) return err;
         }
 
+        // Render state label
         char buf[32] = { 0 };
         int len = snprintf(buf, sizeof(buf), "State: %d %s", state,
                            rico_state_string[state]);
         string_truncate(buf, sizeof(buf), len);
 
         string_free_slot(STR_SLOT_STATE);
-        RICO_load_string(PACK_TRANSIENT, STR_SLOT_STATE,
-                         SCREEN_X(0), SCREEN_Y(0), COLOR_DARK_RED_HIGHLIGHT, 0,
-                         0, buf);
+        RICO_load_string(PACK_TRANSIENT, STR_SLOT_STATE, SCREEN_X(0),
+                         SCREEN_Y(0), COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
     }
 
     ///-------------------------------------------------------------------------
@@ -521,126 +529,6 @@ static int shared_camera_events()
 
     return err;
 }
-static int shared_edit_events()
-{
-    RICO_ASSERT(RICO_state_is_edit());
-
-    enum RICO_error err = SUCCESS;
-
-	bool cursor_moved = false;
-
-    // Raycast object selection
-    if (action_active(ACTION_EDIT_MOUSE_PICK_START))
-    {
-        edit_mouse_pressed();
-    }
-    else if (action_active(ACTION_EDIT_MOUSE_PICK_MOVE))
-    {
-        if (mouse_dx || mouse_dy)
-        {
-			cursor_moved = true;
-        }
-    }
-    else if (action_active(ACTION_EDIT_MOUSE_PICK_END))
-    {
-        edit_mouse_released();
-    }
-    // Recalculate bounding boxes of all objects
-    else if (action_active(ACTION_EDIT_BBOX_RECALCULATE))
-    {
-        edit_bbox_reset_all();
-    }
-    // Duplicate selected object
-    else if (action_active(ACTION_EDIT_SELECTED_DUPLICATE))
-    {
-        edit_duplicate();
-    }
-    // Exit edit mode
-    else if (action_active(ACTION_EDIT_QUIT))
-    {
-		edit_object_select(0, false);
-        state = STATE_PLAY_EXPLORE;
-    }
-    // Select previous edit mode
-    else if (action_active(ACTION_EDIT_MODE_PREVIOUS))
-    {
-        switch (state)
-        {
-        case STATE_EDIT_ROTATE:
-        case STATE_EDIT_SCALE:
-        case STATE_EDIT_MATERIAL:
-        case STATE_EDIT_MESH:
-            state--;
-            break;
-        case STATE_EDIT_TRANSLATE:
-            state = STATE_EDIT_MESH;
-            break;
-        default:
-            RICO_ASSERT("WTF");
-        }
-    }
-    // Select next edit mode
-    else if (action_active(ACTION_EDIT_MODE_NEXT))
-    {
-        switch (state)
-        {
-        case STATE_EDIT_TRANSLATE:
-        case STATE_EDIT_ROTATE:
-        case STATE_EDIT_SCALE:
-        case STATE_EDIT_MATERIAL:
-            state++;
-            break;
-        case STATE_EDIT_MESH:
-            state = STATE_EDIT_TRANSLATE;
-            break;
-        default:
-            RICO_ASSERT("WTF");
-        }
-    }
-    // Cycle select through packs
-    else if (action_active(ACTION_EDIT_CYCLE_PACK))
-    {
-        edit_pack_next();
-    }
-    // Cycle select through objects (in reverse)
-    else if (action_active(ACTION_EDIT_CYCLE_BLOB_REVERSE))
-    {
-        edit_object_prev();
-    }
-    // Cycle select through objects
-    else if (action_active(ACTION_EDIT_CYCLE_BLOB))
-    {
-        edit_object_next();
-    }
-    // Create new object
-    else if (action_active(ACTION_EDIT_CREATE_OBJECT))
-    {
-        edit_object_create();
-    }
-    // Delete selected object
-    else if (action_active(ACTION_EDIT_SELECTED_DELETE))
-    {
-        edit_delete();
-    }
-    // Save chunk
-    else if (action_active(ACTION_EDIT_SAVE))
-    {
-		err = RICO_pack_save(RICO_pack_active, false);
-    }
-    // Toggle camera project (perspective/orthographic)
-    // TODO: Reset to perspective when leaving edit mode?
-    else if (action_active(ACTION_EDIT_CAMERA_TOGGLE_PROJECTION))
-    {
-        camera_toggle_projection(&cam_player);
-    }
-
-	if (cursor_moved || !v3_equals(&player_acc, &VEC3_ZERO))
-	{
-		edit_mouse_move();
-	}
-
-    return err;
-}
 
 static int state_play_explore()
 {
@@ -673,13 +561,127 @@ static int state_play_explore()
 
     return err;
 }
-static int state_edit_cleanup()
+
+static int shared_edit_events()
 {
+    RICO_ASSERT(RICO_state_is_edit());
+
     enum RICO_error err = SUCCESS;
 
-    if (!RICO_state_is_edit())
+    bool cursor_moved = false;
+
+    // Raycast object selection
+    if (action_active(ACTION_EDIT_MOUSE_PICK_START))
     {
-        string_free_slot(STR_SLOT_SELECTED_OBJ);
+        edit_mouse_pressed();
+    }
+    else if (action_active(ACTION_EDIT_MOUSE_PICK_MOVE))
+    {
+        if (mouse_dx || mouse_dy)
+        {
+            cursor_moved = true;
+        }
+    }
+    else if (action_active(ACTION_EDIT_MOUSE_PICK_END))
+    {
+        edit_mouse_released();
+    }
+    // Recalculate bounding boxes of all objects
+    else if (action_active(ACTION_EDIT_BBOX_RECALCULATE))
+    {
+        edit_bbox_reset_all();
+    }
+    // Duplicate selected object
+    else if (action_active(ACTION_EDIT_SELECTED_DUPLICATE))
+    {
+        edit_duplicate();
+    }
+    // Exit edit mode
+    else if (action_active(ACTION_EDIT_QUIT))
+    {
+        edit_object_select(0, false);
+        state = STATE_PLAY_EXPLORE;
+    }
+    // Select previous edit mode
+    else if (action_active(ACTION_EDIT_MODE_PREVIOUS))
+    {
+        switch (state)
+        {
+            case STATE_EDIT_ROTATE:
+            case STATE_EDIT_SCALE:
+            case STATE_EDIT_MATERIAL:
+            case STATE_EDIT_MESH:
+                state--;
+                break;
+            case STATE_EDIT_TRANSLATE:
+                state = STATE_EDIT_MESH;
+                break;
+            default:
+                RICO_ASSERT("WTF");
+        }
+    }
+    // Select next edit mode
+    else if (action_active(ACTION_EDIT_MODE_NEXT))
+    {
+        switch (state)
+        {
+            case STATE_EDIT_TRANSLATE:
+            case STATE_EDIT_ROTATE:
+            case STATE_EDIT_SCALE:
+            case STATE_EDIT_MATERIAL:
+                state++;
+                break;
+            case STATE_EDIT_MESH:
+                state = STATE_EDIT_TRANSLATE;
+                break;
+            default:
+                RICO_ASSERT("WTF");
+        }
+    }
+    // Cycle select through packs
+    else if (action_active(ACTION_EDIT_CYCLE_PACK))
+    {
+        edit_pack_next();
+    }
+    // Cycle select through objects (in reverse)
+    else if (action_active(ACTION_EDIT_CYCLE_BLOB_REVERSE))
+    {
+        edit_object_prev();
+    }
+    // Cycle select through objects
+    else if (action_active(ACTION_EDIT_CYCLE_BLOB))
+    {
+        edit_object_next();
+    }
+    // Create new object
+    else if (action_active(ACTION_EDIT_CREATE_OBJECT))
+    {
+        edit_object_create();
+    }
+    // Delete selected object
+    else if (action_active(ACTION_EDIT_SELECTED_DELETE))
+    {
+        edit_delete();
+    }
+    // Save chunk
+    else if (action_active(ACTION_EDIT_SAVE))
+    {
+        err = RICO_pack_save(RICO_pack_active, false);
+    }
+    // Toggle camera project (perspective/orthographic)
+    // TODO: Reset to perspective when leaving edit mode?
+    else if (action_active(ACTION_EDIT_CAMERA_TOGGLE_PROJECTION))
+    {
+        camera_toggle_projection(&cam_player);
+    }
+    else if (action_active(ACTION_EDIT_DEBUG_TEXT_INPUT))
+    {
+        state = STATE_TEXT_INPUT;
+    }
+
+    if (cursor_moved || !v3_equals(&player_acc, &VEC3_ZERO))
+    {
+        edit_mouse_move();
     }
 
     return err;
@@ -1028,15 +1030,50 @@ static int state_menu_quit()
 
     return err;
 }
-static int state_text_input()
+static int state_edit_cleanup()
 {
     enum RICO_error err = SUCCESS;
 
-    err = shared_edit_events();   if (err || state != state_last_frame) return err;
-    err = shared_engine_events(); if (err || state != state_last_frame) return err;
-    err = shared_camera_events(); if (err || state != state_last_frame) return err;
+    if (!RICO_state_is_edit())
+    {
+        string_free_slot(STR_SLOT_SELECTED_OBJ);
+    }
 
-    // TODO: Handle text input
+    return err;
+}
+
+static int state_text_input_init()
+{
+    enum RICO_error err = SUCCESS;
+
+    //err = shared_edit_events();   if (err || state != state_last_frame) return err;
+    //err = shared_engine_events(); if (err || state != state_last_frame) return err;
+    //err = shared_camera_events(); if (err || state != state_last_frame) return err;
+    SDL_FlushEvents(SDL_FIRSTEVENT, SDL_LASTEVENT);
+    SDL_StartTextInput();
+    SDL_SetRelativeMouseMode(false);
+
+    return err;
+}
+static int state_text_input()
+{
+    enum RICO_error err = SUCCESS;
+    
+    if (KEY_PRESSED(SDL_SCANCODE_ESCAPE))
+    {
+        RICO_ASSERT(state != state_prev);
+        state = state_prev;
+    }
+
+    return err;
+}
+static int state_text_input_cleanup()
+{
+    enum RICO_error err = SUCCESS;
+
+    RICO_ASSERT(SDL_IsTextInputActive());
+    SDL_StopTextInput();
+    SDL_SetRelativeMouseMode(mouse_lock);
 
     return err;
 }
@@ -1072,13 +1109,6 @@ static void rico_check_key_events()
         // and wasn't down last frame (i.e. chord pressed).
         if (action_active(i))
         {
-            if (i == ACTION_PLAY_INTERACT)
-            {
-                u32 a = 4;
-                a++;
-                u32 b = a;
-                b++;
-            }
             action_queue[action_queue_count] = i;
             action_queue_count++;
         }
@@ -1195,6 +1225,7 @@ static int engine_init()
     RICO_bind_action(ACTION_EDIT_MODE_PREVIOUS,              CHORD1(SDL_SCANCODE_KP_PERIOD));
     RICO_bind_action(ACTION_EDIT_MODE_NEXT,                  CHORD1(SDL_SCANCODE_KP_0));
     RICO_bind_action(ACTION_EDIT_CAMERA_TOGGLE_PROJECTION,   CHORD1(SDL_SCANCODE_O));
+    RICO_bind_action(ACTION_EDIT_DEBUG_TEXT_INPUT,           CHORD1(SDL_SCANCODE_I));
 
     RICO_bind_action(ACTION_EDIT_TRANSLATE_RESET,            CHORD1(SDL_SCANCODE_0));
     RICO_bind_action(ACTION_EDIT_TRANSLATE_UP,               CHORD_REPEAT1(SDL_SCANCODE_PAGEUP));
@@ -1236,6 +1267,8 @@ static int engine_init()
     RICO_bind_action(ACTION_EDIT_MESH_NEXT_PACK,             CHORD1(SDL_SCANCODE_UP));
     RICO_bind_action(ACTION_EDIT_MESH_BBOX_RECALCULATE,      CHORD1(SDL_SCANCODE_B));
 
+    state_handlers[STATE_TEXT_INPUT     ].init = &state_text_input_init;
+
 	state_handlers[STATE_ENGINE_SHUTDOWN].run = &state_engine_shutdown;
 	state_handlers[STATE_MENU_QUIT      ].run = &state_menu_quit;
 	state_handlers[STATE_PLAY_EXPLORE   ].run = &state_play_explore;
@@ -1244,13 +1277,14 @@ static int engine_init()
 	state_handlers[STATE_EDIT_SCALE     ].run = &state_edit_scale;
 	state_handlers[STATE_EDIT_MATERIAL  ].run = &state_edit_material;
 	state_handlers[STATE_EDIT_MESH      ].run = &state_edit_mesh;
-	state_handlers[STATE_TEXT_INPUT     ].run = &state_text_input;
+    state_handlers[STATE_TEXT_INPUT     ].run = &state_text_input;
 
 	state_handlers[STATE_EDIT_TRANSLATE ].cleanup = &state_edit_cleanup;
 	state_handlers[STATE_EDIT_ROTATE    ].cleanup = &state_edit_cleanup;
 	state_handlers[STATE_EDIT_SCALE     ].cleanup = &state_edit_cleanup;
 	state_handlers[STATE_EDIT_MATERIAL  ].cleanup = &state_edit_cleanup;
-	state_handlers[STATE_EDIT_MESH      ].cleanup = &state_edit_cleanup;
+    state_handlers[STATE_EDIT_MESH      ].cleanup = &state_edit_cleanup;
+    state_handlers[STATE_TEXT_INPUT     ].cleanup = &state_text_input_cleanup;
 
 	state = STATE_PLAY_EXPLORE;
 

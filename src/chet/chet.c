@@ -884,38 +884,114 @@ int main(int argc, char **argv)
 
     // TODO: Figure out how to handle UTF-8
     //const char test_str[] = "\u30A2\u30CB\u30E1";
-    const char test_str[] =
-    "==========================================================\n"
-    "#        ______            _______        _              #\n"
-    "#        |  __ \\ O        |__   __|      | |             #\n"
-    "#        | |__| |_  ___ ___  | | ___  ___| |__           #\n"
-    "#        |  _  /| |/ __/ _ \\ | |/ _ \\/ __| '_ \\          #\n"
-    "#        | | \\ \\| | |_| (_) || |  __/ |__| | | |         #\n"
-    "#        |_|  \\_\\_|\\___\\___/ |_|\\___|\\___|_| |_|         #\n"
-    "#                                                        #\n"
-    "#              Copyright 2018 Dan Bechard                #\n"
-    "==========================================================\n";
+#define STRING_TEST "test" \
+    //"|========================================================|\n" \
+    //"#        ______            _______        _              #\n" \
+    //"#        |  __ \\ O        |__   __|      | |             #\n" \
+    //"#        | |__| |_  ___ ___  | | ___  ___| |__           #\n" \
+    //"#        |  _  /| |/ __/ _ \\ | |/ _ \\/ __| '_ \\          #\n" \
+    //"#        | | \\ \\| | |_| (_) || |  __/ |__| | | |         #\n" \
+    //"#        |_|  \\_\\_|\\___\\___/ |_|\\___|\\___|_| |_|         #\n" \
+    //"#                                                        #\n" \
+    //"#              Copyright 2018 Dan Bechard                #\n" \
+    //"M========================================================M"
+
+    u32 input_len = MAX(sizeof(STRING_TEST), 1) - 1;
+    u32 input_cursor = input_len;
+    char input_buffer[HEIRO_MAX_LEN] = STRING_TEST;
 
     while (!RICO_quit())
     {
         RICO_mouse_coords(&mouse_x, &mouse_y);
 
-        u32 action;
-        while (RICO_key_event(&action))
+        if (RICO_state_get() == STATE_TEXT_INPUT)
         {
-            if (RICO_state_is_edit() || RICO_simulation_paused())
-                continue;
-
-            switch (action)
+            // TODO: Refactor this out into state_text_input run handler
+            SDL_Event event;
+            while (SDL_PollEvent(&event))
             {
-                case ACTION_PLAY_INTERACT:
-                    object_interact();
+                switch (event.type) {
+                case SDL_TEXTINPUT:
+                {
+                    if (input_len < sizeof(input_buffer))
+                    {
+                        if (input_cursor < input_len)
+                        {
+                            // Shift all text after cursor right
+                            memcpy(input_buffer + input_cursor + 1,
+                                   input_buffer + input_cursor,
+                                   input_len - input_cursor);
+                        }
+                        input_len++;
+                        input_buffer[input_cursor++] = event.text.text[0];
+                    }
                     break;
-                case ACTION_RICO_TEST:
-                    RICO_audio_source_play(&audio_sources[AUDIO_BUTTON]);
+                }
+                case SDL_KEYDOWN:
+                {
+                    switch (event.key.keysym.scancode) {
+                    case SDL_SCANCODE_BACKSPACE:
+                    {
+                        if (input_cursor)
+                        {
+                            if (input_cursor < input_len)
+                            {
+                                // Shift all text after cursor left
+                                memcpy(input_buffer + input_cursor - 1,
+                                       input_buffer + input_cursor,
+                                       input_len - input_cursor);
+                            }
+                            input_len--;
+                            input_cursor--;
+                        }
+                        break;
+                    }
+                    case SDL_SCANCODE_RETURN:
+                    {
+                        input_buffer[input_len++] = '\n';
+                        input_cursor++;
+                        break;
+                    }
+                    case SDL_SCANCODE_LEFT:
+                    {
+                        if (input_cursor) input_cursor--;
+                        break;
+                    }
+                    case SDL_SCANCODE_RIGHT:
+                    {
+                        //if (input_cursor < sizeof(input_buffer)) input_cursor++;
+                        if (input_cursor < input_len) input_cursor++;
+                        break;
+                    }
+                    default:
+                        break;
+                    }
                     break;
+                }
                 default:
                     break;
+                }
+            }
+        }
+        else
+        {
+            u32 action;
+            while (RICO_key_event(&action))
+            {
+                if (RICO_state_is_edit() || RICO_simulation_paused())
+                    continue;
+
+                switch (action)
+                {
+                    case ACTION_PLAY_INTERACT:
+                        object_interact();
+                        break;
+                    case ACTION_RICO_TEST:
+                        RICO_audio_source_play(&audio_sources[AUDIO_BUTTON]);
+                        break;
+                    default:
+                        break;
+                }
             }
         }
 
@@ -939,8 +1015,8 @@ int main(int argc, char **argv)
         game_render_ui();
         RICO_render_editor();
         RICO_render_crosshair();
-        RICO_heiro_render(SCREEN_WIDTH / 2 - (580 / 2), 200, test_str,
-                          sizeof(test_str) - 1);
+        RICO_heiro_render(SCREEN_WIDTH / 2 - (580 / 2), 200, input_buffer,
+                          input_len, input_cursor);
 
         // Swap buffers
         RICO_frame_swap();

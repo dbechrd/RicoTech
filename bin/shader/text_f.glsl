@@ -20,12 +20,14 @@ void main()
 	if (u_grayscale)
 	{
 		color = vec4(vec3(1.0), texel.r);
-	}
+        //color = mix(vertex.color, color, step(0.01, color.a));
+    }
 	else
 	{
 		color = mix(vertex.color, texel, step(0.01, texel.a));
 	}
-	frag_color = color * u_color;
+    color *= u_color;
+    frag_color = color;
 }
 
 /*

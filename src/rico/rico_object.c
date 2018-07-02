@@ -541,21 +541,21 @@ static void object_print(struct RICO_object *obj)
 
         len = snprintf(
             buf, sizeof(buf),
-            "\n"                    \
-            "Object [%u|%u] %s\n"   \
-            "  Type  %d\n"          \
-            "  Pos   %f %f %f\n"    \
-            "  Rot   %f %f %f %f\n" \
-            "  Scale %f %f %f\n"    \
-            "  AABB  %f %f %f\n"    \
-            "        %f %f %f\n"    \
-            "\n"                    \
-            "Mesh [%u|%u] %s\n"     \
-            "  Verts %u\n"          \
-            "\n"                    \
-            "Material [%u|%u] %s\n" \
-            "  Diff [%u|%u] %s\n"   \
-            "  Spec [%u|%u] %s\n"   \
+            "\n"
+            "Object [%u|%u] %s\n"
+            "  Type  %d\n"
+            "  Pos   %f %f %f\n"
+            "  Rot   %f %f %f %f\n"
+            "  Scale %f %f %f\n"
+            "  AABB  %f %f %f\n"
+            "        %f %f %f\n"
+            "\n"
+            "Mesh [%u|%u] %s\n"
+            "  Verts %u\n"
+            "\n"
+            "Material [%u|%u] %s\n"
+            "  Diff [%u|%u] %s\n"
+            "  Spec [%u|%u] %s\n"
             "  Emis [%u|%u] %s\n",
             PKID_PACK(obj->uid.pkid), PKID_BLOB(obj->uid.pkid), obj->uid.name,
             obj->type,
