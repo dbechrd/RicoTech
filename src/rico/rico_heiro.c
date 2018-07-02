@@ -218,44 +218,37 @@ GLuint heiro_upload_texture(s32 width, s32 height, const void *pixels)
     return gl_id;
 }
 
-extern void RICO_heiro_render(s32 sx, s32 sy, const u8 *str, u32 len,
-                              u32 cursor)
+static u32 vert_idx = 0;
+static struct text_vertex vertices[HEIRO_MAX_LEN * HEIRO_GLYPH_VERTS];
+extern void RICO_heiro_build(struct rect *bounds, struct rect *cursor,
+                             const u8 *str, u32 len, u32 cur)
 {
-    // Track bounds for background and UI layout
-    struct rect bounds = { 0 };
-    bounds.x = sx;
-    bounds.y = sy;
-    struct rect cursor_bounds = { 0 };
-
-    s32 x = sx;
-    s32 y = sy;
+    s32 x = 0;
+    s32 y = 0;
     float scale = 1.0f;
+    const s32 glyph_h = (s32)(HEIRO_GLYPH_HEIGHT * scale);
+    const s32 extent_y = (s32)(glyph_max_extents.y * scale);
 
-    u32 vert_idx = 0;
-    static struct text_vertex vertices[HEIRO_MAX_LEN * HEIRO_GLYPH_VERTS];
-    struct vec4 color = COLOR_WHITE;
-
-    u32 prev_tex = 0;
-    for (u32 i = 0; i <= len && i < HEIRO_MAX_LEN; ++i)
+    vert_idx = 0;
+    for (u32 i = 0; i <= len && i <= HEIRO_MAX_LEN; ++i)
     {
-        if (i == cursor)
+        if (i == cur)
         {
-            const u32 cursor_w = 1;
-            cursor_bounds.x = x;
+            cursor->x = x;
             // HACK: Is there a more accurate way to calculate this?
-            cursor_bounds.y = y - (HEIRO_GLYPH_HEIGHT - 3);
-            cursor_bounds.w = cursor_w;
-            cursor_bounds.h = HEIRO_GLYPH_HEIGHT;
+            cursor->y = y + extent_y;
+            cursor->w = 1;
+            cursor->h = glyph_h;
         }
         // NOTE: Need to iterate until i == len for cursor code
-        if (i == len) break;
+        if (i == len || i == HEIRO_MAX_LEN) break;
 
         u8 c = str[i];
         if (c == '\n')
         {
-            x = sx;
-            y += HEIRO_GLYPH_HEIGHT;
-            bounds.h = y - sy;
+            x = 0;
+            y += glyph_h;
+            bounds->h = y;
             continue;
         }
 
@@ -269,21 +262,23 @@ extern void RICO_heiro_render(s32 sx, s32 sy, const u8 *str, u32 len,
         struct RICO_heiro_glyph *glyph = &glyphs[c - HEIRO_CODEPOINT_FIRST];
 
         // Glyph size
-        float gx = (float)(x + glyph->bearing_left);
-        float gy = (float)(y - glyph->bearing_top);
+        float gx = x + (glyph->bearing_left * scale);
+        float gy = y - (glyph->bearing_top * scale);
         float gw = glyph->width * scale;
         float gh = glyph->height * scale;
 
         float x0 = X_TO_NDC(gx);
         float y0 = Y_TO_NDC(gy);
-        float x1 = SCREEN_X(gx + (gw * scale));
-        float y1 = SCREEN_Y(gy + (gh * scale));
+        float x1 = X_TO_NDC(gx + gw);
+        float y1 = Y_TO_NDC(gy + gh);
         float z = -1.0f;
 
         float u0 = glyph->uvs[0].u;
         float v0 = glyph->uvs[0].v;
         float u1 = glyph->uvs[1].u;
         float v1 = glyph->uvs[1].v;
+
+        struct vec4 color = COLOR_WHITE;
 
         vertices[vert_idx++] = (struct text_vertex) {
             VEC3(x0, y0, z), VEC2F(u0, v0), color
@@ -306,29 +301,28 @@ extern void RICO_heiro_render(s32 sx, s32 sy, const u8 *str, u32 len,
 
         s32 adv = (glyph->advance_x >> 6);
         x += (s32)(adv * scale);
-        bounds.w = MAX(bounds.w, x - bounds.x);
+        bounds->w = MAX(bounds->w, x);
     }
 
-    bounds.x += glyph_max_extents.x;
-    bounds.y += glyph_max_extents.y;
-    bounds.h += HEIRO_GLYPH_HEIGHT;
+    bounds->x = 0;
+    // HACK: +1 centers glyphs vertically; may not work with all fonts.
+    bounds->y = extent_y;
+    bounds->h += glyph_h;
+}
 
-    const u32 border_width = 2;
-    struct rect border = bounds;
-    border.x -= border_width;
-    border.y -= border_width;
-    border.w += border_width * 2;
-    border.h += border_width * 2;
-    RICO_prim_draw_rect(&border, &VEC4(0.2f, 0.2f, 0.2f, 0.5f));
-    RICO_prim_draw_rect(&bounds, &VEC4(0.0f, 0.0f, 0.0f, 0.5f));
-
+extern void RICO_heiro_render(s32 sx, s32 sy)
+{
     struct text_program *prog = prog_text;
     RICO_ASSERT(prog->program.gl_id);
     glUseProgram(prog->program.gl_id);
 
+    struct mat4 model = MAT4_IDENT;
+    struct vec3 t_vec = VEC3(X_TO_NDC(sx) + 1.0f, Y_TO_NDC(sy) - 1.0f, 0.0f);
+    mat4_translate(&model, &t_vec);
+
     glUniformMatrix4fv(prog->vert.proj, 1, GL_TRUE, cam_player.ortho_matrix.a);
     glUniformMatrix4fv(prog->vert.view, 1, GL_TRUE, MAT4_IDENT.a);
-    glUniformMatrix4fv(prog->vert.model, 1, GL_TRUE, MAT4_IDENT.a);
+    glUniformMatrix4fv(prog->vert.model, 1, GL_TRUE, model.a);
 
     glUniform4fv(prog->frag.color, 1, &COLOR_GREEN.r);
     glUniform1i(prog->frag.grayscale, true);
@@ -349,9 +343,6 @@ extern void RICO_heiro_render(s32 sx, s32 sy, const u8 *str, u32 len,
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
     glUseProgram(0);
-
-    RICO_ASSERT(cursor_bounds.w > 0);
-    RICO_prim_draw_rect(&cursor_bounds, &VEC4(1.0f, 0.0f, 0.0f, 0.5f));
 }
 
 void heiro_delete_glyphs()

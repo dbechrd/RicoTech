@@ -884,21 +884,26 @@ int main(int argc, char **argv)
 
     // TODO: Figure out how to handle UTF-8
     //const char test_str[] = "\u30A2\u30CB\u30E1";
-#define STRING_TEST "test" \
-    //"|========================================================|\n" \
-    //"#        ______            _______        _              #\n" \
-    //"#        |  __ \\ O        |__   __|      | |             #\n" \
-    //"#        | |__| |_  ___ ___  | | ___  ___| |__           #\n" \
-    //"#        |  _  /| |/ __/ _ \\ | |/ _ \\/ __| '_ \\          #\n" \
-    //"#        | | \\ \\| | |_| (_) || |  __/ |__| | | |         #\n" \
-    //"#        |_|  \\_\\_|\\___\\___/ |_|\\___|\\___|_| |_|         #\n" \
-    //"#                                                        #\n" \
-    //"#              Copyright 2018 Dan Bechard                #\n" \
-    //"M========================================================M"
+#define STRING_TEST \
+    "#========================================================#\n" \
+    "#        ______            _______        _              #\n" \
+    "#        |  __ \\ O        |__   __|      | |             #\n" \
+    "#        | |__| |_  ___ ___  | | ___  ___| |__           #\n" \
+    "#        |  _  /| |/ __/ _ \\ | |/ _ \\/ __| '_ \\          #\n" \
+    "#        | | \\ \\| | |_| (_) || |  __/ |__| | | |         #\n" \
+    "#        |_|  \\_\\_|\\___\\___/ |_|\\___|\\___|_| |_|         #\n" \
+    "#                                                        #\n" \
+    "#              Copyright 2018 Dan Bechard                #\n" \
+    "#========================================================#"
 
     u32 input_len = MAX(sizeof(STRING_TEST), 1) - 1;
     u32 input_cursor = input_len;
+#if RICO_DEBUG
+    #define MEMCHK 250
+#endif
+    IF_DEBUG(u8 memchk1 = MEMCHK);
     char input_buffer[HEIRO_MAX_LEN] = STRING_TEST;
+    IF_DEBUG(u8 memchk2 = MEMCHK);
 
     while (!RICO_quit())
     {
@@ -924,6 +929,7 @@ int main(int argc, char **argv)
                         }
                         input_len++;
                         input_buffer[input_cursor++] = event.text.text[0];
+                        RICO_ASSERT(memchk1 == MEMCHK && memchk2 == MEMCHK);
                     }
                     break;
                 }
@@ -932,7 +938,7 @@ int main(int argc, char **argv)
                     switch (event.key.keysym.scancode) {
                     case SDL_SCANCODE_BACKSPACE:
                     {
-                        if (input_cursor)
+                        if (input_cursor > 0)
                         {
                             if (input_cursor < input_len)
                             {
@@ -943,24 +949,58 @@ int main(int argc, char **argv)
                             }
                             input_len--;
                             input_cursor--;
+                            RICO_ASSERT(memchk1 == MEMCHK && memchk2 == MEMCHK);
+                        }
+                        break;
+                    }
+                    case SDL_SCANCODE_DELETE:
+                    {
+                        if (input_cursor < input_len)
+                        {
+                            // Shift all text after cursor left
+                            memcpy(input_buffer + input_cursor,
+                                    input_buffer + input_cursor + 1,
+                                    input_len - input_cursor);
+                            input_len--;
+                            RICO_ASSERT(memchk1 == MEMCHK && memchk2 == MEMCHK);
                         }
                         break;
                     }
                     case SDL_SCANCODE_RETURN:
                     {
-                        input_buffer[input_len++] = '\n';
-                        input_cursor++;
+                        if (input_len < sizeof(input_buffer))
+                        {
+                            if (input_cursor < input_len)
+                            {
+                                // Shift all text after cursor right
+                                memcpy(input_buffer + input_cursor + 1,
+                                       input_buffer + input_cursor,
+                                       input_len - input_cursor);
+                            }
+                            input_len++;
+                            input_buffer[input_cursor++] = '\n';
+                            RICO_ASSERT(memchk1 == MEMCHK && memchk2 == MEMCHK);
+                        }
                         break;
                     }
                     case SDL_SCANCODE_LEFT:
                     {
-                        if (input_cursor) input_cursor--;
+                        if (input_cursor > 0) input_cursor--;
                         break;
                     }
                     case SDL_SCANCODE_RIGHT:
                     {
-                        //if (input_cursor < sizeof(input_buffer)) input_cursor++;
                         if (input_cursor < input_len) input_cursor++;
+                        break;
+                    }
+                    case SDL_SCANCODE_HOME:
+                    {
+                        input_cursor = 0;
+                        break;
+                    }
+                    case SDL_SCANCODE_END:
+                    {
+                        input_cursor = input_len;
                         break;
                     }
                     default:
@@ -1015,8 +1055,44 @@ int main(int argc, char **argv)
         game_render_ui();
         RICO_render_editor();
         RICO_render_crosshair();
-        RICO_heiro_render(SCREEN_WIDTH / 2 - (580 / 2), 200, input_buffer,
-                          input_len, input_cursor);
+
+        //======================================================================
+        struct rect bounds = { 0 };
+        struct rect cursor = { 0 };
+        RICO_heiro_build(&bounds, &cursor, input_buffer, input_len,
+                         input_cursor);
+
+        const u32 sx = SCREEN_WIDTH / 2 - (580 / 2);
+        const u32 sy = 200;
+        const u32 border_width = 2;
+        const u32 scroll_w = 10;
+
+        bounds.x += sx;
+        bounds.y += sy;
+        bounds.w += scroll_w;
+        cursor.x += sx;
+        cursor.y += sy;
+
+        struct rect border = bounds;
+        border.x -= border_width;
+        border.y -= border_width;
+        border.w += border_width * 2;
+        border.h += border_width * 2;
+
+        struct rect scroll;
+        scroll.x = bounds.x + bounds.w - scroll_w;
+        scroll.y = bounds.y;
+        scroll.w = scroll_w;
+        scroll.h = bounds.h;  // TODO: Calculate
+
+        RICO_prim_draw_rect(&border, &VEC4(0.2f, 0.2f, 0.2f, 0.5f));
+        RICO_prim_draw_rect(&bounds, &VEC4(0.0f, 0.0f, 0.0f, 0.5f));
+        RICO_prim_draw_rect(&scroll, &COLOR_ORANGE_HIGHLIGHT);
+
+        RICO_heiro_render(sx, sy);
+
+        RICO_prim_draw_rect(&cursor, &VEC4(1.0f, 0.0f, 0.0f, 0.5f));
+        //======================================================================
 
         // Swap buffers
         RICO_frame_swap();

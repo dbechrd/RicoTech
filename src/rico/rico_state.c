@@ -387,7 +387,7 @@ extern void RICO_frame_swap()
 #if RICO_DEBUG
     // HACK: Kill some time (a.k.a. prevent my computer from lighting itself on
     //       fire when VSync is disabled)
-    //SDL_Delay(1);
+    SDL_Delay(1);
 #endif
 }
 extern void RICO_render()
@@ -1046,9 +1046,6 @@ static int state_text_input_init()
 {
     enum RICO_error err = SUCCESS;
 
-    //err = shared_edit_events();   if (err || state != state_last_frame) return err;
-    //err = shared_engine_events(); if (err || state != state_last_frame) return err;
-    //err = shared_camera_events(); if (err || state != state_last_frame) return err;
     SDL_FlushEvents(SDL_FIRSTEVENT, SDL_LASTEVENT);
     SDL_StartTextInput();
     SDL_SetRelativeMouseMode(false);
