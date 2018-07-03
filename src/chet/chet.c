@@ -884,18 +884,19 @@ int main(int argc, char **argv)
 
     // TODO: Figure out how to handle UTF-8
     //const char test_str[] = "\u30A2\u30CB\u30E1";
-#define STRING_TEST \
-    "#========================================================#\n" \
-    "#        ______            _______        _              #\n" \
-    "#        |  __ \\ O        |__   __|      | |             #\n" \
-    "#        | |__| |_  ___ ___  | | ___  ___| |__           #\n" \
-    "#        |  _  /| |/ __/ _ \\ | |/ _ \\/ __| '_ \\          #\n" \
-    "#        | | \\ \\| | |_| (_) || |  __/ |__| | | |         #\n" \
-    "#        |_|  \\_\\_|\\___\\___/ |_|\\___|\\___|_| |_|         #\n" \
-    "#                                                        #\n" \
-    "#              Copyright 2018 Dan Bechard                #\n" \
-    "#========================================================#"
+#define STRING_TEST "0123\n56789" //\
+    //"#========================================================#\n" \
+    //"#        ______            _______        _              #\n" \
+    //"#        |  __ \\ O        |__   __|      | |             #\n" \
+    //"#        | |__| |_  ___ ___  | | ___  ___| |__           #\n" \
+    //"#        |  _  /| |/ __/ _ \\ | |/ _ \\/ __| '_ \\          #\n" \
+    //"#        | | \\ \\| | |_| (_) || |  __/ |__| | | |         #\n" \
+    //"#        |_|  \\_\\_|\\___\\___/ |_|\\___|\\___|_| |_|         #\n" \
+    //"#                                                        #\n" \
+    //"#              Copyright 2018 Dan Bechard                #\n" \
+    //"#========================================================#"
 
+    u32 tab_width = 4;
     u32 input_len = MAX(sizeof(STRING_TEST), 1) - 1;
     u32 input_cursor = input_len;
 #if RICO_DEBUG
@@ -983,24 +984,160 @@ int main(int argc, char **argv)
                         }
                         break;
                     }
+                    case SDL_SCANCODE_TAB:
+                    {
+                        if (input_len + tab_width <= sizeof(input_buffer))
+                        {
+                            if (input_cursor < input_len)
+                            {
+                                // Shift all text after cursor right
+                                memcpy(input_buffer + input_cursor + tab_width,
+                                       input_buffer + input_cursor,
+                                       input_len - input_cursor);
+                            }
+                            for (u32 i = 0; i < tab_width; ++i)
+                            {
+                                input_len++;
+                                input_buffer[input_cursor++] = ' ';
+                            }
+                            RICO_ASSERT(memchk1 == MEMCHK && memchk2 == MEMCHK);
+                        }
+                        break;
+                    }
                     case SDL_SCANCODE_LEFT:
                     {
-                        if (input_cursor > 0) input_cursor--;
+                        if (input_cursor > 0)
+                        {
+                            input_cursor--;
+                        }
                         break;
                     }
                     case SDL_SCANCODE_RIGHT:
                     {
-                        if (input_cursor < input_len) input_cursor++;
+                        if (input_cursor < input_len)
+                        {
+                            input_cursor++;
+                        }
+                        break;
+                    }
+                    case SDL_SCANCODE_UP:
+                    {
+                        // Find BOL (and count columns)
+                        u32 column = 0;
+                        while (input_cursor > 0 &&
+                               input_buffer[input_cursor - 1] != '\n')
+                        {
+                            input_cursor--;
+                            column++;
+                        }
+                        
+                        // If cursor at BOF, reset and abort
+                        if (input_cursor == 0) {
+                            input_cursor += column;
+                            break;
+                        }
+                        
+                        // Eat newline
+                        input_cursor--;
+
+                        // Save EOL in case prev line is shorter
+                        u32 eol = input_cursor;
+                        
+                        // Find BOL of prev line
+                        while (input_cursor > 0 &&
+                               input_buffer[input_cursor - 1] != '\n')
+                        {
+                            input_cursor--;
+                        }
+                        
+                        // Add column offset (unless EOL comes first)
+                        input_cursor += MIN(column, eol - input_cursor);
+
+                        break;
+                    }
+                    case SDL_SCANCODE_DOWN:
+                    {
+                        // TODO: Next line
+                        // Scan backward for newline, save count (if EOF, break)
+                        // Scan forward for newline
+                        // Scan forward until hit count/newline
+
+                        // Already at EOF, nowhere to go
+                        if (input_cursor == input_len) break;
+
+                        // Find BOL (and count columns)
+                        u32 column = 0;
+                        while (input_cursor > 0 &&
+                               input_buffer[input_cursor - 1] != '\n')
+                        {
+                            input_cursor--;
+                            column++;
+                        }
+
+                        // Go back to where we started
+                        input_cursor += column;
+
+                        // Find EOL
+                        u32 orig = input_cursor;
+                        while (input_cursor < input_len &&
+                               input_buffer[input_cursor] != '\n')
+                        {
+                            input_cursor++;
+                        }
+
+                        // If cursor at EOF, reset and abort
+                        if (input_cursor == input_len)
+                        {
+                            input_cursor = orig;
+                            break;
+                        }
+
+                        // Eat newline
+                        input_cursor++;
+
+                        // Advance until column or EOL
+                        while (column > 0 &&
+                               input_cursor < input_len &&
+                               input_buffer[input_cursor] != '\n')
+                        {
+                            input_cursor++;
+                            column--;
+                        }
+
                         break;
                     }
                     case SDL_SCANCODE_HOME:
                     {
-                        input_cursor = 0;
+                        if (event.key.keysym.mod & KMOD_CTRL)
+                        {
+                            input_cursor = 0;
+                        }
+                        else
+                        {
+                            // Go to BOL
+                            while (input_cursor > 0 &&
+                                   input_buffer[input_cursor - 1] != '\n')
+                            {
+                                input_cursor--;
+                            }
+                        }
                         break;
                     }
                     case SDL_SCANCODE_END:
                     {
-                        input_cursor = input_len;
+                        if (event.key.keysym.mod & KMOD_CTRL)
+                        {
+                            input_cursor = input_len;
+                        }
+                        else
+                        {
+                            // Go to EOL
+                            while (input_cursor < input_len &&
+                                   input_buffer[input_cursor] != '\n')
+                            {
+                                input_cursor++;
+                            }
+                        }
                         break;
                     }
                     default:
