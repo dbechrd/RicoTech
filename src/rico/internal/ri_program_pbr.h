@@ -1,4 +1,4 @@
-/* Vertex shader */
+// Vertex shader
 struct
 {
     UNIFORM(struct vec3) scale_uv;
@@ -6,7 +6,7 @@ struct
     UNIFORM(struct mat4) view;
     UNIFORM(struct mat4) proj;
 
-    /* Vertex attributes */
+    // Vertex attributes
     struct
     {
         UNIFORM(struct vec3) position;
@@ -18,36 +18,36 @@ struct
 }
 vert;
 
-/* Fragment shader */
+// Fragment shader
 struct
 {
-    /* Camera */
+    // Camera
     struct
     {
         UNIFORM(struct vec3) pos;
     }
     camera;
 
-    /* Material */
+    // Material
     struct
     {
-        /* rgb: metallic ? specular.rgb : albedo.rgb */
-        /*   a: metallic ?            1 : opacity    */
-        UNIFORM(GLint) tex0; /* sampler2D */
+        // rgb: metallic ? specular.rgb : albedo.rgb
+        //   a: metallic ?            1 : opacity   
+        UNIFORM(GLint) tex0; // sampler2D
 
-        /* r: metallic  */
-        /* g: roughness */
-        /* b: ao        */
-        /* a: NOT USED  */
-        UNIFORM(GLint) tex1; /* sampler2D */
+        // r: metallic 
+        // g: roughness
+        // b: ao       
+        // a: NOT USED 
+        UNIFORM(GLint) tex1; // sampler2D
 
-        /* rgb: emission color */
-        /*   a: NOT USED       */
-        UNIFORM(GLint) tex2; /* sampler2D */
+        // rgb: emission color
+        //   a: NOT USED      
+        UNIFORM(GLint) tex2; // sampler2D
     }
     material;
 
-    /* Light */
+    // Light
     struct
     {
         UNIFORM(struct vec3) pos;

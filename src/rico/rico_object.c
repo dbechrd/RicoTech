@@ -422,16 +422,16 @@ static void object_render_ui(struct pack *pack,
     glUseProgram(prog->program.gl_id);
 
     // Projection matrix
-    glUniformMatrix4fv(prog->vert.proj, 1, GL_TRUE, camera->ortho_matrix.a);
-    glUniformMatrix4fv(prog->vert.view, 1, GL_TRUE, MAT4_IDENT.a);
+    glUniformMatrix4fv(prog->locations.vert.proj, 1, GL_TRUE, camera->ortho_matrix.a);
+    glUniformMatrix4fv(prog->locations.vert.view, 1, GL_TRUE, MAT4_IDENT.a);
 
-    glUniform4fv(prog->frag.color, 1, &COLOR_WHITE.r);
-    glUniform1i(prog->frag.grayscale, false);
+    glUniform4fv(prog->locations.frag.color, 1, &COLOR_WHITE.r);
+    glUniform1i(prog->locations.frag.grayscale, false);
     // Font texture
     // Note: We don't have to do this every time as long as we make sure
     //       the correct textures are bound before each draw to the texture
     //       index assumed when the program was initialized.
-    glUniform1i(prog->frag.tex, 0);
+    glUniform1i(prog->locations.frag.tex0, 0);
 
     struct RICO_object *obj = 0;
     for (u32 index = 1; index < pack->blobs_used; ++index)
@@ -450,7 +450,7 @@ static void object_render_ui(struct pack *pack,
         // Model matrix
         //obj->xform.position = VEC3(0.5, 0.5, -1.0f);
         //object_transform_update(obj);
-        glUniformMatrix4fv(prog->vert.model, 1, GL_TRUE, obj->xform.matrix.a);
+        glUniformMatrix4fv(prog->locations.vert.model, 1, GL_TRUE, obj->xform.matrix.a);
 
         // Bind texture
         pkid tex_id = FONT_DEFAULT_TEXTURE;

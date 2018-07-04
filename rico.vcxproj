@@ -191,11 +191,10 @@
     <ClInclude Include="src\rico\internal\ri_physics.h" />
     <ClInclude Include="src\rico\internal\ri_pool.h" />
     <ClInclude Include="src\rico\internal\ri_primitives.h" />
-    <ClInclude Include="src\rico\internal\ri_progdef.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </ClInclude>
+    <ClInclude Include="src\rico\internal\ri_program_pbr.h" />
     <ClInclude Include="src\rico\internal\ri_program.h" />
+    <ClInclude Include="src\rico\internal\ri_program_prim.h" />
+    <ClInclude Include="src\rico\internal\ri_program_text.h" />
     <ClInclude Include="src\rico\internal\ri_regularpoly.h" />
     <ClInclude Include="src\rico\internal\ri_shader.h" />
     <ClInclude Include="src\rico\internal\ri_state.h" />

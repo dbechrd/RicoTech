@@ -295,7 +295,13 @@
     <ClInclude Include="src\rico\rico_heiro.h">
       <Filter>Header Files\rico</Filter>
     </ClInclude>
-    <ClInclude Include="src\rico\internal\ri_progdef.h">
+    <ClInclude Include="src\rico\internal\ri_program_pbr.h">
+      <Filter>Header Files\rico\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rico\internal\ri_program_prim.h">
+      <Filter>Header Files\rico\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rico\internal\ri_program_text.h">
       <Filter>Header Files\rico\internal</Filter>
     </ClInclude>
   </ItemGroup>

@@ -18,10 +18,10 @@ static void rebuild_vao(struct regularpoly *poly)
 
     RICO_ASSERT(regularpoly_program);
 
-    double delta_angle = M_2PI / (double)poly->bucket_count;
+    double delta_angle = M_2PI / (double)poly->vertex_count;
     double angle = 0;
 
-    for (unsigned int i = 0; i < poly->bucket_count; i++)
+    for (unsigned int i = 0; i < poly->vertex_count; i++)
     {
         poly->vertices[i].x = (GLfloat)cos(angle) * poly->radius + poly->pos.x;
         poly->vertices[i].y = (GLfloat)sin(angle) * poly->radius + poly->pos.y;
@@ -37,7 +37,7 @@ static void rebuild_vao(struct regularpoly *poly)
     glGenBuffers(1, &poly_vbo);
 
     glBindBuffer(GL_ARRAY_BUFFER, poly_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(poly->vertices[0])*poly->bucket_count,
+    glBufferData(GL_ARRAY_BUFFER, sizeof(poly->vertices[0])*poly->vertex_count,
                  poly->vertices, GL_STATIC_DRAW);
 
     //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, poly_elements);
@@ -46,7 +46,7 @@ static void rebuild_vao(struct regularpoly *poly)
     // GLboolean normalized, GLsizei stride, const void *pointer);
     glVertexAttribPointer(regularpoly_program->program.gl_id, 4, GL_FLOAT,
                           GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(regularpoly_program->vert.attrs.position);
+    glEnableVertexAttribArray(regularpoly_program->locations.vert.attrs.position);
 
     glBindVertexArray(0);
     glDeleteBuffers(1, &poly_vbo);
@@ -64,7 +64,7 @@ static struct regularpoly *make_regularpoly(struct vec3 center, GLfloat radius,
     poly->radius = radius;
 
     poly->vertices = calloc(1, sizeof(struct vec3) * vertex_count);
-    poly->bucket_count = vertex_count;
+    poly->vertex_count = vertex_count;
 
     poly->vao = 0;
     poly->dirty_vao = true;
@@ -111,7 +111,7 @@ static void render_regularpoly(struct regularpoly *poly)
     glDrawArrays(
         GL_TRIANGLE_FAN,
         0,
-        poly->bucket_count
+        poly->vertex_count
     );
 
     glBindVertexArray(0);
