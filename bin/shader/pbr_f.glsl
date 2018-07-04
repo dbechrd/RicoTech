@@ -109,7 +109,7 @@ void main()
         vec3 L = normalize(light.P - vertex.P);
         vec3 H = normalize(V + L);
         float dist = length(light.P - vertex.P);
-        float attenuation = light.intensity;// / (dist * dist);
+        float attenuation = light.intensity / (dist * dist);
         vec3 radiance = light.color * attenuation;
 
         float D = DistributionGGX(N, H, mtl_roughness);
@@ -135,7 +135,8 @@ void main()
     color = color / (color + vec3(1.0));
     color = pow(color, vec3(1.0/2.2));
 
-    color = mix(color, mtl_emission.rgb, 0.8 * step(0.01, mtl_emission.a));
+    vec3 emission = mix(vec3(0), mtl_emission.rgb, step(0.01, mtl_emission.a));
+    color = color + emission;
 
     frag_color = vec4(color, 1.0);
 }

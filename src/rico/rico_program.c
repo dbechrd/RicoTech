@@ -87,7 +87,7 @@ static void program_pbr_get_locations(struct pbr_program *p)
     RICO_ASSERT(p->locations.vert.attrs.uv == LOCATION_PBR_UV);
     // TODO: Turn these back on when they're being used
     //RICO_ASSERT(p->locations.vert.attrs.color == LOCATION_PBR_COLOR);
-    RICO_ASSERT(p->locations.vert.attrs.normal == LOCATION_PBR_NORMAL);
+    //RICO_ASSERT(p->locations.vert.attrs.normal == LOCATION_PBR_NORMAL);
 
     // Fragment shader
     p->locations.frag.camera.pos = program_get_uniform_location(p->program.gl_id, "camera.P");
@@ -98,13 +98,13 @@ static void program_pbr_get_locations(struct pbr_program *p)
     p->locations.frag.light.color = program_get_uniform_location(p->program.gl_id, "light.color");
     p->locations.frag.light.intensity = program_get_uniform_location(p->program.gl_id, "light.intensity");
     p->locations.frag.light.enabled = program_get_uniform_location(p->program.gl_id, "light.enabled");
-    RICO_ASSERT(p->locations.frag.camera.pos >= 0);
-    RICO_ASSERT(p->locations.frag.material.tex0 >= 0);
-    RICO_ASSERT(p->locations.frag.material.tex1 >= 0);
-    RICO_ASSERT(p->locations.frag.material.tex2 >= 0);
-    RICO_ASSERT(p->locations.frag.light.pos >= 0);
-    RICO_ASSERT(p->locations.frag.light.color >= 0);
-    RICO_ASSERT(p->locations.frag.light.intensity >= 0);
+    //RICO_ASSERT(p->locations.frag.camera.pos >= 0);
+    //RICO_ASSERT(p->locations.frag.material.tex0 >= 0);
+    //RICO_ASSERT(p->locations.frag.material.tex1 >= 0);
+    //RICO_ASSERT(p->locations.frag.material.tex2 >= 0);
+    //RICO_ASSERT(p->locations.frag.light.pos >= 0);
+    //RICO_ASSERT(p->locations.frag.light.color >= 0);
+    //RICO_ASSERT(p->locations.frag.light.intensity >= 0);
     // TODO: Turn these back on when they're being used
     //RICO_ASSERT(p->locations.frag.light.enabled >= 0);
 }

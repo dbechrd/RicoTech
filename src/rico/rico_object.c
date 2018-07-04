@@ -291,12 +291,15 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
 
     // TODO: Get the light out of here!!! It should't be updating its position
     //       in the render function, argh!
-    struct vec3 light_pos = cam_player.pos;
-    v3_add(&light_pos, &VEC3(0.0f, -0.5f, 0.0f));
+    
+    //struct vec3 light_pos = cam_player.pos;
+    //v3_add(&light_pos, &VEC3(0.0f, -0.5f, 0.0f));
+    struct vec3 light_pos = { 0 };
+    v3_add(&light_pos, &VEC3(1.0f, 2.0f, 3.0f));
 
     prog->frag.light.pos = light_pos;
     prog->frag.light.color = VEC3(1.0f, 1.0f, 0.8f);
-    prog->frag.light.intensity = (RICO_lighting_enabled) ? 4.0f : 0.0f;
+    prog->frag.light.intensity = (RICO_lighting_enabled) ? 20.0f : 0.0f;
     prog->frag.light.enabled = true;
     //prog->frag.light.kc = 1.0f;
     //prog->frag.light.kl = 0.05f;

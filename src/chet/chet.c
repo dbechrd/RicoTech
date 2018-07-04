@@ -1194,41 +1194,44 @@ int main(int argc, char **argv)
         RICO_render_crosshair();
 
         //======================================================================
-        struct rect bounds = { 0 };
-        struct rect cursor = { 0 };
-        RICO_heiro_build(&bounds, &cursor, input_buffer, input_len,
-                         input_cursor);
+        if (RICO_state_get() == STATE_TEXT_INPUT)
+        {
+            struct rect bounds = { 0 };
+            struct rect cursor = { 0 };
+            RICO_heiro_build(&bounds, &cursor, input_buffer, input_len,
+                             input_cursor);
 
-        const u32 sx = SCREEN_WIDTH / 2 - (580 / 2);
-        const u32 sy = 200;
-        const u32 border_width = 2;
-        const u32 scroll_w = 10;
+            const u32 sx = SCREEN_WIDTH / 2 - (580 / 2);
+            const u32 sy = 200;
+            const u32 border_width = 2;
+            const u32 scroll_w = 10;
 
-        bounds.x += sx;
-        bounds.y += sy;
-        bounds.w += scroll_w;
-        cursor.x += sx;
-        cursor.y += sy;
+            bounds.x += sx;
+            bounds.y += sy;
+            bounds.w += scroll_w;
+            cursor.x += sx;
+            cursor.y += sy;
 
-        struct rect border = bounds;
-        border.x -= border_width;
-        border.y -= border_width;
-        border.w += border_width * 2;
-        border.h += border_width * 2;
+            struct rect border = bounds;
+            border.x -= border_width;
+            border.y -= border_width;
+            border.w += border_width * 2;
+            border.h += border_width * 2;
 
-        struct rect scroll;
-        scroll.x = bounds.x + bounds.w - scroll_w;
-        scroll.y = bounds.y;
-        scroll.w = scroll_w;
-        scroll.h = bounds.h;  // TODO: Calculate
+            struct rect scroll;
+            scroll.x = bounds.x + bounds.w - scroll_w;
+            scroll.y = bounds.y;
+            scroll.w = scroll_w;
+            scroll.h = bounds.h;  // TODO: Calculate
 
-        RICO_prim_draw_rect(&border, &VEC4(0.2f, 0.2f, 0.2f, 0.5f));
-        RICO_prim_draw_rect(&bounds, &VEC4(0.0f, 0.0f, 0.0f, 0.5f));
-        RICO_prim_draw_rect(&scroll, &COLOR_ORANGE_HIGHLIGHT);
+            RICO_prim_draw_rect(&border, &VEC4(0.2f, 0.2f, 0.2f, 0.5f));
+            RICO_prim_draw_rect(&bounds, &VEC4(0.0f, 0.0f, 0.0f, 0.5f));
+            RICO_prim_draw_rect(&scroll, &COLOR_ORANGE_HIGHLIGHT);
 
-        RICO_heiro_render(sx, sy);
+            RICO_heiro_render(sx, sy);
 
-        RICO_prim_draw_rect(&cursor, &VEC4(1.0f, 0.0f, 0.0f, 0.5f));
+            RICO_prim_draw_rect(&cursor, &VEC4(1.0f, 0.0f, 0.0f, 0.5f));
+        }
         //======================================================================
 
         // Swap buffers
