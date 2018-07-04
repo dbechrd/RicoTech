@@ -40,7 +40,8 @@ static inline void *pack_push_str(struct pack *pack, const char *str)
 #define push_struct(pack, type) ((type *)pack_push(pack, sizeof(type)))
 #define push_bytes(pack, bytes) (pack_push(pack, bytes))
 #define push_string(pack, str) (pack_push_str(pack, str))
-#define push_data(pack, data, bucket_count, min_size) (pack_push_data(pack, data, bucket_count, min_size))
+#define push_data(pack, data, bucket_count, min_size) \
+    (pack_push_data(pack, data, bucket_count, min_size))
 
 static inline void *pack_pop(struct pack *pack, u32 id)
 {

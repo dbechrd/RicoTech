@@ -327,8 +327,10 @@ extern void RICO_prim_draw_bbox_xform(const struct RICO_bbox *bbox,
     RICO_ASSERT(prog_prim->program.gl_id);
     glUseProgram(prog_prim->program.gl_id);
 
-    glUniformMatrix4fv(prog_prim->locations.vert.proj, 1, GL_TRUE, cam_player.proj_matrix->a);
-    glUniformMatrix4fv(prog_prim->locations.vert.view, 1, GL_TRUE, cam_player.view_matrix.a);
+    glUniformMatrix4fv(prog_prim->locations.vert.proj, 1, GL_TRUE,
+                       cam_player.proj_matrix->a);
+    glUniformMatrix4fv(prog_prim->locations.vert.view, 1, GL_TRUE,
+                       cam_player.view_matrix.a);
     glUniformMatrix4fv(prog_prim->locations.vert.model, 1, GL_TRUE, xform->a);
     glUniform4fv(prog_prim->locations.frag.color, 1, (const GLfloat *)color);
     // TODO: Bind texture
@@ -430,8 +432,10 @@ extern void RICO_prim_draw_obb_xform(const struct RICO_obb *obb,
     RICO_ASSERT(prog_prim->program.gl_id);
     glUseProgram(prog_prim->program.gl_id);
 
-    glUniformMatrix4fv(prog_prim->locations.vert.proj, 1, GL_TRUE, cam_player.proj_matrix->a);
-    glUniformMatrix4fv(prog_prim->locations.vert.view, 1, GL_TRUE, cam_player.view_matrix.a);
+    glUniformMatrix4fv(prog_prim->locations.vert.proj, 1, GL_TRUE,
+                       cam_player.proj_matrix->a);
+    glUniformMatrix4fv(prog_prim->locations.vert.view, 1, GL_TRUE,
+                       cam_player.view_matrix.a);
     glUniformMatrix4fv(prog_prim->locations.vert.model, 1, GL_TRUE, xform->a);
     glUniform4fv(prog_prim->locations.frag.color, 1, (const GLfloat *)color);
     // TODO: Bind texture
@@ -486,9 +490,12 @@ extern void RICO_prim_draw_sphere_xform(const struct sphere *sphere,
     RICO_ASSERT(prog_prim->program.gl_id);
     glUseProgram(prog_prim->program.gl_id);
 
-    glUniformMatrix4fv(prog_prim->locations.vert.proj, 1, GL_TRUE, cam_player.proj_matrix->a);
-    glUniformMatrix4fv(prog_prim->locations.vert.view, 1, GL_TRUE, cam_player.view_matrix.a);
-    glUniformMatrix4fv(prog_prim->locations.vert.model, 1, GL_TRUE, model_matrix.a);
+    glUniformMatrix4fv(prog_prim->locations.vert.proj, 1, GL_TRUE,
+                       cam_player.proj_matrix->a);
+    glUniformMatrix4fv(prog_prim->locations.vert.view, 1, GL_TRUE,
+                       cam_player.view_matrix.a);
+    glUniformMatrix4fv(prog_prim->locations.vert.model, 1, GL_TRUE,
+                       model_matrix.a);
     glUniform4fv(prog_prim->locations.frag.color, 1, (const GLfloat *)color);
     // TODO: Bind texture
     

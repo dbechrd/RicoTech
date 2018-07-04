@@ -78,7 +78,8 @@ struct dlb_string
 struct dlb_string *dlb_string_alloc(const char *str)
 {
     u32 len = strlen(str);
-    struct dlb_string *s = calloc(1, sizeof(struct dlb_string) + strlen(str) + 1);
+    struct dlb_string *s = calloc(1, sizeof(struct dlb_string) + strlen(str) +
+                                  1);
     s->len = len;
     s->str = s + 1;
     return s;

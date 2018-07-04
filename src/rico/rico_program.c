@@ -70,19 +70,27 @@ static GLint program_get_uniform_location(GLuint program, const char* name)
 static void program_pbr_get_locations(struct pbr_program *p)
 {
     // Vertex shader
-    p->locations.vert.scale_uv = program_get_uniform_location(p->program.gl_id, "scale_uv");
-    p->locations.vert.proj = program_get_uniform_location(p->program.gl_id, "proj");
-    p->locations.vert.view = program_get_uniform_location(p->program.gl_id, "view");
-    p->locations.vert.model = program_get_uniform_location(p->program.gl_id, "model");
+    p->locations.vert.scale_uv =
+        program_get_uniform_location(p->program.gl_id, "scale_uv");
+    p->locations.vert.proj =
+        program_get_uniform_location(p->program.gl_id, "proj");
+    p->locations.vert.view =
+        program_get_uniform_location(p->program.gl_id, "view");
+    p->locations.vert.model =
+        program_get_uniform_location(p->program.gl_id, "model");
     RICO_ASSERT(p->locations.vert.scale_uv >= 0);
     RICO_ASSERT(p->locations.vert.model >= 0);
     RICO_ASSERT(p->locations.vert.view >= 0);
     RICO_ASSERT(p->locations.vert.proj >= 0);
 
-    p->locations.vert.attrs.position = program_get_attrib_location(p->program.gl_id,"attr_position");
-    p->locations.vert.attrs.uv = program_get_attrib_location(p->program.gl_id, "attr_uv");
-    p->locations.vert.attrs.color = program_get_attrib_location(p->program.gl_id, "attr_color");
-    p->locations.vert.attrs.normal = program_get_attrib_location(p->program.gl_id, "attr_normal");
+    p->locations.vert.attrs.position =
+        program_get_attrib_location(p->program.gl_id,"attr_position");
+    p->locations.vert.attrs.uv =
+        program_get_attrib_location(p->program.gl_id, "attr_uv");
+    p->locations.vert.attrs.color =
+        program_get_attrib_location(p->program.gl_id, "attr_color");
+    p->locations.vert.attrs.normal =
+        program_get_attrib_location(p->program.gl_id, "attr_normal");
     RICO_ASSERT(p->locations.vert.attrs.position == LOCATION_PBR_POSITION);
     RICO_ASSERT(p->locations.vert.attrs.uv == LOCATION_PBR_UV);
     // TODO: Turn these back on when they're being used
@@ -90,14 +98,22 @@ static void program_pbr_get_locations(struct pbr_program *p)
     //RICO_ASSERT(p->locations.vert.attrs.normal == LOCATION_PBR_NORMAL);
 
     // Fragment shader
-    p->locations.frag.camera.pos = program_get_uniform_location(p->program.gl_id, "camera.P");
-    p->locations.frag.material.tex0 = program_get_uniform_location(p->program.gl_id, "material.tex0");
-    p->locations.frag.material.tex1 = program_get_uniform_location(p->program.gl_id, "material.tex1");
-    p->locations.frag.material.tex2 = program_get_uniform_location(p->program.gl_id, "material.tex2");
-    p->locations.frag.light.pos = program_get_uniform_location(p->program.gl_id, "light.P");
-    p->locations.frag.light.color = program_get_uniform_location(p->program.gl_id, "light.color");
-    p->locations.frag.light.intensity = program_get_uniform_location(p->program.gl_id, "light.intensity");
-    p->locations.frag.light.enabled = program_get_uniform_location(p->program.gl_id, "light.enabled");
+    p->locations.frag.camera.pos =
+        program_get_uniform_location(p->program.gl_id, "camera.P");
+    p->locations.frag.material.tex0 =
+        program_get_uniform_location(p->program.gl_id, "material.tex0");
+    p->locations.frag.material.tex1 =
+        program_get_uniform_location(p->program.gl_id, "material.tex1");
+    p->locations.frag.material.tex2 =
+        program_get_uniform_location(p->program.gl_id, "material.tex2");
+    p->locations.frag.light.pos =
+        program_get_uniform_location(p->program.gl_id, "light.P");
+    p->locations.frag.light.color =
+        program_get_uniform_location(p->program.gl_id, "light.color");
+    p->locations.frag.light.intensity =
+        program_get_uniform_location(p->program.gl_id, "light.intensity");
+    p->locations.frag.light.enabled =
+        program_get_uniform_location(p->program.gl_id, "light.enabled");
     RICO_ASSERT(p->locations.frag.camera.pos >= 0);
     RICO_ASSERT(p->locations.frag.material.tex0 >= 0);
     RICO_ASSERT(p->locations.frag.material.tex1 >= 0);
@@ -188,24 +204,32 @@ static void free_program_pbr(struct pbr_program **program)
 static void program_primitive_get_locations(struct prim_program *p)
 {
     // Vertex shader
-    p->locations.vert.proj = program_get_uniform_location(p->program.gl_id, "proj");
-    p->locations.vert.view = program_get_uniform_location(p->program.gl_id, "view");
-    p->locations.vert.model = program_get_uniform_location(p->program.gl_id, "model");
+    p->locations.vert.proj =
+        program_get_uniform_location(p->program.gl_id, "proj");
+    p->locations.vert.view =
+        program_get_uniform_location(p->program.gl_id, "view");
+    p->locations.vert.model =
+        program_get_uniform_location(p->program.gl_id, "model");
     RICO_ASSERT(p->locations.vert.proj >= 0);
     RICO_ASSERT(p->locations.vert.view >= 0);
     RICO_ASSERT(p->locations.vert.model >= 0);
 
-    p->locations.vert.attrs.position = program_get_attrib_location(p->program.gl_id, "attr_position");
-    p->locations.vert.attrs.uv =  program_get_attrib_location(p->program.gl_id, "attr_uv");
-    p->locations.vert.attrs.color = program_get_attrib_location(p->program.gl_id, "attr_color");
+    p->locations.vert.attrs.position =
+        program_get_attrib_location(p->program.gl_id, "attr_position");
+    p->locations.vert.attrs.uv =
+        program_get_attrib_location(p->program.gl_id, "attr_uv");
+    p->locations.vert.attrs.color =
+        program_get_attrib_location(p->program.gl_id, "attr_color");
     RICO_ASSERT(p->locations.vert.attrs.position == LOCATION_PBR_POSITION);
     // TODO: Turn these back on when they're being used
     //RICO_ASSERT(p->locations.vert.attrs.uv == LOCATION_PBR_UV);
     //RICO_ASSERT(p->locations.vert.attrs.color == LOCATION_PBR_COLOR);
 
     // Fragment shader
-    p->locations.frag.color = program_get_uniform_location(p->program.gl_id, "color");
-    p->locations.frag.tex0 = program_get_uniform_location(p->program.gl_id, "tex");
+    p->locations.frag.color =
+        program_get_uniform_location(p->program.gl_id, "color");
+    p->locations.frag.tex0 =
+        program_get_uniform_location(p->program.gl_id, "tex");
     // TODO: Turn these back on when they're being used
     //RICO_ASSERT(p->locations.frag.color >= 0);
     //RICO_ASSERT(p->locations.frag.tex >= 0);
@@ -279,17 +303,23 @@ static void free_program_primitive(struct prim_program **program)
 static void program_text_get_locations(struct text_program *p)
 {
     // Vertex shader
-    p->locations.vert.model = program_get_uniform_location(p->program.gl_id, "model");
-    p->locations.vert.view = program_get_uniform_location(p->program.gl_id, "view");
-    p->locations.vert.proj = program_get_uniform_location(p->program.gl_id, "proj");
+    p->locations.vert.model =
+        program_get_uniform_location(p->program.gl_id, "model");
+    p->locations.vert.view =
+        program_get_uniform_location(p->program.gl_id, "view");
+    p->locations.vert.proj =
+        program_get_uniform_location(p->program.gl_id, "proj");
     RICO_ASSERT(p->locations.vert.model >= 0);
     RICO_ASSERT(p->locations.vert.view >= 0);
     RICO_ASSERT(p->locations.vert.proj >= 0);
 
     // Fragment shader
-    p->locations.frag.color = program_get_uniform_location(p->program.gl_id, "u_color");
-    p->locations.frag.grayscale = program_get_uniform_location(p->program.gl_id, "u_grayscale");
-    p->locations.frag.tex0 = program_get_uniform_location(p->program.gl_id, "u_tex");
+    p->locations.frag.color =
+        program_get_uniform_location(p->program.gl_id, "u_color");
+    p->locations.frag.grayscale =
+        program_get_uniform_location(p->program.gl_id, "u_grayscale");
+    p->locations.frag.tex0 =
+        program_get_uniform_location(p->program.gl_id, "u_tex");
     //RICO_ASSERT(p->locations.frag.color >= 0);
     //RICO_ASSERT(p->locations.frag.grayscale >= 0);
     //RICO_ASSERT(p->locations.frag.tex >= 0);

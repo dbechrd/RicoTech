@@ -320,7 +320,8 @@ extern void RICO_heiro_render(s32 sx, s32 sy)
     struct vec3 t_vec = VEC3(X_TO_NDC(sx) + 1.0f, Y_TO_NDC(sy) - 1.0f, 0.0f);
     mat4_translate(&model, &t_vec);
 
-    glUniformMatrix4fv(prog->locations.vert.proj, 1, GL_TRUE, cam_player.ortho_matrix.a);
+    glUniformMatrix4fv(prog->locations.vert.proj, 1, GL_TRUE,
+                       cam_player.ortho_matrix.a);
     glUniformMatrix4fv(prog->locations.vert.view, 1, GL_TRUE, MAT4_IDENT.a);
     glUniformMatrix4fv(prog->locations.vert.model, 1, GL_TRUE, model.a);
 

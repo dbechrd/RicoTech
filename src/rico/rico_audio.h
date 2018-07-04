@@ -45,7 +45,8 @@ extern void RICO_audio_source_play_loop(struct RICO_audio_source *source);
 extern void RICO_audio_source_pause(struct RICO_audio_source *source);
 extern void RICO_audio_source_resume(struct RICO_audio_source *source);
 extern void RICO_audio_source_stop(struct RICO_audio_source *source);
-extern enum RICO_audio_state RICO_audio_source_state(struct RICO_audio_source *source);
+extern enum RICO_audio_state RICO_audio_source_state(
+    struct RICO_audio_source *source);
 extern void RICO_audio_buffer_load_file(struct RICO_audio_buffer *buffer,
                                         const char *filename);
 extern void RICO_audio_buffer_load(struct RICO_audio_buffer *buffer, u32 len,

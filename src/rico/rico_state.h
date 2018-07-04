@@ -20,7 +20,8 @@ struct RICO_keychord
 #define CHORD_REPEAT2(k0, k1) CHORD_REPEAT3(k0, k1, 0)
 #define CHORD_REPEAT1(k0)     CHORD_REPEAT3(k0, 0, 0)
 
-#define CHORD_UP_REPEAT3(k0, k1, k2) (struct RICO_keychord) {{ k0, k1, k2 }, 1, 1 }
+#define CHORD_UP_REPEAT3(k0, k1, k2) \
+    (struct RICO_keychord) {{ k0, k1, k2 }, 1, 1 }
 #define CHORD_UP_REPEAT2(k0, k1) CHORD_UP_REPEAT3(k0, k1, 0)
 #define CHORD_UP_REPEAT1(k0)     CHORD_UP_REPEAT3(k0, 0, 0)
 
@@ -63,23 +64,32 @@ struct rico_keyevent
 #define EVENT_CHORD(k0, k1) EVENT{ RICO_KEYEVENT_CHORD, k0, k1 }
 #endif
 
-#define RICO_STATES(f)       \
-    f(STATE_PLAY_EXPLORE)    \
-    f(STATE_EDIT_TRANSLATE)  \
-    f(STATE_EDIT_ROTATE)     \
-    f(STATE_EDIT_SCALE)      \
-    f(STATE_EDIT_MATERIAL)   \
-    f(STATE_EDIT_MESH)       \
-    f(STATE_MENU_QUIT)       \
-    f(STATE_TEXT_INPUT)      \
-    f(STATE_ENGINE_SHUTDOWN)
+#define RICO_STATES(f) \
+    f(STATE_PLAY_EXPLORE,         0x1) \
+    f(STATE_EDIT_TRANSLATE,       0x2) \
+    f(STATE_EDIT_ROTATE,          0x4) \
+    f(STATE_EDIT_SCALE,           0x8) \
+    f(STATE_EDIT_MATERIAL,       0x10) \
+    f(STATE_EDIT_MESH,           0x20) \
+    f(STATE_MENU_QUIT,           0x40) \
+    f(STATE_TEXT_INPUT,          0x80) \
+    f(STATE_ENGINE_SHUTDOWN,    0x100)
 
 enum rico_state
 {
-    RICO_STATES(GEN_LIST)
+    RICO_STATES(GEN_LIST_VALUES)
     STATE_COUNT
 };
 extern const char *rico_state_string[STATE_COUNT];
+
+#define RICO_STATE_EDIT (STATE_EDIT_TRANSLATE | \
+                         STATE_EDIT_ROTATE    | \
+                         STATE_EDIT_SCALE     | \
+                         STATE_EDIT_MATERIAL  | \
+                         STATE_EDIT_MESH)
+
+#define RICO_STATE_MENU (STATE_MENU_QUIT | \
+                         STATE_TEXT_INPUT)
 
 enum RICO_action
 {
@@ -175,10 +185,8 @@ enum RICO_action
 extern void RICO_simulation_pause();
 extern void RICO_simulation_play();
 extern bool RICO_simulation_prev();
-extern enum rico_state RICO_state_get();
+extern enum rico_state RICO_state();
 extern bool RICO_simulation_paused();
-extern bool RICO_state_is_menu();
-extern bool RICO_state_is_edit();
 extern int RICO_update();
 extern void RICO_render_objects();
 extern void RICO_render_editor();

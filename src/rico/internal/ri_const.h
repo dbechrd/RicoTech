@@ -40,7 +40,8 @@
 #define FLAG_HANDLE  0x0000FFFF  // 0
 
 // Handle section get/set
-#define HANDLE_PERSIST(handle) (enum rico_persist)((handle & FLAG_PERSIST) >> 31)
+#define HANDLE_PERSIST(handle) \
+    (enum rico_persist)((handle & FLAG_PERSIST) >> 31)
 #define HANDLE_MIDDLE(handle)  ((handle & FLAG_MIDDLE) >> 15)
 #define HANDLE_VALUE(handle)   ((handle & FLAG_HANDLE) >> 0)
 #define HANDLE_PERSIST_SET(handle, val) ((handle & ~FLAG_PERSIST) & (val << 31))
@@ -50,8 +51,8 @@
 //#define FLAG_PERSIST 31
 //#define BIT_SET(num, bit, val) (num ^= (-val ^ num) & (1 << bit))
 //#define BIT_GET(num, bit) ((num >> bit) & 1)
-//#define FLAG_PERSIST_SET(handle, persist) BIT_SET(handle, FLAG_PERSIST, persist)
-//#define FLAG_PERSIST_GET(handle)          BIT_GET(handle, FLAG_PERSIST)
+//#define FLAG_PERSIST_SET(hnd, persist) BIT_SET(hnd, FLAG_PERSIST, persist)
+//#define FLAG_PERSIST_GET(hnd)          BIT_GET(hnd, FLAG_PERSIST)
 #endif
 
 //------------------------------------------------------------------------------
@@ -76,7 +77,8 @@
 #  define FILE_LOC __FILE__, __LINE__
 #  define IF_DEBUG(exp) exp
 #  define RICO_ASSERT(exp) if(!(exp)) HALT();
-#  define RICO_FATAL(err, desc, ...) rico_fatal_print(FILE_LOC, err, desc, ##__VA_ARGS__)
+#  define RICO_FATAL(err, desc, ...) \
+          rico_fatal_print(FILE_LOC, err, desc, ##__VA_ARGS__)
 #
 #  if RICO_DEBUG_ALL_ERRORS_FATAL
 #    define RICO_ERROR(err, desc, ...) RICO_FATAL(err, desc, ##__VA_ARGS__)

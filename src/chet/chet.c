@@ -182,7 +182,6 @@ void game_button_interact(struct game_button *button)
     }
 }
 
-static pkid last_clicked;
 static struct sphere rayviz_sphere;
 void object_interact()
 {
@@ -215,10 +214,6 @@ void object_interact()
 
     struct RICO_object *obj = RICO_pack_lookup(obj_id);
     if (!obj) return;
-
-    // HACK: Display name of last-clicked object
-    last_clicked = obj->uid.pkid;
-    //RICO_load_string(PACK_TRANSIENT, 0, 0, 0, COLOR_WHITE, 0, 0, obj->uid.name);
 
     switch (obj->type)
     {
@@ -418,7 +413,8 @@ void clash_simulate(struct timmy *timmy)
                     v_test = v0;
                     v3_scalef(&v_test, t);
                     v3_add(&obj->rico.xform.position, &v_test);
-                    RICO_object_trans_set(&obj->rico, &obj->rico.xform.position);
+                    RICO_object_trans_set(&obj->rico,
+                                          &obj->rico.xform.position);
                     if (obj->rico.xform.position.y <= 0.0f)
                     {
                         t -= t * 0.5f;
@@ -464,7 +460,8 @@ void clash_simulate(struct timmy *timmy)
                     v_test = v0;
                     v3_scalef(&v_test, t);
                     v3_add(&obj->rico.xform.position, &v_test);
-                    RICO_object_trans_set(&obj->rico, &obj->rico.xform.position);
+                    RICO_object_trans_set(&obj->rico,
+                                          &obj->rico.xform.position);
                     if (object_intersects(&obj->rico, &timmy->rico, &manifold))
                     {
                         t -= t * 0.5f;
@@ -594,25 +591,32 @@ void DEBUG_render_bboxes(struct timmy *timmy)
 
                 if (obj->collide_obb)
                 {
-                    RICO_prim_draw_sphere(&obj->rico.sphere, &COLOR_DARK_WHITE_HIGHLIGHT);
-                    RICO_prim_draw_bbox(&obj->rico.bbox_world, &COLOR_DARK_WHITE_HIGHLIGHT);
+                    RICO_prim_draw_sphere(&obj->rico.sphere,
+                                          &COLOR_DARK_WHITE_HIGHLIGHT);
+                    RICO_prim_draw_bbox(&obj->rico.bbox_world,
+                                        &COLOR_DARK_WHITE_HIGHLIGHT);
                     RICO_prim_draw_obb(&obj->rico.obb, &COLOR_RED);
                 }
                 else if (obj->collide_aabb)
                 {
-                    RICO_prim_draw_sphere(&obj->rico.sphere, &COLOR_DARK_WHITE_HIGHLIGHT);
+                    RICO_prim_draw_sphere(&obj->rico.sphere,
+                                          &COLOR_DARK_WHITE_HIGHLIGHT);
                     RICO_prim_draw_bbox(&obj->rico.bbox_world, &COLOR_ORANGE);
-                    RICO_prim_draw_obb(&obj->rico.obb, &COLOR_DARK_WHITE_HIGHLIGHT);
+                    RICO_prim_draw_obb(&obj->rico.obb,
+                                       &COLOR_DARK_WHITE_HIGHLIGHT);
                 }
                 else if (obj->collide_sphere)
                 {
                     RICO_prim_draw_sphere(&obj->rico.sphere, &COLOR_YELLOW);
-                    RICO_prim_draw_bbox(&obj->rico.bbox_world, &COLOR_DARK_WHITE_HIGHLIGHT);
-                    RICO_prim_draw_obb(&obj->rico.obb, &COLOR_DARK_WHITE_HIGHLIGHT);
+                    RICO_prim_draw_bbox(&obj->rico.bbox_world,
+                                        &COLOR_DARK_WHITE_HIGHLIGHT);
+                    RICO_prim_draw_obb(&obj->rico.obb,
+                                       &COLOR_DARK_WHITE_HIGHLIGHT);
                 }
                 else
                 {
-                    RICO_prim_draw_sphere(&obj->rico.sphere, &COLOR_DARK_WHITE_HIGHLIGHT);
+                    RICO_prim_draw_sphere(&obj->rico.sphere,
+                                          &COLOR_DARK_WHITE_HIGHLIGHT);
                     RICO_prim_draw_bbox(&obj->rico.bbox_world, &COLOR_AQUA);
                     RICO_prim_draw_obb(&obj->rico.obb, &COLOR_LIME);
                 }
@@ -643,11 +647,12 @@ void game_toolbar_init()
     u32 sprite_h = 32;
     for (u32 i = 0; i < sprite_count; ++i)
     {
-        toolbar_sprites[i].sheet = &toolbar_sheet;
-        toolbar_sprites[i].uvs[0].u = (float)sprite_x / tex_sheet->width;
-        toolbar_sprites[i].uvs[0].v = ((float)sprite_y + sprite_h) / tex_sheet->height;
-        toolbar_sprites[i].uvs[1].u = ((float)sprite_x + sprite_w) / tex_sheet->width;
-        toolbar_sprites[i].uvs[1].v = (float)sprite_y / tex_sheet->height;
+        struct RICO_sprite *sprite = &toolbar_sprites[i];
+        sprite->sheet = &toolbar_sheet;
+        sprite->uvs[0].u = (float)sprite_x / tex_sheet->width;
+        sprite->uvs[0].v = (float)(sprite_y + sprite_h) / tex_sheet->height;
+        sprite->uvs[1].u = (float)(sprite_x + sprite_w) / tex_sheet->width;
+        sprite->uvs[1].v = (float)sprite_y / tex_sheet->height;
         sprite_x += sprite_w;
         if (sprite_x >= tex_sheet->width)
         {
@@ -703,7 +708,7 @@ void game_render_ui_toolbar()
         button->sprite = &toolbar_sheet.sprites[0];
     }
 
-    if (RICO_ui_layout(&toolbar_hud->element, 0, 0, 546, 0)) //mouse_x, mouse_y))
+    if (RICO_ui_layout(&toolbar_hud->element, 0, 0, 546, 0))
     {
         u32 start_x = (SCREEN_WIDTH / 2) - (toolbar_hud->element.size.w / 2);
         RICO_ui_draw(&toolbar_hud->element, start_x, 20);
@@ -727,10 +732,10 @@ void debug_render_ui_stack()
     struct RICO_ui_label *ui_debug_usage_bar;
 
     ui_debug_usage_hud = RICO_ui_hud();
-    
+
     // TODO: Make progress bar control
     ui_debug_usage_bar = RICO_ui_label(&ui_debug_usage_hud->element);
-    
+
     u32 ui_stack_used = (ui_stack_ptr - ui_stack) * 100 / sizeof(ui_stack);
     u32 bar_pad = 2;
     ui_debug_usage_bar->element.min_size = VEC2I(ui_stack_used, 8);
@@ -758,7 +763,7 @@ void lights_init()
 {
     colors[0][0] = COLOR_GRAY_3;
     colors[0][1] = COLOR_GRAY_2;
-    
+
     colors[1][0] = COLOR_ORANGE_HIGHLIGHT;
     colors[1][1] = COLOR_ORANGE;
 }
@@ -793,13 +798,15 @@ void game_render_ui_lights()
         u32 light_state = lights_board[i % LIGHTS_X][i / LIGHTS_X];
 
         lights_buttons[i] = RICO_ui_button(&lights_hud->element);
-        lights_buttons[i]->element.min_size = VEC2I(button_w, button_w);
-        lights_buttons[i]->element.margin = PAD(0, 0, margin, margin);
-        lights_buttons[i]->color[RICO_UI_BUTTON_HOVERED] = colors[light_state][0];
-        lights_buttons[i]->color[RICO_UI_BUTTON_DEFAULT] = colors[light_state][1];
-        lights_buttons[i]->element.metadata = (void *)i;
-        lights_buttons[i]->sprite = &toolbar_sheet.sprites[15];
-        lights_buttons[i]->element.event = lights_button_click;
+        struct RICO_ui_button *button = lights_buttons[i];
+
+        button->element.min_size = VEC2I(button_w, button_w);
+        button->element.margin = PAD(0, 0, margin, margin);
+        button->color[RICO_UI_BUTTON_HOVERED] = colors[light_state][0];
+        button->color[RICO_UI_BUTTON_DEFAULT] = colors[light_state][1];
+        button->element.metadata = (void *)i;
+        button->sprite = &toolbar_sheet.sprites[15];
+        button->element.event = lights_button_click;
     }
 
     s32 min_x = (s32)(pad + LIGHTS_X * (button_w + margin));
@@ -819,7 +826,7 @@ void debug_render_cursor()
     //RICO_prim_draw_rect(&RECT(mouse_x - 1, mouse_y - 1, 1, 1), &COLOR_RED);
 }
 
-void game_render_ui()
+void render_editor_ui()
 {
     // HACK: Reset ui stack each frame
     // TODO: Reset this in the engine
@@ -831,9 +838,28 @@ void game_render_ui()
     debug_render_cursor();
 }
 
+void load_sound(enum audio_type type, const char *filename)
+{
+    RICO_audio_buffer_load_file(&audio_buffers[type], filename);
+    RICO_audio_source_init(&audio_sources[type]);
+    RICO_audio_source_buffer(&audio_sources[type], &audio_buffers[type]);
+}
+
+void play_sound(enum audio_type type, bool loop)
+{
+    if (loop)
+    {
+        RICO_audio_source_play_loop(&audio_sources[type]);
+    }
+    else
+    {
+        RICO_audio_source_play(&audio_sources[type]);
+    }
+}
+
 int main(int argc, char **argv)
 {
-    UNUSED(argc); 
+    UNUSED(argc);
     UNUSED(argv);
 
     UNUSED(panel_1);
@@ -850,25 +876,14 @@ int main(int argc, char **argv)
     RICO_bind_action(ACTION_TYPE_NEXT, CHORD1(SDL_SCANCODE_X));
     RICO_bind_action(ACTION_TYPE_PREV, CHORD1(SDL_SCANCODE_C));
 
+    load_sound(AUDIO_WELCOME, "audio/welcome.ric");
+    load_sound(AUDIO_THUNDER, "audio/thunder_storm.ric");
+    load_sound(AUDIO_BUTTON, "audio/bloop2.ric");
+    load_sound(AUDIO_VICTORY, "audio/victory.ric");
+
     RICO_audio_volume_set(0.1f);
-
-    RICO_audio_buffer_load_file(&audio_buffers[AUDIO_WELCOME], "audio/welcome.ric");
-    RICO_audio_source_init(&audio_sources[AUDIO_WELCOME]);
-    RICO_audio_source_buffer(&audio_sources[AUDIO_WELCOME], &audio_buffers[AUDIO_WELCOME]);
-    RICO_audio_source_play(&audio_sources[AUDIO_WELCOME]);
-
-    RICO_audio_buffer_load_file(&audio_buffers[AUDIO_THUNDER], "audio/thunder_storm.ric");
-    RICO_audio_source_init(&audio_sources[AUDIO_THUNDER]);
-    RICO_audio_source_buffer(&audio_sources[AUDIO_THUNDER], &audio_buffers[AUDIO_THUNDER]);
-    RICO_audio_source_play_loop(&audio_sources[AUDIO_THUNDER]);
-
-    RICO_audio_buffer_load_file(&audio_buffers[AUDIO_BUTTON], "audio/bloop2.ric");
-    RICO_audio_source_init(&audio_sources[AUDIO_BUTTON]);
-    RICO_audio_source_buffer(&audio_sources[AUDIO_BUTTON], &audio_buffers[AUDIO_BUTTON]);
-
-    RICO_audio_buffer_load_file(&audio_buffers[AUDIO_VICTORY], "audio/victory.ric");
-    RICO_audio_source_init(&audio_sources[AUDIO_VICTORY]);
-    RICO_audio_source_buffer(&audio_sources[AUDIO_VICTORY], &audio_buffers[AUDIO_VICTORY]);
+    play_sound(AUDIO_WELCOME, false);
+    play_sound(AUDIO_THUNDER, true);
 
     game_toolbar_init();
     lights_init();
@@ -885,16 +900,16 @@ int main(int argc, char **argv)
     // TODO: Figure out how to handle UTF-8
     //const char test_str[] = "\u30A2\u30CB\u30E1";
 #define STRING_TEST \
-    "#========================================================#\n" \
-    "#        ______            _______        _              #\n" \
-    "#        |  __ \\ O        |__   __|      | |             #\n" \
-    "#        | |__| |_  ___ ___  | | ___  ___| |__           #\n" \
-    "#        |  _  /| |/ __/ _ \\ | |/ _ \\/ __| '_ \\          #\n" \
-    "#        | | \\ \\| | |_| (_) || |  __/ |__| | | |         #\n" \
-    "#        |_|  \\_\\_|\\___\\___/ |_|\\___|\\___|_| |_|         #\n" \
-    "#                                                        #\n" \
-    "#              Copyright 2018 Dan Bechard                #\n" \
-    "#========================================================#"
+    "#=======================================================#\n" \
+    "#        ______            _______        _             #\n" \
+    "#        |  __ \\ O        |__   __|      | |            #\n" \
+    "#        | |__| |_  ___ ___  | | ___  ___| |__          #\n" \
+    "#        |  _  /| |/ __/ _ \\ | |/ _ \\/ __| '_ \\         #\n" \
+    "#        | | \\ \\| | |_| (_) || |  __/ |__| | | |        #\n" \
+    "#        |_|  \\_\\_|\\___\\___/ |_|\\___|\\___|_| |_|        #\n" \
+    "#                                                       #\n" \
+    "#              Copyright 2018 Dan Bechard               #\n" \
+    "#=======================================================#"
 
     u32 tab_width = 4;
     u32 input_len = MAX(sizeof(STRING_TEST), 1) - 1;
@@ -910,7 +925,7 @@ int main(int argc, char **argv)
     {
         RICO_mouse_coords(&mouse_x, &mouse_y);
 
-        if (RICO_state_get() == STATE_TEXT_INPUT)
+        if (RICO_state() == STATE_TEXT_INPUT)
         {
             // TODO: Refactor this out into state_text_input run handler
             SDL_Event event;
@@ -1030,26 +1045,26 @@ int main(int argc, char **argv)
                             input_cursor--;
                             column++;
                         }
-                        
+
                         // If cursor at BOF, reset and abort
                         if (input_cursor == 0) {
                             input_cursor += column;
                             break;
                         }
-                        
+
                         // Eat newline
                         input_cursor--;
 
                         // Save EOL in case prev line is shorter
                         u32 eol = input_cursor;
-                        
+
                         // Find BOL of prev line
                         while (input_cursor > 0 &&
                                input_buffer[input_cursor - 1] != '\n')
                         {
                             input_cursor--;
                         }
-                        
+
                         // Add column offset (unless EOL comes first)
                         input_cursor += MIN(column, eol - input_cursor);
 
@@ -1155,7 +1170,7 @@ int main(int argc, char **argv)
             u32 action;
             while (RICO_key_event(&action))
             {
-                if (RICO_state_is_edit() || RICO_simulation_paused())
+                if (RICO_state() & RICO_STATE_EDIT || RICO_simulation_paused())
                     continue;
 
                 switch (action)
@@ -1189,12 +1204,21 @@ int main(int argc, char **argv)
             RICO_prim_draw_sphere(&rayviz_sphere, &COLOR_YELLOW);
 
         // Render overlays
-        game_render_ui();
-        RICO_render_editor();
+        if (RICO_state() & RICO_STATE_EDIT)
+        {
+            render_editor_ui();
+            RICO_render_editor();
+        }
+        else if (RICO_state() & RICO_STATE_MENU)
+        {
+            RICO_render_editor();
+        }
+
+        // Render cursor
         RICO_render_crosshair();
 
         //======================================================================
-        if (RICO_state_get() == STATE_TEXT_INPUT)
+        if (RICO_state() == STATE_TEXT_INPUT)
         {
             struct rect bounds = { 0 };
             struct rect cursor = { 0 };

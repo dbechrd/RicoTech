@@ -88,7 +88,7 @@ static void object_update_sphere(struct RICO_object *obj)
     struct sphere *sphere = &obj->sphere;
     sphere->orig = obj->obb.c;
     sphere->radius = sqrtf((obj->obb.e.x * obj->obb.e.x +
-                            obj->obb.e.y * obj->obb.e.y + 
+                            obj->obb.e.y * obj->obb.e.y +
                             obj->obb.e.z * obj->obb.e.z));
 }
 static void object_update_colliders(struct RICO_object *obj)
@@ -291,7 +291,7 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
 
     // TODO: Get the light out of here!!! It should't be updating its position
     //       in the render function, argh!
-    
+
     //struct vec3 light_pos = cam_player.pos;
     //v3_add(&light_pos, &VEC3(0.0f, -0.5f, 0.0f));
     struct vec3 light_pos = { 0 };
@@ -305,7 +305,8 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
     //prog->frag.light.kl = 0.05f;
     //prog->frag.light.kq = 0.001f;
 
-    glUniform3fv(prog->locations.frag.camera.pos, 1, (const GLfloat *)&camera->pos);
+    glUniform3fv(prog->locations.frag.camera.pos, 1,
+                 (const GLfloat *)&camera->pos);
 
     // Material textures
     // Note: We don't have to do this every time as long as we make sure
@@ -316,9 +317,11 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
     glUniform1i(prog->locations.frag.material.tex2, 2);
 
     // Lighting
-    glUniform3fv(prog->locations.frag.light.pos, 1, (const GLfloat *)&prog->frag.light.pos.a);
-    glUniform3fv(prog->locations.frag.light.color, 1, (const GLfloat *)&prog->frag.light.color);
-    glUniform1f(prog->locations.frag.light.intensity, prog->frag.light.intensity);
+    glUniform3fv(prog->locations.frag.light.pos, 1, &prog->frag.light.pos.x);
+    glUniform3fv(prog->locations.frag.light.color, 1,
+                 &prog->frag.light.color.r);
+    glUniform1f(prog->locations.frag.light.intensity,
+                prog->frag.light.intensity);
     glUniform1i(prog->locations.frag.light.enabled, prog->frag.light.enabled);
 
     glUniform2f(prog->locations.vert.scale_uv, 1.0f, 1.0f);
@@ -342,8 +345,10 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
         {
             glPolygonMode(GL_FRONT_AND_BACK, camera->fill_mode);
 
-            glUniformMatrix4fv(prog->locations.vert.proj, 1, GL_TRUE, camera->proj_matrix->a);
-            glUniformMatrix4fv(prog->locations.vert.view, 1, GL_TRUE, camera->view_matrix.a);
+            glUniformMatrix4fv(prog->locations.vert.proj, 1, GL_TRUE,
+                               camera->proj_matrix->a);
+            glUniformMatrix4fv(prog->locations.vert.view, 1, GL_TRUE,
+                               camera->view_matrix.a);
 
             prev_type = obj->type;
         }
@@ -362,7 +367,8 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
 		}
         else
         {
-            glUniform2f(prog->locations.vert.scale_uv, obj->xform.scale.x, obj->xform.scale.y);
+            glUniform2f(prog->locations.vert.scale_uv, obj->xform.scale.x,
+                        obj->xform.scale.y);
         }
 
         // Model matrix
@@ -402,13 +408,12 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
         if (obj->type == RICO_OBJECT_TYPE_STRING_SCREEN)
             continue;
 
-        if (RICO_state_is_edit())
+        if (RICO_state() & RICO_STATE_EDIT)
         {
-            struct vec4 color = COLOR_DARK_WHITE_HIGHLIGHT;
-            if (obj->selected)
-                color = COLOR_RED;
-            UNUSED(color);
-            //RICO_prim_draw_bbox(&obj->bbox, &obj->xform.matrix, &color);
+            struct vec4 color = (obj->selected)
+                ? COLOR_RED
+                : COLOR_DARK_WHITE_HIGHLIGHT;
+            RICO_prim_draw_bbox_xform(&obj->bbox, &color, &obj->xform.matrix);
         }
     }
 }
@@ -422,7 +427,8 @@ static void object_render_ui(struct pack *pack,
     glUseProgram(prog->program.gl_id);
 
     // Projection matrix
-    glUniformMatrix4fv(prog->locations.vert.proj, 1, GL_TRUE, camera->ortho_matrix.a);
+    glUniformMatrix4fv(prog->locations.vert.proj, 1, GL_TRUE,
+                       camera->ortho_matrix.a);
     glUniformMatrix4fv(prog->locations.vert.view, 1, GL_TRUE, MAT4_IDENT.a);
 
     glUniform4fv(prog->locations.frag.color, 1, &COLOR_WHITE.r);
@@ -450,7 +456,8 @@ static void object_render_ui(struct pack *pack,
         // Model matrix
         //obj->xform.position = VEC3(0.5, 0.5, -1.0f);
         //object_transform_update(obj);
-        glUniformMatrix4fv(prog->locations.vert.model, 1, GL_TRUE, obj->xform.matrix.a);
+        glUniformMatrix4fv(prog->locations.vert.model, 1, GL_TRUE,
+                           obj->xform.matrix.a);
 
         // Bind texture
         pkid tex_id = FONT_DEFAULT_TEXTURE;

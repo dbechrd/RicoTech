@@ -178,22 +178,9 @@ extern bool RICO_simulation_prev()
     sim_paused = prev;
     return sim_paused;
 }
-extern enum rico_state RICO_state_get()
+extern enum rico_state RICO_state()
 {
     return state;
-}
-extern bool RICO_state_is_menu()
-{
-    return (state == STATE_MENU_QUIT ||
-            state == STATE_TEXT_INPUT);
-}
-extern bool RICO_state_is_edit()
-{
-    return (state == STATE_EDIT_TRANSLATE ||
-            state == STATE_EDIT_ROTATE ||
-            state == STATE_EDIT_SCALE ||
-            state == STATE_EDIT_MATERIAL ||
-            state == STATE_EDIT_MESH);
 }
 
 static void render_fps(r64 fps, r64 ms, r64 mcyc)
@@ -347,7 +334,7 @@ extern int RICO_update()
 
     // TODO: Handle mouse movements in the state callbacks. Camera movement
     //       is not the correct response to mouse movement in all states.
-    if (mouse_lock && !RICO_state_is_menu())
+    if (mouse_lock && (RICO_state() & ~RICO_STATE_MENU))
     {
         struct vec3 camera_acc = player_acc;
         if (player_sprint) v3_scalef(&camera_acc, CAM_SPRINT_MULTIPLIER);
@@ -564,7 +551,7 @@ static int state_play_explore()
 
 static int shared_edit_events()
 {
-    RICO_ASSERT(RICO_state_is_edit());
+    RICO_ASSERT(RICO_state() & RICO_STATE_EDIT);
 
     enum RICO_error err = SUCCESS;
 
@@ -690,9 +677,12 @@ static int state_edit_translate()
 {
     enum RICO_error err = SUCCESS;
 
-    err = shared_edit_events();   if (err || state != state_last_frame) return err;
-    err = shared_engine_events(); if (err || state != state_last_frame) return err;
-    err = shared_camera_events(); if (err || state != state_last_frame) return err;
+    err = shared_edit_events();
+    if (err || state != state_last_frame) return err;
+    err = shared_engine_events();
+    if (err || state != state_last_frame) return err;
+    err = shared_camera_events();
+    if (err || state != state_last_frame) return err;
 
     struct vec3 translate = VEC3_ZERO;
     bool translate_reset = false;
@@ -767,9 +757,12 @@ static int state_edit_rotate()
 {
     enum RICO_error err = SUCCESS;
 
-    err = shared_edit_events();   if (err || state != state_last_frame) return err;
-    err = shared_engine_events(); if (err || state != state_last_frame) return err;
-    err = shared_camera_events(); if (err || state != state_last_frame) return err;
+    err = shared_edit_events();
+    if (err || state != state_last_frame) return err;
+    err = shared_engine_events();
+    if (err || state != state_last_frame) return err;
+    err = shared_camera_events();
+    if (err || state != state_last_frame) return err;
 
     struct vec3 rotate = VEC3_ZERO;
     bool rotate_reset = false;
@@ -859,9 +852,12 @@ static int state_edit_scale()
 {
     enum RICO_error err = SUCCESS;
 
-    err = shared_edit_events();   if (err || state != state_last_frame) return err;
-    err = shared_engine_events(); if (err || state != state_last_frame) return err;
-    err = shared_camera_events(); if (err || state != state_last_frame) return err;
+    err = shared_edit_events();
+    if (err || state != state_last_frame) return err;
+    err = shared_engine_events();
+    if (err || state != state_last_frame) return err;
+    err = shared_camera_events();
+    if (err || state != state_last_frame) return err;
 
     struct vec3 scale = VEC3_ZERO;
     bool scale_reset = false;
@@ -950,9 +946,12 @@ static int state_edit_material()
 {
     enum RICO_error err = SUCCESS;
 
-    err = shared_edit_events();   if (err || state != state_last_frame) return err;
-    err = shared_engine_events(); if (err || state != state_last_frame) return err;
-    err = shared_camera_events(); if (err || state != state_last_frame) return err;
+    err = shared_edit_events();
+    if (err || state != state_last_frame) return err;
+    err = shared_engine_events();
+    if (err || state != state_last_frame) return err;
+    err = shared_camera_events();
+    if (err || state != state_last_frame) return err;
 
     // Cycle selected object's material
     if (action_active(ACTION_EDIT_MATERIAL_NEXT))
@@ -976,9 +975,12 @@ static int state_edit_mesh()
 {
     enum RICO_error err = SUCCESS;
 
-    err = shared_edit_events();   if (err || state != state_last_frame) return err;
-    err = shared_engine_events(); if (err || state != state_last_frame) return err;
-    err = shared_camera_events(); if (err || state != state_last_frame) return err;
+    err = shared_edit_events();
+    if (err || state != state_last_frame) return err;
+    err = shared_engine_events();
+    if (err || state != state_last_frame) return err;
+    err = shared_camera_events();
+    if (err || state != state_last_frame) return err;
 
     // Cycle selected object's mesh
     if (action_active(ACTION_EDIT_MESH_NEXT))
@@ -1034,7 +1036,7 @@ static int state_edit_cleanup()
 {
     enum RICO_error err = SUCCESS;
 
-    if (!RICO_state_is_edit())
+    if (RICO_state() & ~RICO_STATE_EDIT)
     {
         string_free_slot(STR_SLOT_SELECTED_OBJ);
     }
@@ -1055,7 +1057,7 @@ static int state_text_input_init()
 static int state_text_input()
 {
     enum RICO_error err = SUCCESS;
-    
+
     if (KEY_PRESSED(SDL_SCANCODE_ESCAPE))
     {
         RICO_ASSERT(state != state_prev);
@@ -1144,16 +1146,16 @@ static int engine_init()
 {
     enum RICO_error err;
 
-    printf("==========================================================\n");
-    printf("#        ______            _______        _              #\n");
-    printf("#        |  __ \\ O        |__   __|      | |             #\n");
-    printf("#        | |__| |_  ___ ___  | | ___  ___| |__           #\n");
-    printf("#        |  _  /| |/ __/ _ \\ | |/ _ \\/ __| '_ \\          #\n");
-    printf("#        | | \\ \\| | |_| (_) || |  __/ |__| | | |         #\n");
-    printf("#        |_|  \\_\\_|\\___\\___/ |_|\\___|\\___|_| |_|         #\n");
-    printf("#                                                        #\n");
-    printf("#              Copyright 2018 Dan Bechard                #\n");
-    printf("==========================================================\n");
+    printf("=========================================================\n");
+    printf("#        ______            _______        _             #\n");
+    printf("#        |  __ \\ O        |__   __|      | |            #\n");
+    printf("#        | |__| |_  ___ ___  | | ___  ___| |__          #\n");
+    printf("#        |  _  /| |/ __/ _ \\ | |/ _ \\/ __| '_ \\         #\n");
+    printf("#        | | \\ \\| | |_| (_) || |  __/ |__| | | |        #\n");
+    printf("#        |_|  \\_\\_|\\___\\___/ |_|\\___|\\___|_| |_|        #\n");
+    printf("#                                                       #\n");
+    printf("#              Copyright 2018 Dan Bechard               #\n");
+    printf("=========================================================\n");
 
     perfs_frequency = SDL_GetPerformanceFrequency();
     last_perfs = SDL_GetPerformanceCounter();
