@@ -281,22 +281,22 @@ extern void RICO_heiro_build(struct rect *bounds, struct rect *cursor,
         struct vec4 color = COLOR_WHITE;
 
         vertices[vert_idx++] = (struct text_vertex) {
-            VEC3(x0, y0, z), VEC2F(u0, v0), color
+            VEC3(x0, y0, z), VEC2(u0, v0), color
         };
         vertices[vert_idx++] = (struct text_vertex) {
-            VEC3(x0, y1, z), VEC2F(u0, v1), color
+            VEC3(x0, y1, z), VEC2(u0, v1), color
         };
         vertices[vert_idx++] = (struct text_vertex) {
-            VEC3(x1, y0, z), VEC2F(u1, v0), color
+            VEC3(x1, y0, z), VEC2(u1, v0), color
         };
         vertices[vert_idx++] = (struct text_vertex) {
-            VEC3(x1, y0, z), VEC2F(u1, v0), color
+            VEC3(x1, y0, z), VEC2(u1, v0), color
         };
         vertices[vert_idx++] = (struct text_vertex) {
-            VEC3(x0, y1, z), VEC2F(u0, v1), color
+            VEC3(x0, y1, z), VEC2(u0, v1), color
         };
         vertices[vert_idx++] = (struct text_vertex) {
-            VEC3(x1, y1, z), VEC2F(u1, v1), color
+            VEC3(x1, y1, z), VEC2(u1, v1), color
         };
 
         s32 adv = (glyph->advance_x >> 6);

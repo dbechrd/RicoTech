@@ -13,7 +13,7 @@ struct RICO_heiro_glyph
     s32 advance_y;
 
     GLuint gl_id;
-    struct vec2f uvs[2];
+    struct vec2 uvs[2];
 };
 
 int rico_heiro_init();

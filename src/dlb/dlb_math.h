@@ -58,7 +58,7 @@ struct rect
     };
 };
 
-struct vec2f
+struct vec2
 {
     union
     {
@@ -153,14 +153,14 @@ struct quat
 //       technically valid in VS, it makes Intellisense whine and misbehave.
 #if defined(__GNUC__) || defined(__clang__) // || defined(_MSC_VER)
 #define RECT(x, y, w, h) ((const struct size) {{{ x, y, w, h }}})
-#define VEC2F(x, y)      ((const struct vec2f) {{{ x, y }}})
+#define VEC2(x, y)      ((const struct vec2) {{{ x, y }}})
 #define VEC2I(x, y)      ((const struct vec2i) {{{ x, y }}})
 #define VEC3(x, y, z)    ((const struct vec3) {{{ x, y, z }}})
 #define VEC4(x, y, z, w) ((const struct vec4) {{{ x, y, z, w }}})
 #define QUAT(w, x, y, z) ((const struct quat) { w, {{ x, y, z }}})
 #else
 #define RECT(x, y, w, h) ((const struct rect) { x, y, w, h })
-#define VEC2F(x, y)      ((const struct vec2f) { x, y })
+#define VEC2(x, y)       ((const struct vec2) { x, y })
 #define VEC2I(x, y)      ((const struct vec2i) { x, y })
 #define VEC3(x, y, z)    ((const struct vec3) { x, y, z })
 #define VEC4(x, y, z, w) ((const struct vec4) { x, y, z, w })
@@ -176,11 +176,11 @@ struct quat
 #define PAD(left, top, right, buttom) RECT(left, top, right, buttom)
 
 
-#define VEC2_ZERO          VEC2F(0.0f, 0.0f)
-#define VEC2_RIGHT         VEC2F(1.0f, 0.0f)
-#define VEC2_LEFT          VEC2F(-1.0f, 0.0f)
-#define VEC2_UP            VEC2F(0.0f, 1.0f)
-#define VEC2_DOWN          VEC2F(0.0f, -1.0f)
+#define VEC2_ZERO          VEC2(0.0f, 0.0f)
+#define VEC2_RIGHT         VEC2(1.0f, 0.0f)
+#define VEC2_LEFT          VEC2(-1.0f, 0.0f)
+#define VEC2_UP            VEC2(0.0f, 1.0f)
+#define VEC2_DOWN          VEC2(0.0f, -1.0f)
 
 #define VEC3_ZERO          VEC3(0.0f, 0.0f, 0.0f)
 #define VEC3_ONE           VEC3(1.0f, 1.0f, 1.0f)

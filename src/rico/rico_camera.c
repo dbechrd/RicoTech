@@ -9,8 +9,8 @@ static struct RICO_camera cam_player;
 
 #define CAM_ACC 0.2f
 #define CAM_FRICTION_MUL 0.95f
-#define LOOK_SENSITIVITY_X 0.1f
-#define LOOK_SENSITIVITY_Y 0.1f
+#define LOOK_SENSITIVITY_X 0.01f
+#define LOOK_SENSITIVITY_Y 0.01f
 
 extern struct RICO_camera* RICO_get_camera_hack()
 {

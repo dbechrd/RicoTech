@@ -31,75 +31,26 @@ static program_attribs_helper program_attribs[PROG_COUNT];
 struct pbr_vertex
 {
     struct vec3 pos;
-    struct vec2f uv;
+    struct vec2 uv;
     struct vec4 col;
     struct vec3 normal;
 };
 
+#define UNIFORM(type) GLint
+struct pbr_program_locations
+{
+#   include "ri_progdef.h"
+};
+#undef UNIFORM
+
+#define UNIFORM(type) type
 struct pbr_program
 {
     struct program program;
-    
-    // Vertex shader
-    struct
-    {
-        GLint scale_uv; // vec3
-        GLint model;    // mat4
-        GLint view;     // mat4
-        GLint proj;     // mat4
-
-        // Vertex attributes
-        struct
-        {
-            GLint position; // vec3
-            GLint uv;       // vec2
-            GLint color;    // vec3
-            GLint normal;   // vec3
-        }
-        attrs;
-    }
-    vert;
-    
-    // Fragment shader
-    struct
-    {
-        // Camera
-        struct
-        {
-            GLint pos; // vec3
-        }
-        camera;
-
-        // Material
-        struct
-        {
-            // rgb: metallic ? specular.rgb : albedo.rgb
-            //   a: metallic ?            1 : opacity
-            GLint tex0; // sampler2D
-
-            // r: metallic
-            // g: roughness
-            // b: ao
-            // a: NOT USED
-            GLint tex1; // sampler2D
-
-            // rgb: emission color
-            //   a: NOT USED
-            GLint tex2; // sampler2D
-        }
-        material;
-
-        // Light
-        struct
-        {
-            GLint pos;       // vec3
-            GLint color;     // vec3
-            GLint intensity; // float
-        }
-        light;
-    }
-    frag;
+    struct pbr_program_locations locations;
+#   include "ri_progdef.h"
 };
+#undef UNIFORM
 
 static void program_pbr_attribs();
 static int make_program_pbr(struct pbr_program **_program);
@@ -115,7 +66,7 @@ static void free_program_pbr(struct pbr_program **program);
 struct prim_vertex
 {
     struct vec3 pos;
-    struct vec2f uv;
+    struct vec2 uv;
     struct vec4 col;
 };
 
@@ -164,7 +115,7 @@ static void free_program_primitive(struct prim_program **program);
 struct text_vertex
 {
     struct vec3 pos;
-    struct vec2f uv;
+    struct vec2 uv;
     struct vec4 col;
 };
 

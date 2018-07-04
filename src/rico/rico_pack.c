@@ -965,7 +965,7 @@ extern int RICO_load_obj_file(u32 pack_id, const char *filename,
 
     // TODO: Colossal waste of memory, just preprocess the file and bucket_count them!
     struct vec3 *positions = calloc(MESH_VERTICES_MAX, sizeof(*positions));
-    struct vec2f *texcoords = calloc(MESH_VERTICES_MAX, sizeof(*texcoords));
+    struct vec2 *texcoords = calloc(MESH_VERTICES_MAX, sizeof(*texcoords));
     struct vec3 *normals = calloc(MESH_VERTICES_MAX, sizeof(*normals));
     struct pbr_vertex *vertices = calloc(MESH_VERTICES_MAX, sizeof(*vertices));
     GLuint *elements = calloc(MESH_VERTICES_MAX, sizeof(*elements));

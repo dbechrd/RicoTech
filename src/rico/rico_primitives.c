@@ -198,10 +198,10 @@ extern void RICO_prim_draw_sprite(const struct rect *rect,
     float v0 = sprite->uvs[0].v;
     float u1 = sprite->uvs[1].u;
     float v1 = sprite->uvs[1].v;
-    verts[0].uv = VEC2F(u0, v0);
-    verts[1].uv = VEC2F(u0, v1);
-    verts[2].uv = VEC2F(u1, v0);
-    verts[3].uv = VEC2F(u1, v1);
+    verts[0].uv = VEC2(u0, v0);
+    verts[1].uv = VEC2(u0, v1);
+    verts[2].uv = VEC2(u1, v0);
+    verts[3].uv = VEC2(u1, v1);
 
     prim_draw_quad(ARRAY_COUNT(verts), verts, color, &MAT4_IDENT, &MAT4_IDENT,
                    &cam_player.ortho_matrix, sprite->sheet->tex_id);
@@ -227,10 +227,10 @@ extern void RICO_prim_draw_rect_tex(const struct rect *rect,
     float v0 = 0.0f;
     float u1 = 1.0f;
     float v1 = 1.0f;
-    verts[0].uv = VEC2F(u0, v0);
-    verts[1].uv = VEC2F(u0, v1);
-    verts[2].uv = VEC2F(u1, v0);
-    verts[3].uv = VEC2F(u1, v1);
+    verts[0].uv = VEC2(u0, v0);
+    verts[1].uv = VEC2(u0, v1);
+    verts[2].uv = VEC2(u1, v0);
+    verts[3].uv = VEC2(u1, v1);
 
     prim_draw_quad(ARRAY_COUNT(verts), verts, color, &MAT4_IDENT, &MAT4_IDENT,
                    &cam_player.ortho_matrix, tex_id);

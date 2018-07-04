@@ -10,8 +10,6 @@ Objects
 [ ] Snap to grid
 [ ] Snap to object (per-object type, relative "snap points")
 [ ] Directly edit properties (textbox)
-[ ] Set texture
-[ ] Set mesh
 [-] Rotate around arbitrary point
 
 ========================================
@@ -25,18 +23,14 @@ Animation
 [ ] Change mesh
 [ ] Change type-specific "properties" (e.g. toggle light on/off)
 [-] Global scale?
-[n] Deform mesh
 
 Collision
 ---------
-[ ] Ray
-[ ] OBB
-[ ] Sphere
-[-] Ellipsoid
-[-] Scene graph (kd-tree, BSP?)
-[-] Frustum culling
-[-] BVH
-[-] Mesh
+[ ] Ellipsoid
+[ ] Scene graph (kd-tree, BSP?)
+[ ] Frustum culling
+[ ] BVH
+[ ] Mesh
 
 Foliage
 -------
@@ -45,8 +39,6 @@ Foliage
 
 Input
 -----
-[ ] FPS camera? How to lock pitch / yaw with quaternions? Store current pitch /
-    yaw values and convert to quat whenever they change?
 [ ] Better mouse smoothing / accuracy?
     "The Witness needs Raw Input to get good low-level relative mouse movements"
     https://mollyrocket.com/casey/stream_0007.html

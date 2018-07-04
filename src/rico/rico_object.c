@@ -291,35 +291,34 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
 
     // TODO: Get the light out of here!!! It should't be updating its position
     //       in the render function, argh!
-    struct vec3 light_pos = { 0 };
-
-    light_pos = cam_player.pos;
+    struct vec3 light_pos = cam_player.pos;
     v3_add(&light_pos, &VEC3(0.0f, -0.5f, 0.0f));
 
-    struct light_point light;
-    light.position = light_pos;
-    light.color = VEC3(1.0f, 1.0f, 0.8f);
-    light.intensity = (RICO_lighting_enabled) ? 4.0f : 0.0f;
-    light.kc = 1.0f;
-    light.kl = 0.05f;
-    light.kq = 0.001f;
+    prog->frag.light.pos = light_pos;
+    prog->frag.light.color = VEC3(1.0f, 1.0f, 0.8f);
+    prog->frag.light.intensity = (RICO_lighting_enabled) ? 4.0f : 0.0f;
+    prog->frag.light.enabled = true;
+    //prog->frag.light.kc = 1.0f;
+    //prog->frag.light.kl = 0.05f;
+    //prog->frag.light.kq = 0.001f;
 
-    glUniform3fv(prog->frag.camera.pos, 1, (const GLfloat *)&camera->pos);
+    glUniform3fv(prog->locations.frag.camera.pos, 1, (const GLfloat *)&camera->pos);
 
     // Material textures
     // Note: We don't have to do this every time as long as we make sure
     //       the correct textures are bound before each draw to the texture
     //       index assumed when the program was initialized.
-    glUniform1i(prog->frag.material.tex0, 0);
-    glUniform1i(prog->frag.material.tex1, 1);
-    glUniform1i(prog->frag.material.tex2, 2);
+    glUniform1i(prog->locations.frag.material.tex0, 0);
+    glUniform1i(prog->locations.frag.material.tex1, 1);
+    glUniform1i(prog->locations.frag.material.tex2, 2);
 
     // Lighting
-    glUniform3fv(prog->frag.light.pos, 1, (const GLfloat *)&light.position);
-    glUniform3fv(prog->frag.light.color, 1, (const GLfloat *)&light.color);
-    glUniform1f(prog->frag.light.intensity, light.intensity);
+    glUniform3fv(prog->locations.frag.light.pos, 1, (const GLfloat *)&prog->frag.light.pos.a);
+    glUniform3fv(prog->locations.frag.light.color, 1, (const GLfloat *)&prog->frag.light.color);
+    glUniform1f(prog->locations.frag.light.intensity, prog->frag.light.intensity);
+    glUniform1i(prog->locations.frag.light.enabled, prog->frag.light.enabled);
 
-    glUniform2f(prog->vert.scale_uv, 1.0f, 1.0f);
+    glUniform2f(prog->locations.vert.scale_uv, 1.0f, 1.0f);
 
     struct RICO_object *obj = 0;
     enum RICO_object_type prev_type = RICO_OBJECT_TYPE_NULL;
@@ -340,8 +339,8 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
         {
             glPolygonMode(GL_FRONT_AND_BACK, camera->fill_mode);
 
-            glUniformMatrix4fv(prog->vert.proj, 1, GL_TRUE, camera->proj_matrix->a);
-            glUniformMatrix4fv(prog->vert.view, 1, GL_TRUE, camera->view_matrix.a);
+            glUniformMatrix4fv(prog->locations.vert.proj, 1, GL_TRUE, camera->proj_matrix->a);
+            glUniformMatrix4fv(prog->locations.vert.view, 1, GL_TRUE, camera->view_matrix.a);
 
             prev_type = obj->type;
         }
@@ -356,15 +355,15 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
         //       uniformly scaled?
         if (obj->type == RICO_OBJECT_TYPE_TERRAIN)
 		{
-			glUniform2f(prog->vert.scale_uv, 100.0f, 100.0f);
+			glUniform2f(prog->locations.vert.scale_uv, 100.0f, 100.0f);
 		}
         else
         {
-            glUniform2f(prog->vert.scale_uv, obj->xform.scale.x, obj->xform.scale.y);
+            glUniform2f(prog->locations.vert.scale_uv, obj->xform.scale.x, obj->xform.scale.y);
         }
 
         // Model matrix
-        glUniformMatrix4fv(prog->vert.model, 1, GL_TRUE,
+        glUniformMatrix4fv(prog->locations.vert.model, 1, GL_TRUE,
                            obj->xform.matrix.a);
 
         // Bind material
