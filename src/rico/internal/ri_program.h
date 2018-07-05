@@ -1,18 +1,7 @@
 #ifndef RICO_INTERNAL_PROGRAM_H
 #define RICO_INTERNAL_PROGRAM_H
 
-#define LOCATION_PBR_POSITION 0
-#define LOCATION_PBR_UV       1
-#define LOCATION_PBR_COLOR    2
-#define LOCATION_PBR_NORMAL   3
-
-#define LOCATION_PRIM_POSITION 0
-#define LOCATION_PRIM_UV       1
-#define LOCATION_PRIM_COLOR    2
-
-#define LOCATION_TEXT_POSITION 0
-#define LOCATION_TEXT_UV       1
-#define LOCATION_TEXT_COLOR    2
+#define NUM_LIGHTS 4
 
 enum program_type
 {
@@ -72,6 +61,19 @@ struct prim_program
 #   include "ri_program_prim.h"
 };
 #undef UNIFORM
+
+#define LOCATION_PBR_POSITION 0
+#define LOCATION_PBR_UV       1
+#define LOCATION_PBR_COLOR    2
+#define LOCATION_PBR_NORMAL   3
+
+#define LOCATION_PRIM_POSITION 0
+#define LOCATION_PRIM_UV       1
+#define LOCATION_PRIM_COLOR    2
+
+#define LOCATION_TEXT_POSITION 0
+#define LOCATION_TEXT_UV       1
+#define LOCATION_TEXT_COLOR    2
 
 struct pbr_vertex
 {

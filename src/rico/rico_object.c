@@ -294,13 +294,20 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
 
     //struct vec3 light_pos = cam_player.pos;
     //v3_add(&light_pos, &VEC3(0.0f, -0.5f, 0.0f));
-    struct vec3 light_pos = { 0 };
-    v3_add(&light_pos, &VEC3(1.0f, 2.0f, 3.0f));
+    prog->frag.lights[0].pos = VEC3(1.0f, 2.0f, 3.0f);
+    prog->frag.lights[0].color = VEC3(0.1f, 0.1f, 1.0f); //VEC3(1.0f, 1.0f, 0.8f);
+    prog->frag.lights[0].intensity = (RICO_lighting_enabled) ? 20.0f : 0.0f;
+    prog->frag.lights[0].enabled = true;
 
-    prog->frag.light.pos = light_pos;
-    prog->frag.light.color = VEC3(1.0f, 1.0f, 0.8f);
-    prog->frag.light.intensity = (RICO_lighting_enabled) ? 20.0f : 0.0f;
-    prog->frag.light.enabled = true;
+    prog->frag.lights[1].pos = VEC3(-4.0f, 2.0f, 3.0f);
+    prog->frag.lights[1].color = VEC3(1.0f, 0.2f, 0.0f);
+    prog->frag.lights[1].intensity = (RICO_lighting_enabled) ? 20.0f : 0.0f;
+    prog->frag.lights[1].enabled = true;
+
+    prog->frag.lights[2].pos = VEC3(4.0f, 2.0f, 3.0f);
+    prog->frag.lights[2].color = VEC3(0.2f, 1.0f, 0.0f);
+    prog->frag.lights[2].intensity = (RICO_lighting_enabled) ? 20.0f : 0.0f;
+    prog->frag.lights[2].enabled = true;
     //prog->frag.light.kc = 1.0f;
     //prog->frag.light.kl = 0.05f;
     //prog->frag.light.kq = 0.001f;
@@ -317,12 +324,20 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
     glUniform1i(prog->locations.frag.material.tex2, 2);
 
     // Lighting
-    glUniform3fv(prog->locations.frag.light.pos, 1, &prog->frag.light.pos.x);
-    glUniform3fv(prog->locations.frag.light.color, 1,
-                 &prog->frag.light.color.r);
-    glUniform1f(prog->locations.frag.light.intensity,
-                prog->frag.light.intensity);
-    glUniform1i(prog->locations.frag.light.enabled, prog->frag.light.enabled);
+    for (u32 i = 0; i < NUM_LIGHTS; ++i)
+    {
+        if (!prog->frag.lights[i].enabled)
+            continue;
+
+        glUniform3fv(prog->locations.frag.lights[i].pos, 1,
+                     &prog->frag.lights[i].pos.x);
+        glUniform3fv(prog->locations.frag.lights[i].color, 1,
+                     &prog->frag.lights[i].color.r);
+        glUniform1f(prog->locations.frag.lights[i].intensity,
+                    prog->frag.lights[i].intensity);
+        glUniform1i(prog->locations.frag.lights[i].enabled,
+                    prog->frag.lights[i].enabled);
+    };
 
     glUniform2f(prog->locations.vert.scale_uv, 1.0f, 1.0f);
 
@@ -408,7 +423,7 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
         if (obj->type == RICO_OBJECT_TYPE_STRING_SCREEN)
             continue;
 
-        if (RICO_state() & RICO_STATE_EDIT)
+        if (RICO_state_is_edit())
         {
             struct vec4 color = (obj->selected)
                 ? COLOR_RED

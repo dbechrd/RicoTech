@@ -182,6 +182,19 @@ extern enum rico_state RICO_state()
 {
     return state;
 }
+extern bool RICO_state_is_menu()
+{
+    return (state == STATE_MENU_QUIT ||
+            state == STATE_TEXT_INPUT);
+}
+extern bool RICO_state_is_edit()
+{
+    return (state == STATE_EDIT_TRANSLATE ||
+            state == STATE_EDIT_ROTATE ||
+            state == STATE_EDIT_SCALE ||
+            state == STATE_EDIT_MATERIAL ||
+            state == STATE_EDIT_MESH);
+}
 
 static void render_fps(r64 fps, r64 ms, r64 mcyc)
 {
@@ -334,7 +347,7 @@ extern int RICO_update()
 
     // TODO: Handle mouse movements in the state callbacks. Camera movement
     //       is not the correct response to mouse movement in all states.
-    if (mouse_lock && (RICO_state() & ~RICO_STATE_MENU))
+    if (mouse_lock && !RICO_state_is_menu())
     {
         struct vec3 camera_acc = player_acc;
         if (player_sprint) v3_scalef(&camera_acc, CAM_SPRINT_MULTIPLIER);
@@ -551,7 +564,7 @@ static int state_play_explore()
 
 static int shared_edit_events()
 {
-    RICO_ASSERT(RICO_state() & RICO_STATE_EDIT);
+    RICO_ASSERT(RICO_state_is_edit());
 
     enum RICO_error err = SUCCESS;
 
@@ -1036,7 +1049,7 @@ static int state_edit_cleanup()
 {
     enum RICO_error err = SUCCESS;
 
-    if (RICO_state() & ~RICO_STATE_EDIT)
+    if (RICO_state_is_edit())
     {
         string_free_slot(STR_SLOT_SELECTED_OBJ);
     }

@@ -55,6 +55,6 @@ struct
         UNIFORM(float)       intensity;
         UNIFORM(bool)        enabled;
     }
-    light;
+    lights[NUM_LIGHTS];
 }
 frag;

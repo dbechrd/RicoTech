@@ -57,7 +57,7 @@ static void *ui_push_element(u32 bytes, enum RICO_ui_element_type type,
 #if 1
     struct RICO_ui_element *element = ui_stack_push(bytes);
     element->type = type;
-    
+
     if (parent)
     {
         if (!parent->first_child)
@@ -134,7 +134,7 @@ static bool ui_layout_element(struct RICO_ui_element *element, s32 x, s32 y,
     s32 start_h = margin_h + pad_h;
 
     ////////////////////////////////////////////////////////////////////////////
-    
+
     s32 next_x = start_x;
     s32 next_y = start_y;
 

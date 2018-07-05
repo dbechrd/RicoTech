@@ -64,20 +64,20 @@ struct rico_keyevent
 #define EVENT_CHORD(k0, k1) EVENT{ RICO_KEYEVENT_CHORD, k0, k1 }
 #endif
 
-#define RICO_STATES(f) \
-    f(STATE_PLAY_EXPLORE,         0x1) \
-    f(STATE_EDIT_TRANSLATE,       0x2) \
-    f(STATE_EDIT_ROTATE,          0x4) \
-    f(STATE_EDIT_SCALE,           0x8) \
-    f(STATE_EDIT_MATERIAL,       0x10) \
-    f(STATE_EDIT_MESH,           0x20) \
-    f(STATE_MENU_QUIT,           0x40) \
-    f(STATE_TEXT_INPUT,          0x80) \
-    f(STATE_ENGINE_SHUTDOWN,    0x100)
+#define RICO_STATES(f)      \
+    f(STATE_PLAY_EXPLORE)   \
+    f(STATE_EDIT_TRANSLATE) \
+    f(STATE_EDIT_ROTATE)    \
+    f(STATE_EDIT_SCALE)     \
+    f(STATE_EDIT_MATERIAL)  \
+    f(STATE_EDIT_MESH)      \
+    f(STATE_MENU_QUIT)      \
+    f(STATE_TEXT_INPUT)     \
+    f(STATE_ENGINE_SHUTDOWN)
 
 enum rico_state
 {
-    RICO_STATES(GEN_LIST_VALUES)
+    RICO_STATES(GEN_LIST)
     STATE_COUNT
 };
 extern const char *rico_state_string[STATE_COUNT];
@@ -186,6 +186,8 @@ extern void RICO_simulation_pause();
 extern void RICO_simulation_play();
 extern bool RICO_simulation_prev();
 extern enum rico_state RICO_state();
+extern bool RICO_state_is_menu();
+extern bool RICO_state_is_edit();
 extern bool RICO_simulation_paused();
 extern int RICO_update();
 extern void RICO_render_objects();

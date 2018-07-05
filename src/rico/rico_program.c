@@ -106,21 +106,32 @@ static void program_pbr_get_locations(struct pbr_program *p)
         program_get_uniform_location(p->program.gl_id, "material.tex1");
     p->locations.frag.material.tex2 =
         program_get_uniform_location(p->program.gl_id, "material.tex2");
-    p->locations.frag.light.pos =
-        program_get_uniform_location(p->program.gl_id, "light.P");
-    p->locations.frag.light.color =
-        program_get_uniform_location(p->program.gl_id, "light.color");
-    p->locations.frag.light.intensity =
-        program_get_uniform_location(p->program.gl_id, "light.intensity");
-    p->locations.frag.light.enabled =
-        program_get_uniform_location(p->program.gl_id, "light.enabled");
+
+#define POINT_LIGHT(i)                                                        \
+p->locations.frag.lights[i].pos =                                             \
+    program_get_uniform_location(p->program.gl_id, "lights["#i"].P");         \
+p->locations.frag.lights[i].color =                                           \
+    program_get_uniform_location(p->program.gl_id, "lights["#i"].color");     \
+p->locations.frag.lights[i].intensity =                                       \
+    program_get_uniform_location(p->program.gl_id, "lights["#i"].intensity"); \
+p->locations.frag.lights[i].enabled =                                         \
+    program_get_uniform_location(p->program.gl_id, "lights["#i"].enabled");
+
+    POINT_LIGHT(0);
+    POINT_LIGHT(1);
+    POINT_LIGHT(2);
+    POINT_LIGHT(3);
+    RICO_ASSERT(4 == NUM_LIGHTS);
+#undef POINT_LIGHT
+
     RICO_ASSERT(p->locations.frag.camera.pos >= 0);
     RICO_ASSERT(p->locations.frag.material.tex0 >= 0);
     RICO_ASSERT(p->locations.frag.material.tex1 >= 0);
     RICO_ASSERT(p->locations.frag.material.tex2 >= 0);
-    RICO_ASSERT(p->locations.frag.light.pos >= 0);
-    RICO_ASSERT(p->locations.frag.light.color >= 0);
-    RICO_ASSERT(p->locations.frag.light.intensity >= 0);
+    RICO_ASSERT(p->locations.frag.lights[0].pos >= 0);
+    RICO_ASSERT(p->locations.frag.lights[0].color >= 0);
+    RICO_ASSERT(p->locations.frag.lights[0].intensity >= 0);
+    RICO_ASSERT(p->locations.frag.lights[0].enabled >= 0);
     // TODO: Turn these back on when they're being used
     //RICO_ASSERT(p->locations.frag.light.enabled >= 0);
 }

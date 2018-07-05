@@ -46,15 +46,18 @@ struct Material {
     sampler2D tex2;
 };
 
+#define NUM_LIGHTS 4
+
 struct PointLight {
     vec3 P;
     vec3 color;
     float intensity;
+    bool enabled;
 };
 
 uniform Camera camera;
 uniform Material material;
-uniform PointLight light;
+uniform PointLight lights[NUM_LIGHTS];
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
 {
@@ -62,11 +65,11 @@ float DistributionGGX(vec3 N, vec3 H, float roughness)
     float a2     = a * a;
     float NdotH  = max(dot(N, H), 0.0);
     float NdotH2 = NdotH * NdotH;
-	
+
     float nom   = a2;
     float denom = (NdotH2 * (a2 - 1.0) + 1.0);
     denom = PI * denom * denom;
-	
+
     return nom / denom;
 }
 
@@ -77,7 +80,7 @@ float GeometrySchlickGGX(float NdotV, float roughness)
 
     float nom   = NdotV;
     float denom = NdotV * (1.0 - k) + k;
-	
+
     return nom / denom;
 }
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
@@ -86,7 +89,7 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
     float NdotL = max(dot(N, L), 0.0);
     float ggx2  = GeometrySchlickGGX(NdotV, roughness);
     float ggx1  = GeometrySchlickGGX(NdotL, roughness);
-	
+
     return ggx1 * ggx2;
 }
 
@@ -104,13 +107,16 @@ void main()
     F0 = mix(F0, mtl_albedo, mtl_metallic);
 
     vec3 L0 = vec3(0.0);
-    for (int i = 0; i < 1; ++i)
+    for (int i = 0; i < NUM_LIGHTS; ++i)
     {
-        vec3 L = normalize(light.P - vertex.P);
+        if (!lights[i].enabled)
+            continue;
+
+        vec3 L = normalize(lights[i].P - vertex.P);
         vec3 H = normalize(V + L);
-        float dist = length(light.P - vertex.P);
-        float attenuation = light.intensity / (dist * dist);
-        vec3 radiance = light.color * attenuation;
+        float dist = length(lights[i].P - vertex.P);
+        float attenuation = lights[i].intensity / (dist * dist);
+        vec3 radiance = lights[i].color * attenuation;
 
         float D = DistributionGGX(N, H, mtl_roughness);
         float G = GeometrySmith(N, V, L, mtl_roughness);

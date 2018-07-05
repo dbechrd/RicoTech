@@ -1170,7 +1170,7 @@ int main(int argc, char **argv)
             u32 action;
             while (RICO_key_event(&action))
             {
-                if (RICO_state() & RICO_STATE_EDIT || RICO_simulation_paused())
+                if (RICO_state_is_edit() || RICO_simulation_paused())
                     continue;
 
                 switch (action)
@@ -1204,12 +1204,12 @@ int main(int argc, char **argv)
             RICO_prim_draw_sphere(&rayviz_sphere, &COLOR_YELLOW);
 
         // Render overlays
-        if (RICO_state() & RICO_STATE_EDIT)
+        if (RICO_state_is_edit())
         {
             render_editor_ui();
             RICO_render_editor();
         }
-        else if (RICO_state() & RICO_STATE_MENU)
+        else if (RICO_state_is_menu())
         {
             RICO_render_editor();
         }
