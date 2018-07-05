@@ -110,6 +110,7 @@ static int init_sdl()
     err = sdl_gl_attrib(SDL_GL_DOUBLEBUFFER, 1);        if (err) return err;
     err = sdl_gl_attrib(SDL_GL_DEPTH_SIZE, 24);         if (err) return err;
 
+    // Anti-aliasing
     err = sdl_gl_attrib(SDL_GL_MULTISAMPLEBUFFERS, 1);  if (err) return err;
     err = sdl_gl_attrib(SDL_GL_MULTISAMPLESAMPLES, 16); if (err) return err;
     err = sdl_gl_attrib(SDL_GL_ACCELERATED_VISUAL, 1);  if (err) return err;

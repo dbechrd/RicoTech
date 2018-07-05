@@ -17,18 +17,23 @@ struct Camera {
 };
 
 // NOTE: Using SRGB_ALPHA in texture_upload, so don't need this atm
-//#define mtl_albedo    pow(texture(material.tex0, vertex.UV).rgb, vec3(gamma))
-//#define mtl_opacity   texture(material.tex0, vertex.UV).a
-//#define mtl_metallic  pow(texture(material.tex1, vertex.UV).r, gamma)
-//#define mtl_roughness pow(texture(material.tex1, vertex.UV).g, gamma)
-//#define mtl_ao        pow(texture(material.tex1, vertex.UV).b, gamma)
-
-#define mtl_albedo    texture(material.tex0, vertex.UV).rgb
-#define mtl_opacity   texture(material.tex0, vertex.UV).a
-#define mtl_metallic  texture(material.tex1, vertex.UV).r
-#define mtl_roughness texture(material.tex1, vertex.UV).g
-#define mtl_ao        texture(material.tex1, vertex.UV).b
-#define mtl_emission  texture(material.tex2, vertex.UV)
+#if 0
+#  define mtl_albedo    pow(texture(material.tex0, vertex.UV).rgb, vec3(gamma))
+#  define mtl_opacity   texture(material.tex0, vertex.UV).a
+#  define mtl_metallic  pow(texture(material.tex1, vertex.UV).r, gamma)
+#  define mtl_roughness pow(texture(material.tex1, vertex.UV).g, gamma)
+#  define mtl_ao        pow(texture(material.tex1, vertex.UV).b, gamma)
+#  define mtl_emission  pow(texture(material.tex2, vertex.UV).rgb, vec3(gamma))
+#  define mtl_emit      step(0.01, texture(material.tex2, vertex.UV).a)
+#else
+#  define mtl_albedo    texture(material.tex0, vertex.UV).rgb
+#  define mtl_opacity   texture(material.tex0, vertex.UV).a
+#  define mtl_metallic  texture(material.tex1, vertex.UV).r
+#  define mtl_roughness texture(material.tex1, vertex.UV).g
+#  define mtl_ao        texture(material.tex1, vertex.UV).b
+#  define mtl_emission  texture(material.tex2, vertex.UV).rgb
+#  define mtl_emit      step(0.01, texture(material.tex2, vertex.UV).a)
+#endif
 
 struct Material {
     // rgb: metallic ? specular.rgb : albedo.rgb
@@ -141,7 +146,7 @@ void main()
     color = color / (color + vec3(1.0));
     color = pow(color, vec3(1.0/2.2));
 
-    vec3 emission = mix(vec3(0), mtl_emission.rgb, step(0.01, mtl_emission.a));
+    vec3 emission = mix(vec3(0), mtl_emission, mtl_emit);
     color = color + emission;
 
     frag_color = vec4(color, 1.0);
