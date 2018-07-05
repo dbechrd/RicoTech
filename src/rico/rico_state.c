@@ -1154,7 +1154,7 @@ static int engine_init()
     printf("#        | | \\ \\| | |_| (_) || |  __/ |__| | | |        #\n");
     printf("#        |_|  \\_\\_|\\___\\___/ |_|\\___|\\___|_| |_|        #\n");
     printf("#                                                       #\n");
-    printf("#              Copyright 2018 Dan Bechard               #\n");
+    printf("#              Copyright 2018  Dan Bechard              #\n");
     printf("=========================================================\n");
 
     perfs_frequency = SDL_GetPerformanceFrequency();

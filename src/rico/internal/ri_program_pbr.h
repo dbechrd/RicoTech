@@ -32,17 +32,17 @@ struct
     struct
     {
         // rgb: metallic ? specular.rgb : albedo.rgb
-        //   a: metallic ?            1 : opacity   
+        //   a: metallic ?            1 : opacity
         UNIFORM(GLint) tex0; // sampler2D
 
-        // r: metallic 
+        // r: metallic
         // g: roughness
-        // b: ao       
-        // a: NOT USED 
+        // b: ao
+        // a: NOT USED
         UNIFORM(GLint) tex1; // sampler2D
 
         // rgb: emission color
-        //   a: NOT USED      
+        //   a: NOT USED
         UNIFORM(GLint) tex2; // sampler2D
     }
     material;
