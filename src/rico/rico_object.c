@@ -283,8 +283,12 @@ static bool object_collide_ray_type(pkid *_object_id, float *_dist,
     if (_dist) *_dist = closest;
     return collided;
 }
-static void object_render(struct pack *pack, const struct RICO_camera *camera)
+
+static void object_render_all(r64 alpha, struct RICO_camera *camera)
 {
+    // TODO: Interpolate / extrapolate physics
+    UNUSED(alpha);
+
     struct pbr_program *prog = prog_pbr;
     RICO_ASSERT(prog->program.gl_id);
     glUseProgram(prog->program.gl_id);
@@ -313,7 +317,7 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
     //prog->frag.light.kq = 0.001f;
 
     glUniform3fv(prog->locations.frag.camera.pos, 1,
-                 (const GLfloat *)&camera->pos);
+        (const GLfloat *)&camera->pos);
 
     // Material textures
     // Note: We don't have to do this every time as long as we make sure
@@ -341,6 +345,57 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
 
     glUniform2f(prog->locations.vert.scale_uv, 1.0f, 1.0f);
 
+    glPolygonMode(GL_FRONT_AND_BACK, camera->fill_mode);
+
+    glUniformMatrix4fv(prog->locations.vert.proj, 1, GL_TRUE,
+                       camera->proj_matrix->a);
+    glUniformMatrix4fv(prog->locations.vert.view, 1, GL_TRUE,
+                       camera->view_matrix.a);
+
+    const GLint model_location = prog->locations.vert.model;
+
+    // Render objects
+    for (u32 i = 1; i < ARRAY_COUNT(packs); ++i)
+    {
+        if (!packs[i]) continue;
+
+        object_render(packs[i], model_location);
+    }
+
+    glUseProgram(0);
+
+    // TODO: Batch these
+    // Render bounding boxes
+    for (u32 i = 1; i < ARRAY_COUNT(packs); ++i)
+    {
+        if (!packs[i]) continue;
+
+        for (u32 index = 1; index < packs[i]->blobs_used; ++index)
+        {
+            if (packs[i]->index[index].type != RICO_HND_OBJECT)
+                continue;
+
+            struct RICO_object *obj = pack_read(packs[i], index);
+            if (obj->type == RICO_OBJECT_TYPE_STRING_SCREEN)
+                continue;
+
+            if (RICO_state_is_edit())
+            {
+                struct vec4 color = (obj->selected)
+                    ? COLOR_RED
+                    : COLOR_DARK_WHITE_HIGHLIGHT;
+                RICO_prim_draw_bbox_xform(&obj->bbox, &color,
+                                          &obj->xform.matrix);
+            }
+        }
+    }
+
+    glUseProgram(0);
+}
+static void object_render(struct pack *pack, GLint model_location)
+{
+    struct pbr_program *prog = prog_pbr;
+
     struct RICO_object *obj = 0;
     enum RICO_object_type prev_type = RICO_OBJECT_TYPE_NULL;
     for (u32 index = 1; index < pack->blobs_used; ++index)
@@ -356,20 +411,11 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
         printf("[ obj][rndr] name=%s\n", object_name(obj));
 #endif
 
-        if (obj->type != prev_type)
-        {
-            glPolygonMode(GL_FRONT_AND_BACK, camera->fill_mode);
-
-            glUniformMatrix4fv(prog->locations.vert.proj, 1, GL_TRUE,
-                               camera->proj_matrix->a);
-            glUniformMatrix4fv(prog->locations.vert.view, 1, GL_TRUE,
-                               camera->view_matrix.a);
-
-            prev_type = obj->type;
-        }
-
         // Set object-specific uniform values
 
+        // Cleanup: This was kinda dumb to begin with. Just set the UV coords
+        //          of the terrain properly.
+        /*
         // UV-coord scale
         // HACK: This only works when object is uniformly scaled on X/Y
         //       plane.
@@ -385,10 +431,10 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
             glUniform2f(prog->locations.vert.scale_uv, obj->xform.scale.x,
                         obj->xform.scale.y);
         }
+        */
 
         // Model matrix
-        glUniformMatrix4fv(prog->locations.vert.model, 1, GL_TRUE,
-                           obj->xform.matrix.a);
+        glUniformMatrix4fv(model_location, 1, GL_TRUE, obj->xform.matrix.a);
 
         // Bind material
         pkid mat_id = MATERIAL_DEFAULT;
@@ -410,26 +456,6 @@ static void object_render(struct pack *pack, const struct RICO_camera *camera)
 
         // Clean up
         material_unbind(mat_id);
-    }
-    glUseProgram(0);
-
-    // Render bounding boxes
-    for (u32 index = 1; index < pack->blobs_used; ++index)
-    {
-        if (pack->index[index].type != RICO_HND_OBJECT)
-            continue;
-
-        obj = pack_read(pack, index);
-        if (obj->type == RICO_OBJECT_TYPE_STRING_SCREEN)
-            continue;
-
-        if (RICO_state_is_edit())
-        {
-            struct vec4 color = (obj->selected)
-                ? COLOR_RED
-                : COLOR_DARK_WHITE_HIGHLIGHT;
-            RICO_prim_draw_bbox_xform(&obj->bbox, &color, &obj->xform.matrix);
-        }
     }
 }
 static void object_render_ui(struct pack *pack,
@@ -494,19 +520,7 @@ static void object_render_ui(struct pack *pack,
     }
     glUseProgram(0);
 }
-static void object_render_all(r64 alpha, struct RICO_camera *camera)
-{
-    // TODO: Interpolate / extrapolate physics
-    UNUSED(alpha);
 
-	for (u32 i = PACK_COUNT; i < ARRAY_COUNT(packs); ++i)
-	{
-		if (packs[i])
-			object_render(packs[i], camera);
-	}
-	object_render(packs[PACK_TRANSIENT], camera);
-	object_render(packs[PACK_FRAME], camera);
-}
 static void object_print(struct RICO_object *obj)
 {
     string_free_slot(STR_SLOT_SELECTED_OBJ);

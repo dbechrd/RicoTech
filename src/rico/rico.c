@@ -219,6 +219,9 @@ static void init_opengl()
     glBlendEquation(GL_FUNC_ADD);  // GL_FUNC_SUBTRACT w/ green for night vision
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
+
+    // Gamma correction
+    //glEnable(GL_FRAMEBUFFER_SRGB);
 }
 static void window_render()
 {

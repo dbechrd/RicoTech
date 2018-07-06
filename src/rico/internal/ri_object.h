@@ -23,10 +23,10 @@ static bool object_collide_ray(float *_dist, struct RICO_object *obj,
                                const struct ray *ray);
 static bool object_collide_ray_type(pkid *_object_id, float *_dist,
                                     const struct ray *ray);
-static void object_render(struct pack *pack, const struct RICO_camera *camera);
+static void object_render_all(r64 alpha, struct RICO_camera *camera);
+static void object_render(struct pack *pack, GLint model_location);
 static void object_render_ui(struct pack *pack,
                              const struct RICO_camera *camera);
-static void object_render_all(r64 alpha, struct RICO_camera *camera);
 static void object_print(struct RICO_object *obj);
 
 #endif
