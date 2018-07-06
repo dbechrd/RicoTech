@@ -304,5 +304,8 @@
     <ClInclude Include="src\rico\internal\ri_program_text.h">
       <Filter>Header Files\rico\internal</Filter>
     </ClInclude>
+    <ClInclude Include="src\rico\internal\ri_program_shadow.h">
+      <Filter>Header Files\rico\internal</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

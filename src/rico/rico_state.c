@@ -217,15 +217,7 @@ extern int RICO_update()
     ///-------------------------------------------------------------------------
     //| Check for window resizes
     ///-------------------------------------------------------------------------
-    s32 window_w, window_h;
-    RICO_window_size(&window_w, &window_h);
-    if (window_w != SCREEN_WIDTH || window_h != SCREEN_HEIGHT)
-    {
-        // Resize OpenGL viewport
-        glViewport(0, 0, window_w, window_h);
-        SCREEN_WIDTH = window_w;
-        SCREEN_HEIGHT = window_h;
-    }
+    RICO_window_size(&SCREEN_WIDTH, &SCREEN_HEIGHT);
 
     ///-------------------------------------------------------------------------
     //| Query input state
@@ -1096,6 +1088,9 @@ static int rico_init_shaders()
 
     // Create shader programs
     err = make_program_pbr(&prog_pbr);
+    if (err) return err;
+
+    err = make_program_shadow(&prog_shadow);
     if (err) return err;
 
     err = make_program_primitive(&prog_prim);

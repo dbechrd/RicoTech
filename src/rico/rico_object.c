@@ -284,22 +284,139 @@ static bool object_collide_ray_type(pkid *_object_id, float *_dist,
     return collided;
 }
 
+static void temp_create_cubemap(GLuint *tex_id, u32 w, u32 h)
+{
+    glGenTextures(1, tex_id);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, *tex_id);
+
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // Generate the 6 face textures for the cube map
+    for (GLint i = 0; i < 6; ++i)
+    {
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0,
+                     GL_DEPTH_COMPONENT24, w, h, 0, GL_DEPTH_COMPONENT,
+                     GL_UNSIGNED_INT, NULL);
+    }
+
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+}
+
+static void temp_create_framebuffer(GLuint *fbo_id, GLuint tex_id)
+{
+    glGenFramebuffers(1, fbo_id);
+    glBindFramebuffer(GL_FRAMEBUFFER, *fbo_id);
+
+    // Attach shadow cubemap to framebuffer depth
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, tex_id, 0);
+
+    // We don't care about color buffers for shadow map
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+static void temp_render_shadow_cubemap(r64 alpha, struct pbr_light *lights)
+{
+    const u32 tex_w = 1024;
+    const u32 tex_h = 1024;
+
+    // TODO: Refactor this debauchery
+    static struct mat4 shadow_proj = { 0 };
+    static struct mat4 rot_matrices[6] = { 0 };
+    static GLuint shadow_cubemap[NUM_LIGHTS] = { 0 };
+    static GLuint shadow_fbo[NUM_LIGHTS] = { 0 };
+
+    if (!shadow_cubemap[0])
+    {
+        // Calculate projection matrix
+        shadow_proj = mat4_init_perspective((float)tex_w, (float)tex_h, 0.0f,
+                                            Z_FAR, 90.0f);
+
+        // Calculate rotation matrices
+        rot_matrices[0] = mat4_init_rotx(90.0f);  // pos_x
+        rot_matrices[1] = mat4_init_rotx(-90.0f); // neg_x
+        rot_matrices[2] = mat4_init_roty(90.0f);  // pos_y
+        rot_matrices[3] = mat4_init_roty(-90.0f); // neg_y
+        rot_matrices[4] = mat4_init_rotz(90.0f);  // pos_z
+        rot_matrices[5] = mat4_init_rotz(-90.0f); // neg_z
+
+        // DEBUG: Print rotation matrices to log file
+        for (int i = 0; i < 6; i++)
+        {
+            printf("rot_matrix[%d]\n", i);
+            mat4_print(&rot_matrices[i]);
+            fflush(stdout);
+        }
+
+        for (int i = 0; i < NUM_LIGHTS; ++i)
+        {
+            temp_create_cubemap(&shadow_cubemap[i], tex_w, tex_h);
+        }
+    }
+
+    if (!shadow_fbo[0])
+    {
+        for (int i = 0; i < NUM_LIGHTS; ++i)
+        {
+            temp_create_framebuffer(&shadow_fbo[i], shadow_cubemap[i]);
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Render shadows
+    glViewport(0, 0, tex_w, tex_h);
+
+    struct shadow_program *prog = prog_shadow;
+    glUseProgram(prog->program.gl_id);
+
+    for (int i = 0; i < NUM_LIGHTS; ++i)
+    {
+        if (!lights[i].enabled)
+            continue;
+
+        struct mat4 light_views[6];
+        struct vec3 light_pos_neg = lights[i].pos;
+        v3_negate(&light_pos_neg);
+
+        // projection * rotate * translate
+        for (int i = 0; i < 6; ++i)
+        {
+            light_views[i] = shadow_proj;
+            mat4_mul(&light_views[i], &rot_matrices[i]);
+            mat4_translate(&light_views[i], &light_pos_neg);
+        }
+
+        // Clear depth buffer and bind shadow map
+        glClear(GL_DEPTH_BUFFER_BIT);
+        //glBindTexture(GL_TEXTURE_CUBE_MAP, shadow_cubemap);
+        glBindFramebuffer(GL_FRAMEBUFFER, shadow_fbo[i]);
+
+        // TODO: Render scene to framebuffer using shadow shader
+        for (u32 i = 1; i < ARRAY_COUNT(packs); ++i)
+        {
+            if (!packs[i]) continue;
+            object_render(packs[i], prog->locations.vert.model, true);
+        }
+    }
+
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glUseProgram(0);
+    ////////////////////////////////////////////////////////////////////////////
+}
 static void object_render_all(r64 alpha, struct RICO_camera *camera)
 {
     // TODO: Interpolate / extrapolate physics
     UNUSED(alpha);
 
     struct pbr_program *prog = prog_pbr;
-    RICO_ASSERT(prog->program.gl_id);
-    glUseProgram(prog->program.gl_id);
-
     // TODO: Get the light out of here!!! It should't be updating its position
     //       in the render function, argh!
-
-    //struct vec3 light_pos = cam_player.pos;
-    //v3_add(&light_pos, &VEC3(0.0f, -0.5f, 0.0f));
-    prog->frag.lights[0].pos = VEC3(1.0f, 2.0f, 3.0f);
-    prog->frag.lights[0].color = VEC3(0.1f, 0.1f, 1.0f); //VEC3(1.0f, 1.0f, 0.8f);
+    prog->frag.lights[0].pos = VEC3(1.0f, 2.0f, -3.0f);
+    prog->frag.lights[0].color = VEC3(1.0f, 1.0f, 0.8f);
     prog->frag.lights[0].intensity = (RICO_lighting_enabled) ? 20.0f : 0.0f;
     prog->frag.lights[0].enabled = true;
 
@@ -312,9 +429,25 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
     prog->frag.lights[2].color = VEC3(0.2f, 1.0f, 0.0f);
     prog->frag.lights[2].intensity = (RICO_lighting_enabled) ? 20.0f : 0.0f;
     prog->frag.lights[2].enabled = true;
+
+    prog->frag.lights[3].pos = VEC3(1.0f, 2.0f, 3.0f);
+    prog->frag.lights[3].color = VEC3(0.1f, 0.1f, 1.0f);
+    prog->frag.lights[3].intensity = (RICO_lighting_enabled) ? 20.0f : 0.0f;
+    prog->frag.lights[3].enabled = true;
     //prog->frag.light.kc = 1.0f;
     //prog->frag.light.kl = 0.05f;
     //prog->frag.light.kq = 0.001f;
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Render shadow map
+    temp_render_shadow_cubemap(alpha, prog->frag.lights);
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Render objects
+    glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    RICO_ASSERT(prog->program.gl_id);
+    glUseProgram(prog->program.gl_id);
 
     glUniform3fv(prog->locations.frag.camera.pos, 1,
         (const GLfloat *)&camera->pos);
@@ -354,18 +487,17 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
 
     const GLint model_location = prog->locations.vert.model;
 
-    // Render objects
     for (u32 i = 1; i < ARRAY_COUNT(packs); ++i)
     {
         if (!packs[i]) continue;
-
-        object_render(packs[i], model_location);
+        object_render(packs[i], model_location, false);
     }
 
     glUseProgram(0);
 
-    // TODO: Batch these
+    ////////////////////////////////////////////////////////////////////////////
     // Render bounding boxes
+    // TODO: Batch render these
     for (u32 i = 1; i < ARRAY_COUNT(packs); ++i)
     {
         if (!packs[i]) continue;
@@ -389,10 +521,8 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
             }
         }
     }
-
-    glUseProgram(0);
 }
-static void object_render(struct pack *pack, GLint model_location)
+static void object_render(struct pack *pack, GLint model_location, bool shadow)
 {
     struct pbr_program *prog = prog_pbr;
 
@@ -433,16 +563,18 @@ static void object_render(struct pack *pack, GLint model_location)
         }
         */
 
-        // Model matrix
         glUniformMatrix4fv(model_location, 1, GL_TRUE, obj->xform.matrix.a);
 
-        // Bind material
-        pkid mat_id = MATERIAL_DEFAULT;
-        if (obj->material_id)
+        if (!shadow)
         {
-            mat_id = obj->material_id;
-        }
-        material_bind(mat_id);
+            // Bind material
+            pkid mat_id = MATERIAL_DEFAULT;
+            if (obj->material_id)
+            {
+                mat_id = obj->material_id;
+            }
+            material_bind(mat_id);
+        {
 
         // Render
         pkid mesh_id = MESH_DEFAULT_CUBE;
@@ -455,31 +587,14 @@ static void object_render(struct pack *pack, GLint model_location)
         glBindVertexArray(0);
 
         // Clean up
-        material_unbind(mat_id);
+        if (!shadow)
+        {
+            material_unbind(mat_id);
+        }
     }
 }
-static void object_render_ui(struct pack *pack,
-                             const struct RICO_camera *camera)
+static void object_render_ui(struct pack *pack, GLint model_location)
 {
-    struct text_program *prog = prog_text;
-
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    RICO_ASSERT(prog->program.gl_id);
-    glUseProgram(prog->program.gl_id);
-
-    // Projection matrix
-    glUniformMatrix4fv(prog->locations.vert.proj, 1, GL_TRUE,
-                       camera->ortho_matrix.a);
-    glUniformMatrix4fv(prog->locations.vert.view, 1, GL_TRUE, MAT4_IDENT.a);
-
-    glUniform4fv(prog->locations.frag.color, 1, &COLOR_WHITE.r);
-    glUniform1i(prog->locations.frag.grayscale, false);
-    // Font texture
-    // Note: We don't have to do this every time as long as we make sure
-    //       the correct textures are bound before each draw to the texture
-    //       index assumed when the program was initialized.
-    glUniform1i(prog->locations.frag.tex0, 0);
-
     struct RICO_object *obj = 0;
     for (u32 index = 1; index < pack->blobs_used; ++index)
     {
@@ -497,8 +612,7 @@ static void object_render_ui(struct pack *pack,
         // Model matrix
         //obj->xform.position = VEC3(0.5, 0.5, -1.0f);
         //object_transform_update(obj);
-        glUniformMatrix4fv(prog->locations.vert.model, 1, GL_TRUE,
-                           obj->xform.matrix.a);
+        glUniformMatrix4fv(model_location, 1, GL_TRUE, obj->xform.matrix.a);
 
         // Bind texture
         pkid tex_id = FONT_DEFAULT_TEXTURE;
@@ -518,7 +632,6 @@ static void object_render_ui(struct pack *pack,
         // Clean up
         texture_unbind(tex_id, GL_TEXTURE0);
     }
-    glUseProgram(0);
 }
 
 static void object_print(struct RICO_object *obj)

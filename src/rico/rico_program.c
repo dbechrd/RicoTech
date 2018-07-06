@@ -2,6 +2,7 @@ static program_attribs_helper program_attribs[PROG_COUNT] =
 {
     0,
     program_pbr_attribs,
+    program_shadow_attribs,
     program_primitive_attribs,
     program_text_attribs
 };
@@ -9,17 +10,21 @@ static program_attribs_helper program_attribs[PROG_COUNT] =
 ///=============================================================================
 //| General-purpose
 ///=============================================================================
-static int make_program(GLuint vertex_shader, GLuint fragment_shader,
-                        GLuint *_program)
+static int make_program(GLuint vertex_shader, GLuint geometry_shader,
+                        GLuint fragment_shader, GLuint *_program)
 {
     GLint status;
     GLuint program = glCreateProgram();
 
     glAttachShader(program, vertex_shader);
+    if (geometry_shader)
+        glAttachShader(program, geometry_shader);
     glAttachShader(program, fragment_shader);
     glLinkProgram(program);
 
     glDetachShader(program, vertex_shader);
+    if (geometry_shader)
+        glDetachShader(program, geometry_shader);
     glDetachShader(program, fragment_shader);
 
     glGetProgramiv(program, GL_LINK_STATUS, &status);
@@ -179,7 +184,7 @@ static int make_program_pbr(struct pbr_program **_program)
     if (err) goto cleanup;
 
     // Link shader program
-    err = make_program(vshader, fshader, &program);
+    err = make_program(vshader, 0, fshader, &program);
     if (err) goto cleanup;
 
     // Create program object
@@ -197,6 +202,113 @@ cleanup:
     return err;
 }
 static void free_program_pbr(struct pbr_program **program)
+{
+    //TODO: Handle error
+    if ((*program)->program.ref_count > 0) {
+        printf("Cannot delete a program in use!");
+        //TODO: crash;
+    }
+
+    glDeleteProgram((*program)->program.gl_id);
+    free(*program);
+    *program = NULL;
+}
+
+///=============================================================================
+//| Shadow program
+///=============================================================================
+static void program_shadow_get_locations(struct shadow_program *p)
+{
+    // Vertex shader
+    p->locations.vert.model =
+        program_get_uniform_location(p->program.gl_id, "model");
+    p->locations.vert.attrs.position =
+        program_get_attrib_location(p->program.gl_id,"attr_position");
+
+    RICO_ASSERT(p->locations.vert.model >= 0);
+    RICO_ASSERT(p->locations.vert.attrs.position == LOCATION_PBR_POSITION);
+
+    // Geometry shader
+#define CUBEMAP_XFORM(i)                                                    \
+p->locations.geom.cubemap_xforms[i] =                                       \
+    program_get_uniform_location(p->program.gl_id, "cubemap_xforms["#i"]");
+
+    CUBEMAP_XFORM(0);
+    CUBEMAP_XFORM(1);
+    CUBEMAP_XFORM(2);
+    CUBEMAP_XFORM(3);
+    CUBEMAP_XFORM(4);
+    CUBEMAP_XFORM(5);
+#undef CUBEMAP_XFORM
+
+    RICO_ASSERT(p->locations.geom.cubemap_xforms[0] >= 0);
+    RICO_ASSERT(p->locations.geom.cubemap_xforms[1] >= 0);
+    RICO_ASSERT(p->locations.geom.cubemap_xforms[2] >= 0);
+    RICO_ASSERT(p->locations.geom.cubemap_xforms[3] >= 0);
+    RICO_ASSERT(p->locations.geom.cubemap_xforms[4] >= 0);
+    RICO_ASSERT(p->locations.geom.cubemap_xforms[5] >= 0);
+
+    // Fragment shader
+    p->locations.frag.far_plane =
+        program_get_uniform_location(p->program.gl_id, "far_plane");
+    p->locations.frag.light_pos =
+        program_get_uniform_location(p->program.gl_id, "light_pos");
+
+    RICO_ASSERT(p->locations.frag.far_plane >= 0);
+    RICO_ASSERT(p->locations.frag.light_pos >= 0);
+}
+static void program_shadow_attribs()
+{
+    glVertexAttribPointer(LOCATION_SHADOW_POSITION, 3, GL_FLOAT, GL_FALSE,
+                          sizeof(struct pbr_vertex),
+                          (GLvoid *)offsetof(struct pbr_vertex, pos));
+    glEnableVertexAttribArray(LOCATION_SHADOW_POSITION);
+}
+static int make_program_shadow(struct shadow_program **_program)
+{
+    static struct shadow_program *prog_shadow = NULL;
+    enum RICO_error err;
+
+    if (prog_shadow != NULL) {
+        *_program = prog_shadow;
+        return SUCCESS;
+    }
+
+    GLuint vshader = 0;
+    GLuint gshader = 0;
+    GLuint fshader = 0;
+    GLuint program = 0;
+
+    // Compile shaders
+    err = make_shader(GL_VERTEX_SHADER, "shader/shadow_v.glsl", &vshader);
+    if (err) goto cleanup;
+
+    err = make_shader(GL_GEOMETRY_SHADER, "shader/shadow_g.glsl", &gshader);
+    if (err) goto cleanup;
+
+    err = make_shader(GL_FRAGMENT_SHADER, "shader/shadow_f.glsl", &fshader);
+    if (err) goto cleanup;
+
+    // Link shader program
+    err = make_program(vshader, gshader, fshader, &program);
+    if (err) goto cleanup;
+
+    // Create program object
+    prog_shadow = calloc(1, sizeof(*prog_shadow));
+    prog_shadow->program.type = PROG_SHADOW;
+    prog_shadow->program.gl_id = program;
+
+    // Query shader locations
+    program_shadow_get_locations(prog_shadow);
+
+cleanup:
+    free_shader(fshader);
+    free_shader(gshader);
+    free_shader(vshader);
+    *_program = prog_shadow;
+    return err;
+}
+static void free_program_shadow(struct shadow_program **program)
 {
     //TODO: Handle error
     if ((*program)->program.ref_count > 0) {
@@ -231,10 +343,10 @@ static void program_primitive_get_locations(struct prim_program *p)
         program_get_attrib_location(p->program.gl_id, "attr_uv");
     p->locations.vert.attrs.color =
         program_get_attrib_location(p->program.gl_id, "attr_color");
-    RICO_ASSERT(p->locations.vert.attrs.position == LOCATION_PBR_POSITION);
+    RICO_ASSERT(p->locations.vert.attrs.position == LOCATION_PRIM_POSITION);
     // TODO: Turn these back on when they're being used
-    //RICO_ASSERT(p->locations.vert.attrs.uv == LOCATION_PBR_UV);
-    //RICO_ASSERT(p->locations.vert.attrs.color == LOCATION_PBR_COLOR);
+    //RICO_ASSERT(p->locations.vert.attrs.uv == LOCATION_PRIM_UV);
+    //RICO_ASSERT(p->locations.vert.attrs.color == LOCATION_PRIM_COLOR);
 
     // Fragment shader
     p->locations.frag.color =
@@ -284,7 +396,7 @@ static int make_program_primitive(struct prim_program **_program)
     if (err) goto cleanup;
 
     // Link shader program
-    err = make_program(vshader, fshader, &program);
+    err = make_program(vshader, 0, fshader, &program);
     if (err) goto cleanup;
 
     // Create program object
@@ -374,7 +486,7 @@ static int make_program_text(struct text_program **_program)
     if (err) goto cleanup;
 
     // Link shader program
-    err = make_program(vshader, fshader, &program);
+    err = make_program(vshader, 0, fshader, &program);
     if (err) goto cleanup;
 
     // Create program object

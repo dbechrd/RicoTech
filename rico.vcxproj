@@ -194,6 +194,7 @@
     <ClInclude Include="src\rico\internal\ri_program_pbr.h" />
     <ClInclude Include="src\rico\internal\ri_program.h" />
     <ClInclude Include="src\rico\internal\ri_program_prim.h" />
+    <ClInclude Include="src\rico\internal\ri_program_shadow.h" />
     <ClInclude Include="src\rico\internal\ri_program_text.h" />
     <ClInclude Include="src\rico\internal\ri_regularpoly.h" />
     <ClInclude Include="src\rico\internal\ri_shader.h" />

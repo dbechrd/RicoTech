@@ -48,7 +48,7 @@ struct
     material;
 
     // Light
-    struct
+    struct STRUCT_NAME(pbr_light)
     {
         UNIFORM(struct vec3) pos;
         UNIFORM(struct vec3) color;

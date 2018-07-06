@@ -15,6 +15,7 @@ enum widget_action
 static const char *widget_action_string[WIDGET_COUNT];
 
 static struct pbr_program *prog_pbr;
+static struct shadow_program *prog_shadow;
 static struct prim_program *prog_prim;
 static struct text_program *prog_text;
 

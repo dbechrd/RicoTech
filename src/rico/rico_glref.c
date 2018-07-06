@@ -549,13 +549,32 @@ static void edit_render()
     //--------------------------------------------------------------------------
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    for (u32 i = PACK_COUNT; i < ARRAY_COUNT(packs); ++i)
+    struct text_program *prog = prog_text;
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    RICO_ASSERT(prog->program.gl_id);
+    glUseProgram(prog->program.gl_id);
+
+    // Projection matrix
+    glUniformMatrix4fv(prog->locations.vert.proj, 1, GL_TRUE,
+                       cam_player.ortho_matrix.a);
+    glUniformMatrix4fv(prog->locations.vert.view, 1, GL_TRUE, MAT4_IDENT.a);
+
+    glUniform4fv(prog->locations.frag.color, 1, &COLOR_WHITE.r);
+    glUniform1i(prog->locations.frag.grayscale, false);
+    // Font texture
+    // Note: We don't have to do this every time as long as we make sure
+    //       the correct textures are bound before each draw to the texture
+    //       index assumed when the program was initialized.
+    glUniform1i(prog->locations.frag.tex0, 0);
+
+    for (u32 i = 1; i < ARRAY_COUNT(packs); ++i)
     {
-        if (packs[i])
-            object_render_ui(packs[i], &cam_player);
+        if (!packs[i]) continue;
+        object_render_ui(packs[i], prog->locations.vert.model);
     }
-    object_render_ui(packs[PACK_TRANSIENT], &cam_player);
-    object_render_ui(packs[PACK_FRAME], &cam_player);
+
+    glUseProgram(0);
 }
 static void free_glref()
 {

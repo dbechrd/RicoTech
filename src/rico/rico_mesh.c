@@ -135,7 +135,7 @@ static void mesh_clusterfuck(pkid pkid)
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rgl_mesh->vbos[VBO_ELEMENT]);
     }
-     
+
     glVertexAttribPointer(LOCATION_PRIM_POSITION, 3, GL_FLOAT, GL_FALSE,
                           sizeof(struct prim_vertex),
                           (GLvoid *)offsetof(struct prim_vertex, pos));

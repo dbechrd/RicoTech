@@ -7,6 +7,7 @@ enum program_type
 {
     PROG_NULL,
     PROG_PBR,
+    PROG_SHADOW,
     PROG_PRIM,
     PROG_TEXT,
     PROG_COUNT
@@ -15,10 +16,23 @@ enum program_type
 typedef void(*program_attribs_helper)();
 static program_attribs_helper program_attribs[PROG_COUNT];
 
+struct program
+{
+    enum program_type type;
+    u32 ref_count;
+    GLuint gl_id;
+};
+
 #define UNIFORM(type) GLint
+#define STRUCT_NAME(name)
 struct pbr_program_locations
 {
 #   include "ri_program_pbr.h"
+};
+
+struct shadow_program_locations
+{
+#   include "ri_program_shadow.h"
 };
 
 struct text_program_locations
@@ -31,20 +45,22 @@ struct prim_program_locations
 #   include "ri_program_prim.h"
 };
 #undef UNIFORM
-
-struct program
-{
-    enum program_type type;
-    u32 ref_count;
-    GLuint gl_id;
-};
+#undef STRUCT_NAME
 
 #define UNIFORM(type) type
+#define STRUCT_NAME(name) name
 struct pbr_program
 {
     struct program program;
     struct pbr_program_locations locations;
 #   include "ri_program_pbr.h"
+};
+
+struct shadow_program
+{
+    struct program program;
+    struct shadow_program_locations locations;
+#   include "ri_program_shadow.h"
 };
 
 struct text_program
@@ -61,11 +77,14 @@ struct prim_program
 #   include "ri_program_prim.h"
 };
 #undef UNIFORM
+#undef STRUCT_NAME
 
 #define LOCATION_PBR_POSITION 0
 #define LOCATION_PBR_UV       1
 #define LOCATION_PBR_COLOR    2
 #define LOCATION_PBR_NORMAL   3
+
+#define LOCATION_SHADOW_POSITION 0
 
 #define LOCATION_PRIM_POSITION 0
 #define LOCATION_PRIM_UV       1
@@ -100,6 +119,10 @@ struct text_vertex
 static void program_pbr_attribs();
 static int make_program_pbr(struct pbr_program **_program);
 static void free_program_pbr(struct pbr_program **program);
+
+static void program_shadow_attribs();
+static int make_program_shadow(struct shadow_program **_program);
+static void free_program_shadow(struct shadow_program **program);
 
 static void program_primitive_attribs();
 static int make_program_primitive(struct prim_program **_program);
