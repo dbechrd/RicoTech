@@ -14,10 +14,10 @@ enum widget_action
 };
 static const char *widget_action_string[WIDGET_COUNT];
 
-static struct pbr_program *prog_pbr;
-static struct shadow_program *prog_shadow;
-static struct prim_program *prog_prim;
-static struct text_program *prog_text;
+extern struct pbr_program *prog_pbr;
+extern struct shadow_program *prog_shadow;
+extern struct prim_program *prog_prim;
+extern struct text_program *prog_text;
 
 static void editor_init();
 static void edit_object_create();

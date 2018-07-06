@@ -56,5 +56,9 @@ struct
         UNIFORM(bool)        enabled;
     }
     lights[NUM_LIGHTS];
+
+    // Shadows
+    UNIFORM(float) far_plane;
+    UNIFORM(GLint) lightmaps[NUM_LIGHTS];
 }
 frag;

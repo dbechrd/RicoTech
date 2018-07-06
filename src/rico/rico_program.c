@@ -103,6 +103,8 @@ static void program_pbr_get_locations(struct pbr_program *p)
     //RICO_ASSERT(p->locations.vert.attrs.normal == LOCATION_PBR_NORMAL);
 
     // Fragment shader
+    p->locations.frag.far_plane =
+        program_get_uniform_location(p->program.gl_id, "far_plane");
     p->locations.frag.camera.pos =
         program_get_uniform_location(p->program.gl_id, "camera.P");
     p->locations.frag.material.tex0 =
@@ -137,8 +139,23 @@ p->locations.frag.lights[i].enabled =                                         \
     RICO_ASSERT(p->locations.frag.lights[0].color >= 0);
     RICO_ASSERT(p->locations.frag.lights[0].intensity >= 0);
     RICO_ASSERT(p->locations.frag.lights[0].enabled >= 0);
-    // TODO: Turn these back on when they're being used
-    //RICO_ASSERT(p->locations.frag.light.enabled >= 0);
+    RICO_ASSERT(p->locations.frag.lights[0].enabled >= 0);
+
+#define LIGHTMAP(i)                                                    \
+p->locations.frag.lightmaps[i] =                                       \
+    program_get_uniform_location(p->program.gl_id, "lightmaps["#i"]");
+
+    LIGHTMAP(0);
+    LIGHTMAP(1);
+    LIGHTMAP(2);
+    LIGHTMAP(3);
+    RICO_ASSERT(4 == NUM_LIGHTS);
+#undef CUBEMAP_XFORM
+
+    RICO_ASSERT(p->locations.frag.lightmaps[0] >= 0);
+    RICO_ASSERT(p->locations.frag.lightmaps[1] >= 0);
+    RICO_ASSERT(p->locations.frag.lightmaps[2] >= 0);
+    RICO_ASSERT(p->locations.frag.lightmaps[3] >= 0);
 }
 static void program_pbr_attribs()
 {

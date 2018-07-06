@@ -15,6 +15,7 @@ const float gamma = 1.0;
 struct Camera {
     vec3 P;
 };
+uniform Camera camera;
 
 // NOTE: Using SRGB_ALPHA in texture_upload, so don't need this atm
 #if 0
@@ -50,6 +51,7 @@ struct Material {
     //   a: UNUSED
     sampler2D tex2;
 };
+uniform Material material;
 
 #define NUM_LIGHTS 4
 
@@ -59,10 +61,10 @@ struct PointLight {
     float intensity;
     bool enabled;
 };
-
-uniform Camera camera;
-uniform Material material;
 uniform PointLight lights[NUM_LIGHTS];
+
+uniform float far_plane;
+uniform samplerCube lightmaps[NUM_LIGHTS];
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
 {
@@ -120,6 +122,14 @@ void main()
         vec3 L = normalize(lights[i].P - vertex.P);
         vec3 H = normalize(V + L);
         float dist = length(lights[i].P - vertex.P);
+
+        // TODO: Clean up shadow stuff
+        float lightmap_dist = texture(lightmaps[i], L).r;
+        lightmap_dist *= far_plane;
+        float eps = 0.15;  // Play with this
+        if (lightmap_dist + eps < dist)
+            continue;
+
         float attenuation = lights[i].intensity / (dist * dist);
         vec3 radiance = lights[i].color * attenuation;
 

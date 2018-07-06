@@ -14,6 +14,7 @@ static struct widget *widget;
 static pkid selected_obj_id;
 
 static struct pbr_program *prog_pbr;
+static struct shadow_program *prog_shadow;
 static struct prim_program *prog_prim;
 static struct text_program *prog_text;
 
