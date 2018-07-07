@@ -285,9 +285,8 @@ DLB_MATH_DEF void mat4_rotx(struct mat4 *m, float deg);
 DLB_MATH_DEF void mat4_roty(struct mat4 *m, float deg);
 DLB_MATH_DEF void mat4_rotz(struct mat4 *m, float deg);
 DLB_MATH_DEF void mat4_transpose(struct mat4 *m);
-DLB_MATH_DEF struct mat4 mat4_init_perspective(float width, float height,
-                                               float z_near, float z_far,
-                                               float fov_deg);
+DLB_MATH_DEF struct mat4 mat4_init_perspective(float aspect, float z_near,
+                                               float z_far, float fov_deg);
 DLB_MATH_DEF struct mat4 mat4_init_ortho(float width, float height,
                                          float z_near, float z_far,
                                          float fudge);
@@ -823,11 +822,9 @@ DLB_MATH_DEF void mat4_transpose(struct mat4 *m)
 }
 
 //Calculate PERSPECTIVE projection
-DLB_MATH_DEF struct mat4 mat4_init_perspective(float width, float height,
-                                               float z_near, float z_far,
-                                               float fov_deg)
+DLB_MATH_DEF struct mat4 mat4_init_perspective(float aspect, float z_near,
+                                               float z_far, float fov_deg)
 {
-    float aspect = width / height;
     float dz = z_far - z_near;
     float fov_calc = 1.0f / tanf(DEG_TO_RADF(fov_deg) / 2.0f);
 

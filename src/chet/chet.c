@@ -867,7 +867,7 @@ int main(int argc, char **argv)
 
 	//main_nuklear(argc, argv);
     RICO_init();
-    //pack_build_all();
+    pack_build_all();
 	pack_load_all();
 
     ric_test();

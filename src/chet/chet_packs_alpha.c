@@ -37,7 +37,7 @@ void pack_build_alpha(struct pack_info *pack_info)
                        PROG_PBR);
     RICO_load_obj_file(pack_dat, "mesh/alpha_staircase_001.obj", 0,
                        PROG_PBR);
-    RICO_load_obj_file(pack_dat, "mesh/alpha_wall_001.obj", 0, 
+    RICO_load_obj_file(pack_dat, "mesh/alpha_wall_001.obj", 0,
                       PROG_PBR);
     RICO_load_obj_file(pack_dat, "mesh/alpha_game_panel.obj", &mesh_panel_id,
                        PROG_PBR);
@@ -59,11 +59,25 @@ void pack_build_alpha(struct pack_info *pack_info)
     pkid timmy_id = RICO_load_object(pack_sav, OBJ_TIMMY, sizeof(struct timmy),
                                      "timmy");
     struct timmy *timmy = RICO_pack_lookup(timmy_id);
+    RICO_object_trans_set(&timmy->rico, &VEC3(-4.0f, 0.0f, 0.0f));
     RICO_object_mesh_set(&timmy->rico, mesh_door_id);
     RICO_object_material_set(terrain, mat_timmy);
     timmy->lights_on = true;
     timmy->audio_on = true;
 
+    pkid light_test_id =
+        RICO_load_object(pack_sav, OBJ_LIGHT_TEST, sizeof(struct light_test),
+                         "Test light");
+    struct light_test *light_test = RICO_pack_lookup(light_test_id);
+    RICO_object_trans_set(&light_test->rico, &VEC3(0.0f, 4.0f, 0.0f));
+
+    pkid lighting_test_cube_id =
+        RICO_load_object(pack_sav, OBJ_LIGHT_TEST_CUBE,
+                         sizeof(struct RICO_object), "Lighting test cube");
+    struct RICO_object *lighting_test_cube = RICO_pack_lookup(lighting_test_cube_id);
+    RICO_object_trans_set(lighting_test_cube, &VEC3(0.0f, 2.0f, 0.0f));
+
+    /*
     pkid panel_id = RICO_load_object(pack_sav, OBJ_GAME_PANEL,
                                      sizeof(struct game_panel), "panel");
     struct game_panel *panel = RICO_pack_lookup(panel_id);
@@ -81,6 +95,7 @@ void pack_build_alpha(struct pack_info *pack_info)
         button->index = i;
         panel->buttons[i] = button_id;
     }
+    */
 
     RICO_pack_save(pack_dat, false);
     RICO_pack_free(pack_dat);

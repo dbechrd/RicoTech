@@ -10,6 +10,8 @@ enum game_object_type
     OBJ_GAME_BUTTON,
     OBJ_RAY_VISUALIZER,
     OBJ_SMALL_CUBE,
+    OBJ_LIGHT_TEST,
+    OBJ_LIGHT_TEST_CUBE,
     OBJ_COUNT
 };
 
@@ -18,6 +20,11 @@ struct timmy
     struct RICO_object rico;
     bool lights_on;
     bool audio_on;
+};
+
+struct light_test
+{
+    struct RICO_object rico;
 };
 
 struct game_button

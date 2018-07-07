@@ -133,12 +133,18 @@ static void object_transform_update(struct RICO_object *obj)
 {
     struct RICO_transform *xform = &obj->xform;
 
-    //HACK: Order of these operations might not always be the same.. should
-    //      probably just store the transformation matrix directly rather than
-    //      trying to figure out which order to do what. Unfortunately, doing
-    //      this makes relative transformations very difficult. Maybe objects
-    //      should have "edit mode" where the matrix is decomposed, then
-    //      recomposed again when edit mode is ended?
+    // HACK: Light test
+    if (obj->type == OBJ_LIGHT_TEST)
+    {
+        prog_pbr->frag.lights[0].pos = obj->xform.position;
+    }
+
+    // HACK: Order of these operations might not always be the same.. should
+    //       probably just store the transformation matrix directly rather than
+    //       trying to figure out which order to do what. Unfortunately, doing
+    //       this makes relative transformations very difficult. Maybe objects
+    //       should have "edit mode" where the matrix is decomposed, then
+    //       recomposed again when edit mode is ended?
     struct mat4 transform = MAT4_IDENT;
     mat4_translate(&transform, &xform->position);
     mat4_rot_quat(&transform, &xform->orientation);
@@ -338,8 +344,8 @@ static void temp_render_shadow_cubemap(r64 alpha, struct pbr_light *lights)
     static GLuint shadow_fbo[NUM_LIGHTS] = { 0 };
 
     // Calculate projection matrix
-    shadow_proj = mat4_init_perspective((float)tex_w, (float)tex_h,
-                                        LIGHT_NEAR, LIGHT_FAR, LIGHT_FOV);
+    shadow_proj = mat4_init_perspective((float)tex_w / tex_h, LIGHT_NEAR,
+                                        LIGHT_FAR, LIGHT_FOV);
 
     if (!shadow_cubemap[0])
     {
@@ -466,31 +472,6 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
     UNUSED(alpha);
 
     struct pbr_program *prog = prog_pbr;
-    // TODO: Get the light out of here!!! It should't be updating its position
-    //       in the render function, argh!
-    const float INTENSITY = 50.0f;
-    prog->frag.lights[0].pos = VEC3(1.0f, 3.0f, -3.0f);
-    prog->frag.lights[0].color = VEC3(1.0f, 1.0f, 0.8f);
-    prog->frag.lights[0].intensity = (RICO_lighting_enabled) ? INTENSITY : 0.0f;
-    prog->frag.lights[0].enabled = true;
-
-    prog->frag.lights[1].pos = VEC3(-4.0f, 4.0f, 3.0f);
-    prog->frag.lights[1].color = VEC3(1.0f, 0.2f, 0.0f);
-    prog->frag.lights[1].intensity = (RICO_lighting_enabled) ? INTENSITY : 0.0f;
-    prog->frag.lights[1].enabled = true;
-
-    prog->frag.lights[2].pos = VEC3(4.0f, 5.0f, 3.0f);
-    prog->frag.lights[2].color = VEC3(0.2f, 1.0f, 0.0f);
-    prog->frag.lights[2].intensity = (RICO_lighting_enabled) ? INTENSITY : 0.0f;
-    prog->frag.lights[2].enabled = true;
-
-    prog->frag.lights[3].pos = VEC3(1.0f, 6.0f, 3.0f);
-    prog->frag.lights[3].color = VEC3(0.1f, 0.1f, 1.0f);
-    prog->frag.lights[3].intensity = (RICO_lighting_enabled) ? INTENSITY : 0.0f;
-    prog->frag.lights[3].enabled = true;
-    //prog->frag.light.kc = 1.0f;
-    //prog->frag.light.kl = 0.05f;
-    //prog->frag.light.kq = 0.001f;
 
     ////////////////////////////////////////////////////////////////////////////
     // Render shadow map
@@ -595,7 +576,8 @@ static void object_render(struct pack *pack, GLint model_location,
             continue;
 
         obj = pack_read(pack, index);
-        if (obj->type == RICO_OBJECT_TYPE_STRING_SCREEN)
+        if (obj->type == RICO_OBJECT_TYPE_STRING_SCREEN ||
+            obj->type == OBJ_LIGHT_TEST)
             continue;
 
 #if RICO_DEBUG_OBJECT
