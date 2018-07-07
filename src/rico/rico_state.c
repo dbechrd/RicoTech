@@ -60,7 +60,7 @@ static u64 last_cycles;
 static u64 fps_last_render;
 static u64 fps_render_delta = 200000;  // 200 ms
 static bool fps_render = false;
-static bool vsync = false;
+static bool vsync = true;
 
 // Mouse and keyboard state
 static u32 mouse_buttons = 0;
@@ -374,7 +374,7 @@ extern void RICO_frame_swap()
     //glClearColor(0.46f, 0.70f, 1.0f, 1.0f);
     //glClearDepth(0.0f);
     glClearColor(0.1f, 0.1f, 0.2f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 #if RICO_DEBUG
     // HACK: Kill some time (a.k.a. prevent my computer from lighting itself on
@@ -408,11 +408,14 @@ static int shared_engine_events()
     else if (action_active(ACTION_ENGINE_DEBUG_FOV_INCREASE) ||
              action_active(ACTION_ENGINE_DEBUG_FOV_DECREASE))
     {
-        float fov = cam_player.fov_deg;
+        /*float fov = cam_player.fov_deg;
         fov += action_active(ACTION_ENGINE_DEBUG_FOV_INCREASE)
             ? 5.0f
             : -5.0f;
-        camera_set_fov(&cam_player, fov);
+        camera_set_fov(&cam_player, fov);*/
+        LIGHT_FOV += action_active(ACTION_ENGINE_DEBUG_FOV_INCREASE)
+            ? 0.1f
+            : -0.1f;
     }
 #endif
     // Toggle FPS counter
@@ -1189,8 +1192,8 @@ static int engine_init()
     // Engine
     RICO_bind_action(ACTION_ENGINE_DEBUG_LIGHTING_TOGGLE,    CHORD1(SDL_SCANCODE_L));
     RICO_bind_action(ACTION_ENGINE_DEBUG_TRIGGER_BREAKPOINT, CHORD1(SDL_SCANCODE_F9));
-    RICO_bind_action(ACTION_ENGINE_DEBUG_FOV_INCREASE,       CHORD1(SDL_SCANCODE_3));
-    RICO_bind_action(ACTION_ENGINE_DEBUG_FOV_DECREASE,       CHORD1(SDL_SCANCODE_4));
+    RICO_bind_action(ACTION_ENGINE_DEBUG_FOV_INCREASE,       CHORD_REPEAT1(SDL_SCANCODE_3));
+    RICO_bind_action(ACTION_ENGINE_DEBUG_FOV_DECREASE,       CHORD_REPEAT1(SDL_SCANCODE_4));
     RICO_bind_action(ACTION_ENGINE_FPS_TOGGLE,               CHORD1(SDL_SCANCODE_2));
     RICO_bind_action(ACTION_ENGINE_MOUSE_LOCK_TOGGLE,        CHORD1(SDL_SCANCODE_M));
     RICO_bind_action(ACTION_ENGINE_VSYNC_TOGGLE,             CHORD1(SDL_SCANCODE_V));

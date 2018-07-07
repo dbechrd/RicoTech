@@ -840,6 +840,7 @@ DLB_MATH_DEF struct mat4 mat4_init_perspective(float width, float height,
     return mat;
 }
 
+// Cleanup: fudge
 //Calculate ORTHOGRAPHIC projection
 DLB_MATH_DEF struct mat4 mat4_init_ortho(float width, float height,
                                          float z_near, float z_far, float fudge)

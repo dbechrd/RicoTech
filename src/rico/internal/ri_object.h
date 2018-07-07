@@ -3,6 +3,8 @@
 
 #include "rico_object.h"
 
+extern float LIGHT_FOV;
+
 static void object_delete(struct RICO_object *obj);
 static struct RICO_object *object_copy(u32 pack, struct RICO_object *other,
                                        const char *name);

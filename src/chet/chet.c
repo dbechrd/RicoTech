@@ -1199,7 +1199,7 @@ int main(int argc, char **argv)
 
         // Render world
         RICO_render_objects();
-        DEBUG_render_bboxes(timmy);
+        //DEBUG_render_bboxes(timmy);
         if (rayviz_sphere.radius > 0.0f)
             RICO_prim_draw_sphere(&rayviz_sphere, &COLOR_YELLOW);
 
@@ -1212,6 +1212,20 @@ int main(int argc, char **argv)
         else if (RICO_state_is_menu())
         {
             RICO_render_editor();
+        }
+
+        // Render light bounds
+        for (int i = 0; i < NUM_LIGHTS; i++)
+        {
+            struct sphere light_sphere = { 0 };
+            light_sphere.orig = prog_pbr->frag.lights[i].pos;
+            light_sphere.radius = 0.1f;
+
+            struct vec4 color = VEC4(prog_pbr->frag.lights[i].color.r,
+                                     prog_pbr->frag.lights[i].color.g,
+                                     prog_pbr->frag.lights[i].color.b,
+                                     1.0f);
+            RICO_prim_draw_sphere(&light_sphere, &color);
         }
 
         // Render cursor

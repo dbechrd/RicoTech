@@ -323,6 +323,9 @@ static void temp_create_framebuffer(GLuint *fbo_id, GLuint tex_id)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+#define LIGHT_NEAR 0.01f
+#define LIGHT_FAR 100.0f
+extern float LIGHT_FOV = 90.0f;
 static GLuint shadow_cubemap[NUM_LIGHTS] = { 0 };
 static void temp_render_shadow_cubemap(r64 alpha, struct pbr_light *lights)
 {
@@ -334,11 +337,15 @@ static void temp_render_shadow_cubemap(r64 alpha, struct pbr_light *lights)
     static struct mat4 rot_matrices[6] = { 0 };
     static GLuint shadow_fbo[NUM_LIGHTS] = { 0 };
 
+    // Calculate projection matrix
+    shadow_proj = mat4_init_perspective((float)tex_w, (float)tex_h,
+                                        LIGHT_NEAR, LIGHT_FAR, LIGHT_FOV);
+
     if (!shadow_cubemap[0])
     {
-        // Calculate projection matrix
-        shadow_proj = mat4_init_perspective((float)tex_w, (float)tex_h, Z_NEAR,
-                                            Z_FAR, 90.0f);
+        //// Calculate projection matrix
+        //shadow_proj = mat4_init_perspective((float)tex_w, (float)tex_h,
+        //                                    LIGHT_NEAR, LIGHT_FAR, LIGHT_FOV);
 
         // Calculate rotation matrices
         //rot_matrices[0] = mat4_init_rotx(90.0f);  // pos_x
@@ -413,7 +420,7 @@ static void temp_render_shadow_cubemap(r64 alpha, struct pbr_light *lights)
     struct shadow_program *prog = prog_shadow;
     glUseProgram(prog->program.gl_id);
 
-    glUniform1f(prog->locations.frag.far_plane, Z_FAR);
+    glUniform1f(prog->locations.frag.far_plane, LIGHT_FAR);
 
     for (int light = 0; light < NUM_LIGHTS; ++light)
     {
@@ -438,8 +445,8 @@ static void temp_render_shadow_cubemap(r64 alpha, struct pbr_light *lights)
         }
 
         // Clear depth buffer and bind shadow map
-        glClear(GL_DEPTH_BUFFER_BIT);
         glBindFramebuffer(GL_FRAMEBUFFER, shadow_fbo[light]);
+        glClear(GL_DEPTH_BUFFER_BIT);
 
         // Render scene to this light's shadow map
         for (u32 pack = 1; pack < ARRAY_COUNT(packs); ++pack)
@@ -462,22 +469,22 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
     // TODO: Get the light out of here!!! It should't be updating its position
     //       in the render function, argh!
     const float INTENSITY = 50.0f;
-    prog->frag.lights[0].pos = VEC3(1.0f, 2.0f, -3.0f);
+    prog->frag.lights[0].pos = VEC3(1.0f, 3.0f, -3.0f);
     prog->frag.lights[0].color = VEC3(1.0f, 1.0f, 0.8f);
     prog->frag.lights[0].intensity = (RICO_lighting_enabled) ? INTENSITY : 0.0f;
     prog->frag.lights[0].enabled = true;
 
-    prog->frag.lights[1].pos = VEC3(-4.0f, 2.0f, 3.0f);
+    prog->frag.lights[1].pos = VEC3(-4.0f, 4.0f, 3.0f);
     prog->frag.lights[1].color = VEC3(1.0f, 0.2f, 0.0f);
     prog->frag.lights[1].intensity = (RICO_lighting_enabled) ? INTENSITY : 0.0f;
     prog->frag.lights[1].enabled = true;
 
-    prog->frag.lights[2].pos = VEC3(4.0f, 2.0f, 3.0f);
+    prog->frag.lights[2].pos = VEC3(4.0f, 5.0f, 3.0f);
     prog->frag.lights[2].color = VEC3(0.2f, 1.0f, 0.0f);
     prog->frag.lights[2].intensity = (RICO_lighting_enabled) ? INTENSITY : 0.0f;
     prog->frag.lights[2].enabled = true;
 
-    prog->frag.lights[3].pos = VEC3(1.0f, 2.0f, 3.0f);
+    prog->frag.lights[3].pos = VEC3(1.0f, 6.0f, 3.0f);
     prog->frag.lights[3].color = VEC3(0.1f, 0.1f, 1.0f);
     prog->frag.lights[3].intensity = (RICO_lighting_enabled) ? INTENSITY : 0.0f;
     prog->frag.lights[3].enabled = true;
@@ -491,6 +498,7 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
 
     ////////////////////////////////////////////////////////////////////////////
     // Render objects
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
     RICO_ASSERT(prog->program.gl_id);
@@ -536,7 +544,7 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
         glUniform1i(prog->locations.frag.lightmaps[i], 10 + i);
     };
 
-    glUniform1f(prog->locations.frag.far_plane, Z_FAR);
+    glUniform1f(prog->locations.frag.far_plane, LIGHT_FAR);
 
     const GLint model_location = prog->locations.vert.model;
     const GLint scale_uv_location = prog->locations.vert.scale_uv;

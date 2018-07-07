@@ -179,7 +179,7 @@ static void camera_update(struct RICO_camera *camera, r64 sim_alpha)
                        "mouse:%d, %d\n",
 					   camera->pos.x, camera->pos.y, camera->pos.z,
 					   camera->pitch, camera->yaw, camera->roll,
-                       camera->fov_deg, mouse_x, mouse_y);
+                       LIGHT_FOV, mouse_x, mouse_y);
 	string_truncate(buf, sizeof(buf), len);
 	string_free_slot(STR_SLOT_DEBUG_CAMERA);
 	RICO_load_string(PACK_TRANSIENT, STR_SLOT_DEBUG_CAMERA,

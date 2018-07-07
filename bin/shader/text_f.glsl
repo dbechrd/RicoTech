@@ -15,7 +15,7 @@ uniform sampler2D u_tex;
 void main()
 {
 	vec4 texel = texture(u_tex, vertex.UV);
-	
+
 	vec4 color;
 	if (u_grayscale)
 	{
@@ -34,7 +34,7 @@ void main()
 void main()
 {
 	vec4 texel = texture(u_tex, vertex.UV);
-	
+
 	vec4 fullcolor = mix(vertex.color, texel, step(0.01, texel.a));
 	vec4 grayscale = vec4(vec3(1.0), texel.r);
 

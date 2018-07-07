@@ -105,6 +105,23 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0)
     return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
+float ShadowCalculation(samplerCube depthMap, vec3 lightPos, vec3 fragPos)
+{
+    // get vector between fragment position and light position
+    vec3 fragToLight = fragPos - lightPos;
+    // use the light to fragment vector to sample from the depth map
+    float closestDepth = texture(depthMap, fragToLight).r;
+    // it is currently in linear range between [0,1]. Re-transform back to original value
+    closestDepth *= far_plane;
+    // now get current linear depth as the length between the fragment and light position
+    float currentDepth = length(fragToLight);
+    // now test for shadows
+    float bias = 0.05;
+    float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+
+    return shadow;
+}
+
 void main()
 {
     vec3 N = normalize(vertex.N);
@@ -124,11 +141,13 @@ void main()
         float dist = length(lights[i].P - vertex.P);
 
         // TODO: Clean up shadow stuff
-        float lightmap_dist = texture(lightmaps[i], L).r;
-        lightmap_dist *= far_plane;
-        float eps = 0.15;  // Play with this
-        if (lightmap_dist + eps < dist)
-            continue;
+        float shadow = ShadowCalculation(lightmaps[i], lights[i].P, vertex.P);
+        if (shadow == 1.0) continue;
+        //float lightmap_dist = texture(lightmaps[i], -L).r;
+        //lightmap_dist *= far_plane;
+        //float eps = 0.15;  // Play with this
+        //if (lightmap_dist + eps < dist)
+        //    continue;
 
         float attenuation = lights[i].intensity / (dist * dist);
         vec3 radiance = lights[i].color * attenuation;
