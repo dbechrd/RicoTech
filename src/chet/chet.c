@@ -684,6 +684,7 @@ void game_render_ui_toolbar()
     toolbar_hud->element.padding = PAD(2, 2, 0, 0);
     toolbar_hud->color = COLOR_GRAY_4;
 
+    // Create toolbar buttons
     for (int i = 0; i < ARRAY_COUNT(toolbar_buttons); ++i)
     {
         toolbar_buttons[i] = RICO_ui_button(&toolbar_hud->element);
@@ -697,6 +698,7 @@ void game_render_ui_toolbar()
         toolbar_buttons[i]->sprite = &toolbar_sheet.sprites[i];
     }
 
+    // Cleanup: Create pointless buttons
     for (u32 i = 0; i < pointless_buttons; ++i)
     {
         struct RICO_ui_button *button = RICO_ui_button(&toolbar_hud->element);
@@ -708,7 +710,8 @@ void game_render_ui_toolbar()
         button->sprite = &toolbar_sheet.sprites[0];
     }
 
-    if (RICO_ui_layout(&toolbar_hud->element, 0, 0, 546, 0))
+    // Layout and render toolbar UI (if it fits)
+    if (RICO_ui_layout(&toolbar_hud->element, 0, 0, 546, 0))//mouse_x, mouse_y))
     {
         u32 start_x = (SCREEN_WIDTH / 2) - (toolbar_hud->element.size.w / 2);
         RICO_ui_draw(&toolbar_hud->element, start_x, 20);
@@ -867,7 +870,7 @@ int main(int argc, char **argv)
 
 	//main_nuklear(argc, argv);
     RICO_init();
-    pack_build_all();
+    //pack_build_all();
 	pack_load_all();
 
     ric_test();

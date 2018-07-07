@@ -164,6 +164,7 @@ struct quat
 #define VEC2I(x, y)      ((const struct vec2i) { x, y })
 #define VEC3(x, y, z)    ((const struct vec3) { x, y, z })
 #define VEC4(x, y, z, w) ((const struct vec4) { x, y, z, w })
+#define VEC4_V3(v)       ((const struct vec4) { v.x, v.y, v.z, 0.0f })
 #define QUAT(w, x, y, z) ((const struct quat) { w, x, y, z })
 #endif
 
@@ -832,7 +833,7 @@ DLB_MATH_DEF struct mat4 mat4_init_perspective(float aspect, float z_near,
     mat.m[0][0] = fov_calc / aspect;
     mat.m[1][1] = fov_calc;
     mat.m[2][2] = -(z_far + z_near) / dz;
-    mat.m[2][3] = 2.0f * (z_far * z_near) / dz;
+    mat.m[2][3] = (2.0f * z_far * z_near) / dz;
     mat.m[3][2] = -1.0f;
     return mat;
 }

@@ -66,7 +66,7 @@ typedef void (*RICO_ui_event_handler)(const struct RICO_ui_event *e);
 struct RICO_ui_element
 {
     enum RICO_ui_element_type type;
-    
+
     struct vec2i min_size;
     struct rect size;    // includes margin
     struct rect margin;
@@ -94,7 +94,7 @@ enum RICO_ui_button_state
     RICO_UI_BUTTON_DEFAULT,
     RICO_UI_BUTTON_HOVERED,
     RICO_UI_BUTTON_PRESSED,
-    
+
     RICO_UI_BUTTON_COUNT
 };
 

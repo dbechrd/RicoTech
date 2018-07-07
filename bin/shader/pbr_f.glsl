@@ -109,15 +109,19 @@ float ShadowCalculation(samplerCube depthMap, vec3 lightPos, vec3 fragPos)
 {
     // get vector between fragment position and light position
     vec3 fragToLight = fragPos - lightPos;
+
     // use the light to fragment vector to sample from the depth map
-    float closestDepth = texture(depthMap, fragToLight).r;
+    float mapDepth = texture(depthMap, fragToLight).r;
+
     // it is currently in linear range between [0,1]. Re-transform back to original value
-    closestDepth *= far_plane;
+    mapDepth *= far_plane;
+
     // now get current linear depth as the length between the fragment and light position
-    float currentDepth = length(fragToLight);
+    float fragDepth = length(fragToLight);
+
     // now test for shadows
     float bias = 0.05;
-    float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+    float shadow = fragDepth - bias > mapDepth ? 1.0 : 0.0;
 
     return shadow;
 }
@@ -136,10 +140,6 @@ void main()
         if (!lights[i].enabled)
             continue;
 
-        vec3 L = normalize(lights[i].P - vertex.P);
-        vec3 H = normalize(V + L);
-        float dist = length(lights[i].P - vertex.P);
-
         // TODO: Clean up shadow stuff
         float shadow = ShadowCalculation(lightmaps[i], lights[i].P, vertex.P);
         if (shadow == 1.0) continue;
@@ -148,6 +148,10 @@ void main()
         //float eps = 0.15;  // Play with this
         //if (lightmap_dist + eps < dist)
         //    continue;
+
+        vec3 L = normalize(lights[i].P - vertex.P);
+        vec3 H = normalize(V + L);
+        float dist = length(lights[i].P - vertex.P);
 
         float attenuation = lights[i].intensity / (dist * dist);
         vec3 radiance = lights[i].color * attenuation;
@@ -179,4 +183,10 @@ void main()
     color = color + emission;
 
     frag_color = vec4(color, 1.0);
+
+    // TODO: Make this uniform int debug_lightmap_idx = -1
+    // Render lightmap
+    //int i = 0;
+    //float mapDepth = texture(lightmaps[i], vertex.P - lights[i].P).r;
+    //frag_color = vec4(vec3(mapDepth), 1.0) + (frag_color * 0.000001);
 }
