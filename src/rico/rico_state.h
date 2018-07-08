@@ -82,15 +82,6 @@ enum rico_state
 };
 extern const char *rico_state_string[STATE_COUNT];
 
-#define RICO_STATE_EDIT (STATE_EDIT_TRANSLATE | \
-                         STATE_EDIT_ROTATE    | \
-                         STATE_EDIT_SCALE     | \
-                         STATE_EDIT_MATERIAL  | \
-                         STATE_EDIT_MESH)
-
-#define RICO_STATE_MENU (STATE_MENU_QUIT | \
-                         STATE_TEXT_INPUT)
-
 enum RICO_action
 {
     ACTION_NULL,

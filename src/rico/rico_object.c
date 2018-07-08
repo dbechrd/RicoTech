@@ -343,19 +343,21 @@ static void temp_create_framebuffer(GLuint *fbo_id, GLuint tex_id)
 #define LIGHT_FAR 50.0f
 extern float LIGHT_FOV = 90.0f;
 static GLuint shadow_cubemap[NUM_LIGHTS] = { 0 };
+static struct mat4 shadow_proj = { 0 };
+struct mat4 light_views[6] = { 0 };
 static void temp_render_shadow_cubemap(r64 alpha, struct pbr_light *lights)
 {
     const u32 tex_size = 1024;
 
     // TODO: Refactor this debauchery
-    static struct mat4 shadow_proj = { 0 };
+    static struct mat4 bias_matrix = { 0 };
     static struct mat4 rot_matrices[6] = { 0 };
     static GLuint shadow_fbo[NUM_LIGHTS] = { 0 };
 
     // Calculate projection matrix
     shadow_proj = mat4_init_perspective(1.0f, LIGHT_NEAR, LIGHT_FAR, LIGHT_FOV);
     //shadow_proj = mat4_init_ortho((float)SCREEN_WIDTH, (float)SCREEN_HEIGHT,
-    //                              LIGHT_NEAR, LIGHT_FAR, 0.0f);;
+    //                              LIGHT_NEAR, LIGHT_FAR, 0.0f);
 
     if (!shadow_cubemap[0])
     {
@@ -363,12 +365,25 @@ static void temp_render_shadow_cubemap(r64 alpha, struct pbr_light *lights)
         //shadow_proj = mat4_init_perspective((float)tex_w, (float)tex_h,
         //                                    LIGHT_NEAR, LIGHT_FAR, LIGHT_FOV);
 
+        bias_matrix = mat4_init(
+            0.5f,  0.0f,  0.0f,  0.5f,
+            0.0f,  0.5f,  0.0f,  0.5f,
+            0.0f,  0.0f,  0.5f,  0.5f,
+            0.0f,  0.0f,  0.0f,  1.0f
+        );
+        /*bias_matrix = mat4_init(
+            0.5f,  0.0f,  0.0f,  0.0f,
+            0.0f,  0.5f,  0.0f,  0.0f,
+            0.0f,  0.0f,  0.5f,  0.0f,
+            0.5f,  0.5f,  0.5f,  1.0f
+        );*/
+
         // Calculate rotation matrices
-        //rot_matrices[0] = mat4_init_rotx(90.0f);  // pos_x
+        //rot_matrices[0] = mat4_init_rotx( 90.0f); // pos_x
         //rot_matrices[1] = mat4_init_rotx(-90.0f); // neg_x
-        //rot_matrices[2] = mat4_init_roty(90.0f);  // pos_y
+        //rot_matrices[2] = mat4_init_roty( 90.0f); // pos_y
         //rot_matrices[3] = mat4_init_roty(-90.0f); // neg_y
-        //rot_matrices[4] = mat4_init_rotz(90.0f);  // pos_z
+        //rot_matrices[4] = mat4_init_rotz( 90.0f); // pos_z
         //rot_matrices[5] = mat4_init_rotz(-90.0f); // neg_z
         rot_matrices[0] = mat4_init(
             0.0f,  0.0f, -1.0f,  0.0f,
@@ -436,25 +451,31 @@ static void temp_render_shadow_cubemap(r64 alpha, struct pbr_light *lights)
     struct shadow_program *prog = prog_shadow;
     glUseProgram(prog->program.gl_id);
 
-    glUniform1f(prog->locations.frag.far_plane, LIGHT_FAR);
+    glUniform2f(prog->locations.frag.near_far, LIGHT_NEAR, LIGHT_FAR);
 
     for (int light = 0; light < NUM_LIGHTS; ++light)
     {
         if (!lights[light].enabled)
             continue;
 
-        glUniform3fv(prog->locations.frag.light_pos, 1, &lights[light].pos.x);
+        struct vec3 light_pos = lights[light].pos;
+        glUniform3fv(prog->locations.frag.light_pos, 1, &light_pos.x);
 
-        struct mat4 light_views[6] = { 0 };
         struct vec3 light_pos_neg = lights[light].pos;
         v3_negate(&light_pos_neg);
 
         // projection * rotate * translate
         for (int view = 0; view < 6; ++view)
         {
-            light_views[view] = shadow_proj;
+            light_views[view] = MAT4_IDENT;
+            //mat4_mul(&light_views[view], &bias_matrix);
+            mat4_mul(&light_views[view], &shadow_proj);
             mat4_mul(&light_views[view], &rot_matrices[view]);
             mat4_translate(&light_views[view], &light_pos_neg);
+
+            /*light_views[view] = shadow_proj;
+            mat4_mul(&light_views[view], &rot_matrices[view]);
+            mat4_translate(&light_views[view], &light_pos_neg);*/
 
             glUniformMatrix4fv(prog->locations.geom.cubemap_xforms[view], 1,
                                GL_TRUE, light_views[view].a);
@@ -535,7 +556,10 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
         glUniform1i(prog->locations.frag.lightmaps[i], 10 + i);
     };
 
-    glUniform1f(prog->locations.frag.far_plane, LIGHT_FAR);
+    //struct mat4 shadow_proj_inv = shadow_proj;
+    glUniformMatrix4fv(prog->locations.frag.light_proj, 1, GL_TRUE,
+                       light_views[0].a);
+    glUniform2f(prog->locations.frag.near_far, LIGHT_NEAR, LIGHT_FAR);
 
     const GLint model_location = prog->locations.vert.model;
     const GLint scale_uv_location = prog->locations.vert.scale_uv;

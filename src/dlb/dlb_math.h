@@ -197,7 +197,7 @@ struct quat
 
 #define VEC4_ZERO          VEC4(0.0f, 0.0f, 0.0f, 0.0f)
 
-#define COLOR_TRANSPARENT  VEC4(0.0f, 0.0f, 0.0f, 0.0f)
+#define COLOR_TRANSPARENT  VEC4(1.0f, 1.0f, 1.0f, 0.0f)
 #define COLOR_WHITE        VEC4(1.0f, 1.0f, 1.0f, 1.0f)
 #define COLOR_GRAY_9       VEC4(0.9f, 0.9f, 0.9f, 1.0f)
 #define COLOR_GRAY_8       VEC4(0.8f, 0.8f, 0.8f, 1.0f)
@@ -233,6 +233,7 @@ struct quat
 #define COLOR_DARK_MAGENTA VEC4(0.500f, 0.000f, 0.500f, 1.0f)
 #define COLOR_DARK_ORANGE  VEC4(0.500f, 0.279f, 0.000f, 1.0f)
 
+#define COLOR_TRANSLUCENT             VEC4(1.0f, 1.0f, 1.0f, 0.3f)
 #define COLOR_DARK_RED_HIGHLIGHT      VEC4(0.500f, 0.000f, 0.000f, 0.5f)
 #define COLOR_DARK_GREEN_HIGHLIGHT    VEC4(0.000f, 0.500f, 0.000f, 0.5f)
 #define COLOR_DARK_BLUE_HIGHLIGHT     VEC4(0.000f, 0.000f, 0.500f, 0.5f)

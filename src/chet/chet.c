@@ -870,7 +870,7 @@ int main(int argc, char **argv)
 
 	//main_nuklear(argc, argv);
     RICO_init();
-    //pack_build_all();
+    pack_build_all();
 	pack_load_all();
 
     ric_test();
@@ -1217,19 +1217,19 @@ int main(int argc, char **argv)
             RICO_render_editor();
         }
 
-        // Render light bounds
-        for (int i = 0; i < NUM_LIGHTS; i++)
-        {
-            struct sphere light_sphere = { 0 };
-            light_sphere.orig = prog_pbr->frag.lights[i].pos;
-            light_sphere.radius = 0.1f;
-
-            struct vec4 color = VEC4(prog_pbr->frag.lights[i].color.r,
-                                     prog_pbr->frag.lights[i].color.g,
-                                     prog_pbr->frag.lights[i].color.b,
-                                     1.0f);
-            RICO_prim_draw_sphere(&light_sphere, &color);
-        }
+        //// Render light bounds
+        //for (int i = 0; i < NUM_LIGHTS; i++)
+        //{
+        //    struct sphere light_sphere = { 0 };
+        //    light_sphere.orig = prog_pbr->frag.lights[i].pos;
+        //    light_sphere.radius = 0.1f;
+        //
+        //    struct vec4 color = VEC4(prog_pbr->frag.lights[i].color.r,
+        //                             prog_pbr->frag.lights[i].color.g,
+        //                             prog_pbr->frag.lights[i].color.b,
+        //                             1.0f);
+        //    RICO_prim_draw_sphere(&light_sphere, &color);
+        //}
 
         // Render cursor
         RICO_render_crosshair();

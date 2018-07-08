@@ -235,7 +235,7 @@ static void ric_test_write(struct ric_arena *arena, const char *filename)
 {
     struct ric_stream stream_ = { 0 };
     struct ric_stream *stream = &stream_;
-    
+
     // Allocate memory arena
     stream->arena = arena;
     stream->version = V_CURRENT;
@@ -336,7 +336,7 @@ static void ric_test_current()
     struct ric_arena arena = { 0 };
     ric_arena_alloc(&arena, arena_size);
     ric_test_write(&arena, "ric_test.bin");
-    
+
     // Save copy and clear
     struct ric_arena arena_copy = { 0 };
     ric_arena_copy(&arena_copy, &arena);
@@ -345,7 +345,7 @@ static void ric_test_current()
     // Read file into arena
     ric_test_read(&arena, "ric_1.bin");
 
-    // Validate that data read is exactly the same as data written (aside from 
+    // Validate that data read is exactly the same as data written (aside from
     // IGNORE_ME values, which are intentionally not serialized to the file)
     for (u32 i = 0; i < arena.size; ++i)
     {

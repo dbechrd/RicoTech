@@ -121,16 +121,14 @@ static void edit_pack_next()
 }
 static void edit_object_next()
 {
-    pkid next_obj = (selected_obj_id)
-        ? RICO_pack_next_loop(selected_obj_id)
-        : RICO_pack_first_type(PACK_DEFAULT, RICO_HND_OBJECT);
+    pkid next_obj = 0;
+    if (selected_obj_id) next_obj = RICO_pack_next_loop(selected_obj_id);
     edit_object_select(next_obj, false);
 }
 static void edit_object_prev()
 {
-    pkid prev_obj = (selected_obj_id)
-        ? RICO_pack_prev_loop(selected_obj_id)
-        : RICO_pack_last_type(PACK_DEFAULT, RICO_HND_OBJECT);
+    pkid prev_obj = 0;
+    if (selected_obj_id) RICO_pack_prev_loop(selected_obj_id);
     edit_object_select(prev_obj, false);
 }
 static void edit_print_object()

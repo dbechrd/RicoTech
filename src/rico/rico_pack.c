@@ -278,16 +278,16 @@ static void pack_build_default()
                                        "font/cousine_regular.bff");
     pkid diff_id = RICO_load_texture_color(pack, "[TEX_DIFF_DEFAULT]",
                                            &COLOR_WHITE);
+    //pkid diff_id = RICO_load_texture_file(pack, "[TEX_DIFF_DEFAULT]",
+    //                                      "texture/pbr_default_0.tga");
     pkid spec_id = RICO_load_texture_color(pack, "[TEX_SPEC_DEFAULT]",
-                                           &COLOR_WHITE);
+                                           &COLOR_GREEN);
+    //pkid spec_id = RICO_load_texture_file(pack, "[TEX_SPEC_DEFAULT]",
+    //                                      "texture/pbr_default_1.tga");
     pkid emis_id = RICO_load_texture_color(pack, "[TEX_EMIS_DEFAULT]",
-                                           &COLOR_BLACK);
-    /*pkid diff_id = RICO_load_texture_file(pack, "[TEX_DIFF_DEFAULT]",
-                                          "texture/pbr_default_0.tga");
-    pkid spec_id = RICO_load_texture_file(pack, "[TEX_SPEC_DEFAULT]",
-                                          "texture/pbr_default_1.tga");
-    pkid emis_id = RICO_load_texture_file(pack, "[TEX_EMIS_DEFAULT]",
-                                          "texture/pbr_default_2.tga");*/
+                                           &COLOR_TRANSPARENT);
+    //pkid emis_id = RICO_load_texture_file(pack, "[TEX_EMIS_DEFAULT]",
+    //                                      "texture/pbr_default_2.tga");
     pkid mat_id = RICO_load_material(pack, "[MATERIAL_DEFAULT]", diff_id,
                                      spec_id, emis_id);
 
@@ -306,6 +306,13 @@ static void pack_build_default()
     RICO_ASSERT(mat_id == MATERIAL_DEFAULT);
     RICO_ASSERT(cube == MESH_DEFAULT_CUBE);
     RICO_ASSERT(sphere == MESH_DEFAULT_SPHERE);
+
+    pkid trans_tex = RICO_load_texture_color(pack, "[TEX_TRANSPARENT]",
+                                             &COLOR_TRANSPARENT);
+    pkid semi_tex = RICO_load_texture_color(pack, "[TEX_TRANSPLUCENT]",
+                                            &COLOR_TRANSLUCENT);
+    pkid trans_mat = RICO_load_material(pack, "[MATERIAL_TRANSPARENT]",
+                                        semi_tex, trans_tex, trans_tex);
 
     RICO_pack_save(pack, true);
     RICO_pack_free(pack);

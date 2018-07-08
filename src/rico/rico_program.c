@@ -103,8 +103,8 @@ static void program_pbr_get_locations(struct pbr_program *p)
     //RICO_ASSERT(p->locations.vert.attrs.normal == LOCATION_PBR_NORMAL);
 
     // Fragment shader
-    p->locations.frag.far_plane =
-        program_get_uniform_location(p->program.gl_id, "far_plane");
+    p->locations.frag.near_far =
+        program_get_uniform_location(p->program.gl_id, "near_far");
     p->locations.frag.camera.pos =
         program_get_uniform_location(p->program.gl_id, "camera.P");
     p->locations.frag.material.tex0 =
@@ -156,6 +156,10 @@ p->locations.frag.lightmaps[i] =                                       \
     RICO_ASSERT(p->locations.frag.lightmaps[1] >= 0);
     RICO_ASSERT(p->locations.frag.lightmaps[2] >= 0);
     RICO_ASSERT(p->locations.frag.lightmaps[3] >= 0);
+
+    p->locations.frag.light_proj =
+        program_get_uniform_location(p->program.gl_id, "light_proj");
+    //RICO_ASSERT(p->locations.frag.light_proj >= 0);
 }
 static void program_pbr_attribs()
 {
@@ -266,12 +270,12 @@ p->locations.geom.cubemap_xforms[i] =                                       \
     RICO_ASSERT(p->locations.geom.cubemap_xforms[5] >= 0);
 
     // Fragment shader
-    p->locations.frag.far_plane =
-        program_get_uniform_location(p->program.gl_id, "far_plane");
+    p->locations.frag.near_far =
+        program_get_uniform_location(p->program.gl_id, "near_far");
     p->locations.frag.light_pos =
         program_get_uniform_location(p->program.gl_id, "light_pos");
 
-    RICO_ASSERT(p->locations.frag.far_plane >= 0);
+    //RICO_ASSERT(p->locations.frag.near_far >= 0);
     RICO_ASSERT(p->locations.frag.light_pos >= 0);
 }
 static void program_shadow_attribs()

@@ -58,7 +58,8 @@ struct
     lights[NUM_LIGHTS];
 
     // Shadows
-    UNIFORM(float) far_plane;
-    UNIFORM(GLint) lightmaps[NUM_LIGHTS];
+    UNIFORM(struct vec2) near_far;
+    UNIFORM(GLint)       lightmaps[NUM_LIGHTS];
+    UNIFORM(struct mat4) light_proj;
 }
 frag;

@@ -69,10 +69,10 @@ struct ric_scene
 static size_t ric_fwrite(void const* buf, size_t size,
                          struct ric_stream *stream);
 static size_t ric_fread(void *buf, size_t size, struct ric_stream *stream);
-static void rem_field(struct ric_stream *stream, enum ric_version v_add,
-                      enum ric_version v_remove, u32 size, void *field);
-static void rem_field_ptr(struct ric_stream *stream, enum ric_version v_add,
-                          enum ric_version v_remove, u32 size, void **field);
+//static void rem_field(struct ric_stream *stream, enum ric_version v_add,
+//                      enum ric_version v_remove, u32 size, void *field);
+//static void rem_field_ptr(struct ric_stream *stream, enum ric_version v_add,
+//                          enum ric_version v_remove, u32 size, void **field);
 static void ric_uid(struct ric_stream *stream, struct uid *data);
 static void ric_RICO_transform(struct ric_stream *stream,
                                  struct RICO_transform *data);

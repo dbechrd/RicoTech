@@ -22,7 +22,7 @@ geom;
 // Fragment shader
 struct
 {
-    UNIFORM(float)       far_plane;
+    UNIFORM(struct vec2) near_far;
     UNIFORM(struct vec3) light_pos;
 }
 frag;

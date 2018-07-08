@@ -498,7 +498,7 @@ extern void RICO_prim_draw_sphere_xform(const struct sphere *sphere,
                        model_matrix.a);
     glUniform4fv(prog_prim->locations.frag.color, 1, (const GLfloat *)color);
     // TODO: Bind texture
-    
+
     // TODO: Render spheres with primitive shader rather than PBR shader? Need
     //       to store vertex data as prim_vertex instead of pbr_vertex.
     glBindVertexArray(mesh_vao(MESH_DEFAULT_SPHERE));

@@ -63,8 +63,9 @@ struct PointLight {
 };
 uniform PointLight lights[NUM_LIGHTS];
 
-uniform float far_plane;
+uniform vec2 near_far;
 uniform samplerCube lightmaps[NUM_LIGHTS];
+uniform mat4 light_proj;
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
 {
@@ -108,20 +109,26 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0)
 float ShadowCalculation(samplerCube depthMap, vec3 lightPos, vec3 fragPos)
 {
     // get vector between fragment position and light position
+    //mat4 light_proj_inv = inverse(light_proj);
+    //fragPos = vec3(light_proj_inv * vec4(fragPos.xyz, 1.0));
     vec3 fragToLight = fragPos - lightPos;
+    //vec4 fragLightSpace = light_proj * gl_FragCoord;
+    //vec3 fragToLight = fragLightSpace.xyz / fragLightSpace.w;
 
     // use the light to fragment vector to sample from the depth map
     float mapDepth = texture(depthMap, fragToLight).r;
 
     // it is currently in linear range between [0,1]. Re-transform back to original value
-    mapDepth *= far_plane;
+    mapDepth *= (near_far.y - near_far.x);
+    //mapDepth += 0.8;
 
     // now get current linear depth as the length between the fragment and light position
     float fragDepth = length(fragToLight);
 
     // now test for shadows
     float bias = 0.05;
-    float shadow = fragDepth - bias > mapDepth ? 1.0 : 0.0;
+    float darkness = 0.7;
+    float shadow = fragDepth - bias > mapDepth ? darkness : 0.0;
 
     return shadow;
 }
@@ -142,7 +149,8 @@ void main()
 
         // TODO: Clean up shadow stuff
         float shadow = ShadowCalculation(lightmaps[i], lights[i].P, vertex.P);
-        if (shadow == 1.0) continue;
+        if (shadow > 0.0) continue;
+
         //float lightmap_dist = texture(lightmaps[i], -L).r;
         //lightmap_dist *= far_plane;
         //float eps = 0.15;  // Play with this
@@ -170,7 +178,7 @@ void main()
         float denom = 4.0 * max(dot(N, V), 0.0) * NdotL;
         vec3 specular = nom / max(denom, 0.001);
 
-        L0 += (kD * mtl_albedo / PI + specular) * radiance * NdotL;
+        L0 += (kD * mtl_albedo / PI + specular) * radiance * NdotL * (1.0 - shadow);
     }
 
     vec3 ambient = vec3(0.01) * mtl_albedo * mtl_ao;
@@ -182,7 +190,7 @@ void main()
     vec3 emission = mix(vec3(0), mtl_emission, mtl_emit);
     color = color + emission;
 
-    frag_color = vec4(color, 1.0);
+    frag_color = vec4(color, mtl_opacity);
 
     // TODO: Make this uniform int debug_lightmap_idx = -1
     // Render lightmap
