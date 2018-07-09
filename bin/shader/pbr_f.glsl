@@ -129,7 +129,7 @@ void main()
         float shadow_map_depth = texture(lightmaps[i], -L).r;
         shadow_map_depth *= near_far.y;
         float bias = 0.05;
-        float darkness = 0.7;
+        float darkness = 0.75;
         float shadow = (dist - bias > shadow_map_depth) ? darkness : 0.0;
 
         float attenuation = lights[i].intensity / (dist * dist);

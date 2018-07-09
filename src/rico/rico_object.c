@@ -559,7 +559,6 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
         glUniform1i(prog->locations.frag.lightmaps[i], 10 + i);
     };
 
-    //struct mat4 shadow_proj_inv = shadow_proj;
     glUniformMatrix4fv(prog->locations.frag.light_proj, 1, GL_TRUE,
                        shadow_proj.a);
     glUniform2f(prog->locations.frag.near_far, LIGHT_NEAR, LIGHT_FAR);
