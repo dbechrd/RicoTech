@@ -126,15 +126,11 @@ void main()
         vec3 H = normalize(V + L);
         float dist = length(fragToLight);
 
-        vec3 LL = -L;
-        //LL.y = -LL.y;
-        float shadow_map_depth = texture(lightmaps[i], LL).r;
+        float shadow_map_depth = texture(lightmaps[i], -L).r;
         shadow_map_depth *= near_far.y;
         float bias = 0.05;
         float darkness = 0.7;
         float shadow = (dist - bias > shadow_map_depth) ? darkness : 0.0;
-        if (shadow > 0.0)
-            continue;
 
         float attenuation = lights[i].intensity / (dist * dist);
         vec3 radiance = lights[i].color * attenuation;
