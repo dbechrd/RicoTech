@@ -152,10 +152,10 @@ p->locations.frag.lightmaps[i] =                                       \
     RICO_ASSERT(4 == NUM_LIGHTS);
 #undef CUBEMAP_XFORM
 
-    RICO_ASSERT(p->locations.frag.lightmaps[0] >= 0);
-    RICO_ASSERT(p->locations.frag.lightmaps[1] >= 0);
-    RICO_ASSERT(p->locations.frag.lightmaps[2] >= 0);
-    RICO_ASSERT(p->locations.frag.lightmaps[3] >= 0);
+    //RICO_ASSERT(p->locations.frag.lightmaps[0] >= 0);
+    //RICO_ASSERT(p->locations.frag.lightmaps[1] >= 0);
+    //RICO_ASSERT(p->locations.frag.lightmaps[2] >= 0);
+    //RICO_ASSERT(p->locations.frag.lightmaps[3] >= 0);
 
     p->locations.frag.light_proj =
         program_get_uniform_location(p->program.gl_id, "light_proj");
@@ -275,7 +275,7 @@ p->locations.geom.cubemap_xforms[i] =                                       \
     p->locations.frag.light_pos =
         program_get_uniform_location(p->program.gl_id, "light_pos");
 
-    //RICO_ASSERT(p->locations.frag.near_far >= 0);
+    RICO_ASSERT(p->locations.frag.near_far >= 0);
     RICO_ASSERT(p->locations.frag.light_pos >= 0);
 }
 static void program_shadow_attribs()

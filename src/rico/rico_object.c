@@ -339,8 +339,8 @@ static void temp_create_framebuffer(GLuint *fbo_id, GLuint tex_id)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-#define LIGHT_NEAR 0.01f
-#define LIGHT_FAR 50.0f
+#define LIGHT_NEAR 1.0f
+#define LIGHT_FAR 100.0f
 extern float LIGHT_FOV = 90.0f;
 static GLuint shadow_cubemap[NUM_LIGHTS] = { 0 };
 static struct mat4 shadow_proj = { 0 };
@@ -356,7 +356,7 @@ static void temp_render_shadow_cubemap(r64 alpha, struct pbr_light *lights)
 
     // Calculate projection matrix
     shadow_proj = mat4_init_perspective(1.0f, LIGHT_NEAR, LIGHT_FAR, LIGHT_FOV);
-    //shadow_proj = mat4_init_ortho((float)SCREEN_WIDTH, (float)SCREEN_HEIGHT,
+    //shadow_proj = mat4_init_ortho((float)tex_size, (float)tex_size,
     //                              LIGHT_NEAR, LIGHT_FAR, 0.0f);
 
     if (!shadow_cubemap[0])
@@ -491,6 +491,7 @@ static void temp_render_shadow_cubemap(r64 alpha, struct pbr_light *lights)
             if (!packs[pack]) continue;
             object_render(packs[pack], prog->locations.vert.model, 0, true);
         }
+
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -558,7 +559,7 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
 
     //struct mat4 shadow_proj_inv = shadow_proj;
     glUniformMatrix4fv(prog->locations.frag.light_proj, 1, GL_TRUE,
-                       light_views[0].a);
+                       shadow_proj.a);
     glUniform2f(prog->locations.frag.near_far, LIGHT_NEAR, LIGHT_FAR);
 
     const GLint model_location = prog->locations.vert.model;

@@ -13,7 +13,8 @@ void main()
     float dist = length(geometry.P.xyz - light_pos);
 
     // Normalize to 0..1
-    dist /= (near_far.y - near_far.x);
+    //dist /= (near_far.y - near_far.x);
+    dist /= near_far.y;
 
     // Update depth buffer
     gl_FragDepth = dist;

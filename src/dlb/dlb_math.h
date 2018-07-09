@@ -827,16 +827,26 @@ DLB_MATH_DEF void mat4_transpose(struct mat4 *m)
 DLB_MATH_DEF struct mat4 mat4_init_perspective(float aspect, float z_near,
                                                float z_far, float fov_deg)
 {
-    float dz = z_far - z_near;
-    float fov_calc = 1.0f / tanf(DEG_TO_RADF(fov_deg) / 2.0f);
+    RICO_ASSERT(z_far > z_near);
+    RICO_ASSERT(z_near > 0.0f);
+
+    float fov_calc = tanf(DEG_TO_RADF(fov_deg) / 2.0f);
 
     struct mat4 mat = MAT4_IDENT;
+    mat.m[0][0] = 1.0f / (aspect * fov_calc);
+    mat.m[1][1] = 1.0f / fov_calc;
+    mat.m[2][2] = z_far / (z_near - z_far);
+    mat.m[2][3] = -(z_far * z_near) / (z_far - z_near);
+    mat.m[3][2] = -1.0f;
+    return mat;
+
+    /*struct mat4 mat = MAT4_IDENT;
     mat.m[0][0] = fov_calc / aspect;
     mat.m[1][1] = fov_calc;
     mat.m[2][2] = -(z_far + z_near) / dz;
     mat.m[2][3] = (2.0f * z_far * z_near) / dz;
     mat.m[3][2] = -1.0f;
-    return mat;
+    return mat;*/
 }
 
 // Cleanup: fudge

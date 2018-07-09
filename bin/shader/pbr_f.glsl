@@ -106,33 +106,6 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0)
     return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
-float ShadowCalculation(samplerCube depthMap, vec3 lightPos, vec3 fragPos)
-{
-    // get vector between fragment position and light position
-    //mat4 light_proj_inv = inverse(light_proj);
-    //fragPos = vec3(light_proj_inv * vec4(fragPos.xyz, 1.0));
-    vec3 fragToLight = fragPos - lightPos;
-    //vec4 fragLightSpace = light_proj * gl_FragCoord;
-    //vec3 fragToLight = fragLightSpace.xyz / fragLightSpace.w;
-
-    // use the light to fragment vector to sample from the depth map
-    float mapDepth = texture(depthMap, fragToLight).r;
-
-    // it is currently in linear range between [0,1]. Re-transform back to original value
-    mapDepth *= (near_far.y - near_far.x);
-    //mapDepth += 0.8;
-
-    // now get current linear depth as the length between the fragment and light position
-    float fragDepth = length(fragToLight);
-
-    // now test for shadows
-    float bias = 0.05;
-    float darkness = 0.7;
-    float shadow = fragDepth - bias > mapDepth ? darkness : 0.0;
-
-    return shadow;
-}
-
 void main()
 {
     vec3 N = normalize(vertex.N);
@@ -147,19 +120,21 @@ void main()
         if (!lights[i].enabled)
             continue;
 
-        // TODO: Clean up shadow stuff
-        float shadow = ShadowCalculation(lightmaps[i], lights[i].P, vertex.P);
-        if (shadow > 0.0) continue;
+        vec3 fragToLight = lights[i].P - vertex.P;
 
-        //float lightmap_dist = texture(lightmaps[i], -L).r;
-        //lightmap_dist *= far_plane;
-        //float eps = 0.15;  // Play with this
-        //if (lightmap_dist + eps < dist)
-        //    continue;
-
-        vec3 L = normalize(lights[i].P - vertex.P);
+        vec3 L = normalize(fragToLight);
         vec3 H = normalize(V + L);
-        float dist = length(lights[i].P - vertex.P);
+        float dist = length(fragToLight);
+
+        vec3 LL = -L;
+        //LL.y = -LL.y;
+        float shadow_map_depth = texture(lightmaps[i], LL).r;
+        shadow_map_depth *= near_far.y;
+        float bias = 0.05;
+        float darkness = 0.7;
+        float shadow = (dist - bias > shadow_map_depth) ? darkness : 0.0;
+        if (shadow > 0.0)
+            continue;
 
         float attenuation = lights[i].intensity / (dist * dist);
         vec3 radiance = lights[i].color * attenuation;

@@ -15,7 +15,7 @@ void render_face(int face)
     for (int vert = 0; vert < 3; ++vert)
     {
         geometry.P = gl_in[vert].gl_Position;
-        gl_Position = cubemap_xforms[gl_Layer] * geometry.P;
+        gl_Position = cubemap_xforms[face] * geometry.P;
         EmitVertex();
     }
     EndPrimitive();

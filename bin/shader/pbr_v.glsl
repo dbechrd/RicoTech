@@ -19,10 +19,9 @@ layout(location = 3) in vec3 attr_normal;
 
 void main()
 {
-    vertex.color = attr_color;
-    vertex.N = (mat3(transpose(inverse(model))) * attr_normal).xyz;
+    vertex.P =  vec3(model * vec4(attr_position, 1.0));
     vertex.UV = scale_uv * attr_uv;
-    gl_Position = model * vec4(attr_position, 1.0);
-    vertex.P = gl_Position.xyz;
-    gl_Position = proj * view * gl_Position;
+    vertex.color = attr_color;
+    vertex.N = transpose(inverse(mat3(model))) * attr_normal;
+    gl_Position = proj * view * vec4(vertex.P, 1.0);
 }
