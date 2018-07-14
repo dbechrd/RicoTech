@@ -61,7 +61,7 @@ void pack_build_alpha(struct pack_info *pack_info)
     struct timmy *timmy = RICO_pack_lookup(timmy_id);
     RICO_object_trans_set(&timmy->rico, &VEC3(-4.0f, 0.0f, 0.0f));
     RICO_object_mesh_set(&timmy->rico, mesh_door_id);
-    RICO_object_material_set(terrain, mat_timmy);
+    RICO_object_material_set(&timmy->rico, mat_timmy);
     timmy->lights_on = true;
     timmy->audio_on = true;
 

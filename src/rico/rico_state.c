@@ -374,7 +374,7 @@ extern void RICO_frame_swap()
     //glClearColor(0.46f, 0.70f, 1.0f, 1.0f);
     //glClearDepth(0.0f);
     glClearColor(0.1f, 0.1f, 0.2f, 1.0f);
-    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 #if RICO_DEBUG
     // HACK: Kill some time (a.k.a. prevent my computer from lighting itself on
@@ -408,14 +408,9 @@ static int shared_engine_events()
     else if (action_active(ACTION_ENGINE_DEBUG_FOV_INCREASE) ||
              action_active(ACTION_ENGINE_DEBUG_FOV_DECREASE))
     {
-        /*float fov = cam_player.fov_deg;
-        fov += action_active(ACTION_ENGINE_DEBUG_FOV_INCREASE)
-            ? 5.0f
-            : -5.0f;
-        camera_set_fov(&cam_player, fov);*/
-        LIGHT_FOV += action_active(ACTION_ENGINE_DEBUG_FOV_INCREASE)
-            ? 0.1f
-            : -0.1f;
+        float fov = cam_player.fov_deg;
+        fov += action_active(ACTION_ENGINE_DEBUG_FOV_INCREASE) ? 1.0f : -1.0f;
+        camera_set_fov(&cam_player, fov);
     }
 #endif
     // Toggle FPS counter
@@ -1117,10 +1112,10 @@ static int rico_init_shaders()
     prog_pbr->frag.lights[0].intensity = INTENSITY;
     prog_pbr->frag.lights[2].intensity = INTENSITY;
     prog_pbr->frag.lights[3].intensity = INTENSITY;
-    prog_pbr->frag.lights[0].enabled = RICO_lighting_enabled && false;
-    prog_pbr->frag.lights[1].enabled = RICO_lighting_enabled && true;
-    prog_pbr->frag.lights[2].enabled = RICO_lighting_enabled && true;
-    prog_pbr->frag.lights[3].enabled = RICO_lighting_enabled && true;
+    prog_pbr->frag.lights[0].enabled = RICO_lighting_enabled && true;
+    prog_pbr->frag.lights[1].enabled = RICO_lighting_enabled && false;
+    prog_pbr->frag.lights[2].enabled = RICO_lighting_enabled && false;
+    prog_pbr->frag.lights[3].enabled = RICO_lighting_enabled && false;
     //prog_pbr->frag.light.kc = 1.0f;
     //prog_pbr->frag.light.kl = 0.05f;
     //prog_pbr->frag.light.kq = 0.001f;
@@ -1203,8 +1198,8 @@ static int engine_init()
     }
 
     // Initialize mouse and keyboard states
-	SDL_GetRelativeMouseState(0, 0);
 	SDL_GetKeyboardState(0);
+	SDL_GetRelativeMouseState(0, 0);
     SDL_SetRelativeMouseMode(mouse_lock);
     mouse_dx = 0;
     mouse_dy = 0;
@@ -1215,8 +1210,8 @@ static int engine_init()
     // Engine
     RICO_bind_action(ACTION_ENGINE_DEBUG_LIGHTING_TOGGLE,    CHORD1(SDL_SCANCODE_L));
     RICO_bind_action(ACTION_ENGINE_DEBUG_TRIGGER_BREAKPOINT, CHORD1(SDL_SCANCODE_F9));
-    RICO_bind_action(ACTION_ENGINE_DEBUG_FOV_INCREASE,       CHORD_REPEAT1(SDL_SCANCODE_3));
-    RICO_bind_action(ACTION_ENGINE_DEBUG_FOV_DECREASE,       CHORD_REPEAT1(SDL_SCANCODE_4));
+    RICO_bind_action(ACTION_ENGINE_DEBUG_FOV_INCREASE,       CHORD1(SDL_SCANCODE_3));
+    RICO_bind_action(ACTION_ENGINE_DEBUG_FOV_DECREASE,       CHORD1(SDL_SCANCODE_4));
     RICO_bind_action(ACTION_ENGINE_FPS_TOGGLE,               CHORD1(SDL_SCANCODE_2));
     RICO_bind_action(ACTION_ENGINE_MOUSE_LOCK_TOGGLE,        CHORD1(SDL_SCANCODE_M));
     RICO_bind_action(ACTION_ENGINE_VSYNC_TOGGLE,             CHORD1(SDL_SCANCODE_V));

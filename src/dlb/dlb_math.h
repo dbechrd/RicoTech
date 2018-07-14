@@ -287,11 +287,11 @@ DLB_MATH_DEF void mat4_rotx(struct mat4 *m, float deg);
 DLB_MATH_DEF void mat4_roty(struct mat4 *m, float deg);
 DLB_MATH_DEF void mat4_rotz(struct mat4 *m, float deg);
 DLB_MATH_DEF void mat4_transpose(struct mat4 *m);
-DLB_MATH_DEF struct mat4 mat4_init_perspective(float aspect, float z_near,
-                                               float z_far, float fov_deg);
-DLB_MATH_DEF struct mat4 mat4_init_ortho(float width, float height,
-                                         float z_near, float z_far,
-                                         float fudge);
+DLB_MATH_DEF struct mat4 mat4_init_perspective(float aspect, float near_z,
+                                               float far_z, float fov_deg);
+DLB_MATH_DEF struct mat4 mat4_init_ortho(float left, float right, float top,
+                                         float bottom, float near_z,
+                                         float far_z);
 DLB_MATH_DEF struct mat4 mat4_init_lookat(struct vec3 *pos, struct vec3 *view,
                                           struct vec3 *up);
 
@@ -824,59 +824,59 @@ DLB_MATH_DEF void mat4_transpose(struct mat4 *m)
 }
 
 //Calculate PERSPECTIVE projection
-DLB_MATH_DEF struct mat4 mat4_init_perspective(float aspect, float z_near,
-                                               float z_far, float fov_deg)
+DLB_MATH_DEF struct mat4 mat4_init_perspective(float aspect, float near_z,
+                                               float far_z, float fov_deg)
 {
-    RICO_ASSERT(z_far > z_near);
-    RICO_ASSERT(z_near > 0.0f);
+    RICO_ASSERT(far_z > near_z);
+    RICO_ASSERT(near_z > 0.0f);
 
     float fov_calc = tanf(DEG_TO_RADF(fov_deg) / 2.0f);
 
-    struct mat4 mat = MAT4_IDENT;
+    // Far plane at negative infinity
+    // https://chaosinmotion.blog/2010/09/06/goodbye-far-clipping-plane/
+    struct mat4 mat = { 0 };
     mat.m[0][0] = 1.0f / (aspect * fov_calc);
     mat.m[1][1] = 1.0f / fov_calc;
-    mat.m[2][2] = z_far / (z_near - z_far);
-    mat.m[2][3] = -(z_far * z_near) / (z_far - z_near);
+    mat.m[2][3] = -near_z;
     mat.m[3][2] = -1.0f;
     return mat;
 
-    /*struct mat4 mat = MAT4_IDENT;
-    mat.m[0][0] = fov_calc / aspect;
-    mat.m[1][1] = fov_calc;
-    mat.m[2][2] = -(z_far + z_near) / dz;
-    mat.m[2][3] = (2.0f * z_far * z_near) / dz;
+    // No idea why this causes far plane to be so close
+    /*float dz = near_z - far_z;
+    struct mat4 mat = { 0 };
+    mat.m[0][0] = 1.0f / (aspect * fov_calc);
+    mat.m[1][1] = 1.0f / fov_calc;
+    mat.m[2][2] = (near_z + far_z) / dz;
+    mat.m[2][3] = (2.0f * far_z * near_z) / dz;
     mat.m[3][2] = -1.0f;
     return mat;*/
+
+    //--------------------------------------------------------------------------
+    // Random dumb shit I accidentally discovered:
+
+    // Super-glitch see-through walls matrix
+    //struct mat4 mat = { 0 };
+    //mat.m[0][0] = 1.0f / (aspect * fov_calc);
+    //mat.m[1][1] = 1.0f / fov_calc;
+    //mat.m[2][2] = -0.9f; // -1.00002003
+    //mat.m[2][3] = 0.0f; // -0.0200002007
+    //mat.m[3][2] = -1.0f;
+    //return mat;
 }
 
-// Cleanup: fudge
 //Calculate ORTHOGRAPHIC projection
-DLB_MATH_DEF struct mat4 mat4_init_ortho(float width, float height,
-                                         float z_near, float z_far, float fudge)
+DLB_MATH_DEF struct mat4 mat4_init_ortho(float left, float right, float top,
+                                         float bottom, float near_z,
+                                         float far_z)
 {
-    float aspect = width / height;
-    float dz = z_far - z_near;
-
-    struct mat4 mat = MAT4_IDENT;
-    //mat.m[0][0] = 1.0f / aspect;
-    //mat.m[1][1] = 1.0f;
-    //mat.m[2][2] = -2.0f / dz;
-    //mat.m[2][3] = (z_far + z_near) / dz;
-    //mat.m[3][3] = fudge;  // TODO: What is fudge?
-
-    float right = 1.0f;
-    float left = -1.0f;
-    float top = 1.0f;
-    float bottom = -1.0f;
-
+    struct mat4 mat = { 0 };
     mat.m[0][0] = 2.0f / (right - left);
     mat.m[1][1] = 2.0f / (top - bottom);
-    mat.m[2][2] = -2.0f / z_far - z_near;
-    mat.m[0][3] = -((right + left) / (right - left));
-    mat.m[1][3] = -((top + bottom) / (top - bottom));
-    mat.m[2][3] = -((z_far + z_near) / (z_far - z_near));
+    mat.m[2][2] = -2.0f / (far_z - near_z);
+    mat.m[0][3] = -(right + left) / (right - left);
+    mat.m[1][3] = -(top + bottom) / (top - bottom);
+    mat.m[2][3] = -(far_z + near_z) / (far_z - near_z);
     mat.m[3][3] = 1.0f;
-
     return mat;
 }
 

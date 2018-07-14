@@ -27,8 +27,8 @@ static s32 SCREEN_HEIGHT = 900;
 #define SCREEN_W(x) ((float)(x) / SCREEN_WIDTH * 2.0f)
 #define SCREEN_H(y) (-(float)(y) / SCREEN_HEIGHT * 2.0f)
 
-#define Z_NEAR 0.01f
-#define Z_FAR 1000.0f
+#define Z_NEAR 1.0f
+#define Z_FAR 32.0f
 
 static void camera_init(struct RICO_camera *camera, struct vec3 position,
                         struct quat view, float fov_deg);

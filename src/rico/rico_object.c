@@ -339,8 +339,8 @@ static void temp_create_framebuffer(GLuint *fbo_id, GLuint tex_id)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-#define LIGHT_NEAR Z_NEAR
-#define LIGHT_FAR Z_FAR
+#define LIGHT_NEAR 1.0f
+#define LIGHT_FAR 25.0f
 extern float LIGHT_FOV = 90.0f;
 static GLuint shadow_cubemap[NUM_LIGHTS] = { 0 };
 static struct mat4 shadow_proj = { 0 };
@@ -358,14 +358,15 @@ static void temp_render_shadow_cubemap(r64 alpha, struct pbr_light *lights)
     {
         // TODO: FIX THIS BROKEN SHIT
         // Calculate projection matrix
-        //shadow_proj = mat4_init_perspective(1.0f, LIGHT_NEAR, LIGHT_FAR, LIGHT_FOV);
-        shadow_proj = mat4_init(
-            1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, -1.0000200271606445, -1,
-            0, 0, -0.02000020071864128, 0
-        );
-        mat4_transpose(&shadow_proj);
+        //new THREE.PerspectiveCamera(90, 1, 0.01, 1000).projectionMatrix
+        shadow_proj = mat4_init_perspective(1.0f, LIGHT_NEAR, LIGHT_FAR, LIGHT_FOV);
+        //shadow_proj = mat4_init(
+        //    1, 0, 0, 0,
+        //    0, 1, 0, 0,
+        //    0, 0, -1.0000200271606445, -1,
+        //    0, 0, -0.02000020071864128, 0
+        //);
+        //mat4_transpose(&shadow_proj);
 
         bias_matrix = mat4_init(
             0.5f,  0.0f,  0.0f,  0.5f,

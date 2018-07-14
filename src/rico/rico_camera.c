@@ -35,12 +35,14 @@ static void camera_init(struct RICO_camera *camera, struct vec3 position,
 
     bbox_init(&camera->RICO_bbox, VEC3(0.f, 0.f, 0.f), VEC3(1.f, 1.f, 1.f));
 
-    camera->persp_matrix = mat4_init_perspective(
-        (r32)SCREEN_WIDTH / (r32)SCREEN_HEIGHT, Z_NEAR, Z_FAR, fov_deg
-    );
-    camera->ortho_matrix = mat4_init_ortho(
-        (r32)SCREEN_WIDTH, (r32)SCREEN_HEIGHT, Z_NEAR, Z_FAR, 0.0f
-    );
+    camera->ortho_matrix = mat4_init_ortho(-1.0f, 1.0f, 1.0f, -1.0f, Z_NEAR,
+                                           Z_FAR);
+    //camera->ortho_matrix =
+    //    mat4_init_ortho(SCREEN_WIDTH / -2.0f, SCREEN_WIDTH / 2.0f,
+    //                    SCREEN_HEIGHT / 2.0f, SCREEN_HEIGHT / -2.0f,
+    //                    Z_NEAR, Z_FAR);
+
+    camera_set_fov(camera, fov_deg);
     camera->proj_matrix = &camera->persp_matrix;
 
     camera_translate_local(camera, &VEC3_ZERO);
@@ -179,7 +181,7 @@ static void camera_update(struct RICO_camera *camera, r64 sim_alpha)
                        "mouse:%d, %d\n",
 					   camera->pos.x, camera->pos.y, camera->pos.z,
 					   camera->pitch, camera->yaw, camera->roll,
-                       LIGHT_FOV, mouse_x, mouse_y);
+                       camera->fov_deg, mouse_x, mouse_y);
 	string_truncate(buf, sizeof(buf), len);
 	string_free_slot(STR_SLOT_DEBUG_CAMERA);
 	RICO_load_string(PACK_TRANSIENT, STR_SLOT_DEBUG_CAMERA,
@@ -257,6 +259,7 @@ static void camera_player_update(struct RICO_camera *camera, s32 dx, s32 dy,
 
     camera_update(&cam_player, 0.0f);
 }
+// TODO: Move this to cursor_render
 static void camera_render(struct RICO_camera *camera)
 {
 #if 0

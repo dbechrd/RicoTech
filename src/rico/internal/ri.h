@@ -54,7 +54,7 @@ struct pack; // Cleanup: Can we move these to the top of this file or something?
 #include "ri_physics.h"
 #include "ri_state.h"
 #include "ri_shader.h"
-#include "ri_glref.h"
+#include "ri_editor.h"
 #include "ri_ui.h"
 #include "ri_cereal.h"
 #include "ri_heiro.h"

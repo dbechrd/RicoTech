@@ -1,8 +1,56 @@
+static void test_math()
+{
+    //new THREE.PerspectiveCamera(90, 1, 0.01, 1000).projectionMatrix
+    struct mat4 proj_shadow_three = mat4_init(
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, -1.0000200271606445, -1,
+        0, 0, -0.02000020071864128, 0
+    );
+    mat4_transpose(&proj_shadow_three);
+
+    struct mat4 proj_shadow_rico =
+        mat4_init_perspective(1.0f, 0.01f, 1000.0f, 90.0f);
+
+    UNUSED(proj_shadow_three);
+    UNUSED(proj_shadow_rico);
+    //RICO_ASSERT(mat4_equals(&proj_shadow_three, &proj_shadow_rico));
+
+    //new THREE.PerspectiveCamera(54, 1600/900, 0.01, 1000).projectionMatrix
+    struct mat4 proj_camera_three = mat4_init(
+        1.1039683818817139, 0, 0, 0,
+        0, 1.9626104831695557, 0, 0,
+        0, 0, -1.0000200271606445, -1,
+        0, 0, -0.02000020071864128, 0
+    );
+    mat4_transpose(&proj_camera_three);
+
+    struct mat4 proj_camera_rico =
+        mat4_init_perspective(1600.0f/900.0f, 0.01f, 1000.0f, 54.0f);
+
+    UNUSED(proj_camera_three);
+    UNUSED(proj_camera_rico);
+    //RICO_ASSERT(mat4_equals(&proj_camera_three, &proj_camera_rico));
+
+    //new THREE.OrthographicCamera(-1.0, 1.0, 1.0, -1.0, 0.01, 1000.0).projectionMatrix;
+    struct mat4 ortho_camera_three = mat4_init(
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, -0.002000019885599613, 0,
+        0, 0, -1.0000200271606445, 1
+    );
+    mat4_transpose(&ortho_camera_three);
+
+    struct mat4 ortho_camera_rico =
+        mat4_init_ortho(-1.0f, 1.0f, 1.0f, -1.0f, 0.01f, 1000.0f);
+
+    RICO_ASSERT(mat4_equals(&ortho_camera_three, &ortho_camera_rico));
+
+}
 static void test_geom()
 {
     //TODO: Use Unity test framework (http://www.throwtheswitch.org/unity)
     //http://www.drdobbs.com/testing/unit-testing-in-c-tools-and-conventions/240156344
-    //run_tests();
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -171,6 +219,7 @@ cleanup:
 #endif
 static void run_tests()
 {
+    test_math();
     test_geom();
     test_hashtable();
     test_ndc_macros();

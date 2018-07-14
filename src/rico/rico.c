@@ -21,7 +21,7 @@
 
 #include "rico_material.c"
 #include "rico_object.c"
-#include "rico_glref.c"
+#include "rico_editor.c"
 
 #include "rico_primitives.c"
 #include "rico_regularpoly.c"
