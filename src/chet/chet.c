@@ -92,7 +92,6 @@ int pack_load_all()
     err = pack_load(PACK_CLASH);
     if (err) return err;
 
-    RICO_pack_active = pack_table[PACK_CLASH].sav_id;
 	return err;
 }
 
@@ -1202,7 +1201,7 @@ int main(int argc, char **argv)
 
         // Render world
         RICO_render_objects();
-        //DEBUG_render_bboxes(timmy);
+        DEBUG_render_bboxes(timmy);
         if (rayviz_sphere.radius > 0.0f)
             RICO_prim_draw_sphere(&rayviz_sphere, &COLOR_YELLOW);
 

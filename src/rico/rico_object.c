@@ -187,7 +187,10 @@ extern void RICO_object_mesh_set(struct RICO_object *obj, pkid mesh_id)
     RICO_ASSERT(uid->type == RICO_HND_MESH);
 #endif
     obj->mesh_id = mesh_id;
-    object_bbox_recalculate(obj);
+    if (obj->type >= RICO_OBJECT_TYPE_COUNT)
+    {
+        object_bbox_recalculate(obj);
+    }
 }
 extern void RICO_object_material_set(struct RICO_object *obj, pkid material_id)
 {
@@ -196,7 +199,6 @@ extern void RICO_object_material_set(struct RICO_object *obj, pkid material_id)
     RICO_ASSERT(uid->type == RICO_HND_MATERIAL);
 #endif
     obj->material_id = material_id;
-    object_bbox_recalculate(obj);
 }
 extern void RICO_object_trans(struct RICO_object *obj, const struct vec3 *v)
 {
@@ -339,7 +341,7 @@ static void temp_create_framebuffer(GLuint *fbo_id, GLuint tex_id)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-#define LIGHT_NEAR 1.0f
+#define LIGHT_NEAR 0.01f
 #define LIGHT_FAR 25.0f
 extern float LIGHT_FOV = 90.0f;
 static GLuint shadow_cubemap[NUM_LIGHTS] = { 0 };

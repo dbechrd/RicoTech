@@ -65,8 +65,6 @@ enum DEFAULT_IDS
     MESH_DEFAULT_SPHERE
 };
 
-extern u32 RICO_pack_active;
-
 extern u32 RICO_pack_init(u32 pack_id, const char *name, u32 blob_count,
                           u32 buffer_size);
 extern void *RICO_pack_lookup(pkid pkid);

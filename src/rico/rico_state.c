@@ -577,9 +577,14 @@ static int shared_edit_events()
         edit_mouse_released();
     }
     // Recalculate bounding boxes of all objects
-    else if (action_active(ACTION_EDIT_BBOX_RECALCULATE))
+    else if (action_active(ACTION_EDIT_BBOX_RECALCULATE_ALL))
     {
         edit_bbox_reset_all();
+    }
+    // Recalculate bounding box based on current mesh
+    else if (action_active(ACTION_EDIT_BBOX_RECALCULATE))
+    {
+        edit_bbox_reset();
     }
     // Duplicate selected object
     else if (action_active(ACTION_EDIT_SELECTED_DUPLICATE))
@@ -656,7 +661,9 @@ static int shared_edit_events()
     // Save chunk
     else if (action_active(ACTION_EDIT_SAVE))
     {
-        err = RICO_pack_save(RICO_pack_active, false);
+        // TODO: Save all packs? Pack dirty flag?
+        u32 pack_id = PKID_PACK(selected_obj_id);
+        err = RICO_pack_save(pack_id, false);
     }
     // Toggle camera project (perspective/orthographic)
     // TODO: Reset to perspective when leaving edit mode?
@@ -1000,11 +1007,6 @@ static int state_edit_mesh()
     {
         edit_mesh_next_pack();
     }
-    // Recalculate bounding box based on current mesh
-    else if (action_active(ACTION_EDIT_MESH_BBOX_RECALCULATE))
-    {
-        edit_bbox_reset();
-    }
 
     return err;
 }
@@ -1016,7 +1018,9 @@ static int state_menu_quit()
     if (KEY_PRESSED(SDL_SCANCODE_Y) || KEY_PRESSED(SDL_SCANCODE_RETURN))
     {
         string_free_slot(STR_SLOT_MENU_QUIT);
-		err = RICO_pack_save(RICO_pack_active, false);
+        // TODO: Save all packs? Pack dirty flag?
+        u32 pack_id = PKID_PACK(selected_obj_id);
+		err = RICO_pack_save(pack_id, false);
         state = STATE_ENGINE_SHUTDOWN;
     }
     // [N] / [Escape]: Return to play mode
@@ -1113,9 +1117,9 @@ static int rico_init_shaders()
     prog_pbr->frag.lights[2].intensity = INTENSITY;
     prog_pbr->frag.lights[3].intensity = INTENSITY;
     prog_pbr->frag.lights[0].enabled = RICO_lighting_enabled && true;
-    prog_pbr->frag.lights[1].enabled = RICO_lighting_enabled && false;
-    prog_pbr->frag.lights[2].enabled = RICO_lighting_enabled && false;
-    prog_pbr->frag.lights[3].enabled = RICO_lighting_enabled && false;
+    prog_pbr->frag.lights[1].enabled = RICO_lighting_enabled && true;
+    prog_pbr->frag.lights[2].enabled = RICO_lighting_enabled && true;
+    prog_pbr->frag.lights[3].enabled = RICO_lighting_enabled && true;
     //prog_pbr->frag.light.kc = 1.0f;
     //prog_pbr->frag.light.kl = 0.05f;
     //prog_pbr->frag.light.kq = 0.001f;
@@ -1246,7 +1250,8 @@ static int engine_init()
     RICO_bind_action(ACTION_EDIT_MOUSE_PICK_START,           CHORD1(RICO_SCANCODE_LMB));
     RICO_bind_action(ACTION_EDIT_MOUSE_PICK_MOVE,            CHORD_REPEAT1(RICO_SCANCODE_LMB));
     RICO_bind_action(ACTION_EDIT_MOUSE_PICK_END,             CHORD_UP1(RICO_SCANCODE_LMB));
-    RICO_bind_action(ACTION_EDIT_BBOX_RECALCULATE,           CHORD2(RICO_SCANCODE_SHIFT,  SDL_SCANCODE_B));
+    RICO_bind_action(ACTION_EDIT_BBOX_RECALCULATE_ALL,       CHORD2(RICO_SCANCODE_SHIFT,  SDL_SCANCODE_B));
+    RICO_bind_action(ACTION_EDIT_BBOX_RECALCULATE,           CHORD1(SDL_SCANCODE_B));
     RICO_bind_action(ACTION_EDIT_CREATE_OBJECT,              CHORD1(SDL_SCANCODE_INSERT));
     RICO_bind_action(ACTION_EDIT_SELECTED_DUPLICATE,         CHORD2(RICO_SCANCODE_CTRL,   SDL_SCANCODE_D));
     RICO_bind_action(ACTION_EDIT_SELECTED_DELETE,            CHORD1(SDL_SCANCODE_DELETE));
@@ -1293,7 +1298,6 @@ static int engine_init()
     RICO_bind_action(ACTION_EDIT_MESH_NEXT,                  CHORD1(SDL_SCANCODE_RIGHT));
     RICO_bind_action(ACTION_EDIT_MESH_PREVIOUS,              CHORD1(SDL_SCANCODE_LEFT));
     RICO_bind_action(ACTION_EDIT_MESH_NEXT_PACK,             CHORD1(SDL_SCANCODE_UP));
-    RICO_bind_action(ACTION_EDIT_MESH_BBOX_RECALCULATE,      CHORD1(SDL_SCANCODE_B));
 
     state_handlers[STATE_TEXT_INPUT     ].init = &state_text_input_init;
 

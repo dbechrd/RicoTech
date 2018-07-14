@@ -37,18 +37,22 @@ static void editor_init()
 }
 static void edit_object_create()
 {
+    if (!selected_obj_id)
+        return;
+
     // TODO: Prompt user for object name
     const char *name = "new_obj";
 
     // HACK: Use first user-defined type
     // Create new object and select it
-    pkid obj_id = RICO_load_object(RICO_pack_active, RICO_OBJECT_TYPE_COUNT, 0,
-                                   name);
-    edit_object_select(obj_id, false);
+    pkid new_id = RICO_load_object(PKID_PACK(selected_obj_id),
+                                   RICO_OBJECT_TYPE_COUNT, 0, name);
+    edit_object_select(new_id, false);
 }
 static void edit_bbox_reset_all()
 {
-    object_bbox_recalculate_all(RICO_pack_active);
+    u32 start_id = PKID_PACK(selected_obj_id);
+    object_bbox_recalculate_all(start_id);
 
     // Reselect current object
     if (selected_obj_id)
@@ -103,39 +107,50 @@ static pkid find_first_selectable_object(u32 pack_id)
 static void edit_pack_next()
 {
     u32 start_id = PKID_PACK(selected_obj_id);
-    u32 pack_id = (start_id + 1) % MAX_PACKS;
+    u32 pack_id = 0;
 
     pkid id;
-    while (pack_id != start_id)
+    for (;;)
     {
         if (packs[pack_id])
         {
             id = find_first_selectable_object(pack_id);
-            if (id)
-                break;
+            if (id) break;
         }
         pack_id = (pack_id + 1) % MAX_PACKS;
+        if (pack_id == start_id)
+        {
+            return;
+        }
     }
 
     edit_object_select(id, false);
 }
 static void edit_object_next()
 {
-    pkid next_obj = 0;
-    if (selected_obj_id) next_obj = RICO_pack_next_loop(selected_obj_id);
-    edit_object_select(next_obj, false);
+    pkid next_id = 0;
+    if (selected_obj_id)
+    {
+        next_id = RICO_pack_next_loop(selected_obj_id);
+    }
+    edit_object_select(next_id, false);
 }
 static void edit_object_prev()
 {
-    pkid prev_obj = 0;
-    if (selected_obj_id) RICO_pack_prev_loop(selected_obj_id);
-    edit_object_select(prev_obj, false);
+    pkid prev_id = 0;
+    if (selected_obj_id)
+    {
+        prev_id = RICO_pack_prev_loop(selected_obj_id);
+    }
+    edit_object_select(prev_id, false);
 }
 static void edit_print_object()
 {
     struct RICO_object *obj = NULL;
     if (selected_obj_id)
+    {
         obj = RICO_pack_lookup(selected_obj_id);
+    }
     object_print(obj);
 }
 static void edit_translate(struct RICO_camera *camera, const struct vec3 *offset)
