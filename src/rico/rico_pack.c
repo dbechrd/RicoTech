@@ -618,11 +618,11 @@ extern int RICO_pack_save_as(u32 pack_id, const char *filename, bool shrink)
 	struct tm *tm = localtime(&rawtime);
 
 	char backupFilename[128] = { 0 };
-	int len = snprintf(backupFilename, sizeof(backupFilename),
+	int buffer_len = snprintf(backupFilename, sizeof(backupFilename),
 					   "chunks/cereal_%04d%02d%02dT%02d%02d%02d.bin",
 					   1900 + tm->tm_year, 1 + tm->tm_mon, tm->tm_mday,
 					   tm->tm_hour, tm->tm_min, tm->tm_sec);
-	string_truncate(backupFilename, sizeof(backupFilename), len);
+	string_truncate(backupFilename, sizeof(backupFilename), buffer_len);
 
 	struct rico_file backupFile;
 	err = rico_file_open_write(&backupFile, backupFilename,

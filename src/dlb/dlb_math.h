@@ -233,7 +233,18 @@ struct quat
 #define COLOR_DARK_MAGENTA VEC4(0.500f, 0.000f, 0.500f, 1.0f)
 #define COLOR_DARK_ORANGE  VEC4(0.500f, 0.279f, 0.000f, 1.0f)
 
-#define COLOR_TRANSLUCENT             VEC4(1.0f, 1.0f, 1.0f, 0.3f)
+#define COLOR_TRANSLUCENT   VEC4(1.0f, 1.0f, 1.0f, 0.5f)
+#define COLOR_TRANS_GRAY_9  VEC4(0.9f, 0.9f, 0.9f, 0.5f)
+#define COLOR_TRANS_GRAY_8  VEC4(0.8f, 0.8f, 0.8f, 0.5f)
+#define COLOR_TRANS_GRAY_7  VEC4(0.7f, 0.7f, 0.7f, 0.5f)
+#define COLOR_TRANS_GRAY_6  VEC4(0.6f, 0.6f, 0.6f, 0.5f)
+#define COLOR_TRANS_GRAY_5  VEC4(0.5f, 0.5f, 0.5f, 0.5f)
+#define COLOR_TRANS_GRAY_4  VEC4(0.4f, 0.4f, 0.4f, 0.5f)
+#define COLOR_TRANS_GRAY_3  VEC4(0.3f, 0.3f, 0.3f, 0.5f)
+#define COLOR_TRANS_GRAY_2  VEC4(0.2f, 0.2f, 0.2f, 0.5f)
+#define COLOR_TRANS_GRAY_1  VEC4(0.1f, 0.1f, 0.1f, 0.5f)
+#define COLOR_TRANS_BLACK   VEC4(0.0f, 0.0f, 0.0f, 0.5f)
+
 #define COLOR_DARK_RED_HIGHLIGHT      VEC4(0.500f, 0.000f, 0.000f, 0.5f)
 #define COLOR_DARK_GREEN_HIGHLIGHT    VEC4(0.000f, 0.500f, 0.000f, 0.5f)
 #define COLOR_DARK_BLUE_HIGHLIGHT     VEC4(0.000f, 0.000f, 0.500f, 0.5f)
@@ -562,10 +573,10 @@ DLB_MATH_DEF struct vec3 v3_negate(struct vec3 v)
 }
 DLB_MATH_DEF struct vec3 v3_normalize(struct vec3 v)
 {
-    float len = 1.0f / v3_length(v);
-    v.x *= len;
-    v.y *= len;
-    v.z *= len;
+    float buffer_len = 1.0f / v3_length(v);
+    v.x *= buffer_len;
+    v.y *= buffer_len;
+    v.z *= buffer_len;
     return v;
 }
 DLB_MATH_DEF struct vec3 v3_positive(struct vec3 v)

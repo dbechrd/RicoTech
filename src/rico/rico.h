@@ -21,8 +21,8 @@
 #include "rico_state.h"
 #include "rico_pack.h"
 #include "rico_camera.h"
-#include "rico_ui.h"
 #include "rico_heiro.h"
+#include "rico_ui.h"
 
 extern int RICO_init();
 extern void RICO_window_size(s32 *x, s32 *y);

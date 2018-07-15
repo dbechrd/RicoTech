@@ -6,10 +6,10 @@ static int rico_convert_obj(const char *filename);
 static int load_obj_file_new(const char *filename);
 
 #if 0
-static inline char *read_word(char *fp, int len, char **buf)
+static inline char *read_word(char *fp, int buffer_len, char **buf)
 {
-    len--;
-    while (*fp && len)
+    buffer_len--;
+    while (*fp && buffer_len)
     {
         (*buf)++;
     }

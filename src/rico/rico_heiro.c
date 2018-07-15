@@ -42,7 +42,7 @@ int rico_heiro_init()
 
     // Set alignment to 1 byte for 8-bit grayscale glyphs
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    
+
     // TODO: Do I need to set cmap or encoding?
     //FT_Set_Charmap(ft_face, charmap);
     //FT_Select_Charmap(ft_face, encoding);
@@ -218,10 +218,9 @@ GLuint heiro_upload_texture(s32 width, s32 height, const void *pixels)
     return gl_id;
 }
 
-static u32 vert_idx = 0;
-static struct text_vertex vertices[HEIRO_MAX_LEN * HEIRO_GLYPH_VERTS];
-extern void RICO_heiro_build(struct rect *bounds, struct rect *cursor,
-                             const u8 *str, u32 len, u32 cur)
+extern void RICO_heiro_build(struct RICO_heiro_string *string,
+                             struct rect *cursor, const u8 *str, u32 len,
+                             u32 cur)
 {
     s32 x = 0;
     s32 y = 0;
@@ -229,10 +228,14 @@ extern void RICO_heiro_build(struct rect *bounds, struct rect *cursor,
     const s32 glyph_h = (s32)(HEIRO_GLYPH_HEIGHT * scale);
     const s32 extent_y = (s32)(glyph_max_extents.y * scale);
 
-    vert_idx = 0;
-    for (u32 i = 0; i <= len && i <= HEIRO_MAX_LEN; ++i)
+    string->length = MIN(len, HEIRO_MAX_LEN);
+    string->vertices = calloc(string->length * HEIRO_GLYPH_VERTS,
+                             sizeof(string->vertices[0]));
+
+    // NOTE: Need to iterate until i == len for cursor code
+    for (u32 i = 0; i <= string->length; ++i)
     {
-        if (i == cur)
+        if (i == cur && cursor)
         {
             cursor->x = x;
             // HACK: Is there a more accurate way to calculate this?
@@ -240,15 +243,14 @@ extern void RICO_heiro_build(struct rect *bounds, struct rect *cursor,
             cursor->w = 1;
             cursor->h = glyph_h;
         }
-        // NOTE: Need to iterate until i == len for cursor code
-        if (i == len || i == HEIRO_MAX_LEN) break;
+        if (i == string->length) break;
 
         u8 c = str[i];
         if (c == '\n')
         {
             x = 0;
             y += glyph_h;
-            bounds->h = y;
+            string->bounds.h = y;
             continue;
         }
 
@@ -280,37 +282,49 @@ extern void RICO_heiro_build(struct rect *bounds, struct rect *cursor,
 
         struct vec4 color = COLOR_WHITE;
 
-        vertices[vert_idx++] = (struct text_vertex) {
-            VEC3(x0, y0, z), VEC2(u0, v0), color
+        string->vertices[string->vertex_count++] = (struct text_vertex) {
+            VEC3(x0, y0, z),
+            VEC2(u0, v0),
+            color
         };
-        vertices[vert_idx++] = (struct text_vertex) {
-            VEC3(x0, y1, z), VEC2(u0, v1), color
+        string->vertices[string->vertex_count++] = (struct text_vertex) {
+            VEC3(x0, y1, z),
+            VEC2(u0, v1),
+            color
         };
-        vertices[vert_idx++] = (struct text_vertex) {
-            VEC3(x1, y0, z), VEC2(u1, v0), color
+        string->vertices[string->vertex_count++] = (struct text_vertex) {
+            VEC3(x1, y0, z),
+            VEC2(u1, v0),
+            color
         };
-        vertices[vert_idx++] = (struct text_vertex) {
-            VEC3(x1, y0, z), VEC2(u1, v0), color
+        string->vertices[string->vertex_count++] = (struct text_vertex) {
+            VEC3(x1, y0, z),
+            VEC2(u1, v0),
+            color
         };
-        vertices[vert_idx++] = (struct text_vertex) {
-            VEC3(x0, y1, z), VEC2(u0, v1), color
+        string->vertices[string->vertex_count++] = (struct text_vertex) {
+            VEC3(x0, y1, z),
+            VEC2(u0, v1),
+            color
         };
-        vertices[vert_idx++] = (struct text_vertex) {
-            VEC3(x1, y1, z), VEC2(u1, v1), color
+        string->vertices[string->vertex_count++] = (struct text_vertex) {
+            VEC3(x1, y1, z),
+            VEC2(u1, v1),
+            color
         };
 
         s32 adv = (glyph->advance_x >> 6);
         x += (s32)(adv * scale);
-        bounds->w = MAX(bounds->w, x);
+        string->bounds.w = MAX(string->bounds.w, x);
     }
 
-    bounds->x = 0;
-    // HACK: +1 centers glyphs vertically; may not work with all fonts.
-    bounds->y = extent_y;
-    bounds->h += glyph_h;
+    string->bounds.x = 0;
+    string->bounds.y = extent_y;
+    string->bounds.h += glyph_h;
 }
 
-extern void RICO_heiro_render(s32 sx, s32 sy)
+extern void RICO_heiro_render(struct RICO_heiro_string *string, s32 sx, s32 sy,
+                              const struct vec4 *color)
 {
     struct text_program *prog = prog_text;
     RICO_ASSERT(prog->program.gl_id);
@@ -325,7 +339,7 @@ extern void RICO_heiro_render(s32 sx, s32 sy)
     glUniformMatrix4fv(prog->locations.vert.view, 1, GL_TRUE, MAT4_IDENT.a);
     glUniformMatrix4fv(prog->locations.vert.model, 1, GL_TRUE, model.a);
 
-    glUniform4fv(prog->locations.frag.color, 1, &COLOR_GREEN.r);
+    glUniform4fv(prog->locations.frag.color, 1, (const GLfloat *)color);
     glUniform1i(prog->locations.frag.grayscale, true);
     glUniform1i(prog->locations.frag.tex0, 0);
 
@@ -336,14 +350,20 @@ extern void RICO_heiro_render(s32 sx, s32 sy)
     glBindTexture(GL_TEXTURE_2D, glyphs[0].gl_id);
 
     glBindBuffer(GL_ARRAY_BUFFER, glyph_vbo);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, vert_idx * sizeof(struct text_vertex),
-                    vertices);
+    glBufferSubData(GL_ARRAY_BUFFER, 0,
+                    string->vertex_count * sizeof(string->vertices[0]),
+                    string->vertices);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glDrawArrays(GL_TRIANGLES, 0, vert_idx);
+    glDrawArrays(GL_TRIANGLES, 0, string->vertex_count);
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
     glUseProgram(0);
+}
+
+extern void RICO_heiro_free(struct RICO_heiro_string *string)
+{
+    free(string->vertices);
 }
 
 void heiro_delete_glyphs()

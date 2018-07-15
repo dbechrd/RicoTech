@@ -39,9 +39,9 @@
 #include "rico_string.c"
 #include "rico_texture.c"
 #include "rico_file.c"
+#include "rico_heiro.c"
 #include "rico_ui.c"
 #include "rico_cereal.c"
-#include "rico_heiro.c"
 #if RICO_DEBUG
     #include "tests.c"
 #endif

@@ -71,16 +71,16 @@ static inline long dlb_atol(const char *str)
 #if 0
 struct dlb_string
 {
-    u32 len;
+    u32 buffer_len;
     const char *str;
 };
 
 struct dlb_string *dlb_string_alloc(const char *str)
 {
-    u32 len = strlen(str);
+    u32 buffer_len = strlen(str);
     struct dlb_string *s = calloc(1, sizeof(struct dlb_string) + strlen(str) +
                                   1);
-    s->len = len;
+    s->buffer_len = buffer_len;
     s->str = s + 1;
     return s;
 }

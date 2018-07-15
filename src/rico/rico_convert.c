@@ -263,7 +263,7 @@ static int load_obj_file_new(const char *filename)
         printf("%s ", obj_token_type_string[token->type]);
         if (token->type == OBJ_TOK_KEYWORD)
             printf("%s ", obj_keyword_type_string[token->keyword]);
-        printf("%.*s\n", token->len, token->value);
+        printf("%.*s\n", token->buffer_len, token->value);
         token++;
     }
 #endif

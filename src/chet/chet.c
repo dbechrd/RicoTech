@@ -45,11 +45,13 @@ enum toolbar_icon {
     TOOLBAR_UNDO,
     TOOLBAR_REDO,
     TOOLBAR_SAVE,
-    TOOLBAR_EXIT
+    TOOLBAR_EXIT,
+    TOOLBAR_COUNT
 };
 
-static struct RICO_sprite toolbar_sprites[16];
+static struct RICO_sprite toolbar_sprites[TOOLBAR_COUNT];
 static struct RICO_spritesheet toolbar_sheet;
+static struct ui_tooltip toolbar_tips[TOOLBAR_COUNT];
 
 #define PACK_ALPHA 0
 #define PACK_CLASH 1
@@ -564,7 +566,7 @@ void DEBUG_render_color_test()
     }
 }
 
-void DEBUG_render_bboxes(struct timmy *timmy)
+void debug_render_bboxes(struct timmy *timmy)
 {
     RICO_prim_draw_sphere(&timmy->rico.sphere, &COLOR_DARK_WHITE_HIGHLIGHT);
     RICO_prim_draw_bbox(&timmy->rico.bbox_world, &COLOR_AQUA);
@@ -659,6 +661,11 @@ void game_toolbar_init()
             sprite_y += sprite_h;
         }
     }
+
+    char text[] = "Translate";
+    struct ui_tooltip *tooltip = &toolbar_tips[TOOLBAR_CURSOR];
+    tooltip->enabled = true;
+    RICO_heiro_build(&tooltip->string.heiro, 0, text, sizeof(text) - 1, 0);
 }
 
 static u32 pointless_buttons = 0;
@@ -695,6 +702,7 @@ void game_render_ui_toolbar()
         toolbar_buttons[i]->color[RICO_UI_BUTTON_HOVERED] = COLOR_ORANGE;
         toolbar_buttons[i]->color[RICO_UI_BUTTON_PRESSED] = COLOR_DARK_ORANGE;
         toolbar_buttons[i]->sprite = &toolbar_sheet.sprites[i];
+        toolbar_buttons[i]->tooltip = &toolbar_tips[i];
     }
 
     // Cleanup: Create pointless buttons
@@ -840,6 +848,306 @@ void render_editor_ui()
     debug_render_cursor();
 }
 
+#if RICO_DEBUG
+#define MEMCHK 250
+#endif
+
+#define CHECK_MEM() RICO_ASSERT( \
+    text_input.memchk1 == MEMCHK && \
+    text_input.memchk2 == MEMCHK);
+
+struct text_input_state
+{
+    u32 tab_width;
+    u32 cursor;
+    u32 buffer_len;
+    IF_DEBUG(u8 memchk1;)
+    char buffer[HEIRO_MAX_LEN];
+    IF_DEBUG(u8 memchk2;)
+};
+struct text_input_state text_input;
+
+void debug_handle_text_input()
+{
+    SDL_Event event;
+    while (SDL_PollEvent(&event))
+    {
+        switch (event.type) {
+            case SDL_TEXTINPUT:
+            {
+                if (text_input.buffer_len < sizeof(text_input.buffer))
+                {
+                    if (text_input.cursor < text_input.buffer_len)
+                    {
+                        // Shift all text after cursor right
+                        memcpy(text_input.buffer + text_input.cursor + 1,
+                               text_input.buffer + text_input.cursor,
+                               text_input.buffer_len - text_input.cursor);
+                    }
+                    text_input.buffer_len++;
+                    text_input.buffer[text_input.cursor++] = event.text.text[0];
+                    CHECK_MEM();
+                }
+                break;
+            }
+            case SDL_KEYDOWN:
+            {
+                switch (event.key.keysym.scancode) {
+                    case SDL_SCANCODE_BACKSPACE:
+                    {
+                        if (text_input.cursor > 0)
+                        {
+                            if (text_input.cursor < text_input.buffer_len)
+                            {
+                                // Shift all text after cursor left
+                                memcpy(text_input.buffer + text_input.cursor - 1,
+                                       text_input.buffer + text_input.cursor,
+                                       text_input.buffer_len - text_input.cursor);
+                            }
+                            text_input.buffer_len--;
+                            text_input.cursor--;
+                            CHECK_MEM();
+                        }
+                        break;
+                    }
+                    case SDL_SCANCODE_DELETE:
+                    {
+                        if (text_input.cursor < text_input.buffer_len)
+                        {
+                            // Shift all text after cursor left
+                            memcpy(text_input.buffer + text_input.cursor,
+                                   text_input.buffer + text_input.cursor + 1,
+                                   text_input.buffer_len - text_input.cursor);
+                            text_input.buffer_len--;
+                            CHECK_MEM();
+                        }
+                        break;
+                    }
+                    case SDL_SCANCODE_RETURN:
+                    {
+                        if (text_input.buffer_len < sizeof(text_input.buffer))
+                        {
+                            if (text_input.cursor < text_input.buffer_len)
+                            {
+                                // Shift all text after cursor right
+                                memcpy(text_input.buffer + text_input.cursor + 1,
+                                       text_input.buffer + text_input.cursor,
+                                       text_input.buffer_len - text_input.cursor);
+                            }
+                            text_input.buffer_len++;
+                            text_input.buffer[text_input.cursor++] = '\n';
+                            CHECK_MEM();
+                        }
+                        break;
+                    }
+                    case SDL_SCANCODE_TAB:
+                    {
+                        if (text_input.buffer_len + text_input.tab_width <=
+                            sizeof(text_input.buffer))
+                        {
+                            if (text_input.cursor < text_input.buffer_len)
+                            {
+                                // Shift all text after cursor right
+                                memcpy(text_input.buffer + text_input.cursor + text_input.tab_width,
+                                       text_input.buffer + text_input.cursor,
+                                       text_input.buffer_len - text_input.cursor);
+                            }
+                            for (u32 i = 0; i < text_input.tab_width; ++i)
+                            {
+                                text_input.buffer_len++;
+                                text_input.buffer[text_input.cursor++] = ' ';
+                            }
+                            CHECK_MEM();
+                        }
+                        break;
+                    }
+                    case SDL_SCANCODE_LEFT:
+                    {
+                        if (text_input.cursor > 0)
+                        {
+                            text_input.cursor--;
+                        }
+                        break;
+                    }
+                    case SDL_SCANCODE_RIGHT:
+                    {
+                        if (text_input.cursor < text_input.buffer_len)
+                        {
+                            text_input.cursor++;
+                        }
+                        break;
+                    }
+                    case SDL_SCANCODE_UP:
+                    {
+                        // Find BOL (and count columns)
+                        u32 column = 0;
+                        while (text_input.cursor > 0 &&
+                               text_input.buffer[text_input.cursor - 1] != '\n')
+                        {
+                            text_input.cursor--;
+                            column++;
+                        }
+
+                        // If cursor at BOF, reset and abort
+                        if (text_input.cursor == 0) {
+                            text_input.cursor += column;
+                            break;
+                        }
+
+                        // Eat newline
+                        text_input.cursor--;
+
+                        // Save EOL in case prev line is shorter
+                        u32 eol = text_input.cursor;
+
+                        // Find BOL of prev line
+                        while (text_input.cursor > 0 &&
+                               text_input.buffer[text_input.cursor - 1] != '\n')
+                        {
+                            text_input.cursor--;
+                        }
+
+                        // Add column offset (unless EOL comes first)
+                        text_input.cursor += MIN(column, eol - text_input.cursor);
+
+                        break;
+                    }
+                    case SDL_SCANCODE_DOWN:
+                    {
+                        // TODO: Next line
+                        // Scan backward for newline, save count (if EOF, break)
+                        // Scan forward for newline
+                        // Scan forward until hit count/newline
+
+                        // Already at EOF, nowhere to go
+                        if (text_input.cursor == text_input.buffer_len) break;
+
+                        // Find BOL (and count columns)
+                        u32 column = 0;
+                        while (text_input.cursor > 0 &&
+                               text_input.buffer[text_input.cursor - 1] != '\n')
+                        {
+                            text_input.cursor--;
+                            column++;
+                        }
+
+                        // Go back to where we started
+                        text_input.cursor += column;
+
+                        // Find EOL
+                        u32 orig = text_input.cursor;
+                        while (text_input.cursor < text_input.buffer_len &&
+                               text_input.buffer[text_input.cursor] != '\n')
+                        {
+                            text_input.cursor++;
+                        }
+
+                        // If cursor at EOF, reset and abort
+                        if (text_input.cursor == text_input.buffer_len)
+                        {
+                            text_input.cursor = orig;
+                            break;
+                        }
+
+                        // Eat newline
+                        text_input.cursor++;
+
+                        // Advance until column or EOL
+                        while (column > 0 &&
+                               text_input.cursor < text_input.buffer_len &&
+                               text_input.buffer[text_input.cursor] != '\n')
+                        {
+                            text_input.cursor++;
+                            column--;
+                        }
+
+                        break;
+                    }
+                    case SDL_SCANCODE_HOME:
+                    {
+                        if (event.key.keysym.mod & KMOD_CTRL)
+                        {
+                            text_input.cursor = 0;
+                        }
+                        else
+                        {
+                            // Go to BOL
+                            while (text_input.cursor > 0 &&
+                                   text_input.buffer[text_input.cursor - 1] != '\n')
+                            {
+                                text_input.cursor--;
+                            }
+                        }
+                        break;
+                    }
+                    case SDL_SCANCODE_END:
+                    {
+                        if (event.key.keysym.mod & KMOD_CTRL)
+                        {
+                            text_input.cursor = text_input.buffer_len;
+                        }
+                        else
+                        {
+                            // Go to EOL
+                            while (text_input.cursor < text_input.buffer_len &&
+                                   text_input.buffer[text_input.cursor] != '\n')
+                            {
+                                text_input.cursor++;
+                            }
+                        }
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            default:
+                break;
+        }
+    }
+}
+
+void debug_render_text_input()
+{
+    struct RICO_heiro_string string = { 0 };
+    struct rect cursor = { 0 };
+    RICO_heiro_build(&string, &cursor, text_input.buffer, text_input.buffer_len,
+                     text_input.cursor);
+
+    const u32 sx = SCREEN_WIDTH / 2 - (580 / 2);
+    const u32 sy = 200;
+    const u32 border_width = 2;
+    const u32 scroll_w = 10;
+
+    string.bounds.x += sx;
+    string.bounds.y += sy;
+    string.bounds.w += scroll_w;
+    cursor.x += sx;
+    cursor.y += sy;
+
+    struct rect border = string.bounds;
+    border.x -= border_width;
+    border.y -= border_width;
+    border.w += border_width * 2;
+    border.h += border_width * 2;
+
+    struct rect scroll;
+    scroll.x = string.bounds.x + string.bounds.w - scroll_w;
+    scroll.y = string.bounds.y;
+    scroll.w = scroll_w;
+    scroll.h = string.bounds.h;  // TODO: Calculate
+
+    RICO_prim_draw_rect(&border, &VEC4(0.2f, 0.2f, 0.2f, 0.5f));
+    RICO_prim_draw_rect(&string.bounds, &COLOR_TRANS_BLACK);
+    RICO_prim_draw_rect(&scroll, &COLOR_ORANGE_HIGHLIGHT);
+
+    RICO_heiro_render(&string, sx, sy, &COLOR_GREEN);
+
+    RICO_prim_draw_rect(&cursor, &VEC4(1.0f, 0.0f, 0.0f, 0.5f));
+    RICO_heiro_free(&string);
+}
+
 void load_sound(enum audio_type type, const char *filename)
 {
     RICO_audio_buffer_load_file(&audio_buffers[type], filename);
@@ -913,15 +1221,12 @@ int main(int argc, char **argv)
     "#              Copyright 2018  Dan Bechard              #\n" \
     "#=======================================================#"
 
-    u32 tab_width = 4;
-    u32 input_len = MAX(sizeof(STRING_TEST), 1) - 1;
-    u32 input_cursor = input_len;
-#if RICO_DEBUG
-    #define MEMCHK 250
-#endif
-    IF_DEBUG(u8 memchk1 = MEMCHK);
-    char input_buffer[HEIRO_MAX_LEN] = STRING_TEST;
-    IF_DEBUG(u8 memchk2 = MEMCHK);
+    text_input.tab_width = 4;
+    text_input.buffer_len = MAX(sizeof(STRING_TEST), 1) - 1;
+    text_input.cursor = text_input.buffer_len;
+    IF_DEBUG(text_input.memchk1 = MEMCHK);
+    memcpy(text_input.buffer, STRING_TEST, text_input.buffer_len);
+    IF_DEBUG(text_input.memchk2 = MEMCHK);
 
     while (!RICO_quit())
     {
@@ -929,243 +1234,7 @@ int main(int argc, char **argv)
 
         if (RICO_state() == STATE_TEXT_INPUT)
         {
-            // TODO: Refactor this out into state_text_input run handler
-            SDL_Event event;
-            while (SDL_PollEvent(&event))
-            {
-                switch (event.type) {
-                case SDL_TEXTINPUT:
-                {
-                    if (input_len < sizeof(input_buffer))
-                    {
-                        if (input_cursor < input_len)
-                        {
-                            // Shift all text after cursor right
-                            memcpy(input_buffer + input_cursor + 1,
-                                   input_buffer + input_cursor,
-                                   input_len - input_cursor);
-                        }
-                        input_len++;
-                        input_buffer[input_cursor++] = event.text.text[0];
-                        RICO_ASSERT(memchk1 == MEMCHK && memchk2 == MEMCHK);
-                    }
-                    break;
-                }
-                case SDL_KEYDOWN:
-                {
-                    switch (event.key.keysym.scancode) {
-                    case SDL_SCANCODE_BACKSPACE:
-                    {
-                        if (input_cursor > 0)
-                        {
-                            if (input_cursor < input_len)
-                            {
-                                // Shift all text after cursor left
-                                memcpy(input_buffer + input_cursor - 1,
-                                       input_buffer + input_cursor,
-                                       input_len - input_cursor);
-                            }
-                            input_len--;
-                            input_cursor--;
-                            RICO_ASSERT(memchk1 == MEMCHK && memchk2 == MEMCHK);
-                        }
-                        break;
-                    }
-                    case SDL_SCANCODE_DELETE:
-                    {
-                        if (input_cursor < input_len)
-                        {
-                            // Shift all text after cursor left
-                            memcpy(input_buffer + input_cursor,
-                                    input_buffer + input_cursor + 1,
-                                    input_len - input_cursor);
-                            input_len--;
-                            RICO_ASSERT(memchk1 == MEMCHK && memchk2 == MEMCHK);
-                        }
-                        break;
-                    }
-                    case SDL_SCANCODE_RETURN:
-                    {
-                        if (input_len < sizeof(input_buffer))
-                        {
-                            if (input_cursor < input_len)
-                            {
-                                // Shift all text after cursor right
-                                memcpy(input_buffer + input_cursor + 1,
-                                       input_buffer + input_cursor,
-                                       input_len - input_cursor);
-                            }
-                            input_len++;
-                            input_buffer[input_cursor++] = '\n';
-                            RICO_ASSERT(memchk1 == MEMCHK && memchk2 == MEMCHK);
-                        }
-                        break;
-                    }
-                    case SDL_SCANCODE_TAB:
-                    {
-                        if (input_len + tab_width <= sizeof(input_buffer))
-                        {
-                            if (input_cursor < input_len)
-                            {
-                                // Shift all text after cursor right
-                                memcpy(input_buffer + input_cursor + tab_width,
-                                       input_buffer + input_cursor,
-                                       input_len - input_cursor);
-                            }
-                            for (u32 i = 0; i < tab_width; ++i)
-                            {
-                                input_len++;
-                                input_buffer[input_cursor++] = ' ';
-                            }
-                            RICO_ASSERT(memchk1 == MEMCHK && memchk2 == MEMCHK);
-                        }
-                        break;
-                    }
-                    case SDL_SCANCODE_LEFT:
-                    {
-                        if (input_cursor > 0)
-                        {
-                            input_cursor--;
-                        }
-                        break;
-                    }
-                    case SDL_SCANCODE_RIGHT:
-                    {
-                        if (input_cursor < input_len)
-                        {
-                            input_cursor++;
-                        }
-                        break;
-                    }
-                    case SDL_SCANCODE_UP:
-                    {
-                        // Find BOL (and count columns)
-                        u32 column = 0;
-                        while (input_cursor > 0 &&
-                               input_buffer[input_cursor - 1] != '\n')
-                        {
-                            input_cursor--;
-                            column++;
-                        }
-
-                        // If cursor at BOF, reset and abort
-                        if (input_cursor == 0) {
-                            input_cursor += column;
-                            break;
-                        }
-
-                        // Eat newline
-                        input_cursor--;
-
-                        // Save EOL in case prev line is shorter
-                        u32 eol = input_cursor;
-
-                        // Find BOL of prev line
-                        while (input_cursor > 0 &&
-                               input_buffer[input_cursor - 1] != '\n')
-                        {
-                            input_cursor--;
-                        }
-
-                        // Add column offset (unless EOL comes first)
-                        input_cursor += MIN(column, eol - input_cursor);
-
-                        break;
-                    }
-                    case SDL_SCANCODE_DOWN:
-                    {
-                        // TODO: Next line
-                        // Scan backward for newline, save count (if EOF, break)
-                        // Scan forward for newline
-                        // Scan forward until hit count/newline
-
-                        // Already at EOF, nowhere to go
-                        if (input_cursor == input_len) break;
-
-                        // Find BOL (and count columns)
-                        u32 column = 0;
-                        while (input_cursor > 0 &&
-                               input_buffer[input_cursor - 1] != '\n')
-                        {
-                            input_cursor--;
-                            column++;
-                        }
-
-                        // Go back to where we started
-                        input_cursor += column;
-
-                        // Find EOL
-                        u32 orig = input_cursor;
-                        while (input_cursor < input_len &&
-                               input_buffer[input_cursor] != '\n')
-                        {
-                            input_cursor++;
-                        }
-
-                        // If cursor at EOF, reset and abort
-                        if (input_cursor == input_len)
-                        {
-                            input_cursor = orig;
-                            break;
-                        }
-
-                        // Eat newline
-                        input_cursor++;
-
-                        // Advance until column or EOL
-                        while (column > 0 &&
-                               input_cursor < input_len &&
-                               input_buffer[input_cursor] != '\n')
-                        {
-                            input_cursor++;
-                            column--;
-                        }
-
-                        break;
-                    }
-                    case SDL_SCANCODE_HOME:
-                    {
-                        if (event.key.keysym.mod & KMOD_CTRL)
-                        {
-                            input_cursor = 0;
-                        }
-                        else
-                        {
-                            // Go to BOL
-                            while (input_cursor > 0 &&
-                                   input_buffer[input_cursor - 1] != '\n')
-                            {
-                                input_cursor--;
-                            }
-                        }
-                        break;
-                    }
-                    case SDL_SCANCODE_END:
-                    {
-                        if (event.key.keysym.mod & KMOD_CTRL)
-                        {
-                            input_cursor = input_len;
-                        }
-                        else
-                        {
-                            // Go to EOL
-                            while (input_cursor < input_len &&
-                                   input_buffer[input_cursor] != '\n')
-                            {
-                                input_cursor++;
-                            }
-                        }
-                        break;
-                    }
-                    default:
-                        break;
-                    }
-                    break;
-                }
-                default:
-                    break;
-                }
-            }
+            debug_handle_text_input();
         }
         else
         {
@@ -1201,9 +1270,11 @@ int main(int argc, char **argv)
 
         // Render world
         RICO_render_objects();
-        DEBUG_render_bboxes(timmy);
+        debug_render_bboxes(timmy);
         if (rayviz_sphere.radius > 0.0f)
+        {
             RICO_prim_draw_sphere(&rayviz_sphere, &COLOR_YELLOW);
+        }
 
         // Render overlays
         if (RICO_state_is_edit())
@@ -1239,41 +1310,7 @@ int main(int argc, char **argv)
         //======================================================================
         if (RICO_state() == STATE_TEXT_INPUT)
         {
-            struct rect bounds = { 0 };
-            struct rect cursor = { 0 };
-            RICO_heiro_build(&bounds, &cursor, input_buffer, input_len,
-                             input_cursor);
-
-            const u32 sx = SCREEN_WIDTH / 2 - (580 / 2);
-            const u32 sy = 200;
-            const u32 border_width = 2;
-            const u32 scroll_w = 10;
-
-            bounds.x += sx;
-            bounds.y += sy;
-            bounds.w += scroll_w;
-            cursor.x += sx;
-            cursor.y += sy;
-
-            struct rect border = bounds;
-            border.x -= border_width;
-            border.y -= border_width;
-            border.w += border_width * 2;
-            border.h += border_width * 2;
-
-            struct rect scroll;
-            scroll.x = bounds.x + bounds.w - scroll_w;
-            scroll.y = bounds.y;
-            scroll.w = scroll_w;
-            scroll.h = bounds.h;  // TODO: Calculate
-
-            RICO_prim_draw_rect(&border, &VEC4(0.2f, 0.2f, 0.2f, 0.5f));
-            RICO_prim_draw_rect(&bounds, &VEC4(0.0f, 0.0f, 0.0f, 0.5f));
-            RICO_prim_draw_rect(&scroll, &COLOR_ORANGE_HIGHLIGHT);
-
-            RICO_heiro_render(sx, sy);
-
-            RICO_prim_draw_rect(&cursor, &VEC4(1.0f, 0.0f, 0.0f, 0.5f));
+            debug_render_text_input();
         }
         //======================================================================
 

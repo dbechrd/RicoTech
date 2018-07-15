@@ -21,13 +21,16 @@ struct RICO_spritesheet
 
 struct ui_string
 {
-    const char *text;
-
-    // TODO: Generate these automatically if null, cache for next frame, only
-    //       update if text is dirty.
-    pkid mesh_id;
-    pkid material_id;
+    struct RICO_heiro_string heiro;
 };
+
+#define MAX_TOOLTIPS 32
+struct ui_tooltip
+{
+    bool enabled;
+    struct ui_string string;
+};
+struct ui_tooltip tooltips[MAX_TOOLTIPS];
 
 #define RICO_UI_ELEMENT_TYPES(f) \
     f(RICO_UI_ELEMENT_HUD)    \
@@ -104,13 +107,14 @@ struct RICO_ui_button
     struct RICO_sprite *sprite;
     enum RICO_ui_button_state state;
     struct vec4 color[RICO_UI_BUTTON_COUNT];
+    struct ui_tooltip *tooltip;
 };
 
 struct RICO_ui_label
 {
     struct RICO_ui_element element;
     struct vec4 color;
-    struct ui_string *string;
+    struct ui_string string;
 };
 
 extern struct RICO_ui_hud *RICO_ui_hud();

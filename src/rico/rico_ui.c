@@ -372,6 +372,36 @@ static void ui_draw_element(struct RICO_ui_element *element, s32 x, s32 y)
     }
 }
 
+extern void ui_draw_tooltip(struct RICO_ui_element *element)
+{
+    if (element->type == RICO_UI_ELEMENT_BUTTON)
+    {
+        struct RICO_ui_button *button = (struct RICO_ui_button *)element;
+        if (button->tooltip && button->state == RICO_UI_BUTTON_HOVERED)
+        {
+            struct RICO_heiro_string *heiro = &button->tooltip->string.heiro;
+            const s32 pad = 2;
+            const struct vec2i offset = { 6, 4 };
+            struct rect bounds = heiro->bounds;
+            bounds.x += mouse_x + offset.x;
+            bounds.y += mouse_y - offset.y;
+            bounds.w += pad * 2;
+            bounds.h += pad * 2;
+            RICO_prim_draw_rect(&bounds, &VEC4(0.2f, 0.4f, 0.8f, 0.9f));
+            RICO_heiro_render(heiro, mouse_x + offset.x + pad,
+                              mouse_y - offset.y + pad,
+                              &COLOR_WHITE);
+        }
+    }
+
+    struct RICO_ui_element *child = element->first_child;
+    while (child)
+    {
+        ui_draw_tooltip(child);
+        child = child->next;
+    }
+}
+
 extern bool RICO_ui_layout(struct RICO_ui_element *element, s32 x, s32 y,
                            s32 max_w, s32 max_h)
 {
@@ -391,4 +421,5 @@ extern bool RICO_ui_layout(struct RICO_ui_element *element, s32 x, s32 y,
 extern void RICO_ui_draw(struct RICO_ui_element *element, s32 x, s32 y)
 {
     ui_draw_element(element, x, y);
+    ui_draw_tooltip(element);
 }
