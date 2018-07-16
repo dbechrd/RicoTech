@@ -43,14 +43,6 @@ struct game_panel
 struct small_cube
 {
     struct RICO_object rico;
-    // TODO: Move collision/physics info to RICO_object
-    //       e.g. u32 collision, u32 physics
-    struct vec3 acc;
-    struct vec3 vel;
-    bool resting;
-    bool collide_sphere;
-    bool collide_aabb;
-    bool collide_obb;
 };
 
 struct pack_info

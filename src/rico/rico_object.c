@@ -40,6 +40,7 @@ static void object_deselect(struct RICO_object *obj)
 }
 static void object_update_bbox_world(struct RICO_object *obj)
 {
+    // TODO: This is super broken.. do I even care about AABB?
     obj->bbox_world = obj->bbox;
     RICO_bbox_transform(&obj->bbox_world, &obj->xform.matrix);
 }
@@ -75,13 +76,15 @@ static void object_update_obb(struct RICO_object *obj)
     v3_scalef(&obb->u[1], obj->xform.scale.y);
     v3_scalef(&obb->u[2], obj->xform.scale.z);
 
-    // Make sure we still have a proper box!
+#if RICO_DEBUG
+    // Cleanup: Make sure we still have a proper box!
     float dot1 = v3_dot(&obb->u[0], &obb->u[1]);
     float dot2 = v3_dot(&obb->u[0], &obb->u[2]);
     float dot3 = v3_dot(&obb->u[1], &obb->u[2]);
     DLB_ASSERT(dot1 == 0.0f);
     DLB_ASSERT(dot2 == 0.0f);
     DLB_ASSERT(dot3 == 0.0f);
+#endif
 }
 static void object_update_sphere(struct RICO_object *obj)
 {
@@ -726,6 +729,8 @@ static void object_print(struct RICO_object *obj)
 
     if (obj)
     {
+        buf32 *pack_name = &packs[PKID_PACK(obj->uid.pkid)]->name;
+
         struct RICO_mesh *mesh = (obj->mesh_id)
             ? RICO_pack_lookup(obj->mesh_id) : NULL;
         struct RICO_material *material = (obj->material_id)
@@ -776,7 +781,9 @@ static void object_print(struct RICO_object *obj)
         len = snprintf(
             buf, sizeof(buf),
             "\n"
-            "Object [%u|%u] %s\n"
+            "Object\n"
+            "  Pack  %u: %s\n"
+            "  Blob  %u: %s\n"
             "  Type  %d\n"
             "  Pos   %f %f %f\n"
             "  Rot   %f %f %f %f\n"
@@ -791,7 +798,8 @@ static void object_print(struct RICO_object *obj)
             "  Diff [%u|%u] %s\n"
             "  Spec [%u|%u] %s\n"
             "  Emis [%u|%u] %s\n",
-            PKID_PACK(obj->uid.pkid), PKID_BLOB(obj->uid.pkid), obj->uid.name,
+            PKID_PACK(obj->uid.pkid), pack_name,
+            PKID_BLOB(obj->uid.pkid), obj->uid.name,
             obj->type,
             obj->xform.position.x, obj->xform.position.y, obj->xform.position.z,
             obj->xform.orientation.w, obj->xform.orientation.x,

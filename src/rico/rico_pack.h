@@ -27,7 +27,7 @@ struct pack
     char magic[4];
     u32 version;
     u32 id;
-    char name[32];
+    buf32 name;
 
     u32 blob_current_id;
     u32 blob_count;

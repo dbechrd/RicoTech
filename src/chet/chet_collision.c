@@ -11,8 +11,12 @@
 //   https://www.geometrictools.com/Documentation/DynamicCollisionDetection.pdf
 int obb_v_obb(struct RICO_obb *a, struct RICO_obb *b)
 {
-    DLB_ASSERT(v3_length(&a->e) > 0.0f);
-    DLB_ASSERT(v3_length(&b->e) > 0.0f);
+    bool a_has_obb = v3_length(&a->e) > 0.0f;
+    bool b_has_obb = v3_length(&b->e) > 0.0f;
+    if (!a_has_obb || !b_has_obb)
+        return -1;
+    DLB_ASSERT(a_has_obb);
+    DLB_ASSERT(b_has_obb);
 
     // TODO: Find and return collision manifold
 

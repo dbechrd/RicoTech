@@ -27,10 +27,23 @@ struct RICO_object
     struct uid uid;
     enum RICO_object_type type;
     struct RICO_transform xform;
-    struct RICO_bbox bbox;       // TODO: Rename this bbox_local
-    struct RICO_bbox bbox_world; // TODO: Rename this bbox
+
+    // TODO: Replace bbox with aabb
+    //struct RICO_aabb aabb;
+    //struct RICO_aabb aabb_world;
+    struct RICO_bbox bbox;
+    struct RICO_bbox bbox_world;
     struct RICO_obb obb;
     struct sphere sphere;
+
+    // TODO: Refactor into physics?
+    struct vec3 acc;
+    struct vec3 vel;
+    bool resting;
+    bool collide_sphere;
+    bool collide_aabb;
+    bool collide_obb;
+
     bool selected;
     pkid mesh_id;
     pkid material_id;

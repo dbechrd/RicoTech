@@ -64,8 +64,8 @@ static struct ui_tooltip toolbar_tips[TOOLBAR_COUNT];
 
 static struct pack_info pack_table[] =
 {
-    { "packs/alpha.pak" , "packs/alpha.sav", 0, 0 },
-    { "packs/clash.pak" , "packs/clash.sav", 0, 0 }
+    { "packs/alpha.pak" , "packs/alpha.sav" },
+    { "packs/clash.pak" , "packs/clash.sav" }
 };
 
 //-------------------------------------------------------------------
@@ -327,40 +327,85 @@ void DEBUG_render_manifold(struct manifold *manifold)
     }
 }
 
-void clash_detect(struct timmy *timmy)
+void clash_detect()
 {
-    pkid id = RICO_pack_first_type(pack_table[PACK_CLASH].sav_id,
-                                   RICO_HND_OBJECT);
-
-    while (id)
+    for (u32 i = 1; i < ARRAY_COUNT(packs); ++i)
     {
-        struct small_cube *obj = RICO_pack_lookup(id);
-        if (obj->rico.type != OBJ_SMALL_CUBE)
+        if (!packs[i])
             continue;
 
-        struct manifold manifold = { 0 };
-        manifold.body_a = &obj->rico;
-        manifold.body_b = &timmy->rico;
-        obj->collide_sphere = DEBUG_sphere_v_sphere(&obj->rico.sphere,
-                                                    &timmy->rico.sphere,
-                                                    &manifold);
-        DEBUG_render_manifold(&manifold);
-        if (manifold.contact_count > 0)
+        pkid a_id = RICO_pack_first_type(packs[i]->id, RICO_HND_OBJECT);
+        while (a_id)
         {
-            struct vec3 resolve = manifold.contacts[0].normal;
-            v3_scalef(&resolve, manifold.contacts[0].penetration);
-            RICO_object_trans(&obj->rico, &resolve);
+            struct RICO_object *a_obj = RICO_pack_lookup(a_id);
+            if (a_obj->type < RICO_OBJECT_TYPE_COUNT)
+            {
+                a_id = RICO_pack_next_type(a_id, RICO_HND_OBJECT);
+                continue;
+            }
+
+            for (u32 j = i; j < ARRAY_COUNT(packs); ++j)
+            {
+                if (!packs[j])
+                    continue;
+
+                pkid b_id;
+                if (j == i)
+                {
+                    b_id = RICO_pack_next_type(a_id, RICO_HND_OBJECT);
+                }
+                else
+                {
+                    b_id = RICO_pack_first_type(packs[j]->id, RICO_HND_OBJECT);
+                }
+
+                while (b_id)
+                {
+                    struct RICO_object *b_obj = RICO_pack_lookup(b_id);
+                    if (b_obj->type < RICO_OBJECT_TYPE_COUNT)
+                    {
+                        b_id = RICO_pack_next_type(b_id, RICO_HND_OBJECT);
+                        continue;
+                    }
+
+                    struct manifold manifold = { 0 };
+                    manifold.body_a = a_obj;
+                    manifold.body_b = b_obj;
+                    bool collide_sphere =
+                        DEBUG_sphere_v_sphere(&a_obj->sphere, &b_obj->sphere,
+                                              &manifold);
+                    // Cleanup: Debug
+                    a_obj->collide_sphere = collide_sphere;
+                    b_obj->collide_sphere = collide_sphere;
+
+                    DEBUG_render_manifold(&manifold);
+                    if (manifold.contact_count > 0)
+                    {
+                        struct vec3 resolve = manifold.contacts[0].normal;
+                        v3_scalef(&resolve, manifold.contacts[0].penetration);
+                        //RICO_object_trans(a_obj, &resolve);
+                    }
+
+                    bool collide_aabb = a_obj->collide_sphere &&
+                        RICO_bbox_intersects(&a_obj->bbox_world,
+                                             &b_obj->bbox_world);
+                    a_obj->collide_aabb = collide_aabb;
+                    b_obj->collide_aabb = collide_aabb;
+
+                    int separating_axis = obb_v_obb(&a_obj->obb, &b_obj->obb);
+                    bool collide_obb = a_obj->collide_sphere && (separating_axis == 0);
+                    a_obj->collide_obb = collide_obb;
+                    b_obj->collide_obb = collide_obb;
+
+                    b_id = RICO_pack_next_type(b_id, RICO_HND_OBJECT);
+                }
+            }
+
+            a_id = RICO_pack_next_type(a_id, RICO_HND_OBJECT);
         }
-
-        //obj->collide_aabb = obj->collide_sphere &&
-        //    RICO_bbox_intersects(&obj->rico.bbox_world,
-        //                         &timmy->rico.bbox_world);
-        //
-        //int separating_axis = obb_v_obb(&obj->rico.obb, &timmy->rico.obb);
-        //obj->collide_obb = obj->collide_sphere && (separating_axis == 0);
-
-        id = RICO_pack_next_type(id, RICO_HND_OBJECT);
     }
+
+    UNUSED("foo");
 }
 
 bool object_intersects(const struct RICO_object *a, const struct RICO_object *b,
@@ -374,140 +419,141 @@ bool object_intersects(const struct RICO_object *a, const struct RICO_object *b,
 
 void clash_simulate(struct timmy *timmy)
 {
-    pkid id = RICO_pack_first_type(pack_table[PACK_CLASH].sav_id,
-                                   RICO_HND_OBJECT);
-
-    struct small_cube *obj;
+    struct RICO_object *obj;
     struct manifold manifold = { 0 };
 
-    while (id)
+    for (u32 i = 1; i < ARRAY_COUNT(packs); ++i)
     {
-        obj = RICO_pack_lookup(id);
+        if (!packs[i]) continue;
 
-        //if (obj->rico.type != OBJ_SMALL_CUBE)
-        //    continue;
-
-        if (obj->resting)
+        pkid id = RICO_pack_first_type(packs[i]->id, RICO_HND_OBJECT);
+        while (id)
         {
-            if (!(v3_equals(&obj->acc, &VEC3_ZERO) &&
-                  v3_equals(&obj->vel, &VEC3_ZERO) &&
-                  (obj->rico.xform.position.y == 0.0f ||
-                  object_intersects(&obj->rico, &timmy->rico, &manifold))))
+            obj = RICO_pack_lookup(id);
+
+            //if (obj->rico.type != OBJ_SMALL_CUBE)
+            //    continue;
+
+            if (obj->resting)
             {
-                obj->resting = false;
+                if (!(v3_equals(&obj->acc, &VEC3_ZERO) &&
+                      v3_equals(&obj->vel, &VEC3_ZERO) &&
+                      (obj->xform.position.y == 0.0f ||
+                      object_intersects(obj, &timmy->rico, &manifold))))
+                {
+                    obj->resting = false;
+                }
             }
+
+            if (!obj->resting)
+            {
+                obj->acc = GRAVITY;
+                v3_add(&obj->vel, &obj->acc);
+                v3_add(&obj->xform.position, &obj->vel);
+                // TODO: Drag coef
+
+                // TODO: Collision detection
+                if (obj->xform.position.y <= 0.0f)
+                {
+                    struct vec3 p0 = obj->xform.position;
+                    v3_sub(&p0, &obj->vel);
+
+                    struct vec3 v0 = obj->vel;
+                    struct vec3 v_test;
+                    float t = 0.5f;
+                    for (int i = 0; i < 10; i++)
+                    {
+                        obj->xform.position = p0;
+                        v_test = v0;
+                        v3_scalef(&v_test, t);
+                        v3_add(&obj->xform.position, &v_test);
+                        RICO_object_trans_set(obj, &obj->xform.position);
+                        if (obj->xform.position.y <= 0.0f)
+                        {
+                            t -= t * 0.5f;
+                        }
+                        else
+                        {
+                            t += t * 0.5f;
+                        }
+                    }
+                    if (obj->vel.y < 0.0f)
+                        obj->vel.y *= -1.0f;
+                    obj->vel.y *= COEF_ELASTICITY;
+
+                    v_test = obj->vel;
+                    v3_scalef(&v_test, 1.0f - t);
+                    v3_add(&obj->xform.position, &v_test);
+                    RICO_object_trans_set(obj, &obj->xform.position);
+
+                    // TODO: Epsilon (must be bigger than GRAVITY * friction)
+                    if (fabs(obj->vel.y) < 0.01f)
+                    {
+                        obj->acc = VEC3_ZERO;
+                        obj->vel = VEC3_ZERO;
+                        //obj->rico.xform.position.y = 0.0f;
+                        obj->xform.position = VEC3(0.1f, 4.0f, 0.1f);
+                        obj->resting = true;
+                    }
+                }
+                else if (object_intersects(obj, &timmy->rico, &manifold))
+                {
+    #if 0
+                    // Continuous collision detection to find time of impact,
+                    // doesn't play particularly well with manifold resolution atm.
+                    struct vec3 p0 = a_obj->xform.position;
+                    v3_sub(&p0, &a_obj->vel);
+
+                    struct vec3 v0 = a_obj->vel;
+                    struct vec3 v_test;
+                    float t = 0.5f;
+                    for (int i = 0; i < 10; i++)
+                    {
+                        a_obj->xform.position = p0;
+                        v_test = v0;
+                        v3_scalef(&v_test, t);
+                        v3_add(&a_obj->xform.position, &v_test);
+                        RICO_object_trans_set(a_obj, &a_obj->xform.position);
+                        if (object_intersects(a_obj, &timmy->rico, &manifold))
+                        {
+                            t -= t * 0.5f;
+                        }
+                        else
+                        {
+                            t += t * 0.5f;
+                        }
+                    }
+                    a_obj->vel.y *= -1.0f;
+                    a_obj->vel.y *= COEF_ELASTICITY;
+
+                    v_test = a_obj->vel;
+                    v3_scalef(&v_test, 1.0f - t);
+                    v3_add(&a_obj->xform.position, &v_test);
+                    RICO_object_trans_set(a_obj, &a_obj->xform.position);
+    #endif
+
+                    if (manifold.contact_count > 0)
+                    {
+                        struct vec3 resolve = manifold.contacts[0].normal;
+                        v3_scalef(&resolve, manifold.contacts[0].penetration);
+                        RICO_object_trans(obj, &resolve);
+                    }
+
+                    // TODO: Epsilon (must be bigger than GRAVITY * friction)
+                    if (fabs(obj->vel.y) < 0.01f)
+                    {
+                        obj->acc = VEC3_ZERO;
+                        obj->vel = VEC3_ZERO;
+                        obj->resting = true;
+                    }
+                }
+
+                DEBUG_render_manifold(&manifold);
+                RICO_object_trans_set(obj, &obj->xform.position);
+            }
+
+            id = RICO_pack_next_type(id, RICO_HND_OBJECT);
         }
-
-        if (!obj->resting)
-        {
-            obj->acc = GRAVITY;
-            v3_add(&obj->vel, &obj->acc);
-            v3_add(&obj->rico.xform.position, &obj->vel);
-            // TODO: Drag coef
-
-            // TODO: Collision detection
-            if (obj->rico.xform.position.y <= 0.0f)
-            {
-                struct vec3 p0 = obj->rico.xform.position;
-                v3_sub(&p0, &obj->vel);
-
-                struct vec3 v0 = obj->vel;
-                struct vec3 v_test;
-                float t = 0.5f;
-                for (int i = 0; i < 10; i++)
-                {
-                    obj->rico.xform.position = p0;
-                    v_test = v0;
-                    v3_scalef(&v_test, t);
-                    v3_add(&obj->rico.xform.position, &v_test);
-                    RICO_object_trans_set(&obj->rico,
-                                          &obj->rico.xform.position);
-                    if (obj->rico.xform.position.y <= 0.0f)
-                    {
-                        t -= t * 0.5f;
-                    }
-                    else
-                    {
-                        t += t * 0.5f;
-                    }
-                }
-                if (obj->vel.y < 0.0f)
-                    obj->vel.y *= -1.0f;
-                obj->vel.y *= COEF_ELASTICITY;
-
-                v_test = obj->vel;
-                v3_scalef(&v_test, 1.0f - t);
-                v3_add(&obj->rico.xform.position, &v_test);
-                RICO_object_trans_set(&obj->rico, &obj->rico.xform.position);
-
-                // TODO: Epsilon (must be bigger than GRAVITY * friction)
-                if (fabs(obj->vel.y) < 0.01f)
-                {
-                    obj->acc = VEC3_ZERO;
-                    obj->vel = VEC3_ZERO;
-                    //obj->rico.xform.position.y = 0.0f;
-                    obj->rico.xform.position = VEC3(0.1f, 4.0f, 0.1f);
-                    obj->resting = true;
-                }
-            }
-            else if (object_intersects(&obj->rico, &timmy->rico, &manifold))
-            {
-#if 0
-                // Continuous collision detection to find time of impact,
-                // doesn't play particularly well with manifold resolution atm.
-                struct vec3 p0 = obj->rico.xform.position;
-                v3_sub(&p0, &obj->vel);
-
-                struct vec3 v0 = obj->vel;
-                struct vec3 v_test;
-                float t = 0.5f;
-                for (int i = 0; i < 10; i++)
-                {
-                    obj->rico.xform.position = p0;
-                    v_test = v0;
-                    v3_scalef(&v_test, t);
-                    v3_add(&obj->rico.xform.position, &v_test);
-                    RICO_object_trans_set(&obj->rico,
-                                          &obj->rico.xform.position);
-                    if (object_intersects(&obj->rico, &timmy->rico, &manifold))
-                    {
-                        t -= t * 0.5f;
-                    }
-                    else
-                    {
-                        t += t * 0.5f;
-                    }
-                }
-                obj->vel.y *= -1.0f;
-                obj->vel.y *= COEF_ELASTICITY;
-
-                v_test = obj->vel;
-                v3_scalef(&v_test, 1.0f - t);
-                v3_add(&obj->rico.xform.position, &v_test);
-                RICO_object_trans_set(&obj->rico, &obj->rico.xform.position);
-#endif
-
-                if (manifold.contact_count > 0)
-                {
-                    struct vec3 resolve = manifold.contacts[0].normal;
-                    v3_scalef(&resolve, manifold.contacts[0].penetration);
-                    RICO_object_trans(&obj->rico, &resolve);
-                }
-
-                // TODO: Epsilon (must be bigger than GRAVITY * friction)
-                if (fabs(obj->vel.y) < 0.01f)
-                {
-                    obj->acc = VEC3_ZERO;
-                    obj->vel = VEC3_ZERO;
-                    obj->resting = true;
-                }
-            }
-
-            DEBUG_render_manifold(&manifold);
-            RICO_object_trans_set(&obj->rico, &obj->rico.xform.position);
-        }
-
-        id = RICO_pack_next_type(id, RICO_HND_OBJECT);
     }
 }
 
@@ -574,66 +620,50 @@ void DEBUG_render_color_test()
 
 void debug_render_bboxes(struct timmy *timmy)
 {
-    RICO_prim_draw_sphere(&timmy->rico.sphere, &COLOR_DARK_WHITE_HIGHLIGHT);
-    RICO_prim_draw_bbox(&timmy->rico.bbox_world, &COLOR_AQUA);
-    RICO_prim_draw_obb(&timmy->rico.obb, &COLOR_LIME);
-
-    pkid id = RICO_pack_first_type(pack_table[PACK_CLASH].sav_id,
-                                   RICO_HND_OBJECT);
-    while (id)
+    for (u32 i = 1; i < ARRAY_COUNT(packs); ++i)
     {
-        struct small_cube *obj = RICO_pack_lookup(id);
+        if (!packs[i])
+            continue;
 
-        switch (obj->rico.type)
+        pkid id = RICO_pack_first_type(packs[i]->id, RICO_HND_OBJECT);
+        while (id)
         {
-            case OBJ_SMALL_CUBE:  // fall through
-            case OBJ_TIMMY:
+            struct RICO_object *obj = RICO_pack_lookup(id);
+
+            //struct RICO_bbox obb_bbox = { 0 };
+            //obb_bbox.min = obj->rico.bbox.min;
+            //v3_mul_mat4(&obb_bbox.min, &obj->rico.xform.matrix);
+            //obb_bbox.max = obj->rico.bbox.max;
+            //v3_mul_mat4(&obb_bbox.max, &obj->rico.xform.matrix);
+            //RICO_prim_draw_bbox(&obb_bbox, &MAT4_IDENT, &COLOR_ORANGE);
+
+            if (obj->collide_obb)
             {
-                //struct RICO_bbox obb_bbox = { 0 };
-                //obb_bbox.min = obj->rico.bbox.min;
-                //v3_mul_mat4(&obb_bbox.min, &obj->rico.xform.matrix);
-                //obb_bbox.max = obj->rico.bbox.max;
-                //v3_mul_mat4(&obb_bbox.max, &obj->rico.xform.matrix);
-                //RICO_prim_draw_bbox(&obb_bbox, &MAT4_IDENT, &COLOR_ORANGE);
-
-                if (obj->collide_obb)
-                {
-                    RICO_prim_draw_sphere(&obj->rico.sphere,
-                                          &COLOR_DARK_WHITE_HIGHLIGHT);
-                    RICO_prim_draw_bbox(&obj->rico.bbox_world,
-                                        &COLOR_DARK_WHITE_HIGHLIGHT);
-                    RICO_prim_draw_obb(&obj->rico.obb, &COLOR_RED);
-                }
-                else if (obj->collide_aabb)
-                {
-                    RICO_prim_draw_sphere(&obj->rico.sphere,
-                                          &COLOR_DARK_WHITE_HIGHLIGHT);
-                    RICO_prim_draw_bbox(&obj->rico.bbox_world, &COLOR_ORANGE);
-                    RICO_prim_draw_obb(&obj->rico.obb,
-                                       &COLOR_DARK_WHITE_HIGHLIGHT);
-                }
-                else if (obj->collide_sphere)
-                {
-                    RICO_prim_draw_sphere(&obj->rico.sphere, &COLOR_YELLOW);
-                    RICO_prim_draw_bbox(&obj->rico.bbox_world,
-                                        &COLOR_DARK_WHITE_HIGHLIGHT);
-                    RICO_prim_draw_obb(&obj->rico.obb,
-                                       &COLOR_DARK_WHITE_HIGHLIGHT);
-                }
-                else
-                {
-                    RICO_prim_draw_sphere(&obj->rico.sphere,
-                                          &COLOR_DARK_WHITE_HIGHLIGHT);
-                    RICO_prim_draw_bbox(&obj->rico.bbox_world, &COLOR_AQUA);
-                    RICO_prim_draw_obb(&obj->rico.obb, &COLOR_LIME);
-                }
-                break;
+                RICO_prim_draw_sphere(&obj->sphere, &COLOR_TRANS_BLACK);
+                RICO_prim_draw_bbox(&obj->bbox_world, &COLOR_TRANS_BLACK);
+                RICO_prim_draw_obb(&obj->obb, &COLOR_RED);
             }
-            default:
-                break;
-        }
+            else if (obj->collide_aabb)
+            {
+                RICO_prim_draw_sphere(&obj->sphere, &COLOR_TRANS_BLACK);
+                RICO_prim_draw_bbox(&obj->bbox_world, &COLOR_ORANGE);
+                RICO_prim_draw_obb(&obj->obb, &COLOR_TRANS_BLACK);
+            }
+            else if (obj->collide_sphere)
+            {
+                RICO_prim_draw_sphere(&obj->sphere, &COLOR_YELLOW);
+                RICO_prim_draw_bbox(&obj->bbox_world, &COLOR_TRANS_BLACK);
+                RICO_prim_draw_obb(&obj->obb, &COLOR_TRANS_BLACK);
+            }
+            else
+            {
+                RICO_prim_draw_sphere(&obj->sphere, &COLOR_TRANS_BLACK);
+                RICO_prim_draw_bbox(&obj->bbox_world, &COLOR_TRANS_BLACK);
+                RICO_prim_draw_obb(&obj->obb, &COLOR_TRANS_BLACK);
+            }
 
-        id = RICO_pack_next_type(id, RICO_HND_OBJECT);
+            id = RICO_pack_next_type(id, RICO_HND_OBJECT);
+        }
     }
 }
 
@@ -714,6 +744,7 @@ void game_render_ui_toolbar()
     }
 
     ///////////////////////////////////////////////////////////////////////////
+    // Cleanup: Test labels
     static struct RICO_heiro_string *label_string = 0;
     if (!label_string)
     {
@@ -1297,7 +1328,7 @@ int main(int argc, char **argv)
         err = RICO_update();
         if (err) break;
 
-        //clash_detect(timmy);
+        clash_detect(timmy);
 
         // Render world
         RICO_render_objects();
