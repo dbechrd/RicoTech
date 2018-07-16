@@ -218,8 +218,8 @@ GLuint heiro_upload_texture(s32 width, s32 height, const void *pixels)
     return gl_id;
 }
 
-extern void RICO_heiro_build(struct RICO_heiro_string *string,
-                             struct rect *cursor, const u8 *str, u32 len,
+extern void RICO_heiro_build(struct RICO_heiro_string **result,
+                             struct rect *cursor, const struct dlb_string *str,
                              u32 cur)
 {
     s32 x = 0;
@@ -228,9 +228,12 @@ extern void RICO_heiro_build(struct RICO_heiro_string *string,
     const s32 glyph_h = (s32)(HEIRO_GLYPH_HEIGHT * scale);
     const s32 extent_y = (s32)(glyph_max_extents.y * scale);
 
-    string->length = MIN(len, HEIRO_MAX_LEN);
-    string->vertices = calloc(string->length * HEIRO_GLYPH_VERTS,
-                             sizeof(string->vertices[0]));
+    u32 len = MIN(str->len - 1, HEIRO_MAX_LEN);
+    struct RICO_heiro_string *string =
+        calloc(1, sizeof(*string) + len * HEIRO_GLYPH_VERTS *
+               sizeof(string->verts[0]));
+    string->length = len;
+    string->verts = (void *)((u8 *)string + sizeof(*string));
 
     // NOTE: Need to iterate until i == len for cursor code
     for (u32 i = 0; i <= string->length; ++i)
@@ -245,7 +248,7 @@ extern void RICO_heiro_build(struct RICO_heiro_string *string,
         }
         if (i == string->length) break;
 
-        u8 c = str[i];
+        u8 c = str->s[i];
         if (c == '\n')
         {
             x = 0;
@@ -282,32 +285,32 @@ extern void RICO_heiro_build(struct RICO_heiro_string *string,
 
         struct vec4 color = COLOR_WHITE;
 
-        string->vertices[string->vertex_count++] = (struct text_vertex) {
+        string->verts[string->vertex_count++] = (struct text_vertex) {
             VEC3(x0, y0, z),
             VEC2(u0, v0),
             color
         };
-        string->vertices[string->vertex_count++] = (struct text_vertex) {
+        string->verts[string->vertex_count++] = (struct text_vertex) {
             VEC3(x0, y1, z),
             VEC2(u0, v1),
             color
         };
-        string->vertices[string->vertex_count++] = (struct text_vertex) {
+        string->verts[string->vertex_count++] = (struct text_vertex) {
             VEC3(x1, y0, z),
             VEC2(u1, v0),
             color
         };
-        string->vertices[string->vertex_count++] = (struct text_vertex) {
+        string->verts[string->vertex_count++] = (struct text_vertex) {
             VEC3(x1, y0, z),
             VEC2(u1, v0),
             color
         };
-        string->vertices[string->vertex_count++] = (struct text_vertex) {
+        string->verts[string->vertex_count++] = (struct text_vertex) {
             VEC3(x0, y1, z),
             VEC2(u0, v1),
             color
         };
-        string->vertices[string->vertex_count++] = (struct text_vertex) {
+        string->verts[string->vertex_count++] = (struct text_vertex) {
             VEC3(x1, y1, z),
             VEC2(u1, v1),
             color
@@ -319,8 +322,9 @@ extern void RICO_heiro_build(struct RICO_heiro_string *string,
     }
 
     string->bounds.x = 0;
-    string->bounds.y = extent_y;
+    string->bounds.y = -extent_y;
     string->bounds.h += glyph_h;
+    *result = string;
 }
 
 extern void RICO_heiro_render(struct RICO_heiro_string *string, s32 sx, s32 sy,
@@ -329,6 +333,9 @@ extern void RICO_heiro_render(struct RICO_heiro_string *string, s32 sx, s32 sy,
     struct text_program *prog = prog_text;
     RICO_ASSERT(prog->program.gl_id);
     glUseProgram(prog->program.gl_id);
+
+    sx += string->bounds.x;
+    sy += string->bounds.y;
 
     struct mat4 model = MAT4_IDENT;
     struct vec3 t_vec = VEC3(X_TO_NDC(sx) + 1.0f, Y_TO_NDC(sy) - 1.0f, 0.0f);
@@ -351,8 +358,8 @@ extern void RICO_heiro_render(struct RICO_heiro_string *string, s32 sx, s32 sy,
 
     glBindBuffer(GL_ARRAY_BUFFER, glyph_vbo);
     glBufferSubData(GL_ARRAY_BUFFER, 0,
-                    string->vertex_count * sizeof(string->vertices[0]),
-                    string->vertices);
+                    string->vertex_count * sizeof(string->verts[0]),
+                    string->verts);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glDrawArrays(GL_TRIANGLES, 0, string->vertex_count);
 
@@ -363,7 +370,7 @@ extern void RICO_heiro_render(struct RICO_heiro_string *string, s32 sx, s32 sy,
 
 extern void RICO_heiro_free(struct RICO_heiro_string *string)
 {
-    free(string->vertices);
+    free(string);
 }
 
 void heiro_delete_glyphs()

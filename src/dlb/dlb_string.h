@@ -3,6 +3,15 @@
 
 #include "dlb_types.h"
 
+#define STR(str) (const struct dlb_string) { str, sizeof(str) }
+#define STRL(str, len) (const struct dlb_string) { str, len }
+
+struct dlb_string
+{
+    const char *s;
+    u32 len;
+};
+
 static inline u32 dlb_strlen(const char *str)
 {
 	u32 len = 0;

@@ -4,22 +4,23 @@ static u8 *ui_stack_ptr;
 
 enum ui_rect_fill_mode
 {
-    UI_RECT_FILLED,
+    UI_RECT_FILL,
     UI_RECT_OUTLINE
 };
 
+/*----------------------------------------------------------------------------*/
+// Create
+/*----------------------------------------------------------------------------*/
 static void rico_ui_init()
 {
     ui_stack_ptr = ui_stack;
     rico_ui_reset();
 }
-
 static void rico_ui_reset()
 {
     ui_stack_ptr = ui_stack;
     glClear(GL_DEPTH_BUFFER_BIT);
 }
-
 static inline void *ui_stack_push(u32 bytes)
 {
     RICO_ASSERT(ui_stack_ptr + bytes < ui_stack + sizeof(ui_stack));
@@ -28,29 +29,6 @@ static inline void *ui_stack_push(u32 bytes)
     memset(ptr, 0, bytes);
     return ptr;
 }
-
-static void ui_draw_rect(s32 x, s32 y, const struct rect *rect,
-                         enum ui_rect_fill_mode fill_mode,
-                         const struct vec4 *color)
-{
-    if (fill_mode == UI_RECT_OUTLINE)
-    {
-        float sx = SCREEN_X(rect->x + x);
-        float sy = SCREEN_Y(rect->y + y);
-        float sw = SCREEN_W(rect->w);
-        float sh = SCREEN_H(rect->h);
-        RICO_prim_draw_line2d(sx     , sy    ,  sx + sw,  sy     , color);
-        RICO_prim_draw_line2d(sx + sw, sy    ,  sx + sw,  sy + sh, color);
-        RICO_prim_draw_line2d(sx + sw, sy + sh, sx     ,  sy + sh, color);
-        RICO_prim_draw_line2d(sx     , sy + sh, sx     ,  sy     , color);
-    }
-    else
-    {
-        RICO_prim_draw_rect(&RECT(rect->x + x, rect->y + y, rect->w, rect->h),
-                            color);
-    }
-}
-
 static void *ui_push_element(u32 bytes, enum RICO_ui_element_type type,
                              struct RICO_ui_element *parent)
 {
@@ -100,19 +78,20 @@ extern struct RICO_ui_hud *RICO_ui_hud()
     return ui_push_element(sizeof(struct RICO_ui_hud), RICO_UI_ELEMENT_HUD,
                            NULL);
 }
-
 extern struct RICO_ui_button *RICO_ui_button(struct RICO_ui_element *parent)
 {
     return ui_push_element(sizeof(struct RICO_ui_button),
                            RICO_UI_ELEMENT_BUTTON, parent);
 }
-
 extern struct RICO_ui_label *RICO_ui_label(struct RICO_ui_element *parent)
 {
     return ui_push_element(sizeof(struct RICO_ui_label), RICO_UI_ELEMENT_LABEL,
                            parent);
 }
 
+/*----------------------------------------------------------------------------*/
+// Layout
+/*----------------------------------------------------------------------------*/
 static bool ui_layout_element(struct RICO_ui_element *element, s32 x, s32 y,
                               s32 max_w, s32 max_h)
 {
@@ -127,6 +106,17 @@ static bool ui_layout_element(struct RICO_ui_element *element, s32 x, s32 y,
     size->y = y;
     size->w = margin_w + MAX(element->min_size.w, pad_w);
     size->h = margin_h + MAX(element->min_size.h, pad_h);
+
+    // HACK: Make sure labels have enough room for their internal strings
+    if (element->type == RICO_UI_ELEMENT_LABEL)
+    {
+        struct RICO_ui_label *label = (void *)element;
+        if (label->heiro)
+        {
+            size->w += label->heiro->bounds.w;
+            size->h += label->heiro->bounds.h;
+        }
+    }
 
     s32 start_x = size->x + element->margin.left + element->padding.left;
     s32 start_y = size->y + element->margin.top + element->padding.top;
@@ -213,28 +203,67 @@ static bool ui_layout_element(struct RICO_ui_element *element, s32 x, s32 y,
     }
     return fit;
 }
+extern bool RICO_ui_layout(struct RICO_ui_element *element, s32 x, s32 y,
+                           s32 max_w, s32 max_h)
+{
+    if (!max_w)
+    {
+        max_w = SCREEN_WIDTH - x;
+    }
+    if (!max_h)
+    {
+        max_h = SCREEN_HEIGHT - y;
+    }
 
+    bool fit = ui_layout_element(element, 0, 0, max_w, max_h);
+    return fit;
+}
+
+/*----------------------------------------------------------------------------*/
+// Draw
+/*----------------------------------------------------------------------------*/
 static inline bool rect_intersects(const struct rect *rect, s32 x, s32 y)
 {
     bool hover = x >= rect->x &&
-                 y >= rect->y &&
-                 x < rect->x + (s32)rect->w &&
-                 y < rect->y + (s32)rect->h;
+        y >= rect->y &&
+        x < rect->x + (s32)rect->w &&
+        y < rect->y + (s32)rect->h;
     return hover;
 }
-
 static inline bool ui_element_hover(struct RICO_ui_element *element, s32 x,
                                     s32 y)
 {
     return rect_intersects(&element->bounds, mouse_x - x, mouse_y - y);
 }
+static void ui_draw_rect(s32 x, s32 y, const struct rect *rect,
+                         enum ui_rect_fill_mode fill_mode,
+                         const struct vec4 *color)
+{
+    if (color->a == 0.0f)
+        return;
 
+    if (fill_mode == UI_RECT_OUTLINE)
+    {
+        float sx = SCREEN_X(rect->x + x);
+        float sy = SCREEN_Y(rect->y + y);
+        float sw = SCREEN_W(rect->w);
+        float sh = SCREEN_H(rect->h);
+        RICO_prim_draw_line2d(sx     , sy    ,  sx + sw,  sy     , color);
+        RICO_prim_draw_line2d(sx + sw, sy    ,  sx + sw,  sy + sh, color);
+        RICO_prim_draw_line2d(sx + sw, sy + sh, sx     ,  sy + sh, color);
+        RICO_prim_draw_line2d(sx     , sy + sh, sx     ,  sy     , color);
+    }
+    else
+    {
+        RICO_prim_draw_rect(&RECT(rect->x + x, rect->y + y, rect->w, rect->h),
+                            color);
+    }
+}
 static void ui_draw_hud(struct RICO_ui_hud *ctrl, s32 x, s32 y)
 {
-    ui_draw_rect(x, y, &ctrl->element.bounds, UI_RECT_FILLED,
+    ui_draw_rect(x, y, &ctrl->element.bounds, UI_RECT_FILL,
                  &ctrl->color);
 }
-
 static void ui_draw_button(struct RICO_ui_button *ctrl, s32 x, s32 y)
 {
     struct rect rect = ctrl->element.bounds;
@@ -253,13 +282,18 @@ static void ui_draw_button(struct RICO_ui_button *ctrl, s32 x, s32 y)
 
     RICO_prim_draw_sprite(&rect, ctrl->sprite, color);
 }
-
 static void ui_draw_label(struct RICO_ui_label *ctrl, s32 x, s32 y)
 {
-    ui_draw_rect(x, y, &ctrl->element.bounds, UI_RECT_FILLED,
-                 &ctrl->color);
-}
+    ui_draw_rect(x, y, &ctrl->element.bounds, UI_RECT_FILL, &ctrl->color);
 
+    if (ctrl->heiro)
+    {
+        struct rect bounds = { 0 };
+        bounds.x += x + ctrl->element.bounds.x + ctrl->element.padding.x;
+        bounds.y += y + ctrl->element.bounds.y + ctrl->element.padding.y;
+        RICO_heiro_render(ctrl->heiro, bounds.x, bounds.y, &COLOR_WHITE);
+    }
+}
 static void ui_draw_element(struct RICO_ui_element *element, s32 x, s32 y)
 {
     bool hover = ui_element_hover(element, x, y);
@@ -371,26 +405,27 @@ static void ui_draw_element(struct RICO_ui_element *element, s32 x, s32 y)
         child = child->next;
     }
 }
-
-extern void ui_draw_tooltip(struct RICO_ui_element *element)
+static void ui_draw_tooltip(struct RICO_ui_element *element)
 {
     if (element->type == RICO_UI_ELEMENT_BUTTON)
     {
         struct RICO_ui_button *button = (struct RICO_ui_button *)element;
         if (button->tooltip && button->state == RICO_UI_BUTTON_HOVERED)
         {
-            struct RICO_heiro_string *heiro = &button->tooltip->string.heiro;
-            const s32 pad = 2;
-            const struct vec2i offset = { 6, 4 };
+            struct RICO_heiro_string *heiro = button->tooltip->string;
+            const struct vec2i pad = { 4, 2 };
+            const struct vec2i offset = { 0, 8 };
+
             struct rect bounds = heiro->bounds;
             bounds.x += mouse_x + offset.x;
-            bounds.y += mouse_y - offset.y;
-            bounds.w += pad * 2;
-            bounds.h += pad * 2;
-            RICO_prim_draw_rect(&bounds, &VEC4(0.2f, 0.4f, 0.8f, 0.9f));
-            RICO_heiro_render(heiro, mouse_x + offset.x + pad,
-                              mouse_y - offset.y + pad,
-                              &COLOR_WHITE);
+            bounds.y += mouse_y + offset.y;
+            bounds.w += pad.x * 2;
+            bounds.h += pad.y * 2;
+            RICO_prim_draw_rect(&bounds, &button->tooltip->color);
+
+            bounds.x += pad.x;
+            bounds.y += pad.y;
+            RICO_heiro_render(heiro, bounds.x, bounds.y, &COLOR_WHITE);
         }
     }
 
@@ -400,22 +435,6 @@ extern void ui_draw_tooltip(struct RICO_ui_element *element)
         ui_draw_tooltip(child);
         child = child->next;
     }
-}
-
-extern bool RICO_ui_layout(struct RICO_ui_element *element, s32 x, s32 y,
-                           s32 max_w, s32 max_h)
-{
-    if (!max_w)
-    {
-        max_w = SCREEN_WIDTH - x;
-    }
-    if (!max_h)
-    {
-        max_h = SCREEN_HEIGHT - y;
-    }
-
-    bool fit = ui_layout_element(element, 0, 0, max_w, max_h);
-    return fit;
 }
 
 extern void RICO_ui_draw(struct RICO_ui_element *element, s32 x, s32 y)

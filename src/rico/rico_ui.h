@@ -19,21 +19,18 @@ struct RICO_spritesheet
 
 ////////////////////////////////////////////////////////////////////////////////
 
-struct ui_string
-{
-    struct RICO_heiro_string heiro;
-};
-
 #define MAX_TOOLTIPS 32
 struct ui_tooltip
 {
     bool enabled;
-    struct ui_string string;
+    struct vec4 color;
+    struct RICO_heiro_string *string;
 };
 struct ui_tooltip tooltips[MAX_TOOLTIPS];
 
 #define RICO_UI_ELEMENT_TYPES(f) \
     f(RICO_UI_ELEMENT_HUD)    \
+    f(RICO_UI_ELEMENT_STRING) \
     f(RICO_UI_ELEMENT_BUTTON) \
     f(RICO_UI_ELEMENT_LABEL)
 
@@ -97,7 +94,6 @@ enum RICO_ui_button_state
     RICO_UI_BUTTON_DEFAULT,
     RICO_UI_BUTTON_HOVERED,
     RICO_UI_BUTTON_PRESSED,
-
     RICO_UI_BUTTON_COUNT
 };
 
@@ -114,10 +110,11 @@ struct RICO_ui_label
 {
     struct RICO_ui_element element;
     struct vec4 color;
-    struct ui_string string;
+    struct RICO_heiro_string *heiro;
 };
 
 extern struct RICO_ui_hud *RICO_ui_hud();
+extern struct RICO_ui_button *RICO_ui_button(struct RICO_ui_element *parent);
 extern struct RICO_ui_label *RICO_ui_label(struct RICO_ui_element *parent);
 extern bool RICO_ui_layout(struct RICO_ui_element *element, s32 x, s32 y,
                            s32 max_w, s32 max_h);

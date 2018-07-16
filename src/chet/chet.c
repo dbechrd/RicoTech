@@ -32,22 +32,28 @@ static struct game_panel panel_1;
 static struct RICO_audio_buffer audio_buffers[AUDIO_COUNT];
 static struct RICO_audio_source audio_sources[AUDIO_COUNT];
 
-enum toolbar_icon {
-    TOOLBAR_CURSOR = 1,
-    TOOLBAR_TRANSLATE,
-    TOOLBAR_ROTATE,
-    TOOLBAR_SCALE,
-    TOOLBAR_MESH,
-    TOOLBAR_TEXTURE,
-    TOOLBAR_NEW,
-    TOOLBAR_COPY,
-    TOOLBAR_DELETE,
-    TOOLBAR_UNDO,
-    TOOLBAR_REDO,
-    TOOLBAR_SAVE,
-    TOOLBAR_EXIT,
+#define TOOLBAR_ICON(f) \
+    f(TOOLBAR_CURSOR,     "Cursor")            \
+    f(TOOLBAR_TRANSLATE,  "Translate")         \
+    f(TOOLBAR_ROTATE,     "Rotate")            \
+    f(TOOLBAR_SCALE,      "Scale")             \
+    f(TOOLBAR_MESH,       "Mesh")              \
+    f(TOOLBAR_TEXTURE,    "Texture")           \
+    f(TOOLBAR_NEW,        "Create new object") \
+    f(TOOLBAR_COPY,       "Copy selected")     \
+    f(TOOLBAR_DELETE,     "Delete selected")   \
+    f(TOOLBAR_UNDO,       "Undo")              \
+    f(TOOLBAR_REDO,       "Redo")              \
+    f(TOOLBAR_SAVE,       "Save pack")         \
+    f(TOOLBAR_EXIT,       "Exit")
+
+enum toolbar_icon
+{
+    TOOLBAR_ICON(GEN_LIST)
     TOOLBAR_COUNT
 };
+//static const char *toolbar_icon_string[] = { TOOLBAR_ICON(GEN_STRING) };
+static const char *toolbar_icon_values[] = { TOOLBAR_ICON(GEN_STRING_VALUES) };
 
 static struct RICO_sprite toolbar_sprites[TOOLBAR_COUNT];
 static struct RICO_spritesheet toolbar_sheet;
@@ -662,22 +668,22 @@ void game_toolbar_init()
         }
     }
 
-    char text[] = "Translate";
-    struct ui_tooltip *tooltip = &toolbar_tips[TOOLBAR_CURSOR];
-    tooltip->enabled = true;
-    RICO_heiro_build(&tooltip->string.heiro, 0, text, sizeof(text) - 1, 0);
+    for (u32 i = 0; i < TOOLBAR_COUNT; ++i)
+    {
+        toolbar_tips[i].enabled = true;
+        toolbar_tips[i].color = COLOR_GRAY_2; //VEC4(0.2f, 0.4f, 0.8f, 0.9f);
+        RICO_heiro_build(&toolbar_tips[i].string, 0,
+                         &STRL(toolbar_icon_values[i],
+                               strlen(toolbar_icon_values[i]) + 1), 0);
+    }
 }
-
-static u32 pointless_buttons = 0;
 
 void toolbar_button_click(const struct RICO_ui_event *e)
 {
     if ((u32)e->element->metadata == TOOLBAR_CURSOR &&
         e->event_type == RICO_UI_EVENT_LMB_CLICK)
     {
-        //e->element->color = COLOR_ORANGE;
         RICO_audio_source_play(&audio_sources[AUDIO_BUTTON]);
-        pointless_buttons++;
     }
 }
 
@@ -690,12 +696,14 @@ void game_render_ui_toolbar()
     toolbar_hud->element.padding = PAD(2, 2, 0, 0);
     toolbar_hud->color = COLOR_GRAY_4;
 
+    struct rect margin = PAD(0, 0, 2, 2);
+
     // Create toolbar buttons
     for (int i = 0; i < ARRAY_COUNT(toolbar_buttons); ++i)
     {
         toolbar_buttons[i] = RICO_ui_button(&toolbar_hud->element);
         toolbar_buttons[i]->element.min_size = VEC2I(32, 32);
-        toolbar_buttons[i]->element.margin = PAD(0, 0, 2, 2);
+        toolbar_buttons[i]->element.margin = margin;
         toolbar_buttons[i]->element.metadata = (void *)(TOOLBAR_CURSOR + i);
         toolbar_buttons[i]->element.event = toolbar_button_click;
         toolbar_buttons[i]->color[RICO_UI_BUTTON_DEFAULT] = COLOR_GRAY_2;
@@ -705,17 +713,35 @@ void game_render_ui_toolbar()
         toolbar_buttons[i]->tooltip = &toolbar_tips[i];
     }
 
-    // Cleanup: Create pointless buttons
-    for (u32 i = 0; i < pointless_buttons; ++i)
+    ///////////////////////////////////////////////////////////////////////////
+    static struct RICO_heiro_string *label_string = 0;
+    if (!label_string)
     {
-        struct RICO_ui_button *button = RICO_ui_button(&toolbar_hud->element);
-        button->element.min_size = VEC2I(32, 32);
-        button->element.margin = PAD(0, 0, 2, 2);
-        button->color[RICO_UI_BUTTON_DEFAULT] = COLOR_GRAY_2;
-        button->color[RICO_UI_BUTTON_HOVERED] = COLOR_ORANGE;
-        button->color[RICO_UI_BUTTON_PRESSED] = COLOR_DARK_ORANGE;
-        button->sprite = &toolbar_sheet.sprites[0];
+        RICO_heiro_build(&label_string, 0, &STR("Lorem ipsum dolor"), 0);
     }
+
+    const s32 label_pad = 2;
+    struct RICO_ui_label *label_test1;
+    label_test1 = RICO_ui_label(&toolbar_hud->element);
+    label_test1->element.padding = RECT1(label_pad);
+    label_test1->element.margin = margin;
+    label_test1->color = COLOR_DARK_RED;
+    label_test1->heiro = label_string;
+
+    struct RICO_ui_label *label_test2;
+    label_test2 = RICO_ui_label(&toolbar_hud->element);
+    label_test2->element.padding = RECT1(label_pad);
+    label_test2->element.margin = margin;
+    label_test2->color = COLOR_DARK_BLUE;
+    label_test2->heiro = label_string;
+
+    struct RICO_ui_label *label_test3;
+    label_test3 = RICO_ui_label(&toolbar_hud->element);
+    label_test3->element.padding = RECT1(label_pad);
+    label_test3->element.margin = margin;
+    label_test3->color = COLOR_DARK_GREEN;
+    label_test3->heiro = label_string;
+    ///////////////////////////////////////////////////////////////////////////
 
     // Layout and render toolbar UI (if it fits)
     if (RICO_ui_layout(&toolbar_hud->element, 0, 0, 546, 0))//mouse_x, mouse_y))
@@ -1110,42 +1136,47 @@ void debug_handle_text_input()
 
 void debug_render_text_input()
 {
-    struct RICO_heiro_string string = { 0 };
-    struct rect cursor = { 0 };
-    RICO_heiro_build(&string, &cursor, text_input.buffer, text_input.buffer_len,
-                     text_input.cursor);
-
     const u32 sx = SCREEN_WIDTH / 2 - (580 / 2);
     const u32 sy = 200;
+
+    struct RICO_heiro_string *string = 0;;
+    struct rect cursor = { 0 };
+    RICO_heiro_build(&string, &cursor,
+                     &STRL(text_input.buffer, text_input.buffer_len + 1),
+                     text_input.cursor);
+
     const u32 border_width = 2;
     const u32 scroll_w = 10;
+    const u32 scroll_h = 30;
 
-    string.bounds.x += sx;
-    string.bounds.y += sy;
-    string.bounds.w += scroll_w;
-    cursor.x += sx;
-    cursor.y += sy;
+    struct rect bounds = { 0 };
+    bounds.x = sx;
+    bounds.y = sy;
+    bounds.w = string->bounds.w + scroll_w;
+    bounds.h = string->bounds.h;
 
-    struct rect border = string.bounds;
+    struct rect border = bounds;
     border.x -= border_width;
     border.y -= border_width;
     border.w += border_width * 2;
     border.h += border_width * 2;
 
-    struct rect scroll;
-    scroll.x = string.bounds.x + string.bounds.w - scroll_w;
-    scroll.y = string.bounds.y;
-    scroll.w = scroll_w;
-    scroll.h = string.bounds.h;  // TODO: Calculate
-
     RICO_prim_draw_rect(&border, &VEC4(0.2f, 0.2f, 0.2f, 0.5f));
-    RICO_prim_draw_rect(&string.bounds, &COLOR_TRANS_BLACK);
+    RICO_prim_draw_rect(&bounds, &COLOR_TRANS_BLACK);
+    RICO_heiro_render(string, sx, sy, &COLOR_GREEN);
+
+    struct rect scroll;
+    scroll.x = bounds.x + bounds.w - scroll_w;
+    scroll.y = bounds.y;
+    scroll.w = scroll_w;
+    scroll.h = scroll_h;  // TODO: Calculate based on scroll percentage
     RICO_prim_draw_rect(&scroll, &COLOR_ORANGE_HIGHLIGHT);
 
-    RICO_heiro_render(&string, sx, sy, &COLOR_GREEN);
-
+    cursor.x += sx + string->bounds.x;
+    cursor.y += sy + string->bounds.y;
     RICO_prim_draw_rect(&cursor, &VEC4(1.0f, 0.0f, 0.0f, 0.5f));
-    RICO_heiro_free(&string);
+
+    RICO_heiro_free(string);
 }
 
 void load_sound(enum audio_type type, const char *filename)
