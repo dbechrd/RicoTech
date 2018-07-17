@@ -1,14 +1,16 @@
 #ifndef RICO_INTERNAL_PROGRAM_H
 #define RICO_INTERNAL_PROGRAM_H
 
-#define NUM_LIGHTS 4
+#define NUM_LIGHT_DIR 1
+#define NUM_LIGHT_POINT 4
 
 enum program_type
 {
     PROG_NULL,
     PROG_PBR,
-    PROG_SHADOW,
-    PROG_PRIM,
+    PROG_SHADOW_TEXTURE,
+    PROG_SHADOW_CUBEMAP,
+    PROG_PRIMITIVE,
     PROG_TEXT,
     PROG_COUNT
 };
@@ -23,16 +25,27 @@ struct program
     GLuint gl_id;
 };
 
+enum pbr_light_type
+{
+    PBR_LIGHT_DIR,
+    PBR_LIGHT_POINT
+};
+
 #define UNIFORM(type) GLint
-#define STRUCT_NAME(name)
+#define NO_UNIFORM(type)
 struct pbr_program_locations
 {
 #   include "ri_program_pbr.h"
 };
 
-struct shadow_program_locations
+struct shadow_texture_program_locations
 {
-#   include "ri_program_shadow.h"
+#   include "ri_program_shadow_texture.h"
+};
+
+struct shadow_cubemap_program_locations
+{
+#   include "ri_program_shadow_cubemap.h"
 };
 
 struct text_program_locations
@@ -40,15 +53,15 @@ struct text_program_locations
 #   include "ri_program_text.h"
 };
 
-struct prim_program_locations
+struct primitive_program_locations
 {
-#   include "ri_program_prim.h"
+#   include "ri_program_primitive.h"
 };
 #undef UNIFORM
-#undef STRUCT_NAME
+#undef NO_UNIFORM
 
 #define UNIFORM(type) type
-#define STRUCT_NAME(name) name
+#define NO_UNIFORM(type) type
 struct pbr_program
 {
     struct program program;
@@ -56,11 +69,18 @@ struct pbr_program
 #   include "ri_program_pbr.h"
 };
 
-struct shadow_program
+struct shadow_texture_program
 {
     struct program program;
-    struct shadow_program_locations locations;
-#   include "ri_program_shadow.h"
+    struct shadow_texture_program_locations locations;
+#   include "ri_program_shadow_texture.h"
+};
+
+struct shadow_cubemap_program
+{
+    struct program program;
+    struct shadow_cubemap_program_locations locations;
+#   include "ri_program_shadow_cubemap.h"
 };
 
 struct text_program
@@ -70,21 +90,22 @@ struct text_program
 #   include "ri_program_text.h"
 };
 
-struct prim_program
+struct primitive_program
 {
     struct program program;
-    struct prim_program_locations locations;
-#   include "ri_program_prim.h"
+    struct primitive_program_locations locations;
+#   include "ri_program_primitive.h"
 };
 #undef UNIFORM
-#undef STRUCT_NAME
+#undef NO_UNIFORM
 
 #define LOCATION_PBR_POSITION 0
 #define LOCATION_PBR_UV       1
 #define LOCATION_PBR_COLOR    2
 #define LOCATION_PBR_NORMAL   3
 
-#define LOCATION_SHADOW_POSITION 0
+#define LOCATION_SHADOW_TEXTURE_POSITION 0
+#define LOCATION_SHADOW_CUBEMAP_POSITION 0
 
 #define LOCATION_PRIM_POSITION 0
 #define LOCATION_PRIM_UV       1
@@ -120,13 +141,17 @@ static void program_pbr_attribs();
 static int make_program_pbr(struct pbr_program **_program);
 static void free_program_pbr(struct pbr_program **program);
 
-static void program_shadow_attribs();
-static int make_program_shadow(struct shadow_program **_program);
-static void free_program_shadow(struct shadow_program **program);
+static void program_shadow_texture_attribs();
+static int make_program_shadow_texture(struct shadow_texture_program **_program);
+static void free_program_shadow_texture(struct shadow_texture_program **program);
+
+static void program_shadow_cubemap_attribs();
+static int make_program_shadow_cubemap(struct shadow_cubemap_program **_program);
+static void free_program_shadow_cubemap(struct shadow_cubemap_program **program);
 
 static void program_primitive_attribs();
-static int make_program_primitive(struct prim_program **_program);
-static void free_program_primitive(struct prim_program **program);
+static int make_program_primitive(struct primitive_program **_program);
+static void free_program_primitive(struct primitive_program **program);
 
 static void program_text_attribs();
 static int make_program_text(struct text_program **_program);

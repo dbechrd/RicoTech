@@ -139,7 +139,7 @@ static void object_transform_update(struct RICO_object *obj)
     // HACK: Light test
     if (obj->type == OBJ_LIGHT_TEST)
     {
-        prog_pbr->frag.lights[0].pos = obj->xform.position;
+        prog_pbr->frag.lights[NUM_LIGHT_DIR].pos = obj->xform.position;
     }
 
     // HACK: Order of these operations might not always be the same.. should
@@ -295,19 +295,26 @@ static bool object_collide_ray_type(pkid *_object_id, float *_dist,
     return collided;
 }
 
-static void temp_create_cubemap(GLuint *tex_id, u32 size)
+static void create_shadow_texture(GLuint *tex_id, u32 size)
+{
+    glGenTextures(1, tex_id);
+    glBindTexture(GL_TEXTURE_2D, *tex_id);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, size, size, 0,
+                 GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+}
+
+static void create_shadow_cubemap(GLuint *tex_id, u32 size)
 {
     glGenTextures(1, tex_id);
     glBindTexture(GL_TEXTURE_CUBE_MAP, *tex_id);
-
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    // Cleanup: Check if these have any effect after shadows are fixed
-    //glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    //glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
     // Generate the 6 face textures for the cube map
     for (GLint i = 0; i < 6; ++i)
@@ -326,15 +333,24 @@ static void temp_create_cubemap(GLuint *tex_id, u32 size)
                      GL_FLOAT, NULL);
     }
 
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    // Cleanup: Check if these have any effect after shadows are fixed
+    //glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    //glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
 
-static void temp_create_framebuffer(GLuint *fbo_id, GLuint tex_id)
+static void create_framebuffer(GLuint *fbo_id, GLuint tex_id)
 {
     glGenFramebuffers(1, fbo_id);
     glBindFramebuffer(GL_FRAMEBUFFER, *fbo_id);
 
-    // Attach shadow cubemap to framebuffer depth
+    // Attach shadow map to framebuffer depth
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, tex_id, 0);
 
     // We don't care about color buffers for shadow map
@@ -347,44 +363,26 @@ static void temp_create_framebuffer(GLuint *fbo_id, GLuint tex_id)
 #define LIGHT_NEAR 0.01f
 #define LIGHT_FAR 25.0f
 extern float LIGHT_FOV = 90.0f;
-static GLuint shadow_cubemap[NUM_LIGHTS] = { 0 };
+static GLuint shadow_textures[NUM_LIGHT_DIR] = { 0 };
+static GLuint shadow_cubemaps[NUM_LIGHT_POINT] = { 0 };
+static struct mat4 shadow_lightspace[NUM_LIGHT_DIR] = { 0 };
 static struct mat4 shadow_proj = { 0 };
-struct mat4 light_views[6] = { 0 };
 static void temp_render_shadow_cubemap(r64 alpha, struct pbr_light *lights)
 {
     const u32 tex_size = 1024;
 
     // TODO: Refactor this debauchery
-    static struct mat4 bias_matrix = { 0 };
     static struct mat4 rot_matrices[6] = { 0 };
-    static GLuint shadow_fbo[NUM_LIGHTS] = { 0 };
+    static GLuint shadow_fbo[NUM_LIGHT_DIR + NUM_LIGHT_POINT] = { 0 };
+    struct mat4 light_views[6] = { 0 };
 
-    if (!shadow_cubemap[0])
+    if (!shadow_textures[0])
     {
         // TODO: FIX THIS BROKEN SHIT
         // Calculate projection matrix
         //new THREE.PerspectiveCamera(90, 1, 0.01, 1000).projectionMatrix
-        shadow_proj = mat4_init_perspective(1.0f, LIGHT_NEAR, LIGHT_FAR, LIGHT_FOV);
-        //shadow_proj = mat4_init(
-        //    1, 0, 0, 0,
-        //    0, 1, 0, 0,
-        //    0, 0, -1.0000200271606445, -1,
-        //    0, 0, -0.02000020071864128, 0
-        //);
-        //mat4_transpose(&shadow_proj);
-
-        bias_matrix = mat4_init(
-            0.5f,  0.0f,  0.0f,  0.5f,
-            0.0f,  0.5f,  0.0f,  0.5f,
-            0.0f,  0.0f,  0.5f,  0.5f,
-            0.0f,  0.0f,  0.0f,  1.0f
-        );
-        /*bias_matrix = mat4_init(
-            0.5f,  0.0f,  0.0f,  0.0f,
-            0.0f,  0.5f,  0.0f,  0.0f,
-            0.0f,  0.0f,  0.5f,  0.0f,
-            0.5f,  0.5f,  0.5f,  1.0f
-        );*/
+        shadow_proj = mat4_init_perspective(1.0f, LIGHT_NEAR, LIGHT_FAR,
+                                            LIGHT_FOV);
 
         // Calculate rotation matrices
         //rot_matrices[0] = mat4_init_rotx( 90.0f); // pos_x
@@ -438,17 +436,15 @@ static void temp_render_shadow_cubemap(r64 alpha, struct pbr_light *lights)
             fflush(stdout);
         }
 
-        for (int i = 0; i < NUM_LIGHTS; ++i)
+        for (int i = 0; i < NUM_LIGHT_DIR; ++i)
         {
-            temp_create_cubemap(&shadow_cubemap[i], tex_size);
+            create_shadow_texture(&shadow_textures[i], tex_size);
+            create_framebuffer(&shadow_fbo[i], shadow_textures[i]);
         }
-    }
-
-    if (!shadow_fbo[0])
-    {
-        for (int i = 0; i < NUM_LIGHTS; ++i)
+        for (int i = 0; i < NUM_LIGHT_POINT; ++i)
         {
-            temp_create_framebuffer(&shadow_fbo[i], shadow_cubemap[i]);
+            create_shadow_cubemap(&shadow_cubemaps[i], tex_size);
+            create_framebuffer(&shadow_fbo[i], shadow_cubemaps[i]);
         }
     }
 
@@ -456,19 +452,50 @@ static void temp_render_shadow_cubemap(r64 alpha, struct pbr_light *lights)
     // Render shadows
     glViewport(0, 0, tex_size, tex_size);
 
-    struct shadow_program *prog = prog_shadow;
-    glUseProgram(prog->program.gl_id);
+    // Directional light shadows
+    struct shadow_texture_program *prog_texture = prog_shadow_texture;
+    glUseProgram(prog_texture->program.gl_id);
 
-    glUniform2f(prog->locations.frag.near_far, LIGHT_NEAR, LIGHT_FAR);
-
-    for (int light = 0; light < NUM_LIGHTS; ++light)
+    for (int light = 0; light < NUM_LIGHT_DIR; ++light)
     {
         if (!lights[light].enabled)
             continue;
 
-        struct vec3 light_pos = lights[light].pos;
-        glUniform3fv(prog->locations.frag.light_pos, 1, &light_pos.x);
+        // projection * view
+        struct vec3 light_dir = lights[light].dir;
+        shadow_lightspace[light] = mat4_init_lookat(v3_negate(&light_dir),
+                                                    &VEC3_ZERO, &VEC3_UP);
+        mat4_mul(&shadow_lightspace[light], &shadow_proj);
+        glUniformMatrix4fv(prog_texture->locations.vert.light_space, 1, GL_TRUE,
+                           shadow_lightspace[light].a);
 
+        // Clear depth buffer and bind shadow map
+        glBindFramebuffer(GL_FRAMEBUFFER, shadow_fbo[light]);
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+        // Render scene to this light's shadow map
+        for (u32 pack = 1; pack < ARRAY_COUNT(packs); ++pack)
+        {
+            if (!packs[pack]) continue;
+            object_render(packs[pack], prog_texture->locations.vert.model, 0,
+                          true);
+        }
+    }
+
+    // Point light shadows
+    struct shadow_cubemap_program *prob_cube = prog_shadow_cubemap;
+    glUseProgram(prob_cube->program.gl_id);
+    glUniform2f(prob_cube->locations.frag.near_far, LIGHT_NEAR, LIGHT_FAR);
+    glUniform3fv(prob_cube->locations.frag.light_dir, 1, &VEC3_ZERO.x);
+
+    for (int light = NUM_LIGHT_DIR; light < NUM_LIGHT_DIR + NUM_LIGHT_POINT;
+         ++light)
+    {
+        if (!lights[light].enabled)
+            continue;
+
+        glUniform3fv(prob_cube->locations.frag.light_pos, 1,
+                     &lights[light].pos.x);
         struct vec3 light_pos_neg = lights[light].pos;
         v3_negate(&light_pos_neg);
 
@@ -476,17 +503,12 @@ static void temp_render_shadow_cubemap(r64 alpha, struct pbr_light *lights)
         for (int view = 0; view < 6; ++view)
         {
             light_views[view] = MAT4_IDENT;
-            //mat4_mul(&light_views[view], &bias_matrix);
             mat4_mul(&light_views[view], &shadow_proj);
             mat4_mul(&light_views[view], &rot_matrices[view]);
             mat4_translate(&light_views[view], &light_pos_neg);
 
-            /*light_views[view] = shadow_proj;
-            mat4_mul(&light_views[view], &rot_matrices[view]);
-            mat4_translate(&light_views[view], &light_pos_neg);*/
-
-            glUniformMatrix4fv(prog->locations.geom.cubemap_xforms[view], 1,
-                               GL_TRUE, light_views[view].a);
+            glUniformMatrix4fv(prob_cube->locations.geom.cubemap_xforms[view],
+                               1, GL_TRUE, light_views[view].a);
         }
 
         // Clear depth buffer and bind shadow map
@@ -497,14 +519,13 @@ static void temp_render_shadow_cubemap(r64 alpha, struct pbr_light *lights)
         for (u32 pack = 1; pack < ARRAY_COUNT(packs); ++pack)
         {
             if (!packs[pack]) continue;
-            object_render(packs[pack], prog->locations.vert.model, 0, true);
+            object_render(packs[pack], prob_cube->locations.vert.model, 0,
+                          true);
         }
-
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glUseProgram(0);
-    ////////////////////////////////////////////////////////////////////////////
 }
 static void object_render_all(r64 alpha, struct RICO_camera *camera)
 {
@@ -546,13 +567,15 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
     glUniform1i(prog->locations.frag.material.tex2, 2);
 
     // Lighting
-    for (u32 i = 0; i < NUM_LIGHTS; ++i)
+    for (u32 i = 0; i < NUM_LIGHT_DIR + NUM_LIGHT_POINT; ++i)
     {
         if (!prog->frag.lights[i].enabled)
             continue;
 
         glUniform3fv(prog->locations.frag.lights[i].pos, 1,
                      &prog->frag.lights[i].pos.x);
+        glUniform3fv(prog->locations.frag.lights[i].dir, 1,
+                     &prog->frag.lights[i].dir.x);
         glUniform3fv(prog->locations.frag.lights[i].color, 1,
                      &prog->frag.lights[i].color.r);
         glUniform1f(prog->locations.frag.lights[i].intensity,
@@ -560,9 +583,21 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
         glUniform1i(prog->locations.frag.lights[i].enabled,
                     prog->frag.lights[i].enabled);
 
-        glActiveTexture(GL_TEXTURE10 + i);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, shadow_cubemap[i]);
-        glUniform1i(prog->locations.frag.lightmaps[i], 10 + i);
+        const u32 target = 4;  // GL_TEXTURE4
+        glActiveTexture(GL_TEXTURE0 + target + i);
+        if (prog->frag.lights[i].type == PBR_LIGHT_DIR)
+        {
+            glBindTexture(GL_TEXTURE_2D, shadow_textures[i]);
+            glUniform1i(prog->locations.frag.shadow_textures[i], target + i);
+
+            glUniformMatrix4fv(prog->locations.frag.shadow_lightspace[i], 1,
+                               GL_TRUE, shadow_lightspace[i].a);
+        }
+        else if (prog->frag.lights[i].type == PBR_LIGHT_POINT)
+        {
+            glBindTexture(GL_TEXTURE_CUBE_MAP, shadow_cubemaps[i]);
+            glUniform1i(prog->locations.frag.shadow_cubemaps[i], target + i);
+        }
     };
 
     glUniformMatrix4fv(prog->locations.frag.light_proj, 1, GL_TRUE,

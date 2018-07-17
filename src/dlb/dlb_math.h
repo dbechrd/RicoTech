@@ -303,8 +303,9 @@ DLB_MATH_DEF struct mat4 mat4_init_perspective(float aspect, float near_z,
 DLB_MATH_DEF struct mat4 mat4_init_ortho(float left, float right, float top,
                                          float bottom, float near_z,
                                          float far_z);
-DLB_MATH_DEF struct mat4 mat4_init_lookat(struct vec3 *pos, struct vec3 *view,
-                                          struct vec3 *up);
+DLB_MATH_DEF struct mat4 mat4_init_lookat(const struct vec3 *pos,
+                                          const struct vec3 *view,
+                                          const struct vec3 *up);
 
 //--- Quaternions ----------------------
 DLB_MATH_DEF struct quat *quat_ident(struct quat *q);
@@ -344,12 +345,12 @@ quat quat_scale(q, float s)
 quat quat_add(a, b)
 quat quat_sub(a, b)
 
-quat quat_rot_axis(q, vec3 v, float angle)  // Rotate axis using quaternion
+quat quat_rot_axis(q, vec3 vw, float angle)  // Rotate axis using quaternion
 quat quat_from_mat(m)
 quat quat_from_ypr(float yaw, float pitch, float roll)
 quat quat_slerp(a, b, float t)
-void quat_to_axis(q, vec3 *v, float *angle)
-vec3 quat_mul_vec(q, v)
+void quat_to_axis(q, vec3 *vw, float *angle)
+vec3 quat_mul_vec(q, vw)
 vec3 quat_to_up(q)  // Return UP vector rotated by this quaternion
 vec3 quat_to_right(q)
 vec3 quat_to_fwd(q)
@@ -357,7 +358,7 @@ vec3 quat_to_fwd_lh(q) // Left-handed forward (+Z)
 float quat_yaw(q)
 float quat_pitch(q)
 float quat_roll(q)
-quat quat_between_vec(vec3 u, vec3 v)
+quat quat_between_vec(vec3 u, vec3 vw)
 
 quat quat_around_axis(q, vec3 axis) // Component of quaternion around axis
 quat quat_lookat(vec3 fwd, vec3 up) // Calculate lookAt quaternion
@@ -530,19 +531,19 @@ DLB_MATH_DEF struct vec3 v3_sub(struct vec3 a, struct vec3 b)
     a.z -= b.z;
     return a;
 }
-DLB_MATH_DEF struct vec3 v3_scale(struct vec3 v, struct vec3 s)
+DLB_MATH_DEF struct vec3 v3_scale(struct vec3 vw, struct vec3 s)
 {
-    v.x *= s.x;
-    v.y *= s.y;
-    v.z *= s.z;
-    return v;
+    vw.x *= s.x;
+    vw.y *= s.y;
+    vw.z *= s.z;
+    return vw;
 }
-DLB_MATH_DEF struct vec3 v3_scalef(struct vec3 v, float s)
+DLB_MATH_DEF struct vec3 v3_scalef(struct vec3 vw, float s)
 {
-    v.x *= s;
-    v.y *= s;
-    v.z *= s;
-    return v;
+    vw.x *= s;
+    vw.y *= s;
+    vw.z *= s;
+    return vw;
 }
 DLB_MATH_DEF float v3_dot(struct vec3 a, struct vec3 b)
 {
@@ -556,35 +557,35 @@ DLB_MATH_DEF struct vec3 v3_cross(struct vec3 a, struct vec3 b)
     c.z = a.x * b.y - a.y * b.x;
     return c;
 }
-DLB_MATH_DEF float v3_length(struct vec3 v)
+DLB_MATH_DEF float v3_length(struct vec3 vw)
 {
     return sqrtf(
-        v.x * v.x +
-        v.y * v.y +
-        v.z * v.z
+        vw.x * vw.x +
+        vw.y * vw.y +
+        vw.z * vw.z
     );
 }
-DLB_MATH_DEF struct vec3 v3_negate(struct vec3 v)
+DLB_MATH_DEF struct vec3 v3_negate(struct vec3 vw)
 {
-    v.x = -v.x;
-    v.y = -v.y;
-    v.z = -v.z;
-    return v;
+    vw.x = -vw.x;
+    vw.y = -vw.y;
+    vw.z = -vw.z;
+    return vw;
 }
-DLB_MATH_DEF struct vec3 v3_normalize(struct vec3 v)
+DLB_MATH_DEF struct vec3 v3_normalize(struct vec3 vw)
 {
-    float buffer_len = 1.0f / v3_length(v);
-    v.x *= buffer_len;
-    v.y *= buffer_len;
-    v.z *= buffer_len;
-    return v;
+    float buffer_len = 1.0f / v3_length(vw);
+    vw.x *= buffer_len;
+    vw.y *= buffer_len;
+    vw.z *= buffer_len;
+    return vw;
 }
-DLB_MATH_DEF struct vec3 v3_positive(struct vec3 v)
+DLB_MATH_DEF struct vec3 v3_positive(struct vec3 vw)
 {
-    v.x = fabsf(v.x);
-    v.y = fabsf(v.y);
-    v.z = fabsf(v.z);
-    return v;
+    vw.x = fabsf(vw.x);
+    vw.y = fabsf(vw.y);
+    vw.z = fabsf(vw.z);
+    return vw;
 }
 DLB_MATH_DEF int v3_equals(struct vec3 a, struct vec3 b)
 {
@@ -892,19 +893,27 @@ DLB_MATH_DEF struct mat4 mat4_init_ortho(float left, float right, float top,
 }
 
 //Calculate lookAt matrix
-DLB_MATH_DEF struct mat4 mat4_init_lookat(struct vec3 *pos, struct vec3 *view,
-                                          struct vec3 *up)
+DLB_MATH_DEF struct mat4 mat4_init_lookat(const struct vec3 *pos,
+                                          const struct vec3 *view,
+                                          const struct vec3 *up)
 {
     struct mat4 look;
-    struct vec3 right = v3_cross(v3_sub(view, pos), up);
+    struct vec3 vw = *view;
+    struct vec3 right = v3_cross(v3_sub(&vw, pos), up);
     v3_normalize(&right);
     look = mat4_init(
-        right.x,  right.y, right.z, 0.0f,
-          up->x,    up->y,   up->z, 0.0f,
-        view->x,  view->y, view->z, 0.0f,
+        right.x, right.y, right.z, 0.0f,
+          up->x,   up->y,   up->z, 0.0f,
+           vw.x,    vw.y,    vw.z, 0.0f,
            0.0f,    0.0f,    0.0f, 1.0f
     );
-    struct mat4 trans = mat4_init_translate(v3_negate(pos));
+    struct mat4 trans = mat4_init(
+        1, 0, 0, -pos->x,
+        0, 1, 0, -pos->y,
+        0, 0, 1, -pos->z,
+        0, 0, 0, 1
+    );
+
     mat4_mul(&look, &trans);
     //mat4_mul(&trans, &look);
     return look;

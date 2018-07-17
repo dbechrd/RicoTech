@@ -15,8 +15,9 @@ enum widget_action
 static const char *widget_action_string[WIDGET_COUNT];
 
 extern struct pbr_program *prog_pbr;
-extern struct shadow_program *prog_shadow;
-extern struct prim_program *prog_prim;
+extern struct shadow_texture_program *prog_shadow_texture;
+extern struct shadow_cubemap_program *prog_shadow_cubemap;
+extern struct primitive_program *prog_prim;
 extern struct text_program *prog_text;
 
 static void editor_init();

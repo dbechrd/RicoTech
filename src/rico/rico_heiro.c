@@ -62,7 +62,7 @@ int rico_heiro_init()
     glBufferData(GL_ARRAY_BUFFER,
                  sizeof(struct text_vertex[HEIRO_MAX_LEN * HEIRO_GLYPH_VERTS ]),
                  0, GL_DYNAMIC_DRAW);
-    program_attribs[PROG_PRIM]();
+    program_attribs[PROG_PRIMITIVE]();
 
     // Unbind vbo/vao
     glBindBuffer(GL_ARRAY_BUFFER, 0);

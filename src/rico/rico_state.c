@@ -1092,7 +1092,10 @@ static int rico_init_shaders()
     err = make_program_pbr(&prog_pbr);
     if (err) return err;
 
-    err = make_program_shadow(&prog_shadow);
+    err = make_program_shadow_texture(&prog_shadow_texture);
+    if (err) return err;
+
+    err = make_program_shadow_cubemap(&prog_shadow_cubemap);
     if (err) return err;
 
     err = make_program_primitive(&prog_prim);
@@ -1104,22 +1107,31 @@ static int rico_init_shaders()
     // TODO: Get the light out of here!!! It should't be updating its position
     //       in the render function, argh!
     const float INTENSITY = 50.0f;
-    prog_pbr->frag.lights[0].pos = VEC3(0.0f, 4.0f, 0.0f);
-    prog_pbr->frag.lights[1].pos = VEC3(-4.0f, 4.0f, 3.0f);
-    prog_pbr->frag.lights[2].pos = VEC3(4.0f, 5.0f, 3.0f);
-    prog_pbr->frag.lights[3].pos = VEC3(1.0f, 6.0f, 3.0f);
-    prog_pbr->frag.lights[0].color = VEC3(1.0f, 1.0f, 0.8f);
-    prog_pbr->frag.lights[1].color = VEC3(1.0f, 0.1f, 0.1f);
-    prog_pbr->frag.lights[2].color = VEC3(0.1f, 1.0f, 0.1f);
-    prog_pbr->frag.lights[3].color = VEC3(0.1f, 0.1f, 1.0f);
+    prog_pbr->frag.lights[0].type = PBR_LIGHT_DIR;
+    prog_pbr->frag.lights[1].type = PBR_LIGHT_POINT;
+    prog_pbr->frag.lights[2].type = PBR_LIGHT_POINT;
+    prog_pbr->frag.lights[3].type = PBR_LIGHT_POINT;
+    prog_pbr->frag.lights[4].type = PBR_LIGHT_POINT;
+    prog_pbr->frag.lights[0].dir = VEC3(0.0f, 1.0f, 0.0f);
+    prog_pbr->frag.lights[1].pos = VEC3(0.0f, 4.0f, 0.0f);
+    prog_pbr->frag.lights[2].pos = VEC3(-4.0f, 4.0f, 3.0f);
+    prog_pbr->frag.lights[3].pos = VEC3(4.0f, 5.0f, 3.0f);
+    prog_pbr->frag.lights[4].pos = VEC3(1.0f, 6.0f, 3.0f);
+    prog_pbr->frag.lights[0].color = VEC3(1.0f, 0.8f, 0.4f);
+    prog_pbr->frag.lights[1].color = VEC3(1.0f, 1.0f, 0.8f);
+    prog_pbr->frag.lights[2].color = VEC3(1.0f, 0.1f, 0.1f);
+    prog_pbr->frag.lights[3].color = VEC3(0.1f, 1.0f, 0.1f);
+    prog_pbr->frag.lights[4].color = VEC3(0.1f, 0.1f, 1.0f);
+    prog_pbr->frag.lights[0].intensity = 10.0f;
     prog_pbr->frag.lights[1].intensity = INTENSITY;
-    prog_pbr->frag.lights[0].intensity = INTENSITY;
     prog_pbr->frag.lights[2].intensity = INTENSITY;
     prog_pbr->frag.lights[3].intensity = INTENSITY;
+    prog_pbr->frag.lights[4].intensity = INTENSITY;
     prog_pbr->frag.lights[0].enabled = RICO_lighting_enabled && true;
-    prog_pbr->frag.lights[1].enabled = RICO_lighting_enabled && true;
-    prog_pbr->frag.lights[2].enabled = RICO_lighting_enabled && true;
-    prog_pbr->frag.lights[3].enabled = RICO_lighting_enabled && true;
+    prog_pbr->frag.lights[1].enabled = RICO_lighting_enabled && false;
+    prog_pbr->frag.lights[2].enabled = RICO_lighting_enabled && false;
+    prog_pbr->frag.lights[3].enabled = RICO_lighting_enabled && false;
+    prog_pbr->frag.lights[4].enabled = RICO_lighting_enabled && false;
     //prog_pbr->frag.light.kc = 1.0f;
     //prog_pbr->frag.light.kl = 0.05f;
     //prog_pbr->frag.light.kq = 0.001f;

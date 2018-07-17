@@ -53,18 +53,29 @@ struct Material {
 };
 uniform Material material;
 
-#define NUM_LIGHTS 4
+#define NUM_LIGHT_DIR 1
+#define NUM_LIGHT_POINT 4
 
-struct PointLight {
-    vec3 P;
+struct Light {
+    vec3 pos;
+    vec3 dir;
     vec3 color;
     float intensity;
     bool enabled;
 };
-uniform PointLight lights[NUM_LIGHTS];
+uniform Light lights[NUM_LIGHT_DIR + NUM_LIGHT_POINT];
 
 uniform vec2 near_far;
-uniform samplerCube lightmaps[NUM_LIGHTS];
+
+// Note: lights = [[directional lights], [point lights]]
+#       define TEXTURE_IDX i
+#       define CUBEMAP_IDX i - NUM_LIGHT_DIR
+
+uniform sampler2D shadow_textures[NUM_LIGHT_DIR];
+// TODO: Move this to vertex shader; super inefficient to multiply every
+//       fragment by a matrix
+uniform mat4 shadow_lightspace[NUM_LIGHT_DIR];
+uniform samplerCube shadow_cubemaps[NUM_LIGHT_POINT];
 uniform mat4 light_proj;
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
@@ -115,22 +126,59 @@ void main()
     F0 = mix(F0, mtl_albedo, mtl_metallic);
 
     vec3 L0 = vec3(0.0);
-    for (int i = 0; i < NUM_LIGHTS; ++i)
+    for (int i = 0; i < NUM_LIGHT_DIR + NUM_LIGHT_POINT; ++i)
     {
         if (!lights[i].enabled)
             continue;
 
-        vec3 fragToLight = lights[i].P - vertex.P;
+        // directional = 0.0
+        // other       = 1.0
+        float light_type = float(length(lights[i].pos) > 0);
+
+        /*
+        vec3 fragToLight;
+        if (light_type == 0)
+        {
+            // Directional light
+            fragToLight = lights[i].dir;
+        }
+        else
+        {
+            // Point light
+            fragToLight = lights[i].pos - vertex.P;
+        }
+        */
+        // Same as above without branching
+        vec3 fragToLight = mix(lights[i].dir, lights[i].pos - vertex.P,
+                               light_type);
 
         vec3 L = normalize(fragToLight);
         vec3 H = normalize(V + L);
         float dist = length(fragToLight);
 
-        float shadow_map_depth = texture(lightmaps[i], -L).r;
-        shadow_map_depth *= near_far.y;
+        ////////////////////////////////////////////////////////////////////////
+        // Calculate shadows
+        float shadow_map_depth;
+        if (light_type == 0)
+        {
+            // Directional light
+            vec4 fragPosLightSpace = shadow_lightspace[TEXTURE_IDX] *
+                                     vec4(vertex.P, 1.0);
+            vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+            projCoords = projCoords * 0.5 + 0.5;
+            shadow_map_depth = texture(shadow_textures[TEXTURE_IDX],
+                                       projCoords.xy).r;
+        }
+        else
+        {
+            // Point light
+            shadow_map_depth = texture(shadow_cubemaps[CUBEMAP_IDX], -L).r;
+            shadow_map_depth *= near_far.y;
+        }
         float bias = 0.05;
         float darkness = 0.75;
         float shadow = (dist - bias > shadow_map_depth) ? darkness : 0.0;
+        ////////////////////////////////////////////////////////////////////////
 
         float attenuation = lights[i].intensity / (dist * dist);
         vec3 radiance = lights[i].color * attenuation;
@@ -161,11 +209,15 @@ void main()
     vec3 emission = mix(vec3(0), mtl_emission, mtl_emit);
     color = color + emission;
 
-    frag_color = vec4(color, mtl_opacity);
-
     // TODO: Make this uniform int debug_lightmap_idx = -1
     // Render lightmap
     //int i = 0;
-    //float mapDepth = texture(lightmaps[i], vertex.P - lights[i].P).r;
-    //frag_color = vec4(vec3(mapDepth), 1.0) + (frag_color * 0.000001);
+    //float mapDepth = texture(lightmaps[i], vertex.P - lights[i].pos).r;
+    //frag_color = vec4(vec3(mapDepth) + (color * 0.000001), 1.0);
+
+    //color *= 0.000001;
+    //color = normalize(lights[0].dir) + (color * 0.000001);
+    //color = vec3(1.0, 0.0, 0.0) + (color * 0.000001);
+
+    frag_color = vec4(color, mtl_opacity);
 }

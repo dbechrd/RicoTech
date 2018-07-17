@@ -2,7 +2,8 @@ static program_attribs_helper program_attribs[PROG_COUNT] =
 {
     0,
     program_pbr_attribs,
-    program_shadow_attribs,
+    program_shadow_texture_attribs,
+    program_shadow_cubemap_attribs,
     program_primitive_attribs,
     program_text_attribs
 };
@@ -103,8 +104,6 @@ static void program_pbr_get_locations(struct pbr_program *p)
     //RICO_ASSERT(p->locations.vert.attrs.normal == LOCATION_PBR_NORMAL);
 
     // Fragment shader
-    p->locations.frag.near_far =
-        program_get_uniform_location(p->program.gl_id, "near_far");
     p->locations.frag.camera.pos =
         program_get_uniform_location(p->program.gl_id, "camera.P");
     p->locations.frag.material.tex0 =
@@ -114,9 +113,11 @@ static void program_pbr_get_locations(struct pbr_program *p)
     p->locations.frag.material.tex2 =
         program_get_uniform_location(p->program.gl_id, "material.tex2");
 
-#define POINT_LIGHT(i)                                                        \
+#define LIGHT(i)                                                              \
 p->locations.frag.lights[i].pos =                                             \
-    program_get_uniform_location(p->program.gl_id, "lights["#i"].P");         \
+    program_get_uniform_location(p->program.gl_id, "lights["#i"].pos");       \
+p->locations.frag.lights[i].dir =                                             \
+    program_get_uniform_location(p->program.gl_id, "lights["#i"].dir");       \
 p->locations.frag.lights[i].color =                                           \
     program_get_uniform_location(p->program.gl_id, "lights["#i"].color");     \
 p->locations.frag.lights[i].intensity =                                       \
@@ -124,38 +125,56 @@ p->locations.frag.lights[i].intensity =                                       \
 p->locations.frag.lights[i].enabled =                                         \
     program_get_uniform_location(p->program.gl_id, "lights["#i"].enabled");
 
-    POINT_LIGHT(0);
-    POINT_LIGHT(1);
-    POINT_LIGHT(2);
-    POINT_LIGHT(3);
-    RICO_ASSERT(4 == NUM_LIGHTS);
+    LIGHT(0);
+    LIGHT(1);
+    LIGHT(2);
+    LIGHT(3);
+    LIGHT(4);
+    RICO_ASSERT(5 == NUM_LIGHT_DIR + NUM_LIGHT_POINT);
 #undef POINT_LIGHT
 
     RICO_ASSERT(p->locations.frag.camera.pos >= 0);
     RICO_ASSERT(p->locations.frag.material.tex0 >= 0);
     RICO_ASSERT(p->locations.frag.material.tex1 >= 0);
     RICO_ASSERT(p->locations.frag.material.tex2 >= 0);
-    RICO_ASSERT(p->locations.frag.lights[0].pos >= 0);
+    //RICO_ASSERT(p->locations.frag.lights[0].pos >= 0);
+    //RICO_ASSERT(p->locations.frag.lights[0].dir >= 0);
     RICO_ASSERT(p->locations.frag.lights[0].color >= 0);
     RICO_ASSERT(p->locations.frag.lights[0].intensity >= 0);
     RICO_ASSERT(p->locations.frag.lights[0].enabled >= 0);
-    RICO_ASSERT(p->locations.frag.lights[0].enabled >= 0);
 
-#define LIGHTMAP(i)                                                    \
-p->locations.frag.lightmaps[i] =                                       \
-    program_get_uniform_location(p->program.gl_id, "lightmaps["#i"]");
+    p->locations.frag.near_far =
+        program_get_uniform_location(p->program.gl_id, "near_far");
 
-    LIGHTMAP(0);
-    LIGHTMAP(1);
-    LIGHTMAP(2);
-    LIGHTMAP(3);
-    RICO_ASSERT(4 == NUM_LIGHTS);
-#undef CUBEMAP_XFORM
+#define SHADOW_TEXTURE(i)                                                    \
+p->locations.frag.shadow_textures[i] =                                       \
+    program_get_uniform_location(p->program.gl_id, "shadow_textures["#i"]");
 
-    //RICO_ASSERT(p->locations.frag.lightmaps[0] >= 0);
-    //RICO_ASSERT(p->locations.frag.lightmaps[1] >= 0);
-    //RICO_ASSERT(p->locations.frag.lightmaps[2] >= 0);
-    //RICO_ASSERT(p->locations.frag.lightmaps[3] >= 0);
+    SHADOW_TEXTURE(0);
+    RICO_ASSERT(1 == NUM_LIGHT_DIR);
+    //RICO_ASSERT(p->locations.frag.shadow_textures[0] >= 0);
+#undef SHADOW_TEXTURE
+
+#define SHADOW_LIGHTSPACE(i)                                                 \
+p->locations.frag.shadow_lightspace[i] =                                     \
+    program_get_uniform_location(p->program.gl_id, "shadow_lightspace["#i"]");
+
+    SHADOW_LIGHTSPACE(0);
+    RICO_ASSERT(1 == NUM_LIGHT_DIR);
+    //RICO_ASSERT(p->locations.frag.shadow_lightspace[0] >= 0);
+#undef SHADOW_LIGHTSPACE
+
+#define SHADOW_CUBEMAP(i)                                                    \
+p->locations.frag.shadow_cubemaps[i] =                                       \
+    program_get_uniform_location(p->program.gl_id, "shadow_cubemaps["#i"]");
+
+    SHADOW_CUBEMAP(0);
+    SHADOW_CUBEMAP(1);
+    SHADOW_CUBEMAP(2);
+    SHADOW_CUBEMAP(3);
+    RICO_ASSERT(4 == NUM_LIGHT_POINT);
+    //RICO_ASSERT(p->locations.frag.shadow_cubemaps[0] >= 0);
+#undef SHADOW_CUBEMAP
 
     p->locations.frag.light_proj =
         program_get_uniform_location(p->program.gl_id, "light_proj");
@@ -185,11 +204,11 @@ static void program_pbr_attribs()
 }
 static int make_program_pbr(struct pbr_program **_program)
 {
-    static struct pbr_program *prog_pbr = NULL;
+    static struct pbr_program *prog = NULL;
     enum RICO_error err;
 
-    if (prog_pbr != NULL) {
-        *_program = prog_pbr;
+    if (prog != NULL) {
+        *_program = prog;
         return SUCCESS;
     }
 
@@ -209,17 +228,17 @@ static int make_program_pbr(struct pbr_program **_program)
     if (err) goto cleanup;
 
     // Create program object
-    prog_pbr = calloc(1, sizeof(*prog_pbr));
-    prog_pbr->program.type = PROG_PBR;
-    prog_pbr->program.gl_id = program;
+    prog = calloc(1, sizeof(*prog));
+    prog->program.type = PROG_PBR;
+    prog->program.gl_id = program;
 
     // Query shader locations
-    program_pbr_get_locations(prog_pbr);
+    program_pbr_get_locations(prog);
 
 cleanup:
     free_shader(fshader);
     free_shader(vshader);
-    *_program = prog_pbr;
+    *_program = prog;
     return err;
 }
 static void free_program_pbr(struct pbr_program **program)
@@ -236,9 +255,93 @@ static void free_program_pbr(struct pbr_program **program)
 }
 
 ///=============================================================================
-//| Shadow program
+//| Shadow texture program
 ///=============================================================================
-static void program_shadow_get_locations(struct shadow_program *p)
+static void program_shadow_texture_get_locations(
+    struct shadow_texture_program *p)
+{
+    // Vertex shader
+    p->locations.vert.light_space =
+        program_get_uniform_location(p->program.gl_id, "light_space");
+    p->locations.vert.model =
+        program_get_uniform_location(p->program.gl_id, "model");
+    p->locations.vert.attrs.position =
+        program_get_attrib_location(p->program.gl_id,"attr_position");
+
+    RICO_ASSERT(p->locations.vert.model >= 0);
+    RICO_ASSERT(p->locations.vert.attrs.position == LOCATION_PBR_POSITION);
+
+    // Fragment shader
+    //Empty
+}
+static void program_shadow_texture_attribs()
+{
+    glVertexAttribPointer(LOCATION_SHADOW_TEXTURE_POSITION, 3, GL_FLOAT,
+                          GL_FALSE, sizeof(struct pbr_vertex),
+                          (GLvoid *)offsetof(struct pbr_vertex, pos));
+    glEnableVertexAttribArray(LOCATION_SHADOW_TEXTURE_POSITION);
+}
+static int make_program_shadow_texture(struct shadow_texture_program **_program)
+{
+    static struct shadow_texture_program *prog = NULL;
+    enum RICO_error err;
+
+    if (prog != NULL) {
+        *_program = prog;
+        return SUCCESS;
+    }
+
+    GLuint vshader = 0;
+    GLuint gshader = 0;
+    GLuint fshader = 0;
+    GLuint program = 0;
+
+    // Compile shaders
+    err = make_shader(GL_VERTEX_SHADER, "shader/shadow_texture_v.glsl",
+                      &vshader);
+    if (err) goto cleanup;
+
+    err = make_shader(GL_FRAGMENT_SHADER, "shader/shadow_texture_f.glsl",
+                      &fshader);
+    if (err) goto cleanup;
+
+    // Link shader program
+    err = make_program(vshader, gshader, fshader, &program);
+    if (err) goto cleanup;
+
+    // Create program object
+    prog = calloc(1, sizeof(*prog));
+    prog->program.type = PROG_SHADOW_CUBEMAP;
+    prog->program.gl_id = program;
+
+    // Query shader locations
+    program_shadow_texture_get_locations(prog);
+
+cleanup:
+    free_shader(fshader);
+    free_shader(gshader);
+    free_shader(vshader);
+    *_program = prog;
+    return err;
+}
+static void free_program_shadow_texture(struct shadow_texture_program **program)
+{
+    //TODO: Handle error
+    if ((*program)->program.ref_count > 0) {
+        printf("Cannot delete a program in use!");
+        //TODO: crash;
+    }
+
+    glDeleteProgram((*program)->program.gl_id);
+    free(*program);
+    *program = NULL;
+}
+
+///=============================================================================
+//| Shadow cubemap program
+///=============================================================================
+static void program_shadow_cubemap_get_locations(
+    struct shadow_cubemap_program *p)
 {
     // Vertex shader
     p->locations.vert.model =
@@ -274,24 +377,27 @@ p->locations.geom.cubemap_xforms[i] =                                       \
         program_get_uniform_location(p->program.gl_id, "near_far");
     p->locations.frag.light_pos =
         program_get_uniform_location(p->program.gl_id, "light_pos");
+    p->locations.frag.light_dir =
+        program_get_uniform_location(p->program.gl_id, "light_dir");
 
     RICO_ASSERT(p->locations.frag.near_far >= 0);
     RICO_ASSERT(p->locations.frag.light_pos >= 0);
+    RICO_ASSERT(p->locations.frag.light_dir >= 0);
 }
-static void program_shadow_attribs()
+static void program_shadow_cubemap_attribs()
 {
-    glVertexAttribPointer(LOCATION_SHADOW_POSITION, 3, GL_FLOAT, GL_FALSE,
-                          sizeof(struct pbr_vertex),
+    glVertexAttribPointer(LOCATION_SHADOW_CUBEMAP_POSITION, 3, GL_FLOAT,
+                          GL_FALSE, sizeof(struct pbr_vertex),
                           (GLvoid *)offsetof(struct pbr_vertex, pos));
-    glEnableVertexAttribArray(LOCATION_SHADOW_POSITION);
+    glEnableVertexAttribArray(LOCATION_SHADOW_CUBEMAP_POSITION);
 }
-static int make_program_shadow(struct shadow_program **_program)
+static int make_program_shadow_cubemap(struct shadow_cubemap_program **_program)
 {
-    static struct shadow_program *prog_shadow = NULL;
+    static struct shadow_cubemap_program *prog = NULL;
     enum RICO_error err;
 
-    if (prog_shadow != NULL) {
-        *_program = prog_shadow;
+    if (prog != NULL) {
+        *_program = prog;
         return SUCCESS;
     }
 
@@ -301,13 +407,16 @@ static int make_program_shadow(struct shadow_program **_program)
     GLuint program = 0;
 
     // Compile shaders
-    err = make_shader(GL_VERTEX_SHADER, "shader/shadow_v.glsl", &vshader);
+    err = make_shader(GL_VERTEX_SHADER, "shader/shadow_cubemap_v.glsl",
+                      &vshader);
     if (err) goto cleanup;
 
-    err = make_shader(GL_GEOMETRY_SHADER, "shader/shadow_g.glsl", &gshader);
+    err = make_shader(GL_GEOMETRY_SHADER, "shader/shadow_cubemap_g.glsl",
+                      &gshader);
     if (err) goto cleanup;
 
-    err = make_shader(GL_FRAGMENT_SHADER, "shader/shadow_f.glsl", &fshader);
+    err = make_shader(GL_FRAGMENT_SHADER, "shader/shadow_cubemap_f.glsl",
+                      &fshader);
     if (err) goto cleanup;
 
     // Link shader program
@@ -315,21 +424,21 @@ static int make_program_shadow(struct shadow_program **_program)
     if (err) goto cleanup;
 
     // Create program object
-    prog_shadow = calloc(1, sizeof(*prog_shadow));
-    prog_shadow->program.type = PROG_SHADOW;
-    prog_shadow->program.gl_id = program;
+    prog = calloc(1, sizeof(*prog));
+    prog->program.type = PROG_SHADOW_CUBEMAP;
+    prog->program.gl_id = program;
 
     // Query shader locations
-    program_shadow_get_locations(prog_shadow);
+    program_shadow_cubemap_get_locations(prog);
 
 cleanup:
     free_shader(fshader);
     free_shader(gshader);
     free_shader(vshader);
-    *_program = prog_shadow;
+    *_program = prog;
     return err;
 }
-static void free_program_shadow(struct shadow_program **program)
+static void free_program_shadow_cubemap(struct shadow_cubemap_program **program)
 {
     //TODO: Handle error
     if ((*program)->program.ref_count > 0) {
@@ -345,7 +454,7 @@ static void free_program_shadow(struct shadow_program **program)
 ///=============================================================================
 //| Primitive program
 ///=============================================================================
-static void program_primitive_get_locations(struct prim_program *p)
+static void program_primitive_get_locations(struct primitive_program *p)
 {
     // Vertex shader
     p->locations.vert.proj =
@@ -395,13 +504,13 @@ static void program_primitive_attribs()
                           (GLvoid *)offsetof(struct prim_vertex, col));
     glEnableVertexAttribArray(LOCATION_PRIM_COLOR);
 }
-static int make_program_primitive(struct prim_program **_program)
+static int make_program_primitive(struct primitive_program **_program)
 {
-    static struct prim_program *prog_primitive = NULL;
+    static struct primitive_program *prog = NULL;
     enum RICO_error err;
 
-    if (prog_primitive != NULL) {
-        *_program = prog_primitive;
+    if (prog != NULL) {
+        *_program = prog;
         return SUCCESS;
     }
 
@@ -421,20 +530,20 @@ static int make_program_primitive(struct prim_program **_program)
     if (err) goto cleanup;
 
     // Create program object
-    prog_primitive = calloc(1, sizeof(*prog_primitive));
-    prog_primitive->program.type = PROG_PRIM;
-    prog_primitive->program.gl_id = program;
+    prog = calloc(1, sizeof(*prog));
+    prog->program.type = PROG_PRIMITIVE;
+    prog->program.gl_id = program;
 
     // Query shader locations
-    program_primitive_get_locations(prog_primitive);
+    program_primitive_get_locations(prog);
 
 cleanup:
     free_shader(fshader);
     free_shader(vshader);
-    *_program = prog_primitive;
+    *_program = prog;
     return err;
 }
-static void free_program_primitive(struct prim_program **program)
+static void free_program_primitive(struct primitive_program **program)
 {
     glDeleteProgram((*program)->program.gl_id);
     free(*program);
@@ -487,11 +596,11 @@ static void program_text_attribs()
 }
 static int make_program_text(struct text_program **_program)
 {
-    static struct text_program *prog_text = NULL;
+    static struct text_program *prog = NULL;
     enum RICO_error err;
 
-    if (prog_text != NULL) {
-        *_program = prog_text;
+    if (prog != NULL) {
+        *_program = prog;
         return SUCCESS;
     }
 
@@ -511,17 +620,17 @@ static int make_program_text(struct text_program **_program)
     if (err) goto cleanup;
 
     // Create program object
-    prog_text = calloc(1, sizeof(*prog_text));
-    prog_text->program.type = PROG_TEXT;
-    prog_text->program.gl_id = program;
+    prog = calloc(1, sizeof(*prog));
+    prog->program.type = PROG_TEXT;
+    prog->program.gl_id = program;
 
     // Query shader locations
-    program_text_get_locations(prog_text);
+    program_text_get_locations(prog);
 
 cleanup:
     free_shader(fshader);
     free_shader(vshader);
-    *_program = prog_text;
+    *_program = prog;
     return err;
 }
 static void free_program_text(struct text_program **program)

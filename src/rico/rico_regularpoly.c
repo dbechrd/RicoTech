@@ -1,4 +1,4 @@
-static struct prim_program *regularpoly_program = NULL;
+static struct primitive_program *regularpoly_program = NULL;
 
 static int init_regularpoly_program()
 {

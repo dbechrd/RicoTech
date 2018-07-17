@@ -1326,7 +1326,7 @@ int main(int argc, char **argv)
         }
 
         err = RICO_update();
-        if (err) break;
+        if (err || RICO_quit()) break;
 
         clash_detect(timmy);
 
@@ -1350,7 +1350,7 @@ int main(int argc, char **argv)
         }
 
         // Render light bounds
-        for (int i = 0; i < NUM_LIGHTS; i++)
+        for (int i = 0; i < NUM_LIGHT_DIR + NUM_LIGHT_POINT; i++)
         {
             if (!prog_pbr->frag.lights[i].enabled)
                 continue;

@@ -14,8 +14,9 @@ static struct widget *widget;
 static pkid selected_obj_id;
 
 static struct pbr_program *prog_pbr;
-static struct shadow_program *prog_shadow;
-static struct prim_program *prog_prim;
+static struct shadow_texture_program *prog_shadow_texture;
+static struct shadow_cubemap_program *prog_shadow_cubemap;
+static struct primitive_program *prog_prim;
 static struct text_program *prog_text;
 
 static void editor_init()

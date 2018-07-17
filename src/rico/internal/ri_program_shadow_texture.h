@@ -1,6 +1,7 @@
 // Vertex shader
 struct
 {
+    UNIFORM(struct mat4) light_space;
     UNIFORM(struct mat4) model;
 
     // Vertex attributes
@@ -12,17 +13,8 @@ struct
 }
 vert;
 
-// Geometry shader
-struct
-{
-    UNIFORM(struct mat4) cubemap_xforms[6];
-}
-geom;
-
 // Fragment shader
-struct
-{
-    UNIFORM(struct vec2) near_far;
-    UNIFORM(struct vec3) light_pos;
-}
-frag;
+//struct
+//{
+//}
+//frag;
