@@ -897,25 +897,22 @@ DLB_MATH_DEF struct mat4 mat4_init_lookat(const struct vec3 *pos,
                                           const struct vec3 *view,
                                           const struct vec3 *up)
 {
-    struct mat4 look;
-    struct vec3 vw = *view;
-    struct vec3 right = v3_cross(v3_sub(&vw, pos), up);
-    v3_normalize(&right);
-    look = mat4_init(
-        right.x, right.y, right.z, 0.0f,
-          up->x,   up->y,   up->z, 0.0f,
-           vw.x,    vw.y,    vw.z, 0.0f,
-           0.0f,    0.0f,    0.0f, 1.0f
-    );
-    struct mat4 trans = mat4_init(
-        1, 0, 0, -pos->x,
-        0, 1, 0, -pos->y,
-        0, 0, 1, -pos->z,
-        0, 0, 0, 1
-    );
+    struct vec3 z = *pos;
+    v3_sub(&z, view);
+    v3_normalize(&z);
 
-    mat4_mul(&look, &trans);
-    //mat4_mul(&trans, &look);
+    struct vec3 x = v3_cross(up, &z);
+    v3_normalize(&x);
+
+    struct vec3 y = v3_cross(&z, &x);
+    v3_normalize(&y);
+
+    struct mat4 look = mat4_init(
+         x.x,  x.y,  x.z, -v3_dot(&x, pos),
+         y.x,  y.y,  y.z, -v3_dot(&y, pos),
+         z.x,  z.y,  z.z, -v3_dot(&z, pos),
+        0.0f, 0.0f, 0.0f, 1.0f
+    );
     return look;
 }
 

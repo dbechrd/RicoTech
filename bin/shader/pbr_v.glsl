@@ -5,12 +5,14 @@ out vs_out {
     vec2 UV;
     vec4 color;
     vec3 N;
+    vec4 light_space;
 } vertex;
 
 uniform vec2 scale_uv;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 proj;
+uniform mat4 light_space;
 
 layout(location = 0) in vec3 attr_position;
 layout(location = 1) in vec2 attr_uv;
@@ -19,10 +21,11 @@ layout(location = 3) in vec3 attr_normal;
 
 void main()
 {
-    gl_Position = model * vec4(attr_position, 1.0);
-    vertex.P = gl_Position.xyz;
+    vec4 pos = model * vec4(attr_position, 1.0);
+    vertex.P = pos.xyz;
     vertex.UV = scale_uv * attr_uv;
     vertex.color = attr_color;
     vertex.N = transpose(inverse(mat3(model))) * attr_normal;
-    gl_Position = proj * view * gl_Position;
+    vertex.light_space = light_space * pos;
+    gl_Position = proj * view * pos;
 }

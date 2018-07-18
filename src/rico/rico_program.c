@@ -78,16 +78,19 @@ static void program_pbr_get_locations(struct pbr_program *p)
     // Vertex shader
     p->locations.vert.scale_uv =
         program_get_uniform_location(p->program.gl_id, "scale_uv");
-    p->locations.vert.proj =
-        program_get_uniform_location(p->program.gl_id, "proj");
-    p->locations.vert.view =
-        program_get_uniform_location(p->program.gl_id, "view");
     p->locations.vert.model =
         program_get_uniform_location(p->program.gl_id, "model");
+    p->locations.vert.view =
+        program_get_uniform_location(p->program.gl_id, "view");
+    p->locations.vert.proj =
+        program_get_uniform_location(p->program.gl_id, "proj");
+    p->locations.vert.light_space =
+        program_get_uniform_location(p->program.gl_id, "light_space");
     RICO_ASSERT(p->locations.vert.scale_uv >= 0);
     RICO_ASSERT(p->locations.vert.model >= 0);
     RICO_ASSERT(p->locations.vert.view >= 0);
     RICO_ASSERT(p->locations.vert.proj >= 0);
+    RICO_ASSERT(p->locations.vert.light_space >= 0);
 
     p->locations.vert.attrs.position =
         program_get_attrib_location(p->program.gl_id,"attr_position");
@@ -104,6 +107,8 @@ static void program_pbr_get_locations(struct pbr_program *p)
     //RICO_ASSERT(p->locations.vert.attrs.normal == LOCATION_PBR_NORMAL);
 
     // Fragment shader
+    p->locations.frag.time =
+        program_get_uniform_location(p->program.gl_id, "time");
     p->locations.frag.camera.pos =
         program_get_uniform_location(p->program.gl_id, "camera.P");
     p->locations.frag.material.tex0 =
@@ -133,6 +138,7 @@ p->locations.frag.lights[i].enabled =                                         \
     RICO_ASSERT(5 == NUM_LIGHT_DIR + NUM_LIGHT_POINT);
 #undef POINT_LIGHT
 
+    //RICO_ASSERT(p->locations.frag.time >= 0);
     RICO_ASSERT(p->locations.frag.camera.pos >= 0);
     RICO_ASSERT(p->locations.frag.material.tex0 >= 0);
     RICO_ASSERT(p->locations.frag.material.tex1 >= 0);
@@ -155,14 +161,14 @@ p->locations.frag.shadow_textures[i] =                                       \
     //RICO_ASSERT(p->locations.frag.shadow_textures[0] >= 0);
 #undef SHADOW_TEXTURE
 
-#define SHADOW_LIGHTSPACE(i)                                                 \
-p->locations.frag.shadow_lightspace[i] =                                     \
-    program_get_uniform_location(p->program.gl_id, "shadow_lightspace["#i"]");
-
-    SHADOW_LIGHTSPACE(0);
-    RICO_ASSERT(1 == NUM_LIGHT_DIR);
-    //RICO_ASSERT(p->locations.frag.shadow_lightspace[0] >= 0);
-#undef SHADOW_LIGHTSPACE
+//#define LIGHT_SPACE(i)                                                 \
+//p->locations.vert.shadow_lightspace[i] =                                     \
+//    program_get_uniform_location(p->program.gl_id, "light_space["#i"]");
+//
+//    LIGHT_SPACE(0);
+//    RICO_ASSERT(1 == NUM_LIGHT_DIR);
+//    //RICO_ASSERT(p->locations.vert.light_space[0] >= 0);
+//#undef LIGHT_SPACE
 
 #define SHADOW_CUBEMAP(i)                                                    \
 p->locations.frag.shadow_cubemaps[i] =                                       \

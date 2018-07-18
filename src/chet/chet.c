@@ -1350,21 +1350,41 @@ int main(int argc, char **argv)
         }
 
         // Render light bounds
-        for (int i = 0; i < NUM_LIGHT_DIR + NUM_LIGHT_POINT; i++)
-        {
-            if (!prog_pbr->frag.lights[i].enabled)
-                continue;
+        //for (int i = 0; i < NUM_LIGHT_DIR + NUM_LIGHT_POINT; i++)
+        //{
+        //    if (!prog_pbr->frag.lights[i].enabled)
+        //        continue;
+        //
+        //    struct sphere light_sphere = { 0 };
+        //    light_sphere.orig = prog_pbr->frag.lights[i].pos;
+        //    light_sphere.radius = 0.1f;
+        //
+        //    struct vec4 color = VEC4(prog_pbr->frag.lights[i].color.r,
+        //                             prog_pbr->frag.lights[i].color.g,
+        //                             prog_pbr->frag.lights[i].color.b,
+        //                             1.0f);
+        //    RICO_prim_draw_sphere(&light_sphere, &color);
+        //}
 
-            struct sphere light_sphere = { 0 };
-            light_sphere.orig = prog_pbr->frag.lights[i].pos;
-            light_sphere.radius = 0.1f;
-
-            struct vec4 color = VEC4(prog_pbr->frag.lights[i].color.r,
-                                     prog_pbr->frag.lights[i].color.g,
-                                     prog_pbr->frag.lights[i].color.b,
-                                     1.0f);
-            RICO_prim_draw_sphere(&light_sphere, &color);
-        }
+        // Render shadow lookat axes
+        struct vec3 x = VEC3(foo_matrix.m[0][0],
+                             foo_matrix.m[0][1],
+                             foo_matrix.m[0][2]);
+        struct vec3 y = VEC3(foo_matrix.m[1][0],
+                             foo_matrix.m[1][1],
+                             foo_matrix.m[1][2]);
+        struct vec3 z = VEC3(foo_matrix.m[2][0],
+                             foo_matrix.m[2][1],
+                             foo_matrix.m[2][2]);
+        v3_scalef(v3_normalize(&x), 0.2f);
+        v3_scalef(v3_normalize(&y), 0.2f);
+        v3_scalef(v3_normalize(&z), 0.2f);
+        struct mat4 lookat_xform = mat4_init_translate(&VEC3(0.0f, 4.0f, 0.0f));
+        RICO_prim_draw_line_xform(&VEC3_ZERO, &x, &COLOR_RED, &lookat_xform);
+        RICO_prim_draw_line_xform(&VEC3_ZERO, &y, &COLOR_GREEN, &lookat_xform);
+        RICO_prim_draw_line_xform(&VEC3_ZERO, &z, &COLOR_BLUE, &lookat_xform);
+        RICO_prim_draw_line_xform(&VEC3_ZERO, &prog_pbr->frag.lights[0].dir,
+                                  &COLOR_YELLOW, &lookat_xform);
 
         // Render cursor
         RICO_render_crosshair();

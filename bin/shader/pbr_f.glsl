@@ -5,12 +5,15 @@ in vs_out {
     vec2 UV;
     vec4 color;
     vec3 N;
+    vec4 light_space;
 } vertex;
 
 out vec4 frag_color;
 
 const float PI = 3.14159265359;
 const float gamma = 1.0;
+
+uniform float time;
 
 struct Camera {
     vec3 P;
@@ -125,6 +128,7 @@ void main()
     vec3 F0 = vec3(0.04);
     F0 = mix(F0, mtl_albedo, mtl_metallic);
 
+    vec4 debug_color = vec4(0.0);
     vec3 L0 = vec3(0.0);
     for (int i = 0; i < NUM_LIGHT_DIR + NUM_LIGHT_POINT; ++i)
     {
@@ -149,7 +153,7 @@ void main()
         }
         */
         // Same as above without branching
-        vec3 fragToLight = mix(lights[i].dir, lights[i].pos - vertex.P,
+        vec3 fragToLight = mix(-lights[i].dir, lights[i].pos - vertex.P,
                                light_type);
 
         vec3 L = normalize(fragToLight);
@@ -159,28 +163,35 @@ void main()
         ////////////////////////////////////////////////////////////////////////
         // Calculate shadows
         float shadow_map_depth;
+        float attenuation;
         if (light_type == 0)
         {
             // Directional light
-            vec4 fragPosLightSpace = shadow_lightspace[TEXTURE_IDX] *
-                                     vec4(vertex.P, 1.0);
-            vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+            vec3 projCoords = vertex.light_space.xyz / vertex.light_space.w;
             projCoords = projCoords * 0.5 + 0.5;
             shadow_map_depth = texture(shadow_textures[TEXTURE_IDX],
                                        projCoords.xy).r;
+            dist = projCoords.z;
+            //debug_color = vec4(vec3(shadow_map_depth), 1.0);
+            //debug_color = vec4(vec3(dist), 1.0);
+            //debug_color = vec4(vec3(vertex.light_space.w), 1.0);
+
+            attenuation = lights[i].intensity;
         }
         else
         {
             // Point light
             shadow_map_depth = texture(shadow_cubemaps[CUBEMAP_IDX], -L).r;
             shadow_map_depth *= near_far.y;
+
+            attenuation = lights[i].intensity / (dist * dist);
         }
         float bias = 0.05;
-        float darkness = 0.75;
+        float darkness = 0.9; //0.75;
         float shadow = (dist - bias > shadow_map_depth) ? darkness : 0.0;
+        //debug_color = vec4(vec3(shadow), 1.0);
         ////////////////////////////////////////////////////////////////////////
 
-        float attenuation = lights[i].intensity / (dist * dist);
         vec3 radiance = lights[i].color * attenuation;
 
         float D = DistributionGGX(N, H, mtl_roughness);
@@ -213,11 +224,11 @@ void main()
     // Render lightmap
     //int i = 0;
     //float mapDepth = texture(lightmaps[i], vertex.P - lights[i].pos).r;
-    //frag_color = vec4(vec3(mapDepth) + (color * 0.000001), 1.0);
+    //color = vec3(mapDepth) + (color * 0.000001);
 
     //color *= 0.000001;
     //color = normalize(lights[0].dir) + (color * 0.000001);
     //color = vec3(1.0, 0.0, 0.0) + (color * 0.000001);
 
-    frag_color = vec4(color, mtl_opacity);
+    frag_color = mix(vec4(color, mtl_opacity), debug_color, debug_color.a > 0.0);
 }

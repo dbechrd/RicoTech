@@ -173,13 +173,14 @@ enum RICO_action
     ACTION_COUNT
 };
 
+extern r64 RICO_simulation_time();
+extern bool RICO_simulation_paused();
 extern void RICO_simulation_pause();
 extern void RICO_simulation_play();
 extern bool RICO_simulation_prev();
 extern enum rico_state RICO_state();
 extern bool RICO_state_is_menu();
 extern bool RICO_state_is_edit();
-extern bool RICO_simulation_paused();
 extern int RICO_update();
 extern void RICO_render_objects();
 extern void RICO_render_editor();

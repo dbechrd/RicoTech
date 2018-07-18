@@ -365,7 +365,9 @@ static void create_framebuffer(GLuint *fbo_id, GLuint tex_id)
 extern float LIGHT_FOV = 90.0f;
 static GLuint shadow_textures[NUM_LIGHT_DIR] = { 0 };
 static GLuint shadow_cubemaps[NUM_LIGHT_POINT] = { 0 };
+static struct mat4 foo_matrix = { 0 };
 static struct mat4 shadow_lightspace[NUM_LIGHT_DIR] = { 0 };
+static struct mat4 shadow_ortho = { 0 };
 static struct mat4 shadow_proj = { 0 };
 static void temp_render_shadow_cubemap(r64 alpha, struct pbr_light *lights)
 {
@@ -378,6 +380,10 @@ static void temp_render_shadow_cubemap(r64 alpha, struct pbr_light *lights)
 
     if (!shadow_textures[0])
     {
+        float dist = 10.0f;
+        shadow_ortho = mat4_init_ortho(-dist, dist, dist, -dist, LIGHT_NEAR,
+                                       dist);
+
         // TODO: FIX THIS BROKEN SHIT
         // Calculate projection matrix
         //new THREE.PerspectiveCamera(90, 1, 0.01, 1000).projectionMatrix
@@ -444,7 +450,8 @@ static void temp_render_shadow_cubemap(r64 alpha, struct pbr_light *lights)
         for (int i = 0; i < NUM_LIGHT_POINT; ++i)
         {
             create_shadow_cubemap(&shadow_cubemaps[i], tex_size);
-            create_framebuffer(&shadow_fbo[i], shadow_cubemaps[i]);
+            create_framebuffer(&shadow_fbo[NUM_LIGHT_DIR + i],
+                               shadow_cubemaps[i]);
         }
     }
 
@@ -462,10 +469,12 @@ static void temp_render_shadow_cubemap(r64 alpha, struct pbr_light *lights)
             continue;
 
         // projection * view
-        struct vec3 light_dir = lights[light].dir;
-        shadow_lightspace[light] = mat4_init_lookat(v3_negate(&light_dir),
-                                                    &VEC3_ZERO, &VEC3_UP);
-        mat4_mul(&shadow_lightspace[light], &shadow_proj);
+        struct vec3 light_dir_neg = lights[light].dir;
+        v3_negate(&light_dir_neg);
+        shadow_lightspace[light] = mat4_init_lookat(&light_dir_neg, &VEC3_ZERO,
+                                                    &VEC3_UP);
+        foo_matrix = shadow_lightspace[light];
+        mat4_mul(&shadow_lightspace[light], &shadow_ortho);
         glUniformMatrix4fv(prog_texture->locations.vert.light_space, 1, GL_TRUE,
                            shadow_lightspace[light].a);
 
@@ -482,6 +491,7 @@ static void temp_render_shadow_cubemap(r64 alpha, struct pbr_light *lights)
         }
     }
 
+    /*
     // Point light shadows
     struct shadow_cubemap_program *prob_cube = prog_shadow_cubemap;
     glUseProgram(prob_cube->program.gl_id);
@@ -523,6 +533,7 @@ static void temp_render_shadow_cubemap(r64 alpha, struct pbr_light *lights)
                           true);
         }
     }
+    */
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glUseProgram(0);
@@ -545,6 +556,14 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
 
     RICO_ASSERT(prog->program.gl_id);
     glUseProgram(prog->program.gl_id);
+
+    r64 time = RICO_simulation_time();
+    glUniform1f(prog->locations.frag.time, (r32)SIM_SEC);  // Cleanup: Shader time
+
+    time /= 3000.0;
+    struct vec3 new_dir = VEC3((float)cos(time), (float)-ABS(sin(time)), 0.0f);
+    //printf("Light: %f, %f\n", new_dir.x, new_dir.y);
+    prog->frag.lights[0].dir = new_dir;
 
     glUniform2f(prog->locations.vert.scale_uv, 1.0f, 1.0f);
 
@@ -583,20 +602,24 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
         glUniform1i(prog->locations.frag.lights[i].enabled,
                     prog->frag.lights[i].enabled);
 
-        const u32 target = 4;  // GL_TEXTURE4
-        glActiveTexture(GL_TEXTURE0 + target + i);
+        // TODO: Move this somewhere sane
+#       define SHADOW_TEXTURE_OFFSET 4
+        glActiveTexture(GL_TEXTURE0 + SHADOW_TEXTURE_OFFSET + i);
         if (prog->frag.lights[i].type == PBR_LIGHT_DIR)
         {
             glBindTexture(GL_TEXTURE_2D, shadow_textures[i]);
-            glUniform1i(prog->locations.frag.shadow_textures[i], target + i);
+            glUniform1i(prog->locations.frag.shadow_textures[i],
+                        SHADOW_TEXTURE_OFFSET + i);
 
-            glUniformMatrix4fv(prog->locations.frag.shadow_lightspace[i], 1,
-                               GL_TRUE, shadow_lightspace[i].a);
+            // TODO: Make vert.light_space a proper array
+            glUniformMatrix4fv(prog->locations.vert.light_space, 1, GL_TRUE,
+                               shadow_lightspace[0].a);
         }
         else if (prog->frag.lights[i].type == PBR_LIGHT_POINT)
         {
             glBindTexture(GL_TEXTURE_CUBE_MAP, shadow_cubemaps[i]);
-            glUniform1i(prog->locations.frag.shadow_cubemaps[i], target + i);
+            glUniform1i(prog->locations.frag.shadow_cubemaps[i],
+                        SHADOW_TEXTURE_OFFSET + i);
         }
     };
 

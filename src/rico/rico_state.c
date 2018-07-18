@@ -53,6 +53,7 @@ static bool sim_paused = false;
 
 // Performance timing
 static u64 perfs_frequency;
+static u64 init_perfs;
 static u64 last_perfs;
 static u64 last_cycles;
 
@@ -157,6 +158,12 @@ struct state_handlers
 };
 static struct state_handlers state_handlers[STATE_COUNT] = { 0 };
 
+extern r64 RICO_simulation_time()
+{
+    r64 now = (r64)SDL_GetPerformanceCounter();
+    r64 time = (now - init_perfs) / perfs_frequency * 1000.0;
+    return time;
+}
 extern bool RICO_simulation_paused()
 {
     return sim_paused;
@@ -1112,7 +1119,8 @@ static int rico_init_shaders()
     prog_pbr->frag.lights[2].type = PBR_LIGHT_POINT;
     prog_pbr->frag.lights[3].type = PBR_LIGHT_POINT;
     prog_pbr->frag.lights[4].type = PBR_LIGHT_POINT;
-    prog_pbr->frag.lights[0].dir = VEC3(0.0f, 1.0f, 0.0f);
+    prog_pbr->frag.lights[0].dir = VEC3(0.000001f, -1.0f, 0.000001f);
+    v3_normalize(&prog_pbr->frag.lights[0].dir);
     prog_pbr->frag.lights[1].pos = VEC3(0.0f, 4.0f, 0.0f);
     prog_pbr->frag.lights[2].pos = VEC3(-4.0f, 4.0f, 3.0f);
     prog_pbr->frag.lights[3].pos = VEC3(4.0f, 5.0f, 3.0f);
@@ -1203,7 +1211,8 @@ static int engine_init()
     printf("=========================================================\n");
 
     perfs_frequency = SDL_GetPerformanceFrequency();
-    last_perfs = SDL_GetPerformanceCounter();
+    init_perfs = SDL_GetPerformanceCounter();
+    last_perfs = init_perfs;
     last_cycles = __rdtsc();
     fps_last_render = last_perfs;
 
