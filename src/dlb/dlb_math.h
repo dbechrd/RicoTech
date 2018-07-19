@@ -839,7 +839,7 @@ DLB_MATH_DEF void mat4_transpose(struct mat4 *m)
 DLB_MATH_DEF struct mat4 mat4_init_perspective(float aspect, float near_z,
                                                float far_z, float fov_deg)
 {
-    RICO_ASSERT(far_z > near_z);
+    //RICO_ASSERT(far_z > near_z);
     RICO_ASSERT(near_z > 0.0f);
 
     float fov_calc = tanf(DEG_TO_RADF(fov_deg) / 2.0f);

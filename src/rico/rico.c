@@ -20,6 +20,7 @@
 #include "rico_bbox.c"
 
 #include "rico_material.c"
+#include "rico_shadow.c"
 #include "rico_object.c"
 #include "rico_editor.c"
 

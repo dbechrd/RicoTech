@@ -51,22 +51,23 @@ struct
     }
     material;
 
-    // Light
-    struct NO_UNIFORM(pbr_light)
-    {
-        NO_UNIFORM(enum pbr_light_type type;)
-        UNIFORM(struct vec3) pos;
-        UNIFORM(struct vec3) dir;
-        UNIFORM(struct vec3) color;
-        UNIFORM(float)       intensity;
-        UNIFORM(bool)        enabled;
-    }
-    lights[NUM_LIGHT_DIR + NUM_LIGHT_POINT];
+    // Lights
+    UNIFORM_TYPE(
+        struct
+        {
+            GLint type;
+            GLint on;
+            GLint col;
+            GLint pos;
+            GLint intensity;
+            GLint dir;
+        },
+        struct RICO_light
+    ) lights[NUM_LIGHT_DIR + NUM_LIGHT_POINT];
 
     // Shadows
     UNIFORM(struct vec2) near_far;
     UNIFORM(GLint)       shadow_textures[NUM_LIGHT_DIR];
     UNIFORM(GLint)       shadow_cubemaps[NUM_LIGHT_POINT];
-    UNIFORM(struct mat4) light_proj;
 }
 frag;

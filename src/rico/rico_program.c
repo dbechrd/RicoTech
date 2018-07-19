@@ -90,7 +90,7 @@ static void program_pbr_get_locations(struct pbr_program *p)
     RICO_ASSERT(p->locations.vert.model >= 0);
     RICO_ASSERT(p->locations.vert.view >= 0);
     RICO_ASSERT(p->locations.vert.proj >= 0);
-    RICO_ASSERT(p->locations.vert.light_space >= 0);
+    //RICO_ASSERT(p->locations.vert.light_space >= 0);
 
     p->locations.vert.attrs.position =
         program_get_attrib_location(p->program.gl_id,"attr_position");
@@ -119,16 +119,18 @@ static void program_pbr_get_locations(struct pbr_program *p)
         program_get_uniform_location(p->program.gl_id, "material.tex2");
 
 #define LIGHT(i)                                                              \
+p->locations.frag.lights[i].type =                                            \
+    program_get_uniform_location(p->program.gl_id, "lights["#i"].type");      \
+p->locations.frag.lights[i].on =                                              \
+    program_get_uniform_location(p->program.gl_id, "lights["#i"].on");        \
 p->locations.frag.lights[i].pos =                                             \
     program_get_uniform_location(p->program.gl_id, "lights["#i"].pos");       \
-p->locations.frag.lights[i].dir =                                             \
-    program_get_uniform_location(p->program.gl_id, "lights["#i"].dir");       \
-p->locations.frag.lights[i].color =                                           \
-    program_get_uniform_location(p->program.gl_id, "lights["#i"].color");     \
+p->locations.frag.lights[i].col =                                             \
+    program_get_uniform_location(p->program.gl_id, "lights["#i"].col");       \
 p->locations.frag.lights[i].intensity =                                       \
     program_get_uniform_location(p->program.gl_id, "lights["#i"].intensity"); \
-p->locations.frag.lights[i].enabled =                                         \
-    program_get_uniform_location(p->program.gl_id, "lights["#i"].enabled");
+p->locations.frag.lights[i].dir =                                             \
+    program_get_uniform_location(p->program.gl_id, "lights["#i"].dir");
 
     LIGHT(0);
     LIGHT(1);
@@ -143,11 +145,12 @@ p->locations.frag.lights[i].enabled =                                         \
     RICO_ASSERT(p->locations.frag.material.tex0 >= 0);
     RICO_ASSERT(p->locations.frag.material.tex1 >= 0);
     RICO_ASSERT(p->locations.frag.material.tex2 >= 0);
-    //RICO_ASSERT(p->locations.frag.lights[0].pos >= 0);
-    //RICO_ASSERT(p->locations.frag.lights[0].dir >= 0);
-    RICO_ASSERT(p->locations.frag.lights[0].color >= 0);
+    RICO_ASSERT(p->locations.frag.lights[0].type >= 0);
+    RICO_ASSERT(p->locations.frag.lights[0].on >= 0);
+    //RICO_ASSERT(p->locations.frag.lights[0].col >= 0);
+    RICO_ASSERT(p->locations.frag.lights[0].pos >= 0);
     RICO_ASSERT(p->locations.frag.lights[0].intensity >= 0);
-    RICO_ASSERT(p->locations.frag.lights[0].enabled >= 0);
+    RICO_ASSERT(p->locations.frag.lights[0].dir >= 0);
 
     p->locations.frag.near_far =
         program_get_uniform_location(p->program.gl_id, "near_far");
@@ -161,15 +164,6 @@ p->locations.frag.shadow_textures[i] =                                       \
     //RICO_ASSERT(p->locations.frag.shadow_textures[0] >= 0);
 #undef SHADOW_TEXTURE
 
-//#define LIGHT_SPACE(i)                                                 \
-//p->locations.vert.shadow_lightspace[i] =                                     \
-//    program_get_uniform_location(p->program.gl_id, "light_space["#i"]");
-//
-//    LIGHT_SPACE(0);
-//    RICO_ASSERT(1 == NUM_LIGHT_DIR);
-//    //RICO_ASSERT(p->locations.vert.light_space[0] >= 0);
-//#undef LIGHT_SPACE
-
 #define SHADOW_CUBEMAP(i)                                                    \
 p->locations.frag.shadow_cubemaps[i] =                                       \
     program_get_uniform_location(p->program.gl_id, "shadow_cubemaps["#i"]");
@@ -181,10 +175,6 @@ p->locations.frag.shadow_cubemaps[i] =                                       \
     RICO_ASSERT(4 == NUM_LIGHT_POINT);
     //RICO_ASSERT(p->locations.frag.shadow_cubemaps[0] >= 0);
 #undef SHADOW_CUBEMAP
-
-    p->locations.frag.light_proj =
-        program_get_uniform_location(p->program.gl_id, "light_proj");
-    //RICO_ASSERT(p->locations.frag.light_proj >= 0);
 }
 static void program_pbr_attribs()
 {
@@ -274,6 +264,7 @@ static void program_shadow_texture_get_locations(
     p->locations.vert.attrs.position =
         program_get_attrib_location(p->program.gl_id,"attr_position");
 
+    RICO_ASSERT(p->locations.vert.light_space >= 0);
     RICO_ASSERT(p->locations.vert.model >= 0);
     RICO_ASSERT(p->locations.vert.attrs.position == LOCATION_PBR_POSITION);
 
@@ -317,7 +308,7 @@ static int make_program_shadow_texture(struct shadow_texture_program **_program)
 
     // Create program object
     prog = calloc(1, sizeof(*prog));
-    prog->program.type = PROG_SHADOW_CUBEMAP;
+    prog->program.type = PROG_SHADOW_TEXTURE;
     prog->program.gl_id = program;
 
     // Query shader locations
@@ -383,12 +374,9 @@ p->locations.geom.cubemap_xforms[i] =                                       \
         program_get_uniform_location(p->program.gl_id, "near_far");
     p->locations.frag.light_pos =
         program_get_uniform_location(p->program.gl_id, "light_pos");
-    p->locations.frag.light_dir =
-        program_get_uniform_location(p->program.gl_id, "light_dir");
 
     RICO_ASSERT(p->locations.frag.near_far >= 0);
     RICO_ASSERT(p->locations.frag.light_pos >= 0);
-    RICO_ASSERT(p->locations.frag.light_dir >= 0);
 }
 static void program_shadow_cubemap_attribs()
 {

@@ -25,14 +25,8 @@ struct program
     GLuint gl_id;
 };
 
-enum pbr_light_type
-{
-    PBR_LIGHT_DIR,
-    PBR_LIGHT_POINT
-};
-
 #define UNIFORM(type) GLint
-#define NO_UNIFORM(type)
+#define UNIFORM_TYPE(type_a, type_b) type_a
 struct pbr_program_locations
 {
 #   include "ri_program_pbr.h"
@@ -58,10 +52,10 @@ struct primitive_program_locations
 #   include "ri_program_primitive.h"
 };
 #undef UNIFORM
-#undef NO_UNIFORM
+#undef UNIFORM_TYPE
 
 #define UNIFORM(type) type
-#define NO_UNIFORM(type) type
+#define UNIFORM_TYPE(type_a, type_b) type_b
 struct pbr_program
 {
     struct program program;
@@ -97,7 +91,7 @@ struct primitive_program
 #   include "ri_program_primitive.h"
 };
 #undef UNIFORM
-#undef NO_UNIFORM
+#undef UNIFORM_TYPE
 
 #define LOCATION_PBR_POSITION 0
 #define LOCATION_PBR_UV       1

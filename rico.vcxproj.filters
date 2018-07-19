@@ -137,6 +137,9 @@
     <ClCompile Include="src\rico\rico_editor.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
+    <ClCompile Include="src\rico\rico_shadow.c">
+      <Filter>Source Files\rico</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dlb\dlb_math.h">
@@ -305,6 +308,9 @@
       <Filter>Header Files\rico\internal</Filter>
     </ClInclude>
     <ClInclude Include="src\rico\internal\ri_editor.h">
+      <Filter>Header Files\rico\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rico\internal\ri_shadow.h">
       <Filter>Header Files\rico\internal</Filter>
     </ClInclude>
   </ItemGroup>

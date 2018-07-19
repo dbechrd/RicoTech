@@ -501,7 +501,7 @@ void clash_simulate(struct timmy *timmy)
     #if 0
                     // Continuous collision detection to find time of impact,
                     // doesn't play particularly well with manifold resolution atm.
-                    struct vec3 p0 = a_obj->xform.position;
+                    struct vec3 p0 = a_obj->xform.pos;
                     v3_sub(&p0, &a_obj->vel);
 
                     struct vec3 v0 = a_obj->vel;
@@ -509,11 +509,11 @@ void clash_simulate(struct timmy *timmy)
                     float t = 0.5f;
                     for (int i = 0; i < 10; i++)
                     {
-                        a_obj->xform.position = p0;
+                        a_obj->xform.pos = p0;
                         v_test = v0;
                         v3_scalef(&v_test, t);
-                        v3_add(&a_obj->xform.position, &v_test);
-                        RICO_object_trans_set(a_obj, &a_obj->xform.position);
+                        v3_add(&a_obj->xform.pos, &v_test);
+                        RICO_object_trans_set(a_obj, &a_obj->xform.pos);
                         if (object_intersects(a_obj, &timmy->rico, &manifold))
                         {
                             t -= t * 0.5f;
@@ -528,8 +528,8 @@ void clash_simulate(struct timmy *timmy)
 
                     v_test = a_obj->vel;
                     v3_scalef(&v_test, 1.0f - t);
-                    v3_add(&a_obj->xform.position, &v_test);
-                    RICO_object_trans_set(a_obj, &a_obj->xform.position);
+                    v3_add(&a_obj->xform.pos, &v_test);
+                    RICO_object_trans_set(a_obj, &a_obj->xform.pos);
     #endif
 
                     if (manifold.contact_count > 0)
@@ -1367,15 +1367,15 @@ int main(int argc, char **argv)
         //}
 
         // Render shadow lookat axes
-        struct vec3 x = VEC3(foo_matrix.m[0][0],
-                             foo_matrix.m[0][1],
-                             foo_matrix.m[0][2]);
-        struct vec3 y = VEC3(foo_matrix.m[1][0],
-                             foo_matrix.m[1][1],
-                             foo_matrix.m[1][2]);
-        struct vec3 z = VEC3(foo_matrix.m[2][0],
-                             foo_matrix.m[2][1],
-                             foo_matrix.m[2][2]);
+        struct vec3 x = VEC3(debug_sun_xform.m[0][0],
+                             debug_sun_xform.m[0][1],
+                             debug_sun_xform.m[0][2]);
+        struct vec3 y = VEC3(debug_sun_xform.m[1][0],
+                             debug_sun_xform.m[1][1],
+                             debug_sun_xform.m[1][2]);
+        struct vec3 z = VEC3(debug_sun_xform.m[2][0],
+                             debug_sun_xform.m[2][1],
+                             debug_sun_xform.m[2][2]);
         v3_scalef(v3_normalize(&x), 0.2f);
         v3_scalef(v3_normalize(&y), 0.2f);
         v3_scalef(v3_normalize(&z), 0.2f);
@@ -1383,7 +1383,8 @@ int main(int argc, char **argv)
         RICO_prim_draw_line_xform(&VEC3_ZERO, &x, &COLOR_RED, &lookat_xform);
         RICO_prim_draw_line_xform(&VEC3_ZERO, &y, &COLOR_GREEN, &lookat_xform);
         RICO_prim_draw_line_xform(&VEC3_ZERO, &z, &COLOR_BLUE, &lookat_xform);
-        RICO_prim_draw_line_xform(&VEC3_ZERO, &prog_pbr->frag.lights[0].dir,
+        RICO_prim_draw_line_xform(&VEC3_ZERO,
+                                  &prog_pbr->frag.lights[0].directional.dir,
                                   &COLOR_YELLOW, &lookat_xform);
 
         // Render cursor

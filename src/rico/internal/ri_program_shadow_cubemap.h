@@ -24,6 +24,5 @@ struct
 {
     UNIFORM(struct vec2) near_far;
     UNIFORM(struct vec3) light_pos;
-    UNIFORM(struct vec3) light_dir;
 }
 frag;

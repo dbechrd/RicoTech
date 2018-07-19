@@ -38,6 +38,7 @@ struct pack; // Cleanup: Can we move these to the top of this file or something?
 #include "ri_camera.h"
 #include "ri_program.h"
 #include "ri_light.h"
+#include "ri_shadow.h"
 #include "ri_object.h"
 #include "ri_texture.h"
 #include "ri_mesh.h"

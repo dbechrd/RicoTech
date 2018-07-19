@@ -1,5 +1,7 @@
 #version 330 core
 
+#define ERR_UNKNOWN_LIGHT_TYPE vec4(1.0, 0.0, 1.0, 1.0) // Magenta
+
 in vs_out {
     vec3 P;
     vec2 UV;
@@ -56,30 +58,32 @@ struct Material {
 };
 uniform Material material;
 
+#define LIGHT_AMBIENT       0
+#define LIGHT_DIRECTIONAL   1
+#define LIGHT_POINT         2
+#define LIGHT_SPOT          3
+
 #define NUM_LIGHT_DIR 1
 #define NUM_LIGHT_POINT 4
 
 struct Light {
+    int type;
+    bool on;
+    vec3 col;
     vec3 pos;
-    vec3 dir;
-    vec3 color;
     float intensity;
-    bool enabled;
+    vec3 dir;
 };
 uniform Light lights[NUM_LIGHT_DIR + NUM_LIGHT_POINT];
 
 uniform vec2 near_far;
 
 // Note: lights = [[directional lights], [point lights]]
-#       define TEXTURE_IDX i
-#       define CUBEMAP_IDX i - NUM_LIGHT_DIR
+#define TEXTURE_IDX i
+#define CUBEMAP_IDX i - NUM_LIGHT_DIR
 
 uniform sampler2D shadow_textures[NUM_LIGHT_DIR];
-// TODO: Move this to vertex shader; super inefficient to multiply every
-//       fragment by a matrix
-uniform mat4 shadow_lightspace[NUM_LIGHT_DIR];
 uniform samplerCube shadow_cubemaps[NUM_LIGHT_POINT];
-uniform mat4 light_proj;
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
 {
@@ -122,77 +126,64 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0)
 
 void main()
 {
+    vec4 debug_color = vec4(0.0);
+
     vec3 N = normalize(vertex.N);
     vec3 V = normalize(camera.P - vertex.P);
 
     vec3 F0 = vec3(0.04);
     F0 = mix(F0, mtl_albedo, mtl_metallic);
 
-    vec4 debug_color = vec4(0.0);
     vec3 L0 = vec3(0.0);
     for (int i = 0; i < NUM_LIGHT_DIR + NUM_LIGHT_POINT; ++i)
     {
-        if (!lights[i].enabled)
+        if (!lights[i].on)
             continue;
 
-        // directional = 0.0
-        // other       = 1.0
-        float light_type = float(length(lights[i].pos) > 0);
-
-        /*
         vec3 fragToLight;
-        if (light_type == 0)
-        {
-            // Directional light
-            fragToLight = lights[i].dir;
-        }
-        else
-        {
-            // Point light
-            fragToLight = lights[i].pos - vertex.P;
-        }
-        */
-        // Same as above without branching
-        vec3 fragToLight = mix(-lights[i].dir, lights[i].pos - vertex.P,
-                               light_type);
-
-        vec3 L = normalize(fragToLight);
-        vec3 H = normalize(V + L);
-        float dist = length(fragToLight);
-
-        ////////////////////////////////////////////////////////////////////////
-        // Calculate shadows
+        float dist;
         float shadow_map_depth;
         float attenuation;
-        if (light_type == 0)
+
+        if (lights[i].type == LIGHT_DIRECTIONAL)
         {
-            // Directional light
+            fragToLight = -lights[i].dir;
+            dist = length(fragToLight);
+
             vec3 projCoords = vertex.light_space.xyz / vertex.light_space.w;
             projCoords = projCoords * 0.5 + 0.5;
             shadow_map_depth = texture(shadow_textures[TEXTURE_IDX],
                                        projCoords.xy).r;
             dist = projCoords.z;
-            //debug_color = vec4(vec3(shadow_map_depth), 1.0);
-            //debug_color = vec4(vec3(dist), 1.0);
-            //debug_color = vec4(vec3(vertex.light_space.w), 1.0);
-
             attenuation = lights[i].intensity;
+
+            debug_color = vec4(vec3(shadow_map_depth), 1.0);
+            //debug_color = vec4(vec3(dist), 1.0);
+            //debug_color = vec4(vertex.light_space.xyz, 1.0);
+        }
+        else if (lights[i].type == LIGHT_POINT)
+        {
+            fragToLight = lights[i].pos - vertex.P;
+            dist = length(fragToLight);
+
+            shadow_map_depth = texture(shadow_cubemaps[CUBEMAP_IDX],
+                                       -fragToLight).r;
+            shadow_map_depth *= near_far.y;
+            attenuation = lights[i].intensity / (dist * dist);
         }
         else
         {
-            // Point light
-            shadow_map_depth = texture(shadow_cubemaps[CUBEMAP_IDX], -L).r;
-            shadow_map_depth *= near_far.y;
-
-            attenuation = lights[i].intensity / (dist * dist);
+            debug_color = ERR_UNKNOWN_LIGHT_TYPE;
         }
+
         float bias = 0.05;
         float darkness = 0.9; //0.75;
         float shadow = (dist - bias > shadow_map_depth) ? darkness : 0.0;
-        //debug_color = vec4(vec3(shadow), 1.0);
-        ////////////////////////////////////////////////////////////////////////
 
-        vec3 radiance = lights[i].color * attenuation;
+        vec3 radiance = lights[i].col * attenuation;
+
+        vec3 L = normalize(fragToLight);
+        vec3 H = normalize(V + L);
 
         float D = DistributionGGX(N, H, mtl_roughness);
         float G = GeometrySmith(N, V, L, mtl_roughness);
