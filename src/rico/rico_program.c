@@ -149,7 +149,7 @@ p->locations.frag.lights[i].dir =                                             \
     RICO_ASSERT(p->locations.frag.lights[0].on >= 0);
     //RICO_ASSERT(p->locations.frag.lights[0].col >= 0);
     RICO_ASSERT(p->locations.frag.lights[0].pos >= 0);
-    RICO_ASSERT(p->locations.frag.lights[0].intensity >= 0);
+    //RICO_ASSERT(p->locations.frag.lights[0].intensity >= 0);
     RICO_ASSERT(p->locations.frag.lights[0].dir >= 0);
 
     p->locations.frag.near_far =

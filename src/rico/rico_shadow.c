@@ -18,6 +18,8 @@ static void create_shadow_texture(GLuint *tex_id, u32 size)
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
@@ -84,12 +86,17 @@ static void render_shadow_cubemap(r64 alpha, struct RICO_light *lights)
 
     if (!shadow_textures[0])
     {
-        float dist = 100.0f;
-        shadow_ortho = mat4_init_ortho(-dist, dist, dist, -dist, 0.01f, 10.0f);
-
-        // Calculate projection matrix
-        //new THREE.PerspectiveCamera(90, 1, 0.01, 1000).projectionMatrix
-        shadow_proj = mat4_init_perspective(1.0f, LIGHT_NEAR, 0.0f, 90.0f);
+        for (int i = 0; i < NUM_LIGHT_DIR; ++i)
+        {
+            create_shadow_texture(&shadow_textures[i], tex_size);
+            create_framebuffer(&shadow_fbo[i], shadow_textures[i]);
+        }
+        for (int i = 0; i < NUM_LIGHT_POINT; ++i)
+        {
+            create_shadow_cubemap(&shadow_cubemaps[i], tex_size);
+            create_framebuffer(&shadow_fbo[NUM_LIGHT_DIR + i],
+                               shadow_cubemaps[i]);
+        }
 
         // Calculate rotation matrices
         //rot_matrices[0] = mat4_init_rotx( 90.0f); // pos_x
@@ -143,17 +150,12 @@ static void render_shadow_cubemap(r64 alpha, struct RICO_light *lights)
         //    fflush(stdout);
         //}
 
-        for (int i = 0; i < NUM_LIGHT_DIR; ++i)
-        {
-            create_shadow_texture(&shadow_textures[i], tex_size);
-            create_framebuffer(&shadow_fbo[i], shadow_textures[i]);
-        }
-        for (int i = 0; i < NUM_LIGHT_POINT; ++i)
-        {
-            create_shadow_cubemap(&shadow_cubemaps[i], tex_size);
-            create_framebuffer(&shadow_fbo[NUM_LIGHT_DIR + i],
-                               shadow_cubemaps[i]);
-        }
+        float dist = 50.0f;
+        shadow_ortho = mat4_init_ortho(-dist, dist, dist, -dist, dist, -dist);
+
+        // Calculate projection matrix
+        //new THREE.PerspectiveCamera(90, 1, 0.01, 1000).projectionMatrix
+        shadow_proj = mat4_init_perspective(1.0f, LIGHT_NEAR, 0.0f, 90.0f);
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -170,17 +172,17 @@ static void render_shadow_cubemap(r64 alpha, struct RICO_light *lights)
             continue;
 
         // projection * view
-        struct vec3 light_dir_neg = lights[light].directional.dir;
-        v3_normalize(&light_dir_neg);
-        v3_negate(&light_dir_neg);
-        //v3_scalef(&light_dir_neg, 0.1f);
+        struct mat4 proj = shadow_ortho;
 
-        shadow_lightspace[light] = mat4_init_lookat(&light_dir_neg, &VEC3_ZERO,
-                                                    &VEC3_UP);
-        debug_sun_xform = shadow_lightspace[light];
-        mat4_mul(&shadow_lightspace[light], &shadow_ortho);
+        struct vec3 light_view = lights[light].directional.dir;
+        struct mat4 view = mat4_init_lookat(&light_view, &VEC3_ZERO, &VEC3_UP);
+        mat4_mul(&proj, &view);
+        shadow_lightspace[light] = proj;
         glUniformMatrix4fv(prog_texture->locations.vert.light_space, 1, GL_TRUE,
                            shadow_lightspace[light].a);
+
+        // TODO: Cleanup
+        debug_sun_xform = shadow_lightspace[light];
 
         // Clear depth buffer and bind shadow map
         glBindFramebuffer(GL_FRAMEBUFFER, shadow_fbo[light]);

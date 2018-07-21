@@ -1332,15 +1332,15 @@ int main(int argc, char **argv)
 
         // Render world
         RICO_render_objects();
-        debug_render_bboxes(timmy);
-        if (rayviz_sphere.radius > 0.0f)
-        {
-            RICO_prim_draw_sphere(&rayviz_sphere, &COLOR_YELLOW);
-        }
 
         // Render overlays
         if (RICO_state_is_edit())
         {
+            debug_render_bboxes(timmy);
+            if (rayviz_sphere.radius > 0.0f)
+            {
+                RICO_prim_draw_sphere(&rayviz_sphere, &COLOR_YELLOW);
+            }
             render_editor_ui();
             RICO_render_editor();
         }
@@ -1386,6 +1386,22 @@ int main(int argc, char **argv)
         RICO_prim_draw_line_xform(&VEC3_ZERO,
                                   &prog_pbr->frag.lights[0].directional.dir,
                                   &COLOR_YELLOW, &lookat_xform);
+
+        // Cleanup: Debug transform matrices
+        //for (u32 y = 0; y < 6; y++)
+        //{
+        //    for (u32 x = 0; x < 6; x++)
+        //    {
+        //        struct vec3 p0 = VEC3(-1.5f + 0.1f * x, 1.0f + 0.1f * y, 0.0f);
+        //        struct vec3 p1 = VEC3(-1.5f + 0.1f * x, 1.0f + 0.1f * y, -1.0f);
+        //        struct vec4 col = VEC4(1.0f / 6 * x, 1.0f / 6 * y, 0.0f, 1.0f);
+        //        RICO_prim_draw_line(&p0, &p1, &col);
+        //
+        //        v3_mul_mat4(&p0, &debug_sun_xform);
+        //        v3_mul_mat4(&p1, &debug_sun_xform);
+        //        RICO_prim_draw_line(&p0, &p1, &col);
+        //    }
+        //}
 
         // Render cursor
         RICO_render_crosshair();

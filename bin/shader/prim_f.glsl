@@ -15,7 +15,7 @@ void main()
 {
 	vec4 color = color;
 	vec4 texel = texture(tex, vertex.UV);
-	
+
 	//vec4 texel_invert = vec4(vec3(1.0f) - texel.rgb, texel.a);
 	//float selected = float(color.r == 0.25f &&
 	//					   color.g == 0.25f &&
