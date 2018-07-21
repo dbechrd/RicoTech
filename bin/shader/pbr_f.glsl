@@ -82,6 +82,7 @@ uniform vec2 near_far;
 #define TEXTURE_IDX i
 #define CUBEMAP_IDX i - NUM_LIGHT_DIR
 
+// TODO: Figure out how to use sampler2DShadow
 uniform sampler2D shadow_textures[NUM_LIGHT_DIR];
 uniform samplerCube shadow_cubemaps[NUM_LIGHT_POINT];
 
@@ -161,6 +162,7 @@ void main()
             dist = projCoords.z;
             attenuation = lights[i].intensity;
             //debug_color = vec4(projCoords.xy, 0.0, 1.0);
+            //debug_color = vec4(vec3(projCoords.z), 1.0);
         }
         else if (lights[i].type == LIGHT_POINT)
         {
@@ -173,7 +175,9 @@ void main()
             shadow_darkness = 0.9;
 
             dist = length(fragToLight);
-            attenuation = lights[i].intensity / (dist * dist);
+            attenuation = 1.0 / (1.0 + 0.022 * dist + 0.0019 * dist * dist);
+            //attenuation = 1.0 / (1.0 + lights[i].intensity * dist +
+            //                     lights[i].intensity * (dist * dist));
         }
         else
         {

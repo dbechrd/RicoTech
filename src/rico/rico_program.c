@@ -375,8 +375,8 @@ p->locations.geom.cubemap_xforms[i] =                                       \
     p->locations.frag.light_pos =
         program_get_uniform_location(p->program.gl_id, "light_pos");
 
-    RICO_ASSERT(p->locations.frag.near_far >= 0);
-    RICO_ASSERT(p->locations.frag.light_pos >= 0);
+    //RICO_ASSERT(p->locations.frag.near_far >= 0);
+    //RICO_ASSERT(p->locations.frag.light_pos >= 0);
 }
 static void program_shadow_cubemap_attribs()
 {

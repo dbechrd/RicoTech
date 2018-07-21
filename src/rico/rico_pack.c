@@ -275,18 +275,18 @@ static void pack_build_default()
 
     pkid font_id = RICO_load_font_file(pack, "[FONT_DEFAULT]",
                                        "font/cousine_regular.bff");
-    pkid diff_id = RICO_load_texture_file(pack, "[TEX_DIFF_DEFAULT]",
-                                          "texture/pbr_default_0.tga");
-    pkid spec_id = RICO_load_texture_file(pack, "[TEX_SPEC_DEFAULT]",
-                                          "texture/pbr_default_1.tga");
-    pkid emis_id = RICO_load_texture_file(pack, "[TEX_EMIS_DEFAULT]",
-                                          "texture/pbr_default_2.tga");
-    //pkid diff_id = RICO_load_texture_color(pack, "[TEX_DIFF_DEFAULT]",
-    //                                       &COLOR_WHITE);
-    //pkid spec_id = RICO_load_texture_color(pack, "[TEX_SPEC_DEFAULT]",
-    //                                       &COLOR_GREEN);
-    //pkid emis_id = RICO_load_texture_color(pack, "[TEX_EMIS_DEFAULT]",
-    //                                       &COLOR_TRANSPARENT);
+    //pkid diff_id = RICO_load_texture_file(pack, "[TEX_DIFF_DEFAULT]",
+    //                                      "texture/pbr_default_0.tga");
+    //pkid spec_id = RICO_load_texture_file(pack, "[TEX_SPEC_DEFAULT]",
+    //                                      "texture/pbr_default_1.tga");
+    //pkid emis_id = RICO_load_texture_file(pack, "[TEX_EMIS_DEFAULT]",
+    //                                      "texture/pbr_default_2.tga");
+    pkid diff_id = RICO_load_texture_color(pack, "[TEX_DIFF_DEFAULT]",
+                                           &COLOR_WHITE);
+    pkid spec_id = RICO_load_texture_color(pack, "[TEX_SPEC_DEFAULT]",
+                                           &COLOR_GREEN);
+    pkid emis_id = RICO_load_texture_color(pack, "[TEX_EMIS_DEFAULT]",
+                                           &COLOR_TRANSPARENT);
     pkid mat_id = RICO_load_material(pack, "[MATERIAL_DEFAULT]", diff_id,
                                      spec_id, emis_id);
 
@@ -309,7 +309,7 @@ static void pack_build_default()
     pkid trans_tex = RICO_load_texture_color(pack, "[TEX_TRANSPARENT]",
                                              &COLOR_TRANSPARENT);
     pkid semi_tex = RICO_load_texture_color(pack, "[TEX_TRANSPLUCENT]",
-                                            &COLOR_WHITE);
+                                            &COLOR_TRANSLUCENT);
     pkid trans_mat = RICO_load_material(pack, "[MATERIAL_TRANSPARENT]",
                                         semi_tex, trans_tex, trans_tex);
 

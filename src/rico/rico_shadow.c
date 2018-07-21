@@ -1,5 +1,5 @@
 #define LIGHT_NEAR 0.01f
-#define LIGHT_FAR 25.0f
+#define LIGHT_FAR 100.0f
 
 static GLuint shadow_textures[NUM_LIGHT_DIR] = { 0 };
 static GLuint shadow_cubemaps[NUM_LIGHT_POINT] = { 0 };
