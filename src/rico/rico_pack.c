@@ -309,7 +309,7 @@ static void pack_build_default()
     pkid trans_tex = RICO_load_texture_color(pack, "[TEX_TRANSPARENT]",
                                              &COLOR_TRANSPARENT);
     pkid semi_tex = RICO_load_texture_color(pack, "[TEX_TRANSPLUCENT]",
-                                            &COLOR_TRANSLUCENT);
+                                            &COLOR_WHITE);
     pkid trans_mat = RICO_load_material(pack, "[MATERIAL_TRANSPARENT]",
                                         semi_tex, trans_tex, trans_tex);
 

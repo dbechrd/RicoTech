@@ -16,10 +16,10 @@ static void create_shadow_texture(GLuint *tex_id, u32 size)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, size, size, 0,
                  GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
@@ -150,8 +150,10 @@ static void render_shadow_cubemap(r64 alpha, struct RICO_light *lights)
         //    fflush(stdout);
         //}
 
-        float dist = 50.0f;
-        shadow_ortho = mat4_init_ortho(-dist, dist, dist, -dist, dist, -dist);
+        float ortho_width = 50.0f;
+        float ortho_far = 250.0f;
+        shadow_ortho = mat4_init_ortho(-ortho_width, ortho_width, ortho_width,
+                                       -ortho_width, ortho_far, -ortho_far);
 
         // Calculate projection matrix
         //new THREE.PerspectiveCamera(90, 1, 0.01, 1000).projectionMatrix

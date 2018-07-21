@@ -142,6 +142,8 @@ void main()
 
         vec3 fragToLight;
         float shadow_map_depth;
+        float shadow_bias;
+        float shadow_darkness;
         float dist;
         float attenuation;
 
@@ -153,6 +155,8 @@ void main()
             projCoords = projCoords * 0.5 + 0.5;
             shadow_map_depth = texture(shadow_textures[TEXTURE_IDX],
                                        projCoords.xy).r;
+            shadow_bias = 0.0001;
+            shadow_darkness = 0.9;
 
             dist = projCoords.z;
             attenuation = lights[i].intensity;
@@ -165,6 +169,8 @@ void main()
             shadow_map_depth = texture(shadow_cubemaps[CUBEMAP_IDX],
                                        -fragToLight).r;
             shadow_map_depth *= near_far.y;
+            shadow_bias = 0.0001;
+            shadow_darkness = 0.9;
 
             dist = length(fragToLight);
             attenuation = lights[i].intensity / (dist * dist);
@@ -174,9 +180,8 @@ void main()
             debug_color = ERR_UNKNOWN_LIGHT_TYPE;
         }
 
-        float bias = 0.0; //0.01;
-        float darkness = 0.9; //0.75;
-        float shadow = (dist - bias > shadow_map_depth) ? darkness : 0.0;
+        float shadow = mix(0.0, shadow_darkness,
+                           dist - shadow_bias > shadow_map_depth);
 
         //debug_color = vec4(vec3(shadow_map_depth), 1.0);
         //debug_color = vec4(vec3(dist), 1.0);

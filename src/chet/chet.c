@@ -1336,7 +1336,7 @@ int main(int argc, char **argv)
         // Render overlays
         if (RICO_state_is_edit())
         {
-            debug_render_bboxes(timmy);
+            //debug_render_bboxes(timmy);
             if (rayviz_sphere.radius > 0.0f)
             {
                 RICO_prim_draw_sphere(&rayviz_sphere, &COLOR_YELLOW);
@@ -1349,22 +1349,32 @@ int main(int argc, char **argv)
             RICO_render_editor();
         }
 
+        // Debug: Move sun away from origin so it doesn't render inside ground
+        struct mat4 sun_xform = mat4_init_translate(&VEC3(0.0f, 10.0f, 0.0f));
+
         // Render light bounds
-        //for (int i = 0; i < NUM_LIGHT_DIR + NUM_LIGHT_POINT; i++)
-        //{
-        //    if (!prog_pbr->frag.lights[i].enabled)
-        //        continue;
-        //
-        //    struct sphere light_sphere = { 0 };
-        //    light_sphere.orig = prog_pbr->frag.lights[i].pos;
-        //    light_sphere.radius = 0.1f;
-        //
-        //    struct vec4 color = VEC4(prog_pbr->frag.lights[i].color.r,
-        //                             prog_pbr->frag.lights[i].color.g,
-        //                             prog_pbr->frag.lights[i].color.b,
-        //                             1.0f);
-        //    RICO_prim_draw_sphere(&light_sphere, &color);
-        //}
+        for (int i = 0; i < NUM_LIGHT_DIR + NUM_LIGHT_POINT; i++)
+        {
+            if (!prog_pbr->frag.lights[i].on)
+                continue;
+
+            struct sphere light_sphere = { 0 };
+            light_sphere.orig = prog_pbr->frag.lights[i].pos;
+            light_sphere.radius = 0.1f;
+
+            struct vec4 color = VEC4(prog_pbr->frag.lights[i].col.r,
+                                     prog_pbr->frag.lights[i].col.g,
+                                     prog_pbr->frag.lights[i].col.b,
+                                     1.0f);
+            if (prog_pbr->frag.lights[i].type == LIGHT_DIRECTIONAL)
+            {
+                RICO_prim_draw_sphere_xform(&light_sphere, &color, &sun_xform);
+            }
+            else
+            {
+                RICO_prim_draw_sphere(&light_sphere, &color);
+            }
+        }
 
         // Render shadow lookat axes
         struct vec3 x = VEC3(debug_sun_xform.m[0][0],
@@ -1379,13 +1389,12 @@ int main(int argc, char **argv)
         v3_scalef(v3_normalize(&x), 0.2f);
         v3_scalef(v3_normalize(&y), 0.2f);
         v3_scalef(v3_normalize(&z), 0.2f);
-        struct mat4 lookat_xform = mat4_init_translate(&VEC3(0.0f, 4.0f, 0.0f));
-        RICO_prim_draw_line_xform(&VEC3_ZERO, &x, &COLOR_RED, &lookat_xform);
-        RICO_prim_draw_line_xform(&VEC3_ZERO, &y, &COLOR_GREEN, &lookat_xform);
-        RICO_prim_draw_line_xform(&VEC3_ZERO, &z, &COLOR_BLUE, &lookat_xform);
+        RICO_prim_draw_line_xform(&VEC3_ZERO, &x, &COLOR_RED, &sun_xform);
+        RICO_prim_draw_line_xform(&VEC3_ZERO, &y, &COLOR_GREEN, &sun_xform);
+        RICO_prim_draw_line_xform(&VEC3_ZERO, &z, &COLOR_BLUE, &sun_xform);
         RICO_prim_draw_line_xform(&VEC3_ZERO,
                                   &prog_pbr->frag.lights[0].directional.dir,
-                                  &COLOR_YELLOW, &lookat_xform);
+                                  &COLOR_YELLOW, &sun_xform);
 
         // Cleanup: Debug transform matrices
         //for (u32 y = 0; y < 6; y++)

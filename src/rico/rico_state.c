@@ -1117,24 +1117,29 @@ static int rico_init_shaders()
 
     // TODO: Lights should be objects around the world and the shader should
     //       render the 4 closest ones to the player's position.
-    const float INTENSITY = 50.0f;
+    const float INTENSITY = 100.0f;
     prog_pbr->frag.lights[0].type = LIGHT_DIRECTIONAL;
     prog_pbr->frag.lights[1].type = LIGHT_POINT;
     prog_pbr->frag.lights[2].type = LIGHT_POINT;
     prog_pbr->frag.lights[3].type = LIGHT_POINT;
     prog_pbr->frag.lights[4].type = LIGHT_POINT;
-    prog_pbr->frag.lights[0].directional.dir = VEC3(0.0f, -1.0f, 0.0f);
+    prog_pbr->frag.lights[0].directional.dir = VEC3(-1.0f, -1.0f, 0.0f);
     v3_normalize(&prog_pbr->frag.lights[0].directional.dir);
     prog_pbr->frag.lights[1].pos = VEC3(0.0f, 4.0f, 0.0f);
-    prog_pbr->frag.lights[2].pos = VEC3(-4.0f, 4.0f, 3.0f);
-    prog_pbr->frag.lights[3].pos = VEC3(4.0f, 5.0f, 3.0f);
-    prog_pbr->frag.lights[4].pos = VEC3(1.0f, 6.0f, 3.0f);
+
+    //prog_pbr->frag.lights[2].pos = VEC3(-4.0f, 4.0f, 3.0f);
+    //prog_pbr->frag.lights[3].pos = VEC3(4.0f, 5.0f, 3.0f);
+    //prog_pbr->frag.lights[4].pos = VEC3(1.0f, 6.0f, 3.0f);
+    prog_pbr->frag.lights[2].pos = VEC3(-1.0f, 4.0f, 3.0f);
+    prog_pbr->frag.lights[3].pos = VEC3(0.0f, 4.0f, 3.0f);
+    prog_pbr->frag.lights[4].pos = VEC3(1.0f, 4.0f, 3.0f);
+
     prog_pbr->frag.lights[0].col = VEC3(1.0f, 0.8f, 0.4f);
     prog_pbr->frag.lights[1].col = VEC3(1.0f, 1.0f, 0.8f);
     prog_pbr->frag.lights[2].col = VEC3(1.0f, 0.1f, 0.1f);
     prog_pbr->frag.lights[3].col = VEC3(0.1f, 1.0f, 0.1f);
     prog_pbr->frag.lights[4].col = VEC3(0.1f, 0.1f, 1.0f);
-    prog_pbr->frag.lights[0].intensity = 10.0f;
+    prog_pbr->frag.lights[0].intensity = 1.0f;
     prog_pbr->frag.lights[1].intensity = INTENSITY;
     prog_pbr->frag.lights[2].intensity = INTENSITY;
     prog_pbr->frag.lights[3].intensity = INTENSITY;

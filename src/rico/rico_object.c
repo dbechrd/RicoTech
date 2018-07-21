@@ -311,13 +311,13 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
     r64 time = RICO_simulation_time();
     glUniform1f(prog->locations.frag.time, (r32)SIM_SEC);  // Cleanup: Shader time
 
-    time /= 2000.0;
-    float x = (float)cos(time);
-    float y = (float)-ABS(sin(time));
-    struct vec3 new_dir = VEC3(x, y, 0.0f);
-    v3_normalize(&new_dir);
-    //printf("Light: %f, %f\n", new_dir.x, new_dir.y);
-    prog->frag.lights[0].directional.dir = new_dir;
+    //time /= 2000.0;
+    //float x = (float)cos(time);
+    //float y = (float)-ABS(sin(time));
+    //struct vec3 new_dir = VEC3(x, y, 0.0f);
+    //v3_normalize(&new_dir);
+    ////printf("Light: %f, %f\n", new_dir.x, new_dir.y);
+    //prog->frag.lights[0].directional.dir = new_dir;
 
     glUniform2f(prog->locations.vert.scale_uv, 1.0f, 1.0f);
 
