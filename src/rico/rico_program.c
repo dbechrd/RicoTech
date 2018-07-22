@@ -76,8 +76,6 @@ static GLint program_get_uniform_location(GLuint program, const char* name)
 static void program_pbr_get_locations(struct pbr_program *p)
 {
     // Vertex shader
-    p->locations.vert.scale_uv =
-        program_get_uniform_location(p->program.gl_id, "scale_uv");
     p->locations.vert.model =
         program_get_uniform_location(p->program.gl_id, "model");
     p->locations.vert.view =
@@ -86,7 +84,6 @@ static void program_pbr_get_locations(struct pbr_program *p)
         program_get_uniform_location(p->program.gl_id, "proj");
     p->locations.vert.light_space =
         program_get_uniform_location(p->program.gl_id, "light_space");
-    RICO_ASSERT(p->locations.vert.scale_uv >= 0);
     RICO_ASSERT(p->locations.vert.model >= 0);
     RICO_ASSERT(p->locations.vert.view >= 0);
     RICO_ASSERT(p->locations.vert.proj >= 0);

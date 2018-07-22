@@ -1,18 +1,6 @@
 #ifndef RICO_OBJECT_H
 #define RICO_OBJECT_H
 
-#define RICO_OBJECT_TYPES(f) \
-    f(RICO_OBJECT_TYPE_NULL)           \
-    f(RICO_OBJECT_TYPE_TERRAIN)        \
-    f(RICO_OBJECT_TYPE_STRING_SCREEN)
-
-enum RICO_object_type
-{
-    RICO_OBJECT_TYPES(GEN_LIST)
-    RICO_OBJECT_TYPE_COUNT
-};
-extern const char *RICO_obj_type_string[];
-
 struct RICO_transform
 {
     struct vec3 position;
@@ -25,7 +13,7 @@ struct RICO_transform
 struct RICO_object
 {
     struct uid uid;
-    enum RICO_object_type type;
+    u32 type;
     struct RICO_transform xform;
 
     // TODO: Replace bbox with aabb

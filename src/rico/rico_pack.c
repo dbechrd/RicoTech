@@ -936,34 +936,46 @@ extern pkid RICO_load_string(u32 pack_id, enum RICO_string_slot slot, float x,
                              float y, struct vec4 color, u32 lifespan,
                              pkid font, const char *text)
 {
+    if (slot == STR_SLOT_COUNT)
+    {
+        // Find next available slot
+        while (slot < ARRAY_COUNT(global_string_slots))
+        {
+            if (global_string_slots[slot] == 0) break;
+            slot++;
+        }
+    }
+
+    if (slot == ARRAY_COUNT(global_string_slots))
+    {
+        RICO_ASSERT(0); // No more free slots for string
+        return 0;
+    }
+
     struct pack *pack = packs[pack_id];
 #if RICO_DEBUG_STRING
     printf("[strg][init] name=%s\n", name);
 #endif
 
-    const char *name = RICO_string_slot_string[slot];
+    const char *name = "STR_DYNAMIC";
+    if (slot < STR_SLOT_COUNT)
+    {
+        name = RICO_string_slot_string[slot];
+    }
+
+    pkid mesh, texture;
+    font_render(&mesh, &texture, font, x, y, color, text, name);
 
     // TODO: Reuse mesh and material if they are the same
     // Generate font mesh and get texture handle
-    u32 font_mesh_id;
-    u32 font_tex_id;
-    font_render(&font_mesh_id, &font_tex_id, font, x, y, color, text, name);
-
-    pkid str_object_id =
-        RICO_load_object(pack_id, RICO_OBJECT_TYPE_STRING_SCREEN, 0, name);
-    struct RICO_object *str_object = RICO_pack_lookup(str_object_id);
-    RICO_object_mesh_set(str_object, font_mesh_id);
-
-    struct RICO_string *str = blob_start(pack, RICO_HND_STRING, 0, "bloop");
+    struct RICO_string *str = blob_start(pack, RICO_HND_STRING, 0, name);
     str->slot = slot;
-    str->object_id = str_object->uid.pkid;
     str->lifespan = lifespan;
+    str->mesh_id = mesh;
+    str->tex_id = texture;
 
-    // Store in slot table if not dynamic
-    if (str->slot != STR_SLOT_DYNAMIC)
-    {
-        global_string_slots[str->slot] = str->uid.pkid;
-    }
+    // Store in slot table
+    global_string_slots[str->slot] = str->uid.pkid;
 
     pkid pkid = str->uid.pkid;
     blob_end(pack);

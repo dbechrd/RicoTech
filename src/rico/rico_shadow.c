@@ -196,7 +196,7 @@ static void render_shadow_cubemap(r64 alpha, struct RICO_light *lights)
             if (!packs[pack])
                 continue;
 
-            object_render(packs[pack], prog_texture->locations.vert.model, 0,
+            object_render(packs[pack], prog_texture->locations.vert.model,
                           true);
         }
     }
@@ -239,8 +239,7 @@ static void render_shadow_cubemap(r64 alpha, struct RICO_light *lights)
             if (!packs[pack])
                 continue;
 
-            object_render(packs[pack], prob_cube->locations.vert.model, 0,
-                          true);
+            object_render(packs[pack], prob_cube->locations.vert.model, true);
         }
     }
 

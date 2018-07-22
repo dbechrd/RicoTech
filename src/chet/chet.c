@@ -338,11 +338,6 @@ void clash_detect()
         while (a_id)
         {
             struct RICO_object *a_obj = RICO_pack_lookup(a_id);
-            if (a_obj->type < RICO_OBJECT_TYPE_COUNT)
-            {
-                a_id = RICO_pack_next_type(a_id, RICO_HND_OBJECT);
-                continue;
-            }
 
             for (u32 j = i; j < ARRAY_COUNT(packs); ++j)
             {
@@ -362,11 +357,6 @@ void clash_detect()
                 while (b_id)
                 {
                     struct RICO_object *b_obj = RICO_pack_lookup(b_id);
-                    if (b_obj->type < RICO_OBJECT_TYPE_COUNT)
-                    {
-                        b_id = RICO_pack_next_type(b_id, RICO_HND_OBJECT);
-                        continue;
-                    }
 
                     struct manifold manifold = { 0 };
                     manifold.body_a = a_obj;

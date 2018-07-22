@@ -1,7 +1,6 @@
 // Vertex shader
 struct
 {
-    UNIFORM(struct vec3) scale_uv;
     UNIFORM(struct mat4) model;
     UNIFORM(struct mat4) view;
     UNIFORM(struct mat4) proj;

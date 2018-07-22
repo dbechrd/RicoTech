@@ -5,14 +5,15 @@
 
 enum game_object_type
 {
-    OBJ_TIMMY = RICO_OBJECT_TYPE_COUNT,
+    OBJ_NULL,
+    OBJ_TERRAIN,
+    OBJ_TIMMY,
     OBJ_GAME_PANEL,
     OBJ_GAME_BUTTON,
     OBJ_RAY_VISUALIZER,
     OBJ_SMALL_CUBE,
     OBJ_LIGHT_TEST,
-    OBJ_LIGHT_TEST_CUBE,
-    OBJ_COUNT
+    OBJ_LIGHT_TEST_CUBE
 };
 
 struct timmy

@@ -1,5 +1,3 @@
-const char *RICO_obj_type_string[] = { RICO_OBJECT_TYPES(GEN_STRING) };
-
 static void object_delete(struct RICO_object *obj)
 {
     // TODO: Make sure all of the properties get cleaned up properly
@@ -21,17 +19,12 @@ static struct RICO_object *object_copy(u32 pack, struct RICO_object *other,
 
     return new_obj;
 }
-static bool object_selectable(struct RICO_object *obj)
-{
-    return obj->type != RICO_OBJECT_TYPE_STRING_SCREEN;
-}
 static void object_select_toggle(struct RICO_object *obj)
 {
     obj->selected = !obj->selected;
 }
 static void object_select(struct RICO_object *obj)
 {
-    RICO_ASSERT(object_selectable(obj));
     obj->selected = true;
 }
 static void object_deselect(struct RICO_object *obj)
@@ -96,9 +89,6 @@ static void object_update_sphere(struct RICO_object *obj)
 }
 static void object_update_colliders(struct RICO_object *obj)
 {
-    if (obj->type == RICO_OBJECT_TYPE_STRING_SCREEN)
-        return;
-
     object_update_bbox_world(obj);
     object_update_obb(obj);
     object_update_sphere(obj);
@@ -126,9 +116,6 @@ static void object_bbox_recalculate_all(u32 id)
             continue;
 
         obj = pack_read(pack, index);
-        if (obj->type < RICO_OBJECT_TYPE_COUNT)
-            continue;
-
         object_bbox_recalculate(obj);
     }
 }
@@ -190,10 +177,7 @@ extern void RICO_object_mesh_set(struct RICO_object *obj, pkid mesh_id)
     RICO_ASSERT(uid->type == RICO_HND_MESH);
 #endif
     obj->mesh_id = mesh_id;
-    if (obj->type >= RICO_OBJECT_TYPE_COUNT)
-    {
-        object_bbox_recalculate(obj);
-    }
+    object_bbox_recalculate(obj);
 }
 extern void RICO_object_material_set(struct RICO_object *obj, pkid material_id)
 {
@@ -273,8 +257,6 @@ static bool object_collide_ray_type(pkid *_object_id, float *_dist,
                 continue;
 
             obj = pack_read(packs[i], index);
-            if (obj->type == RICO_OBJECT_TYPE_TERRAIN)
-                continue;
 
             float dist;
             bool col = collide_ray_obb(&dist, ray, &obj->bbox,
@@ -318,8 +300,6 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
     v3_normalize(&new_dir);
     //printf("Light: %f, %f\n", new_dir.x, new_dir.y);
     prog->frag.lights[0].directional.dir = new_dir;
-
-    glUniform2f(prog->locations.vert.scale_uv, 1.0f, 1.0f);
 
     glPolygonMode(GL_FRONT_AND_BACK, camera->fill_mode);
 
@@ -382,12 +362,11 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
     glUniform2f(prog->locations.frag.near_far, LIGHT_NEAR, LIGHT_FAR);
 
     const GLint model_location = prog->locations.vert.model;
-    const GLint scale_uv_location = prog->locations.vert.scale_uv;
 
     for (u32 i = 1; i < ARRAY_COUNT(packs); ++i)
     {
         if (!packs[i]) continue;
-        object_render(packs[i], model_location, scale_uv_location, false);
+        object_render(packs[i], model_location, false);
     }
 
     glUseProgram(0);
@@ -405,8 +384,6 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
                 continue;
 
             struct RICO_object *obj = pack_read(packs[i], index);
-            if (obj->type == RICO_OBJECT_TYPE_STRING_SCREEN)
-                continue;
 
             if (RICO_state_is_edit())
             {
@@ -419,48 +396,22 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
         }
     }
 }
-static void object_render(struct pack *pack, GLint model_location,
-                          GLint scale_uv_location, bool shadow)
+static void object_render(struct pack *pack, GLint model_location, bool shadow)
 {
     struct RICO_object *obj = 0;
-    enum RICO_object_type prev_type = RICO_OBJECT_TYPE_NULL;
+    u32 prev_type = 0;
     for (u32 index = 1; index < pack->blobs_used; ++index)
     {
         if (pack->index[index].type != RICO_HND_OBJECT)
             continue;
 
         obj = pack_read(pack, index);
-        if (obj->type == RICO_OBJECT_TYPE_STRING_SCREEN ||
-            obj->type == OBJ_LIGHT_TEST)
-            continue;
 
 #if RICO_DEBUG_OBJECT
         printf("[ obj][rndr] name=%s\n", object_name(obj));
 #endif
 
         // Set object-specific uniform values
-
-        // Cleanup: This was kinda dumb to begin with. Just set the UV coords
-        //          of the terrain properly.
-        // UV-coord scale
-        // HACK: This only works when object is uniformly scaled on X/Y
-        //       plane.
-        // TODO: UV scaling in general only works when object is uniformly
-        //       scaled. Maybe I should only allow textured objects to be
-        //       uniformly scaled?
-        if (scale_uv_location)
-        {
-            if (obj->type == RICO_OBJECT_TYPE_TERRAIN)
-		    {
-			    glUniform2f(scale_uv_location, 100.0f, 100.0f);
-		    }
-            else
-            {
-                glUniform2f(scale_uv_location, obj->xform.scale.x,
-                            obj->xform.scale.y);
-            }
-        }
-
         glUniformMatrix4fv(model_location, 1, GL_TRUE, obj->xform.matrix.a);
 
         pkid mat_id = MATERIAL_DEFAULT;
@@ -489,46 +440,6 @@ static void object_render(struct pack *pack, GLint model_location,
         {
             material_unbind(mat_id);
         }
-    }
-}
-static void object_render_ui(struct pack *pack, GLint model_location)
-{
-    struct RICO_object *obj = 0;
-    for (u32 index = 1; index < pack->blobs_used; ++index)
-    {
-        if (pack->index[index].type != RICO_HND_OBJECT)
-            continue;
-
-        obj = pack_read(pack, index);
-        if (obj->type != RICO_OBJECT_TYPE_STRING_SCREEN)
-            continue;
-
-#if RICO_DEBUG_OBJECT
-        printf("[ obj][rndr] name=%s\n", object_name(obj));
-#endif
-
-        // Model matrix
-        //obj->xform.position = VEC3(0.5, 0.5, -1.0f);
-        //object_transform_update(obj);
-        glUniformMatrix4fv(model_location, 1, GL_TRUE, obj->xform.matrix.a);
-
-        // Bind texture
-        pkid tex_id = FONT_DEFAULT_TEXTURE;
-        texture_bind(tex_id, GL_TEXTURE0);
-
-        // Render
-        pkid mesh_id = 0;
-        if (obj->mesh_id)
-        {
-            mesh_id = obj->mesh_id;
-        }
-        RICO_ASSERT(mesh_id);
-        glBindVertexArray(mesh_vao(mesh_id));
-        mesh_render(mesh_id);
-        glBindVertexArray(0);
-
-        // Clean up
-        texture_unbind(tex_id, GL_TEXTURE0);
     }
 }
 

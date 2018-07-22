@@ -8,7 +8,6 @@ out vs_out {
     vec4 light_space;
 } vertex;
 
-uniform vec2 scale_uv;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 proj;
@@ -23,7 +22,7 @@ void main()
 {
     vec4 pos = model * vec4(attr_position, 1.0);
     vertex.P = pos.xyz;
-    vertex.UV = scale_uv * attr_uv;
+    vertex.UV = attr_uv;
     vertex.color = attr_color;
     vertex.N = transpose(inverse(mat3(model))) * attr_normal;
     vertex.light_space = light_space * pos;

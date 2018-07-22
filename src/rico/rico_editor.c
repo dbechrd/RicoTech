@@ -44,10 +44,8 @@ static void edit_object_create()
     // TODO: Prompt user for object name
     const char *name = "new_obj";
 
-    // HACK: Use first user-defined type
     // Create new object and select it
-    pkid new_id = RICO_load_object(PKID_PACK(selected_obj_id),
-                                   RICO_OBJECT_TYPE_COUNT, 0, name);
+    pkid new_id = RICO_load_object(PKID_PACK(selected_obj_id), 0, 0, name);
     edit_object_select(new_id, false);
 }
 static void edit_bbox_reset_all()
@@ -97,7 +95,7 @@ static pkid find_first_selectable_object(u32 pack_id)
     while (id)
     {
         struct RICO_object *obj = RICO_pack_lookup(id);
-        if (obj->uid.type == RICO_HND_OBJECT && object_selectable(obj))
+        if (obj->uid.type == RICO_HND_OBJECT)
         {
             break;
         }
@@ -583,11 +581,7 @@ static void edit_render()
     //       index assumed when the program was initialized.
     glUniform1i(prog->locations.frag.tex0, 0);
 
-    for (u32 i = 1; i < ARRAY_COUNT(packs); ++i)
-    {
-        if (!packs[i]) continue;
-        object_render_ui(packs[i], prog->locations.vert.model);
-    }
+    string_render_all(prog->locations.vert.model);
 
     glUseProgram(0);
 }

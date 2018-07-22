@@ -40,7 +40,7 @@ static void font_setblend(const struct RICO_font *font)
 		break;
 	}
 }
-static void font_render(u32 *mesh_id, u32 *tex_id, pkid font_id, float x,
+static void font_render(pkid *mesh_id, pkid *tex_id, pkid font_id, float x,
                         float y, struct vec4 bg, const char *text,
                         const char *mesh_name)
 {

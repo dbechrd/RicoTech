@@ -8,7 +8,6 @@ static struct RICO_object *object_copy(u32 pack, struct RICO_object *other,
                                        const char *name);
 static void object_update_colliders(struct RICO_object *obj);
 static void object_bbox_recalculate_all(u32 id);
-static bool object_selectable(struct RICO_object *obj);
 static void object_select(struct RICO_object *obj);
 static void object_deselect(struct RICO_object *obj);
 static void object_transform_update(struct RICO_object *obj);
@@ -24,9 +23,7 @@ static bool object_collide_ray(float *_dist, struct RICO_object *obj,
 static bool object_collide_ray_type(pkid *_object_id, float *_dist,
                                     const struct ray *ray);
 static void object_render_all(r64 alpha, struct RICO_camera *camera);
-static void object_render(struct pack *pack, GLint model_location,
-                          GLint scale_uv_location, bool shadow);
-static void object_render_ui(struct pack *pack, GLint model_location);
+static void object_render(struct pack *pack, GLint model_location, bool shadow);
 static void object_print(struct RICO_object *obj);
 
 #endif

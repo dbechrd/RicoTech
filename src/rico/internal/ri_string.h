@@ -6,13 +6,19 @@
 struct RICO_string
 {
     struct uid uid;
-    enum RICO_string_slot slot;
-    pkid object_id;
+    u32 slot;
     u32 lifespan;
+
+    pkid mesh_id;
+    pkid tex_id;
 };
+
+extern pkid global_string_slots[STR_SLOT_COUNT + 64];
 
 static void string_delete(struct RICO_string *str);
 static void string_free_slot(enum RICO_string_slot slot);
 static void string_update();
+static void string_render(struct RICO_string *str, GLint model_location);
+static void string_render_all(GLint model_location);
 
 #endif

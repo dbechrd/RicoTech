@@ -464,9 +464,9 @@ static int shared_engine_events()
                            global_audio_volume * 100.0f);
         }
         string_truncate(buf, sizeof(buf), len);
-        RICO_load_string(PACK_TRANSIENT, STR_SLOT_DYNAMIC,
-                         SCREEN_X(-FONT_WIDTH * 12), SCREEN_Y(0),
-                         COLOR_GRAY_5, 1000, 0, buf);
+        RICO_load_string(PACK_TRANSIENT, STR_SLOT_COUNT,
+                         SCREEN_X(-FONT_WIDTH * 12), SCREEN_Y(0), COLOR_GRAY_5,
+                         1000, 0, buf);
     }
     // Pause simulation
     else if (action_active(ACTION_ENGINE_SIM_PAUSE))

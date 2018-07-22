@@ -50,8 +50,7 @@ void pack_build_alpha(struct pack_info *pack_info)
     DLB_ASSERT(mesh_button_id);
 
     u32 pack_sav = RICO_pack_init(0, pack_info->path_sav, 64, MB(32));
-    pkid terrain_id = RICO_load_object(pack_sav, RICO_OBJECT_TYPE_TERRAIN, 0,
-                                       "terrain");
+    pkid terrain_id = RICO_load_object(pack_sav, OBJ_TERRAIN, 0, "terrain");
     struct RICO_object *terrain = RICO_pack_lookup(terrain_id);
     RICO_object_mesh_set(terrain, mesh_terrain_id);
     RICO_object_material_set(terrain, mat_bricks);

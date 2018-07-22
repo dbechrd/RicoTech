@@ -4,7 +4,6 @@ static struct dlb_hash global_meshes;
 static struct dlb_hash global_objects;
 static struct dlb_hash global_strings;
 static struct dlb_hash global_textures;
-static pkid global_string_slots[STR_SLOT_COUNT];
 
 static void rico_hashtable_init()
 {
