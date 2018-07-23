@@ -13,9 +13,6 @@ static const u8 PACK_SIGNATURE[4] = { 'R', 'I', 'C', 'O' };
 struct pack *packs[MAX_PACKS] = { 0 };
 u32 packs_next = 0;
 
-static u32 perf_pack_tick_start;
-static u32 perf_pack_tick_end;
-
 static void pack_compact_buffer(struct pack *pack);
 
 static void *blob_start(struct pack *pack, enum RICO_hnd_type type, u32 min_size,
@@ -557,9 +554,6 @@ extern u32 RICO_pack_init(u32 pack_id, const char *name, u32 blob_count,
     u32 new_id = pack_id ? pack_id : packs_next;
     RICO_ASSERT(!packs[new_id]);
 
-    // TODO: Use perf timer, not ticks. Expose RICO_timer somehow.
-    perf_pack_tick_start = SDL_GetTicks();
-
     struct pack *pack = calloc(1, sizeof(*pack) +
                                blob_count * sizeof(pack->lookup[0]) +
                                blob_count * sizeof(pack->index[0]) +
@@ -676,10 +670,6 @@ extern int RICO_pack_save_as(u32 pack_id, const char *filename, bool shrink)
                          filename);
     }
 
-    perf_pack_tick_end = SDL_GetTicks();
-    printf("[PERF][pack] '%s' built in: %u ticks\n", filename,
-           perf_pack_tick_end - perf_pack_tick_start);
-    perf_pack_tick_start = perf_pack_tick_end = 0;
     return err;
 }
 extern int RICO_pack_load(const char *filename, u32 *_pack)
@@ -690,8 +680,6 @@ extern int RICO_pack_load(const char *filename, u32 *_pack)
     FILE *pack_file = fopen(filename, "rb");
     if (pack_file)
     {
-        u32 tick_start = SDL_GetTicks();
-
         struct pack tmp_pack = { 0 };
         fread(&tmp_pack, 1, sizeof(tmp_pack), pack_file);
         rewind(pack_file);
@@ -714,10 +702,6 @@ extern int RICO_pack_load(const char *filename, u32 *_pack)
         RICO_ASSERT(pack->id < MAX_PACKS);
         RICO_ASSERT(packs[pack->id] == 0);
         packs[pack->id] = pack;
-
-        u32 tick_end = SDL_GetTicks();
-        printf("[PERF][pack] '%s' loaded in: %d ticks\n", pack->name,
-               tick_end - tick_start);
     }
     else
     {

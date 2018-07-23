@@ -76,18 +76,28 @@ static const float COEF_ELASTICITY = 0.15f;
 
 void pack_build_all()
 {
+    PERF_START(pack_build_alpha);
     pack_build_alpha(&pack_table[PACK_ALPHA]);
+    PERF_END_MSG(pack_build_alpha, "Built pack '%s'\n",
+                 pack_table[PACK_ALPHA].path_pak);
+
+    PERF_START(pack_build_clash);
     pack_build_clash_of_cubes(&pack_table[PACK_CLASH]);
+    PERF_END_MSG(pack_build_clash, "Built pack '%s'\n",
+                 pack_table[PACK_CLASH].path_pak);
 }
 
 int pack_load(u32 pack_idx)
 {
+    PERF_START(pack_load);
     enum RICO_error err;
     err = RICO_pack_load(pack_table[pack_idx].path_pak,
                          &pack_table[pack_idx].pak_id);
     if (err) return err;
     err = RICO_pack_load(pack_table[pack_idx].path_sav,
                          &pack_table[pack_idx].sav_id);
+    PERF_END_MSG(pack_load, "Loaded pack '%s'\n",
+                 pack_table[pack_idx].path_pak);
     return err;
 }
 
