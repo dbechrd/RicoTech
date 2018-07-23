@@ -8,8 +8,6 @@ static struct RICO_object *object_copy(u32 pack, struct RICO_object *other,
                                        const char *name);
 static void object_update_colliders(struct RICO_object *obj);
 static void object_bbox_recalculate_all(u32 id);
-static void object_select(struct RICO_object *obj);
-static void object_deselect(struct RICO_object *obj);
 static void object_transform_update(struct RICO_object *obj);
 static void object_rot(struct RICO_object *obj, const struct quat *q);
 static void object_rot_set(struct RICO_object *obj, const struct quat *q);

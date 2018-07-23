@@ -69,14 +69,14 @@ static void edit_object_select(pkid id, bool force)
     if (selected_obj_id)
     {
         struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
-        object_deselect(obj);
+        obj->selected = false;
     }
 
     // Select requested object
     if (id && (force || id != selected_obj_id))
     {
         struct RICO_object *obj = RICO_pack_lookup(id);
-        object_select(obj);
+        obj->selected = true;
         selected_obj_id = id;
     }
     else
@@ -85,23 +85,6 @@ static void edit_object_select(pkid id, bool force)
     }
 
     edit_print_object();
-}
-static pkid find_first_selectable_object(u32 pack_id)
-{
-    struct pack *pack = packs[pack_id];
-    RICO_ASSERT(pack);
-
-    pkid id = RICO_pack_first(pack_id);
-    while (id)
-    {
-        struct RICO_object *obj = RICO_pack_lookup(id);
-        if (obj->uid.type == RICO_HND_OBJECT)
-        {
-            break;
-        }
-        id = RICO_pack_next(id);
-    }
-    return id;
 }
 static void edit_pack_next()
 {
@@ -113,7 +96,7 @@ static void edit_pack_next()
     {
         if (packs[pack_id])
         {
-            id = find_first_selectable_object(pack_id);
+            id = RICO_pack_first_type(pack_id, RICO_HND_OBJECT);
             if (id) break;
         }
         pack_id = (pack_id + 1) % MAX_PACKS;
@@ -304,7 +287,7 @@ static void edit_mesh_next_pack()
     if (next_mesh_id)
     {
         RICO_object_mesh_set(obj, next_mesh_id);
-        object_select(obj);
+        obj->selected = true;
         object_print(obj);
     }
 }
@@ -320,7 +303,7 @@ static void edit_mesh_next()
     if (next_mesh_id)
     {
         RICO_object_mesh_set(obj, next_mesh_id);
-        object_select(obj);
+        obj->selected = true;
         object_print(obj);
     }
 }
@@ -336,7 +319,7 @@ static void edit_mesh_prev()
     if (prev_mesh_id)
     {
         RICO_object_mesh_set(obj, prev_mesh_id);
-        object_select(obj);
+        obj->selected = true;
         object_print(obj);
     }
 }
@@ -348,7 +331,7 @@ static void edit_bbox_reset()
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
     object_bbox_recalculate(obj);
 
-    object_select(obj);
+    obj->selected = true;
     object_print(obj);
 }
 static void edit_duplicate()

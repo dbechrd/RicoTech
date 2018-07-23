@@ -33,6 +33,8 @@ struct RICO_object
     bool collide_obb;
 
     bool selected;
+    bool select_ignore;
+
     pkid mesh_id;
     pkid material_id;
 };

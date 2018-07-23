@@ -19,18 +19,6 @@ static struct RICO_object *object_copy(u32 pack, struct RICO_object *other,
 
     return new_obj;
 }
-static void object_select_toggle(struct RICO_object *obj)
-{
-    obj->selected = !obj->selected;
-}
-static void object_select(struct RICO_object *obj)
-{
-    obj->selected = true;
-}
-static void object_deselect(struct RICO_object *obj)
-{
-    obj->selected = false;
-}
 static void object_update_bbox_world(struct RICO_object *obj)
 {
     // TODO: This is super broken.. do I even care about AABB?
@@ -257,6 +245,8 @@ static bool object_collide_ray_type(pkid *_object_id, float *_dist,
                 continue;
 
             obj = pack_read(packs[i], index);
+            if (obj->select_ignore)
+                continue;
 
             float dist;
             bool col = collide_ray_obb(&dist, ray, &obj->bbox,
