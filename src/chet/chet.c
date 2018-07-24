@@ -819,7 +819,8 @@ void debug_render_ui_stack()
     //progress->percent = debug_perc;
     progress->element.min_size = VEC2I(bar_pad * 2 + 100, 8);
     progress->element.margin = RECT1(bar_pad);
-    progress->color = COLOR_PINK;
+    progress->color = COLOR_ORANGE;
+    progress->color_bg = COLOR_DARK_ORANGE;
 
     struct dlb_string progress_tip_str = { 0 };
     char progress_tip_buf[64] = { 0 };
@@ -830,7 +831,7 @@ void debug_render_ui_stack()
     struct RICO_heiro_string *progress_tip_heiro = 0;
     RICO_heiro_build(&progress_tip_heiro, 0, &progress_tip_str, 0);
 
-    progress_tip.color = COLOR_GRAY_2;
+    progress_tip.color = COLOR_DARK_ORANGE;
     progress_tip.enabled = true;
     progress_tip.string = progress_tip_heiro;
     progress->tooltip = &progress_tip;

@@ -133,6 +133,7 @@ struct RICO_ui_progress
     struct RICO_ui_element element;
     enum RICO_ui_state state;
     struct vec4 color;
+    struct vec4 color_bg;
     float percent;
     struct RICO_heiro_string *heiro;
     struct ui_tooltip *tooltip;

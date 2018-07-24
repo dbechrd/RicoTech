@@ -331,7 +331,7 @@ static void ui_draw_label(struct RICO_ui_label *ctrl, s32 x, s32 y)
 }
 static void ui_draw_progress(struct RICO_ui_progress *ctrl, s32 x, s32 y)
 {
-    ui_draw_rect(x, y, &ctrl->element.bounds, UI_RECT_FILL, &COLOR_PURPLE);
+    ui_draw_rect(x, y, &ctrl->element.bounds, UI_RECT_FILL, &ctrl->color_bg);
 
     s32 pad_w = ctrl->element.padding.x + ctrl->element.padding.w;
     s32 pad_h = ctrl->element.padding.y + ctrl->element.padding.h;
