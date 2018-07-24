@@ -30,26 +30,26 @@ static inline void *ui_stack_push(u32 bytes)
     return ptr;
 }
 static void *ui_push_element(u32 bytes, enum RICO_ui_element_type type,
-                             struct RICO_ui_element *parent)
+                             struct RICO_ui_hud *parent)
 {
 #if 1
-    struct RICO_ui_element *element = ui_stack_push(bytes);
-    element->type = type;
+    struct RICO_ui_head *ui = ui_stack_push(bytes);
+    ui->type = type;
 
     if (parent)
     {
         if (!parent->first_child)
         {
-            parent->first_child = element;
+            parent->first_child = ui;
         }
         else
         {
-            parent->last_child->next = element;
+            parent->last_child->next = ui;
         }
-        parent->last_child = element;
+        parent->last_child = ui;
     }
 
-    return element;
+    return ui;
 #else
     struct RICO_ui_element *element = ui_stack_push(bytes);
     element->type = type;
@@ -75,26 +75,43 @@ static void *ui_push_element(u32 bytes, enum RICO_ui_element_type type,
 
 extern struct RICO_ui_hud *RICO_ui_hud()
 {
-    return ui_push_element(sizeof(struct RICO_ui_hud), RICO_UI_ELEMENT_HUD,
+    return ui_push_element(sizeof(struct RICO_ui_hud), RICO_UI_HUD,
                            NULL);
 }
-extern struct RICO_ui_button *RICO_ui_button(struct RICO_ui_element *parent)
+extern struct RICO_ui_head *RICO_ui_line_break(struct RICO_ui_hud *parent)
+{
+    return ui_push_element(sizeof(struct RICO_ui_hud), RICO_UI_LINE_BREAK,
+                           parent);
+}
+extern struct RICO_ui_button *RICO_ui_button(struct RICO_ui_hud *parent)
 {
     return ui_push_element(sizeof(struct RICO_ui_button),
                            RICO_UI_ELEMENT_BUTTON, parent);
 }
-extern struct RICO_ui_label *RICO_ui_label(struct RICO_ui_element *parent)
+extern struct RICO_ui_label *RICO_ui_label(struct RICO_ui_hud *parent)
 {
     return ui_push_element(sizeof(struct RICO_ui_label), RICO_UI_ELEMENT_LABEL,
                            parent);
+}
+extern struct RICO_ui_progress *RICO_ui_progress(struct RICO_ui_hud *parent)
+{
+    return ui_push_element(sizeof(struct RICO_ui_progress),
+                           RICO_UI_ELEMENT_PROGRESS, parent);
 }
 
 /*----------------------------------------------------------------------------*/
 // Layout
 /*----------------------------------------------------------------------------*/
-static bool ui_layout_element(struct RICO_ui_element *element, s32 x, s32 y,
+static bool ui_layout(struct RICO_ui_head *head, s32 x, s32 y,
                               s32 max_w, s32 max_h)
 {
+    if (head->type == RICO_UI_LINE_BREAK)
+    {
+        return false;
+    }
+
+    struct RICO_ui_element *element = (void *)head;
+
     s32 margin_w = element->margin.left + element->margin.right;
     s32 margin_h = element->margin.top + element->margin.bottom;
 
@@ -107,14 +124,23 @@ static bool ui_layout_element(struct RICO_ui_element *element, s32 x, s32 y,
     size->w = margin_w + MAX(element->min_size.w, pad_w);
     size->h = margin_h + MAX(element->min_size.h, pad_h);
 
-    // HACK: Make sure labels have enough room for their internal strings
-    if (element->type == RICO_UI_ELEMENT_LABEL)
+    // HACK: Make sure controls have enough room for their internal strings
+    if (element->head.type == RICO_UI_ELEMENT_LABEL)
     {
         struct RICO_ui_label *label = (void *)element;
         if (label->heiro)
         {
             size->w += label->heiro->bounds.w;
             size->h += label->heiro->bounds.h;
+        }
+    }
+    else if (element->head.type == RICO_UI_ELEMENT_PROGRESS)
+    {
+        struct RICO_ui_progress *progress = (void *)element;
+        if (progress->heiro)
+        {
+            size->w += progress->heiro->bounds.w;
+            size->h += progress->heiro->bounds.h;
         }
     }
 
@@ -135,16 +161,19 @@ static bool ui_layout_element(struct RICO_ui_element *element, s32 x, s32 y,
     s32 row_used_w = start_w;
     s32 row_max_h = 0;
 
-    struct RICO_ui_element *child = element->first_child;
-    if (child)
+    if (element->head.type == RICO_UI_HUD)
     {
-        while (child)
+        struct RICO_ui_hud *hud = (void *)element;
+        struct RICO_ui_head *child_head = hud->first_child;
+        while (child_head)
         {
             // Calculate child bounds
-            bool fit = ui_layout_element(child, next_x, next_y,
-                                         max_w - row_used_w, max_h - used_h);
+            bool fit = ui_layout(child_head, next_x, next_y, max_w - row_used_w,
+                                 max_h - used_h);
             if (fit)
             {
+                struct RICO_ui_element *child = (void *)child_head;
+
                 // Move to next column
                 next_x += child->size.w;
 
@@ -161,7 +190,7 @@ static bool ui_layout_element(struct RICO_ui_element *element, s32 x, s32 y,
                     row_max_h = child->size.h;
                 }
 
-                child = child->next;
+                child_head = child_head->next;
             }
             else if (row_used_w > 0 && row_max_h > 0)
             {
@@ -173,9 +202,15 @@ static bool ui_layout_element(struct RICO_ui_element *element, s32 x, s32 y,
 
                 row_used_w = start_w;
                 row_max_h = 0;
+
+                if (child_head->type == RICO_UI_LINE_BREAK)
+                {
+                    child_head = child_head->next;
+                }
             }
             else
             {
+                // Uh-oh, we're out of room!
                 return false;
             }
         }
@@ -215,7 +250,7 @@ extern bool RICO_ui_layout(struct RICO_ui_element *element, s32 x, s32 y,
         max_h = SCREEN_HEIGHT - y;
     }
 
-    bool fit = ui_layout_element(element, 0, 0, max_w, max_h);
+    bool fit = ui_layout(&element->head, 0, 0, max_w, max_h);
     return fit;
 }
 
@@ -294,6 +329,31 @@ static void ui_draw_label(struct RICO_ui_label *ctrl, s32 x, s32 y)
         RICO_heiro_render(ctrl->heiro, bounds.x, bounds.y, &COLOR_WHITE);
     }
 }
+static void ui_draw_progress(struct RICO_ui_progress *ctrl, s32 x, s32 y)
+{
+    ui_draw_rect(x, y, &ctrl->element.bounds, UI_RECT_FILL, &COLOR_PURPLE);
+
+    s32 pad_w = ctrl->element.padding.x + ctrl->element.padding.w;
+    s32 pad_h = ctrl->element.padding.y + ctrl->element.padding.h;
+
+    s32 client_w = ctrl->element.bounds.w - pad_w;
+    s32 client_h = ctrl->element.bounds.h - pad_h;
+
+    struct rect bounds = { 0 };
+    bounds.x += ctrl->element.bounds.x + ctrl->element.padding.x;
+    bounds.y += ctrl->element.bounds.y + ctrl->element.padding.y;
+    bounds.w = (s32)(MIN(MAX(ctrl->percent, 0.0f), 100.0f) / 100.0f * client_w);
+    bounds.h = client_h;
+    ui_draw_rect(x, y, &bounds, UI_RECT_FILL, &ctrl->color);
+
+    if (ctrl->heiro)
+    {
+        struct rect bounds = { 0 };
+        bounds.x += x + ctrl->element.bounds.x + ctrl->element.padding.x;
+        bounds.y += y + ctrl->element.bounds.y + ctrl->element.padding.y;
+        RICO_heiro_render(ctrl->heiro, bounds.x, bounds.y, &COLOR_WHITE);
+    }
+}
 static void ui_draw_element(struct RICO_ui_element *element, s32 x, s32 y)
 {
     bool hover = ui_element_hover(element, x, y);
@@ -301,7 +361,7 @@ static void ui_draw_element(struct RICO_ui_element *element, s32 x, s32 y)
     bool rmb_down = hover && chord_active(&CHORD_REPEAT1(RICO_SCANCODE_RMB));
 
     // TODO: Refactor out into ui_update_element(element);
-    if (element->type == RICO_UI_ELEMENT_BUTTON)
+    if (element->head.type == RICO_UI_ELEMENT_BUTTON)
     {
         struct RICO_ui_button *button = (struct RICO_ui_button *)element;
         if ((lmb_down || rmb_down))
@@ -382,9 +442,9 @@ static void ui_draw_element(struct RICO_ui_element *element, s32 x, s32 y)
         }
     }
 
-    switch (element->type)
+    switch (element->head.type)
     {
-        case RICO_UI_ELEMENT_HUD:
+        case RICO_UI_HUD:
             ui_draw_hud((struct RICO_ui_hud *)element, x, y);
             break;
         case RICO_UI_ELEMENT_BUTTON:
@@ -393,21 +453,35 @@ static void ui_draw_element(struct RICO_ui_element *element, s32 x, s32 y)
         case RICO_UI_ELEMENT_LABEL:
             ui_draw_label((struct RICO_ui_label *)element, x, y);
             break;
+        case RICO_UI_ELEMENT_PROGRESS:
+            ui_draw_progress((struct RICO_ui_progress *)element, x, y);
+            break;
         default:
             RICO_ASSERT(0); // Unhandled element type
             break;
     }
 
-    struct RICO_ui_element *child = element->first_child;
-    while (child)
+    if (element->head.type == RICO_UI_HUD)
     {
-        ui_draw_element(child, x, y);
-        child = child->next;
+        struct RICO_ui_hud *hud = (void *)element;
+        struct RICO_ui_head *child_head = hud->first_child;
+        while (child_head)
+        {
+            if (child_head->type == RICO_UI_LINE_BREAK)
+            {
+                child_head = child_head->next;
+                continue;
+            }
+
+            struct RICO_ui_element *child = (void *)child_head;
+            ui_draw_element(child, x, y);
+            child_head = child_head->next;
+        }
     }
 }
 static void ui_draw_tooltip(struct RICO_ui_element *element)
 {
-    if (element->type == RICO_UI_ELEMENT_BUTTON)
+    if (element->head.type == RICO_UI_ELEMENT_BUTTON)
     {
         struct RICO_ui_button *button = (struct RICO_ui_button *)element;
         if (button->tooltip && button->state == RICO_UI_BUTTON_HOVERED)
@@ -429,11 +503,22 @@ static void ui_draw_tooltip(struct RICO_ui_element *element)
         }
     }
 
-    struct RICO_ui_element *child = element->first_child;
-    while (child)
+    if (element->head.type == RICO_UI_HUD)
     {
-        ui_draw_tooltip(child);
-        child = child->next;
+        struct RICO_ui_hud *hud = (void *)element;
+        struct RICO_ui_head *child_head = hud->first_child;
+        while (child_head)
+        {
+            if (child_head->type == RICO_UI_LINE_BREAK)
+            {
+                child_head = child_head->next;
+                continue;
+            }
+
+            struct RICO_ui_element *child = (void *)child_head;
+            ui_draw_tooltip(child);
+            child_head = child_head->next;
+        }
     }
 }
 

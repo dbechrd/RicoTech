@@ -10,8 +10,7 @@ void pack_build_alpha(struct pack_info *pack_info)
     // TODO: Split objects (state) from resources (materials, textures, audio).
     //       pack_state: all world objects (for now)
     //       pack_alpha: textures, materials, audio, etc. specific to alpha
-
-    u32 pack_dat = RICO_pack_init(0, pack_info->path_pak, 64, MB(32));
+    u32 pack_dat = RICO_pack_init(0, pack_info->path_pak, 64, MB(128));
 
     pkid tex_bricks_diff = RICO_load_texture_file(
         pack_dat, "bricks_diff", "texture/cobble_diff.tga");
@@ -27,6 +26,20 @@ void pack_build_alpha(struct pack_info *pack_info)
     DLB_ASSERT(tex_bricks_diff);
     DLB_ASSERT(tex_bricks_emis);
     DLB_ASSERT(mat_bricks);
+    DLB_ASSERT(mat_timmy);
+
+    pkid tex_sky_posx = RICO_load_texture_file(
+        pack_dat, "sky_posx", "texture/sky_posx.tga");
+    pkid tex_sky_negx = RICO_load_texture_file(
+        pack_dat, "sky_negx", "texture/sky_negx.tga");
+    pkid tex_sky_posy = RICO_load_texture_file(
+        pack_dat, "sky_posy", "texture/sky_posy.tga");
+    pkid tex_sky_negy = RICO_load_texture_file(
+        pack_dat, "sky_negy", "texture/sky_negy.tga");
+    pkid tex_sky_posz = RICO_load_texture_file(
+        pack_dat, "sky_posz", "texture/sky_posz.tga");
+    pkid tex_sky_negz = RICO_load_texture_file(
+        pack_dat, "sky_negz", "texture/sky_negz.tga");
 
     pkid mesh_terrain_id;
     pkid mesh_door_id;

@@ -731,7 +731,7 @@ void game_render_ui_toolbar()
     // Create toolbar buttons
     for (int i = 0; i < ARRAY_COUNT(toolbar_buttons); ++i)
     {
-        toolbar_buttons[i] = RICO_ui_button(&toolbar_hud->element);
+        toolbar_buttons[i] = RICO_ui_button(toolbar_hud);
         toolbar_buttons[i]->element.min_size = VEC2I(32, 32);
         toolbar_buttons[i]->element.margin = margin;
         toolbar_buttons[i]->element.metadata = (void *)(TOOLBAR_CURSOR + i);
@@ -753,21 +753,21 @@ void game_render_ui_toolbar()
 
     const s32 label_pad = 2;
     struct RICO_ui_label *label_test1;
-    label_test1 = RICO_ui_label(&toolbar_hud->element);
+    label_test1 = RICO_ui_label(toolbar_hud);
     label_test1->element.padding = RECT1(label_pad);
     label_test1->element.margin = margin;
     label_test1->color = COLOR_DARK_RED;
     label_test1->heiro = label_string;
 
     struct RICO_ui_label *label_test2;
-    label_test2 = RICO_ui_label(&toolbar_hud->element);
+    label_test2 = RICO_ui_label(toolbar_hud);
     label_test2->element.padding = RECT1(label_pad);
     label_test2->element.margin = margin;
     label_test2->color = COLOR_DARK_BLUE;
     label_test2->heiro = label_string;
 
     struct RICO_ui_label *label_test3;
-    label_test3 = RICO_ui_label(&toolbar_hud->element);
+    label_test3 = RICO_ui_label(toolbar_hud);
     label_test3->element.padding = RECT1(label_pad);
     label_test3->element.margin = margin;
     label_test3->color = COLOR_DARK_GREEN;
@@ -793,24 +793,47 @@ void game_render_ui_toolbar()
     }
 }
 
+static r32 debug_perc = 0.0f;
 void debug_render_ui_stack()
 {
     struct RICO_ui_hud *ui_debug_usage_hud;
-    struct RICO_ui_label *ui_debug_usage_bar;
+    struct RICO_ui_progress *ui_debug_usage_bar;
+    struct RICO_ui_label *ui_debug_usage_label;
+
+    u32 bar_pad = 2;
 
     ui_debug_usage_hud = RICO_ui_hud();
+    ui_debug_usage_hud->element.min_size =
+        VEC2I(100 + bar_pad * 2, 8 + bar_pad * 2);
+    ui_debug_usage_hud->color = COLOR_DARK_WHITE_HIGHLIGHT;
+
+    //static struct RICO_heiro_string *label_string = 0;
+    //if (!label_string)
+    //{
+    //    RICO_heiro_build(&label_string, 0, &STR("UI Stack Usage"), 0);
+    //}
 
     // TODO: Make progress bar control
-    ui_debug_usage_bar = RICO_ui_label(&ui_debug_usage_hud->element);
-
-    u32 ui_stack_used = (ui_stack_ptr - ui_stack) * 100 / sizeof(ui_stack);
-    u32 bar_pad = 2;
-    ui_debug_usage_bar->element.min_size = VEC2I(ui_stack_used, 8);
+    ui_debug_usage_bar = RICO_ui_progress(ui_debug_usage_hud);
+    //ui_debug_usage_bar->percent = (ui_stack_ptr - ui_stack) * 100.0f / sizeof(ui_stack);
+    ui_debug_usage_bar->percent = debug_perc;
+    ui_debug_usage_bar->element.min_size = VEC2I(bar_pad * 2 + 100, 8);
     ui_debug_usage_bar->element.margin = RECT1(bar_pad);
-    ui_debug_usage_bar->color = COLOR_DARK_YELLOW;
-    ui_debug_usage_hud->element.min_size = VEC2I(100 + bar_pad * 2,
-                                                 8 + bar_pad * 2);
-    ui_debug_usage_hud->color = COLOR_DARK_WHITE_HIGHLIGHT;
+    ui_debug_usage_bar->color = COLOR_PINK;
+    //ui_debug_usage_bar->heiro = label_string;
+
+    RICO_ui_line_break(ui_debug_usage_hud);
+
+    struct dlb_string label_str = { 0 };
+    char label_str_buf[64] = { 0 };
+    label_str.s = label_str_buf;
+    label_str.len = 1 + snprintf(label_str_buf, sizeof(label_str_buf) - 1,
+                                 "%.f%%", debug_perc);
+    struct RICO_heiro_string *label_perc = 0;
+    RICO_heiro_build(&label_perc, 0, &label_str, 0);
+
+    ui_debug_usage_label = RICO_ui_label(ui_debug_usage_hud);
+    ui_debug_usage_label->heiro = label_perc;
 
     // Layout and draw
     if (RICO_ui_layout(&ui_debug_usage_hud->element, 300, 60, 0, 0))
@@ -819,6 +842,8 @@ void debug_render_ui_stack()
             (SCREEN_WIDTH / 2) - (ui_debug_usage_hud->element.size.w / 2);
         RICO_ui_draw(&ui_debug_usage_hud->element, ui_debug_stack_x, 2);
     }
+
+    RICO_heiro_free(label_perc);
 }
 
 #define LIGHTS_X 12
@@ -864,7 +889,7 @@ void game_render_ui_lights()
     {
         u32 light_state = lights_board[i % LIGHTS_X][i / LIGHTS_X];
 
-        lights_buttons[i] = RICO_ui_button(&lights_hud->element);
+        lights_buttons[i] = RICO_ui_button(lights_hud);
         struct RICO_ui_button *button = lights_buttons[i];
 
         button->element.min_size = VEC2I(button_w, button_w);
@@ -1244,7 +1269,7 @@ int main(int argc, char **argv)
 
     ric_test();
 
-    RICO_bind_action(ACTION_RICO_TEST, CHORD_REPEAT1(SDL_SCANCODE_Z));
+    RICO_bind_action(ACTION_RICO_TEST, CHORD1(SDL_SCANCODE_Z));
     RICO_bind_action(ACTION_TYPE_NEXT, CHORD1(SDL_SCANCODE_X));
     RICO_bind_action(ACTION_TYPE_PREV, CHORD1(SDL_SCANCODE_C));
 
@@ -1303,19 +1328,36 @@ int main(int argc, char **argv)
             u32 action;
             while (RICO_key_event(&action))
             {
-                if (RICO_state_is_edit() || RICO_simulation_paused())
-                    continue;
-
-                switch (action)
+                if (RICO_state_is_edit())
                 {
-                    case ACTION_PLAY_INTERACT:
-                        object_interact();
-                        break;
-                    case ACTION_RICO_TEST:
-                        RICO_audio_source_play(&audio_sources[AUDIO_BUTTON]);
-                        break;
-                    default:
-                        break;
+                    switch (action)
+                    {
+                        case ACTION_RICO_TEST:
+                            RICO_audio_source_play(&audio_sources[AUDIO_BUTTON]);
+                            debug_perc += 1.0f;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                else if (RICO_simulation_paused())
+                {
+                    continue;
+                }
+                else
+                {
+                    switch (action)
+                    {
+                        case ACTION_PLAY_INTERACT:
+                            object_interact();
+                            break;
+                        case ACTION_RICO_TEST:
+                            RICO_audio_source_play(&audio_sources[AUDIO_BUTTON]);
+                            debug_perc += 1.0f;
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
         }

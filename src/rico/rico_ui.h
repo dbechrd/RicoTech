@@ -29,10 +29,12 @@ struct ui_tooltip
 struct ui_tooltip tooltips[MAX_TOOLTIPS];
 
 #define RICO_UI_ELEMENT_TYPES(f) \
-    f(RICO_UI_ELEMENT_HUD)    \
-    f(RICO_UI_ELEMENT_STRING) \
-    f(RICO_UI_ELEMENT_BUTTON) \
-    f(RICO_UI_ELEMENT_LABEL)
+    f(RICO_UI_HUD)               \
+    f(RICO_UI_LINE_BREAK)        \
+    f(RICO_UI_ELEMENT_STRING)    \
+    f(RICO_UI_ELEMENT_BUTTON)    \
+    f(RICO_UI_ELEMENT_LABEL)     \
+    f(RICO_UI_ELEMENT_PROGRESS)
 
 enum RICO_ui_element_type
 {
@@ -63,10 +65,18 @@ struct RICO_ui_event
 
 typedef void (*RICO_ui_event_handler)(const struct RICO_ui_event *e);
 
-struct RICO_ui_element
+struct RICO_ui_head
 {
     enum RICO_ui_element_type type;
+    struct RICO_ui_head *next;
 
+    //struct RICO_ui_element *parent;
+    //struct RICO_ui_element *prev;
+};
+
+struct RICO_ui_element
+{
+    struct RICO_ui_head head;
     struct vec2i min_size;
     struct rect size;    // includes margin
     struct rect margin;
@@ -74,18 +84,24 @@ struct RICO_ui_element
     struct rect padding;
     void *metadata;
 
-    //struct RICO_ui_element *parent;
-    //struct RICO_ui_element *prev;
-    struct RICO_ui_element *next;
-    struct RICO_ui_element *first_child;
-    struct RICO_ui_element *last_child;
-
     RICO_ui_event_handler event;
 };
+
+/*
+// Cleanup: HUD is the only container, right?
+struct RICO_ui_container
+{
+    struct RICO_ui_element element;
+    struct RICO_ui_head *first_child;
+    struct RICO_ui_head *last_child;
+};
+*/
 
 struct RICO_ui_hud
 {
     struct RICO_ui_element element;
+    struct RICO_ui_head *first_child;
+    struct RICO_ui_head *last_child;
     struct vec4 color;
 };
 
@@ -113,9 +129,19 @@ struct RICO_ui_label
     struct RICO_heiro_string *heiro;
 };
 
+struct RICO_ui_progress
+{
+    struct RICO_ui_element element;
+    struct vec4 color;
+    struct RICO_heiro_string *heiro;
+    float percent;
+};
+
 extern struct RICO_ui_hud *RICO_ui_hud();
-extern struct RICO_ui_button *RICO_ui_button(struct RICO_ui_element *parent);
-extern struct RICO_ui_label *RICO_ui_label(struct RICO_ui_element *parent);
+extern struct RICO_ui_head *RICO_ui_line_break(struct RICO_ui_hud *parent);
+extern struct RICO_ui_button *RICO_ui_button(struct RICO_ui_hud *parent);
+extern struct RICO_ui_label *RICO_ui_label(struct RICO_ui_hud *parent);
+extern struct RICO_ui_progress *RICO_ui_progress(struct RICO_ui_hud *parent);
 extern bool RICO_ui_layout(struct RICO_ui_element *element, s32 x, s32 y,
                            s32 max_w, s32 max_h);
 extern void RICO_ui_draw(struct RICO_ui_element *element, s32 x, s32 y);

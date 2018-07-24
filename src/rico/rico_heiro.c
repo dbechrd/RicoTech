@@ -218,6 +218,8 @@ GLuint heiro_upload_texture(s32 width, s32 height, const void *pixels)
     return gl_id;
 }
 
+// TODO: Pass arena into this. Sometimes frame arena, sometimes longer lasting
+//       arena for strings you don't want to build multiple times.
 extern void RICO_heiro_build(struct RICO_heiro_string **result,
                              struct rect *cursor, const struct dlb_string *str,
                              u32 cur)
