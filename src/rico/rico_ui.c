@@ -75,12 +75,12 @@ static void *ui_push_element(u32 bytes, enum RICO_ui_element_type type,
 
 extern struct RICO_ui_hud *RICO_ui_hud()
 {
-    return ui_push_element(sizeof(struct RICO_ui_hud), RICO_UI_HUD,
+    return ui_push_element(sizeof(struct RICO_ui_hud), RICO_UI_ELEMENT_HUD,
                            NULL);
 }
 extern struct RICO_ui_head *RICO_ui_line_break(struct RICO_ui_hud *parent)
 {
-    return ui_push_element(sizeof(struct RICO_ui_hud), RICO_UI_LINE_BREAK,
+    return ui_push_element(sizeof(struct RICO_ui_hud), RICO_UI_ELEMENT_BREAK,
                            parent);
 }
 extern struct RICO_ui_button *RICO_ui_button(struct RICO_ui_hud *parent)
@@ -105,7 +105,7 @@ extern struct RICO_ui_progress *RICO_ui_progress(struct RICO_ui_hud *parent)
 static bool ui_layout(struct RICO_ui_head *head, s32 x, s32 y,
                               s32 max_w, s32 max_h)
 {
-    if (head->type == RICO_UI_LINE_BREAK)
+    if (head->type == RICO_UI_ELEMENT_BREAK)
     {
         return false;
     }
@@ -161,7 +161,7 @@ static bool ui_layout(struct RICO_ui_head *head, s32 x, s32 y,
     s32 row_used_w = start_w;
     s32 row_max_h = 0;
 
-    if (element->head.type == RICO_UI_HUD)
+    if (element->head.type == RICO_UI_ELEMENT_HUD)
     {
         struct RICO_ui_hud *hud = (void *)element;
         struct RICO_ui_head *child_head = hud->first_child;
@@ -203,7 +203,7 @@ static bool ui_layout(struct RICO_ui_head *head, s32 x, s32 y,
                 row_used_w = start_w;
                 row_max_h = 0;
 
-                if (child_head->type == RICO_UI_LINE_BREAK)
+                if (child_head->type == RICO_UI_ELEMENT_BREAK)
                 {
                     child_head = child_head->next;
                 }
@@ -361,20 +361,37 @@ static void ui_draw_element(struct RICO_ui_element *element, s32 x, s32 y)
     bool rmb_down = hover && chord_active(&CHORD_REPEAT1(RICO_SCANCODE_RMB));
 
     // TODO: Refactor out into ui_update_element(element);
-    if (element->head.type == RICO_UI_ELEMENT_BUTTON)
+    enum RICO_ui_state *state = 0;
+    switch (element->head.type)
     {
-        struct RICO_ui_button *button = (struct RICO_ui_button *)element;
+        case RICO_UI_ELEMENT_BUTTON:
+        {
+            struct RICO_ui_button *ctrl = (void *)element;
+            state = &ctrl->state;
+            break;
+        }
+        case RICO_UI_ELEMENT_PROGRESS:
+        {
+            struct RICO_ui_progress *ctrl = (void *)element;
+            state = &ctrl->state;
+            break;
+        }
+        default:
+            break;
+    }
+    if (state)
+    {
         if ((lmb_down || rmb_down))
         {
-            button->state = RICO_UI_BUTTON_PRESSED;
+            *state = RICO_UI_PRESSED;
         }
         else if (hover)
         {
-            button->state = RICO_UI_BUTTON_HOVERED;
+            *state = RICO_UI_HOVERED;
         }
         else
         {
-            button->state = RICO_UI_BUTTON_DEFAULT;
+            *state = RICO_UI_DEFAULT;
         }
     }
 
@@ -444,7 +461,7 @@ static void ui_draw_element(struct RICO_ui_element *element, s32 x, s32 y)
 
     switch (element->head.type)
     {
-        case RICO_UI_HUD:
+        case RICO_UI_ELEMENT_HUD:
             ui_draw_hud((struct RICO_ui_hud *)element, x, y);
             break;
         case RICO_UI_ELEMENT_BUTTON:
@@ -461,13 +478,13 @@ static void ui_draw_element(struct RICO_ui_element *element, s32 x, s32 y)
             break;
     }
 
-    if (element->head.type == RICO_UI_HUD)
+    if (element->head.type == RICO_UI_ELEMENT_HUD)
     {
         struct RICO_ui_hud *hud = (void *)element;
         struct RICO_ui_head *child_head = hud->first_child;
         while (child_head)
         {
-            if (child_head->type == RICO_UI_LINE_BREAK)
+            if (child_head->type == RICO_UI_ELEMENT_BREAK)
             {
                 child_head = child_head->next;
                 continue;
@@ -481,10 +498,30 @@ static void ui_draw_element(struct RICO_ui_element *element, s32 x, s32 y)
 }
 static void ui_draw_tooltip(struct RICO_ui_element *element)
 {
-    if (element->head.type == RICO_UI_ELEMENT_BUTTON)
+    if (element->head.type == RICO_UI_ELEMENT_HUD)
     {
-        struct RICO_ui_button *button = (struct RICO_ui_button *)element;
-        if (button->tooltip && button->state == RICO_UI_BUTTON_HOVERED)
+        struct RICO_ui_hud *hud = (void *)element;
+        struct RICO_ui_head *child_head = hud->first_child;
+        while (child_head)
+        {
+            if (child_head->type == RICO_UI_ELEMENT_BREAK)
+            {
+                child_head = child_head->next;
+                continue;
+            }
+
+            struct RICO_ui_element *child = (void *)child_head;
+            ui_draw_tooltip(child);
+            child_head = child_head->next;
+        }
+    }
+    // TODO: Refactor common tooltip rendering code out
+    else if (element->head.type == RICO_UI_ELEMENT_BUTTON)
+    {
+        struct RICO_ui_button *button = (void *)element;
+        if (button->tooltip &&
+            (button->state == RICO_UI_HOVERED ||
+             button->state == RICO_UI_PRESSED))
         {
             struct RICO_heiro_string *heiro = button->tooltip->string;
             const struct vec2i pad = { 4, 2 };
@@ -502,22 +539,26 @@ static void ui_draw_tooltip(struct RICO_ui_element *element)
             RICO_heiro_render(heiro, bounds.x, bounds.y, &COLOR_WHITE);
         }
     }
-
-    if (element->head.type == RICO_UI_HUD)
+    else if (element->head.type == RICO_UI_ELEMENT_PROGRESS)
     {
-        struct RICO_ui_hud *hud = (void *)element;
-        struct RICO_ui_head *child_head = hud->first_child;
-        while (child_head)
+        struct RICO_ui_progress *progress = (void *)element;
+        if (progress->tooltip &&(progress->state == RICO_UI_HOVERED ||
+                                 progress->state == RICO_UI_PRESSED))
         {
-            if (child_head->type == RICO_UI_LINE_BREAK)
-            {
-                child_head = child_head->next;
-                continue;
-            }
+            struct RICO_heiro_string *heiro = progress->tooltip->string;
+            const struct vec2i pad = { 4, 2 };
+            const struct vec2i offset = { 0, 8 };
 
-            struct RICO_ui_element *child = (void *)child_head;
-            ui_draw_tooltip(child);
-            child_head = child_head->next;
+            struct rect bounds = heiro->bounds;
+            bounds.x += mouse_x + offset.x;
+            bounds.y += mouse_y + offset.y;
+            bounds.w += pad.x * 2;
+            bounds.h += pad.y * 2;
+            RICO_prim_draw_rect(&bounds, &progress->tooltip->color);
+
+            bounds.x += pad.x;
+            bounds.y += pad.y;
+            RICO_heiro_render(heiro, bounds.x, bounds.y, &COLOR_WHITE);
         }
     }
 }

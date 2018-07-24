@@ -26,11 +26,10 @@ struct ui_tooltip
     struct vec4 color;
     struct RICO_heiro_string *string;
 };
-struct ui_tooltip tooltips[MAX_TOOLTIPS];
 
 #define RICO_UI_ELEMENT_TYPES(f) \
-    f(RICO_UI_HUD)               \
-    f(RICO_UI_LINE_BREAK)        \
+    f(RICO_UI_ELEMENT_HUD)       \
+    f(RICO_UI_ELEMENT_BREAK)     \
     f(RICO_UI_ELEMENT_STRING)    \
     f(RICO_UI_ELEMENT_BUTTON)    \
     f(RICO_UI_ELEMENT_LABEL)     \
@@ -105,20 +104,20 @@ struct RICO_ui_hud
     struct vec4 color;
 };
 
-enum RICO_ui_button_state
+enum RICO_ui_state
 {
-    RICO_UI_BUTTON_DEFAULT,
-    RICO_UI_BUTTON_HOVERED,
-    RICO_UI_BUTTON_PRESSED,
-    RICO_UI_BUTTON_COUNT
+    RICO_UI_DEFAULT,
+    RICO_UI_HOVERED,
+    RICO_UI_PRESSED,
+    RICO_UI_COUNT
 };
 
 struct RICO_ui_button
 {
     struct RICO_ui_element element;
+    enum RICO_ui_state state;
+    struct vec4 color[RICO_UI_COUNT];
     struct RICO_sprite *sprite;
-    enum RICO_ui_button_state state;
-    struct vec4 color[RICO_UI_BUTTON_COUNT];
     struct ui_tooltip *tooltip;
 };
 
@@ -132,9 +131,11 @@ struct RICO_ui_label
 struct RICO_ui_progress
 {
     struct RICO_ui_element element;
+    enum RICO_ui_state state;
     struct vec4 color;
-    struct RICO_heiro_string *heiro;
     float percent;
+    struct RICO_heiro_string *heiro;
+    struct ui_tooltip *tooltip;
 };
 
 extern struct RICO_ui_hud *RICO_ui_hud();

@@ -1,7 +1,7 @@
 #ifndef RI_HEIRO_H
 #define RI_HEIRO_H
 
-#define HEIRO_GLYPH_HEIGHT 16
+#define HEIRO_GLYPH_HEIGHT 14
 
 struct RICO_heiro_glyph
 {

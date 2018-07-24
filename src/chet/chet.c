@@ -736,9 +736,9 @@ void game_render_ui_toolbar()
         toolbar_buttons[i]->element.margin = margin;
         toolbar_buttons[i]->element.metadata = (void *)(TOOLBAR_CURSOR + i);
         toolbar_buttons[i]->element.event = toolbar_button_click;
-        toolbar_buttons[i]->color[RICO_UI_BUTTON_DEFAULT] = COLOR_GRAY_2;
-        toolbar_buttons[i]->color[RICO_UI_BUTTON_HOVERED] = COLOR_ORANGE;
-        toolbar_buttons[i]->color[RICO_UI_BUTTON_PRESSED] = COLOR_DARK_ORANGE;
+        toolbar_buttons[i]->color[RICO_UI_DEFAULT] = COLOR_GRAY_2;
+        toolbar_buttons[i]->color[RICO_UI_HOVERED] = COLOR_ORANGE;
+        toolbar_buttons[i]->color[RICO_UI_PRESSED] = COLOR_DARK_ORANGE;
         toolbar_buttons[i]->sprite = &toolbar_sheet.sprites[i];
         toolbar_buttons[i]->tooltip = &toolbar_tips[i];
     }
@@ -796,54 +796,58 @@ void game_render_ui_toolbar()
 static r32 debug_perc = 0.0f;
 void debug_render_ui_stack()
 {
-    struct RICO_ui_hud *ui_debug_usage_hud;
-    struct RICO_ui_progress *ui_debug_usage_bar;
-    struct RICO_ui_label *ui_debug_usage_label;
+    const u32 bar_pad = 2;
+    struct RICO_ui_hud *hud;
+    struct RICO_ui_label *label;
+    struct RICO_ui_progress *progress;
+    struct ui_tooltip progress_tip;
 
-    u32 bar_pad = 2;
+    hud = RICO_ui_hud();
+    hud->element.min_size = VEC2I(100 + bar_pad * 2, 8 + bar_pad * 2);
+    hud->element.padding = PAD1(1);
+    hud->color = COLOR_DARK_WHITE_HIGHLIGHT;
 
-    ui_debug_usage_hud = RICO_ui_hud();
-    ui_debug_usage_hud->element.min_size =
-        VEC2I(100 + bar_pad * 2, 8 + bar_pad * 2);
-    ui_debug_usage_hud->color = COLOR_DARK_WHITE_HIGHLIGHT;
+    struct RICO_heiro_string *label_heiro = 0;
+    RICO_heiro_build(&label_heiro, 0, &STR("UI Stack:"), 0);
 
-    //static struct RICO_heiro_string *label_string = 0;
-    //if (!label_string)
-    //{
-    //    RICO_heiro_build(&label_string, 0, &STR("UI Stack Usage"), 0);
-    //}
+    label = RICO_ui_label(hud);
+    label->heiro = label_heiro;
 
-    // TODO: Make progress bar control
-    ui_debug_usage_bar = RICO_ui_progress(ui_debug_usage_hud);
-    //ui_debug_usage_bar->percent = (ui_stack_ptr - ui_stack) * 100.0f / sizeof(ui_stack);
-    ui_debug_usage_bar->percent = debug_perc;
-    ui_debug_usage_bar->element.min_size = VEC2I(bar_pad * 2 + 100, 8);
-    ui_debug_usage_bar->element.margin = RECT1(bar_pad);
-    ui_debug_usage_bar->color = COLOR_PINK;
-    //ui_debug_usage_bar->heiro = label_string;
+    progress = RICO_ui_progress(hud);
+    progress->percent = (ui_stack_ptr - ui_stack) * 100.0f /
+                                  sizeof(ui_stack);
+    //progress->percent = debug_perc;
+    progress->element.min_size = VEC2I(bar_pad * 2 + 100, 8);
+    progress->element.margin = RECT1(bar_pad);
+    progress->color = COLOR_PINK;
 
-    RICO_ui_line_break(ui_debug_usage_hud);
+    struct dlb_string progress_tip_str = { 0 };
+    char progress_tip_buf[64] = { 0 };
+    progress_tip_str.s = progress_tip_buf;
+    progress_tip_str.len = 1 +
+        snprintf(progress_tip_buf, sizeof(progress_tip_buf) - 1,
+                 "%.f%%", progress->percent);
+    struct RICO_heiro_string *progress_tip_heiro = 0;
+    RICO_heiro_build(&progress_tip_heiro, 0, &progress_tip_str, 0);
 
-    struct dlb_string label_str = { 0 };
-    char label_str_buf[64] = { 0 };
-    label_str.s = label_str_buf;
-    label_str.len = 1 + snprintf(label_str_buf, sizeof(label_str_buf) - 1,
-                                 "%.f%%", debug_perc);
-    struct RICO_heiro_string *label_perc = 0;
-    RICO_heiro_build(&label_perc, 0, &label_str, 0);
+    progress_tip.color = COLOR_GRAY_2;
+    progress_tip.enabled = true;
+    progress_tip.string = progress_tip_heiro;
+    progress->tooltip = &progress_tip;
 
-    ui_debug_usage_label = RICO_ui_label(ui_debug_usage_hud);
-    ui_debug_usage_label->heiro = label_perc;
+    RICO_ui_line_break(hud);
 
     // Layout and draw
-    if (RICO_ui_layout(&ui_debug_usage_hud->element, 300, 60, 0, 0))
+    if (RICO_ui_layout(&hud->element, 300, 60, 0, 0))
     {
         u32 ui_debug_stack_x =
-            (SCREEN_WIDTH / 2) - (ui_debug_usage_hud->element.size.w / 2);
-        RICO_ui_draw(&ui_debug_usage_hud->element, ui_debug_stack_x, 2);
+            (SCREEN_WIDTH / 2) - (hud->element.size.w / 2);
+        RICO_ui_draw(&hud->element, ui_debug_stack_x, 2);
     }
 
-    RICO_heiro_free(label_perc);
+    // TODO: Alloc in frame arena (stack allocator)
+    RICO_heiro_free(label_heiro);
+    RICO_heiro_free(progress_tip_heiro);
 }
 
 #define LIGHTS_X 12
@@ -894,8 +898,8 @@ void game_render_ui_lights()
 
         button->element.min_size = VEC2I(button_w, button_w);
         button->element.margin = PAD(0, 0, margin, margin);
-        button->color[RICO_UI_BUTTON_HOVERED] = colors[light_state][0];
-        button->color[RICO_UI_BUTTON_DEFAULT] = colors[light_state][1];
+        button->color[RICO_UI_HOVERED] = colors[light_state][0];
+        button->color[RICO_UI_DEFAULT] = colors[light_state][1];
         button->element.metadata = (void *)i;
         button->sprite = &toolbar_sheet.sprites[15];
         button->element.event = lights_button_click;
@@ -1375,22 +1379,6 @@ int main(int argc, char **argv)
         // Render world
         RICO_render_objects();
 
-        // Render overlays
-        if (RICO_state_is_edit())
-        {
-            //debug_render_bboxes(timmy);
-            if (rayviz_sphere.radius > 0.0f)
-            {
-                RICO_prim_draw_sphere(&rayviz_sphere, &COLOR_YELLOW);
-            }
-            render_editor_ui();
-            RICO_render_editor();
-        }
-        else if (RICO_state_is_menu())
-        {
-            RICO_render_editor();
-        }
-
         // Debug: Move sun away from origin so it doesn't render inside ground
         struct mat4 sun_xform = mat4_init_translate(&VEC3(0.0f, 10.0f, 0.0f));
 
@@ -1453,6 +1441,22 @@ int main(int argc, char **argv)
         //        RICO_prim_draw_line(&p0, &p1, &col);
         //    }
         //}
+
+        // Render overlays
+        if (RICO_state_is_edit())
+        {
+            //debug_render_bboxes(timmy);
+            if (rayviz_sphere.radius > 0.0f)
+            {
+                RICO_prim_draw_sphere(&rayviz_sphere, &COLOR_YELLOW);
+            }
+            render_editor_ui();
+            RICO_render_editor();
+        }
+        else if (RICO_state_is_menu())
+        {
+            RICO_render_editor();
+        }
 
         // Render cursor
         RICO_render_crosshair();
