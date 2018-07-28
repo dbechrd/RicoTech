@@ -956,7 +956,7 @@ extern pkid RICO_load_string(u32 pack_id, enum RICO_string_slot slot, float x,
     str->slot = slot;
     str->lifespan = lifespan;
     str->mesh_id = mesh;
-    str->tex_id = texture;
+    str->texture_id = texture;
 
     // Store in slot table
     global_string_slots[str->slot] = str->uid.pkid;

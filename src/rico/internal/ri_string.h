@@ -10,7 +10,7 @@ struct RICO_string
     u32 lifespan;
 
     pkid mesh_id;
-    pkid tex_id;
+    pkid texture_id;
 };
 
 extern pkid global_string_slots[STR_SLOT_COUNT + 64];

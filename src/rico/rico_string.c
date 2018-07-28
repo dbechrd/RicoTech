@@ -63,11 +63,11 @@ static void string_render(struct RICO_string *str, GLint model_location)
 {
     glUniformMatrix4fv(model_location, 1, GL_TRUE, MAT4_IDENT.a);
 
-    texture_bind(str->tex_id, GL_TEXTURE0);
+    texture_bind(str->texture_id, GL_TEXTURE0);
     glBindVertexArray(mesh_vao(str->mesh_id));
     mesh_render(str->mesh_id);
     glBindVertexArray(0);
-    texture_unbind(str->tex_id, GL_TEXTURE0);
+    texture_unbind(str->texture_id, GL_TEXTURE0);
 }
 
 static void string_render_all(GLint model_location)
