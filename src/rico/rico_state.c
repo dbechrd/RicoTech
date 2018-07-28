@@ -1353,7 +1353,7 @@ static int engine_init()
 	printf("----------------------------------------------------------\n");
 	printf("[MAIN][init] Initializing storage\n");
 	printf("----------------------------------------------------------\n");
-    rico_hashtable_init();
+    rico_resource_init();
     rico_texture_init();
     rico_mesh_init();
     rico_ui_init();

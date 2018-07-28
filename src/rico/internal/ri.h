@@ -31,7 +31,7 @@ struct pack; // Cleanup: Can we move these to the top of this file or something?
 #include "ri_file.h"
 //#include "ri_pool.h"
 #include "ri_hnd.h"
-#include "ri_hash.h"
+#include "ri_resource.h"
 #include "ri_audio.h"
 
 #include "ri_bbox.h"

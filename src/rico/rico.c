@@ -9,7 +9,7 @@
 
 #include "rico_error.c"
 #include "rico_util.c"
-#include "rico_hash.c"
+#include "rico_resource.c"
 #include "rico_audio.c"
 #include "rico_light.c"
 

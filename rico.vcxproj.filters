@@ -56,9 +56,6 @@
     <ClCompile Include="src\rico\rico_font.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
-    <ClCompile Include="src\rico\rico_hash.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
     <ClCompile Include="src\rico\rico_hnd.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
@@ -138,6 +135,9 @@
       <Filter>Source Files\rico</Filter>
     </ClCompile>
     <ClCompile Include="src\rico\rico_shadow.c">
+      <Filter>Source Files\rico</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_resource.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
   </ItemGroup>
@@ -221,9 +221,6 @@
       <Filter>Header Files\rico\internal</Filter>
     </ClInclude>
     <ClInclude Include="src\rico\internal\ri_font.h">
-      <Filter>Header Files\rico\internal</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rico\internal\ri_hash.h">
       <Filter>Header Files\rico\internal</Filter>
     </ClInclude>
     <ClInclude Include="src\rico\internal\ri_hnd.h">
@@ -311,6 +308,9 @@
       <Filter>Header Files\rico\internal</Filter>
     </ClInclude>
     <ClInclude Include="src\rico\internal\ri_shadow.h">
+      <Filter>Header Files\rico\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rico\internal\ri_resource.h">
       <Filter>Header Files\rico\internal</Filter>
     </ClInclude>
   </ItemGroup>
