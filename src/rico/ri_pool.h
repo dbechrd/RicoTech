@@ -1,6 +1,7 @@
 #ifndef RICO_INTERNAL_POOL_H
 #define RICO_INTERNAL_POOL_H
 
+#if 0
 struct hnd;
 struct rico_chunk;
 
@@ -84,6 +85,7 @@ static inline void *pool_read(const struct rico_pool *pool, u32 value)
     // Note: Handle values start at 1; 0 is reserved
     return (void *)&((pool->data)[pool->min_size * (value - 1)]);
 }
+#endif
 #endif
 
 #endif

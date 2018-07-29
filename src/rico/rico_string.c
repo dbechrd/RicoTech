@@ -1,6 +1,6 @@
 const char *RICO_string_slot_string[] = { RICO_STRING_SLOTS(GEN_STRING) };
 
-static pkid global_string_slots[STR_SLOT_COUNT + 64];
+pkid global_string_slots[STR_SLOT_COUNT + 64];
 
 static void string_delete(struct RICO_string *str)
 {

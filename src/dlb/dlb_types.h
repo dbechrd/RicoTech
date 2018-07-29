@@ -70,4 +70,25 @@ DLB_assert_handler_def *DLB_assert_handler;
         DLB_DEBUG_BREAK; \
     }
 
+static inline u16 endian_swap_u16(u16 val)
+{
+    return (u16)(((val & 0xFF00) >> 8) |
+                 ((val & 0x00FF) << 8));
+}
+
+static inline u32 endian_swap_u32(u32 val)
+{
+    return (u32)(((val & 0xFF000000) >> 24) |
+                 ((val & 0x00FF0000) >>  8) |
+                 ((val & 0x0000FF00) <<  8) |
+                 ((val & 0x000000FF) << 24));
+}
+
+static inline void swap_r32(r32 *a, r32 *b)
+{
+    r32 t = *a;
+    *a = *b;
+    *b = t;
+}
+
 #endif

@@ -1,4 +1,4 @@
-#include "internal/ri.h"
+#include "ri.h"
 #include "gl3w.c"
 
 #include "rico.h"
@@ -13,7 +13,7 @@
 #include "rico_audio.c"
 #include "rico_light.c"
 
-#include "rico_hnd.c"
+#include "rico_types.c"
 #include "rico_shader.c"
 #include "rico_program.c"
 #include "rico_camera.c"
@@ -25,14 +25,11 @@
 #include "rico_editor.c"
 
 #include "rico_primitives.c"
-#include "rico_regularpoly.c"
-//#include "rico_chunk.c"
 #include "rico_collision.c"
 #include "rico_convert.c"
 #include "rico_font.c"
 #include "rico_mesh.c"
 #include "rico_physics.c"
-//#include "rico_pool.c"
 #include "rico_pack.c"
 
 #include "rico_state.c"

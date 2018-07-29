@@ -1,35 +1,6 @@
 #ifndef RICO_AUDIO_H
 #define RICO_AUDIO_H
 
-#include "AL/al.h"
-#include "AL/alc.h"
-
-#define RICO_AUDIO_STATE(f) \
-    f(RICO_AUDIO_UNKNOWN)   \
-    f(RICO_AUDIO_STOPPED)   \
-    f(RICO_AUDIO_PLAYING)   \
-    f(RICO_AUDIO_PAUSED)    \
-    f(RICO_AUDIO_COUNT)
-
-enum RICO_audio_state
-{
-    RICO_AUDIO_STATE(GEN_LIST)
-};
-extern const char *RICO_audio_state_string[];
-
-struct RICO_audio_source
-{
-    ALuint al_source_id;
-    float pitch;
-    float gain;
-    bool loop;
-};
-
-struct RICO_audio_buffer
-{
-    ALuint al_buffer_id;
-};
-
 extern float RICO_audio_volume();
 extern void RICO_audio_volume_set(float volume);
 extern bool RICO_audio_muted();

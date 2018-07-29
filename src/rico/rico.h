@@ -4,13 +4,16 @@
 #include "dlb_types.h"
 #define DLB_MATH_PRINT
 #include "dlb_math.h"
+
+#include "AL/al.h"
+#include "AL/alc.h"
 #include "ft2build.h"
 #include FT_FREETYPE_H
-#include "SDL/SDL.h"
 #include "GL/gl3w.h"
+#include "SDL/SDL.h"
 
 #include "rico_error.h"
-#include "rico_hnd.h"
+#include "rico_types.h"
 #include "rico_bbox.h"
 #include "rico_primitives.h"
 #include "rico_mesh.h"

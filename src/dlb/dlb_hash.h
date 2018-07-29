@@ -49,8 +49,8 @@ static inline struct dlb_hash_entry *chains(struct dlb_hash *table)
 static void hashtable_init(struct dlb_hash *table, const char *name,
                            u32 bucket_count, u32 chain_length)
 {
-    RICO_ASSERT(bucket_count);
-    RICO_ASSERT(chain_length >= 2);
+    DLB_ASSERT(bucket_count);
+    DLB_ASSERT(chain_length >= 2);
 
     table->name = name;
     table->bucket_count = bucket_count;
@@ -58,14 +58,14 @@ static void hashtable_init(struct dlb_hash *table, const char *name,
     table->buckets = calloc(bucket_count * (1 + chain_length),
                             sizeof(table->buckets[0]));
 
-#if RICO_DEBUG_HASH
+#if DLB_HASH_DEBUG
     printf("[hash][init] %s\n", table->hnd.name);
 #endif
 }
 
 void hashtable_free(struct dlb_hash *table)
 {
-#if RICO_DEBUG_HASH
+#if DLB_HASH_DEBUG
     printf("[hash][free] %s\n", table->hnd.name);
 #endif
 
@@ -74,7 +74,7 @@ void hashtable_free(struct dlb_hash *table)
 
 void *hashtable_search(struct dlb_hash *table, u32 key)
 {
-    RICO_ASSERT(key);
+    DLB_ASSERT(key);
     u32 hash = hash_u32(key);
     u32 index = hash % table->bucket_count;
 
@@ -106,12 +106,12 @@ void *hashtable_search(struct dlb_hash *table, u32 key)
 
 bool hashtable_insert(struct dlb_hash *table, u32 key, void *value)
 {
-    RICO_ASSERT(key);
+    DLB_ASSERT(key);
     u32 hash = hash_u32(key);
     u32 index = hash % table->bucket_count;
 
     // Prevent dupe keys
-    RICO_ASSERT(table->buckets[index].key != key);
+    DLB_ASSERT(table->buckets[index].key != key);
 
     // Check bucket head
     if (!table->buckets[index].key)
@@ -125,7 +125,7 @@ bool hashtable_insert(struct dlb_hash *table, u32 key, void *value)
     struct dlb_hash_entry *entry = chains(table);
     while (i++ < table->chain_length && entry->key)
     {
-        RICO_ASSERT(entry->key != key);  // Prevent dupe keys
+        DLB_ASSERT(entry->key != key);  // Prevent dupe keys
         entry++;
     }
 
@@ -139,7 +139,7 @@ bool hashtable_insert(struct dlb_hash *table, u32 key, void *value)
 }
 static bool hashtable_delete(struct dlb_hash *table, u32 key)
 {
-    RICO_ASSERT(key);
+    DLB_ASSERT(key);
     u32 hash = hash_u32(key);
     u32 index = hash % table->bucket_count;
 

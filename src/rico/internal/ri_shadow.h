@@ -1,6 +1,0 @@
-#ifndef RICO_INTERNAL_SHADOW_H
-#define RICO_INTERNAL_SHADOW_H
-
-
-
-#endif

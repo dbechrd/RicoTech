@@ -43,7 +43,7 @@ void RICO_bbox_transform(struct RICO_bbox *bbox, const struct mat4 *m)
     v3_mul_mat4(&bbox->min, m);
     v3_mul_mat4(&bbox->max, m);
 
-    if (bbox->min.x > bbox->max.x) swapf(&bbox->min.x, &bbox->max.x);
-    if (bbox->min.y > bbox->max.y) swapf(&bbox->min.y, &bbox->max.y);
-    if (bbox->min.z > bbox->max.z) swapf(&bbox->min.z, &bbox->max.z);
+    if (bbox->min.x > bbox->max.x) swap_r32(&bbox->min.x, &bbox->max.x);
+    if (bbox->min.y > bbox->max.y) swap_r32(&bbox->min.y, &bbox->max.y);
+    if (bbox->min.z > bbox->max.z) swap_r32(&bbox->min.z, &bbox->max.z);
 }

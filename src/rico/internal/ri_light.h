@@ -1,5 +1,0 @@
-#ifndef RICO_INTERNAL_LIGHT_H
-#define RICO_INTERNAL_LIGHT_H
-
-
-#endif
