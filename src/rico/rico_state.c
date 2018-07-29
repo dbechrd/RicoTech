@@ -288,7 +288,7 @@ extern int RICO_update()
         }
 
         // Render state label
-        char buf[32] = { 0 };
+        char buf[64] = { 0 };
         int len = snprintf(buf, sizeof(buf), "State: %d %s", state,
                            ric_engine_state_string[state]);
         string_truncate(buf, sizeof(buf), len);

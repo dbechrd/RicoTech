@@ -28,13 +28,9 @@ static void camera_init(struct RICO_camera *camera, struct vec3 position,
     camera->roll = 0;
     camera->view = view;
     camera->fov_deg = fov_deg;
-
     camera->fill_mode = GL_FILL;
     camera->locked = false;
     camera->need_update = true;
-
-    bbox_init(&camera->RICO_bbox, VEC3(0.f, 0.f, 0.f), VEC3(1.f, 1.f, 1.f));
-
     camera->ortho_matrix = mat4_init_ortho(-1.0f, 1.0f, 1.0f, -1.0f, Z_NEAR,
                                            Z_FAR);
     //camera->ortho_matrix =

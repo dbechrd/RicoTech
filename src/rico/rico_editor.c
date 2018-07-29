@@ -1,10 +1,10 @@
-#define RIC_WIDGET_BOX_OFFSET 1.0f;
-#define RIC_WIDGET_BOX_RADIUS 0.1f;
+#define RIC_WIDGET_BOX_OFFSET 1.0f
+#define RIC_WIDGET_BOX_RADIUS 0.15f
 
 struct widget
 {
     enum ric_widget action;
-    struct RICO_bbox bbox;
+    struct RICO_aabb aabb;
 };
 static struct widget widgets[RIC_WIDGET_COUNT];
 static struct widget *widget;
@@ -22,16 +22,16 @@ static void editor_init()
     const float offset = RIC_WIDGET_BOX_OFFSET;
     const float radius = RIC_WIDGET_BOX_RADIUS;
 
-    widgets[0].bbox.min = VEC3(offset - radius, -radius, -radius);
-    widgets[0].bbox.max = VEC3(offset + radius, radius, radius);
+    widgets[0].aabb.c = VEC3(offset + radius, 0.0f, 0.0f);
+    widgets[0].aabb.e = VEC3_1(radius);
     widgets[0].action = RIC_WIDGET_TRANSLATE_X;
 
-    widgets[1].bbox.min = VEC3(-radius, offset - radius, -radius);
-    widgets[1].bbox.max = VEC3(radius, offset + radius, radius);
+    widgets[1].aabb.c = VEC3(0.0f, offset + radius, 0.0f);
+    widgets[1].aabb.e = VEC3_1(radius);
     widgets[1].action = RIC_WIDGET_TRANSLATE_Y;
 
-    widgets[2].bbox.min = VEC3(-radius, -radius, offset - radius);
-    widgets[2].bbox.max = VEC3(radius, radius, offset + radius);
+    widgets[2].aabb.c = VEC3(0.0f, 0.0f, offset + radius);
+    widgets[2].aabb.e = VEC3_1(radius);
     widgets[2].action = RIC_WIDGET_TRANSLATE_Z;
 }
 static void edit_object_create()
@@ -141,7 +141,7 @@ static void edit_translate(struct RICO_camera *camera, const struct vec3 *offset
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
 
     // HACK: There's probably a better way to do this check
-    bool has_bbox = !v3_equals(&obj->bbox.min, &obj->bbox.max);
+    bool has_bbox = true; //v3_length(&obj->aabb.e) > 0;
 
     if (v3_equals(offset, &VEC3_ZERO))
     {
@@ -365,15 +365,12 @@ static struct widget *widget_test()
         struct ray cam_ray = { 0 };
         camera_fwd_ray(&cam_ray, &cam_player);
 
-        struct mat4 xform = MAT4_IDENT;
-        mat4_translate(&xform, &obj->xform.position);
-
         float dist_min = 9999.0;
         for (u32 i = 0; i < ARRAY_COUNT(widgets); ++i)
         {
             float dist;
-            bool collide = collide_ray_bbox(&dist, &cam_ray, &widgets[i].bbox,
-											&xform);
+            bool collide = collide_ray_bbox(&dist, &cam_ray, &widgets[i].aabb,
+                                            &obj->xform.position);
             if (collide && dist < dist_min)
             {
                 dist_min = dist;
@@ -519,9 +516,9 @@ static void edit_render()
         RICO_prim_draw_line_xform(&VEC3_ZERO, &VEC3_Y, &COLOR_GREEN, &xform);
         RICO_prim_draw_line_xform(&VEC3_ZERO, &VEC3_Z, &COLOR_BLUE, &xform);
 
-        RICO_prim_draw_bbox_xform(&widgets[0].bbox, &COLOR_RED, &xform);
-        RICO_prim_draw_bbox_xform(&widgets[1].bbox, &COLOR_GREEN, &xform);
-        RICO_prim_draw_bbox_xform(&widgets[2].bbox, &COLOR_BLUE, &xform);
+        RICO_prim_draw_bbox_xform(&widgets[0].aabb, &COLOR_RED, &xform);
+        RICO_prim_draw_bbox_xform(&widgets[1].aabb, &COLOR_GREEN, &xform);
+        RICO_prim_draw_bbox_xform(&widgets[2].aabb, &COLOR_BLUE, &xform);
     }
 
 #if 0

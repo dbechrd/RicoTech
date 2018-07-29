@@ -70,7 +70,7 @@ static struct pack_info pack_table[] =
 
 //-------------------------------------------------------------------
 // TODO: Scale by delta_time properly
-#define GRAVITY VEC3(0.0f, -0.0098f, 0.0f);
+#define GRAVITY VEC3(0.0f, -0.0098f, 0.0f)
 // TODO: Elastic collision coef
 static const float COEF_ELASTICITY = 0.15f;
 
@@ -256,7 +256,7 @@ bool RICO_object_has_physics(pkid id)
 {
     struct RICO_object *obj = RICO_pack_lookup(id);
     // TODO: Implement a proper physics flag
-    return !v3_equals(&obj->bbox.min, &obj->bbox.max);
+    return v3_length(&obj->aabb.e) > 0;
 }
 
 pkid RICO_physics_next(pkid id)
@@ -272,7 +272,7 @@ pkid RICO_physics_next(pkid id)
 #if 0
 void clash_detect()
 {
-    //struct RICO_bbox *a, b;
+    //struct RICO_aabb *a, b;
     //
     //const int pack_count = ARRAY_COUNT(pack_table);
     //for (int pack_idx_a = 0; pack_idx_a < pack_count; pack_idx_a++)
@@ -374,6 +374,7 @@ void clash_detect()
                     bool collide_sphere =
                         DEBUG_sphere_v_sphere(&a_obj->sphere, &b_obj->sphere,
                                               &manifold);
+                    ////////////////////////////////////////////////////////////
                     // Cleanup: Debug
                     a_obj->collide_sphere = collide_sphere;
                     b_obj->collide_sphere = collide_sphere;
@@ -387,15 +388,16 @@ void clash_detect()
                     }
 
                     bool collide_aabb = a_obj->collide_sphere &&
-                        RICO_bbox_intersects(&a_obj->bbox_world,
-                                             &b_obj->bbox_world);
+                        RICO_aabb_intersects(&a_obj->aabb_world,
+                                             &b_obj->aabb_world);
                     a_obj->collide_aabb = collide_aabb;
                     b_obj->collide_aabb = collide_aabb;
 
-                    int separating_axis = obb_v_obb(&a_obj->obb, &b_obj->obb);
-                    bool collide_obb = a_obj->collide_sphere && (separating_axis == 0);
+                    bool collide_obb = a_obj->collide_sphere &&
+                       obb_v_obb(&a_obj->obb, &b_obj->obb) == 0;
                     a_obj->collide_obb = collide_obb;
                     b_obj->collide_obb = collide_obb;
+                    ////////////////////////////////////////////////////////////
 
                     b_id = RICO_pack_next_type(b_id, RIC_ASSET_OBJECT);
                 }
@@ -598,7 +600,7 @@ void DEBUG_render_color_test()
         COLOR_BLACK,
     };
 
-    struct RICO_bbox color_test = { 0 };
+    struct RICO_aabb color_test = { 0 };
     float x = 0.0f;
     float y = 2.0f;
     const float width = 0.1f;
@@ -612,13 +614,13 @@ void DEBUG_render_color_test()
             continue;
         }
         x -= width + padding;
-        color_test.min = VEC3(x - width, y - width,   0.0f);
-        color_test.max = VEC3(x        , y        , -width);
+        color_test.c = VEC3(x, y, 0.0f);
+        color_test.e = VEC3_1(width);
         RICO_prim_draw_bbox(&color_test, &colors[i]);
     }
 }
 
-void debug_render_bboxes(struct timmy *timmy)
+void debug_render_bboxes()
 {
     for (u32 i = 1; i < ARRAY_COUNT(global_packs); ++i)
     {
@@ -630,7 +632,7 @@ void debug_render_bboxes(struct timmy *timmy)
         {
             struct RICO_object *obj = RICO_pack_lookup(id);
 
-            //struct RICO_bbox obb_bbox = { 0 };
+            //struct RICO_aabb obb_bbox = { 0 };
             //obb_bbox.min = obj->rico.bbox.min;
             //v3_mul_mat4(&obb_bbox.min, &obj->rico.xform.matrix);
             //obb_bbox.max = obj->rico.bbox.max;
@@ -639,26 +641,26 @@ void debug_render_bboxes(struct timmy *timmy)
 
             if (obj->collide_obb)
             {
-                RICO_prim_draw_sphere(&obj->sphere, &COLOR_TRANS_BLACK);
-                RICO_prim_draw_bbox(&obj->bbox_world, &COLOR_TRANS_BLACK);
+                RICO_prim_draw_sphere(&obj->sphere, &COLOR_TRANS_GRAY_2);
+                RICO_prim_draw_bbox(&obj->aabb_world, &COLOR_TRANS_BLACK);
                 RICO_prim_draw_obb(&obj->obb, &COLOR_RED);
             }
             else if (obj->collide_aabb)
             {
-                RICO_prim_draw_sphere(&obj->sphere, &COLOR_TRANS_BLACK);
-                RICO_prim_draw_bbox(&obj->bbox_world, &COLOR_ORANGE);
+                RICO_prim_draw_sphere(&obj->sphere, &COLOR_TRANS_GRAY_2);
+                RICO_prim_draw_bbox(&obj->aabb_world, &COLOR_ORANGE);
                 RICO_prim_draw_obb(&obj->obb, &COLOR_TRANS_BLACK);
             }
             else if (obj->collide_sphere)
             {
-                RICO_prim_draw_sphere(&obj->sphere, &COLOR_YELLOW);
-                RICO_prim_draw_bbox(&obj->bbox_world, &COLOR_TRANS_BLACK);
+                RICO_prim_draw_sphere(&obj->sphere, &COLOR_DARK_YELLOW_HIGHLIGHT);
+                RICO_prim_draw_bbox(&obj->aabb_world, &COLOR_TRANS_BLACK);
                 RICO_prim_draw_obb(&obj->obb, &COLOR_TRANS_BLACK);
             }
             else
             {
-                RICO_prim_draw_sphere(&obj->sphere, &COLOR_TRANS_BLACK);
-                RICO_prim_draw_bbox(&obj->bbox_world, &COLOR_TRANS_BLACK);
+                RICO_prim_draw_sphere(&obj->sphere, &COLOR_TRANS_GRAY_2);
+                RICO_prim_draw_bbox(&obj->aabb_world, &COLOR_TRANS_BLACK);
                 RICO_prim_draw_obb(&obj->obb, &COLOR_TRANS_BLACK);
             }
 
@@ -1446,7 +1448,7 @@ int main(int argc, char **argv)
         // Render overlays
         if (RICO_state_is_edit())
         {
-            //debug_render_bboxes(timmy);
+            debug_render_bboxes();
             if (rayviz_sphere.radius > 0.0f)
             {
                 RICO_prim_draw_sphere(&rayviz_sphere, &COLOR_YELLOW);

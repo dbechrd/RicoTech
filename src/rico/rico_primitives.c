@@ -301,24 +301,29 @@ extern void RICO_prim_draw_plane_xform(const struct vec3 *n,
 
     RICO_prim_draw_quad_xform(&quad, color, xform);
 }
-extern void RICO_prim_draw_bbox(const struct RICO_bbox *bbox,
+extern void RICO_prim_draw_bbox(const struct RICO_aabb *aabb,
                                 const struct vec4 *color)
 {
-    RICO_prim_draw_bbox_xform(bbox, color, &MAT4_IDENT);
+    RICO_prim_draw_bbox_xform(aabb, color, &MAT4_IDENT);
 }
-extern void RICO_prim_draw_bbox_xform(const struct RICO_bbox *bbox,
+extern void RICO_prim_draw_bbox_xform(const struct RICO_aabb *aabb,
                                       const struct vec4 *color,
                                       const struct mat4 *xform)
 {
+    struct vec3 p0 = aabb->c;
+    v3_sub(&p0, &aabb->e);
+    struct vec3 p1 = aabb->c;
+    v3_add(&p1, &aabb->e);
+
     GLfloat vertices[] = {
-        bbox->min.x, bbox->min.y, bbox->min.z,
-        bbox->max.x, bbox->min.y, bbox->min.z,
-        bbox->max.x, bbox->max.y, bbox->min.z,
-        bbox->min.x, bbox->max.y, bbox->min.z,
-        bbox->min.x, bbox->min.y, bbox->max.z,
-        bbox->max.x, bbox->min.y, bbox->max.z,
-        bbox->max.x, bbox->max.y, bbox->max.z,
-        bbox->min.x, bbox->max.y, bbox->max.z,
+        p0.x, p0.y, p0.z,
+        p1.x, p0.y, p0.z,
+        p1.x, p1.y, p0.z,
+        p0.x, p1.y, p0.z,
+        p0.x, p0.y, p1.z,
+        p1.x, p0.y, p1.z,
+        p1.x, p1.y, p1.z,
+        p0.x, p1.y, p1.z,
     };
 
     RICO_ASSERT(global_prog_primitive->program.gl_id);

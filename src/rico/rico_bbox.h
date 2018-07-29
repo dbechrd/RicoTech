@@ -1,17 +1,17 @@
 #ifndef RICO_BBOX_H
 #define RICO_BBOX_H
 
-extern void RICO_bbox_transform(struct RICO_bbox *bbox, const struct mat4 *m);
+extern void RICO_aabb_transform(struct RICO_aabb *aabb, const struct mat4 *m);
 
-static inline bool RICO_bbox_intersects(const struct RICO_bbox *a,
-                                        const struct RICO_bbox *b)
+static inline bool RICO_aabb_intersects(const struct RICO_aabb *a,
+                                        const struct RICO_aabb *b)
 {
-    return !(a->max.x < b->min.x ||
-             b->max.x < a->min.x ||
-             a->max.y < b->min.y ||
-             b->max.y < a->min.y ||
-             a->max.z < b->min.z ||
-             b->max.z < a->min.z);
+    return !(a->c.x + a->e.x < b->c.x - b->e.x ||
+             b->c.x + b->e.x < a->c.x - a->e.x ||
+             a->c.y + a->e.y < b->c.y - b->e.y ||
+             b->c.y + b->e.y < a->c.y - a->e.y ||
+             a->c.z + a->e.z < b->c.z - b->e.z ||
+             b->c.z + b->e.z < a->c.z - a->e.z);
 }
 
 #endif

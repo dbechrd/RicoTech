@@ -25,13 +25,21 @@ static bool collide_ray_plane(struct vec3 *_contact, const struct ray *ray,
     return false;
 }
 static bool collide_ray_bbox(float *_t, const struct ray *ray,
-                             const struct RICO_bbox *RICO_bbox,
-                             const struct mat4 *transform)
+                             const struct RICO_aabb *aabb,
+                             const struct vec3 *pos)
 {
-    //TODO: Transform ray and bbox
-    struct vec3 p[2] = { RICO_bbox->min, RICO_bbox->max };
-    v3_mul_mat4(&p[0], transform);
-    v3_mul_mat4(&p[1], transform);
+    struct vec3 p[2] = {
+        VEC3(
+            pos->x + aabb->c.x - aabb->e.x,
+            pos->y + aabb->c.y - aabb->e.y,
+            pos->z + aabb->c.z - aabb->e.z
+        ),
+        VEC3(
+            pos->x + aabb->c.x + aabb->e.x,
+            pos->y + aabb->c.y + aabb->e.y,
+            pos->z + aabb->c.z + aabb->e.z
+        ),
+    };
 
     struct vec3 invdir;
     invdir.x = 1.0f / ray->dir.x;
@@ -45,8 +53,11 @@ static bool collide_ray_bbox(float *_t, const struct ray *ray,
 
     float t_min, t_max, y_min, y_max, z_min, z_max;
 
+    // x-axis
     t_min = (p[    sign[0]].x - ray->orig.x) * invdir.x;
     t_max = (p[1 - sign[0]].x - ray->orig.x) * invdir.x;
+
+    // y-axis
     y_min = (p[    sign[1]].y - ray->orig.y) * invdir.y;
     y_max = (p[1 - sign[1]].y - ray->orig.y) * invdir.y;
 
@@ -57,6 +68,7 @@ static bool collide_ray_bbox(float *_t, const struct ray *ray,
     if (y_max < t_max)
         t_max = y_max;
 
+    // z-axis
     z_min = (p[    sign[2]].z - ray->orig.z) * invdir.z;
     z_max = (p[1 - sign[2]].z - ray->orig.z) * invdir.z;
 
@@ -75,11 +87,13 @@ static bool collide_ray_bbox(float *_t, const struct ray *ray,
     return true;
 }
 static bool collide_ray_obb(float *_dist, const struct ray *r,
-                            const struct RICO_bbox *RICO_bbox,
+                            const struct RICO_aabb *aabb,
                             const struct mat4 *model_matrix)
 {
-    struct vec3 p0 = RICO_bbox->min;
-    struct vec3 p1 = RICO_bbox->max;
+    struct vec3 p0 = aabb->c;
+    v3_sub(&p0, &aabb->e);
+    struct vec3 p1 = aabb->c;
+    v3_add(&p1, &aabb->e);
 
 	// Intersection method from Real-Time Rendering and Essential Mathematics
     // for Games

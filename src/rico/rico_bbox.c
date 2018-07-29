@@ -1,13 +1,6 @@
 #define BBOX_EPSILON 0.001f
-static const struct vec3 BBOX_EPSILON_TRANS =
-    {{{ BBOX_EPSILON / 2, BBOX_EPSILON / 2, BBOX_EPSILON / 2 }}};
 
-static void bbox_init(struct RICO_bbox *bbox, struct vec3 min, struct vec3 max)
-{
-    bbox->min = min;
-    bbox->max = max;
-}
-static void bbox_init_mesh(struct RICO_bbox *bbox, struct RICO_mesh *mesh)
+static void bbox_init_mesh(struct RICO_aabb *aabb, struct RICO_mesh *mesh)
 {
     RICO_ASSERT(mesh->vertex_count);
 
@@ -29,21 +22,32 @@ static void bbox_init_mesh(struct RICO_bbox *bbox, struct RICO_mesh *mesh)
     }
 
     // Prevent infinitesimally small bounds
-    max.x += BBOX_EPSILON;
-    min.x -= BBOX_EPSILON;
-    max.y += BBOX_EPSILON;
-    min.y -= BBOX_EPSILON;
-    max.z += BBOX_EPSILON;
-    min.z -= BBOX_EPSILON;
+    //max.x += BBOX_EPSILON;
+    //min.x -= BBOX_EPSILON;
+    //max.y += BBOX_EPSILON;
+    //min.y -= BBOX_EPSILON;
+    //max.z += BBOX_EPSILON;
+    //min.z -= BBOX_EPSILON;
 
-    bbox_init(bbox, min, max);
+    aabb->e = VEC3(
+        (max.x - min.x + BBOX_EPSILON) / 2.0f,
+        (max.y - min.y + BBOX_EPSILON) / 2.0f,
+        (max.z - min.z + BBOX_EPSILON) / 2.0f
+    );
+    aabb->c = VEC3(
+        min.x + aabb->e.x,
+        min.y + aabb->e.y,
+        min.z + aabb->e.z
+    );
 }
-void RICO_bbox_transform(struct RICO_bbox *bbox, const struct mat4 *m)
+#if 0
+void RICO_aabb_transform(struct RICO_aabb *aabb, const struct mat4 *m)
 {
-    v3_mul_mat4(&bbox->min, m);
-    v3_mul_mat4(&bbox->max, m);
+    v3_mul_mat4(&aabb->min, m);
+    v3_mul_mat4(&aabb->max, m);
 
-    if (bbox->min.x > bbox->max.x) swap_r32(&bbox->min.x, &bbox->max.x);
-    if (bbox->min.y > bbox->max.y) swap_r32(&bbox->min.y, &bbox->max.y);
-    if (bbox->min.z > bbox->max.z) swap_r32(&bbox->min.z, &bbox->max.z);
+    if (aabb->min.x > aabb->max.x) swap_r32(&aabb->min.x, &aabb->max.x);
+    if (aabb->min.y > aabb->max.y) swap_r32(&aabb->min.y, &aabb->max.y);
+    if (aabb->min.z > aabb->max.z) swap_r32(&aabb->min.z, &aabb->max.z);
 }
+#endif

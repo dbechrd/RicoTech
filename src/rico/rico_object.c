@@ -19,25 +19,11 @@ static struct RICO_object *object_copy(u32 pack, struct RICO_object *other,
 
     return new_obj;
 }
-static void object_update_bbox_world(struct RICO_object *obj)
-{
-    // TODO: This is super broken.. do I even care about AABB?
-    obj->bbox_world = obj->bbox;
-    RICO_bbox_transform(&obj->bbox_world, &obj->xform.matrix);
-}
 static void object_update_obb(struct RICO_object *obj)
 {
     struct RICO_obb *obb = &obj->obb;
-    obb->e = VEC3(
-        (obj->bbox.max.x - obj->bbox.min.x) / 2.0f,
-        (obj->bbox.max.y - obj->bbox.min.y) / 2.0f,
-        (obj->bbox.max.z - obj->bbox.min.z) / 2.0f
-    );
-    obb->c = VEC3(
-        obj->bbox.min.x + obb->e.x,
-        obj->bbox.min.y + obb->e.y,
-        obj->bbox.min.z + obb->e.z
-    );
+    obb->e = obj->aabb.e;
+    obb->c = obj->aabb.c;
     obb->u[0] = VEC3_X;
     obb->u[1] = VEC3_Y;
     obb->u[2] = VEC3_Z;
@@ -67,6 +53,16 @@ static void object_update_obb(struct RICO_object *obj)
     DLB_ASSERT(dot3 == 0.0f);
 #endif
 }
+static void object_update_bbox_world(struct RICO_object *obj)
+{
+    // TODO: This is super broken.. do I even care about AABB?
+    obj->aabb_world = obj->aabb;
+    //RICO_aabb_transform(&obj->aabb_world, &obj->xform.matrix);
+
+    // TODO: Store local AABB
+    //  calculate world_obb from local AABB + transform
+    //  calculate world_aabb from world_obb
+}
 static void object_update_sphere(struct RICO_object *obj)
 {
     struct sphere *sphere = &obj->sphere;
@@ -92,7 +88,7 @@ static void object_bbox_recalculate(struct RICO_object *obj)
     {
         mesh = RICO_pack_lookup(global_default_mesh_cube);
     }
-    RICO_object_bbox_set(obj, &mesh->bbox);
+    RICO_object_bbox_set(obj, &mesh->aabb);
 }
 static void object_bbox_recalculate_all(u32 id)
 {
@@ -153,9 +149,9 @@ static void object_transform_update(struct RICO_object *obj)
     object_update_colliders(obj);
 }
 extern void RICO_object_bbox_set(struct RICO_object *obj,
-                                 const struct RICO_bbox *bbox)
+                                 const struct RICO_aabb *aabb)
 {
-    obj->bbox = *bbox;
+    obj->aabb = *aabb;
     object_update_colliders(obj);
 }
 extern void RICO_object_mesh_set(struct RICO_object *obj, pkid mesh_id)
@@ -225,7 +221,7 @@ static const struct mat4 *object_matrix_get(struct RICO_object *obj)
 static bool object_collide_ray(float *_dist, struct RICO_object *obj,
                                const struct ray *ray)
 {
-    return collide_ray_obb(_dist, ray, &obj->bbox, &obj->xform.matrix);
+    return collide_ray_obb(_dist, ray, &obj->aabb, &obj->xform.matrix);
 }
 static bool object_collide_ray_type(pkid *_object_id, float *_dist,
                                     const struct ray *ray)
@@ -249,7 +245,7 @@ static bool object_collide_ray_type(pkid *_object_id, float *_dist,
                 continue;
 
             float dist;
-            bool col = collide_ray_obb(&dist, ray, &obj->bbox,
+            bool col = collide_ray_obb(&dist, ray, &obj->aabb,
                                        &obj->xform.matrix);
 
             // If closest so far, save info
@@ -380,7 +376,7 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
                 struct vec4 color = (obj->selected)
                     ? COLOR_RED
                     : COLOR_DARK_WHITE_HIGHLIGHT;
-                RICO_prim_draw_bbox_xform(&obj->bbox, &color,
+                RICO_prim_draw_bbox_xform(&obj->aabb, &color,
                                           &obj->xform.matrix);
             }
         }
@@ -501,8 +497,8 @@ static void object_print(struct RICO_object *obj)
             "  Pos   %f %f %f\n"
             "  Rot   %f %f %f %f\n"
             "  Scale %f %f %f\n"
-            "  AABB  %f %f %f\n"
-            "        %f %f %f\n"
+            "  AABB   center: %f %f %f\n"
+            "        extents: %f %f %f\n"
             "\n"
             "Mesh [%u|%u] %s\n"
             "  Verts %u\n"
@@ -518,8 +514,8 @@ static void object_print(struct RICO_object *obj)
             obj->xform.orientation.w, obj->xform.orientation.x,
             obj->xform.orientation.y, obj->xform.orientation.z,
             obj->xform.scale.x, obj->xform.scale.y, obj->xform.scale.z,
-            obj->bbox_world.min.x, obj->bbox_world.min.y, obj->bbox_world.min.z,
-            obj->bbox_world.max.x, obj->bbox_world.max.y, obj->bbox_world.max.z,
+            obj->aabb_world.c.x, obj->aabb_world.c.y, obj->aabb_world.c.z,
+            obj->aabb_world.e.x, obj->aabb_world.e.y, obj->aabb_world.e.z,
             PKID_PACK(obj->mesh_id), PKID_BLOB(obj->mesh_id), mesh_str,
             mesh_verts,
             PKID_PACK(obj->material_id), PKID_BLOB(obj->material_id),

@@ -56,9 +56,9 @@ typedef DLB_ASSERT_HANDLER(DLB_assert_handler_def);
 DLB_assert_handler_def *DLB_assert_handler;
 
 #if defined(_MSC_VER)
-    #define DLB_DEBUG_BREAK (__debugbreak());
+    #define DLB_DEBUG_BREAK __debugbreak()
 #elif defined(__GNUC__) || defined(__clang__)
-    #define DLB_DEBUG_BREAK (__builtin_trap());
+    #define DLB_DEBUG_BREAK __builtin_trap()
 #endif
 
 #define DLB_ASSERT(expr) \

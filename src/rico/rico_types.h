@@ -11,7 +11,7 @@
     f(RIC_ASSET_FONT,      sizeof(struct RICO_font))		\
     f(RIC_ASSET_STRING,    sizeof(struct RICO_string))	    \
     f(RIC_ASSET_MATERIAL,  sizeof(struct RICO_material))	\
-    f(RIC_ASSET_BBOX,      sizeof(struct RICO_bbox))
+    f(RIC_ASSET_BBOX,      sizeof(struct RICO_aabb))
 
 enum ric_asset_type
 {
@@ -335,19 +335,6 @@ struct RICO_audio_buffer
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-// TODO: Move this to rico_primitives
-
-// TODO: Replace bbox with aabb
-// TODO: Implement reuse of data for bounding boxes.. no need to initialize
-//       an entirely new vao/vbo for every bbox.
-// TODO: Don't serialize vao/vbo!
-
-// IMPORTANT: *DO NOT* add pointers in this struct, it will break cereal!
-struct RICO_bbox
-{
-    struct vec3 min;
-    struct vec3 max;
-};
 
 struct RICO_aabb
 {
@@ -381,7 +368,6 @@ struct RICO_camera
     bool locked;
     bool need_update;
 
-    struct RICO_bbox RICO_bbox; //TODO: Replace with vec3 and do v3_render()
     struct mat4 view_matrix;
     struct mat4 persp_matrix;
     struct mat4 ortho_matrix;
@@ -484,7 +470,7 @@ struct RICO_mesh
     u32 vertex_count;
     u32 element_count;
     enum program_type prog_type;
-    struct RICO_bbox bbox;
+    struct RICO_aabb aabb;
 
     // TODO: Remove these fields. Load data directly into VRAM then free buffer.
     u32 vertices_offset;
@@ -710,8 +696,8 @@ struct RICO_object
     // TODO: Replace bbox with aabb
     //struct RICO_aabb aabb;
     //struct RICO_aabb aabb_world;
-    struct RICO_bbox bbox;
-    struct RICO_bbox bbox_world;
+    struct RICO_aabb aabb;
+    struct RICO_aabb aabb_world;
     struct RICO_obb obb;
     struct sphere sphere;
 

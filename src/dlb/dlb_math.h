@@ -153,18 +153,21 @@ struct quat
 //       technically valid in VS, it makes Intellisense whine and misbehave.
 #if defined(__GNUC__) || defined(__clang__) // || defined(_MSC_VER)
 #define RECT(x, y, w, h) ((const struct size) {{{ x, y, w, h }}})
-#define VEC2(x, y)      ((const struct vec2) {{{ x, y }}})
+#define VEC2(x, y)       ((const struct vec2) {{{ x, y }}})
 #define VEC2I(x, y)      ((const struct vec2i) {{{ x, y }}})
+#define VEC3_1(x)        ((const struct vec3) {{{ x, x, x }}})
 #define VEC3(x, y, z)    ((const struct vec3) {{{ x, y, z }}})
+#define VEC4_V3(v)       ((const struct vec4) {{{ v.x, v.y, v.z, 0.0f }}})
 #define VEC4(x, y, z, w) ((const struct vec4) {{{ x, y, z, w }}})
 #define QUAT(w, x, y, z) ((const struct quat) { w, {{ x, y, z }}})
 #else
 #define RECT(x, y, w, h) ((const struct rect) { x, y, w, h })
 #define VEC2(x, y)       ((const struct vec2) { x, y })
 #define VEC2I(x, y)      ((const struct vec2i) { x, y })
+#define VEC3_1(x)        ((const struct vec3) { x, x, x })
 #define VEC3(x, y, z)    ((const struct vec3) { x, y, z })
-#define VEC4(x, y, z, w) ((const struct vec4) { x, y, z, w })
 #define VEC4_V3(v)       ((const struct vec4) { v.x, v.y, v.z, 0.0f })
+#define VEC4(x, y, z, w) ((const struct vec4) { x, y, z, w })
 #define QUAT(w, x, y, z) ((const struct quat) { w, x, y, z })
 #endif
 

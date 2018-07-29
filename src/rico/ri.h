@@ -174,8 +174,7 @@ static void window_render();
 static void init_openal();
 
 struct RICO_mesh;
-static void bbox_init(struct RICO_bbox *bbox, struct vec3 min, struct vec3 max);
-static void bbox_init_mesh(struct RICO_bbox *bbox, struct RICO_mesh *mesh);
+static void bbox_init_mesh(struct RICO_aabb *aabb, struct RICO_mesh *mesh);
 
 static void camera_init(struct RICO_camera *camera, struct vec3 position,
                         struct quat view, float fov_deg);
@@ -197,10 +196,10 @@ static void camera_fwd_ray(struct ray *_ray, struct RICO_camera *camera);
 static bool collide_ray_plane(struct vec3 *_contact, const struct ray *ray,
                               const struct vec3 *p, const struct vec3 *n);
 static bool collide_ray_bbox(float *_t, const struct ray *ray,
-                             const struct RICO_bbox *RICO_bbox,
-                             const struct mat4 *transform);
+                             const struct RICO_aabb *aabb,
+                             const struct vec3 *pos);
 static bool collide_ray_obb(float *_dist, const struct ray *r,
-                            const struct RICO_bbox *RICO_bbox,
+                            const struct RICO_aabb *RICO_aabb,
                             const struct mat4 *model_matrix);
 
 static int rico_convert(int argc, char **argv);
