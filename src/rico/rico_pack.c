@@ -1016,7 +1016,7 @@ extern int RICO_load_obj_file(u32 pack_id, const char *filename,
                     RICO_load_mesh(pack_id, name, sizeof(*vertices), idx_vertex,
                                    vertices, idx_element, elements, prog_type);
                 struct RICO_mesh *mesh = RICO_pack_lookup(last_mesh_id);
-                bbox_init_mesh(&mesh->aabb, mesh);
+                aabb_init_mesh(&mesh->aabb, mesh);
 
                 idx_mesh++;
                 if (idx_mesh > 10)
@@ -1112,7 +1112,7 @@ extern int RICO_load_obj_file(u32 pack_id, const char *filename,
             RICO_load_mesh(pack_id, name, sizeof(*vertices), idx_vertex,
                            vertices, idx_element, elements, prog_type);
         struct RICO_mesh *mesh = RICO_pack_lookup(last_mesh_id);
-        bbox_init_mesh(&mesh->aabb, mesh);
+        aabb_init_mesh(&mesh->aabb, mesh);
 
         idx_mesh++;
     }

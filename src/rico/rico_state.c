@@ -588,12 +588,12 @@ static int shared_edit_events()
     // Recalculate bounding boxes of all objects
     else if (action_active(RIC_ACTION_EDIT_BBOX_RECALCULATE_ALL))
     {
-        edit_bbox_reset_all();
+        edit_aabb_reset_all();
     }
     // Recalculate bounding box based on current mesh
     else if (action_active(RIC_ACTION_EDIT_BBOX_RECALCULATE))
     {
-        edit_bbox_reset();
+        edit_aabb_reset();
     }
     // Duplicate selected object
     else if (action_active(RIC_ACTION_EDIT_SELECTED_DUPLICATE))

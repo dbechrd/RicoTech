@@ -616,11 +616,11 @@ void DEBUG_render_color_test()
         x -= width + padding;
         color_test.c = VEC3(x, y, 0.0f);
         color_test.e = VEC3_1(width);
-        RICO_prim_draw_bbox(&color_test, &colors[i]);
+        RICO_prim_draw_aabb(&color_test, &colors[i]);
     }
 }
 
-void debug_render_bboxes()
+void debug_render_colliders()
 {
     for (u32 i = 1; i < ARRAY_COUNT(global_packs); ++i)
     {
@@ -632,37 +632,26 @@ void debug_render_bboxes()
         {
             struct RICO_object *obj = RICO_pack_lookup(id);
 
-            //struct RICO_aabb obb_bbox = { 0 };
-            //obb_bbox.min = obj->rico.bbox.min;
-            //v3_mul_mat4(&obb_bbox.min, &obj->rico.xform.matrix);
-            //obb_bbox.max = obj->rico.bbox.max;
-            //v3_mul_mat4(&obb_bbox.max, &obj->rico.xform.matrix);
-            //RICO_prim_draw_bbox(&obb_bbox, &MAT4_IDENT, &COLOR_ORANGE);
+            struct vec4 col_obb     = COLOR_DARK_RED;
+            struct vec4 col_aabb    = COLOR_DARK_ORANGE;
+            struct vec4 col_sphere  = COLOR_DARK_YELLOW;
 
             if (obj->collide_obb)
             {
-                RICO_prim_draw_sphere(&obj->sphere, &COLOR_TRANS_GRAY_2);
-                RICO_prim_draw_bbox(&obj->aabb_world, &COLOR_TRANS_BLACK);
-                RICO_prim_draw_obb(&obj->obb, &COLOR_RED);
+                col_obb = COLOR_RED;
             }
             else if (obj->collide_aabb)
             {
-                RICO_prim_draw_sphere(&obj->sphere, &COLOR_TRANS_GRAY_2);
-                RICO_prim_draw_bbox(&obj->aabb_world, &COLOR_ORANGE);
-                RICO_prim_draw_obb(&obj->obb, &COLOR_TRANS_BLACK);
+                col_aabb = COLOR_ORANGE;
             }
             else if (obj->collide_sphere)
             {
-                RICO_prim_draw_sphere(&obj->sphere, &COLOR_DARK_YELLOW_HIGHLIGHT);
-                RICO_prim_draw_bbox(&obj->aabb_world, &COLOR_TRANS_BLACK);
-                RICO_prim_draw_obb(&obj->obb, &COLOR_TRANS_BLACK);
+                col_sphere = COLOR_YELLOW;
             }
-            else
-            {
-                RICO_prim_draw_sphere(&obj->sphere, &COLOR_TRANS_GRAY_2);
-                RICO_prim_draw_bbox(&obj->aabb_world, &COLOR_TRANS_BLACK);
-                RICO_prim_draw_obb(&obj->obb, &COLOR_TRANS_BLACK);
-            }
+
+            //RICO_prim_draw_sphere(&obj->sphere, &col_sphere);
+            RICO_prim_draw_aabb(&obj->aabb_world, &col_aabb);
+            RICO_prim_draw_obb(&obj->obb, &col_obb);
 
             id = RICO_pack_next_type(id, RIC_ASSET_OBJECT);
         }
@@ -1448,7 +1437,7 @@ int main(int argc, char **argv)
         // Render overlays
         if (RICO_state_is_edit())
         {
-            debug_render_bboxes();
+            debug_render_colliders();
             if (rayviz_sphere.radius > 0.0f)
             {
                 RICO_prim_draw_sphere(&rayviz_sphere, &COLOR_YELLOW);

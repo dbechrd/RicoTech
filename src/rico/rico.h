@@ -14,7 +14,7 @@
 
 #include "rico_error.h"
 #include "rico_types.h"
-#include "rico_bbox.h"
+#include "rico_aabb.h"
 #include "rico_primitives.h"
 #include "rico_mesh.h"
 #include "rico_light.h"

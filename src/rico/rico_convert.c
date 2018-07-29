@@ -1,3 +1,4 @@
+#if 0
 #define MAX_TOKENS 32 * 1024 * 1024
 
 #define OBJ_TOKEN_TYPES(f) \
@@ -251,8 +252,8 @@ static int load_obj_file_new(const char *filename)
     if (tok_idx == MAX_TOKENS && *bp)
     {
         err = RICO_ERROR(RIC_ERR_OBJ_PARSE_FAILED,
-                          "Ran out of memory for tokens on line %d.\n",
-                          line_number);
+                         "Ran out of memory for tokens on line %d.\n",
+                         line_number);
         goto cleanup;
     }
 
@@ -352,4 +353,5 @@ enum obj_keyword_type
 
     OBJ_KW_COUNT
 };
+#endif
 #endif

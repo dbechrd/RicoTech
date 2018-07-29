@@ -24,7 +24,7 @@ static bool collide_ray_plane(struct vec3 *_contact, const struct ray *ray,
 
     return false;
 }
-static bool collide_ray_bbox(float *_t, const struct ray *ray,
+static bool collide_ray_aabb(float *_t, const struct ray *ray,
                              const struct RICO_aabb *aabb,
                              const struct vec3 *pos)
 {

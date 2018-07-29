@@ -693,9 +693,6 @@ struct RICO_object
     u32 type;
     struct RICO_transform xform;
 
-    // TODO: Replace bbox with aabb
-    //struct RICO_aabb aabb;
-    //struct RICO_aabb aabb_world;
     struct RICO_aabb aabb;
     struct RICO_aabb aabb_world;
     struct RICO_obb obb;

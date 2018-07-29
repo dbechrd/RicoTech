@@ -46,10 +46,10 @@ static void edit_object_create()
     pkid new_id = RICO_load_object(PKID_PACK(selected_obj_id), 0, 0, name);
     edit_object_select(new_id, false);
 }
-static void edit_bbox_reset_all()
+static void edit_aabb_reset_all()
 {
     u32 start_id = PKID_PACK(selected_obj_id);
-    object_bbox_recalculate_all(start_id);
+    object_aabb_recalculate_all(start_id);
 
     // Reselect current object
     if (selected_obj_id)
@@ -140,12 +140,9 @@ static void edit_translate(struct RICO_camera *camera, const struct vec3 *offset
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
 
-    // HACK: There's probably a better way to do this check
-    bool has_bbox = true; //v3_length(&obj->aabb.e) > 0;
-
     if (v3_equals(offset, &VEC3_ZERO))
     {
-        if (camera->locked && has_bbox)
+        if (camera->locked)
         {
             camera->pos = VEC3_ZERO;
         }
@@ -153,7 +150,7 @@ static void edit_translate(struct RICO_camera *camera, const struct vec3 *offset
     }
     else
     {
-        if (camera->locked && has_bbox)
+        if (camera->locked)
         {
             camera_translate_world(camera, offset);
         }
@@ -321,13 +318,13 @@ static void edit_mesh_prev()
         object_print(obj);
     }
 }
-static void edit_bbox_reset()
+static void edit_aabb_reset()
 {
     if (!selected_obj_id)
         return;
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
-    object_bbox_recalculate(obj);
+    object_aabb_recalculate(obj);
 
     obj->selected = true;
     object_print(obj);
@@ -369,7 +366,7 @@ static struct widget *widget_test()
         for (u32 i = 0; i < ARRAY_COUNT(widgets); ++i)
         {
             float dist;
-            bool collide = collide_ray_bbox(&dist, &cam_ray, &widgets[i].aabb,
+            bool collide = collide_ray_aabb(&dist, &cam_ray, &widgets[i].aabb,
                                             &obj->xform.position);
             if (collide && dist < dist_min)
             {
@@ -507,18 +504,13 @@ static void edit_render()
         struct mat4 xform = MAT4_IDENT;
         mat4_translate(&xform, &obj->xform.position);
 
-        //struct vec3 *bbox = &obj->bbox.max;
-        //prim_draw_line(&VEC3_ZERO, &VEC3(bbox->x, 0.0f, 0.0f), &xform, COLOR_RED);
-        //prim_draw_line(&VEC3_ZERO, &VEC3(0.0f, bbox->y, 0.0f), &xform, COLOR_GREEN);
-        //prim_draw_line(&VEC3_ZERO, &VEC3(0.0f, 0.0f, bbox->z), &xform, COLOR_BLUE);
-
         RICO_prim_draw_line_xform(&VEC3_ZERO, &VEC3_X, &COLOR_RED, &xform);
         RICO_prim_draw_line_xform(&VEC3_ZERO, &VEC3_Y, &COLOR_GREEN, &xform);
         RICO_prim_draw_line_xform(&VEC3_ZERO, &VEC3_Z, &COLOR_BLUE, &xform);
 
-        RICO_prim_draw_bbox_xform(&widgets[0].aabb, &COLOR_RED, &xform);
-        RICO_prim_draw_bbox_xform(&widgets[1].aabb, &COLOR_GREEN, &xform);
-        RICO_prim_draw_bbox_xform(&widgets[2].aabb, &COLOR_BLUE, &xform);
+        RICO_prim_draw_aabb_xform(&widgets[0].aabb, &COLOR_RED, &xform);
+        RICO_prim_draw_aabb_xform(&widgets[1].aabb, &COLOR_GREEN, &xform);
+        RICO_prim_draw_aabb_xform(&widgets[2].aabb, &COLOR_BLUE, &xform);
     }
 
 #if 0

@@ -53,15 +53,20 @@ static void object_update_obb(struct RICO_object *obj)
     DLB_ASSERT(dot3 == 0.0f);
 #endif
 }
-static void object_update_bbox_world(struct RICO_object *obj)
+static void object_update_aabb_world(struct RICO_object *obj)
 {
-    // TODO: This is super broken.. do I even care about AABB?
-    obj->aabb_world = obj->aabb;
-    //RICO_aabb_transform(&obj->aabb_world, &obj->xform.matrix);
+    obj->aabb_world.c = obj->obb.c;
+    obj->aabb_world.e = VEC3_ZERO;
 
-    // TODO: Store local AABB
-    //  calculate world_obb from local AABB + transform
-    //  calculate world_aabb from world_obb
+    for (int i = 0; i < 3; ++i)
+    {
+        struct vec3 axis = obj->obb.u[i];
+        v3_scalef(&axis, obj->obb.e.a[i]);
+
+        obj->aabb_world.e.x += ABS(v3_dot(&axis, &VEC3_X));
+        obj->aabb_world.e.y += ABS(v3_dot(&axis, &VEC3_Y));
+        obj->aabb_world.e.z += ABS(v3_dot(&axis, &VEC3_Z));
+    }
 }
 static void object_update_sphere(struct RICO_object *obj)
 {
@@ -73,11 +78,11 @@ static void object_update_sphere(struct RICO_object *obj)
 }
 static void object_update_colliders(struct RICO_object *obj)
 {
-    object_update_bbox_world(obj);
     object_update_obb(obj);
+    object_update_aabb_world(obj);
     object_update_sphere(obj);
 }
-static void object_bbox_recalculate(struct RICO_object *obj)
+static void object_aabb_recalculate(struct RICO_object *obj)
 {
     struct RICO_mesh *mesh;
     if (obj->mesh_id)
@@ -88,9 +93,9 @@ static void object_bbox_recalculate(struct RICO_object *obj)
     {
         mesh = RICO_pack_lookup(global_default_mesh_cube);
     }
-    RICO_object_bbox_set(obj, &mesh->aabb);
+    RICO_object_aabb_set(obj, &mesh->aabb);
 }
-static void object_bbox_recalculate_all(u32 id)
+static void object_aabb_recalculate_all(u32 id)
 {
     struct pack *pack = global_packs[id];
     struct RICO_object *obj;
@@ -100,7 +105,7 @@ static void object_bbox_recalculate_all(u32 id)
             continue;
 
         obj = pack_read(pack, index);
-        object_bbox_recalculate(obj);
+        object_aabb_recalculate(obj);
     }
 }
 static void object_transform_update(struct RICO_object *obj)
@@ -148,7 +153,7 @@ static void object_transform_update(struct RICO_object *obj)
 
     object_update_colliders(obj);
 }
-extern void RICO_object_bbox_set(struct RICO_object *obj,
+extern void RICO_object_aabb_set(struct RICO_object *obj,
                                  const struct RICO_aabb *aabb)
 {
     obj->aabb = *aabb;
@@ -161,7 +166,7 @@ extern void RICO_object_mesh_set(struct RICO_object *obj, pkid mesh_id)
     RICO_ASSERT(uid->type == RIC_ASSET_MESH);
 #endif
     obj->mesh_id = mesh_id;
-    object_bbox_recalculate(obj);
+    object_aabb_recalculate(obj);
 }
 extern void RICO_object_material_set(struct RICO_object *obj, pkid material_id)
 {
@@ -376,7 +381,7 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
                 struct vec4 color = (obj->selected)
                     ? COLOR_RED
                     : COLOR_DARK_WHITE_HIGHLIGHT;
-                RICO_prim_draw_bbox_xform(&obj->aabb, &color,
+                RICO_prim_draw_aabb_xform(&obj->aabb, &color,
                                           &obj->xform.matrix);
             }
         }

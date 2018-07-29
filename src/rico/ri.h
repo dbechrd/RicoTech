@@ -174,7 +174,7 @@ static void window_render();
 static void init_openal();
 
 struct RICO_mesh;
-static void bbox_init_mesh(struct RICO_aabb *aabb, struct RICO_mesh *mesh);
+static void aabb_init_mesh(struct RICO_aabb *aabb, struct RICO_mesh *mesh);
 
 static void camera_init(struct RICO_camera *camera, struct vec3 position,
                         struct quat view, float fov_deg);
@@ -195,16 +195,12 @@ static void camera_fwd_ray(struct ray *_ray, struct RICO_camera *camera);
 
 static bool collide_ray_plane(struct vec3 *_contact, const struct ray *ray,
                               const struct vec3 *p, const struct vec3 *n);
-static bool collide_ray_bbox(float *_t, const struct ray *ray,
+static bool collide_ray_aabb(float *_t, const struct ray *ray,
                              const struct RICO_aabb *aabb,
                              const struct vec3 *pos);
 static bool collide_ray_obb(float *_dist, const struct ray *r,
                             const struct RICO_aabb *RICO_aabb,
                             const struct mat4 *model_matrix);
-
-static int rico_convert(int argc, char **argv);
-static int rico_convert_obj(const char *filename);
-static int load_obj_file_new(const char *filename);
 
 #if 0
 static inline char *read_word(char *fp, int buffer_len, char **buf)
@@ -222,7 +218,7 @@ static inline char *read_word(char *fp, int buffer_len, char **buf)
 
 static void editor_init();
 static void edit_object_create();
-static void edit_bbox_reset_all();
+static void edit_aabb_reset_all();
 static void edit_object_select(pkid id, bool force);
 static void edit_object_next();
 static void edit_object_prev();
@@ -233,7 +229,7 @@ static void edit_rotate(const struct quat *offset);
 static void edit_scale(const struct vec3 *offset);
 static void edit_mesh_next();
 static void edit_mesh_prev();
-static void edit_bbox_reset();
+static void edit_aabb_reset();
 static void edit_duplicate();
 static void edit_delete();
 static void edit_mouse_pressed();
@@ -285,7 +281,7 @@ static void object_delete(struct RICO_object *obj);
 static struct RICO_object *object_copy(u32 pack, struct RICO_object *other,
                                        const char *name);
 static void object_update_colliders(struct RICO_object *obj);
-static void object_bbox_recalculate_all(u32 id);
+static void object_aabb_recalculate_all(u32 id);
 static void object_transform_update(struct RICO_object *obj);
 static void object_rot(struct RICO_object *obj, const struct quat *q);
 static void object_rot_set(struct RICO_object *obj, const struct quat *q);

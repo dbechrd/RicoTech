@@ -32,9 +32,6 @@
     <ClCompile Include="src\rico\rico_audio.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
-    <ClCompile Include="src\rico\rico_bbox.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
     <ClCompile Include="src\rico\rico_camera.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
@@ -134,6 +131,9 @@
     <ClCompile Include="src\rico\rico_types.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
+    <ClCompile Include="src\rico\rico_aabb.c">
+      <Filter>Source Files\rico</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dlb\dlb_math.h">
@@ -155,9 +155,6 @@
       <Filter>Header Files\rico</Filter>
     </ClInclude>
     <ClInclude Include="src\rico\rico_audio.h">
-      <Filter>Header Files\rico</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rico\rico_bbox.h">
       <Filter>Header Files\rico</Filter>
     </ClInclude>
     <ClInclude Include="src\rico\rico_camera.h">
@@ -224,6 +221,9 @@
       <Filter>Header Files\rico</Filter>
     </ClInclude>
     <ClInclude Include="src\rico\ri_program_text.h">
+      <Filter>Header Files\rico</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rico\rico_aabb.h">
       <Filter>Header Files\rico</Filter>
     </ClInclude>
   </ItemGroup>

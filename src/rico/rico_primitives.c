@@ -4,8 +4,8 @@ static GLuint prim_line_vbo;
 static GLuint prim_quad_vao;
 static GLuint prim_quad_vbo;
 
-static GLuint prim_bbox_vao;
-static GLuint prim_bbox_vbo[RIC_VBO_COUNT];
+static GLuint prim_aabb_vao;
+static GLuint prim_aabb_vbo[RIC_VBO_COUNT];
 
 static int prim_init()
 {
@@ -75,12 +75,12 @@ static int prim_init()
     ///-------------------------------------------------------------------------
     //| Bounding box
     ///-------------------------------------------------------------------------
-    glGenVertexArrays(1, &prim_bbox_vao);
-    glBindVertexArray(prim_bbox_vao);
+    glGenVertexArrays(1, &prim_aabb_vao);
+    glBindVertexArray(prim_aabb_vao);
 
-    glGenBuffers(2, prim_bbox_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, prim_bbox_vbo[0]);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, prim_bbox_vbo[1]);
+    glGenBuffers(2, prim_aabb_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, prim_aabb_vbo[0]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, prim_aabb_vbo[1]);
 
     const GLushort elements[] = {
         0, 1, 2, 3,            // front face
@@ -301,12 +301,12 @@ extern void RICO_prim_draw_plane_xform(const struct vec3 *n,
 
     RICO_prim_draw_quad_xform(&quad, color, xform);
 }
-extern void RICO_prim_draw_bbox(const struct RICO_aabb *aabb,
+extern void RICO_prim_draw_aabb(const struct RICO_aabb *aabb,
                                 const struct vec4 *color)
 {
-    RICO_prim_draw_bbox_xform(aabb, color, &MAT4_IDENT);
+    RICO_prim_draw_aabb_xform(aabb, color, &MAT4_IDENT);
 }
-extern void RICO_prim_draw_bbox_xform(const struct RICO_aabb *aabb,
+extern void RICO_prim_draw_aabb_xform(const struct RICO_aabb *aabb,
                                       const struct vec4 *color,
                                       const struct mat4 *xform)
 {
@@ -337,13 +337,13 @@ extern void RICO_prim_draw_bbox_xform(const struct RICO_aabb *aabb,
     glUniform4fv(global_prog_primitive->locations.frag.color, 1, (const GLfloat *)color);
     // TODO: Bind texture
 
-    RICO_ASSERT(prim_bbox_vao);
-    RICO_ASSERT(prim_bbox_vbo[0]);
-    RICO_ASSERT(prim_bbox_vbo[1]);
-    glBindVertexArray(prim_bbox_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, prim_bbox_vbo[0]);
+    RICO_ASSERT(prim_aabb_vao);
+    RICO_ASSERT(prim_aabb_vbo[0]);
+    RICO_ASSERT(prim_aabb_vbo[1]);
+    glBindVertexArray(prim_aabb_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, prim_aabb_vbo[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, prim_bbox_vbo[1]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, prim_aabb_vbo[1]);
 
     // Based loosely on:
     // https://en.wikibooks.org/wiki/OpenGL_Programming/Bounding_box
@@ -442,13 +442,13 @@ extern void RICO_prim_draw_obb_xform(const struct RICO_obb *obb,
     glUniform4fv(global_prog_primitive->locations.frag.color, 1, (const GLfloat *)color);
     // TODO: Bind texture
 
-    RICO_ASSERT(prim_bbox_vao);
-    RICO_ASSERT(prim_bbox_vbo[0]);
-    RICO_ASSERT(prim_bbox_vbo[1]);
-    glBindVertexArray(prim_bbox_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, prim_bbox_vbo[0]);
+    RICO_ASSERT(prim_aabb_vao);
+    RICO_ASSERT(prim_aabb_vbo[0]);
+    RICO_ASSERT(prim_aabb_vbo[1]);
+    glBindVertexArray(prim_aabb_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, prim_aabb_vbo[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, prim_bbox_vbo[1]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, prim_aabb_vbo[1]);
 
     // Based loosely on:
     // https://en.wikibooks.org/wiki/OpenGL_Programming/Bounding_box

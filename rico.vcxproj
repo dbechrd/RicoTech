@@ -44,7 +44,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="src\rico\rico_bbox.c">
+    <ClCompile Include="src\rico\rico_aabb.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
@@ -172,7 +172,7 @@
     <ClInclude Include="src\rico\ri.h" />
     <ClInclude Include="src\rico\rico.h" />
     <ClInclude Include="src\rico\rico_audio.h" />
-    <ClInclude Include="src\rico\rico_bbox.h" />
+    <ClInclude Include="src\rico\rico_aabb.h" />
     <ClInclude Include="src\rico\rico_camera.h" />
     <ClInclude Include="src\rico\rico_error.h" />
     <ClInclude Include="src\rico\rico_heiro.h" />

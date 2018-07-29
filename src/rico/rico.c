@@ -17,7 +17,7 @@
 #include "rico_shader.c"
 #include "rico_program.c"
 #include "rico_camera.c"
-#include "rico_bbox.c"
+#include "rico_aabb.c"
 
 #include "rico_material.c"
 #include "rico_shadow.c"
