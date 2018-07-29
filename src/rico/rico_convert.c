@@ -12,8 +12,8 @@
     f(OBJ_TOK_NEWLINE)         /* [ ]               */ \
     f(OBJ_TOK_COUNT)
 
-enum obj_token_type { OBJ_TOKEN_TYPES(GEN_LIST) };
-static const char *obj_token_type_string[] = { OBJ_TOKEN_TYPES(GEN_STRING) };
+enum obj_token_type { OBJ_TOKEN_TYPES(ENUM) };
+static const char *obj_token_type_string[] = { OBJ_TOKEN_TYPES(ENUM_STRING) };
 
 #define OBJ_KEYWORD_TYPES(f) \
     f(OBJ_KW_INVALID,        "\0") \
@@ -31,9 +31,9 @@ static const char *obj_token_type_string[] = { OBJ_TOKEN_TYPES(GEN_STRING) };
     f(OBJ_KW_SMOOTHING_GROUP, "s")     /* [s]                     */ \
     f(OBJ_KW_COUNT, "\0")
 
-enum obj_keyword_type { OBJ_KEYWORD_TYPES(GEN_LIST) };
-static const char *obj_keyword_type_string[] = { OBJ_KEYWORD_TYPES(GEN_STRING) };
-static const char *obj_keyword_values[] = { OBJ_KEYWORD_TYPES(GEN_STRING_VALUES) };
+enum obj_keyword_type { OBJ_KEYWORD_TYPES(ENUM) };
+static const char *obj_keyword_type_string[] = { OBJ_KEYWORD_TYPES(ENUM_STRING) };
+static const char *obj_keyword_values[] = { OBJ_KEYWORD_TYPES(ENUM_META) };
 
 struct obj_token
 {
@@ -59,7 +59,7 @@ struct obj_file
 
 static int rico_convert(int argc, char **argv)
 {
-    enum RICO_error err = ERR_INVALID_PARAMS;
+    enum ric_error err = RIC_ERR_INVALID_PARAMS;
 
     for (int i = 1; i < argc; ++i)
     {
@@ -80,7 +80,7 @@ static int rico_convert(int argc, char **argv)
 }
 static int rico_convert_obj(const char *filename)
 {
-    enum RICO_error err = SUCCESS;
+    enum ric_error err = RIC_SUCCESS;
     printf("Converting %s\n", filename);
     return load_obj_file_new(filename);
     return err;
@@ -90,7 +90,7 @@ static int load_obj_file_new(const char *filename)
     UNUSED(obj_token_type_string);
     UNUSED(obj_keyword_type_string);
 
-    enum RICO_error err;
+    enum ric_error err;
 
     u32 length;
     char *buffer;
@@ -150,7 +150,7 @@ static int load_obj_file_new(const char *filename)
             if (keyword == NULL)
             {
                 err = RICO_ERROR(
-                    ERR_OBJ_PARSE_FAILED,
+                    RIC_ERR_OBJ_PARSE_FAILED,
                     "Expected comment or keyword at beginning of line %d. Found: %.*s\n",
                     line_number, len, value
                 );
@@ -198,7 +198,7 @@ static int load_obj_file_new(const char *filename)
             }
             else
             {
-                err = RICO_ERROR(ERR_OBJ_PARSE_FAILED,
+                err = RICO_ERROR(RIC_ERR_OBJ_PARSE_FAILED,
                                   "Unexpected digit '%c' on line %d\n",
                                   *value, line_number);
                 goto cleanup;
@@ -216,7 +216,7 @@ static int load_obj_file_new(const char *filename)
 
         if (file.tokens[tok_idx].type == OBJ_TOK_UNKNOWN)
         {
-            err = RICO_ERROR(ERR_OBJ_PARSE_FAILED,
+            err = RICO_ERROR(RIC_ERR_OBJ_PARSE_FAILED,
                               "Unexpected character '%c' on line %d\n",
                               *value, line_number);
             goto cleanup;
@@ -250,7 +250,7 @@ static int load_obj_file_new(const char *filename)
 
     if (tok_idx == MAX_TOKENS && *bp)
     {
-        err = RICO_ERROR(ERR_OBJ_PARSE_FAILED,
+        err = RICO_ERROR(RIC_ERR_OBJ_PARSE_FAILED,
                           "Ran out of memory for tokens on line %d.\n",
                           line_number);
         goto cleanup;

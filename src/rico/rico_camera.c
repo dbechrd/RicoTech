@@ -183,8 +183,8 @@ static void camera_update(struct RICO_camera *camera, r64 sim_alpha)
 					   camera->pitch, camera->yaw, camera->roll,
                        camera->fov_deg, mouse_x, mouse_y);
 	string_truncate(buf, sizeof(buf), len);
-	string_free_slot(STR_SLOT_DEBUG_CAMERA);
-	RICO_load_string(PACK_TRANSIENT, STR_SLOT_DEBUG_CAMERA,
+	string_free_slot(RIC_STRING_SLOT_DEBUG_CAMERA);
+	RICO_load_string(RIC_PACK_ID_TRANSIENT, RIC_STRING_SLOT_DEBUG_CAMERA,
                      SCREEN_X(-(FONT_WIDTH * 16)), SCREEN_Y(FONT_HEIGHT),
                      COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
 #endif

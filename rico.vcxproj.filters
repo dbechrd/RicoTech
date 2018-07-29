@@ -199,29 +199,32 @@
     <ClInclude Include="src\rico\rico_types.h">
       <Filter>Header Files\rico</Filter>
     </ClInclude>
-    <ClInclude Include="src\rico\internal\ri.h">
-      <Filter>Header Files\rico</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rico\internal\ri_pool.h">
-      <Filter>Header Files\rico</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rico\internal\ri_program.h">
-      <Filter>Header Files\rico</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rico\internal\ri_program_pbr.h">
-      <Filter>Header Files\rico</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rico\internal\ri_program_prim.h">
-      <Filter>Header Files\rico</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rico\internal\ri_program_shadow.h">
-      <Filter>Header Files\rico</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rico\internal\ri_program_text.h">
-      <Filter>Header Files\rico</Filter>
-    </ClInclude>
     <ClInclude Include="src\dlb\dlb_hash.h">
       <Filter>Header Files\dlb</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rico\ri.h">
+      <Filter>Header Files\rico</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rico\ri_pool.h">
+      <Filter>Header Files\rico</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rico\ri_program.h">
+      <Filter>Header Files\rico</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rico\ri_program_pbr.h">
+      <Filter>Header Files\rico</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rico\ri_program_primitive.h">
+      <Filter>Header Files\rico</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rico\ri_program_shadow_cubemap.h">
+      <Filter>Header Files\rico</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rico\ri_program_shadow_texture.h">
+      <Filter>Header Files\rico</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rico\ri_program_text.h">
+      <Filter>Header Files\rico</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

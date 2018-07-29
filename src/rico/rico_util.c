@@ -20,7 +20,7 @@ static int file_contents(const char *filename, u32 *_length, char **_buffer)
 {
     FILE *fs = fopen(filename, "rb");
     if (!fs) {
-        return RICO_ERROR(ERR_FILE_READ, "Unable to open %s for reading",
+        return RICO_ERROR(RIC_ERR_FILE_READ, "Unable to open %s for reading",
                           filename);
     }
 
@@ -29,13 +29,13 @@ static int file_contents(const char *filename, u32 *_length, char **_buffer)
     rewind(fs);
 
     if (!*_length) {
-        return RICO_ERROR(ERR_FILE_READ, "Unable to determine length of %s",
+        return RICO_ERROR(RIC_ERR_FILE_READ, "Unable to determine length of %s",
                           filename);
     }
 
     *_buffer = malloc(*_length + 1 * sizeof(char));
     if (!*_buffer) {
-        return RICO_ERROR(ERR_BAD_ALLOC,
+        return RICO_ERROR(RIC_ERR_BAD_ALLOC,
                           "Failed to allocate file buffer for %s", filename);
     }
 
@@ -43,7 +43,7 @@ static int file_contents(const char *filename, u32 *_length, char **_buffer)
     fclose(fs);
     (*_buffer)[*_length] = '\0';
 
-    return SUCCESS;
+    return RIC_SUCCESS;
 }
 static void APIENTRY
 openglCallbackFunction(GLenum source, GLenum type, GLuint id, GLenum severity,
@@ -139,7 +139,7 @@ static void show_info_log(GLuint rico,
     log = malloc(log_length);
     glGet__InfoLog(rico, log_length, NULL, log);
     printf("%s", log);
-    RICO_ERROR(ERR_SHADER_COMPILE, "GL Info Log: '%s'", log);
+    RICO_ERROR(RIC_ERR_SHADER_COMPILE, "GL Info Log: '%s'", log);
     free(log);
 };
 

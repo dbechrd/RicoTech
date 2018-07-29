@@ -134,25 +134,37 @@
 ///////////////////////////////////////////////////////////
 // Globals
 ///////////////////////////////////////////////////////////
-extern struct pbr_program *prog_pbr;
-extern struct shadow_texture_program *prog_shadow_texture;
-extern struct shadow_cubemap_program *prog_shadow_cubemap;
-extern struct primitive_program *prog_prim;
-extern struct text_program *prog_text;
+extern struct program_pbr *global_prog_pbr;
+extern struct program_shadow_texture *global_prog_shadow_texture;
+extern struct program_shadow_cubemap *global_prog_shadow_cubemap;
+extern struct program_primitive *global_prog_primitive;
+extern struct program_text *global_prog_text;
 
 extern struct dlb_hash global_fonts;
 extern struct dlb_hash global_materials;
 extern struct dlb_hash global_meshes;
 extern struct dlb_hash global_textures;
 
-#define PACK_ALLOC_ZERO_MEMORY
+extern pkid global_default_font;
+extern pkid global_default_font_texture;
+extern pkid global_default_texture_diff;
+extern pkid global_default_texture_spec;
+extern pkid global_default_texture_emis;
+extern pkid global_default_material;
+extern pkid global_default_mesh_cube;
+extern pkid global_default_mesh_sphere;
+
+#define PACK_PUSH_CLEAR_MEM
 #define MAX_PACKS 32
-extern struct pack *packs[MAX_PACKS];
-extern u32 packs_next;
+extern struct pack *global_packs[MAX_PACKS];
+extern u32 global_packs_next;
 
-extern float trans_delta;
+// TODO: Rotate and scale widgets
+extern float global_trans_delta;
+extern float global_rot_delta;
+extern float global_scale_delta;
 
-extern pkid global_string_slots[STR_SLOT_COUNT + 64];
+extern pkid global_string_slots[RIC_STRING_SLOT_COUNT + 64];
 
 ///////////////////////////////////////////////////////////
 // Methods
@@ -231,11 +243,11 @@ static void edit_mouse_released();
 static void edit_render();
 static void free_glref();
 
-static enum RICO_error rico_error_print(const char *file, int line,
-                                        enum RICO_error err, const char *fmt,
+static enum ric_error rico_error_print(const char *file, int line,
+                                        enum ric_error err, const char *fmt,
                                         ...);
-static enum RICO_error rico_fatal_print(const char *file, int line,
-                                        enum RICO_error err, const char *fmt,
+static enum ric_error rico_fatal_print(const char *file, int line,
+                                        enum ric_error err, const char *fmt,
                                         ...);
 
 static int rico_file_open_write(struct rico_file *_handle, const char *filename,
@@ -298,7 +310,7 @@ static inline void *pack_push(struct pack *pack, u32 bytes)
 {
     RICO_ASSERT(pack->buffer_used + bytes < pack->buffer_size);
     void *ptr = pack->buffer + pack->buffer_used;
-#ifdef PACK_ALLOC_ZERO_MEMORY
+#ifdef PACK_PUSH_CLEAR_MEM
     memset(ptr, 0, bytes); // Re-zero memory
 #endif
     pack->buffer_used += bytes;
@@ -390,7 +402,7 @@ static inline void free_shader(GLuint shader)
 static void rico_check_key_events();
 
 static void string_delete(struct RICO_string *str);
-static void string_free_slot(enum RICO_string_slot slot);
+static void string_free_slot(enum ric_string_slot slot);
 static void string_update();
 static void string_render(struct RICO_string *str, GLint model_location);
 static void string_render_all(GLint model_location);

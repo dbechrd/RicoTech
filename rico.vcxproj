@@ -169,13 +169,7 @@
     <ClInclude Include="src\dlb\dlb_math.h" />
     <ClInclude Include="src\dlb\dlb_string.h" />
     <ClInclude Include="src\dlb\dlb_types.h" />
-    <ClInclude Include="src\rico\internal\ri.h" />
-    <ClInclude Include="src\rico\internal\ri_pool.h" />
-    <ClInclude Include="src\rico\internal\ri_program_pbr.h" />
-    <ClInclude Include="src\rico\internal\ri_program.h" />
-    <ClInclude Include="src\rico\internal\ri_program_prim.h" />
-    <ClInclude Include="src\rico\internal\ri_program_shadow.h" />
-    <ClInclude Include="src\rico\internal\ri_program_text.h" />
+    <ClInclude Include="src\rico\ri.h" />
     <ClInclude Include="src\rico\rico.h" />
     <ClInclude Include="src\rico\rico_audio.h" />
     <ClInclude Include="src\rico\rico_bbox.h" />
@@ -191,6 +185,13 @@
     <ClInclude Include="src\rico\rico_state.h" />
     <ClInclude Include="src\rico\rico_string.h" />
     <ClInclude Include="src\rico\rico_ui.h" />
+    <ClInclude Include="src\rico\ri_pool.h" />
+    <ClInclude Include="src\rico\ri_program.h" />
+    <ClInclude Include="src\rico\ri_program_pbr.h" />
+    <ClInclude Include="src\rico\ri_program_primitive.h" />
+    <ClInclude Include="src\rico\ri_program_shadow_cubemap.h" />
+    <ClInclude Include="src\rico\ri_program_shadow_texture.h" />
+    <ClInclude Include="src\rico\ri_program_text.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{13382442-3368-4BCD-A10F-E82012C2DB89}</ProjectGuid>

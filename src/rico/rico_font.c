@@ -56,7 +56,7 @@ static void font_render(pkid *mesh_id, pkid *tex_id, pkid font_id, float x,
     }
     else
     {
-        font = RICO_pack_lookup(FONT_DEFAULT);
+        font = RICO_pack_lookup(global_default_font);
     }
 
     //font_setblend(font);
@@ -132,7 +132,7 @@ static void font_render(pkid *mesh_id, pkid *tex_id, pkid font_id, float x,
     }
 
     pkid new_mesh_id =
-        RICO_load_mesh(PACK_TRANSIENT, mesh_name, sizeof(*vertices), idx_vertex,
+        RICO_load_mesh(RIC_PACK_ID_TRANSIENT, mesh_name, sizeof(*vertices), idx_vertex,
                        vertices, idx_element, elements, PROG_TEXT);
 
     RICO_ASSERT(new_mesh_id);

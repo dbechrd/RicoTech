@@ -90,17 +90,17 @@ static void object_bbox_recalculate(struct RICO_object *obj)
     }
     else
     {
-        mesh = RICO_pack_lookup(MESH_DEFAULT_CUBE);
+        mesh = RICO_pack_lookup(global_default_mesh_cube);
     }
     RICO_object_bbox_set(obj, &mesh->bbox);
 }
 static void object_bbox_recalculate_all(u32 id)
 {
-    struct pack *pack = packs[id];
+    struct pack *pack = global_packs[id];
     struct RICO_object *obj;
     for (u32 index = 1; index < pack->blobs_used; ++index)
     {
-        if (pack->index[index].type != RICO_HND_OBJECT)
+        if (pack->index[index].type != RIC_ASSET_OBJECT)
             continue;
 
         obj = pack_read(pack, index);
@@ -114,7 +114,7 @@ static void object_transform_update(struct RICO_object *obj)
     // HACK: Light test
     if (obj->type == OBJ_LIGHT_TEST)
     {
-        prog_pbr->frag.lights[NUM_LIGHT_DIR].pos = obj->xform.position;
+        global_prog_pbr->frag.lights[NUM_LIGHT_DIR].pos = obj->xform.position;
     }
 
     // HACK: Order of these operations might not always be the same.. should
@@ -162,7 +162,7 @@ extern void RICO_object_mesh_set(struct RICO_object *obj, pkid mesh_id)
 {
 #if RICO_DEBUG
     struct uid *uid = RICO_pack_lookup(mesh_id);
-    RICO_ASSERT(uid->type == RICO_HND_MESH);
+    RICO_ASSERT(uid->type == RIC_ASSET_MESH);
 #endif
     obj->mesh_id = mesh_id;
     object_bbox_recalculate(obj);
@@ -171,7 +171,7 @@ extern void RICO_object_material_set(struct RICO_object *obj, pkid material_id)
 {
 #if RICO_DEBUG
     struct uid *uid = RICO_pack_lookup(material_id);
-    RICO_ASSERT(uid->type == RICO_HND_MATERIAL);
+    RICO_ASSERT(uid->type == RIC_ASSET_MATERIAL);
 #endif
     obj->material_id = material_id;
 }
@@ -234,17 +234,17 @@ static bool object_collide_ray_type(pkid *_object_id, float *_dist,
     float closest = Z_FAR; // Track closest object
 
     struct RICO_object *obj = 0;
-    for (u32 i = PACK_COUNT; i < ARRAY_COUNT(packs); ++i)
+    for (u32 i = RIC_PACK_ID_COUNT; i < ARRAY_COUNT(global_packs); ++i)
     {
-        if (!packs[i])
+        if (!global_packs[i])
             continue;
 
-        for (u32 index = 1; index < packs[i]->blobs_used; ++index)
+        for (u32 index = 1; index < global_packs[i]->blobs_used; ++index)
         {
-            if (packs[i]->index[index].type != RICO_HND_OBJECT)
+            if (global_packs[i]->index[index].type != RIC_ASSET_OBJECT)
                 continue;
 
-            obj = pack_read(packs[i], index);
+            obj = pack_read(global_packs[i], index);
             if (obj->select_ignore)
                 continue;
 
@@ -272,7 +272,7 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
     // TODO: Interpolate / extrapolate physics
     UNUSED(alpha);
 
-    struct pbr_program *prog = prog_pbr;
+    struct program_pbr *prog = global_prog_pbr;
 
     glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -331,7 +331,7 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
         // TODO: Move this somewhere sane
 #       define SHADOW_TEXTURE_OFFSET 4
         glActiveTexture(GL_TEXTURE0 + SHADOW_TEXTURE_OFFSET + i);
-        if (prog->frag.lights[i].type == LIGHT_DIRECTIONAL)
+        if (prog->frag.lights[i].type == RIC_LIGHT_DIRECTIONAL)
         {
             glBindTexture(GL_TEXTURE_2D, shadow_textures[i]);
             glUniform1i(prog->locations.frag.shadow_textures[i],
@@ -341,7 +341,7 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
             glUniformMatrix4fv(prog->locations.vert.light_space, 1, GL_TRUE,
                                shadow_lightspace[0].a);
         }
-        else if (prog->frag.lights[i].type == LIGHT_POINT)
+        else if (prog->frag.lights[i].type == RIC_LIGHT_POINT)
         {
             glBindTexture(GL_TEXTURE_CUBE_MAP, shadow_cubemaps[i - NUM_LIGHT_DIR]);
             glUniform1i(prog->locations.frag.shadow_cubemaps[i- NUM_LIGHT_DIR],
@@ -353,10 +353,10 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
 
     const GLint model_location = prog->locations.vert.model;
 
-    for (u32 i = 1; i < ARRAY_COUNT(packs); ++i)
+    for (u32 i = 1; i < ARRAY_COUNT(global_packs); ++i)
     {
-        if (!packs[i]) continue;
-        object_render(packs[i], model_location, false);
+        if (!global_packs[i]) continue;
+        object_render(global_packs[i], model_location, false);
     }
 
     glUseProgram(0);
@@ -364,16 +364,16 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
     ////////////////////////////////////////////////////////////////////////////
     // Render bounding boxes
     // TODO: Batch render these
-    for (u32 i = 1; i < ARRAY_COUNT(packs); ++i)
+    for (u32 i = 1; i < ARRAY_COUNT(global_packs); ++i)
     {
-        if (!packs[i]) continue;
+        if (!global_packs[i]) continue;
 
-        for (u32 index = 1; index < packs[i]->blobs_used; ++index)
+        for (u32 index = 1; index < global_packs[i]->blobs_used; ++index)
         {
-            if (packs[i]->index[index].type != RICO_HND_OBJECT)
+            if (global_packs[i]->index[index].type != RIC_ASSET_OBJECT)
                 continue;
 
-            struct RICO_object *obj = pack_read(packs[i], index);
+            struct RICO_object *obj = pack_read(global_packs[i], index);
 
             if (RICO_state_is_edit())
             {
@@ -392,7 +392,7 @@ static void object_render(struct pack *pack, GLint model_location, bool shadow)
     u32 prev_type = 0;
     for (u32 index = 1; index < pack->blobs_used; ++index)
     {
-        if (pack->index[index].type != RICO_HND_OBJECT)
+        if (pack->index[index].type != RIC_ASSET_OBJECT)
             continue;
 
         obj = pack_read(pack, index);
@@ -404,7 +404,7 @@ static void object_render(struct pack *pack, GLint model_location, bool shadow)
         // Set object-specific uniform values
         glUniformMatrix4fv(model_location, 1, GL_TRUE, obj->xform.matrix.a);
 
-        pkid mat_id = MATERIAL_DEFAULT;
+        pkid mat_id = global_default_material;
         if (!shadow)
         {
             // Bind material
@@ -416,7 +416,7 @@ static void object_render(struct pack *pack, GLint model_location, bool shadow)
         }
 
         // Render
-        pkid mesh_id = MESH_DEFAULT_CUBE;
+        pkid mesh_id = global_default_mesh_cube;
         if (obj->mesh_id)
         {
             mesh_id = obj->mesh_id;
@@ -435,14 +435,14 @@ static void object_render(struct pack *pack, GLint model_location, bool shadow)
 
 static void object_print(struct RICO_object *obj)
 {
-    string_free_slot(STR_SLOT_SELECTED_OBJ);
+    string_free_slot(RIC_STRING_SLOT_SELECTED_OBJ);
 
     int len;
     char buf[BFG_MAXSTRING + 1] = { 0 };
 
     if (obj)
     {
-        buf32 *pack_name = &packs[PKID_PACK(obj->uid.pkid)]->name;
+        buf32 *pack_name = &global_packs[PKID_PACK(obj->uid.pkid)]->name;
 
         struct RICO_mesh *mesh = (obj->mesh_id)
             ? RICO_pack_lookup(obj->mesh_id) : NULL;
@@ -535,7 +535,7 @@ static void object_print(struct RICO_object *obj)
     }
 
     string_truncate(buf, sizeof(buf), len);
-    RICO_load_string(PACK_TRANSIENT, STR_SLOT_SELECTED_OBJ,
+    RICO_load_string(RIC_PACK_ID_TRANSIENT, RIC_STRING_SLOT_SELECTED_OBJ,
                      SCREEN_X(0), SCREEN_Y(FONT_HEIGHT),
                      COLOR_DARK_WHITE_HIGHLIGHT, 0, 0, buf);
 }

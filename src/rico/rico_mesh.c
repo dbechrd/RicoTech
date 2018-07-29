@@ -40,7 +40,7 @@ static void mesh_upload(struct RICO_mesh *mesh, GLenum hint)
     //--------------------------------------------------------------------------
     // Vertex buffer
     //--------------------------------------------------------------------------
-    glBindBuffer(GL_ARRAY_BUFFER, rgl_mesh->vbos[VBO_VERTEX]);
+    glBindBuffer(GL_ARRAY_BUFFER, rgl_mesh->vbos[RIC_VBO_VERTEX]);
     glBufferData(GL_ARRAY_BUFFER, rgl_mesh->vertices * mesh->vertex_size,
                  mesh_vertices(mesh), hint);
 
@@ -49,7 +49,7 @@ static void mesh_upload(struct RICO_mesh *mesh, GLenum hint)
     //--------------------------------------------------------------------------
     if (rgl_mesh->elements)
     {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rgl_mesh->vbos[VBO_ELEMENT]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rgl_mesh->vbos[RIC_VBO_ELEMENT]);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, rgl_mesh->elements * sizeof(u32),
                      mesh_elements(mesh), hint);
     }
@@ -102,10 +102,10 @@ static struct rgl_mesh *mesh_rgl(pkid pkid)
 static void mesh_bind_buffers(pkid pkid)
 {
     struct rgl_mesh *rgl_mesh = mesh_rgl(pkid);
-    glBindBuffer(GL_ARRAY_BUFFER, rgl_mesh->vbos[VBO_VERTEX]);
+    glBindBuffer(GL_ARRAY_BUFFER, rgl_mesh->vbos[RIC_VBO_VERTEX]);
     if (rgl_mesh->elements)
     {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rgl_mesh->vbos[VBO_ELEMENT]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rgl_mesh->vbos[RIC_VBO_ELEMENT]);
     }
 }
 static GLuint mesh_vao(pkid pkid)
@@ -130,10 +130,10 @@ static void mesh_clusterfuck(pkid pkid)
 {
     // Draw
     struct rgl_mesh *rgl_mesh = mesh_rgl(pkid);
-    glBindBuffer(GL_ARRAY_BUFFER, rgl_mesh->vbos[VBO_VERTEX]);
+    glBindBuffer(GL_ARRAY_BUFFER, rgl_mesh->vbos[RIC_VBO_VERTEX]);
     if (rgl_mesh->elements)
     {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rgl_mesh->vbos[VBO_ELEMENT]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rgl_mesh->vbos[RIC_VBO_ELEMENT]);
     }
 
     glVertexAttribPointer(LOCATION_PRIM_POSITION, 3, GL_FLOAT, GL_FALSE,

@@ -5,9 +5,9 @@
 
 enum actions
 {
-    ACTION_RICO_TEST = ACTION_COUNT,
-    ACTION_TYPE_NEXT,
-    ACTION_TYPE_PREV
+    RIC_ACTION_RICO_TEST = RIC_ACTION_COUNT,
+    RIC_ACTION_TYPE_NEXT,
+    RIC_ACTION_TYPE_PREV
 };
 
 struct ray_visualizer
@@ -49,11 +49,11 @@ static struct RICO_audio_source audio_sources[AUDIO_COUNT];
 
 enum toolbar_icon
 {
-    TOOLBAR_ICON(GEN_LIST)
+    TOOLBAR_ICON(ENUM)
     TOOLBAR_COUNT
 };
-//static const char *toolbar_icon_string[] = { TOOLBAR_ICON(GEN_STRING) };
-static const char *toolbar_icon_values[] = { TOOLBAR_ICON(GEN_STRING_VALUES) };
+//static const char *toolbar_icon_string[] = { TOOLBAR_ICON(ENUM_STRING) };
+static const char *toolbar_icon_values[] = { TOOLBAR_ICON(ENUM_META) };
 
 static struct RICO_sprite toolbar_sprites[TOOLBAR_COUNT];
 static struct RICO_spritesheet toolbar_sheet;
@@ -90,7 +90,7 @@ void pack_build_all()
 int pack_load(u32 pack_idx)
 {
     PERF_START(pack_load);
-    enum RICO_error err;
+    enum ric_error err;
     err = RICO_pack_load(pack_table[pack_idx].path_pak,
                          &pack_table[pack_idx].pak_id);
     if (err) return err;
@@ -103,7 +103,7 @@ int pack_load(u32 pack_idx)
 
 int pack_load_all()
 {
-	enum RICO_error err;
+	enum ric_error err;
 
     err = pack_load(PACK_ALPHA);
     if (err) return err;
@@ -339,29 +339,29 @@ void DEBUG_render_manifold(struct manifold *manifold)
 
 void clash_detect()
 {
-    for (u32 i = 1; i < ARRAY_COUNT(packs); ++i)
+    for (u32 i = 1; i < ARRAY_COUNT(global_packs); ++i)
     {
-        if (!packs[i])
+        if (!global_packs[i])
             continue;
 
-        pkid a_id = RICO_pack_first_type(packs[i]->id, RICO_HND_OBJECT);
+        pkid a_id = RICO_pack_first_type(global_packs[i]->id, RIC_ASSET_OBJECT);
         while (a_id)
         {
             struct RICO_object *a_obj = RICO_pack_lookup(a_id);
 
-            for (u32 j = i; j < ARRAY_COUNT(packs); ++j)
+            for (u32 j = i; j < ARRAY_COUNT(global_packs); ++j)
             {
-                if (!packs[j])
+                if (!global_packs[j])
                     continue;
 
                 pkid b_id;
                 if (j == i)
                 {
-                    b_id = RICO_pack_next_type(a_id, RICO_HND_OBJECT);
+                    b_id = RICO_pack_next_type(a_id, RIC_ASSET_OBJECT);
                 }
                 else
                 {
-                    b_id = RICO_pack_first_type(packs[j]->id, RICO_HND_OBJECT);
+                    b_id = RICO_pack_first_type(global_packs[j]->id, RIC_ASSET_OBJECT);
                 }
 
                 while (b_id)
@@ -397,11 +397,11 @@ void clash_detect()
                     a_obj->collide_obb = collide_obb;
                     b_obj->collide_obb = collide_obb;
 
-                    b_id = RICO_pack_next_type(b_id, RICO_HND_OBJECT);
+                    b_id = RICO_pack_next_type(b_id, RIC_ASSET_OBJECT);
                 }
             }
 
-            a_id = RICO_pack_next_type(a_id, RICO_HND_OBJECT);
+            a_id = RICO_pack_next_type(a_id, RIC_ASSET_OBJECT);
         }
     }
 
@@ -422,11 +422,11 @@ void clash_simulate(struct timmy *timmy)
     struct RICO_object *obj;
     struct manifold manifold = { 0 };
 
-    for (u32 i = 1; i < ARRAY_COUNT(packs); ++i)
+    for (u32 i = 1; i < ARRAY_COUNT(global_packs); ++i)
     {
-        if (!packs[i]) continue;
+        if (!global_packs[i]) continue;
 
-        pkid id = RICO_pack_first_type(packs[i]->id, RICO_HND_OBJECT);
+        pkid id = RICO_pack_first_type(global_packs[i]->id, RIC_ASSET_OBJECT);
         while (id)
         {
             obj = RICO_pack_lookup(id);
@@ -552,7 +552,7 @@ void clash_simulate(struct timmy *timmy)
                 RICO_object_trans_set(obj, &obj->xform.position);
             }
 
-            id = RICO_pack_next_type(id, RICO_HND_OBJECT);
+            id = RICO_pack_next_type(id, RIC_ASSET_OBJECT);
         }
     }
 }
@@ -620,12 +620,12 @@ void DEBUG_render_color_test()
 
 void debug_render_bboxes(struct timmy *timmy)
 {
-    for (u32 i = 1; i < ARRAY_COUNT(packs); ++i)
+    for (u32 i = 1; i < ARRAY_COUNT(global_packs); ++i)
     {
-        if (!packs[i])
+        if (!global_packs[i])
             continue;
 
-        pkid id = RICO_pack_first_type(packs[i]->id, RICO_HND_OBJECT);
+        pkid id = RICO_pack_first_type(global_packs[i]->id, RIC_ASSET_OBJECT);
         while (id)
         {
             struct RICO_object *obj = RICO_pack_lookup(id);
@@ -662,7 +662,7 @@ void debug_render_bboxes(struct timmy *timmy)
                 RICO_prim_draw_obb(&obj->obb, &COLOR_TRANS_BLACK);
             }
 
-            id = RICO_pack_next_type(id, RICO_HND_OBJECT);
+            id = RICO_pack_next_type(id, RIC_ASSET_OBJECT);
         }
     }
 }
@@ -671,7 +671,7 @@ void game_toolbar_init()
 {
     u32 sprite_count = ARRAY_COUNT(toolbar_sprites);
 
-    toolbar_sheet.tex_id = RICO_load_texture_file(PACK_TRANSIENT, "toolbar",
+    toolbar_sheet.tex_id = RICO_load_texture_file(RIC_PACK_ID_TRANSIENT, "toolbar",
                                                   "texture/toolbar.tga");
     toolbar_sheet.sprites = toolbar_sprites;
     toolbar_sheet.sprite_count = sprite_count;
@@ -711,7 +711,7 @@ void game_toolbar_init()
 void toolbar_button_click(const struct RICO_ui_event *e)
 {
     if ((u32)e->element->metadata == TOOLBAR_CURSOR &&
-        e->event_type == RICO_UI_EVENT_LMB_CLICK)
+        e->event_type == RIC_UI_EVENT_LMB_CLICK)
     {
         RICO_audio_source_play(&audio_sources[AUDIO_BUTTON]);
     }
@@ -736,9 +736,9 @@ void game_render_ui_toolbar()
         toolbar_buttons[i]->element.margin = margin;
         toolbar_buttons[i]->element.metadata = (void *)(TOOLBAR_CURSOR + i);
         toolbar_buttons[i]->element.event = toolbar_button_click;
-        toolbar_buttons[i]->color[RICO_UI_DEFAULT] = COLOR_GRAY_2;
-        toolbar_buttons[i]->color[RICO_UI_HOVERED] = COLOR_ORANGE;
-        toolbar_buttons[i]->color[RICO_UI_PRESSED] = COLOR_DARK_ORANGE;
+        toolbar_buttons[i]->color[RIC_UI_STATE_DEFAULT] = COLOR_GRAY_2;
+        toolbar_buttons[i]->color[RIC_UI_STATE_HOVERED] = COLOR_ORANGE;
+        toolbar_buttons[i]->color[RIC_UI_STATE_PRESSED] = COLOR_DARK_ORANGE;
         toolbar_buttons[i]->sprite = &toolbar_sheet.sprites[i];
         toolbar_buttons[i]->tooltip = &toolbar_tips[i];
     }
@@ -868,7 +868,7 @@ void lights_init()
 void lights_button_click(const struct RICO_ui_event *e)
 {
     u32 i = (u32)e->element->metadata;
-    if (e->event_type == RICO_UI_EVENT_LMB_CLICK)
+    if (e->event_type == RIC_UI_EVENT_LMB_CLICK)
     {
         //e->element->color = COLOR_ORANGE;
         RICO_audio_source_play(&audio_sources[AUDIO_BUTTON]);
@@ -899,8 +899,8 @@ void game_render_ui_lights()
 
         button->element.min_size = VEC2I(button_w, button_w);
         button->element.margin = PAD(0, 0, margin, margin);
-        button->color[RICO_UI_HOVERED] = colors[light_state][0];
-        button->color[RICO_UI_DEFAULT] = colors[light_state][1];
+        button->color[RIC_UI_STATE_HOVERED] = colors[light_state][0];
+        button->color[RIC_UI_STATE_DEFAULT] = colors[light_state][1];
         button->element.metadata = (void *)i;
         button->sprite = &toolbar_sheet.sprites[15];
         button->element.event = lights_button_click;
@@ -1265,7 +1265,7 @@ int main(int argc, char **argv)
     UNUSED(argv);
 
     UNUSED(panel_1);
-    enum RICO_error err = SUCCESS;
+    enum ric_error err = RIC_SUCCESS;
 
 	//main_nuklear(argc, argv);
     RICO_init();
@@ -1274,9 +1274,9 @@ int main(int argc, char **argv)
 
     ric_test();
 
-    RICO_bind_action(ACTION_RICO_TEST, CHORD1(SDL_SCANCODE_Z));
-    RICO_bind_action(ACTION_TYPE_NEXT, CHORD1(SDL_SCANCODE_X));
-    RICO_bind_action(ACTION_TYPE_PREV, CHORD1(SDL_SCANCODE_C));
+    RICO_bind_action(RIC_ACTION_RICO_TEST, CHORD1(SDL_SCANCODE_Z));
+    RICO_bind_action(RIC_ACTION_TYPE_NEXT, CHORD1(SDL_SCANCODE_X));
+    RICO_bind_action(RIC_ACTION_TYPE_PREV, CHORD1(SDL_SCANCODE_C));
 
     load_sound(AUDIO_WELCOME, "audio/welcome.ric");
     load_sound(AUDIO_THUNDER, "audio/thunder_storm.ric");
@@ -1324,7 +1324,7 @@ int main(int argc, char **argv)
     {
         RICO_mouse_coords(&mouse_x, &mouse_y);
 
-        if (RICO_state() == STATE_TEXT_INPUT)
+        if (RICO_state() == RIC_ENGINE_TEXT_INPUT)
         {
             debug_handle_text_input();
         }
@@ -1337,7 +1337,7 @@ int main(int argc, char **argv)
                 {
                     switch (action)
                     {
-                        case ACTION_RICO_TEST:
+                        case RIC_ACTION_RICO_TEST:
                             RICO_audio_source_play(&audio_sources[AUDIO_BUTTON]);
                             debug_perc += 1.0f;
                             break;
@@ -1353,10 +1353,10 @@ int main(int argc, char **argv)
                 {
                     switch (action)
                     {
-                        case ACTION_PLAY_INTERACT:
+                        case RIC_ACTION_PLAY_INTERACT:
                             object_interact();
                             break;
-                        case ACTION_RICO_TEST:
+                        case RIC_ACTION_RICO_TEST:
                             RICO_audio_source_play(&audio_sources[AUDIO_BUTTON]);
                             debug_perc += 1.0f;
                             break;
@@ -1386,18 +1386,18 @@ int main(int argc, char **argv)
         // Render light bounds
         for (int i = 0; i < NUM_LIGHT_DIR + NUM_LIGHT_POINT; i++)
         {
-            if (!prog_pbr->frag.lights[i].on)
+            if (!global_prog_pbr->frag.lights[i].on)
                 continue;
 
             struct sphere light_sphere = { 0 };
-            light_sphere.orig = prog_pbr->frag.lights[i].pos;
+            light_sphere.orig = global_prog_pbr->frag.lights[i].pos;
             light_sphere.radius = 0.1f;
 
-            struct vec4 color = VEC4(prog_pbr->frag.lights[i].col.r,
-                                     prog_pbr->frag.lights[i].col.g,
-                                     prog_pbr->frag.lights[i].col.b,
+            struct vec4 color = VEC4(global_prog_pbr->frag.lights[i].col.r,
+                                     global_prog_pbr->frag.lights[i].col.g,
+                                     global_prog_pbr->frag.lights[i].col.b,
                                      1.0f);
-            if (prog_pbr->frag.lights[i].type == LIGHT_DIRECTIONAL)
+            if (global_prog_pbr->frag.lights[i].type == RIC_LIGHT_DIRECTIONAL)
             {
                 RICO_prim_draw_sphere_xform(&light_sphere, &color, &sun_xform);
             }
@@ -1424,7 +1424,7 @@ int main(int argc, char **argv)
         RICO_prim_draw_line_xform(&VEC3_ZERO, &y, &COLOR_GREEN, &sun_xform);
         RICO_prim_draw_line_xform(&VEC3_ZERO, &z, &COLOR_BLUE, &sun_xform);
         RICO_prim_draw_line_xform(&VEC3_ZERO,
-                                  &prog_pbr->frag.lights[0].directional.dir,
+                                  &global_prog_pbr->frag.lights[0].directional.dir,
                                   &COLOR_YELLOW, &sun_xform);
 
         // Cleanup: Debug transform matrices
@@ -1463,7 +1463,7 @@ int main(int argc, char **argv)
         RICO_render_crosshair();
 
         //======================================================================
-        if (RICO_state() == STATE_TEXT_INPUT)
+        if (RICO_state() == RIC_ENGINE_TEXT_INPUT)
         {
             debug_render_text_input();
         }

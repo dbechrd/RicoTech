@@ -1,5 +1,284 @@
-#ifndef RICO_HND_H
-#define RICO_HND_H
+#ifndef RICO_TYPES_H
+#define RICO_TYPES_H
+
+////////////////////////////////////////////////////////////////////////////////
+
+#define RIC_ASSET_TYPES(f) \
+    f(RIC_ASSET_NULL,      0) \
+    f(RIC_ASSET_OBJECT,    sizeof(struct RICO_object))     \
+    f(RIC_ASSET_TEXTURE,   sizeof(struct RICO_texture))    \
+    f(RIC_ASSET_MESH,      sizeof(struct RICO_mesh))		\
+    f(RIC_ASSET_FONT,      sizeof(struct RICO_font))		\
+    f(RIC_ASSET_STRING,    sizeof(struct RICO_string))	    \
+    f(RIC_ASSET_MATERIAL,  sizeof(struct RICO_material))	\
+    f(RIC_ASSET_BBOX,      sizeof(struct RICO_bbox))
+
+enum ric_asset_type
+{
+    RIC_ASSET_TYPES(ENUM)
+    RIC_ASSET_TYPE_COUNT
+};
+extern const char *ric_asset_type_string[];
+extern const u32 ric_asset_type_size[];
+
+#define RIC_AUDIO_STATES(f) \
+    f(RICO_AUDIO_UNKNOWN)    \
+    f(RICO_AUDIO_STOPPED)    \
+    f(RICO_AUDIO_PLAYING)    \
+    f(RICO_AUDIO_PAUSED)
+
+enum ric_audio_state
+{
+    RIC_AUDIO_STATES(ENUM)
+    RICO_AUDIO_STATE_COUNT
+};
+extern const char *ric_audio_state_string[];
+
+#define RIC_LIGHT_TYPES(f) \
+    f(RIC_LIGHT_AMBIENT)        \
+    f(RIC_LIGHT_DIRECTIONAL)    \
+    f(RIC_LIGHT_POINT)          \
+    f(RIC_LIGHT_SPOT)
+
+enum ric_light_type
+{
+    RIC_LIGHT_TYPES(ENUM)
+    RIC_LIGHT_TYPE_COUNT
+};
+extern const char *ric_light_type_string[];
+
+#define RIC_ENGINE_STATES(f) \
+    f(RIC_ENGINE_PLAY_EXPLORE)   \
+    f(RIC_ENGINE_EDIT_TRANSLATE) \
+    f(RIC_ENGINE_EDIT_ROTATE)    \
+    f(RIC_ENGINE_EDIT_SCALE)     \
+    f(RIC_ENGINE_EDIT_MATERIAL)  \
+    f(RIC_ENGINE_EDIT_MESH)      \
+    f(RIC_ENGINE_MENU_QUIT)      \
+    f(RIC_ENGINE_TEXT_INPUT)     \
+    f(RIC_ENGINE_SHUTDOWN)
+
+enum ric_state
+{
+    RIC_ENGINE_STATES(ENUM)
+    RIC_ENGINE_STATE_COUNT
+};
+extern const char *ric_engine_state_string[RIC_ENGINE_STATE_COUNT];
+
+enum ric_action
+{
+    RIC_ACTION_NULL,
+
+    RIC_ACTION_ENGINE_DEBUG_LIGHTING_TOGGLE,
+    RIC_ACTION_ENGINE_DEBUG_TRIGGER_BREAKPOINT,
+    RIC_ACTION_ENGINE_DEBUG_FOV_INCREASE,
+    RIC_ACTION_ENGINE_DEBUG_FOV_DECREASE,
+    RIC_ACTION_ENGINE_FPS_TOGGLE,
+    RIC_ACTION_ENGINE_MOUSE_LOCK_TOGGLE,
+    RIC_ACTION_ENGINE_VSYNC_TOGGLE,
+    RIC_ACTION_ENGINE_MUTE_TOGGLE,
+    RIC_ACTION_ENGINE_SIM_PAUSE,
+    RIC_ACTION_ENGINE_QUIT,
+
+    RIC_ACTION_CAMERA_SLOW_TOGGLE,
+    RIC_ACTION_CAMERA_RESET,
+    RIC_ACTION_CAMERA_LOCK_TOGGLE,
+    RIC_ACTION_CAMERA_WIREFRAME_TOGGLE,
+
+    RIC_ACTION_MOVE_RIGHT,
+    RIC_ACTION_MOVE_LEFT,
+    RIC_ACTION_MOVE_UP,
+    RIC_ACTION_MOVE_DOWN,
+    RIC_ACTION_MOVE_FORWARD,
+    RIC_ACTION_MOVE_BACKWARD,
+    RIC_ACTION_MOVE_SPRINT,
+
+    RIC_ACTION_PLAY_EDITOR,
+    RIC_ACTION_PLAY_INTERACT,
+
+    RIC_ACTION_EDIT_QUIT,
+    RIC_ACTION_EDIT_SAVE,
+    RIC_ACTION_EDIT_CYCLE_PACK,
+    RIC_ACTION_EDIT_CYCLE_BLOB_REVERSE,
+    RIC_ACTION_EDIT_CYCLE_BLOB,
+    RIC_ACTION_EDIT_MOUSE_PICK_START,
+    RIC_ACTION_EDIT_MOUSE_PICK_MOVE,
+    RIC_ACTION_EDIT_MOUSE_PICK_END,
+    RIC_ACTION_EDIT_BBOX_RECALCULATE_ALL,
+    RIC_ACTION_EDIT_CREATE_OBJECT,
+    RIC_ACTION_EDIT_SELECTED_DUPLICATE,
+    RIC_ACTION_EDIT_SELECTED_DELETE,
+    RIC_ACTION_EDIT_MODE_PREVIOUS,
+    RIC_ACTION_EDIT_MODE_NEXT,
+    RIC_ACTION_EDIT_CAMERA_TOGGLE_PROJECTION,
+    RIC_ACTION_EDIT_DEBUG_TEXT_INPUT,
+
+    RIC_ACTION_EDIT_TRANSLATE_RESET,
+    RIC_ACTION_EDIT_TRANSLATE_UP,
+    RIC_ACTION_EDIT_TRANSLATE_DOWN,
+    RIC_ACTION_EDIT_TRANSLATE_WEST,
+    RIC_ACTION_EDIT_TRANSLATE_EAST,
+    RIC_ACTION_EDIT_TRANSLATE_NORTH,
+    RIC_ACTION_EDIT_TRANSLATE_SOUTH,
+    RIC_ACTION_EDIT_TRANSLATE_DELTA_INCREASE,
+    RIC_ACTION_EDIT_TRANSLATE_DELTA_DECREASE,
+
+    RIC_ACTION_EDIT_ROTATE_RESET,
+    RIC_ACTION_EDIT_ROTATE_X_POS,
+    RIC_ACTION_EDIT_ROTATE_X_NEG,
+    RIC_ACTION_EDIT_ROTATE_Y_POS,
+    RIC_ACTION_EDIT_ROTATE_Y_NEG,
+    RIC_ACTION_EDIT_ROTATE_Z_POS,
+    RIC_ACTION_EDIT_ROTATE_Z_NEG,
+    RIC_ACTION_EDIT_ROTATE_DELTA_INCREASE,
+    RIC_ACTION_EDIT_ROTATE_DELTA_DECREASE,
+    RIC_ACTION_EDIT_ROTATE_HEPTAMODE_TOGGLE,
+
+    RIC_ACTION_EDIT_SCALE_RESET,
+    RIC_ACTION_EDIT_SCALE_UP,
+    RIC_ACTION_EDIT_SCALE_DOWN,
+    RIC_ACTION_EDIT_SCALE_WEST,
+    RIC_ACTION_EDIT_SCALE_EAST,
+    RIC_ACTION_EDIT_SCALE_NORTH,
+    RIC_ACTION_EDIT_SCALE_SOUTH,
+    RIC_ACTION_EDIT_SCALE_DELTA_INCREASE,
+    RIC_ACTION_EDIT_SCALE_DELTA_DECREASE,
+
+    RIC_ACTION_EDIT_MATERIAL_NEXT,
+    RIC_ACTION_EDIT_MATERIAL_PREVIOUS,
+    RIC_ACTION_EDIT_MATERIAL_NEXT_PACK,
+
+    RIC_ACTION_EDIT_MESH_NEXT,
+    RIC_ACTION_EDIT_MESH_PREVIOUS,
+    RIC_ACTION_EDIT_MESH_NEXT_PACK,
+    RIC_ACTION_EDIT_BBOX_RECALCULATE,
+
+    RIC_ACTION_COUNT
+};
+
+// TODO: Replace with proper temp / frame arenas.
+enum ric_pack_ids
+{
+    RIC_PACK_ID_DEFAULT,
+    RIC_PACK_ID_TRANSIENT,
+    RIC_PACK_ID_FRAME,
+    RIC_PACK_ID_COUNT
+};
+
+#define RIC_STRING_SLOTS(f) \
+    f(RIC_STRING_SLOT_SELECTED_OBJ) \
+    f(RIC_STRING_SLOT_STATE)        \
+    f(RIC_STRING_SLOT_FPS)          \
+    f(RIC_STRING_SLOT_MENU_QUIT)    \
+    f(RIC_STRING_SLOT_DELTA)        \
+    f(RIC_STRING_SLOT_WIDGET)       \
+    f(RIC_STRING_SLOT_DEBUG_CAMERA)
+
+enum ric_string_slot
+{
+    RIC_STRING_SLOTS(ENUM)
+    RIC_STRING_SLOT_COUNT
+};
+extern const char *ric_string_slot_string[];
+
+#define RIC_ERRORS(f) \
+    f(RIC_SUCCESS)                     \
+    f(RIC_ERR_BAD_ALLOC)               \
+    f(RIC_ERR_POOL_OUT_OF_MEMORY)      \
+    f(RIC_ERR_POOL_INVALID_HANDLE)     \
+    f(RIC_ERR_POOL_BAD_FREE)           \
+    f(RIC_ERR_FILE_WRITE)              \
+    f(RIC_ERR_FILE_READ)               \
+    f(RIC_ERR_FILE_SIGNATURE)          \
+    f(RIC_ERR_FILE_VERSION)            \
+    f(RIC_ERR_SERIALIZE_DISABLED)      \
+    f(RIC_ERR_SERIALIZER_NULL)         \
+    f(RIC_ERR_DESERIALIZER_NULL)       \
+    f(RIC_ERR_TEXTURE_LOAD)            \
+    f(RIC_ERR_TEXTURE_UNSUPPORTED_BPP) \
+    f(RIC_ERR_SHADER_COMPILE)          \
+    f(RIC_ERR_SHADER_LINK)             \
+    f(RIC_ERR_SDL_INIT)                \
+    f(RIC_ERR_GL3W_INIT)               \
+    f(RIC_ERR_OPENAL_INIT)             \
+    f(RIC_ERR_FREETYPE_INIT)           \
+    f(RIC_ERR_PRIM_UNSUPPORTED)        \
+    f(RIC_ERR_OBJ_TOO_MANY_VERTS)      \
+    f(RIC_ERR_CHUNK_NULL)              \
+    f(RIC_ERR_MESH_INVALID_NAME)       \
+    f(RIC_ERR_TEXTURE_INVALID_NAME)    \
+    f(RIC_ERR_MATERIAL_INVALID_NAME)   \
+    f(RIC_ERR_OBJECT_INVALID_NAME)     \
+    f(RIC_ERR_STRING_INVALID_NAME)     \
+    f(RIC_ERR_FONT_INVALID_NAME)       \
+    f(RIC_ERR_HASH_TABLE_FULL)         \
+    f(RIC_ERR_HASH_INVALID_KEY)        \
+    f(RIC_ERR_HASH_OVERWRITE)          \
+    f(RIC_ERR_INVALID_PARAMS)          \
+    f(RIC_ERR_CHUNK_FREE_FAILED)       \
+    f(RIC_ERR_OBJ_PARSE_FAILED)        \
+    f(RIC_ERR_FREETYPE_FACE)           \
+    f(RIC_ERR_FREETYPE_SIZE)           \
+    f(RIC_ERR_FREETYPE_CHAR)
+
+enum ric_error
+{
+    RIC_ERRORS(ENUM)
+    RIC_ERR_COUNT
+};
+extern const char *ric_error_string[];
+
+enum ric_ui_type
+{
+    RIC_UI_HUD,
+    RIC_UI_BREAK,
+    RIC_UI_STRING,
+    RIC_UI_BUTTON,
+    RIC_UI_LABEL,
+    RIC_UI_PROGRESS,
+    RIC_UI_COUNT
+};
+
+enum ric_ui_event_type
+{
+    RIC_UI_EVENT_HOVER,
+    RIC_UI_EVENT_LMB_CLICK,
+    RIC_UI_EVENT_LMB_DOWN,
+    RIC_UI_EVENT_LMB_UP,
+    RIC_UI_EVENT_MMB_CLICK,
+    RIC_UI_EVENT_MMB_DOWN,
+    RIC_UI_EVENT_MMB_UP,
+    RIC_UI_EVENT_RMB_CLICK,
+    RIC_UI_EVENT_RMB_DOWN,
+    RIC_UI_EVENT_RMB_UP
+};
+
+enum ric_ui_state
+{
+    RIC_UI_STATE_DEFAULT,
+    RIC_UI_STATE_HOVERED,
+    RIC_UI_STATE_PRESSED,
+    RIC_UI_STATE_COUNT
+};
+
+#define RIC_WIDGETS(f) \
+    f(RIC_WIDGET_TRANSLATE_X) \
+    f(RIC_WIDGET_TRANSLATE_Y) \
+    f(RIC_WIDGET_TRANSLATE_Z)
+
+enum ric_widget
+{
+    RIC_WIDGETS(ENUM)
+    RIC_WIDGET_COUNT
+};
+extern const char *ric_widget_string[];
+
+enum ric_vbo_type
+{
+    RIC_VBO_VERTEX,
+    RIC_VBO_ELEMENT,
+    RIC_VBO_COUNT
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -33,45 +312,14 @@ static s32 SCREEN_HEIGHT = 900;
 
 typedef u32 pkid;
 
-#define RICO_HND_TYPES(f)	 \
-    f(RICO_HND_NULL,	  0) \
-    f(RICO_HND_OBJECT,    sizeof(struct RICO_object))   \
-    f(RICO_HND_TEXTURE,   sizeof(struct RICO_texture))	\
-    f(RICO_HND_MESH,      sizeof(struct RICO_mesh))		\
-    f(RICO_HND_FONT,      sizeof(struct RICO_font))		\
-    f(RICO_HND_STRING,    sizeof(struct RICO_string))	\
-    f(RICO_HND_MATERIAL,  sizeof(struct RICO_material))	\
-    f(RICO_HND_BBOX,      sizeof(struct RICO_bbox))
-
-enum RICO_hnd_type
-{
-    RICO_HND_TYPES(GEN_LIST)
-    RICO_HND_COUNT
-};
-extern const char *RICO_hnd_type_string[];
-extern const u32 RICO_hnd_type_size[];
-
 typedef u8 buf32[32];
 
 struct uid
 {
     pkid pkid;
-    enum RICO_hnd_type type;
+    enum ric_asset_type type;
     buf32 name;
 };
-
-#define RICO_AUDIO_STATE(f) \
-    f(RICO_AUDIO_UNKNOWN)   \
-    f(RICO_AUDIO_STOPPED)   \
-    f(RICO_AUDIO_PLAYING)   \
-    f(RICO_AUDIO_PAUSED)    \
-    f(RICO_AUDIO_COUNT)
-
-enum RICO_audio_state
-{
-    RICO_AUDIO_STATE(GEN_LIST)
-};
-extern const char *RICO_audio_state_string[];
 
 struct RICO_audio_source
 {
@@ -148,17 +396,9 @@ struct RICO_heiro_string
     struct text_vertex *verts;
 };
 
-enum RICO_light_type
-{
-    LIGHT_AMBIENT       = 0,
-    LIGHT_DIRECTIONAL   = 1,
-    LIGHT_POINT         = 2,
-    LIGHT_SPOT          = 3
-};
-
 struct RICO_light
 {
-    enum RICO_light_type type;
+    enum ric_light_type type;
     bool on;
     struct vec3 col;
     struct vec3 pos;
@@ -314,118 +554,9 @@ struct rico_keyevent
 #define EVENT_CHORD(k0, k1) EVENT{ RICO_KEYEVENT_CHORD, k0, k1 }
 #endif
 
-#define RICO_STATES(f)      \
-    f(STATE_PLAY_EXPLORE)   \
-    f(STATE_EDIT_TRANSLATE) \
-    f(STATE_EDIT_ROTATE)    \
-    f(STATE_EDIT_SCALE)     \
-    f(STATE_EDIT_MATERIAL)  \
-    f(STATE_EDIT_MESH)      \
-    f(STATE_MENU_QUIT)      \
-    f(STATE_TEXT_INPUT)     \
-    f(STATE_ENGINE_SHUTDOWN)
-
-enum rico_state
-{
-    RICO_STATES(GEN_LIST)
-    STATE_COUNT
-};
-extern const char *rico_state_string[STATE_COUNT];
-
-enum RICO_action
-{
-    ACTION_NULL,
-
-    ACTION_ENGINE_DEBUG_LIGHTING_TOGGLE,
-    ACTION_ENGINE_DEBUG_TRIGGER_BREAKPOINT,
-    ACTION_ENGINE_DEBUG_FOV_INCREASE,
-    ACTION_ENGINE_DEBUG_FOV_DECREASE,
-    ACTION_ENGINE_FPS_TOGGLE,
-    ACTION_ENGINE_MOUSE_LOCK_TOGGLE,
-    ACTION_ENGINE_VSYNC_TOGGLE,
-    ACTION_ENGINE_MUTE_TOGGLE,
-    ACTION_ENGINE_SIM_PAUSE,
-    ACTION_ENGINE_QUIT,
-
-    ACTION_CAMERA_SLOW_TOGGLE,
-    ACTION_CAMERA_RESET,
-    ACTION_CAMERA_LOCK_TOGGLE,
-    ACTION_CAMERA_WIREFRAME_TOGGLE,
-
-    ACTION_MOVE_RIGHT,
-    ACTION_MOVE_LEFT,
-    ACTION_MOVE_UP,
-    ACTION_MOVE_DOWN,
-    ACTION_MOVE_FORWARD,
-    ACTION_MOVE_BACKWARD,
-    ACTION_MOVE_SPRINT,
-
-    ACTION_PLAY_EDITOR,
-    ACTION_PLAY_INTERACT,
-
-    ACTION_EDIT_QUIT,
-    ACTION_EDIT_SAVE,
-    ACTION_EDIT_CYCLE_PACK,
-    ACTION_EDIT_CYCLE_BLOB_REVERSE,
-    ACTION_EDIT_CYCLE_BLOB,
-    ACTION_EDIT_MOUSE_PICK_START,
-    ACTION_EDIT_MOUSE_PICK_MOVE,
-    ACTION_EDIT_MOUSE_PICK_END,
-    ACTION_EDIT_BBOX_RECALCULATE_ALL,
-    ACTION_EDIT_CREATE_OBJECT,
-    ACTION_EDIT_SELECTED_DUPLICATE,
-    ACTION_EDIT_SELECTED_DELETE,
-    ACTION_EDIT_MODE_PREVIOUS,
-    ACTION_EDIT_MODE_NEXT,
-    ACTION_EDIT_CAMERA_TOGGLE_PROJECTION,
-    ACTION_EDIT_DEBUG_TEXT_INPUT,
-
-    ACTION_EDIT_TRANSLATE_RESET,
-    ACTION_EDIT_TRANSLATE_UP,
-    ACTION_EDIT_TRANSLATE_DOWN,
-    ACTION_EDIT_TRANSLATE_WEST,
-    ACTION_EDIT_TRANSLATE_EAST,
-    ACTION_EDIT_TRANSLATE_NORTH,
-    ACTION_EDIT_TRANSLATE_SOUTH,
-    ACTION_EDIT_TRANSLATE_DELTA_INCREASE,
-    ACTION_EDIT_TRANSLATE_DELTA_DECREASE,
-
-    ACTION_EDIT_ROTATE_RESET,
-    ACTION_EDIT_ROTATE_X_POS,
-    ACTION_EDIT_ROTATE_X_NEG,
-    ACTION_EDIT_ROTATE_Y_POS,
-    ACTION_EDIT_ROTATE_Y_NEG,
-    ACTION_EDIT_ROTATE_Z_POS,
-    ACTION_EDIT_ROTATE_Z_NEG,
-    ACTION_EDIT_ROTATE_DELTA_INCREASE,
-    ACTION_EDIT_ROTATE_DELTA_DECREASE,
-    ACTION_EDIT_ROTATE_HEPTAMODE_TOGGLE,
-
-    ACTION_EDIT_SCALE_RESET,
-    ACTION_EDIT_SCALE_UP,
-    ACTION_EDIT_SCALE_DOWN,
-    ACTION_EDIT_SCALE_WEST,
-    ACTION_EDIT_SCALE_EAST,
-    ACTION_EDIT_SCALE_NORTH,
-    ACTION_EDIT_SCALE_SOUTH,
-    ACTION_EDIT_SCALE_DELTA_INCREASE,
-    ACTION_EDIT_SCALE_DELTA_DECREASE,
-
-    ACTION_EDIT_MATERIAL_NEXT,
-    ACTION_EDIT_MATERIAL_PREVIOUS,
-    ACTION_EDIT_MATERIAL_NEXT_PACK,
-
-    ACTION_EDIT_MESH_NEXT,
-    ACTION_EDIT_MESH_PREVIOUS,
-    ACTION_EDIT_MESH_NEXT_PACK,
-    ACTION_EDIT_BBOX_RECALCULATE,
-
-    ACTION_COUNT
-};
-
 struct blob_index
 {
-    enum RICO_hnd_type type;
+    enum ric_asset_type type;
     u32 name_hash;
     u32 offset;
     u32 min_size;
@@ -460,86 +591,6 @@ struct pack
     u8 *buffer;
 };
 
-enum PACK_IDS
-{
-    PACK_DEFAULT,
-    PACK_TRANSIENT,
-    PACK_FRAME,
-    PACK_COUNT
-};
-
-enum DEFAULT_IDS
-{
-    FONT_DEFAULT = 1,
-    FONT_DEFAULT_TEXTURE,
-    TEXTURE_DEFAULT_DIFF,
-    TEXTURE_DEFAULT_SPEC,
-    TEXTURE_DEFAULT_EMIS,
-    MATERIAL_DEFAULT,
-    MESH_DEFAULT_CUBE,
-    MESH_DEFAULT_SPHERE
-};
-
-#define RICO_STRING_SLOTS(f) \
-    f(STR_SLOT_SELECTED_OBJ) \
-    f(STR_SLOT_STATE)        \
-    f(STR_SLOT_FPS)          \
-    f(STR_SLOT_MENU_QUIT)    \
-    f(STR_SLOT_DELTA)        \
-    f(STR_SLOT_WIDGET)       \
-    f(STR_SLOT_DEBUG_CAMERA)
-
-enum RICO_string_slot
-{
-    RICO_STRING_SLOTS(GEN_LIST)
-    STR_SLOT_COUNT
-};
-extern const char *RICO_string_slot_string[];
-
-#define RICO_ERRORS(f)             \
-    f(SUCCESS)                     \
-    f(ERR_BAD_ALLOC)               \
-    f(ERR_POOL_OUT_OF_MEMORY)      \
-    f(ERR_POOL_INVALID_HANDLE)     \
-    f(ERR_POOL_BAD_FREE)           \
-    f(ERR_FILE_WRITE)              \
-    f(ERR_FILE_READ)               \
-    f(ERR_FILE_SIGNATURE)          \
-    f(ERR_FILE_VERSION)            \
-    f(ERR_SERIALIZE_DISABLED)      \
-    f(ERR_SERIALIZER_NULL)         \
-    f(ERR_DESERIALIZER_NULL)       \
-    f(ERR_TEXTURE_LOAD)            \
-    f(ERR_TEXTURE_UNSUPPORTED_BPP) \
-    f(ERR_SHADER_COMPILE)          \
-    f(ERR_SHADER_LINK)             \
-    f(ERR_SDL_INIT)                \
-    f(ERR_GL3W_INIT)               \
-    f(ERR_OPENAL_INIT)             \
-    f(ERR_FREETYPE_INIT)           \
-    f(ERR_PRIM_UNSUPPORTED)        \
-    f(ERR_OBJ_TOO_MANY_VERTS)      \
-    f(ERR_CHUNK_NULL)              \
-    f(ERR_MESH_INVALID_NAME)       \
-    f(ERR_TEXTURE_INVALID_NAME)    \
-    f(ERR_MATERIAL_INVALID_NAME)   \
-    f(ERR_OBJECT_INVALID_NAME)     \
-    f(ERR_STRING_INVALID_NAME)     \
-    f(ERR_FONT_INVALID_NAME)       \
-    f(ERR_HASH_TABLE_FULL)         \
-    f(ERR_HASH_INVALID_KEY)        \
-    f(ERR_HASH_OVERWRITE)          \
-    f(ERR_INVALID_PARAMS)          \
-    f(ERR_CHUNK_FREE_FAILED)       \
-    f(ERR_OBJ_PARSE_FAILED)        \
-    f(ERR_FREETYPE_FACE)           \
-    f(ERR_FREETYPE_SIZE)           \
-    f(ERR_FREETYPE_CHAR)           \
-    f(ERR_COUNT)
-
-enum RICO_error { RICO_ERRORS(GEN_LIST) };
-extern const char *RICO_error_string[];
-
 ////////////////////////////////////////////////////////////////////////////////
 // TODO: Move this to its own header if it works
 
@@ -566,46 +617,17 @@ struct ui_tooltip
     struct RICO_heiro_string *string;
 };
 
-#define RICO_UI_ELEMENT_TYPES(f) \
-    f(RICO_UI_ELEMENT_HUD)       \
-    f(RICO_UI_ELEMENT_BREAK)     \
-    f(RICO_UI_ELEMENT_STRING)    \
-    f(RICO_UI_ELEMENT_BUTTON)    \
-    f(RICO_UI_ELEMENT_LABEL)     \
-    f(RICO_UI_ELEMENT_PROGRESS)
-
-enum RICO_ui_element_type
-{
-    RICO_UI_ELEMENT_TYPES(GEN_LIST)
-    RICO_UI_ELEMENT_COUNT
-};
-extern const char *RICO_ui_element_type_string[];
-
-enum RICO_ui_event_type
-{
-    RICO_UI_EVENT_HOVER,
-    RICO_UI_EVENT_LMB_CLICK,
-    RICO_UI_EVENT_LMB_DOWN,
-    RICO_UI_EVENT_LMB_UP,
-    RICO_UI_EVENT_MMB_CLICK,
-    RICO_UI_EVENT_MMB_DOWN,
-    RICO_UI_EVENT_MMB_UP,
-    RICO_UI_EVENT_RMB_CLICK,
-    RICO_UI_EVENT_RMB_DOWN,
-    RICO_UI_EVENT_RMB_UP
-};
-
 struct RICO_ui_event
 {
     struct RICO_ui_element *element;
-    enum RICO_ui_event_type event_type;
+    enum ric_ui_event_type event_type;
 };
 
 typedef void (*RICO_ui_event_handler)(const struct RICO_ui_event *e);
 
 struct RICO_ui_head
 {
-    enum RICO_ui_element_type type;
+    enum ric_ui_type type;
     struct RICO_ui_head *next;
 
     //struct RICO_ui_element *parent;
@@ -643,19 +665,11 @@ struct RICO_ui_hud
     struct vec4 color;
 };
 
-enum RICO_ui_state
-{
-    RICO_UI_DEFAULT,
-    RICO_UI_HOVERED,
-    RICO_UI_PRESSED,
-    RICO_UI_COUNT
-};
-
 struct RICO_ui_button
 {
     struct RICO_ui_element element;
-    enum RICO_ui_state state;
-    struct vec4 color[RICO_UI_COUNT];
+    enum ric_ui_state state;
+    struct vec4 color[RIC_UI_STATE_COUNT];
     struct RICO_sprite *sprite;
     struct ui_tooltip *tooltip;
 };
@@ -670,7 +684,7 @@ struct RICO_ui_label
 struct RICO_ui_progress
 {
     struct RICO_ui_element element;
-    enum RICO_ui_state state;
+    enum ric_ui_state state;
     struct vec4 color;
     struct vec4 color_bg;
     float percent;
@@ -715,18 +729,6 @@ struct RICO_object
     pkid mesh_id;
     pkid material_id;
 };
-
-#define WIDGET_ACTIONS(f) \
-    f(WIDGET_NONE)        \
-    f(WIDGET_TRANSLATE_X) \
-    f(WIDGET_TRANSLATE_Y) \
-    f(WIDGET_TRANSLATE_Z)
-
-enum widget_action
-{
-    WIDGET_ACTIONS(GEN_LIST)
-};
-extern const char *widget_action_string[];
 
 #define RICO_FILE_VERSION_CURRENT 1
 #define RICO_FILE_VERSION_MINIMUM_SUPPORTED 1
@@ -800,13 +802,6 @@ struct RICO_material
     pkid tex_mrao;
     pkid tex_emission;
     // TODO: pkid tex_normal;
-};
-
-enum rico_vbo
-{
-    VBO_VERTEX,
-    VBO_ELEMENT,
-    VBO_COUNT
 };
 
 struct rgl_mesh

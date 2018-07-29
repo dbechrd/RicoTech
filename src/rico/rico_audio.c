@@ -1,5 +1,3 @@
-const char *RICO_audio_state_string[] = { RICO_AUDIO_STATE(GEN_STRING) };
-
 static ALCdevice *audio_device = 0;
 static ALCcontext *audio_context = 0;
 
@@ -21,7 +19,7 @@ static void init_openal()
     audio_device = alcOpenDevice(NULL);
 	if (!audio_device)
 	{
-		RICO_FATAL(ERR_OPENAL_INIT, "Failed to open audio device");
+		RICO_FATAL(RIC_ERR_OPENAL_INIT, "Failed to open audio device");
 		return;
 	}
 
@@ -29,18 +27,18 @@ static void init_openal()
     audio_context = alcCreateContext(audio_device, attrlist);
 	if (!audio_context)
 	{
-		RICO_FATAL(ERR_OPENAL_INIT, "Failed to create audio context");
+		RICO_FATAL(RIC_ERR_OPENAL_INIT, "Failed to create audio context");
 		return;
 	}
 
 	if (!alcMakeContextCurrent(audio_context))
 	{
-		RICO_FATAL(ERR_OPENAL_INIT, "Failed to activate audio context");
+		RICO_FATAL(RIC_ERR_OPENAL_INIT, "Failed to activate audio context");
 		return;
 	}
 
     err = alGetError();
-    if (err) RICO_ERROR(ERR_OPENAL_INIT, "OpenAL error: %s\n", err);
+    if (err) RICO_ERROR(RIC_ERR_OPENAL_INIT, "OpenAL error: %s\n", err);
 }
 
 extern float RICO_audio_volume()
@@ -140,7 +138,7 @@ extern void RICO_audio_source_stop(struct RICO_audio_source *source)
 {
     alSourceStop(source->al_source_id);
 }
-extern enum RICO_audio_state RICO_audio_source_state(struct RICO_audio_source *source)
+extern enum ric_audio_state RICO_audio_source_state(struct RICO_audio_source *source)
 {
     ALenum state;
     alGetSourcei(source->al_source_id, AL_SOURCE_STATE, &state);

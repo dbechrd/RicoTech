@@ -36,12 +36,12 @@ static int make_program(GLuint vertex_shader, GLuint geometry_shader,
 
         //Clean up
         glDeleteProgram(program);
-        return RICO_ERROR(ERR_SHADER_LINK, "Failed to link shader %s",
+        return RICO_ERROR(RIC_ERR_SHADER_LINK, "Failed to link shader %s",
                           "UNKNOWN");
     }
 
     *_program = program;
-    return SUCCESS;
+    return RIC_SUCCESS;
 }
 static void free_program(GLuint program)
 {
@@ -73,7 +73,7 @@ static GLint program_get_uniform_location(GLuint program, const char* name)
 ///=============================================================================
 //| PBR program
 ///=============================================================================
-static void program_pbr_get_locations(struct pbr_program *p)
+static void program_pbr_get_locations(struct program_pbr *p)
 {
     // Vertex shader
     p->locations.vert.model =
@@ -195,14 +195,14 @@ static void program_pbr_attribs()
                           (GLvoid *)offsetof(struct pbr_vertex, normal));
     glEnableVertexAttribArray(LOCATION_PBR_NORMAL);
 }
-static int make_program_pbr(struct pbr_program **_program)
+static int make_program_pbr(struct program_pbr **_program)
 {
-    static struct pbr_program *prog = NULL;
-    enum RICO_error err;
+    static struct program_pbr *prog = NULL;
+    enum ric_error err;
 
     if (prog != NULL) {
         *_program = prog;
-        return SUCCESS;
+        return RIC_SUCCESS;
     }
 
     GLuint vshader = 0;
@@ -234,7 +234,7 @@ cleanup:
     *_program = prog;
     return err;
 }
-static void free_program_pbr(struct pbr_program **program)
+static void free_program_pbr(struct program_pbr **program)
 {
     //TODO: Handle error
     if ((*program)->program.ref_count > 0) {
@@ -251,7 +251,7 @@ static void free_program_pbr(struct pbr_program **program)
 //| Shadow texture program
 ///=============================================================================
 static void program_shadow_texture_get_locations(
-    struct shadow_texture_program *p)
+    struct program_shadow_texture *p)
 {
     // Vertex shader
     p->locations.vert.light_space =
@@ -275,14 +275,14 @@ static void program_shadow_texture_attribs()
                           (GLvoid *)offsetof(struct pbr_vertex, pos));
     glEnableVertexAttribArray(LOCATION_SHADOW_TEXTURE_POSITION);
 }
-static int make_program_shadow_texture(struct shadow_texture_program **_program)
+static int make_program_shadow_texture(struct program_shadow_texture **_program)
 {
-    static struct shadow_texture_program *prog = NULL;
-    enum RICO_error err;
+    static struct program_shadow_texture *prog = NULL;
+    enum ric_error err;
 
     if (prog != NULL) {
         *_program = prog;
-        return SUCCESS;
+        return RIC_SUCCESS;
     }
 
     GLuint vshader = 0;
@@ -318,7 +318,7 @@ cleanup:
     *_program = prog;
     return err;
 }
-static void free_program_shadow_texture(struct shadow_texture_program **program)
+static void free_program_shadow_texture(struct program_shadow_texture **program)
 {
     //TODO: Handle error
     if ((*program)->program.ref_count > 0) {
@@ -335,7 +335,7 @@ static void free_program_shadow_texture(struct shadow_texture_program **program)
 //| Shadow cubemap program
 ///=============================================================================
 static void program_shadow_cubemap_get_locations(
-    struct shadow_cubemap_program *p)
+    struct program_shadow_cubemap *p)
 {
     // Vertex shader
     p->locations.vert.model =
@@ -382,14 +382,14 @@ static void program_shadow_cubemap_attribs()
                           (GLvoid *)offsetof(struct pbr_vertex, pos));
     glEnableVertexAttribArray(LOCATION_SHADOW_CUBEMAP_POSITION);
 }
-static int make_program_shadow_cubemap(struct shadow_cubemap_program **_program)
+static int make_program_shadow_cubemap(struct program_shadow_cubemap **_program)
 {
-    static struct shadow_cubemap_program *prog = NULL;
-    enum RICO_error err;
+    static struct program_shadow_cubemap *prog = NULL;
+    enum ric_error err;
 
     if (prog != NULL) {
         *_program = prog;
-        return SUCCESS;
+        return RIC_SUCCESS;
     }
 
     GLuint vshader = 0;
@@ -429,7 +429,7 @@ cleanup:
     *_program = prog;
     return err;
 }
-static void free_program_shadow_cubemap(struct shadow_cubemap_program **program)
+static void free_program_shadow_cubemap(struct program_shadow_cubemap **program)
 {
     //TODO: Handle error
     if ((*program)->program.ref_count > 0) {
@@ -445,7 +445,7 @@ static void free_program_shadow_cubemap(struct shadow_cubemap_program **program)
 ///=============================================================================
 //| Primitive program
 ///=============================================================================
-static void program_primitive_get_locations(struct primitive_program *p)
+static void program_primitive_get_locations(struct program_primitive *p)
 {
     // Vertex shader
     p->locations.vert.proj =
@@ -495,14 +495,14 @@ static void program_primitive_attribs()
                           (GLvoid *)offsetof(struct prim_vertex, col));
     glEnableVertexAttribArray(LOCATION_PRIM_COLOR);
 }
-static int make_program_primitive(struct primitive_program **_program)
+static int make_program_primitive(struct program_primitive **_program)
 {
-    static struct primitive_program *prog = NULL;
-    enum RICO_error err;
+    static struct program_primitive *prog = NULL;
+    enum ric_error err;
 
     if (prog != NULL) {
         *_program = prog;
-        return SUCCESS;
+        return RIC_SUCCESS;
     }
 
     GLuint vshader = 0;
@@ -534,7 +534,7 @@ cleanup:
     *_program = prog;
     return err;
 }
-static void free_program_primitive(struct primitive_program **program)
+static void free_program_primitive(struct program_primitive **program)
 {
     glDeleteProgram((*program)->program.gl_id);
     free(*program);
@@ -544,7 +544,7 @@ static void free_program_primitive(struct primitive_program **program)
 ///=============================================================================
 //| Text program
 ///=============================================================================
-static void program_text_get_locations(struct text_program *p)
+static void program_text_get_locations(struct program_text *p)
 {
     // Vertex shader
     p->locations.vert.model =
@@ -585,14 +585,14 @@ static void program_text_attribs()
                           (GLvoid *)offsetof(struct text_vertex, col));
     glEnableVertexAttribArray(LOCATION_TEXT_COLOR);
 }
-static int make_program_text(struct text_program **_program)
+static int make_program_text(struct program_text **_program)
 {
-    static struct text_program *prog = NULL;
-    enum RICO_error err;
+    static struct program_text *prog = NULL;
+    enum ric_error err;
 
     if (prog != NULL) {
         *_program = prog;
-        return SUCCESS;
+        return RIC_SUCCESS;
     }
 
     GLuint vshader = 0;
@@ -624,7 +624,7 @@ cleanup:
     *_program = prog;
     return err;
 }
-static void free_program_text(struct text_program **program)
+static void free_program_text(struct program_text **program)
 {
     glDeleteProgram((*program)->program.gl_id);
     free(*program);

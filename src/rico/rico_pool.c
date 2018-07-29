@@ -50,14 +50,14 @@ int pool_init(void *buf, const char *name, u32 block_count, u32 block_size)
     printf("[pool][init] %s\n", pool->name);
 #endif
 
-    return SUCCESS;
+    return RIC_SUCCESS;
 }
 
 int pool_add(struct hnd **handle, struct rico_pool *pool)
 {
     RICO_ASSERT(pool);
 
-    enum RICO_error err = SUCCESS;
+    enum ric_error err = RIC_SUCCESS;
 
     if (pool->blocks_used == pool->block_count)
     {
@@ -67,7 +67,7 @@ int pool_add(struct hnd **handle, struct rico_pool *pool)
         pool_print_handles(pool);
 #endif
 
-        return RICO_FATAL(ERR_POOL_OUT_OF_MEMORY, "%s pool is full",
+        return RICO_FATAL(RIC_ERR_POOL_OUT_OF_MEMORY, "%s pool is full",
                           pool->name);
     }
 
@@ -112,7 +112,7 @@ int pool_remove(struct rico_pool *pool, struct pool_id id)
 
     if (pool->tags[id.tag].generation != id.generation)
     {
-        return RICO_ERROR(ERR_POOL_BAD_FREE,
+        return RICO_ERROR(RIC_ERR_POOL_BAD_FREE,
                           "Tag generation mismatch, tag %u already freed!",
                           id.tag);
     }
@@ -149,7 +149,7 @@ int pool_remove(struct rico_pool *pool, struct pool_id id)
     pool_print_handles(pool);
 #endif
 
-    return SUCCESS;
+    return RIC_SUCCESS;
 }
 
 #if 0
@@ -375,13 +375,13 @@ SERIAL(pool_serialize_0)
     for (u32 i = 0; i < pool->active; ++i)
     {
         err = rico_serialize(pool_read(pool, pool->handles[i]), fp);
-        if (err == ERR_SERIALIZE_DISABLED)
+        if (err == RIC_ERR_SERIALIZE_DISABLED)
             continue;
         if (err)
             return err;
     }
 
-    return SUCCESS;
+    return RIC_SUCCESS;
 }
 
 //int pool_deserialize_0(void *_handle, const struct rico_file *file)
@@ -398,20 +398,20 @@ DESERIAL(pool_deserialize_0)
     {
         pool->handles = calloc(pool->vertex_count, sizeof(u32));
         if (!pool->handles)
-            return RICO_ERROR(ERR_BAD_ALLOC,
+            return RICO_ERROR(RIC_ERR_BAD_ALLOC,
                               "Failed to alloc handles for pool %s",
                               pool->name);
 
         pool->data = calloc(pool->vertex_count, pool->min_size);
         if (!pool->data)
-            return RICO_ERROR(ERR_BAD_ALLOC, "Failed to alloc data for pool %s",
+            return RICO_ERROR(RIC_ERR_BAD_ALLOC, "Failed to alloc data for pool %s",
                               pool->name);
 
         fread(pool->handles, sizeof(*pool->handles), pool->vertex_count, fp->fs);
         for (u32 i = 0; i < pool->active; ++i)
         {
             err = rico_deserialize(pool_read(pool, pool->handles[i]), fp);
-            if (err == ERR_SERIALIZE_DISABLED)
+            if (err == RIC_ERR_SERIALIZE_DISABLED)
                 continue;
             if (err)
                 return err;
@@ -444,6 +444,6 @@ DESERIAL(pool_deserialize_0)
     pool_print_handles(pool);
 #endif
 
-    return SUCCESS;
+    return RIC_SUCCESS;
 }
 #endif

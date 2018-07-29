@@ -15,7 +15,7 @@ static u8 *texture_pixels(struct RICO_texture *tex)
 }
 static int texture_upload(struct RICO_texture *texture)
 {
-    enum RICO_error err = SUCCESS;
+    enum ric_error err = RIC_SUCCESS;
 
 #if RICO_DEBUG_TEXTURE
     printf("[ tex][upld] name=%s\n", texture_name(texture));
@@ -136,7 +136,7 @@ static int texture_upload(struct RICO_texture *texture)
         rgl_tex->format_internal = GL_SRGB_ALPHA;
         break;
     default: // Unsupported BPP
-        return RICO_ERROR(ERR_TEXTURE_UNSUPPORTED_BPP, NULL);
+        return RICO_ERROR(RIC_ERR_TEXTURE_UNSUPPORTED_BPP, NULL);
     }
 
     glTexImage2D(rgl_tex->gl_target, 0, rgl_tex->format_internal,

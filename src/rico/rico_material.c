@@ -13,7 +13,7 @@ static void material_bind(pkid pkid)
     }
     else
     {
-        texture_bind(TEXTURE_DEFAULT_DIFF, GL_TEXTURE0);
+        texture_bind(global_default_texture_diff, GL_TEXTURE0);
     }
 
     // Bind specular or default
@@ -23,7 +23,7 @@ static void material_bind(pkid pkid)
     }
     else
     {
-        texture_bind(TEXTURE_DEFAULT_SPEC, GL_TEXTURE1);
+        texture_bind(global_default_texture_spec, GL_TEXTURE1);
     }
 
     // Bind emission or default
@@ -33,7 +33,7 @@ static void material_bind(pkid pkid)
     }
     else
     {
-        texture_bind(TEXTURE_DEFAULT_EMIS, GL_TEXTURE2);
+        texture_bind(global_default_texture_emis, GL_TEXTURE2);
     }
 }
 static void material_unbind(pkid pkid)
@@ -51,7 +51,7 @@ static void material_unbind(pkid pkid)
     }
     else
     {
-        texture_unbind(TEXTURE_DEFAULT_DIFF, GL_TEXTURE0);
+        texture_unbind(global_default_texture_diff, GL_TEXTURE0);
     }
 
     // Unbind specular or default
@@ -61,7 +61,7 @@ static void material_unbind(pkid pkid)
     }
     else
     {
-        texture_unbind(TEXTURE_DEFAULT_SPEC, GL_TEXTURE1);
+        texture_unbind(global_default_texture_spec, GL_TEXTURE1);
     }
 
     // Unbind emission or default
@@ -71,6 +71,6 @@ static void material_unbind(pkid pkid)
     }
     else
     {
-        texture_unbind(TEXTURE_DEFAULT_EMIS, GL_TEXTURE2);
+        texture_unbind(global_default_texture_emis, GL_TEXTURE2);
     }
 }

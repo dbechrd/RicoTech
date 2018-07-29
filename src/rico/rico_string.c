@@ -1,6 +1,4 @@
-const char *RICO_string_slot_string[] = { RICO_STRING_SLOTS(GEN_STRING) };
-
-pkid global_string_slots[STR_SLOT_COUNT + 64];
+pkid global_string_slots[RIC_STRING_SLOT_COUNT + 64];
 
 static void string_delete(struct RICO_string *str)
 {
@@ -8,7 +6,7 @@ static void string_delete(struct RICO_string *str)
     printf("[strg][free] uid=%d\n", str->id);
 #endif
 
-    if (str->slot < STR_SLOT_COUNT)
+    if (str->slot < RIC_STRING_SLOT_COUNT)
     {
         // Remove from slot table
         global_string_slots[str->slot] = 0;
@@ -17,7 +15,7 @@ static void string_delete(struct RICO_string *str)
     pack_delete(str->mesh_id);
     // Note: Let font engine manage font texture
 }
-static void string_free_slot(enum RICO_string_slot slot)
+static void string_free_slot(enum ric_string_slot slot)
 {
     if (global_string_slots[slot])
     {
@@ -30,12 +28,12 @@ static void string_free_slot(enum RICO_string_slot slot)
 //       time to delete in ms, soonest first.
 static void string_update()
 {
-    struct pack *pack = packs[PACK_TRANSIENT];
+    struct pack *pack = global_packs[RIC_PACK_ID_TRANSIENT];
     struct RICO_string *str = 0;
     u32 index = 0;
     while(index < pack->blobs_used)
     {
-        if (pack->index[index].type != RICO_HND_STRING)
+        if (pack->index[index].type != RIC_ASSET_STRING)
         {
             index++;
             continue;

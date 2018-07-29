@@ -1,6 +1,6 @@
-#include "ri.h"
 #include "gl3w.c"
 
+#include "ri.h"
 #include "rico.h"
 
 #define DLB_MATH_PRINT
@@ -80,19 +80,19 @@ static int sdl_gl_attrib(SDL_GLattr attr, int value)
     int sdl_err = SDL_GL_SetAttribute(attr, value);
     if (sdl_err < 0)
     {
-        return RICO_ERROR(ERR_SDL_INIT, "SDL_GL_SetAttribute %d error: %s",
+        return RICO_ERROR(RIC_ERR_SDL_INIT, "SDL_GL_SetAttribute %d error: %s",
                           attr, SDL_GetError());
     }
-    return SUCCESS;
+    return RIC_SUCCESS;
 }
 static int init_sdl()
 {
-    enum RICO_error err;
+    enum ric_error err;
     int sdl_err;
 
     sdl_err = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
     if (sdl_err < 0) {
-        return RICO_ERROR(ERR_SDL_INIT, "SDL_Init error: %s", SDL_GetError());
+        return RICO_ERROR(RIC_ERR_SDL_INIT, "SDL_Init error: %s", SDL_GetError());
     }
 
 #if _DEBUG
@@ -145,14 +145,14 @@ static int init_sdl()
     }
 
     if (window == NULL) {
-        return RICO_FATAL(ERR_SDL_INIT, "SDL_CreateWindow error: %s",
+        return RICO_FATAL(RIC_ERR_SDL_INIT, "SDL_CreateWindow error: %s",
                           SDL_GetError());
     }
 
     // Create GL context
     gl_context = SDL_GL_CreateContext(window);
     if (gl_context == NULL) {
-        return RICO_FATAL(ERR_SDL_INIT, "SDL_GL_CreateContext error: %s",
+        return RICO_FATAL(RIC_ERR_SDL_INIT, "SDL_GL_CreateContext error: %s",
                           SDL_GetError());
     }
 
@@ -160,21 +160,21 @@ static int init_sdl()
     int swap = SDL_GL_GetSwapInterval();
     fprintf(stdout, "VSync = %s\n", (swap) ? "Enabled" : "Disabled");
 
-    return SUCCESS;
+    return RIC_SUCCESS;
 }
 static int init_gl3w(int major, int minor)
 {
     int init = gl3wInit();
     if (init)
-        return RICO_FATAL(ERR_GL3W_INIT, "gl3wInit failed with code %d", init);
+        return RICO_FATAL(RIC_ERR_GL3W_INIT, "gl3wInit failed with code %d", init);
 
     fprintf(stdout, "OpenGL = \"%s\"\nGLSL = \"%s\"\n", glGetString(GL_VERSION),
             glGetString(GL_SHADING_LANGUAGE_VERSION));
 
     if (!gl3wIsSupported(major, minor))
-        return RICO_FATAL(ERR_GL3W_INIT, "OpenGL 3.2 not supported");
+        return RICO_FATAL(RIC_ERR_GL3W_INIT, "OpenGL 3.2 not supported");
 
-    return SUCCESS;
+    return RIC_SUCCESS;
 }
 static void init_opengl()
 {
@@ -228,7 +228,7 @@ static void window_render()
 
 int RICO_init()
 {
-    enum RICO_error err;
+    enum ric_error err;
 
     printf("------------------------------------------------------------\n");
     printf("[MAIN][init] Initializing third party\n");
@@ -253,7 +253,7 @@ int RICO_init()
 #endif
 
 error:
-    if (err) printf("Error: %s", RICO_error_string[err]);
+    if (err) printf("Error: %s", ric_error_string[err]);
     return err;
 }
 void RICO_window_size(s32 *w, s32 *h)

@@ -1,6 +1,6 @@
 static int make_shader(const GLenum type, const char *filename, GLuint *_shader)
 {
-    enum RICO_error err;
+    enum ric_error err;
     u32 len;
     GLchar *source;
     GLuint shader;
@@ -17,7 +17,7 @@ static int make_shader(const GLenum type, const char *filename, GLuint *_shader)
     glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
     if (!status)
     {
-        err = RICO_ERROR(ERR_SHADER_COMPILE, "Failed to compile shader '%s'",
+        err = RICO_ERROR(RIC_ERR_SHADER_COMPILE, "Failed to compile shader '%s'",
                          filename);
         show_info_log(shader, glGetShaderiv, glGetShaderInfoLog);
         glDeleteShader(shader);

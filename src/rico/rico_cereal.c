@@ -237,7 +237,7 @@ static size_t ric_fread(void *buf, size_t size, struct ric_stream *stream)
 static void ric_uid(struct ric_stream *stream, struct uid *data)
 {
     ADD_FIELD(V_EPOCH, pkid, pkid);
-    ADD_FIELD(V_EPOCH, enum RICO_hnd_type, type);
+    ADD_FIELD(V_EPOCH, enum ric_asset_type, type);
     ADD_FIELD(V_EPOCH, buf32, name);
 }
 

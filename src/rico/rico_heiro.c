@@ -31,14 +31,14 @@ int rico_heiro_init()
     FT_Library ft_lib = 0;
     FT_Face ft_face = 0;
 
-    FT_TRY(FT_Init_FreeType(&ft_lib), ERR_FREETYPE_INIT);
+    FT_TRY(FT_Init_FreeType(&ft_lib), RIC_ERR_FREETYPE_INIT);
     FT_TRY(FT_New_Face(ft_lib, "font/Cousine-Regular.ttf", 0, &ft_face),
-           ERR_FREETYPE_FACE);
+           RIC_ERR_FREETYPE_FACE);
     // Note: Use this if the font data is already loaded into a memory buffer
     //FREETYPE_TRY(FT_New_Memory_Face(ft_lib, buffer, buffer_size, 0, &ft_face),
-    //             ERR_FREETYPE_FACE;
+    //             RIC_ERR_FREETYPE_FACE;
     FT_TRY(FT_Set_Pixel_Sizes(ft_face, 0, HEIRO_GLYPH_HEIGHT),
-           ERR_FREETYPE_SIZE);
+           RIC_ERR_FREETYPE_SIZE);
 
     // Set alignment to 1 byte for 8-bit grayscale glyphs
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -80,7 +80,7 @@ int heiro_load_glyphs(FT_Face ft_face)
 #define ATLAS_HEIGHT 128
 #define ATLAS_PAD 1
 
-    enum rico_error err = SUCCESS;
+    enum rico_error err = RIC_SUCCESS;
 
     u32 atlas_x = 0;
     u32 atlas_y = 0;
@@ -179,11 +179,11 @@ int heiro_load_glyphs(FT_Face ft_face)
 int heiro_load_glyph(u8 **buffer, struct RICO_heiro_glyph *glyph,
                      FT_Face ft_face, FT_ULong char_code)
 {
-    enum rico_error err = SUCCESS;
+    enum rico_error err = RIC_SUCCESS;
     FT_Error ft_err;
 
     // Note: Looks up glyph based on on current charmap
-    FT_TRY(FT_Load_Char(ft_face, char_code, FT_LOAD_RENDER), ERR_FREETYPE_CHAR);
+    FT_TRY(FT_Load_Char(ft_face, char_code, FT_LOAD_RENDER), RIC_ERR_FREETYPE_CHAR);
     //FT_TRY(FT_Load_Glyph(ft_face, glyph_code, FT_LOAD_RENDER);
 
     glyph->width        = ft_face->glyph->bitmap.width;
@@ -332,7 +332,7 @@ extern void RICO_heiro_build(struct RICO_heiro_string **result,
 extern void RICO_heiro_render(struct RICO_heiro_string *string, s32 sx, s32 sy,
                               const struct vec4 *color)
 {
-    struct text_program *prog = prog_text;
+    struct program_text *prog = global_prog_text;
     RICO_ASSERT(prog->program.gl_id);
     glUseProgram(prog->program.gl_id);
 

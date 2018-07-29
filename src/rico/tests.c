@@ -186,7 +186,7 @@ static int test_pool()
                 8 * sizeof(struct pool_tag));
 
     void *mem_block = calloc(1, pool_size);
-    if (!mem_block) RICO_ERROR(ERR_BAD_ALLOC, "Failed to alloc for test pool");
+    if (!mem_block) RICO_ERROR(RIC_ERR_BAD_ALLOC, "Failed to alloc for test pool");
 
     struct rico_pool *pool = mem_block;
     err = pool_init(pool, "Test pool", block_count, block_size);
@@ -199,13 +199,13 @@ static int test_pool()
     if (err) goto cleanup;
     id1 = str->hnd.id;
 
-    hnd_init(&str->hnd, RICO_HND_OBJECT, "Test 1");
+    hnd_init(&str->hnd, RIC_ASSET_OBJECT, "Test 1");
 
     err = pool_add((struct hnd **)&str, pool);
     if (err) goto cleanup;
     id2 = str->hnd.id;
 
-    hnd_init(&str->hnd, RICO_HND_OBJECT, "Test 2");
+    hnd_init(&str->hnd, RIC_ASSET_OBJECT, "Test 2");
 
     err = pool_remove(pool, id1);
     if (err) goto cleanup;

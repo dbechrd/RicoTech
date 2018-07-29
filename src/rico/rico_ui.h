@@ -1,5 +1,5 @@
-#ifndef RICO_UI_H
-#define RICO_UI_H
+#ifndef RIC_UI_STATE_H
+#define RIC_UI_STATE_H
 
 extern struct RICO_ui_hud *RICO_ui_hud();
 extern struct RICO_ui_head *RICO_ui_line_break(struct RICO_ui_hud *parent);

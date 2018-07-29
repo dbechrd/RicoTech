@@ -56,35 +56,35 @@ struct primitive_program_locations
 
 #define UNIFORM(type) type
 #define UNIFORM_TYPE(type_a, type_b) type_b
-struct pbr_program
+struct program_pbr
 {
     struct program program;
     struct pbr_program_locations locations;
 #   include "ri_program_pbr.h"
 };
 
-struct shadow_texture_program
+struct program_shadow_texture
 {
     struct program program;
     struct shadow_texture_program_locations locations;
 #   include "ri_program_shadow_texture.h"
 };
 
-struct shadow_cubemap_program
+struct program_shadow_cubemap
 {
     struct program program;
     struct shadow_cubemap_program_locations locations;
 #   include "ri_program_shadow_cubemap.h"
 };
 
-struct text_program
+struct program_text
 {
     struct program program;
     struct text_program_locations locations;
 #   include "ri_program_text.h"
 };
 
-struct primitive_program
+struct program_primitive
 {
     struct program program;
     struct primitive_program_locations locations;
@@ -132,23 +132,23 @@ struct text_vertex
 };
 
 static void program_pbr_attribs();
-static int make_program_pbr(struct pbr_program **_program);
-static void free_program_pbr(struct pbr_program **program);
+static int make_program_pbr(struct program_pbr **_program);
+static void free_program_pbr(struct program_pbr **program);
 
 static void program_shadow_texture_attribs();
-static int make_program_shadow_texture(struct shadow_texture_program **_program);
-static void free_program_shadow_texture(struct shadow_texture_program **program);
+static int make_program_shadow_texture(struct program_shadow_texture **_program);
+static void free_program_shadow_texture(struct program_shadow_texture **program);
 
 static void program_shadow_cubemap_attribs();
-static int make_program_shadow_cubemap(struct shadow_cubemap_program **_program);
-static void free_program_shadow_cubemap(struct shadow_cubemap_program **program);
+static int make_program_shadow_cubemap(struct program_shadow_cubemap **_program);
+static void free_program_shadow_cubemap(struct program_shadow_cubemap **program);
 
 static void program_primitive_attribs();
-static int make_program_primitive(struct primitive_program **_program);
-static void free_program_primitive(struct primitive_program **program);
+static int make_program_primitive(struct program_primitive **_program);
+static void free_program_primitive(struct program_primitive **program);
 
 static void program_text_attribs();
-static int make_program_text(struct text_program **_program);
-static void free_program_text(struct text_program **program);
+static int make_program_text(struct program_text **_program);
+static void free_program_text(struct program_text **program);
 
 #endif

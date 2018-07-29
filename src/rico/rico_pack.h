@@ -18,12 +18,12 @@ extern pkid RICO_pack_next(pkid id);
 extern pkid RICO_pack_prev(pkid id);
 extern pkid RICO_pack_next_loop(pkid id);
 extern pkid RICO_pack_prev_loop(pkid id);
-extern pkid RICO_pack_first_type(u32 pack_id, enum RICO_hnd_type type);
-extern pkid RICO_pack_last_type(u32 pack_id, enum RICO_hnd_type type);
-extern pkid RICO_pack_next_type(pkid id, enum RICO_hnd_type type);
-extern pkid RICO_pack_prev_type(pkid id, enum RICO_hnd_type type);
-extern pkid RICO_pack_next_type_loop(pkid id, enum RICO_hnd_type type);
-extern pkid RICO_pack_prev_type_loop(pkid id, enum RICO_hnd_type type);
+extern pkid RICO_pack_first_type(u32 pack_id, enum ric_asset_type type);
+extern pkid RICO_pack_last_type(u32 pack_id, enum ric_asset_type type);
+extern pkid RICO_pack_next_type(pkid id, enum ric_asset_type type);
+extern pkid RICO_pack_prev_type(pkid id, enum ric_asset_type type);
+extern pkid RICO_pack_next_type_loop(pkid id, enum ric_asset_type type);
+extern pkid RICO_pack_prev_type_loop(pkid id, enum ric_asset_type type);
 extern int RICO_pack_save(u32 pack_id, bool shrink);
 extern int RICO_pack_save_as(u32 pack_id, const char *filename, bool shrink);
 extern int RICO_pack_load(const char *filename, u32 *_pack);
@@ -44,7 +44,7 @@ extern pkid RICO_load_mesh(u32 pack_id, const char *name, u32 vertex_size,
                            u32 vertex_count, const void *vertex_data,
                            u32 element_count, const GLuint *element_data,
                            enum program_type prog_type);
-extern pkid RICO_load_string(u32 pack_id, enum RICO_string_slot slot, float x,
+extern pkid RICO_load_string(u32 pack_id, enum ric_string_slot slot, float x,
                              float y, struct vec4 color, u32 lifespan,
                              pkid font, const char *text);
 extern int RICO_load_obj_file(u32 pack_id, const char *filename,

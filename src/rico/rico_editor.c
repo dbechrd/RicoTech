@@ -1,40 +1,38 @@
-#define WIDGET_BOX_OFFSET 1.0f;
-#define WIDGET_BOX_RADIUS 0.1f;
-
-static const char *widget_action_string[] = { WIDGET_ACTIONS(GEN_STRING) };
+#define RIC_WIDGET_BOX_OFFSET 1.0f;
+#define RIC_WIDGET_BOX_RADIUS 0.1f;
 
 struct widget
 {
+    enum ric_widget action;
     struct RICO_bbox bbox;
-    enum widget_action action;
 };
-static struct widget widgets[3];
+static struct widget widgets[RIC_WIDGET_COUNT];
 static struct widget *widget;
 
 static pkid selected_obj_id;
 
-static struct pbr_program *prog_pbr;
-static struct shadow_texture_program *prog_shadow_texture;
-static struct shadow_cubemap_program *prog_shadow_cubemap;
-static struct primitive_program *prog_prim;
-static struct text_program *prog_text;
+static struct program_pbr *global_prog_pbr;
+static struct program_shadow_texture *global_prog_shadow_texture;
+static struct program_shadow_cubemap *global_prog_shadow_cubemap;
+static struct program_primitive *global_prog_primitive;
+static struct program_text *global_prog_text;
 
 static void editor_init()
 {
-    const float offset = WIDGET_BOX_OFFSET;
-    const float radius = WIDGET_BOX_RADIUS;
+    const float offset = RIC_WIDGET_BOX_OFFSET;
+    const float radius = RIC_WIDGET_BOX_RADIUS;
 
     widgets[0].bbox.min = VEC3(offset - radius, -radius, -radius);
     widgets[0].bbox.max = VEC3(offset + radius, radius, radius);
-    widgets[0].action = WIDGET_TRANSLATE_X;
+    widgets[0].action = RIC_WIDGET_TRANSLATE_X;
 
     widgets[1].bbox.min = VEC3(-radius, offset - radius, -radius);
     widgets[1].bbox.max = VEC3(radius, offset + radius, radius);
-    widgets[1].action = WIDGET_TRANSLATE_Y;
+    widgets[1].action = RIC_WIDGET_TRANSLATE_Y;
 
     widgets[2].bbox.min = VEC3(-radius, -radius, offset - radius);
     widgets[2].bbox.max = VEC3(radius, radius, offset + radius);
-    widgets[2].action = WIDGET_TRANSLATE_Z;
+    widgets[2].action = RIC_WIDGET_TRANSLATE_Z;
 }
 static void edit_object_create()
 {
@@ -94,9 +92,9 @@ static void edit_pack_next()
     pkid id;
     for (;;)
     {
-        if (packs[pack_id])
+        if (global_packs[pack_id])
         {
-            id = RICO_pack_first_type(pack_id, RICO_HND_OBJECT);
+            id = RICO_pack_first_type(pack_id, RIC_ASSET_OBJECT);
             if (id) break;
         }
         pack_id = (pack_id + 1) % MAX_PACKS;
@@ -210,11 +208,11 @@ static void edit_material_next_pack()
     u32 pack_id = pack_start + 1;
     while (pack_id != pack_start)
     {
-        if (pack_id != PACK_TRANSIENT &&
-            pack_id != PACK_FRAME &&
-            packs[pack_id])
+        if (pack_id != RIC_PACK_ID_TRANSIENT &&
+            pack_id != RIC_PACK_ID_FRAME &&
+            global_packs[pack_id])
         {
-            next_material_id = RICO_pack_last_type(pack_id, RICO_HND_MATERIAL);
+            next_material_id = RICO_pack_last_type(pack_id, RIC_ASSET_MATERIAL);
             if (next_material_id)
                 break;
         }
@@ -235,8 +233,8 @@ static void edit_material_next()
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
     pkid next_material_id = (obj->material_id)
-        ? RICO_pack_next_type_loop(obj->material_id, RICO_HND_MATERIAL)
-        : RICO_pack_first_type(PACK_DEFAULT, RICO_HND_MATERIAL);
+        ? RICO_pack_next_type_loop(obj->material_id, RIC_ASSET_MATERIAL)
+        : RICO_pack_first_type(RIC_PACK_ID_DEFAULT, RIC_ASSET_MATERIAL);
     struct RICO_material *next_material = RICO_pack_lookup(next_material_id);
     if (next_material)
     {
@@ -251,8 +249,8 @@ static void edit_material_prev()
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
     pkid prev_material_id = (obj->material_id)
-        ? RICO_pack_prev_type_loop(obj->material_id, RICO_HND_MATERIAL)
-        : RICO_pack_last_type(PACK_DEFAULT, RICO_HND_MATERIAL);
+        ? RICO_pack_prev_type_loop(obj->material_id, RIC_ASSET_MATERIAL)
+        : RICO_pack_last_type(RIC_PACK_ID_DEFAULT, RIC_ASSET_MATERIAL);
     struct RICO_material *prev_material = RICO_pack_lookup(prev_material_id);
     if (prev_material)
     {
@@ -272,11 +270,11 @@ static void edit_mesh_next_pack()
     u32 pack_id = pack_start + 1;
     while (pack_id != pack_start)
     {
-        if (pack_id != PACK_TRANSIENT &&
-            pack_id != PACK_FRAME &&
-            packs[pack_id])
+        if (pack_id != RIC_PACK_ID_TRANSIENT &&
+            pack_id != RIC_PACK_ID_FRAME &&
+            global_packs[pack_id])
         {
-            next_mesh_id = RICO_pack_last_type(pack_id, RICO_HND_MESH);
+            next_mesh_id = RICO_pack_last_type(pack_id, RIC_ASSET_MESH);
             if (next_mesh_id)
                 break;
         }
@@ -298,8 +296,8 @@ static void edit_mesh_next()
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
     pkid next_mesh_id = (obj->mesh_id)
-        ? RICO_pack_next_type_loop(obj->mesh_id, RICO_HND_MESH)
-        : RICO_pack_first_type(PACK_DEFAULT, RICO_HND_MESH);
+        ? RICO_pack_next_type_loop(obj->mesh_id, RIC_ASSET_MESH)
+        : RICO_pack_first_type(RIC_PACK_ID_DEFAULT, RIC_ASSET_MESH);
     if (next_mesh_id)
     {
         RICO_object_mesh_set(obj, next_mesh_id);
@@ -314,8 +312,8 @@ static void edit_mesh_prev()
 
     struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
     pkid prev_mesh_id = (obj->mesh_id)
-        ? RICO_pack_prev_type_loop(obj->mesh_id, RICO_HND_MESH)
-        : RICO_pack_last_type(PACK_DEFAULT, RICO_HND_MESH);
+        ? RICO_pack_prev_type_loop(obj->mesh_id, RIC_ASSET_MESH)
+        : RICO_pack_last_type(RIC_PACK_ID_DEFAULT, RIC_ASSET_MESH);
     if (prev_mesh_id)
     {
         RICO_object_mesh_set(obj, prev_mesh_id);
@@ -385,11 +383,11 @@ static struct widget *widget_test()
 
         if (widget)
         {
-            string_free_slot(STR_SLOT_WIDGET);
-            RICO_load_string(PACK_TRANSIENT, STR_SLOT_WIDGET,
+            string_free_slot(RIC_STRING_SLOT_WIDGET);
+            RICO_load_string(RIC_PACK_ID_TRANSIENT, RIC_STRING_SLOT_WIDGET,
                              SCREEN_X(0), SCREEN_Y(FONT_HEIGHT),
                              COLOR_DARK_CYAN, 0, 0,
-                             widget_action_string[widget->action]);
+                             ric_widget_string[widget->action]);
         }
     }
 
@@ -416,7 +414,7 @@ static void edit_mouse_pressed()
 static void edit_mouse_move()
 {
     if (!selected_obj_id) return;
-    if (!widget || widget->action == WIDGET_NONE) return;
+    if (!widget) return;
 
     struct ray cam_ray;
     camera_fwd_ray(&cam_ray, &cam_player);
@@ -428,7 +426,7 @@ static void edit_mouse_move()
     struct vec3 normal = cam_player.pos;
     v3_sub(&normal, &obj->xform.position);
 
-    if (widget->action == WIDGET_TRANSLATE_X)
+    if (widget->action == RIC_WIDGET_TRANSLATE_X)
     {
         normal.x = 0.0f;
         v3_normalize(&normal);
@@ -441,11 +439,11 @@ static void edit_mouse_move()
                                     &obj->xform.position,
                                     &normal);
         if (collide) {
-            trans.x = contact.x - WIDGET_BOX_OFFSET;
-            trans.x -= (float)fmod(trans.x, trans_delta);
+            trans.x = contact.x - RIC_WIDGET_BOX_OFFSET;
+            trans.x -= (float)fmod(trans.x, global_trans_delta);
         }
     }
-    else if (widget->action == WIDGET_TRANSLATE_Y)
+    else if (widget->action == RIC_WIDGET_TRANSLATE_Y)
     {
         normal.y = 0.0f;
         v3_normalize(&normal);
@@ -458,11 +456,11 @@ static void edit_mouse_move()
                                     &obj->xform.position,
                                     &normal);
         if (collide) {
-            trans.y = contact.y - WIDGET_BOX_OFFSET;
-            trans.y -= (float)fmod(trans.y, trans_delta);
+            trans.y = contact.y - RIC_WIDGET_BOX_OFFSET;
+            trans.y -= (float)fmod(trans.y, global_trans_delta);
         }
     }
-    else if (widget->action == WIDGET_TRANSLATE_Z)
+    else if (widget->action == RIC_WIDGET_TRANSLATE_Z)
     {
         normal.z = 0.0f;
         v3_normalize(&normal);
@@ -475,8 +473,8 @@ static void edit_mouse_move()
                                     &obj->xform.position,
                                     &normal);
         if (collide) {
-            trans.z = contact.z - WIDGET_BOX_OFFSET;
-            trans.z -= (float)fmod(trans.z, trans_delta);
+            trans.z = contact.z - RIC_WIDGET_BOX_OFFSET;
+            trans.z -= (float)fmod(trans.z, global_trans_delta);
         }
     }
 
@@ -489,7 +487,7 @@ static void edit_mouse_move()
 static void edit_mouse_released()
 {
     widget = NULL;
-    string_free_slot(STR_SLOT_WIDGET);
+    string_free_slot(RIC_STRING_SLOT_WIDGET);
 }
 static void edit_render()
 {
@@ -545,7 +543,7 @@ static void edit_render()
     //--------------------------------------------------------------------------
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    struct text_program *prog = prog_text;
+    struct program_text *prog = global_prog_text;
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     RICO_ASSERT(prog->program.gl_id);
@@ -582,8 +580,8 @@ static void free_glref()
     //chunk_free(chunk_transient);
 
     //TODO: Free all programs
-    free_program_pbr(&prog_pbr);
-    free_program_primitive(&prog_prim);
-    free_program_text(&prog_text);
+    free_program_pbr(&global_prog_pbr);
+    free_program_primitive(&global_prog_primitive);
+    free_program_text(&global_prog_text);
 #endif
 }

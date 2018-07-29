@@ -165,7 +165,7 @@ static void render_shadow_cubemap(r64 alpha, struct RICO_light *lights)
     glViewport(0, 0, tex_size, tex_size);
 
     // Directional light shadows
-    struct shadow_texture_program *prog_texture = prog_shadow_texture;
+    struct program_shadow_texture *prog_texture = global_prog_shadow_texture;
     glUseProgram(prog_texture->program.gl_id);
 
     for (int light = 0; light < NUM_LIGHT_DIR; ++light)
@@ -191,18 +191,18 @@ static void render_shadow_cubemap(r64 alpha, struct RICO_light *lights)
         glClear(GL_DEPTH_BUFFER_BIT);
 
         // Render scene to this light's shadow map
-        for (u32 pack = 1; pack < ARRAY_COUNT(packs); ++pack)
+        for (u32 pack = 1; pack < ARRAY_COUNT(global_packs); ++pack)
         {
-            if (!packs[pack])
+            if (!global_packs[pack])
                 continue;
 
-            object_render(packs[pack], prog_texture->locations.vert.model,
+            object_render(global_packs[pack], prog_texture->locations.vert.model,
                           true);
         }
     }
 
     // Point light shadows
-    struct shadow_cubemap_program *prob_cube = prog_shadow_cubemap;
+    struct program_shadow_cubemap *prob_cube = global_prog_shadow_cubemap;
     glUseProgram(prob_cube->program.gl_id);
     glUniform2f(prob_cube->locations.frag.near_far, LIGHT_NEAR, LIGHT_FAR);
 
@@ -234,12 +234,12 @@ static void render_shadow_cubemap(r64 alpha, struct RICO_light *lights)
         glClear(GL_DEPTH_BUFFER_BIT);
 
         // Render scene to this light's shadow map
-        for (u32 pack = 1; pack < ARRAY_COUNT(packs); ++pack)
+        for (u32 pack = 1; pack < ARRAY_COUNT(global_packs); ++pack)
         {
-            if (!packs[pack])
+            if (!global_packs[pack])
                 continue;
 
-            object_render(packs[pack], prob_cube->locations.vert.model, true);
+            object_render(global_packs[pack], prob_cube->locations.vert.model, true);
         }
     }
 
