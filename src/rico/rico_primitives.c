@@ -164,9 +164,9 @@ extern void RICO_prim_draw_ray_xform(const struct ray *ray,
                                      const struct vec4 *color,
                                      const struct mat4 *xform)
 {
-    struct vec3 ray_end = ray->orig;
-    v3_add(&ray_end, &ray->dir);
-    RICO_prim_draw_line_xform(&ray->orig, &ray->dir, color, xform);
+    struct vec3 ray_end = ray->origin;
+    v3_add(&ray_end, &ray->d);
+    RICO_prim_draw_line_xform(&ray->origin, &ray->d, color, xform);
 }
 extern void RICO_prim_draw_rect(const struct rect *rect,
                                 const struct vec4 *color)
@@ -301,12 +301,12 @@ extern void RICO_prim_draw_plane_xform(const struct vec3 *n,
 
     RICO_prim_draw_quad_xform(&quad, color, xform);
 }
-extern void RICO_prim_draw_aabb(const struct RICO_aabb *aabb,
+extern void RICO_prim_draw_aabb(const struct ric_aabb *aabb,
                                 const struct vec4 *color)
 {
     RICO_prim_draw_aabb_xform(aabb, color, &MAT4_IDENT);
 }
-extern void RICO_prim_draw_aabb_xform(const struct RICO_aabb *aabb,
+extern void RICO_prim_draw_aabb_xform(const struct ric_aabb *aabb,
                                       const struct vec4 *color,
                                       const struct mat4 *xform)
 {
@@ -480,12 +480,12 @@ extern void RICO_prim_draw_sphere_xform(const struct sphere *sphere,
     // TODO: Test these!
 #if 1
     struct mat4 model_matrix = *xform;
-    mat4_translate(&model_matrix, &sphere->orig);
-    mat4_scalef(&model_matrix, sphere->radius);
+    mat4_translate(&model_matrix, &sphere->center);
+    mat4_scalef(&model_matrix, sphere->r);
 #else
     struct mat4 model_matrix = MAT4_IDENT;
-    mat4_translate(&model_matrix, &sphere->orig);
-    mat4_scalef(&model_matrix, sphere->radius);
+    mat4_translate(&model_matrix, &sphere->center);
+    mat4_scalef(&model_matrix, sphere->r);
     mat4_mul(&model_matrix, xform);
 #endif
 
@@ -545,8 +545,8 @@ static void rebuild_vao(struct regularpoly *poly)
 
     for (unsigned int i = 0; i < poly->vertex_count; i++)
     {
-        poly->vertices[i].x = (GLfloat)cos(angle) * poly->radius + poly->pos.x;
-        poly->vertices[i].y = (GLfloat)sin(angle) * poly->radius + poly->pos.y;
+        poly->vertices[i].x = (GLfloat)cos(angle) * poly->r + poly->pos.x;
+        poly->vertices[i].y = (GLfloat)sin(angle) * poly->r + poly->pos.y;
         poly->vertices[i].z = poly->pos.z;
         angle += delta_angle;
     }
@@ -575,7 +575,7 @@ static void rebuild_vao(struct regularpoly *poly)
 
     poly->dirty_vao = false;
 }
-static struct regularpoly *make_regularpoly(struct vec3 center, GLfloat radius,
+static struct regularpoly *make_regularpoly(struct vec3 center, GLfloat r,
                                             unsigned int vertex_count)
 {
     struct regularpoly *poly = calloc(1, sizeof(struct regularpoly));
@@ -583,7 +583,7 @@ static struct regularpoly *make_regularpoly(struct vec3 center, GLfloat radius,
         return NULL;
 
     poly->pos = center;
-    poly->radius = radius;
+    poly->r = r;
 
     poly->vertices = calloc(1, sizeof(struct vec3) * vertex_count);
     poly->vertex_count = vertex_count;

@@ -174,7 +174,7 @@ static void window_render();
 static void init_openal();
 
 struct RICO_mesh;
-static void aabb_init_mesh(struct RICO_aabb *aabb, struct RICO_mesh *mesh);
+static void aabb_init_mesh(struct ric_aabb *aabb, struct RICO_mesh *mesh);
 
 static void camera_init(struct RICO_camera *camera, struct vec3 position,
                         struct quat view, float fov_deg);
@@ -194,29 +194,17 @@ static void camera_render(struct RICO_camera *camera);
 static void camera_fwd_ray(struct ray *_ray, struct RICO_camera *camera);
 
 static bool collide_ray_plane(struct vec3 *_contact, const struct ray *ray,
-                              const struct vec3 *p, const struct vec3 *n);
+                              const struct plane *plane);
+static bool collide_ray_sphere(float *_t, const struct ray *ray,
+                               const struct sphere *sphere);
 static bool collide_ray_aabb(float *_t, const struct ray *ray,
-                             const struct RICO_aabb *aabb,
-                             const struct vec3 *pos);
+                             const struct ric_aabb *aabb);
 static bool collide_ray_obb(float *_dist, const struct ray *r,
-                            const struct RICO_aabb *RICO_aabb,
+                            const struct ric_aabb *ric_aabb,
                             const struct mat4 *model_matrix);
 
-#if 0
-static inline char *read_word(char *fp, int buffer_len, char **buf)
-{
-    buffer_len--;
-    while (*fp && buffer_len)
-    {
-        (*buf)++;
-    }
-    **buf = '\0';
-
-    return fp;
-}
-#endif
-
-static void editor_init();
+static void edit_init();
+static void edit_free();
 static void edit_object_create();
 static void edit_aabb_reset_all();
 static void edit_object_select(pkid id, bool force);
@@ -236,7 +224,6 @@ static void edit_mouse_pressed();
 static void edit_mouse_move();
 static void edit_mouse_released();
 static void edit_render();
-static void free_glref();
 
 static enum ric_error rico_error_print(const char *file, int line,
                                         enum ric_error err, const char *fmt,

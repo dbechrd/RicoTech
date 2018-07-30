@@ -280,6 +280,6 @@ extern void RICO_camera_fwd(struct vec3 *_fwd, struct RICO_camera *camera)
 }
 static void camera_fwd_ray(struct ray *_ray, struct RICO_camera *camera)
 {
-    RICO_camera_fwd(&_ray->dir, camera);
-    _ray->orig = camera->pos;
+    RICO_camera_fwd(&_ray->d, camera);
+    _ray->origin = camera->pos;
 }

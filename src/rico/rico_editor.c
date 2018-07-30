@@ -1,10 +1,10 @@
 #define RIC_WIDGET_BOX_OFFSET 1.0f
-#define RIC_WIDGET_BOX_RADIUS 0.15f
+#define RIC_WIDGET_BOX_RADIUS 0.1f
 
 struct widget
 {
     enum ric_widget action;
-    struct RICO_aabb aabb;
+    struct ric_aabb aabb;
 };
 static struct widget widgets[RIC_WIDGET_COUNT];
 static struct widget *widget;
@@ -17,7 +17,7 @@ static struct program_shadow_cubemap *global_prog_shadow_cubemap;
 static struct program_primitive *global_prog_primitive;
 static struct program_text *global_prog_text;
 
-static void editor_init()
+static void edit_init()
 {
     const float offset = RIC_WIDGET_BOX_OFFSET;
     const float radius = RIC_WIDGET_BOX_RADIUS;
@@ -33,6 +33,25 @@ static void editor_init()
     widgets[2].aabb.c = VEC3(0.0f, 0.0f, offset + radius);
     widgets[2].aabb.e = VEC3_1(radius);
     widgets[2].action = RIC_WIDGET_TRANSLATE_Z;
+}
+static void edit_free()
+{
+#if 0
+    // TODO: What are chunks used for now? How/when do we need to free them?
+    free(pack_frame);
+    free(pack_transient);
+    free(RICO_pack_active);
+    free(pack_default);
+
+    // TODO: Free chunks/pools if still using any
+    //chunk_free(chunk_active);
+    //chunk_free(chunk_transient);
+
+    //TODO: Free all programs
+    free_program_pbr(&global_prog_pbr);
+    free_program_primitive(&global_prog_primitive);
+    free_program_text(&global_prog_text);
+#endif
 }
 static void edit_object_create()
 {
@@ -365,9 +384,11 @@ static struct widget *widget_test()
         float dist_min = 9999.0;
         for (u32 i = 0; i < ARRAY_COUNT(widgets); ++i)
         {
+            struct ric_aabb aabb = widgets[i].aabb;
+            v3_add(&aabb.c, &obj->xform.position);
+
             float dist;
-            bool collide = collide_ray_aabb(&dist, &cam_ray, &widgets[i].aabb,
-                                            &obj->xform.position);
+            bool collide = collide_ray_aabb(&dist, &cam_ray, &aabb);
             if (collide && dist < dist_min)
             {
                 dist_min = dist;
@@ -428,12 +449,13 @@ static void edit_mouse_move()
         //prim_draw_plane(&obj->xform.position, &normal, &MAT4_IDENT,
         //                &COLOR_RED_HIGHLIGHT);
 
+
         struct vec3 contact = { 0 };
         collide = collide_ray_plane(&contact, &cam_ray,
-                                    &obj->xform.position,
-                                    &normal);
-        if (collide) {
-            trans.x = contact.x - RIC_WIDGET_BOX_OFFSET;
+                                    &PLANE(obj->xform.position, normal));
+        if (collide)
+        {
+            trans.x = contact.x - RIC_WIDGET_BOX_OFFSET - RIC_WIDGET_BOX_RADIUS;
             trans.x -= (float)fmod(trans.x, global_trans_delta);
         }
     }
@@ -447,10 +469,10 @@ static void edit_mouse_move()
 
         struct vec3 contact = { 0 };
         collide = collide_ray_plane(&contact, &cam_ray,
-                                    &obj->xform.position,
-                                    &normal);
-        if (collide) {
-            trans.y = contact.y - RIC_WIDGET_BOX_OFFSET;
+                                    &PLANE(obj->xform.position, normal));
+        if (collide)
+        {
+            trans.y = contact.y - RIC_WIDGET_BOX_OFFSET - RIC_WIDGET_BOX_RADIUS;
             trans.y -= (float)fmod(trans.y, global_trans_delta);
         }
     }
@@ -464,10 +486,10 @@ static void edit_mouse_move()
 
         struct vec3 contact = { 0 };
         collide = collide_ray_plane(&contact, &cam_ray,
-                                    &obj->xform.position,
-                                    &normal);
-        if (collide) {
-            trans.z = contact.z - RIC_WIDGET_BOX_OFFSET;
+                                    &PLANE(obj->xform.position, normal));
+        if (collide)
+        {
+            trans.z = contact.z - RIC_WIDGET_BOX_OFFSET - RIC_WIDGET_BOX_RADIUS;
             trans.z -= (float)fmod(trans.z, global_trans_delta);
         }
     }
@@ -523,8 +545,8 @@ static void edit_render()
     prim_draw_quad(&flag1, &MAT4_IDENT, &COLOR_CYAN_HIGHLIGHT);
 
     struct vec3 n = VEC3(0.1f, 0.5f, 0.8f);
-    struct vec3 p = VEC3(2.0f, 2.0f, 2.0f);
-    prim_draw_plane(&p, &n, &COLOR_MAGENTA_HIGHLIGHT);
+    struct vec3 center = VEC3(2.0f, 2.0f, 2.0f);
+    prim_draw_plane(&center, &n, &COLOR_MAGENTA_HIGHLIGHT);
 #endif
 
     //--------------------------------------------------------------------------
@@ -554,23 +576,4 @@ static void edit_render()
     string_render_all(prog->locations.vert.model);
 
     glUseProgram(0);
-}
-static void free_glref()
-{
-#if 0
-    // TODO: What are chunks used for now? How/when do we need to free them?
-    free(pack_frame);
-    free(pack_transient);
-    free(RICO_pack_active);
-    free(pack_default);
-
-    // TODO: Free chunks/pools if still using any
-    //chunk_free(chunk_active);
-    //chunk_free(chunk_transient);
-
-    //TODO: Free all programs
-    free_program_pbr(&global_prog_pbr);
-    free_program_primitive(&global_prog_primitive);
-    free_program_text(&global_prog_text);
-#endif
 }

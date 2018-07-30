@@ -71,8 +71,8 @@ static void object_update_aabb_world(struct RICO_object *obj)
 static void object_update_sphere(struct RICO_object *obj)
 {
     struct sphere *sphere = &obj->sphere;
-    sphere->orig = obj->obb.c;
-    sphere->radius = sqrtf((obj->obb.e.x * obj->obb.e.x +
+    sphere->center = obj->obb.c;
+    sphere->r = sqrtf((obj->obb.e.x * obj->obb.e.x +
                             obj->obb.e.y * obj->obb.e.y +
                             obj->obb.e.z * obj->obb.e.z));
 }
@@ -154,7 +154,7 @@ static void object_transform_update(struct RICO_object *obj)
     object_update_colliders(obj);
 }
 extern void RICO_object_aabb_set(struct RICO_object *obj,
-                                 const struct RICO_aabb *aabb)
+                                 const struct ric_aabb *aabb)
 {
     obj->aabb = *aabb;
     object_update_colliders(obj);
@@ -250,8 +250,9 @@ static bool object_collide_ray_type(pkid *_object_id, float *_dist,
                 continue;
 
             float dist;
-            bool col = collide_ray_obb(&dist, ray, &obj->aabb,
-                                       &obj->xform.matrix);
+            //bool col = collide_ray_obb(&dist, ray, &obj->aabb,
+            //                           &obj->xform.matrix);
+            bool col = collide_ray_sphere(&dist, ray, &obj->sphere);
 
             // If closest so far, save info
             if (col && dist < closest)

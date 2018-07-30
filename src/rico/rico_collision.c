@@ -1,50 +1,85 @@
 static bool collide_ray_plane(struct vec3 *_contact, const struct ray *ray,
-                              const struct vec3 *p, const struct vec3 *n)
+                              const struct plane *plane)
 {
     float t = 0.0f;
 
-    float denom = v3_dot(n, &ray->dir);
+    // w = plane.p - ray.p
+    // t = (plane.n * w) / (plane.n * ray.d)
+
+    float denom = v3_dot(&plane->n, &ray->d);
     if (fabs(denom) > EPSILON)
     {
-        struct vec3 w = ray->orig;
-        v3_sub(&w, p);
+        struct vec3 w = plane->p;
+        v3_sub(&w, &ray->origin);
 
-        t = -v3_dot(n, &w) / denom;
-
-        struct vec3 contact = ray->dir;
-        v3_scalef(&contact, t);
-        v3_add(&contact, &ray->orig);
-
+        t = v3_dot(&plane->n, &w) / denom;
         if (t >= 0)
         {
-            *_contact = contact;
+            if (_contact)
+            {
+                *_contact = ray->d;
+                v3_scalef(_contact, t);
+                v3_add(_contact, &ray->origin);
+            }
             return true;
         }
     }
 
     return false;
 }
+static bool collide_ray_sphere(float *_t, const struct ray *ray,
+                               const struct sphere *sphere)
+{
+    struct vec3 m = ray->origin;
+    v3_sub(&m, &sphere->center);
+
+    // Note: dot(m, m) == len(m) * len(m)
+    float b = v3_dot(&m, &ray->d);
+    float c = v3_dot(&m, &m) - (sphere->r * sphere->r);
+    if (c > 0.0f && b > 0.0f)
+    {
+        return false;
+    }
+
+    // Discriminant
+    float disc = (b * b) - c;
+    if (disc < 0.0f)
+    {
+        return false;
+    }
+
+    float t = -b - sqrtf(disc);
+    if (t > 0.0f)
+    {
+        if (_t)
+        {
+            *_t = t;
+        }
+        return true;
+    }
+
+    return false;
+}
 static bool collide_ray_aabb(float *_t, const struct ray *ray,
-                             const struct RICO_aabb *aabb,
-                             const struct vec3 *pos)
+                             const struct ric_aabb *aabb)
 {
     struct vec3 p[2] = {
         VEC3(
-            pos->x + aabb->c.x - aabb->e.x,
-            pos->y + aabb->c.y - aabb->e.y,
-            pos->z + aabb->c.z - aabb->e.z
+            aabb->c.x - aabb->e.x,
+            aabb->c.y - aabb->e.y,
+            aabb->c.z - aabb->e.z
         ),
         VEC3(
-            pos->x + aabb->c.x + aabb->e.x,
-            pos->y + aabb->c.y + aabb->e.y,
-            pos->z + aabb->c.z + aabb->e.z
+            aabb->c.x + aabb->e.x,
+            aabb->c.y + aabb->e.y,
+            aabb->c.z + aabb->e.z
         ),
     };
 
     struct vec3 invdir;
-    invdir.x = 1.0f / ray->dir.x;
-    invdir.y = 1.0f / ray->dir.y;
-    invdir.z = 1.0f / ray->dir.z;
+    invdir.x = 1.0f / ray->d.x;
+    invdir.y = 1.0f / ray->d.y;
+    invdir.z = 1.0f / ray->d.z;
 
     int sign[3];
     sign[0] = invdir.x < 0;
@@ -54,12 +89,12 @@ static bool collide_ray_aabb(float *_t, const struct ray *ray,
     float t_min, t_max, y_min, y_max, z_min, z_max;
 
     // x-axis
-    t_min = (p[    sign[0]].x - ray->orig.x) * invdir.x;
-    t_max = (p[1 - sign[0]].x - ray->orig.x) * invdir.x;
+    t_min = (p[    sign[0]].x - ray->origin.x) * invdir.x;
+    t_max = (p[1 - sign[0]].x - ray->origin.x) * invdir.x;
 
     // y-axis
-    y_min = (p[    sign[1]].y - ray->orig.y) * invdir.y;
-    y_max = (p[1 - sign[1]].y - ray->orig.y) * invdir.y;
+    y_min = (p[    sign[1]].y - ray->origin.y) * invdir.y;
+    y_max = (p[1 - sign[1]].y - ray->origin.y) * invdir.y;
 
     if (t_min > y_max || y_min > t_max)
         return false;
@@ -69,8 +104,8 @@ static bool collide_ray_aabb(float *_t, const struct ray *ray,
         t_max = y_max;
 
     // z-axis
-    z_min = (p[    sign[2]].z - ray->orig.z) * invdir.z;
-    z_max = (p[1 - sign[2]].z - ray->orig.z) * invdir.z;
+    z_min = (p[    sign[2]].z - ray->origin.z) * invdir.z;
+    z_max = (p[1 - sign[2]].z - ray->origin.z) * invdir.z;
 
     if ((t_min > z_max) || (z_min > t_max))
         return false;
@@ -87,7 +122,7 @@ static bool collide_ray_aabb(float *_t, const struct ray *ray,
     return true;
 }
 static bool collide_ray_obb(float *_dist, const struct ray *r,
-                            const struct RICO_aabb *aabb,
+                            const struct ric_aabb *aabb,
                             const struct mat4 *model_matrix)
 {
     struct vec3 p0 = aabb->c;
@@ -111,8 +146,8 @@ static bool collide_ray_obb(float *_dist, const struct ray *r,
     model_orig.y = model_matrix->m[1][3];
     model_orig.z = model_matrix->m[2][3];
 
-    ray.orig = model_orig;
-    v3_sub(&ray.orig, &r->orig);
+    ray.origin = model_orig;
+    v3_sub(&ray.origin, &r->origin);
 
     //DEBUG: Draw sphere / ray
     // struct sphere sphere_ray;
@@ -121,7 +156,7 @@ static bool collide_ray_obb(float *_dist, const struct ray *r,
     // prim_draw_sphere(&sphere_ray, &COLOR_MAGENTA_HIGHLIGHT);
 
     // struct ray debug_ray = ray;
-    // v3_scalef(&debug_ray.dir, 10.0f);
+    // v3_scalef(&debug_ray.d, 10.0f);
     // prim_draw_ray(&debug_ray, &MAT4_IDENT, COLOR_YELLOW_HIGHLIGHT);
 
 	// Test intersection with the 2 planes perpendicular to the OBB's X axis
@@ -137,17 +172,17 @@ static bool collide_ray_obb(float *_dist, const struct ray *r,
 
         // struct ray x_ray;
         // x_ray.orig = model_orig;
-        // x_ray.dir = x_axis;
+        // x_ray.d = x_axis;
         // prim_draw_ray(&x_ray, &MAT4_IDENT, COLOR_RED_HIGHLIGHT);
 
         // struct sphere x_sphere;
         // x_sphere.orig = x_ray.orig;
-        // v3_add(&x_sphere.orig, &x_ray.dir);
+        // v3_add(&x_sphere.orig, &x_ray.d);
         // x_sphere.radius = 0.05f;
         // prim_draw_sphere(&x_sphere, &COLOR_RED_HIGHLIGHT);
 
-		float e = v3_dot(&x_axis, &ray.orig);
-		float f = v3_dot(&ray.dir, &x_axis);
+		float e = v3_dot(&x_axis, &ray.origin);
+		float f = v3_dot(&ray.d, &x_axis);
 
 		if (fabsf(f) > 0.00001f) // Standard case
         {
@@ -202,17 +237,17 @@ static bool collide_ray_obb(float *_dist, const struct ray *r,
 
         // struct ray y_ray;
         // y_ray.orig = model_orig;
-        // y_ray.dir = y_axis;
+        // y_ray.d = y_axis;
         // prim_draw_ray(&y_ray, &MAT4_IDENT, COLOR_GREEN_HIGHLIGHT);
 
         // struct sphere y_sphere;
         // y_sphere.orig = y_ray.orig;
-        // v3_add(&y_sphere.orig, &y_ray.dir);
+        // v3_add(&y_sphere.orig, &y_ray.d);
         // y_sphere.radius = 0.05f;
         // prim_draw_sphere(&y_sphere, &COLOR_GREEN_HIGHLIGHT);
 
-        float e = v3_dot(&y_axis, &ray.orig);
-		float f = v3_dot(&ray.dir, &y_axis);
+        float e = v3_dot(&y_axis, &ray.origin);
+		float f = v3_dot(&ray.d, &y_axis);
 
 		if (fabsf(f) > 0.00001f)
         {
@@ -248,17 +283,17 @@ static bool collide_ray_obb(float *_dist, const struct ray *r,
 
         // struct ray z_ray;
         // z_ray.orig = model_orig;
-        // z_ray.dir = z_axis;
+        // z_ray.d = z_axis;
         // prim_draw_ray(&z_ray, &MAT4_IDENT, COLOR_BLUE_HIGHLIGHT);
 
         // struct sphere z_sphere;
         // z_sphere.orig = z_ray.orig;
-        // v3_add(&z_sphere.orig, &z_ray.dir);
+        // v3_add(&z_sphere.orig, &z_ray.d);
         // z_sphere.radius = 0.05f;
         // prim_draw_sphere(&z_sphere, &COLOR_BLUE_HIGHLIGHT);
 
-        float e = v3_dot(&z_axis, &ray.orig);
-		float f = v3_dot(&ray.dir, &z_axis);
+        float e = v3_dot(&z_axis, &ray.origin);
+		float f = v3_dot(&ray.d, &z_axis);
 
 		if (fabsf(f) > 0.00001f)
         {

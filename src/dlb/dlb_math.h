@@ -99,8 +99,8 @@ struct vec4
 
 struct ray
 {
-    struct vec3 orig;
-    struct vec3 dir;
+    struct vec3 origin;
+    struct vec3 d;
 };
 
 struct triangle
@@ -116,8 +116,14 @@ struct quad
 
 struct sphere
 {
-    struct vec3 orig;
-    float radius;
+    struct vec3 center;
+    float r;
+};
+
+struct plane
+{
+    struct vec3 p;
+    struct vec3 n;
 };
 
 struct mat4
@@ -159,6 +165,7 @@ struct quat
 #define VEC3(x, y, z)    ((const struct vec3) {{{ x, y, z }}})
 #define VEC4_V3(v)       ((const struct vec4) {{{ v.x, v.y, v.z, 0.0f }}})
 #define VEC4(x, y, z, w) ((const struct vec4) {{{ x, y, z, w }}})
+#define PLANE(p, n)      ((const struct plane) {{{ p, n }}})
 #define QUAT(w, x, y, z) ((const struct quat) { w, {{ x, y, z }}})
 #else
 #define RECT(x, y, w, h) ((const struct rect) { x, y, w, h })
@@ -168,6 +175,7 @@ struct quat
 #define VEC3(x, y, z)    ((const struct vec3) { x, y, z })
 #define VEC4_V3(v)       ((const struct vec4) { v.x, v.y, v.z, 0.0f })
 #define VEC4(x, y, z, w) ((const struct vec4) { x, y, z, w })
+#define PLANE(p, n)      ((const struct plane) { p, n })
 #define QUAT(w, x, y, z) ((const struct quat) { w, x, y, z })
 #endif
 
@@ -554,11 +562,11 @@ DLB_MATH_DEF float v3_dot(struct vec3 a, struct vec3 b)
 }
 DLB_MATH_DEF struct vec3 v3_cross(struct vec3 a, struct vec3 b)
 {
-    struct vec3 c;
-    c.x = a.y * b.z - a.z * b.y;
-    c.y = a.z * b.x - a.x * b.z;
-    c.z = a.x * b.y - a.y * b.x;
-    return c;
+    struct vec3 center;
+    center.x = a.y * b.z - a.z * b.y;
+    center.y = a.z * b.x - a.x * b.z;
+    center.z = a.x * b.y - a.y * b.x;
+    return center;
 }
 DLB_MATH_DEF float v3_length(struct vec3 vw)
 {

@@ -30,9 +30,9 @@ extern void RICO_prim_draw_plane(const struct vec3 *n,
 extern void RICO_prim_draw_plane_xform(const struct vec3 *n,
                                        const struct vec4 *color,
                                        const struct mat4 *xform);
-extern void RICO_prim_draw_aabb(const struct RICO_aabb *aabb,
+extern void RICO_prim_draw_aabb(const struct ric_aabb *aabb,
                                 const struct vec4 *color);
-extern void RICO_prim_draw_aabb_xform(const struct RICO_aabb *aabb,
+extern void RICO_prim_draw_aabb_xform(const struct ric_aabb *aabb,
                                       const struct vec4 *color,
                                       const struct mat4 *xform);
 extern void RICO_prim_draw_obb(const struct RICO_obb *obb,

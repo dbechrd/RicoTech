@@ -10,12 +10,6 @@ enum actions
     RIC_ACTION_TYPE_PREV
 };
 
-struct ray_visualizer
-{
-    struct RICO_object rico;
-    u32 lifetime;
-};
-
 enum audio_type
 {
     AUDIO_WELCOME,
@@ -202,7 +196,7 @@ void game_button_interact(struct game_button *button)
 static struct sphere rayviz_sphere;
 void object_interact()
 {
-    rayviz_sphere.radius = 0.0f;
+    rayviz_sphere.r = 0.0f;
 
     pkid obj_id = 0;
     float dist;
@@ -223,10 +217,10 @@ void object_interact()
     //       existing mesh.. also need to somehow calculate and subtract
     //       distance from original to edge of new mesh and dot that with the
     //       ray to prevent it from being placed inside.
-    rayviz_sphere.orig = pos;
-    rayviz_sphere.radius = scale;
+    rayviz_sphere.center = pos;
+    rayviz_sphere.r = scale;
 
-    if (dist > 3.0f)
+    if (dist > 10.0f)
         return;
 
     struct RICO_object *obj = RICO_pack_lookup(obj_id);
@@ -272,7 +266,7 @@ pkid RICO_physics_next(pkid id)
 #if 0
 void clash_detect()
 {
-    //struct RICO_aabb *a, b;
+    //struct ric_aabb *a, b;
     //
     //const int pack_count = ARRAY_COUNT(pack_table);
     //for (int pack_idx_a = 0; pack_idx_a < pack_count; pack_idx_a++)
@@ -293,10 +287,10 @@ void clash_detect()
 bool DEBUG_sphere_v_sphere(const struct sphere *a, const struct sphere *b,
                            struct manifold *manifold)
 {
-    struct vec3 D = a->orig;
-    v3_sub(&D, &b->orig);
+    struct vec3 D = a->center;
+    v3_sub(&D, &b->center);
     float dist = v3_length(&D);
-    float r_sum = a->radius + b->radius;
+    float r_sum = a->r + b->r;
     bool collide = (dist < r_sum);
 
     if (collide)
@@ -305,8 +299,8 @@ bool DEBUG_sphere_v_sphere(const struct sphere *a, const struct sphere *b,
         struct vec3 normal = D;
         v3_normalize(&normal);
         struct vec3 position = normal;
-        v3_scalef(&position, b->radius - pen);
-        v3_add(&position, &b->orig);
+        v3_scalef(&position, b->r - pen);
+        v3_add(&position, &b->center);
 
         manifold->contacts[0].penetration = pen;
         manifold->contacts[0].normal = normal;
@@ -324,8 +318,8 @@ void DEBUG_render_manifold(struct manifold *manifold)
         for (u32 i = 0; i < manifold->contact_count; ++i)
         {
             struct sphere manifold_pos;
-            manifold_pos.orig = manifold->contacts[i].position;
-            manifold_pos.radius = 0.01f;
+            manifold_pos.center = manifold->contacts[i].position;
+            manifold_pos.r = 0.01f;
             RICO_prim_draw_sphere(&manifold_pos, &COLOR_PINK);
 
             struct vec3 p0 = manifold->contacts[i].position;
@@ -600,7 +594,7 @@ void DEBUG_render_color_test()
         COLOR_BLACK,
     };
 
-    struct RICO_aabb color_test = { 0 };
+    struct ric_aabb color_test = { 0 };
     float x = 0.0f;
     float y = 2.0f;
     const float width = 0.1f;
@@ -649,7 +643,7 @@ void debug_render_colliders()
                 col_sphere = COLOR_YELLOW;
             }
 
-            //RICO_prim_draw_sphere(&obj->sphere, &col_sphere);
+            RICO_prim_draw_sphere(&obj->sphere, &col_sphere);
             RICO_prim_draw_aabb(&obj->aabb_world, &col_aabb);
             RICO_prim_draw_obb(&obj->obb, &col_obb);
 
@@ -1324,37 +1318,27 @@ int main(int argc, char **argv)
             u32 action;
             while (RICO_key_event(&action))
             {
-                if (RICO_state_is_edit())
+                switch (action)
                 {
-                    switch (action)
-                    {
-                        case RIC_ACTION_RICO_TEST:
-                            RICO_audio_source_play(&audio_sources[AUDIO_BUTTON]);
-                            debug_perc += 1.0f;
-                            break;
-                        default:
-                            break;
-                    }
+                    case RIC_ACTION_PLAY_INTERACT:
+                        object_interact();
+                        break;
+                    case RIC_ACTION_RICO_TEST:
+                        RICO_audio_source_play(&audio_sources[AUDIO_BUTTON]);
+                        debug_perc += 1.0f;
+                        break;
+                    default:
+                        break;
                 }
-                else if (RICO_simulation_paused())
-                {
-                    continue;
-                }
-                else
-                {
-                    switch (action)
-                    {
-                        case RIC_ACTION_PLAY_INTERACT:
-                            object_interact();
-                            break;
-                        case RIC_ACTION_RICO_TEST:
-                            RICO_audio_source_play(&audio_sources[AUDIO_BUTTON]);
-                            debug_perc += 1.0f;
-                            break;
-                        default:
-                            break;
-                    }
-                }
+
+                //if (RICO_state_is_edit())
+                //{
+                //
+                //}
+                //if (RICO_simulation_paused())
+                //{
+                //    continue;
+                //}
             }
         }
 
@@ -1381,8 +1365,8 @@ int main(int argc, char **argv)
                 continue;
 
             struct sphere light_sphere = { 0 };
-            light_sphere.orig = global_prog_pbr->frag.lights[i].pos;
-            light_sphere.radius = 0.1f;
+            light_sphere.center = global_prog_pbr->frag.lights[i].pos;
+            light_sphere.r = 0.1f;
 
             struct vec4 color = VEC4(global_prog_pbr->frag.lights[i].col.r,
                                      global_prog_pbr->frag.lights[i].col.g,
@@ -1434,14 +1418,18 @@ int main(int argc, char **argv)
         //    }
         //}
 
-        // Render overlays
         if (RICO_state_is_edit())
         {
             debug_render_colliders();
-            if (rayviz_sphere.radius > 0.0f)
-            {
-                RICO_prim_draw_sphere(&rayviz_sphere, &COLOR_YELLOW);
-            }
+        }
+        //if (rayviz_sphere.r > 0.0f)
+        //{
+        //    RICO_prim_draw_sphere(&rayviz_sphere, &COLOR_YELLOW);
+        //}
+
+        // Render overlays
+        if (RICO_state_is_edit())
+        {
             render_editor_ui();
             RICO_render_editor();
         }

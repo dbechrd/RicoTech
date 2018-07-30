@@ -58,6 +58,20 @@ struct obj_file
     struct obj_token *tokens;
 };
 
+#if 0
+static inline char *read_word(char *fp, int buffer_len, char **buf)
+{
+    buffer_len--;
+    while (*fp && buffer_len)
+    {
+        (*buf)++;
+    }
+    **buf = '\0';
+
+    return fp;
+}
+#endif
+
 static int rico_convert(int argc, char **argv)
 {
     enum ric_error err = RIC_ERR_INVALID_PARAMS;
@@ -136,10 +150,10 @@ static int load_obj_file_new(const char *filename)
             {
                 if (dlb_strlen(obj_keyword_values[kw]) != len) continue;
 
-                u32 c = 0;
-                while (value[c] == obj_keyword_values[kw][c]) c++;
+                u32 center = 0;
+                while (value[center] == obj_keyword_values[kw][center]) center++;
 
-                if (c == len)
+                if (center == len)
                 {
                     file.tokens[tok_idx].type = OBJ_TOK_KEYWORD;
                     file.tokens[tok_idx].keyword = (enum obj_keyword_type)kw;

@@ -11,7 +11,7 @@
     f(RIC_ASSET_FONT,      sizeof(struct RICO_font))		\
     f(RIC_ASSET_STRING,    sizeof(struct RICO_string))	    \
     f(RIC_ASSET_MATERIAL,  sizeof(struct RICO_material))	\
-    f(RIC_ASSET_BBOX,      sizeof(struct RICO_aabb))
+    f(RIC_ASSET_BBOX,      sizeof(struct ric_aabb))
 
 enum ric_asset_type
 {
@@ -336,7 +336,7 @@ struct RICO_audio_buffer
 
 ////////////////////////////////////////////////////////////////////////////////
 
-struct RICO_aabb
+struct ric_aabb
 {
     struct vec3 c;
     struct vec3 e;  // half-width extents
@@ -470,7 +470,7 @@ struct RICO_mesh
     u32 vertex_count;
     u32 element_count;
     enum program_type prog_type;
-    struct RICO_aabb aabb;
+    struct ric_aabb aabb;
 
     // TODO: Remove these fields. Load data directly into VRAM then free buffer.
     u32 vertices_offset;
@@ -693,8 +693,8 @@ struct RICO_object
     u32 type;
     struct RICO_transform xform;
 
-    struct RICO_aabb aabb;
-    struct RICO_aabb aabb_world;
+    struct ric_aabb aabb;
+    struct ric_aabb aabb_world;
     struct RICO_obb obb;
     struct sphere sphere;
 

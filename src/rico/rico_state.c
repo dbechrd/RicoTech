@@ -1155,7 +1155,7 @@ static int rico_init_shaders()
 }
 static int state_engine_shutdown()
 {
-	free_glref();
+	edit_free();
 	return RIC_SUCCESS;
 }
 static void rico_check_key_events()
@@ -1371,7 +1371,7 @@ static int engine_init()
 	printf("----------------------------------------------------------\n");
 	printf("[MAIN][init] Initializing editor\n");
 	printf("----------------------------------------------------------\n");
-	editor_init();
+	edit_init();
 
 	printf("----------------------------------------------------------\n");
 	printf("[MAIN][init] Initializing packs\n");
