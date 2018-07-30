@@ -155,7 +155,7 @@ void main()
             vec3 projCoords = vertex.light_space.xyz / vertex.light_space.w;
             projCoords = projCoords * 0.5 + 0.5;
             shadow_map_depth = texture(shadow_textures[TEXTURE_IDX],
-                                       projCoords.xy).r;
+                                       projCoords.st).r;
             shadow_bias = 0.0001;
             shadow_darkness = 0.9;
 
@@ -184,8 +184,8 @@ void main()
             debug_color = ERR_UNKNOWN_LIGHT_TYPE;
         }
 
-        float shadow = mix(0.0, shadow_darkness,
-                           dist - shadow_bias > shadow_map_depth);
+        float shadow = mix(0.0, shadow_darkness, dist - shadow_bias >
+                           shadow_map_depth);
 
         //debug_color = vec4(vec3(shadow_map_depth), 1.0);
         //debug_color = vec4(vec3(dist), 1.0);

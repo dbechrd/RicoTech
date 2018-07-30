@@ -77,7 +77,7 @@ static void create_framebuffer(GLuint *fbo_id, GLuint tex_id)
 
 static void render_shadow_cubemap(r64 alpha, struct RICO_light *lights)
 {
-    const u32 tex_size = 256;
+    const u32 tex_size = 1024;
 
     // TODO: Refactor this debauchery
     static struct mat4 rot_matrices[6] = { 0 };
@@ -150,8 +150,10 @@ static void render_shadow_cubemap(r64 alpha, struct RICO_light *lights)
         //    fflush(stdout);
         //}
 
+        // TODO: Figure out how to project directional light better. These
+        //       constants are really hacky and the light can't go very far.
         float ortho_width = 50.0f;
-        float ortho_far = 250.0f;
+        float ortho_far = 500.0f;
         shadow_ortho = mat4_init_ortho(-ortho_width, ortho_width, ortho_width,
                                        -ortho_width, ortho_far, -ortho_far);
 
@@ -163,6 +165,7 @@ static void render_shadow_cubemap(r64 alpha, struct RICO_light *lights)
     ////////////////////////////////////////////////////////////////////////////
     // Render shadows
     glViewport(0, 0, tex_size, tex_size);
+    //glCullFace(GL_FRONT);
 
     // Directional light shadows
     struct program_shadow_texture *prog_texture = global_prog_shadow_texture;
@@ -243,6 +246,7 @@ static void render_shadow_cubemap(r64 alpha, struct RICO_light *lights)
         }
     }
 
+    //glCullFace(GL_BACK);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glUseProgram(0);
 }
