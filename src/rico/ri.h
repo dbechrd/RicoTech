@@ -202,6 +202,8 @@ static bool collide_ray_aabb(float *_t, const struct ray *ray,
 static bool collide_ray_obb(float *_dist, const struct ray *r,
                             const struct ric_aabb *ric_aabb,
                             const struct mat4 *model_matrix);
+bool collide_obb_obb(struct RICO_obb *a, struct RICO_obb *b, int *axis);
+bool collide_obb_obb_eberly(struct RICO_obb *a, struct RICO_obb *b);
 
 static void edit_init();
 static void edit_free();

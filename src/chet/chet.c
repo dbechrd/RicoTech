@@ -1,7 +1,6 @@
 ﻿#include "chet.h"
 #include "rico.c"
 #include "chet_packs.c"
-#include "chet_collision.c"
 
 enum actions
 {
@@ -342,6 +341,27 @@ void clash_detect()
         while (a_id)
         {
             struct RICO_object *a_obj = RICO_pack_lookup(a_id);
+            a_obj->collide_sphere = false;
+            a_obj->collide_aabb = false;
+            a_obj->collide_obb = false;
+
+            a_id = RICO_pack_next_type(a_id, RIC_ASSET_OBJECT);
+        }
+    }
+    for (u32 i = 1; i < ARRAY_COUNT(global_packs); ++i)
+    {
+        if (!global_packs[i])
+            continue;
+
+        pkid a_id = RICO_pack_first_type(global_packs[i]->id, RIC_ASSET_OBJECT);
+        while (a_id)
+        {
+            struct RICO_object *a_obj = RICO_pack_lookup(a_id);
+            if (a_obj->type == OBJ_TERRAIN)
+            {
+                a_id = RICO_pack_next_type(a_id, RIC_ASSET_OBJECT);
+                continue;
+            }
 
             for (u32 j = i; j < ARRAY_COUNT(global_packs); ++j)
             {
@@ -361,17 +381,17 @@ void clash_detect()
                 while (b_id)
                 {
                     struct RICO_object *b_obj = RICO_pack_lookup(b_id);
+                    if (b_obj->type == OBJ_TERRAIN)
+                    {
+                        b_id = RICO_pack_next_type(a_id, RIC_ASSET_OBJECT);
+                        continue;
+                    }
 
                     struct manifold manifold = { 0 };
                     manifold.body_a = a_obj;
                     manifold.body_b = b_obj;
-                    bool collide_sphere =
-                        DEBUG_sphere_v_sphere(&a_obj->sphere, &b_obj->sphere,
-                                              &manifold);
-                    ////////////////////////////////////////////////////////////
-                    // Cleanup: Debug
-                    a_obj->collide_sphere = collide_sphere;
-                    b_obj->collide_sphere = collide_sphere;
+                    bool collide_sphere = DEBUG_sphere_v_sphere(
+                        &a_obj->sphere, &b_obj->sphere, &manifold);
 
                     DEBUG_render_manifold(&manifold);
                     if (manifold.contact_count > 0)
@@ -381,17 +401,27 @@ void clash_detect()
                         //RICO_object_trans(a_obj, &resolve);
                     }
 
-                    bool collide_aabb = a_obj->collide_sphere &&
-                        RICO_aabb_intersects(&a_obj->aabb_world,
-                                             &b_obj->aabb_world);
-                    a_obj->collide_aabb = collide_aabb;
-                    b_obj->collide_aabb = collide_aabb;
+                    bool collide_aabb = RICO_aabb_intersects(
+                        &a_obj->aabb_world, &b_obj->aabb_world);
 
-                    bool collide_obb = a_obj->collide_sphere &&
-                       obb_v_obb(&a_obj->obb, &b_obj->obb) == 0;
-                    a_obj->collide_obb = collide_obb;
-                    b_obj->collide_obb = collide_obb;
-                    ////////////////////////////////////////////////////////////
+                    bool collide_obb = collide_obb_obb(
+                        &a_obj->obb, &b_obj->obb, 0);
+
+                    if (collide_sphere)
+                    {
+                        a_obj->collide_sphere = true;
+                        b_obj->collide_sphere = true;
+                    }
+                    if (collide_aabb)
+                    {
+                        a_obj->collide_aabb = true;
+                        b_obj->collide_aabb = true;
+                    }
+                    if (collide_obb)
+                    {
+                        a_obj->collide_obb = true;
+                        b_obj->collide_obb = true;
+                    }
 
                     b_id = RICO_pack_next_type(b_id, RIC_ASSET_OBJECT);
                 }
@@ -400,8 +430,6 @@ void clash_detect()
             a_id = RICO_pack_next_type(a_id, RIC_ASSET_OBJECT);
         }
     }
-
-    UNUSED("foo");
 }
 
 bool object_intersects(const struct RICO_object *a, const struct RICO_object *b,
@@ -1254,7 +1282,7 @@ int main(int argc, char **argv)
 
 	//main_nuklear(argc, argv);
     RICO_init();
-    pack_build_all();
+    //pack_build_all();
 	pack_load_all();
 
     ric_test();

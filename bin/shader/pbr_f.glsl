@@ -171,7 +171,7 @@ void main()
             shadow_map_depth = texture(shadow_cubemaps[CUBEMAP_IDX],
                                        -fragToLight).r;
             shadow_map_depth *= near_far.y;
-            shadow_bias = 0.0001;
+            shadow_bias = 0.1;
             shadow_darkness = 0.9;
 
             dist = length(fragToLight);

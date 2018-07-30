@@ -101,9 +101,6 @@
     <ClCompile Include="src\rico\tests.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
-    <ClCompile Include="src\chet\chet_collision.c">
-      <Filter>Source Files\chet</Filter>
-    </ClCompile>
     <ClCompile Include="src\rico\rico_ui.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
@@ -183,9 +180,6 @@
     </ClInclude>
     <ClInclude Include="src\rico\rico_string.h">
       <Filter>Header Files\rico</Filter>
-    </ClInclude>
-    <ClInclude Include="src\chet\chet_collision.h">
-      <Filter>Header Files\chet</Filter>
     </ClInclude>
     <ClInclude Include="src\rico\rico_ui.h">
       <Filter>Header Files\rico</Filter>

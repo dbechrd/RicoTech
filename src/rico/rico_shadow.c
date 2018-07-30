@@ -77,7 +77,7 @@ static void create_framebuffer(GLuint *fbo_id, GLuint tex_id)
 
 static void render_shadow_cubemap(r64 alpha, struct RICO_light *lights)
 {
-    const u32 tex_size = 1024;
+    const u32 tex_size = 256;
 
     // TODO: Refactor this debauchery
     static struct mat4 rot_matrices[6] = { 0 };

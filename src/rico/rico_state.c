@@ -1142,11 +1142,11 @@ static int rico_init_shaders()
     global_prog_pbr->frag.lights[2].intensity = INTENSITY;
     global_prog_pbr->frag.lights[3].intensity = INTENSITY;
     global_prog_pbr->frag.lights[4].intensity = INTENSITY;
-    global_prog_pbr->frag.lights[0].on = RICO_lighting_enabled && true;
-    global_prog_pbr->frag.lights[1].on = RICO_lighting_enabled && false;
-    global_prog_pbr->frag.lights[2].on = RICO_lighting_enabled && true;
-    global_prog_pbr->frag.lights[3].on = RICO_lighting_enabled && true;
-    global_prog_pbr->frag.lights[4].on = RICO_lighting_enabled && true;
+    global_prog_pbr->frag.lights[0].on = RICO_lighting_enabled && false;
+    global_prog_pbr->frag.lights[1].on = RICO_lighting_enabled && true;
+    global_prog_pbr->frag.lights[2].on = RICO_lighting_enabled && false;
+    global_prog_pbr->frag.lights[3].on = RICO_lighting_enabled && false;
+    global_prog_pbr->frag.lights[4].on = RICO_lighting_enabled && false;
     //global_prog_pbr->frag.light.kc = 1.0f;
     //global_prog_pbr->frag.light.kl = 0.05f;
     //global_prog_pbr->frag.light.kq = 0.001f;
