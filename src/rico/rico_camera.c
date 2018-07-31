@@ -1,6 +1,6 @@
 #include "rico_camera.h"
 
-static struct RICO_camera cam_player;
+static struct ric_camera cam_player;
 
 // Note: Height of player's eyes in meters
 #define CAMERA_POS_Y_MIN 1.68f
@@ -12,12 +12,12 @@ static struct RICO_camera cam_player;
 #define LOOK_SENSITIVITY_X 0.1f
 #define LOOK_SENSITIVITY_Y 0.1f
 
-extern struct RICO_camera* RICO_get_camera_hack()
+extern struct ric_camera* ric_get_camera_hack()
 {
     return &cam_player;
 }
 
-static void camera_init(struct RICO_camera *camera, struct vec3 position,
+static void camera_init(struct ric_camera *camera, struct vec3 position,
                         struct quat view, float fov_deg)
 {
     camera->pos = position;
@@ -45,19 +45,19 @@ static void camera_init(struct RICO_camera *camera, struct vec3 position,
     camera_rotate(camera, 0.0f, 0.0f, 0.0f);
     camera_update(camera, 0.0f);
 }
-static void camera_reset(struct RICO_camera *camera)
+static void camera_reset(struct ric_camera *camera)
 {
     const struct vec3 CAMERA_POS_INITIAL = VEC3(0.0f, CAMERA_POS_Y_MIN, 3.0f);
     camera_init(camera, CAMERA_POS_INITIAL, QUAT_IDENT, CAMERA_FOV_DEG);
 }
-static void camera_set_fov(struct RICO_camera *camera, float fov_deg)
+static void camera_set_fov(struct ric_camera *camera, float fov_deg)
 {
     camera->fov_deg = fov_deg;
     camera->persp_matrix = mat4_init_perspective(
         (r32)SCREEN_WIDTH / (r32)SCREEN_HEIGHT, Z_NEAR, Z_FAR, fov_deg
     );
 }
-static void camera_toggle_projection(struct RICO_camera *camera)
+static void camera_toggle_projection(struct ric_camera *camera)
 {
     if (camera->proj_matrix == &camera->persp_matrix)
     {
@@ -68,7 +68,7 @@ static void camera_toggle_projection(struct RICO_camera *camera)
         camera->proj_matrix = &camera->persp_matrix;
     }
 }
-static void camera_translate_world(struct RICO_camera *camera,
+static void camera_translate_world(struct ric_camera *camera,
                                    const struct vec3 *v)
 {
     v3_add(&camera->pos, v);
@@ -79,7 +79,7 @@ static void camera_translate_world(struct RICO_camera *camera,
 
     camera->need_update = true;
 }
-static void camera_translate_local(struct RICO_camera *camera,
+static void camera_translate_local(struct ric_camera *camera,
                                    const struct vec3 *v)
 {
     struct vec3 right = VEC3_RIGHT;
@@ -105,7 +105,7 @@ static void camera_translate_local(struct RICO_camera *camera,
 
     camera->need_update = true;
 }
-static void camera_rotate(struct RICO_camera *camera, float dx, float dy,
+static void camera_rotate(struct ric_camera *camera, float dx, float dy,
                           float dz)
 {
     camera->pitch += dx;
@@ -125,7 +125,7 @@ static void camera_rotate(struct RICO_camera *camera, float dx, float dy,
 
     camera->need_update = true;
 }
-static void camera_update(struct RICO_camera *camera, r64 sim_alpha)
+static void camera_update(struct ric_camera *camera, r64 sim_alpha)
 {
     if (!camera->need_update && sim_alpha == 0.0f)
         return;
@@ -163,7 +163,7 @@ static void camera_update(struct RICO_camera *camera, r64 sim_alpha)
 #if RICO_DEBUG_CAMERA
 
     u32 mouse_x, mouse_y;
-    RICO_mouse_coords(&mouse_x, &mouse_y);
+    ric_mouse_coords(&mouse_x, &mouse_y);
 
 	char buf[256] = { 0 };
 	int len = snprintf(buf, sizeof(buf),
@@ -180,14 +180,14 @@ static void camera_update(struct RICO_camera *camera, r64 sim_alpha)
                        camera->fov_deg, mouse_x, mouse_y);
 	string_truncate(buf, sizeof(buf), len);
 	string_free_slot(RIC_STRING_SLOT_DEBUG_CAMERA);
-	RICO_load_string(RIC_PACK_ID_TRANSIENT, RIC_STRING_SLOT_DEBUG_CAMERA,
+	ric_load_string(RIC_PACK_ID_TRANSIENT, RIC_STRING_SLOT_DEBUG_CAMERA,
                      SCREEN_X(-(FONT_WIDTH * 16)), SCREEN_Y(FONT_HEIGHT),
                      COLOR_DARK_RED_HIGHLIGHT, 0, 0, buf);
 #endif
 
     camera->need_update = false;
 }
-static void camera_player_update(struct RICO_camera *camera, s32 dx, s32 dy,
+static void camera_player_update(struct ric_camera *camera, s32 dx, s32 dy,
                                  struct vec3 delta_acc, float sim_alpha)
 {
     //---------------------------------------------------
@@ -256,7 +256,7 @@ static void camera_player_update(struct RICO_camera *camera, s32 dx, s32 dy,
     camera_update(&cam_player, 0.0f);
 }
 // TODO: Move this to cursor_render
-static void camera_render(struct RICO_camera *camera)
+static void camera_render(struct ric_camera *camera)
 {
 #if 0
     struct vec3 x = VEC3_RIGHT;
@@ -266,20 +266,21 @@ static void camera_render(struct RICO_camera *camera)
     v3_add(&x, &camera->pos);
     v3_add(&y, &camera->pos);
 
-    RICO_prim_draw_line(&camera->pos, &x, &COLOR_RED);
-    RICO_prim_draw_line(&camera->pos, &y, &COLOR_GREEN);
+    ric_prim_draw_line(&camera->pos, &x, &COLOR_RED);
+    ric_prim_draw_line(&camera->pos, &y, &COLOR_GREEN);
 #else
-    RICO_prim_draw_line2d(0.0f, 0.0f, SCREEN_W(10), 0.0f, &COLOR_RED);
-    RICO_prim_draw_line2d(0.0f, 0.0f, 0.0f, SCREEN_H(-10), &COLOR_GREEN);
+    ric_prim_draw_line2d(0.0f, 0.0f, SCREEN_W(10), 0.0f, &COLOR_RED);
+    ric_prim_draw_line2d(0.0f, 0.0f, 0.0f, SCREEN_H(-10), &COLOR_GREEN);
 #endif
 }
-extern void RICO_camera_fwd(struct vec3 *_fwd, struct RICO_camera *camera)
+static void camera_fwd_ray(struct ric_camera *camera, struct ray *ray)
 {
-    *_fwd = VEC3_FWD;
-    v3_mul_quat(_fwd, &camera->view);
+    ric_camera_fwd(camera, &ray->d);
+    ray->origin = camera->pos;
 }
-static void camera_fwd_ray(struct ray *_ray, struct RICO_camera *camera)
+
+extern void ric_camera_fwd(struct ric_camera *camera, struct vec3 *fwd)
 {
-    RICO_camera_fwd(&_ray->d, camera);
-    _ray->origin = camera->pos;
+    *fwd = VEC3_FWD;
+    v3_mul_quat(fwd, &camera->view);
 }

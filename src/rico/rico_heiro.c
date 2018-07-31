@@ -10,7 +10,7 @@ static GLuint glyph_vbo;
 static struct rect glyph_max_extents;
 
 // TODO: Use hash table instead
-static struct RICO_heiro_glyph glyphs[(HEIRO_CODEPOINT_LAST + 1) -
+static struct ric_heiro_glyph glyphs[(HEIRO_CODEPOINT_LAST + 1) -
                                       HEIRO_CODEPOINT_FIRST];
 //static struct dlb_hash glyphs;
 
@@ -176,7 +176,7 @@ int heiro_load_glyphs(FT_Face ft_face)
 #undef ATLAS_PAD
 }
 
-int heiro_load_glyph(u8 **buffer, struct RICO_heiro_glyph *glyph,
+int heiro_load_glyph(u8 **buffer, struct ric_heiro_glyph *glyph,
                      FT_Face ft_face, FT_ULong char_code)
 {
     enum rico_error err = RIC_SUCCESS;
@@ -200,7 +200,7 @@ cleanup:
 }
 
 // TODO: Refactor into upload_texture w/ options for wrap, filter, pixel size
-//void heiro_upload_glyph(struct RICO_heiro_glyph *glyph, const void *pixels)
+//void heiro_upload_glyph(struct ric_heiro_glyph *glyph, const void *pixels)
 GLuint heiro_upload_texture(s32 width, s32 height, const void *pixels)
 {
     GLuint gl_id;
@@ -220,7 +220,7 @@ GLuint heiro_upload_texture(s32 width, s32 height, const void *pixels)
 
 // TODO: Pass arena into this. Sometimes frame arena, sometimes longer lasting
 //       arena for strings you don't want to build multiple times.
-extern void RICO_heiro_build(struct RICO_heiro_string **result,
+extern void ric_heiro_build(struct ric_heiro_string **result,
                              struct rect *cursor, const struct dlb_string *str,
                              u32 cur)
 {
@@ -231,7 +231,7 @@ extern void RICO_heiro_build(struct RICO_heiro_string **result,
     const s32 extent_y = (s32)(glyph_max_extents.y * scale);
 
     u32 len = MIN(str->len - 1, HEIRO_MAX_LEN);
-    struct RICO_heiro_string *string =
+    struct ric_heiro_string *string =
         calloc(1, sizeof(*string) + len * HEIRO_GLYPH_VERTS *
                sizeof(string->verts[0]));
     string->length = len;
@@ -266,7 +266,7 @@ extern void RICO_heiro_build(struct RICO_heiro_string **result,
             RICO_ASSERT(c >= HEIRO_CODEPOINT_FIRST &&
                         c <= HEIRO_CODEPOINT_LAST);
         }
-        struct RICO_heiro_glyph *glyph = &glyphs[c - HEIRO_CODEPOINT_FIRST];
+        struct ric_heiro_glyph *glyph = &glyphs[c - HEIRO_CODEPOINT_FIRST];
 
         // Glyph size
         float gx = x + (glyph->bearing_left * scale);
@@ -329,7 +329,7 @@ extern void RICO_heiro_build(struct RICO_heiro_string **result,
     *result = string;
 }
 
-extern void RICO_heiro_render(struct RICO_heiro_string *string, s32 sx, s32 sy,
+extern void ric_heiro_render(struct ric_heiro_string *string, s32 sx, s32 sy,
                               const struct vec4 *color)
 {
     struct program_text *prog = global_prog_text;
@@ -370,7 +370,7 @@ extern void RICO_heiro_render(struct RICO_heiro_string *string, s32 sx, s32 sy,
     glUseProgram(0);
 }
 
-extern void RICO_heiro_free(struct RICO_heiro_string *string)
+extern void ric_heiro_free(struct ric_heiro_string *string)
 {
     free(string);
 }
@@ -389,7 +389,7 @@ void heiro_delete_glyphs()
     //memset(glyphs, 0, sizeof(glyphs));
 }
 
-void heiro_delete_glyph(struct RICO_heiro_glyph *glyph)
+void heiro_delete_glyph(struct ric_heiro_glyph *glyph)
 {
     glDeleteTextures(1, &glyph->gl_id);
 }

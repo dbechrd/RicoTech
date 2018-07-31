@@ -23,6 +23,7 @@ struct ric_foo
 enum ric_version
 {
     V_EPOCH = 1,
+    V_2018_07_30 = 2,
 
     V_NEXT
 };
@@ -238,7 +239,7 @@ static void sav_ric_object(struct ric_stream *stream,
                             struct ric_object *data)
 {
     ADD_STRUCT(V_EPOCH, struct uid, uid, sav_uid);
-    ADD_FIELD(V_EPOCH, enum RICO_object_type, type);
+    REM_FIELD(V_EPOCH, V_2018_07_30, enum RICO_object_type, type);
     ADD_STRUCT(V_EPOCH, struct ric_transform, xform, sav_ric_transform);
     ADD_FIELD(V_EPOCH, pkid, mesh_id);
     ADD_FIELD(V_EPOCH, pkid, material_id);

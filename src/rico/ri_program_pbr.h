@@ -61,7 +61,7 @@ struct
             GLint intensity;
             GLint dir;
         },
-        struct RICO_light
+        struct ric_light
     ) lights[NUM_LIGHT_DIR + NUM_LIGHT_POINT];
 
     // Shadows

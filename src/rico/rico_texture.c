@@ -9,11 +9,11 @@ extern void rico_texture_init()
     }
     texture_freelist = texture_pool;
 }
-static u8 *texture_pixels(struct RICO_texture *tex)
+static u8 *texture_pixels(struct ric_texture *tex)
 {
     return (u8 *)tex + tex->pixels_offset;
 }
-static int texture_upload(struct RICO_texture *texture)
+static int texture_upload(struct ric_texture *texture)
 {
     enum ric_error err = RIC_SUCCESS;
 
@@ -157,7 +157,7 @@ static int texture_upload(struct RICO_texture *texture)
     hashtable_insert(&global_textures, texture->uid.pkid, rgl_tex);
     return err;
 }
-static void texture_delete(struct RICO_texture *texture)
+static void texture_delete(struct ric_texture *texture)
 {
     struct rgl_texture *rgl_tex =
         hashtable_search(&global_textures, texture->uid.pkid);
@@ -178,7 +178,7 @@ static void texture_bind(pkid pkid, GLenum texture_unit)
     struct rgl_texture *rgl_tex = hashtable_search(&global_textures, pkid);
     if (!rgl_tex)
     {
-        struct RICO_texture *texture = RICO_pack_lookup(pkid);
+        struct ric_texture *texture = ric_pack_lookup(pkid);
         RICO_ASSERT(texture);
         texture_upload(texture);
         rgl_tex = hashtable_search(&global_textures, pkid);

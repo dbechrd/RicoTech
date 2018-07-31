@@ -88,10 +88,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="src\rico\rico_light.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="src\rico\rico_material.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -172,7 +168,6 @@
     <ClInclude Include="src\rico\rico_error.h" />
     <ClInclude Include="src\rico\rico_heiro.h" />
     <ClInclude Include="src\rico\rico_types.h" />
-    <ClInclude Include="src\rico\rico_light.h" />
     <ClInclude Include="src\rico\rico_mesh.h" />
     <ClInclude Include="src\rico\rico_object.h" />
     <ClInclude Include="src\rico\rico_pack.h" />

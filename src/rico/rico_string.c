@@ -1,6 +1,6 @@
 pkid global_string_slots[RIC_STRING_SLOT_COUNT + 64];
 
-static void string_delete(struct RICO_string *str)
+static void string_delete(struct ric_string *str)
 {
 #if RICO_DEBUG_STRING
     printf("[strg][free] uid=%d\n", str->id);
@@ -29,7 +29,7 @@ static void string_free_slot(enum ric_string_slot slot)
 static void string_update()
 {
     struct pack *pack = global_packs[RIC_PACK_ID_TRANSIENT];
-    struct RICO_string *str = 0;
+    struct ric_string *str = 0;
     u32 index = 0;
     while(index < pack->blobs_used)
     {
@@ -57,7 +57,7 @@ static void string_update()
     }
 }
 
-static void string_render(struct RICO_string *str, GLint model_location)
+static void string_render(struct ric_string *str, GLint model_location)
 {
     glUniformMatrix4fv(model_location, 1, GL_TRUE, MAT4_IDENT.a);
 
@@ -75,7 +75,7 @@ static void string_render_all(GLint model_location)
         pkid id = global_string_slots[i];
         if (id)
         {
-            struct RICO_string *str = RICO_pack_lookup(id);
+            struct ric_string *str = ric_pack_lookup(id);
             string_render(str, model_location);
         }
     }

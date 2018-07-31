@@ -9,15 +9,15 @@ extern void rico_mesh_init()
     }
     mesh_freelist = mesh_pool;
 }
-static void *mesh_vertices(struct RICO_mesh *mesh)
+static void *mesh_vertices(struct ric_mesh *mesh)
 {
     return ((u8 *)mesh + mesh->vertices_offset);
 }
-static u32 *mesh_elements(struct RICO_mesh *mesh)
+static u32 *mesh_elements(struct ric_mesh *mesh)
 {
     return (u32 *)((u8 *)mesh + mesh->elements_offset);
 }
-static void mesh_upload(struct RICO_mesh *mesh, GLenum hint)
+static void mesh_upload(struct ric_mesh *mesh, GLenum hint)
 {
 #if RICO_DEBUG_MESH
     printf("[mesh][upld] name=%s\n", mesh_name(mesh));
@@ -68,7 +68,7 @@ static void mesh_upload(struct RICO_mesh *mesh, GLenum hint)
     // Store in hash table
     hashtable_insert(&global_meshes, mesh->uid.pkid, rgl_mesh);
 }
-static void mesh_delete(struct RICO_mesh *mesh)
+static void mesh_delete(struct ric_mesh *mesh)
 {
     struct rgl_mesh *rgl_mesh = hashtable_search(&global_meshes,
                                                  mesh->uid.pkid);
@@ -91,7 +91,7 @@ static struct rgl_mesh *mesh_rgl(pkid pkid)
     struct rgl_mesh *rgl_mesh = hashtable_search(&global_meshes, pkid);
     if (!rgl_mesh)
     {
-        struct RICO_mesh *mesh = RICO_pack_lookup(pkid);
+        struct ric_mesh *mesh = ric_pack_lookup(pkid);
         RICO_ASSERT(mesh);
         mesh_upload(mesh, GL_STATIC_DRAW);
         rgl_mesh = hashtable_search(&global_meshes, pkid);

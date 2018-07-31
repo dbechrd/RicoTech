@@ -5,12 +5,12 @@
 
 #define RIC_ASSET_TYPES(f) \
     f(RIC_ASSET_NULL,      0) \
-    f(RIC_ASSET_OBJECT,    sizeof(struct ric_object))     \
-    f(RIC_ASSET_TEXTURE,   sizeof(struct RICO_texture))    \
-    f(RIC_ASSET_MESH,      sizeof(struct RICO_mesh))		\
-    f(RIC_ASSET_FONT,      sizeof(struct RICO_font))		\
-    f(RIC_ASSET_STRING,    sizeof(struct RICO_string))	    \
-    f(RIC_ASSET_MATERIAL,  sizeof(struct RICO_material))	\
+    f(RIC_ASSET_OBJECT,    sizeof(struct ric_object))   \
+    f(RIC_ASSET_TEXTURE,   sizeof(struct ric_texture))  \
+    f(RIC_ASSET_MESH,      sizeof(struct ric_mesh))		\
+    f(RIC_ASSET_FONT,      sizeof(struct ric_font))		\
+    f(RIC_ASSET_STRING,    sizeof(struct ric_string))   \
+    f(RIC_ASSET_MATERIAL,  sizeof(struct ric_material))	\
     f(RIC_ASSET_BBOX,      sizeof(struct ric_aabb))
 
 enum ric_asset_type
@@ -22,15 +22,15 @@ extern const char *ric_asset_type_string[];
 extern const u32 ric_asset_type_size[];
 
 #define RIC_AUDIO_STATES(f) \
-    f(RICO_AUDIO_UNKNOWN)    \
-    f(RICO_AUDIO_STOPPED)    \
-    f(RICO_AUDIO_PLAYING)    \
-    f(RICO_AUDIO_PAUSED)
+    f(RIC_AUDIO_UNKNOWN)    \
+    f(RIC_AUDIO_STOPPED)    \
+    f(RIC_AUDIO_PLAYING)    \
+    f(RIC_AUDIO_PAUSED)
 
 enum ric_audio_state
 {
     RIC_AUDIO_STATES(ENUM)
-    RICO_AUDIO_STATE_COUNT
+    RIC_AUDIO_STATE_COUNT
 };
 extern const char *ric_audio_state_string[];
 
@@ -321,7 +321,7 @@ struct uid
     buf32 name;
 };
 
-struct RICO_audio_source
+struct ric_audio_source
 {
     ALuint al_source_id;
     float pitch;
@@ -329,7 +329,7 @@ struct RICO_audio_source
     bool loop;
 };
 
-struct RICO_audio_buffer
+struct ric_audio_buffer
 {
     ALuint al_buffer_id;
 };
@@ -342,7 +342,7 @@ struct ric_aabb
     struct vec3 e;  // half-width extents
 };
 
-struct RICO_obb
+struct ric_obb
 {
     // PERF: Only store two of the axes and calculate third using cross product
     struct vec3 c;     // center
@@ -350,7 +350,7 @@ struct RICO_obb
     struct vec3 e;     // half-width extents
 };
 
-struct RICO_camera
+struct ric_camera
 {
     struct vec3 pos;
     struct vec3 vel;
@@ -374,7 +374,7 @@ struct RICO_camera
     struct mat4 *proj_matrix;
 };
 
-struct RICO_heiro_string
+struct ric_heiro_string
 {
     struct rect bounds;
     u32 length;
@@ -382,7 +382,7 @@ struct RICO_heiro_string
     struct text_vertex *verts;
 };
 
-struct RICO_light
+struct ric_light
 {
     enum ric_light_type type;
     bool on;
@@ -463,7 +463,7 @@ struct light_spot
 };
 */
 
-struct RICO_mesh
+struct ric_mesh
 {
     struct uid uid;
     u32 vertex_size;
@@ -477,67 +477,66 @@ struct RICO_mesh
     u32 elements_offset;
 };
 
-struct RICO_keychord
+struct ric_keychord
 {
     u16 keys[3];
     u8 repeat;
     u8 on_release;
 };
 
-#define CHORD3(k0, k1, k2) (struct RICO_keychord) {{ k0, k1, k2 }, 0, 0 }
-#define CHORD2(k0, k1) CHORD3(k0, k1, 0)
-#define CHORD1(k0)     CHORD3(k0, 0, 0)
+#define RIC_CHORD3(k0, k1, k2) \
+    (const struct ric_keychord) {{ k0, k1, k2 }, 0, 0 }
+#define RIC_CHORD2(k0, k1)     RIC_CHORD3(k0, k1, 0)
+#define RIC_CHORD1(k0)         RIC_CHORD3(k0, 0, 0)
 
-#define CHORD_UP3(k0, k1, k2) (struct RICO_keychord) {{ k0, k1, k2 }, 0, 1 }
-#define CHORD_UP2(k0, k1) CHORD_UP3(k0, k1, 0)
-#define CHORD_UP1(k0)     CHORD_UP3(k0, 0, 0)
+#define RIC_CHORD_UP3(k0, k1, k2) \
+    (const struct ric_keychord) {{ k0, k1, k2 }, 0, 1 }
+#define RIC_CHORD_UP2(k0, k1)     RIC_CHORD_UP3(k0, k1, 0)
+#define RIC_CHORD_UP1(k0)         RIC_CHORD_UP3(k0, 0, 0)
 
-#define CHORD_REPEAT3(k0, k1, k2) (struct RICO_keychord) {{ k0, k1, k2 }, 1, 0 }
-#define CHORD_REPEAT2(k0, k1) CHORD_REPEAT3(k0, k1, 0)
-#define CHORD_REPEAT1(k0)     CHORD_REPEAT3(k0, 0, 0)
+#define RIC_CHORD_REPEAT3(k0, k1, k2) \
+    (const struct ric_keychord) {{ k0, k1, k2 }, 1, 0 }
+#define RIC_CHORD_REPEAT2(k0, k1)     RIC_CHORD_REPEAT3(k0, k1, 0)
+#define RIC_CHORD_REPEAT1(k0)         RIC_CHORD_REPEAT3(k0, 0, 0)
 
-#define CHORD_UP_REPEAT3(k0, k1, k2) \
-    (struct RICO_keychord) {{ k0, k1, k2 }, 1, 1 }
-#define CHORD_UP_REPEAT2(k0, k1) CHORD_UP_REPEAT3(k0, k1, 0)
-#define CHORD_UP_REPEAT1(k0)     CHORD_UP_REPEAT3(k0, 0, 0)
+#define RIC_CHORD_UP_REPEAT3(k0, k1, k2) \
+    (const struct ric_keychord) {{ k0, k1, k2 }, 1, 1 }
+#define RIC_CHORD_UP_REPEAT2(k0, k1)     RIC_CHORD_UP_REPEAT3(k0, k1, 0)
+#define RIC_CHORD_UP_REPEAT1(k0)         RIC_CHORD_UP_REPEAT3(k0, 0, 0)
 
-#define RICO_SCANCODE_ALT   ((u16)301)
-#define RICO_SCANCODE_CTRL  ((u16)302)
-#define RICO_SCANCODE_SHIFT ((u16)303)
-#define RICO_SCANCODE_LMB   ((u16)304)
-#define RICO_SCANCODE_MMB   ((u16)305)
-#define RICO_SCANCODE_RMB   ((u16)306)
-
-//#define CHORD_3(action, k0, k1, k2) action_chords[action] = CHORD3(k0, k1, k2)
-//#define CHORD_2(action, k0, k1)     action_chords[action] = CHORD2(k0, k1)
-//#define CHORD_1(action, k0)         action_chords[action] = CHORD1(k0)
+#define RIC_SCANCODE_ALT   ((u16)301)
+#define RIC_SCANCODE_CTRL  ((u16)302)
+#define RIC_SCANCODE_SHIFT ((u16)303)
+#define RIC_SCANCODE_LMB   ((u16)304)
+#define RIC_SCANCODE_MMB   ((u16)305)
+#define RIC_SCANCODE_RMB   ((u16)306)
 
 #if 0
-struct rico_keysequence
+struct ric_keysequence
 {
-    struct rico_keychord chords[3];
+    struct ric_keychord chords[3];
 };
 
 // NOTE: Key, chord, sequence
-struct rico_keyevent
+struct ric_keyevent
 {
-    enum rico_keyevent_type
+    enum ric_keyevent_type
     {
-        RICO_KEYEVENT_KEY,
-        RICO_KEYEVENT_CHORD,
-        RICO_KEYEVENT_SEQUENCE
+        RIC_KEYEVENT_KEY,
+        RIC_KEYEVENT_CHORD,
+        RIC_KEYEVENT_SEQUENCE
     } type;
     union
     {
-        rico_key key;
-        struct rico_keychord chord;
-        struct rico_keysequence sequence;
+        ric_key key;
+        struct ric_keychord chord;
+        struct ric_keysequence sequence;
     };
 };
 
-#define EVENT (struct rico_keyevent)
-#define EVENT_KEY(key) EVENT{ RICO_KEYEVENT_KEY, key }
-#define EVENT_CHORD(k0, k1) EVENT{ RICO_KEYEVENT_CHORD, k0, k1 }
+#define EVENT (struct ric_keyevent)
+#define EVENT_KEY(key) EVENT{ RIC_KEYEVENT_KEY, key }
+#define EVENT_CHORD(k0, k1) EVENT{ RIC_KEYEVENT_CHORD, k0, k1 }
 #endif
 
 struct blob_index
@@ -580,17 +579,17 @@ struct pack
 ////////////////////////////////////////////////////////////////////////////////
 // TODO: Move this to its own header if it works
 
-struct RICO_sprite
+struct ric_sprite
 {
-    struct RICO_spritesheet *sheet;
+    struct ric_spritesheet *sheet;
     struct vec2 uvs[2];
 };
 
-struct RICO_spritesheet
+struct ric_spritesheet
 {
     pkid tex_id;
     u32 sprite_count;
-    struct RICO_sprite *sprites;
+    struct ric_sprite *sprites;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -600,29 +599,29 @@ struct ui_tooltip
 {
     bool enabled;
     struct vec4 color;
-    struct RICO_heiro_string *string;
+    struct ric_heiro_string *string;
 };
 
-struct RICO_ui_event
+struct ric_ui_event
 {
-    struct RICO_ui_element *element;
+    struct ric_ui_element *element;
     enum ric_ui_event_type event_type;
 };
 
-typedef void (*RICO_ui_event_handler)(const struct RICO_ui_event *e);
+typedef void (*ric_ui_event_handler)(const struct ric_ui_event *e);
 
-struct RICO_ui_head
+struct ric_ui_head
 {
     enum ric_ui_type type;
-    struct RICO_ui_head *next;
+    struct ric_ui_head *next;
 
-    //struct RICO_ui_element *parent;
-    //struct RICO_ui_element *prev;
+    //struct ric_ui_element *parent;
+    //struct ric_ui_element *prev;
 };
 
-struct RICO_ui_element
+struct ric_ui_element
 {
-    struct RICO_ui_head head;
+    struct ric_ui_head head;
     struct vec2i min_size;
     struct rect size;    // includes margin
     struct rect margin;
@@ -630,51 +629,51 @@ struct RICO_ui_element
     struct rect padding;
     void *metadata;
 
-    RICO_ui_event_handler event;
+    ric_ui_event_handler event;
 };
 
 /*
 // Cleanup: HUD is the only container, right?
-struct RICO_ui_container
+struct ric_ui_container
 {
-struct RICO_ui_element element;
-struct RICO_ui_head *first_child;
-struct RICO_ui_head *last_child;
+    struct ric_ui_element element;
+    struct ric_ui_head *first_child;
+    struct ric_ui_head *last_child;
 };
 */
 
-struct RICO_ui_hud
+struct ric_ui_hud
 {
-    struct RICO_ui_element element;
-    struct RICO_ui_head *first_child;
-    struct RICO_ui_head *last_child;
+    struct ric_ui_element element;
+    struct ric_ui_head *first_child;
+    struct ric_ui_head *last_child;
     struct vec4 color;
 };
 
-struct RICO_ui_button
+struct ric_ui_button
 {
-    struct RICO_ui_element element;
+    struct ric_ui_element element;
     enum ric_ui_state state;
     struct vec4 color[RIC_UI_STATE_COUNT];
-    struct RICO_sprite *sprite;
+    struct ric_sprite *sprite;
     struct ui_tooltip *tooltip;
 };
 
-struct RICO_ui_label
+struct ric_ui_label
 {
-    struct RICO_ui_element element;
+    struct ric_ui_element element;
     struct vec4 color;
-    struct RICO_heiro_string *heiro;
+    struct ric_heiro_string *heiro;
 };
 
-struct RICO_ui_progress
+struct ric_ui_progress
 {
-    struct RICO_ui_element element;
+    struct ric_ui_element element;
     enum ric_ui_state state;
     struct vec4 color;
     struct vec4 color_bg;
     float percent;
-    struct RICO_heiro_string *heiro;
+    struct ric_heiro_string *heiro;
     struct ui_tooltip *tooltip;
 };
 
@@ -695,7 +694,7 @@ struct ric_object
 
     struct ric_aabb aabb;
     struct ric_aabb aabb_world;
-    struct RICO_obb obb;
+    struct ric_obb obb;
     struct sphere sphere;
 
     // TODO: Refactor into physics?
@@ -713,13 +712,14 @@ struct ric_object
     pkid material_id;
 };
 
+// TODO: Deprecate when sav_file is working?
 #define RICO_FILE_VERSION_CURRENT 1
 #define RICO_FILE_VERSION_MINIMUM_SUPPORTED 1
 #define RICO_FILE_VERSION_MAXIMUM_SUPPORTED RICO_FILE_VERSION_CURRENT
 #define RICO_FILE_VERSION_COUNT 1 + (RICO_FILE_VERSION_MAXIMUM_SUPPORTED -\
                                      RICO_FILE_VERSION_MINIMUM_SUPPORTED)
 
-struct rico_file
+struct ric_file
 {
     FILE *fs;
     u32 version;
@@ -742,7 +742,7 @@ struct rico_file
 
 #define BFG_MAXSTRING 511  // Maximum string length
 
-struct RICO_font
+struct ric_font
 {
     struct uid uid;
     u32 cell_x;
@@ -760,7 +760,7 @@ struct RICO_font
 
 #define HEIRO_GLYPH_HEIGHT 14
 
-struct RICO_heiro_glyph
+struct ric_heiro_glyph
 {
     u32 width;
     u32 height;
@@ -775,7 +775,7 @@ struct RICO_heiro_glyph
 
 // TODO: Material describes texture(s), device state settings, and which v/f
 //       shader to use when rendering.
-struct RICO_material
+struct ric_material
 {
     struct uid uid;
 
@@ -804,7 +804,7 @@ struct rico_physics
     struct vec3 acc;
 };
 
-struct RICO_string
+struct ric_string
 {
     struct uid uid;
     u32 slot;
@@ -823,7 +823,7 @@ struct rgl_texture
     struct rgl_texture *next;
 };
 
-struct RICO_texture
+struct ric_texture
 {
     struct uid uid;
     u32 width;

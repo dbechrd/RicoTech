@@ -8,8 +8,8 @@ static void object_delete(struct ric_object *obj)
 static struct ric_object *object_copy(u32 pack, struct ric_object *other,
                                        const char *name)
 {
-    pkid new_obj_id = RICO_load_object(pack, other->type, 0, name);
-    struct ric_object *new_obj = RICO_pack_lookup(new_obj_id);
+    pkid new_obj_id = ric_load_object(pack, other->type, 0, name);
+    struct ric_object *new_obj = ric_pack_lookup(new_obj_id);
 
     // TODO: Make sure to update any ref counting we're using to prevent e.g.
     //       mesh or texture from being deleted when still in use.
@@ -21,7 +21,7 @@ static struct ric_object *object_copy(u32 pack, struct ric_object *other,
 }
 static void object_update_obb(struct ric_object *obj)
 {
-    struct RICO_obb *obb = &obj->obb;
+    struct ric_obb *obb = &obj->obb;
     obb->e = obj->aabb.e;
     obb->c = obj->aabb.c;
     obb->u[0] = VEC3_X;
@@ -84,16 +84,16 @@ static void object_update_colliders(struct ric_object *obj)
 }
 static void object_aabb_recalculate(struct ric_object *obj)
 {
-    struct RICO_mesh *mesh;
+    struct ric_mesh *mesh;
     if (obj->mesh_id)
     {
-        mesh = RICO_pack_lookup(obj->mesh_id);
+        mesh = ric_pack_lookup(obj->mesh_id);
     }
     else
     {
-        mesh = RICO_pack_lookup(global_default_mesh_cube);
+        mesh = ric_pack_lookup(global_default_mesh_cube);
     }
-    RICO_object_aabb_set(obj, &mesh->aabb);
+    ric_object_aabb_set(obj, &mesh->aabb);
 }
 static void object_aabb_recalculate_all(u32 id)
 {
@@ -153,39 +153,39 @@ static void object_transform_update(struct ric_object *obj)
 
     object_update_colliders(obj);
 }
-extern void RICO_object_aabb_set(struct ric_object *obj,
+extern void ric_object_aabb_set(struct ric_object *obj,
                                  const struct ric_aabb *aabb)
 {
     obj->aabb = *aabb;
     object_update_colliders(obj);
 }
-extern void RICO_object_mesh_set(struct ric_object *obj, pkid mesh_id)
+extern void ric_object_mesh_set(struct ric_object *obj, pkid mesh_id)
 {
 #if RICO_DEBUG
-    struct uid *uid = RICO_pack_lookup(mesh_id);
+    struct uid *uid = ric_pack_lookup(mesh_id);
     RICO_ASSERT(uid->type == RIC_ASSET_MESH);
 #endif
     obj->mesh_id = mesh_id;
     object_aabb_recalculate(obj);
 }
-extern void RICO_object_material_set(struct ric_object *obj, pkid material_id)
+extern void ric_object_material_set(struct ric_object *obj, pkid material_id)
 {
 #if RICO_DEBUG
-    struct uid *uid = RICO_pack_lookup(material_id);
+    struct uid *uid = ric_pack_lookup(material_id);
     RICO_ASSERT(uid->type == RIC_ASSET_MATERIAL);
 #endif
     obj->material_id = material_id;
 }
-extern void RICO_object_trans(struct ric_object *obj, const struct vec3 *v)
+extern void ric_object_trans(struct ric_object *obj, const struct vec3 *v)
 {
     v3_add(&obj->xform.position, v);
     object_transform_update(obj);
 }
-extern const struct vec3 *RICO_object_trans_get(struct ric_object *obj)
+extern const struct vec3 *ric_object_trans_get(struct ric_object *obj)
 {
     return &obj->xform.position;
 }
-extern void RICO_object_trans_set(struct ric_object *obj,
+extern void ric_object_trans_set(struct ric_object *obj,
                                   const struct vec3 *v)
 {
     obj->xform.position = *v;
@@ -269,7 +269,7 @@ static bool object_collide_ray_type(pkid *_object_id, float *_dist,
     return collided;
 }
 
-static void object_render_all(r64 alpha, struct RICO_camera *camera)
+static void object_render_all(r64 alpha, struct ric_camera *camera)
 {
     // TODO: Interpolate / extrapolate physics
     UNUSED(alpha);
@@ -282,7 +282,7 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
     RICO_ASSERT(prog->program.gl_id);
     glUseProgram(prog->program.gl_id);
 
-    r64 time = RICO_simulation_time();
+    r64 time = ric_simulation_time();
     glUniform1f(prog->locations.frag.time, (r32)SIM_SEC);  // Cleanup: Shader time
 
     time /= 2000.0;
@@ -377,12 +377,12 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
 
             struct ric_object *obj = pack_read(global_packs[i], index);
 
-            if (RICO_state_is_edit())
+            if (ric_state_is_edit())
             {
                 struct vec4 color = (obj->selected)
                     ? COLOR_RED
                     : COLOR_DARK_WHITE_HIGHLIGHT;
-                RICO_prim_draw_aabb_xform(&obj->aabb, &color,
+                ric_prim_draw_aabb_xform(&obj->aabb, &color,
                                           &obj->xform.matrix);
             }
         }
@@ -446,10 +446,10 @@ static void object_print(struct ric_object *obj)
     {
         buf32 *pack_name = &global_packs[PKID_PACK(obj->uid.pkid)]->name;
 
-        struct RICO_mesh *mesh = (obj->mesh_id)
-            ? RICO_pack_lookup(obj->mesh_id) : NULL;
-        struct RICO_material *material = (obj->material_id)
-            ? RICO_pack_lookup(obj->material_id) : NULL;
+        struct ric_mesh *mesh = (obj->mesh_id)
+            ? ric_pack_lookup(obj->mesh_id) : NULL;
+        struct ric_material *material = (obj->material_id)
+            ? ric_pack_lookup(obj->material_id) : NULL;
 
         const char *mesh_str = "---";
         u32 mesh_verts = 0;
@@ -472,22 +472,22 @@ static void object_print(struct ric_object *obj)
 
             if (material->tex_albedo)
             {
-                struct RICO_texture *tex =
-                    RICO_pack_lookup(material->tex_albedo);
+                struct ric_texture *tex =
+                    ric_pack_lookup(material->tex_albedo);
                 mat_tex0_id = tex->uid.pkid;
                 mat_tex0_str = tex->uid.name;
             }
             if (material->tex_mrao)
             {
-                struct RICO_texture *tex =
-                    RICO_pack_lookup(material->tex_mrao);
+                struct ric_texture *tex =
+                    ric_pack_lookup(material->tex_mrao);
                 mat_tex1_id = tex->uid.pkid;
                 mat_tex1_str = tex->uid.name;
             }
             if (material->tex_emission)
             {
-                struct RICO_texture *tex =
-                    RICO_pack_lookup(material->tex_emission);
+                struct ric_texture *tex =
+                    ric_pack_lookup(material->tex_emission);
                 mat_tex2_id = tex->uid.pkid;
                 mat_tex2_str = tex->uid.name;
             }
@@ -537,7 +537,7 @@ static void object_print(struct ric_object *obj)
     }
 
     string_truncate(buf, sizeof(buf), len);
-    RICO_load_string(RIC_PACK_ID_TRANSIENT, RIC_STRING_SLOT_SELECTED_OBJ,
+    ric_load_string(RIC_PACK_ID_TRANSIENT, RIC_STRING_SLOT_SELECTED_OBJ,
                      SCREEN_X(0), SCREEN_Y(FONT_HEIGHT),
                      COLOR_DARK_WHITE_HIGHLIGHT, 0, 0, buf);
 }

@@ -1,6 +1,6 @@
 static void material_bind(pkid pkid)
 {
-    struct RICO_material *material = RICO_pack_lookup(pkid);
+    struct ric_material *material = ric_pack_lookup(pkid);
 
 #if RICO_DEBUG_MATERIAL
     printf("[ mtl][bind] name=%s\n", material_name(material));
@@ -38,7 +38,7 @@ static void material_bind(pkid pkid)
 }
 static void material_unbind(pkid pkid)
 {
-    struct RICO_material *material = RICO_pack_lookup(pkid);
+    struct ric_material *material = ric_pack_lookup(pkid);
 
 #if RICO_DEBUG_MATERIAL
     printf("[ mtl][unbd] name=%s\n", material_name(material));

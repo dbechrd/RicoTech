@@ -1,12 +1,14 @@
 #define LIGHT_NEAR 0.01f
 #define LIGHT_FAR 100.0f
 
-static GLuint shadow_textures[NUM_LIGHT_DIR] = { 0 };
-static GLuint shadow_cubemaps[NUM_LIGHT_POINT] = { 0 };
-static struct mat4 debug_sun_xform = { 0 };
-static struct mat4 shadow_lightspace[NUM_LIGHT_DIR] = { 0 };
-static struct mat4 shadow_ortho = { 0 };
-static struct mat4 shadow_proj = { 0 };
+bool global_lighting_enabled = true;
+
+static GLuint shadow_textures[NUM_LIGHT_DIR];
+static GLuint shadow_cubemaps[NUM_LIGHT_POINT];
+static struct mat4 debug_sun_xform;
+static struct mat4 shadow_lightspace[NUM_LIGHT_DIR];
+static struct mat4 shadow_ortho;
+static struct mat4 shadow_proj;
 
 static void create_shadow_texture(GLuint *tex_id, u32 size)
 {
@@ -75,7 +77,7 @@ static void create_framebuffer(GLuint *fbo_id, GLuint tex_id)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-static void render_shadow_cubemap(r64 alpha, struct RICO_light *lights)
+static void render_shadow_cubemap(r64 alpha, struct ric_light *lights)
 {
     const u32 tex_size = 1024;
 

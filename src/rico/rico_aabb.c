@@ -1,6 +1,6 @@
 #define BBOX_EPSILON 0.001f
 
-static void aabb_init_mesh(struct ric_aabb *aabb, struct RICO_mesh *mesh)
+static void aabb_init_mesh(struct ric_aabb *aabb, struct ric_mesh *mesh)
 {
     RICO_ASSERT(mesh->vertex_count);
 
@@ -40,7 +40,7 @@ static void aabb_init_mesh(struct ric_aabb *aabb, struct RICO_mesh *mesh)
         min.z + aabb->e.z
     );
 }
-void RICO_aabb_transform(struct ric_aabb *aabb, const struct mat4 *m)
+void ric_aabb_transform(struct ric_aabb *aabb, const struct mat4 *m)
 {
     v3_mul_mat4(&aabb->e, m);
 

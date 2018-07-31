@@ -1,7 +1,7 @@
 #ifndef RICO_CAMERA_H
 #define RICO_CAMERA_H
 
-extern struct RICO_camera* RICO_get_camera_hack();
-extern void RICO_camera_fwd(struct vec3 *_fwd, struct RICO_camera *camera);
+extern struct ric_camera* ric_get_camera_hack();
+extern void ric_camera_fwd(struct ric_camera *camera, struct vec3 *fwd);
 
 #endif

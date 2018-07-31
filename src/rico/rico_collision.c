@@ -329,7 +329,7 @@ static bool collide_ray_obb(float *_dist, const struct ray *r,
 // and David Eberly's paper:
 //   "Dynamic Collision Detection using Oriented Bounding Boxes" (p. 7)
 //   https://www.geometrictools.com/Documentation/DynamicCollisionDetection.pdf
-bool collide_obb_obb(struct RICO_obb *a, struct RICO_obb *b, int *axis)
+bool collide_obb_obb(struct ric_obb *a, struct ric_obb *b, int *axis)
 {
     bool a_has_obb = v3_length(&a->e) > 0.0f;
     bool b_has_obb = v3_length(&b->e) > 0.0f;
@@ -466,7 +466,7 @@ bool collide_obb_obb(struct RICO_obb *a, struct RICO_obb *b, int *axis)
 // Based on David Eberly's paper:
 // "Dynamic Collision Detection using Oriented Bounding Boxes" (p. 7)
 // https://www.geometrictools.com/Documentation/DynamicCollisionDetection.pdf
-bool collide_obb_obb_eberly(struct RICO_obb *a, struct RICO_obb *b)
+bool collide_obb_obb_eberly(struct ric_obb *a, struct ric_obb *b)
 {
     float R, R0, R1;
     struct vec3 D = b->c;

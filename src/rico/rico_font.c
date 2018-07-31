@@ -22,7 +22,7 @@ int font_free(struct rico_font *font)
 }
 #endif
 
-static void font_setblend(const struct RICO_font *font)
+static void font_setblend(const struct ric_font *font)
 {
     // TODO: Preserve blend settings before changing
 	switch(font->render_style)
@@ -49,14 +49,14 @@ static void font_render(pkid *mesh_id, pkid *tex_id, pkid font_id, float x,
     static struct text_vertex vertices[BFG_MAXSTRING * 4] = { 0 };
     static GLuint elements[BFG_MAXSTRING * 6] = { 0 };
 
-    struct RICO_font *font;
+    struct ric_font *font;
     if (font_id)
     {
-        font = RICO_pack_lookup(font_id);
+        font = ric_pack_lookup(font_id);
     }
     else
     {
-        font = RICO_pack_lookup(global_default_font);
+        font = ric_pack_lookup(global_default_font);
     }
 
     //font_setblend(font);
@@ -132,7 +132,7 @@ static void font_render(pkid *mesh_id, pkid *tex_id, pkid font_id, float x,
     }
 
     pkid new_mesh_id =
-        RICO_load_mesh(RIC_PACK_ID_TRANSIENT, mesh_name, sizeof(*vertices), idx_vertex,
+        ric_load_mesh(RIC_PACK_ID_TRANSIENT, mesh_name, sizeof(*vertices), idx_vertex,
                        vertices, idx_element, elements, PROG_TEXT);
 
     RICO_ASSERT(new_mesh_id);

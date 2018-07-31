@@ -362,7 +362,7 @@ struct hnd *pool_handle_prev(struct rico_pool *pool, u32 idx)
     return pool->handles[i - 1];
 }
 
-//int pool_serialize_0(const void *handle, const struct rico_file *file)
+//int pool_serialize_0(const void *handle, const struct ric_file *file)
 SERIAL(pool_serialize_0)
 {
     enum rico_error err;
@@ -384,7 +384,7 @@ SERIAL(pool_serialize_0)
     return RIC_SUCCESS;
 }
 
-//int pool_deserialize_0(void *_handle, const struct rico_file *file)
+//int pool_deserialize_0(void *_handle, const struct ric_file *file)
 DESERIAL(pool_deserialize_0)
 {
     enum rico_error err;

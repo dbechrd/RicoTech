@@ -101,12 +101,12 @@
 #  define IF_DEBUG(exp) exp
 #  define RICO_ASSERT(exp) if(!(exp)) HALT();
 #  define RICO_FATAL(err, desc, ...) \
-          rico_fatal_print(FILE_LOC, err, desc, ##__VA_ARGS__)
+          fatal_print(FILE_LOC, err, desc, ##__VA_ARGS__)
 #
 #  if RICO_DEBUG_ALL_ERRORS_FATAL
 #    define RICO_ERROR(err, desc, ...) RICO_FATAL(err, desc, ##__VA_ARGS__)
 #  else
-#    define RICO_ERROR(err, desc, ...) rico_error_print(FILE_LOC, err, desc)
+#    define RICO_ERROR(err, desc, ...) error_print(FILE_LOC, err, desc)
 #  endif
 #else
 #  define IF_DEBUG(exp) UNUSED(exp)
@@ -166,32 +166,31 @@ extern float global_scale_delta;
 
 extern pkid global_string_slots[RIC_STRING_SLOT_COUNT + 64];
 
+extern bool global_lighting_enabled;
+
 ///////////////////////////////////////////////////////////
 // Methods
 ///////////////////////////////////////////////////////////
-static void window_render();
+static void platform_window_swap();
 
-static void init_openal();
+static void aabb_init_mesh(struct ric_aabb *aabb, struct ric_mesh *mesh);
 
-struct RICO_mesh;
-static void aabb_init_mesh(struct ric_aabb *aabb, struct RICO_mesh *mesh);
-
-static void camera_init(struct RICO_camera *camera, struct vec3 position,
+static void camera_init(struct ric_camera *camera, struct vec3 position,
                         struct quat view, float fov_deg);
-static void camera_reset(struct RICO_camera *camera);
-static void camera_set_fov(struct RICO_camera *camera, float fov_deg);
-static void camera_toggle_projection(struct RICO_camera *camera);
-static void camera_translate_world(struct RICO_camera *camera,
+static void camera_reset(struct ric_camera *camera);
+static void camera_set_fov(struct ric_camera *camera, float fov_deg);
+static void camera_toggle_projection(struct ric_camera *camera);
+static void camera_translate_world(struct ric_camera *camera,
                                    const struct vec3 *v);
-static void camera_translate_local(struct RICO_camera *camera,
+static void camera_translate_local(struct ric_camera *camera,
                                    const struct vec3 *v);
-static void camera_rotate(struct RICO_camera *camera, float dx, float dy,
+static void camera_rotate(struct ric_camera *camera, float dx, float dy,
                           float dz);
-static void camera_update(struct RICO_camera *camera, r64 sim_alpha);
-static void camera_player_update(struct RICO_camera *camera, s32 dx, s32 dy,
+static void camera_update(struct ric_camera *camera, r64 sim_alpha);
+static void camera_player_update(struct ric_camera *camera, s32 dx, s32 dy,
                                  struct vec3 delta_acc, float sim_alpha);
-static void camera_render(struct RICO_camera *camera);
-static void camera_fwd_ray(struct ray *_ray, struct RICO_camera *camera);
+static void camera_render(struct ric_camera *camera);
+static void camera_fwd_ray(struct ric_camera *camera, struct ray *ray);
 
 static bool collide_ray_plane(struct vec3 *_contact, const struct ray *ray,
                               const struct plane *plane);
@@ -202,8 +201,8 @@ static bool collide_ray_aabb(float *_t, const struct ray *ray,
 static bool collide_ray_obb(float *_dist, const struct ray *r,
                             const struct ric_aabb *ric_aabb,
                             const struct mat4 *model_matrix);
-bool collide_obb_obb(struct RICO_obb *a, struct RICO_obb *b, int *axis);
-bool collide_obb_obb_eberly(struct RICO_obb *a, struct RICO_obb *b);
+bool collide_obb_obb(struct ric_obb *a, struct ric_obb *b, int *axis);
+bool collide_obb_obb_eberly(struct ric_obb *a, struct ric_obb *b);
 
 static void edit_init();
 static void edit_free();
@@ -213,7 +212,7 @@ static void edit_object_select(pkid id, bool force);
 static void edit_object_next();
 static void edit_object_prev();
 static void edit_print_object();
-static void edit_translate(struct RICO_camera *camera,
+static void edit_translate(struct ric_camera *camera,
                            const struct vec3 *offset);
 static void edit_rotate(const struct quat *offset);
 static void edit_scale(const struct vec3 *offset);
@@ -227,17 +226,15 @@ static void edit_mouse_move();
 static void edit_mouse_released();
 static void edit_render();
 
-static enum ric_error rico_error_print(const char *file, int line,
-                                        enum ric_error err, const char *fmt,
-                                        ...);
-static enum ric_error rico_fatal_print(const char *file, int line,
-                                        enum ric_error err, const char *fmt,
-                                        ...);
+static enum ric_error error_print(const char *file, int line,
+                                  enum ric_error err, const char *fmt, ...);
+static enum ric_error fatal_print(const char *file, int line,
+                                  enum ric_error err, const char *fmt, ...);
 
-static int rico_file_open_write(struct rico_file *_handle, const char *filename,
-                                u32 version);
-static int rico_file_open_read(struct rico_file *_handle, const char *filename);
-static void rico_file_close(struct rico_file *handle);
+static int ric_file_open_write(struct ric_file *_handle, const char *filename,
+                               u32 version);
+static int ric_file_open_read(struct ric_file *_handle, const char *filename);
+static void ric_file_close(struct ric_file *handle);
 
 static void font_render(pkid *mesh_id, pkid *tex_id, pkid font_id, float x,
                         float y, struct vec4 bg, const char *text,
@@ -247,20 +244,20 @@ static void rico_resource_init();
 
 int rico_heiro_init();
 int heiro_load_glyphs(FT_Face ft_face);
-int heiro_load_glyph(u8 **buffer, struct RICO_heiro_glyph *glyph,
+int heiro_load_glyph(u8 **buffer, struct ric_heiro_glyph *glyph,
                      FT_Face ft_face, FT_ULong char_code);
 GLuint heiro_upload_texture(s32 width, s32 height, const void *pixels);
 void heiro_delete_glyphs();
-void heiro_delete_glyph(struct RICO_heiro_glyph *glyph);
+void heiro_delete_glyph(struct ric_heiro_glyph *glyph);
 void heiro_free();
 
 static void material_bind(pkid pkid);
 static void material_unbind(pkid pkid);
 
 static void rico_mesh_init();
-static void *mesh_vertices(struct RICO_mesh *mesh);
-static void mesh_upload(struct RICO_mesh *mesh, GLenum hint);
-static void mesh_delete(struct RICO_mesh *mesh);
+static void *mesh_vertices(struct ric_mesh *mesh);
+static void mesh_upload(struct ric_mesh *mesh, GLenum hint);
+static void mesh_delete(struct ric_mesh *mesh);
 static void mesh_bind_buffers(pkid pkid);
 static GLuint mesh_vao(pkid pkid);
 static void mesh_render(pkid pkid);
@@ -283,7 +280,7 @@ static bool object_collide_ray(float *_dist, struct ric_object *obj,
                                const struct ray *ray);
 static bool object_collide_ray_type(pkid *_object_id, float *_dist,
                                     const struct ray *ray);
-static void object_render_all(r64 alpha, struct RICO_camera *camera);
+static void object_render_all(r64 alpha, struct ric_camera *camera);
 static void object_render(struct pack *pack, GLint model_location, bool shadow);
 static void object_print(struct ric_object *obj);
 
@@ -385,21 +382,21 @@ static inline void free_shader(GLuint shader)
 
 static void rico_check_key_events();
 
-static void string_delete(struct RICO_string *str);
+static void string_delete(struct ric_string *str);
 static void string_free_slot(enum ric_string_slot slot);
 static void string_update();
-static void string_render(struct RICO_string *str, GLint model_location);
+static void string_render(struct ric_string *str, GLint model_location);
 static void string_render_all(GLint model_location);
 
 // TODO: Rename "static void rico_" to "static void ri_"
 static void rico_texture_init();
-static void texture_delete(struct RICO_texture *texture);
+static void texture_delete(struct ric_texture *texture);
 static void texture_bind(pkid pkid, GLenum texture_unit);
 static void texture_unbind(pkid pkid, GLenum texture_unit);
 
 static void rico_ui_init();
 static void rico_ui_reset();
-static void ui_draw_element(struct RICO_ui_element *element, s32 x, s32 y);
+static void ui_draw_element(struct ric_ui_element *element, s32 x, s32 y);
 
 //int file_contents(const char *filename, int *_length, char **_buffer);
 ////void *read_tga(const char *filename, int *width, int *height);

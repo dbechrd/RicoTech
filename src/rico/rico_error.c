@@ -1,4 +1,4 @@
-static enum ric_error rico_error_print(const char *file, int line,
+static enum ric_error error_print(const char *file, int line,
                                         enum ric_error err, const char *fmt,
                                         ...)
 {
@@ -17,7 +17,7 @@ static enum ric_error rico_error_print(const char *file, int line,
     }
     return err;
 }
-static enum ric_error rico_fatal_print(const char *file, int line,
+static enum ric_error fatal_print(const char *file, int line,
                                         enum ric_error err, const char *fmt,
                                         ...)
 {

@@ -109,20 +109,20 @@ static int prim_init()
 }
 // TODO: Queue up primitive requests and batch them within a single
 //       glUseProgram() call.
-extern void RICO_prim_draw_line2d(float x0, float y0, float x1, float y1,
+extern void ric_prim_draw_line2d(float x0, float y0, float x1, float y1,
                                   const struct vec4 *color)
 {
     const float ortho_z = -1.0f;
     prim_draw_line(&VEC3(x0, y0, ortho_z), &VEC3(x1, y1, ortho_z),
                    color, &MAT4_IDENT, &MAT4_IDENT, &cam_player.ortho_matrix);
 }
-extern void RICO_prim_draw_line(const struct vec3 *p0, const struct vec3 *p1,
+extern void ric_prim_draw_line(const struct vec3 *p0, const struct vec3 *p1,
                                 const struct vec4 *color)
 {
     prim_draw_line(p0, p1, color, &MAT4_IDENT, &cam_player.view_matrix,
                    cam_player.proj_matrix);
 }
-extern void RICO_prim_draw_line_xform(const struct vec3 *p0,
+extern void ric_prim_draw_line_xform(const struct vec3 *p0,
                                       const struct vec3 *p1,
                                       const struct vec4 *color,
                                       const struct mat4 *xform)
@@ -156,25 +156,25 @@ static void prim_draw_line(const struct vec3 *p0, const struct vec3 *p1,
     glBindVertexArray(0);
     glUseProgram(0);
 }
-extern void RICO_prim_draw_ray(const struct ray *ray, const struct vec4 *color)
+extern void ric_prim_draw_ray(const struct ray *ray, const struct vec4 *color)
 {
-    RICO_prim_draw_ray_xform(ray, color, &MAT4_IDENT);
+    ric_prim_draw_ray_xform(ray, color, &MAT4_IDENT);
 }
-extern void RICO_prim_draw_ray_xform(const struct ray *ray,
+extern void ric_prim_draw_ray_xform(const struct ray *ray,
                                      const struct vec4 *color,
                                      const struct mat4 *xform)
 {
     struct vec3 ray_end = ray->origin;
     v3_add(&ray_end, &ray->d);
-    RICO_prim_draw_line_xform(&ray->origin, &ray->d, color, xform);
+    ric_prim_draw_line_xform(&ray->origin, &ray->d, color, xform);
 }
-extern void RICO_prim_draw_rect(const struct rect *rect,
+extern void ric_prim_draw_rect(const struct rect *rect,
                                 const struct vec4 *color)
 {
-    RICO_prim_draw_rect_tex(rect, color, 0);
+    ric_prim_draw_rect_tex(rect, color, 0);
 }
-extern void RICO_prim_draw_sprite(const struct rect *rect,
-                                  const struct RICO_sprite *sprite,
+extern void ric_prim_draw_sprite(const struct rect *rect,
+                                  const struct ric_sprite *sprite,
                                   const struct vec4 *color)
 {
     // Triangle strip CCW winding order:
@@ -203,7 +203,7 @@ extern void RICO_prim_draw_sprite(const struct rect *rect,
     prim_draw_quad(ARRAY_COUNT(verts), verts, color, &MAT4_IDENT, &MAT4_IDENT,
                    &cam_player.ortho_matrix, sprite->sheet->tex_id);
 }
-extern void RICO_prim_draw_rect_tex(const struct rect *rect,
+extern void ric_prim_draw_rect_tex(const struct rect *rect,
                                     const struct vec4 *color, pkid tex_id)
 {
     // Triangle strip CCW winding order:
@@ -232,12 +232,12 @@ extern void RICO_prim_draw_rect_tex(const struct rect *rect,
     prim_draw_quad(ARRAY_COUNT(verts), verts, color, &MAT4_IDENT, &MAT4_IDENT,
                    &cam_player.ortho_matrix, tex_id);
 }
-extern void RICO_prim_draw_quad(const struct quad *quad,
+extern void ric_prim_draw_quad(const struct quad *quad,
                                 const struct vec4 *color)
 {
-    RICO_prim_draw_quad_xform(quad, color, &MAT4_IDENT);
+    ric_prim_draw_quad_xform(quad, color, &MAT4_IDENT);
 }
-extern void RICO_prim_draw_quad_xform(const struct quad *quad,
+extern void ric_prim_draw_quad_xform(const struct quad *quad,
                                       const struct vec4 *color,
                                       const struct mat4 *xform)
 {
@@ -276,12 +276,12 @@ static void prim_draw_quad(u32 vertex_count, const struct prim_vertex *vertices,
     glBindVertexArray(0);
     glUseProgram(0);
 }
-extern void RICO_prim_draw_plane(const struct vec3 *n,
+extern void ric_prim_draw_plane(const struct vec3 *n,
                                  const struct vec4 *color)
 {
-    RICO_prim_draw_plane_xform(n, color, &MAT4_IDENT);
+    ric_prim_draw_plane_xform(n, color, &MAT4_IDENT);
 }
-extern void RICO_prim_draw_plane_xform(const struct vec3 *n,
+extern void ric_prim_draw_plane_xform(const struct vec3 *n,
                                        const struct vec4 *color,
                                        const struct mat4 *xform)
 {
@@ -299,14 +299,14 @@ extern void RICO_prim_draw_plane_xform(const struct vec3 *n,
         v3_scalef(&quad.verts[i], 10.0f);
     }
 
-    RICO_prim_draw_quad_xform(&quad, color, xform);
+    ric_prim_draw_quad_xform(&quad, color, xform);
 }
-extern void RICO_prim_draw_aabb(const struct ric_aabb *aabb,
+extern void ric_prim_draw_aabb(const struct ric_aabb *aabb,
                                 const struct vec4 *color)
 {
-    RICO_prim_draw_aabb_xform(aabb, color, &MAT4_IDENT);
+    ric_prim_draw_aabb_xform(aabb, color, &MAT4_IDENT);
 }
-extern void RICO_prim_draw_aabb_xform(const struct ric_aabb *aabb,
+extern void ric_prim_draw_aabb_xform(const struct ric_aabb *aabb,
                                       const struct vec4 *color,
                                       const struct mat4 *xform)
 {
@@ -360,12 +360,12 @@ extern void RICO_prim_draw_aabb_xform(const struct ric_aabb *aabb,
     // Clean up
     glUseProgram(0);
 }
-extern void RICO_prim_draw_obb(const struct RICO_obb *obb,
+extern void ric_prim_draw_obb(const struct ric_obb *obb,
                                const struct vec4 *color)
 {
-    RICO_prim_draw_obb_xform(obb, color, &MAT4_IDENT);
+    ric_prim_draw_obb_xform(obb, color, &MAT4_IDENT);
 }
-extern void RICO_prim_draw_obb_xform(const struct RICO_obb *obb,
+extern void ric_prim_draw_obb_xform(const struct ric_obb *obb,
                                      const struct vec4 *color,
                                      const struct mat4 *xform)
 {
@@ -383,9 +383,9 @@ extern void RICO_prim_draw_obb_xform(const struct RICO_obb *obb,
     v3_add(&axis0, &e0);
     v3_add(&axis1, &e1);
     v3_add(&axis2, &e2);
-    RICO_prim_draw_line_xform(&obb->c, &axis0, &COLOR_RED, xform);
-    RICO_prim_draw_line_xform(&obb->c, &axis1, &COLOR_GREEN, xform);
-    RICO_prim_draw_line_xform(&obb->c, &axis2, &COLOR_BLUE, xform);
+    ric_prim_draw_line_xform(&obb->c, &axis0, &COLOR_RED, xform);
+    ric_prim_draw_line_xform(&obb->c, &axis1, &COLOR_GREEN, xform);
+    ric_prim_draw_line_xform(&obb->c, &axis2, &COLOR_BLUE, xform);
 
     struct vec3 p0 = obb->c; // 000
     v3_sub(&p0, &e0);
@@ -465,12 +465,12 @@ extern void RICO_prim_draw_obb_xform(const struct RICO_obb *obb,
     // Clean up
     glUseProgram(0);
 }
-extern void RICO_prim_draw_sphere(const struct sphere *sphere,
+extern void ric_prim_draw_sphere(const struct sphere *sphere,
                                   const struct vec4 *color)
 {
-    RICO_prim_draw_sphere_xform(sphere, color, &MAT4_IDENT);
+    ric_prim_draw_sphere_xform(sphere, color, &MAT4_IDENT);
 }
-extern void RICO_prim_draw_sphere_xform(const struct sphere *sphere,
+extern void ric_prim_draw_sphere_xform(const struct sphere *sphere,
                                         const struct vec4 *color,
                                         const struct mat4 *xform)
 {

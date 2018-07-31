@@ -9,7 +9,7 @@ struct rico_chunk;
 // mark, tag, badge, pin, peg
 struct pool_id
 {
-    enum RICO_hnd_type type;
+    enum ric_hnd_type type;
     u32 tag;
     u32 generation;
     u32 pool_uid;

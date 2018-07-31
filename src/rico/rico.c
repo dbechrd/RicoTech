@@ -11,7 +11,6 @@
 #include "rico_util.c"
 #include "rico_resource.c"
 #include "rico_audio.c"
-#include "rico_light.c"
 
 #include "rico_types.c"
 #include "rico_shader.c"
@@ -221,12 +220,12 @@ static void init_opengl()
     // Gamma correction
     //glEnable(GL_FRAMEBUFFER_SRGB);
 }
-static void window_render()
+static void platform_window_swap()
 {
     SDL_GL_SwapWindow(window);
 }
 
-int RICO_init()
+int ric_init()
 {
     enum ric_error err;
 
@@ -256,11 +255,11 @@ error:
     if (err) printf("Error: %s", ric_error_string[err]);
     return err;
 }
-void RICO_window_size(s32 *w, s32 *h)
+void ric_window_size(s32 *w, s32 *h)
 {
     SDL_GetWindowSize(window, w, h);
 }
-void RICO_cleanup()
+void ric_cleanup()
 {
     printf("------------------------------------------------------------\n");
     printf("[MAIN][term] Clean up\n");

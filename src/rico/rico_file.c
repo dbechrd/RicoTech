@@ -1,4 +1,4 @@
-static int rico_file_open_write(struct rico_file *_file, const char *filename,
+static int ric_file_open_write(struct ric_file *_file, const char *filename,
                                 u32 version)
 {
     enum ric_error err = RIC_SUCCESS;
@@ -7,7 +7,7 @@ static int rico_file_open_write(struct rico_file *_file, const char *filename,
     _file->fs = fopen(filename, "wb");
     if (!_file->fs)
     {
-        rico_file_close(_file);
+        ric_file_close(_file);
         fprintf(stderr, "Unable to open %s for writing\n", filename);
         return RICO_ERROR(RIC_ERR_FILE_WRITE, "Failed to open file %s for write",
                           filename);
@@ -16,7 +16,7 @@ static int rico_file_open_write(struct rico_file *_file, const char *filename,
     // File version
     if (version < RICO_FILE_VERSION_MINIMUM_SUPPORTED)
     {
-        rico_file_close(_file);
+        ric_file_close(_file);
         fprintf(stderr, "Unsupported file version [%d]. The minimum supported" \
                 "version for this build is [%d].\n", version,
                 RICO_FILE_VERSION_MAXIMUM_SUPPORTED);
@@ -26,7 +26,7 @@ static int rico_file_open_write(struct rico_file *_file, const char *filename,
     }
     else if (version > RICO_FILE_VERSION_MAXIMUM_SUPPORTED)
     {
-        rico_file_close(_file);
+        ric_file_close(_file);
         fprintf(stderr, "Unsupported file version [%d]. The maximum supported" \
                 "version for this build is [%d].\n", version,
                 RICO_FILE_VERSION_MAXIMUM_SUPPORTED);
@@ -51,7 +51,7 @@ static int rico_file_open_write(struct rico_file *_file, const char *filename,
 
     return err;
 }
-static int rico_file_open_read(struct rico_file *_file, const char *filename)
+static int ric_file_open_read(struct ric_file *_file, const char *filename)
 {
     enum ric_error err = RIC_SUCCESS;
 
@@ -59,7 +59,7 @@ static int rico_file_open_read(struct rico_file *_file, const char *filename)
     _file->fs = fopen(filename, "rb");
     if (!_file->fs)
     {
-        rico_file_close(_file);
+        ric_file_close(_file);
         fprintf(stderr, "Unable to open %s for reading\n", filename);
         return RICO_ERROR(RIC_ERR_FILE_READ, "Failed to open %s for read",
                           filename);
@@ -74,7 +74,7 @@ static int rico_file_open_read(struct rico_file *_file, const char *filename)
     fread(&signature, sizeof(signature), 1, _file->fs);
     if (memcmp(signature, PACK_SIGNATURE, sizeof(signature)))
     {
-        rico_file_close(_file);
+        ric_file_close(_file);
         fprintf(stderr, "Invalid file signature: %s\n", signature);
         return RICO_ERROR(RIC_ERR_FILE_SIGNATURE,
                           "Invalid file signature %d in file %s",
@@ -85,7 +85,7 @@ static int rico_file_open_read(struct rico_file *_file, const char *filename)
     fread(&_file->version, sizeof(_file->version), 1, _file->fs);
     if (_file->version < RICO_FILE_VERSION_MINIMUM_SUPPORTED)
     {
-        rico_file_close(_file);
+        ric_file_close(_file);
         fprintf(stderr, "Unsupported file version [%d]. The minimum supported" \
                 "version for this build is [%d].\n", _file->version,
                 RICO_FILE_VERSION_MAXIMUM_SUPPORTED);
@@ -95,7 +95,7 @@ static int rico_file_open_read(struct rico_file *_file, const char *filename)
     }
     else if (_file->version > RICO_FILE_VERSION_MAXIMUM_SUPPORTED)
     {
-        rico_file_close(_file);
+        ric_file_close(_file);
         fprintf(stderr, "Unsupported file version [%d]. The maximum supported" \
                 "version for this build is [%d].\n", _file->version,
                 RICO_FILE_VERSION_MAXIMUM_SUPPORTED);
@@ -110,7 +110,7 @@ static int rico_file_open_read(struct rico_file *_file, const char *filename)
     _file->filename = filename;
     return err;
 }
-static void rico_file_close(struct rico_file *handle)
+static void ric_file_close(struct ric_file *handle)
 {
     if (handle->fs) {
         fclose(handle->fs);

@@ -240,19 +240,19 @@ static void pack_delete(pkid id)
         }
         case RIC_ASSET_TEXTURE:
         {
-            struct RICO_texture *tex = delete_me;
+            struct ric_texture *tex = delete_me;
             texture_delete(tex);
             break;
         }
         case RIC_ASSET_MESH:
         {
-            struct RICO_mesh *mesh = delete_me;
+            struct ric_mesh *mesh = delete_me;
             mesh_delete(mesh);
             break;
         }
         case RIC_ASSET_STRING:
         {
-            struct RICO_string *string = delete_me;
+            struct ric_string *string = delete_me;
             string_delete(string);
             break;
         }
@@ -276,50 +276,50 @@ static void pack_build_default()
     }
 #endif
 
-    u32 pack = RICO_pack_init(RIC_PACK_ID_DEFAULT, filename, 16, MB(1));
+    u32 pack = ric_pack_init(RIC_PACK_ID_DEFAULT, filename, 16, MB(1));
     RICO_ASSERT(pack == 0); // RIC_PACK_ID_DEFAULT *must* be id 0!
 
-    global_default_font = RICO_load_font_file(pack, "[global_default_font]",
+    global_default_font = ric_load_font_file(pack, "[global_default_font]",
                                        "font/cousine_regular.bff");
-    struct RICO_font *font = RICO_pack_lookup(global_default_font);
+    struct ric_font *font = ric_pack_lookup(global_default_font);
     global_default_font_texture = font->tex_id;
 
-    //pkid diff_id = RICO_load_texture_file(pack, "[TEX_DIFF_DEFAULT]",
+    //pkid diff_id = ric_load_texture_file(pack, "[TEX_DIFF_DEFAULT]",
     //                                      "texture/pbr_default_0.tga");
-    //pkid spec_id = RICO_load_texture_file(pack, "[TEX_SPEC_DEFAULT]",
+    //pkid spec_id = ric_load_texture_file(pack, "[TEX_SPEC_DEFAULT]",
     //                                      "texture/pbr_default_1.tga");
-    //pkid emis_id = RICO_load_texture_file(pack, "[TEX_EMIS_DEFAULT]",
+    //pkid emis_id = ric_load_texture_file(pack, "[TEX_EMIS_DEFAULT]",
     //                                      "texture/pbr_default_2.tga");
     global_default_texture_diff =
-        RICO_load_texture_color(pack, "[DEFAULT_TEX_DIFF]", &COLOR_WHITE);
+        ric_load_texture_color(pack, "[DEFAULT_TEX_DIFF]", &COLOR_WHITE);
     global_default_texture_spec =
-        RICO_load_texture_color(pack, "[DEFAULT_TEX_SPEC]", &COLOR_GREEN);
+        ric_load_texture_color(pack, "[DEFAULT_TEX_SPEC]", &COLOR_GREEN);
     global_default_texture_emis =
-        RICO_load_texture_color(pack, "[DEFAULT_TEX_EMIS]", &COLOR_TRANSPARENT);
-    global_default_material = RICO_load_material(pack, "[DEFAULT_MATERIAL]",
+        ric_load_texture_color(pack, "[DEFAULT_TEX_EMIS]", &COLOR_TRANSPARENT);
+    global_default_material = ric_load_material(pack, "[DEFAULT_MATERIAL]",
                            global_default_texture_diff,
                            global_default_texture_spec,
                            global_default_texture_emis);
 
     // HACK: This is a bit of a gross way to get the id of the last mesh
-    RICO_load_obj_file(pack, "mesh/prim_cube.obj",
+    ric_load_obj_file(pack, "mesh/prim_cube.obj",
                        &global_default_mesh_cube, PROG_PBR);
-    RICO_load_obj_file(pack, "mesh/prim_sphere.obj",
+    ric_load_obj_file(pack, "mesh/prim_sphere.obj",
                        &global_default_mesh_sphere, PROG_PBR);
 
     pkid tex_transparent_id =
-        RICO_load_texture_color(pack, "[TEX_TRANSPARENT]", &COLOR_TRANSPARENT);
+        ric_load_texture_color(pack, "[TEX_TRANSPARENT]", &COLOR_TRANSPARENT);
     pkid tex_translucent_id =
-        RICO_load_texture_color(pack, "[TEX_TRANSPLUCENT]", &COLOR_TRANSLUCENT);
+        ric_load_texture_color(pack, "[TEX_TRANSPLUCENT]", &COLOR_TRANSLUCENT);
     pkid mat_transparent_id =
-        RICO_load_material(pack, "[MAT_TRANSPARENT]", tex_translucent_id,
+        ric_load_material(pack, "[MAT_TRANSPARENT]", tex_translucent_id,
                            tex_transparent_id, tex_transparent_id);
 
-    RICO_pack_save(pack, true);
-    RICO_pack_free(pack);
+    ric_pack_save(pack, true);
+    ric_pack_free(pack);
 }
 
-extern void *RICO_pack_lookup(pkid id)
+extern void *ric_pack_lookup(pkid id)
 {
     u32 pack_id = PKID_PACK(id);
     RICO_ASSERT(pack_id < MAX_PACKS);
@@ -331,7 +331,7 @@ extern void *RICO_pack_lookup(pkid id)
     u32 idx = pack->lookup[blob_id];
     return pack_read(pack, idx);
 }
-extern void *RICO_pack_lookup_by_name(u32 pack_id, const char *name)
+extern void *ric_pack_lookup_by_name(u32 pack_id, const char *name)
 {
     RICO_ASSERT(pack_id < MAX_PACKS);
     struct pack *pack = global_packs[pack_id];
@@ -351,7 +351,7 @@ extern void *RICO_pack_lookup_by_name(u32 pack_id, const char *name)
 
     return NULL;
 }
-extern pkid RICO_pack_first(u32 pack_id)
+extern pkid ric_pack_first(u32 pack_id)
 {
     struct pack *pack = global_packs[pack_id];
     RICO_ASSERT(pack);
@@ -362,7 +362,7 @@ extern pkid RICO_pack_first(u32 pack_id)
     struct uid *first = pack_read(pack, 1);
     return first->pkid;
 }
-extern pkid RICO_pack_last(u32 pack_id)
+extern pkid ric_pack_last(u32 pack_id)
 {
     struct pack *pack = global_packs[pack_id];
     RICO_ASSERT(pack);
@@ -373,7 +373,7 @@ extern pkid RICO_pack_last(u32 pack_id)
     struct uid *last = pack_read(pack, pack->blobs_used - 1);
     return last->pkid;
 }
-extern pkid RICO_pack_next(pkid id)
+extern pkid ric_pack_next(pkid id)
 {
     RICO_ASSERT(id);
     u32 pack_id = PKID_PACK(id);
@@ -395,7 +395,7 @@ extern pkid RICO_pack_next(pkid id)
     }
     return next;
 }
-extern pkid RICO_pack_prev(pkid id)
+extern pkid ric_pack_prev(pkid id)
 {
     RICO_ASSERT(id);
     u32 pack_id = PKID_PACK(id);
@@ -417,25 +417,25 @@ extern pkid RICO_pack_prev(pkid id)
     }
     return prev;
 }
-extern pkid RICO_pack_next_loop(pkid id)
+extern pkid ric_pack_next_loop(pkid id)
 {
-    pkid next = RICO_pack_next(id);
+    pkid next = ric_pack_next(id);
     if (!next)
     {
-        next = RICO_pack_first(PKID_PACK(id));
+        next = ric_pack_first(PKID_PACK(id));
     }
     return next;
 }
-extern pkid RICO_pack_prev_loop(pkid id)
+extern pkid ric_pack_prev_loop(pkid id)
 {
-    pkid prev = RICO_pack_prev(id);
+    pkid prev = ric_pack_prev(id);
     if (!prev)
     {
-        prev = RICO_pack_last(PKID_PACK(id));
+        prev = ric_pack_last(PKID_PACK(id));
     }
     return prev;
 }
-extern pkid RICO_pack_first_type(u32 pack_id, enum ric_asset_type type)
+extern pkid ric_pack_first_type(u32 pack_id, enum ric_asset_type type)
 {
     struct pack *pack = global_packs[pack_id];
     RICO_ASSERT(pack);
@@ -455,7 +455,7 @@ extern pkid RICO_pack_first_type(u32 pack_id, enum ric_asset_type type)
     }
     return first;
 }
-extern pkid RICO_pack_last_type(u32 pack_id, enum ric_asset_type type)
+extern pkid ric_pack_last_type(u32 pack_id, enum ric_asset_type type)
 {
     struct pack *pack = global_packs[pack_id];
     RICO_ASSERT(pack);
@@ -475,7 +475,7 @@ extern pkid RICO_pack_last_type(u32 pack_id, enum ric_asset_type type)
     }
     return last;
 }
-extern pkid RICO_pack_next_type(pkid id, enum ric_asset_type type)
+extern pkid ric_pack_next_type(pkid id, enum ric_asset_type type)
 {
     RICO_ASSERT(id);
     u32 pack_id = PKID_PACK(id);
@@ -500,7 +500,7 @@ extern pkid RICO_pack_next_type(pkid id, enum ric_asset_type type)
     }
     return next;
 }
-extern pkid RICO_pack_prev_type(pkid id, enum ric_asset_type type)
+extern pkid ric_pack_prev_type(pkid id, enum ric_asset_type type)
 {
     RICO_ASSERT(id);
     u32 pack_id = PKID_PACK(id);
@@ -525,25 +525,25 @@ extern pkid RICO_pack_prev_type(pkid id, enum ric_asset_type type)
     }
     return prev;
 }
-extern pkid RICO_pack_next_type_loop(pkid id, enum ric_asset_type type)
+extern pkid ric_pack_next_type_loop(pkid id, enum ric_asset_type type)
 {
-    pkid next = RICO_pack_next_type(id, type);
+    pkid next = ric_pack_next_type(id, type);
     if (!next)
     {
-        next = RICO_pack_first_type(PKID_PACK(id), type);
+        next = ric_pack_first_type(PKID_PACK(id), type);
     }
     return next;
 }
-extern pkid RICO_pack_prev_type_loop(pkid id, enum ric_asset_type type)
+extern pkid ric_pack_prev_type_loop(pkid id, enum ric_asset_type type)
 {
-    pkid prev = RICO_pack_prev_type(id, type);
+    pkid prev = ric_pack_prev_type(id, type);
     if (!prev)
     {
-        prev = RICO_pack_last_type(PKID_PACK(id), type);
+        prev = ric_pack_last_type(PKID_PACK(id), type);
     }
     return prev;
 }
-extern u32 RICO_pack_init(u32 pack_id, const char *name, u32 blob_count,
+extern u32 ric_pack_init(u32 pack_id, const char *name, u32 blob_count,
                           u32 buffer_size)
 {
     // HACK: Don't pass id into init().. this was just to make sure packs get
@@ -595,14 +595,14 @@ extern u32 RICO_pack_init(u32 pack_id, const char *name, u32 blob_count,
     global_packs[pack->id] = pack;
     return pack->id;
 }
-extern int RICO_pack_save(u32 pack_id, bool shrink)
+extern int ric_pack_save(u32 pack_id, bool shrink)
 {
     struct pack *pack = global_packs[pack_id];
     RICO_ASSERT(pack->blob_current_id == 0);
 
-    return RICO_pack_save_as(pack_id, pack->name, shrink);
+    return ric_pack_save_as(pack_id, pack->name, shrink);
 }
-extern int RICO_pack_save_as(u32 pack_id, const char *filename, bool shrink)
+extern int ric_pack_save_as(u32 pack_id, const char *filename, bool shrink)
 {
     enum ric_error err = RIC_SUCCESS;
 
@@ -623,13 +623,13 @@ extern int RICO_pack_save_as(u32 pack_id, const char *filename, bool shrink)
 					   tm->tm_hour, tm->tm_min, tm->tm_sec);
 	string_truncate(backupFilename, sizeof(backupFilename), buffer_len);
 
-	struct rico_file backupFile;
-	err = rico_file_open_write(&backupFile, backupFilename,
+	struct ric_file backupFile;
+	err = ric_file_open_write(&backupFile, backupFilename,
 							   RICO_FILE_VERSION_CURRENT);
 	if (err) return err;
 
 	err = rico_serialize(chunk, &backupFile);
-	rico_file_close(&backupFile);
+	ric_file_close(&backupFile);
 	return err;
 #endif
 
@@ -677,7 +677,7 @@ extern int RICO_pack_save_as(u32 pack_id, const char *filename, bool shrink)
 
     return err;
 }
-extern int RICO_pack_load(const char *filename, u32 *_pack)
+extern int ric_pack_load(const char *filename, u32 *_pack)
 {
     enum ric_error err = RIC_SUCCESS;
 
@@ -719,14 +719,14 @@ extern int RICO_pack_load(const char *filename, u32 *_pack)
 cleanup:
     return err;
 }
-extern void RICO_pack_free(u32 pack_id)
+extern void ric_pack_free(u32 pack_id)
 {
     RICO_ASSERT(pack_id < MAX_PACKS);
     RICO_ASSERT(global_packs[pack_id]);
     free(global_packs[pack_id]);
     global_packs[pack_id] = 0;
 }
-extern pkid RICO_load_object(u32 pack_id, u32 type, u32 min_size, const char *name)
+extern pkid ric_load_object(u32 pack_id, u32 type, u32 min_size, const char *name)
 {
     struct pack *pack = global_packs[pack_id];
     struct ric_object *obj = blob_start(pack, RIC_ASSET_OBJECT, min_size, name);
@@ -743,13 +743,13 @@ extern pkid RICO_load_object(u32 pack_id, u32 type, u32 min_size, const char *na
     blob_end(pack);
     return pkid;
 }
-extern pkid RICO_load_texture(u32 pack_id, const char *name, GLenum target,
+extern pkid ric_load_texture(u32 pack_id, const char *name, GLenum target,
                               u32 width, u32 height, u8 bpp, u8 *pixels)
 {
     struct pack *pack = global_packs[pack_id];
 
-    struct RICO_texture *tex = blob_start(pack, RIC_ASSET_TEXTURE,
-                                          sizeof(struct RICO_texture), name);
+    struct ric_texture *tex = blob_start(pack, RIC_ASSET_TEXTURE,
+                                          sizeof(struct ric_texture), name);
     tex->width = width;
     tex->height = height;
     tex->bpp = bpp;
@@ -762,7 +762,7 @@ extern pkid RICO_load_texture(u32 pack_id, const char *name, GLenum target,
     blob_end(pack);
     return pkid;
 }
-extern pkid RICO_load_texture_file(u32 pack_id, const char *name,
+extern pkid ric_load_texture_file(u32 pack_id, const char *name,
                                    const char *filename)
 {
     enum ric_error err = RIC_SUCCESS;
@@ -776,7 +776,7 @@ extern pkid RICO_load_texture_file(u32 pack_id, const char *name,
         goto cleanup;
     }
 
-    pkid tex_id = RICO_load_texture(pack_id, name, GL_TEXTURE_2D, (u32)width,
+    pkid tex_id = ric_load_texture(pack_id, name, GL_TEXTURE_2D, (u32)width,
                                     (u32)height, 32, pixels);
 
 cleanup:
@@ -784,7 +784,7 @@ cleanup:
     if (err) blob_error(global_packs[pack_id], &tex_id);
     return tex_id;
 }
-extern pkid RICO_load_texture_color(u32 pack_id, const char *name,
+extern pkid ric_load_texture_color(u32 pack_id, const char *name,
                                     const struct vec4 *color)
 {
     u8 rgba[4] = {
@@ -793,13 +793,13 @@ extern pkid RICO_load_texture_color(u32 pack_id, const char *name,
         (u8)(color->b * 255),
         (u8)(color->a * 255)
     };
-    return RICO_load_texture(pack_id, name, GL_TEXTURE_2D, 1, 1, 32, rgba);
+    return ric_load_texture(pack_id, name, GL_TEXTURE_2D, 1, 1, 32, rgba);
 }
-extern pkid RICO_load_material(u32 pack_id, const char *name, pkid tex_albedo,
+extern pkid ric_load_material(u32 pack_id, const char *name, pkid tex_albedo,
                                pkid tex_mrao, pkid tex_emission)
 {
     struct pack *pack = global_packs[pack_id];
-    struct RICO_material *mat = blob_start(pack, RIC_ASSET_MATERIAL, 0, name);
+    struct ric_material *mat = blob_start(pack, RIC_ASSET_MATERIAL, 0, name);
     mat->tex_albedo = tex_albedo;
     mat->tex_mrao = tex_mrao;
     mat->tex_emission = tex_emission;
@@ -808,7 +808,7 @@ extern pkid RICO_load_material(u32 pack_id, const char *name, pkid tex_albedo,
     blob_end(pack);
     return pkid;
 }
-extern pkid RICO_load_font_file(u32 pack_id, const char *name,
+extern pkid ric_load_font_file(u32 pack_id, const char *name,
                                 const char *filename)
 {
     enum ric_error err;
@@ -828,7 +828,7 @@ extern pkid RICO_load_font_file(u32 pack_id, const char *name,
     }
 
     // Allocate font/texture
-    struct RICO_font *font = blob_start(global_packs[pack_id], RIC_ASSET_FONT, 0, name);
+    struct ric_font *font = blob_start(global_packs[pack_id], RIC_ASSET_FONT, 0, name);
     u32 tex_width = 0;
     u32 tex_height = 0;
     u32 tex_bpp = 0;
@@ -880,7 +880,7 @@ extern pkid RICO_load_font_file(u32 pack_id, const char *name,
     //------------------------------------------------------------
     // Font texture
     //------------------------------------------------------------
-    struct RICO_texture *tex0 = blob_start(global_packs[pack_id], RIC_ASSET_TEXTURE, 0,
+    struct ric_texture *tex0 = blob_start(global_packs[pack_id], RIC_ASSET_TEXTURE, 0,
                                            name);
     tex0->width = tex_width;
     tex0->height = tex_height;
@@ -894,20 +894,20 @@ extern pkid RICO_load_font_file(u32 pack_id, const char *name,
     pkid tex0_id = tex0->uid.pkid;
     blob_end(global_packs[pack_id]);
 
-    font = RICO_pack_lookup(font_id);
+    font = ric_pack_lookup(font_id);
     font->tex_id = tex0_id;
 
 cleanup:
     free(buffer);
     return font_id;
 }
-extern pkid RICO_load_mesh(u32 pack_id, const char *name, u32 vertex_size,
+extern pkid ric_load_mesh(u32 pack_id, const char *name, u32 vertex_size,
                            u32 vertex_count, const void *vertex_data,
                            u32 element_count, const GLuint *element_data,
                            enum program_type prog_type)
 {
     struct pack *pack = global_packs[pack_id];
-    struct RICO_mesh *mesh = blob_start(pack, RIC_ASSET_MESH, 0, name);
+    struct ric_mesh *mesh = blob_start(pack, RIC_ASSET_MESH, 0, name);
     mesh->vertex_size = vertex_size;
     mesh->vertex_count = vertex_count;
     mesh->element_count = element_count;
@@ -921,7 +921,7 @@ extern pkid RICO_load_mesh(u32 pack_id, const char *name, u32 vertex_size,
     blob_end(pack);
     return pkid;
 }
-extern pkid RICO_load_string(u32 pack_id, enum ric_string_slot slot, float x,
+extern pkid ric_load_string(u32 pack_id, enum ric_string_slot slot, float x,
                              float y, struct vec4 color, u32 lifespan,
                              pkid font, const char *text)
 {
@@ -957,7 +957,7 @@ extern pkid RICO_load_string(u32 pack_id, enum ric_string_slot slot, float x,
 
     // TODO: Reuse mesh and material if they are the same
     // Generate font mesh and get texture handle
-    struct RICO_string *str = blob_start(pack, RIC_ASSET_STRING, 0, name);
+    struct ric_string *str = blob_start(pack, RIC_ASSET_STRING, 0, name);
     str->slot = slot;
     str->lifespan = lifespan;
     str->mesh_id = mesh;
@@ -970,7 +970,7 @@ extern pkid RICO_load_string(u32 pack_id, enum ric_string_slot slot, float x,
     blob_end(pack);
     return pkid;
 }
-extern int RICO_load_obj_file(u32 pack_id, const char *filename,
+extern int ric_load_obj_file(u32 pack_id, const char *filename,
                               pkid *_last_mesh_id, enum program_type prog_type)
 {
     enum ric_error err;
@@ -1013,9 +1013,9 @@ extern int RICO_load_obj_file(u32 pack_id, const char *filename,
             if (idx_vertex > 0)
             {
                 last_mesh_id =
-                    RICO_load_mesh(pack_id, name, sizeof(*vertices), idx_vertex,
+                    ric_load_mesh(pack_id, name, sizeof(*vertices), idx_vertex,
                                    vertices, idx_element, elements, prog_type);
-                struct RICO_mesh *mesh = RICO_pack_lookup(last_mesh_id);
+                struct ric_mesh *mesh = ric_pack_lookup(last_mesh_id);
                 aabb_init_mesh(&mesh->aabb, mesh);
 
                 idx_mesh++;
@@ -1109,9 +1109,9 @@ extern int RICO_load_obj_file(u32 pack_id, const char *filename,
     if (idx_vertex > 0)
     {
         last_mesh_id =
-            RICO_load_mesh(pack_id, name, sizeof(*vertices), idx_vertex,
+            ric_load_mesh(pack_id, name, sizeof(*vertices), idx_vertex,
                            vertices, idx_element, elements, prog_type);
-        struct RICO_mesh *mesh = RICO_pack_lookup(last_mesh_id);
+        struct ric_mesh *mesh = ric_pack_lookup(last_mesh_id);
         aabb_init_mesh(&mesh->aabb, mesh);
 
         idx_mesh++;

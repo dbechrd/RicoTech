@@ -41,37 +41,37 @@ static void init_openal()
     if (err) RICO_ERROR(RIC_ERR_OPENAL_INIT, "OpenAL error: %s\n", err);
 }
 
-extern float RICO_audio_volume()
+extern float ric_audio_volume()
 {
     //ALfloat volume = 0;
     //alGetListenerf(AL_GAIN, &volume);
     //return volume;
     return global_audio_volume;
 }
-extern void RICO_audio_volume_set(float volume)
+extern void ric_audio_volume_set(float volume)
 {
     global_audio_volume = volume;
     alListenerf(AL_GAIN, global_audio_volume);
 }
-extern bool RICO_audio_muted()
+extern bool ric_audio_muted()
 {
     return global_audio_muted;
 }
-extern void RICO_audio_mute()
+extern void ric_audio_mute()
 {
     global_audio_muted = true;
     alListenerf(AL_GAIN, 0.0f);
 }
-extern void RICO_audio_unmute()
+extern void ric_audio_unmute()
 {
     global_audio_muted = false;
-    RICO_audio_volume_set(global_audio_volume);
+    ric_audio_volume_set(global_audio_volume);
 }
-extern void RICO_audio_toggle()
+extern void ric_audio_toggle()
 {
-    global_audio_muted ? RICO_audio_unmute() : RICO_audio_mute();
+    global_audio_muted ? ric_audio_unmute() : ric_audio_mute();
 }
-extern void RICO_audio_source_init(struct RICO_audio_source *source)
+extern void ric_audio_source_init(struct ric_audio_source *source)
 {
     if (!source->pitch) source->pitch = 1.0f;
     if (!source->gain) source->gain = 1.0f;
@@ -91,17 +91,17 @@ extern void RICO_audio_source_init(struct RICO_audio_source *source)
     //alSourcefv(audio_source, AL_POSITION, (float *)&VEC3_ZERO);
 #endif
 }
-extern void RICO_audio_source_free(struct RICO_audio_source *source)
+extern void ric_audio_source_free(struct ric_audio_source *source)
 {
     alDeleteSources(1, &source->al_source_id);
 }
-extern void RICO_audio_buffer_load_file(struct RICO_audio_buffer *buffer,
+extern void ric_audio_buffer_load_file(struct ric_audio_buffer *buffer,
                                         const char *filename)
 {
     u32 len;
     char *data;
     file_contents(filename, &len, &data);
-    RICO_audio_buffer_load(buffer, len, data);
+    ric_audio_buffer_load(buffer, len, data);
     free(data);
 }
 #if 0
@@ -112,13 +112,13 @@ static void audio_upload(struct ral_audio_buffer *buffer)
 
 }
 #endif
-extern void RICO_audio_source_play(struct RICO_audio_source *source)
+extern void ric_audio_source_play(struct ric_audio_source *source)
 {
     source->loop = false;
     alSourcei(source->al_source_id, AL_LOOPING, source->loop);
     alSourcePlay(source->al_source_id);
 }
-extern void RICO_audio_source_play_loop(struct RICO_audio_source *source)
+extern void ric_audio_source_play_loop(struct ric_audio_source *source)
 {
     source->loop = true;
     alSourcei(source->al_source_id, AL_LOOPING, source->loop);
@@ -126,19 +126,19 @@ extern void RICO_audio_source_play_loop(struct RICO_audio_source *source)
     printf("Playing source id=%d pitch=%f gain=%f loop=%d\n",
            source->al_source_id, source->pitch, source->gain, source->loop);
 }
-extern void RICO_audio_source_pause(struct RICO_audio_source *source)
+extern void ric_audio_source_pause(struct ric_audio_source *source)
 {
     alSourcePause(source->al_source_id);
 }
-extern void RICO_audio_source_resume(struct RICO_audio_source *source)
+extern void ric_audio_source_resume(struct ric_audio_source *source)
 {
     alSourcePlay(source->al_source_id);
 }
-extern void RICO_audio_source_stop(struct RICO_audio_source *source)
+extern void ric_audio_source_stop(struct ric_audio_source *source)
 {
     alSourceStop(source->al_source_id);
 }
-extern enum ric_audio_state RICO_audio_source_state(struct RICO_audio_source *source)
+extern enum ric_audio_state ric_audio_source_state(struct ric_audio_source *source)
 {
     ALenum state;
     alGetSourcei(source->al_source_id, AL_SOURCE_STATE, &state);
@@ -147,16 +147,16 @@ extern enum ric_audio_state RICO_audio_source_state(struct RICO_audio_source *so
     {
         case AL_INITIAL:
         case AL_STOPPED:
-            return RICO_AUDIO_STOPPED;
+            return RIC_AUDIO_STOPPED;
         case AL_PLAYING:
-            return RICO_AUDIO_STOPPED;
+            return RIC_AUDIO_STOPPED;
         case AL_PAUSED:
-            return RICO_AUDIO_STOPPED;
+            return RIC_AUDIO_STOPPED;
         default:
-            return RICO_AUDIO_UNKNOWN;
+            return RIC_AUDIO_UNKNOWN;
     }
 }
-extern void RICO_audio_buffer_load(struct RICO_audio_buffer *buffer, u32 len,
+extern void ric_audio_buffer_load(struct ric_audio_buffer *buffer, u32 len,
                             char *data)
 {
     alGenBuffers(1, &buffer->al_buffer_id);
@@ -185,13 +185,13 @@ extern void RICO_audio_buffer_load(struct RICO_audio_buffer *buffer, u32 len,
     alBufferData(buffer->al_buffer_id, AL_FORMAT_MONO16, data, len, SAMPLE_RATE);
 #endif
 }
-extern void RICO_audio_source_buffer(struct RICO_audio_source *source,
-                              struct RICO_audio_buffer *buffer)
+extern void ric_audio_source_buffer(struct ric_audio_source *source,
+                              struct ric_audio_buffer *buffer)
 {
     //alSourceQueueBuffers(audio_source, 1, &audio_buffer);
     alSourcei(source->al_source_id, AL_BUFFER, buffer->al_buffer_id);
 }
-extern void RICO_audio_buffer_free(struct RICO_audio_buffer *buffer)
+extern void ric_audio_buffer_free(struct ric_audio_buffer *buffer)
 {
     alDeleteBuffers(1, &buffer->al_buffer_id);
 }
