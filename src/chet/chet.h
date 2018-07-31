@@ -18,32 +18,32 @@ enum game_object_type
 
 struct timmy
 {
-    struct RICO_object rico;
+    struct ric_object rico;
     bool lights_on;
     bool audio_on;
 };
 
 struct light_test
 {
-    struct RICO_object rico;
+    struct ric_object rico;
 };
 
 struct game_button
 {
-    struct RICO_object rico;
+    struct ric_object rico;
     pkid panel_id;
     u32 index;
 };
 
 struct game_panel
 {
-    struct RICO_object rico;
+    struct ric_object rico;
     pkid buttons[9];
 };
 
 struct small_cube
 {
-    struct RICO_object rico;
+    struct ric_object rico;
 };
 
 struct pack_info
@@ -74,8 +74,8 @@ struct manifold
 {
     struct contact contacts[1];  // TODO: Multiple contact points
     u32 contact_count;
-    const struct RICO_object *body_a;
-    const struct RICO_object *body_b;
+    const struct ric_object *body_a;
+    const struct ric_object *body_b;
 };
 
 #endif

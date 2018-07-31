@@ -234,7 +234,7 @@ static void pack_delete(pkid id)
     {
         case RIC_ASSET_OBJECT:
         {
-            struct RICO_object *obj = delete_me;
+            struct ric_object *obj = delete_me;
             object_delete(obj);
             break;
         }
@@ -729,7 +729,7 @@ extern void RICO_pack_free(u32 pack_id)
 extern pkid RICO_load_object(u32 pack_id, u32 type, u32 min_size, const char *name)
 {
     struct pack *pack = global_packs[pack_id];
-    struct RICO_object *obj = blob_start(pack, RIC_ASSET_OBJECT, min_size, name);
+    struct ric_object *obj = blob_start(pack, RIC_ASSET_OBJECT, min_size, name);
     obj->type = type;
     obj->xform.position = VEC3_ZERO;
     obj->xform.orientation = QUAT_IDENT;

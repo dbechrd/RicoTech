@@ -222,7 +222,7 @@ void object_interact()
     if (dist > 10.0f)
         return;
 
-    struct RICO_object *obj = RICO_pack_lookup(obj_id);
+    struct ric_object *obj = RICO_pack_lookup(obj_id);
     if (!obj) return;
 
     switch (obj->type)
@@ -247,7 +247,7 @@ DLB_assert_handler_def *DLB_assert_handler = handle_assert;
 
 bool RICO_object_has_physics(pkid id)
 {
-    struct RICO_object *obj = RICO_pack_lookup(id);
+    struct ric_object *obj = RICO_pack_lookup(id);
     // TODO: Implement a proper physics flag
     return v3_length(&obj->aabb.e) > 0;
 }
@@ -272,7 +272,7 @@ void clash_detect()
     //{
     //    struct pack_info *pack_info_a = &pack_table[pack_idx_a];
     //    pack_info_a->pak_id
-    //    struct RICO_object *obj_a = RICO_pack_first(
+    //    struct ric_object *obj_a = RICO_pack_first(
     //}
 
     pkid a = RICO_pack_first(RICO_pack_active);
@@ -340,7 +340,7 @@ void clash_detect()
         pkid a_id = RICO_pack_first_type(global_packs[i]->id, RIC_ASSET_OBJECT);
         while (a_id)
         {
-            struct RICO_object *a_obj = RICO_pack_lookup(a_id);
+            struct ric_object *a_obj = RICO_pack_lookup(a_id);
             a_obj->collide_sphere = false;
             a_obj->collide_aabb = false;
             a_obj->collide_obb = false;
@@ -356,7 +356,7 @@ void clash_detect()
         pkid a_id = RICO_pack_first_type(global_packs[i]->id, RIC_ASSET_OBJECT);
         while (a_id)
         {
-            struct RICO_object *a_obj = RICO_pack_lookup(a_id);
+            struct ric_object *a_obj = RICO_pack_lookup(a_id);
             if (a_obj->type == OBJ_TERRAIN)
             {
                 a_id = RICO_pack_next_type(a_id, RIC_ASSET_OBJECT);
@@ -380,7 +380,7 @@ void clash_detect()
 
                 while (b_id)
                 {
-                    struct RICO_object *b_obj = RICO_pack_lookup(b_id);
+                    struct ric_object *b_obj = RICO_pack_lookup(b_id);
                     if (b_obj->type == OBJ_TERRAIN)
                     {
                         b_id = RICO_pack_next_type(a_id, RIC_ASSET_OBJECT);
@@ -432,7 +432,7 @@ void clash_detect()
     }
 }
 
-bool object_intersects(const struct RICO_object *a, const struct RICO_object *b,
+bool object_intersects(const struct ric_object *a, const struct ric_object *b,
                        struct manifold *manifold)
 {
     // TODO: check sphere, then aabb, then obb
@@ -443,7 +443,7 @@ bool object_intersects(const struct RICO_object *a, const struct RICO_object *b,
 
 void clash_simulate(struct timmy *timmy)
 {
-    struct RICO_object *obj;
+    struct ric_object *obj;
     struct manifold manifold = { 0 };
 
     for (u32 i = 1; i < ARRAY_COUNT(global_packs); ++i)
@@ -652,7 +652,7 @@ void debug_render_colliders()
         pkid id = RICO_pack_first_type(global_packs[i]->id, RIC_ASSET_OBJECT);
         while (id)
         {
-            struct RICO_object *obj = RICO_pack_lookup(id);
+            struct ric_object *obj = RICO_pack_lookup(id);
 
             struct vec4 col_obb     = COLOR_DARK_RED;
             struct vec4 col_aabb    = COLOR_DARK_ORANGE;

@@ -5,7 +5,7 @@
 
 #define RIC_ASSET_TYPES(f) \
     f(RIC_ASSET_NULL,      0) \
-    f(RIC_ASSET_OBJECT,    sizeof(struct RICO_object))     \
+    f(RIC_ASSET_OBJECT,    sizeof(struct ric_object))     \
     f(RIC_ASSET_TEXTURE,   sizeof(struct RICO_texture))    \
     f(RIC_ASSET_MESH,      sizeof(struct RICO_mesh))		\
     f(RIC_ASSET_FONT,      sizeof(struct RICO_font))		\
@@ -678,7 +678,7 @@ struct RICO_ui_progress
     struct ui_tooltip *tooltip;
 };
 
-struct RICO_transform
+struct ric_transform
 {
     struct vec3 position;
     struct quat orientation;
@@ -687,11 +687,11 @@ struct RICO_transform
     struct mat4 matrix_inverse;
 };
 
-struct RICO_object
+struct ric_object
 {
     struct uid uid;
     u32 type;
-    struct RICO_transform xform;
+    struct ric_transform xform;
 
     struct ric_aabb aabb;
     struct ric_aabb aabb_world;

@@ -65,7 +65,7 @@ void pack_build_alpha(struct pack_info *pack_info)
 
     u32 pack_sav = RICO_pack_init(0, pack_info->path_sav, 64, MB(32));
     pkid terrain_id = RICO_load_object(pack_sav, OBJ_TERRAIN, 0, "terrain");
-    struct RICO_object *terrain = RICO_pack_lookup(terrain_id);
+    struct ric_object *terrain = RICO_pack_lookup(terrain_id);
     RICO_object_mesh_set(terrain, mesh_terrain_id);
     RICO_object_material_set(terrain, mat_bricks);
     terrain->select_ignore = true;
@@ -85,9 +85,9 @@ void pack_build_alpha(struct pack_info *pack_info)
     RICO_object_trans_set(&light_test->rico, &VEC3(0.0f, 4.0f, 0.0f));
 
     pkid lighting_test_cube_id = RICO_load_object(
-        pack_sav, OBJ_LIGHT_TEST_CUBE, sizeof(struct RICO_object),
+        pack_sav, OBJ_LIGHT_TEST_CUBE, sizeof(struct ric_object),
         "Lighting test cube");
-    struct RICO_object *lighting_test_cube =
+    struct ric_object *lighting_test_cube =
         RICO_pack_lookup(lighting_test_cube_id);
     RICO_object_trans_set(lighting_test_cube, &VEC3(0.0f, 2.0f, 0.0f));
 

@@ -85,14 +85,14 @@ static void edit_object_select(pkid id, bool force)
     // Deselect current object
     if (selected_obj_id)
     {
-        struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
+        struct ric_object *obj = RICO_pack_lookup(selected_obj_id);
         obj->selected = false;
     }
 
     // Select requested object
     if (id && (force || id != selected_obj_id))
     {
-        struct RICO_object *obj = RICO_pack_lookup(id);
+        struct ric_object *obj = RICO_pack_lookup(id);
         obj->selected = true;
         selected_obj_id = id;
     }
@@ -145,7 +145,7 @@ static void edit_object_prev()
 }
 static void edit_print_object()
 {
-    struct RICO_object *obj = NULL;
+    struct ric_object *obj = NULL;
     if (selected_obj_id)
     {
         obj = RICO_pack_lookup(selected_obj_id);
@@ -157,7 +157,7 @@ static void edit_translate(struct RICO_camera *camera, const struct vec3 *offset
     if (!selected_obj_id)
         return;
 
-    struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
+    struct ric_object *obj = RICO_pack_lookup(selected_obj_id);
 
     if (v3_equals(offset, &VEC3_ZERO))
     {
@@ -183,7 +183,7 @@ static void edit_rotate(const struct quat *offset)
     if (!selected_obj_id)
         return;
 
-    struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
+    struct ric_object *obj = RICO_pack_lookup(selected_obj_id);
     if (quat_equals(offset, &QUAT_IDENT))
     {
         object_rot_set(obj, &QUAT_IDENT);
@@ -200,7 +200,7 @@ static void edit_scale(const struct vec3 *offset)
     if (!selected_obj_id)
         return;
 
-    struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
+    struct ric_object *obj = RICO_pack_lookup(selected_obj_id);
     if (v3_equals(offset, &VEC3_ZERO))
     {
         object_scale_set(obj, &VEC3_ONE);
@@ -217,7 +217,7 @@ static void edit_material_next_pack()
     if (!selected_obj_id)
         return;
 
-    struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
+    struct ric_object *obj = RICO_pack_lookup(selected_obj_id);
     pkid next_material_id = 0;
 
     u32 pack_start = PKID_PACK(obj->material_id);
@@ -247,7 +247,7 @@ static void edit_material_next()
     if (!selected_obj_id)
         return;
 
-    struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
+    struct ric_object *obj = RICO_pack_lookup(selected_obj_id);
     pkid next_material_id = (obj->material_id)
         ? RICO_pack_next_type_loop(obj->material_id, RIC_ASSET_MATERIAL)
         : RICO_pack_first_type(RIC_PACK_ID_DEFAULT, RIC_ASSET_MATERIAL);
@@ -263,7 +263,7 @@ static void edit_material_prev()
     if (!selected_obj_id)
         return;
 
-    struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
+    struct ric_object *obj = RICO_pack_lookup(selected_obj_id);
     pkid prev_material_id = (obj->material_id)
         ? RICO_pack_prev_type_loop(obj->material_id, RIC_ASSET_MATERIAL)
         : RICO_pack_last_type(RIC_PACK_ID_DEFAULT, RIC_ASSET_MATERIAL);
@@ -279,7 +279,7 @@ static void edit_mesh_next_pack()
     if (!selected_obj_id)
         return;
 
-    struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
+    struct ric_object *obj = RICO_pack_lookup(selected_obj_id);
     pkid next_mesh_id = 0;
 
     u32 pack_start = PKID_PACK(obj->mesh_id);
@@ -310,7 +310,7 @@ static void edit_mesh_next()
     if (!selected_obj_id)
         return;
 
-    struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
+    struct ric_object *obj = RICO_pack_lookup(selected_obj_id);
     pkid next_mesh_id = (obj->mesh_id)
         ? RICO_pack_next_type_loop(obj->mesh_id, RIC_ASSET_MESH)
         : RICO_pack_first_type(RIC_PACK_ID_DEFAULT, RIC_ASSET_MESH);
@@ -326,7 +326,7 @@ static void edit_mesh_prev()
     if (!selected_obj_id)
         return;
 
-    struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
+    struct ric_object *obj = RICO_pack_lookup(selected_obj_id);
     pkid prev_mesh_id = (obj->mesh_id)
         ? RICO_pack_prev_type_loop(obj->mesh_id, RIC_ASSET_MESH)
         : RICO_pack_last_type(RIC_PACK_ID_DEFAULT, RIC_ASSET_MESH);
@@ -342,7 +342,7 @@ static void edit_aabb_reset()
     if (!selected_obj_id)
         return;
 
-    struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
+    struct ric_object *obj = RICO_pack_lookup(selected_obj_id);
     object_aabb_recalculate(obj);
 
     obj->selected = true;
@@ -356,8 +356,8 @@ static void edit_duplicate()
     // TODO: Prompt user for name
     const char *name = "Duplicate";
 
-    struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
-    struct RICO_object *new_obj = object_copy(PKID_PACK(selected_obj_id), obj,
+    struct ric_object *obj = RICO_pack_lookup(selected_obj_id);
+    struct ric_object *new_obj = object_copy(PKID_PACK(selected_obj_id), obj,
                                               name);
     edit_object_select(new_obj->uid.pkid, false);
 }
@@ -377,7 +377,7 @@ static struct widget *widget_test()
 
     if (selected_obj_id)
     {
-        struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
+        struct ric_object *obj = RICO_pack_lookup(selected_obj_id);
         struct ray cam_ray = { 0 };
         camera_fwd_ray(&cam_ray, &cam_player);
 
@@ -435,7 +435,7 @@ static void edit_mouse_move()
     camera_fwd_ray(&cam_ray, &cam_player);
 
     bool collide = false;
-    struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
+    struct ric_object *obj = RICO_pack_lookup(selected_obj_id);
     struct vec3 trans = obj->xform.position;
 
     struct vec3 normal = cam_player.pos;
@@ -521,7 +521,7 @@ static void edit_render()
 
     if (selected_obj_id)
     {
-        struct RICO_object *obj = RICO_pack_lookup(selected_obj_id);
+        struct ric_object *obj = RICO_pack_lookup(selected_obj_id);
 
         struct mat4 xform = MAT4_IDENT;
         mat4_translate(&xform, &obj->xform.position);

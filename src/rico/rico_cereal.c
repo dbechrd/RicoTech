@@ -1,3 +1,25 @@
+//------------------------------------------------------------------------------
+// TODO: Remove test structs
+struct ric_bar
+{
+    u32 ignore1;
+    u32 check1;
+    struct vec3 pos;
+    u32 check2;
+    u32 ignore2;
+};
+
+struct ric_foo
+{
+    u32 ignore1;
+    u32 check1;
+    struct ric_bar *bar;
+    u32 *baz;
+    u32 check2;
+    u32 ignore2;
+};
+//------------------------------------------------------------------------------
+
 enum ric_version
 {
     V_EPOCH = 1,
@@ -28,54 +50,18 @@ struct ric_header
     u32 arena_size;
 };
 
-//------------------------------------------------------------------------------
-// TODO: Remove test structs
-struct ric_bar
-{
-    u32 ignore1;
-    u32 check1;
-    struct vec3 pos;
-    u32 check2;
-    u32 ignore2;
-};
-
-struct ric_foo
-{
-    u32 ignore1;
-    u32 check1;
-    struct ric_bar *bar;
-    u32 *baz;
-    u32 check2;
-    u32 ignore2;
-};
-
-struct RICO_scene
+struct ric_scene
 {
     u32 object_count;
-    struct RICO_object *objects;
+    struct ric_object *objects;
     struct ric_foo foo;
 };
 
-struct ric_scene
+struct ric_save
 {
     struct ric_header header;
-    struct RICO_scene *scene;
+    struct ric_scene *scene;
 };
-//------------------------------------------------------------------------------
-
-static size_t ric_fwrite(void const* buf, size_t size,
-                         struct ric_stream *stream);
-static size_t ric_fread(void *buf, size_t size, struct ric_stream *stream);
-//static void rem_field(struct ric_stream *stream, enum ric_version v_add,
-//                      enum ric_version v_remove, u32 size, void *field);
-//static void rem_field_ptr(struct ric_stream *stream, enum ric_version v_add,
-//                          enum ric_version v_remove, u32 size, void **field);
-static void ric_uid(struct ric_stream *stream, struct uid *data);
-static void ric_RICO_transform(struct ric_stream *stream,
-                               struct RICO_transform *data);
-static void ric_RICO_object(struct ric_stream *stream,
-                            struct RICO_object *data);
-static void ric_RICO_scene(struct ric_stream *stream, struct RICO_scene *data);
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -90,9 +76,9 @@ static void ric_RICO_scene(struct ric_stream *stream, struct RICO_scene *data);
 
 #define STREAM_RW(buf, size) \
     if (stream->mode == RIC_WRITE) { \
-        ric_fwrite(buf, size, stream); \
+        ric_stream_write(stream, buf, size); \
     } else { \
-        ric_fread(buf, size, stream); \
+        ric_stream_read(stream, buf, size); \
     }
 
 #define ADD_FIELD(v_add, type, field) \
@@ -205,10 +191,8 @@ static inline void *ric_arena_push(struct ric_arena *arena, u32 bytes)
     return ptr;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
-static size_t ric_fwrite(void const* buf, size_t size,
-                         struct ric_stream *stream)
+static size_t ric_stream_write(struct ric_stream *stream, void const* buf,
+                               size_t size)
 {
     size_t bytes = fwrite(buf, 1, size, stream->fp);
     RICO_ASSERT(bytes == size);
@@ -221,7 +205,7 @@ static size_t ric_fwrite(void const* buf, size_t size,
     return bytes;
 }
 
-static size_t ric_fread(void *buf, size_t size, struct ric_stream *stream)
+static size_t ric_stream_read(struct ric_stream *stream, void *buf, size_t size)
 {
     size_t bytes = fread(buf, 1, size, stream->fp);
     RICO_ASSERT(bytes == size);
@@ -233,56 +217,57 @@ static size_t ric_fread(void *buf, size_t size, struct ric_stream *stream)
     printf("\n");
     return bytes;
 }
+////////////////////////////////////////////////////////////////////////////////
 
-static void ric_uid(struct ric_stream *stream, struct uid *data)
+static void sav_uid(struct ric_stream *stream, struct uid *data)
 {
     ADD_FIELD(V_EPOCH, pkid, pkid);
     ADD_FIELD(V_EPOCH, enum ric_asset_type, type);
     ADD_FIELD(V_EPOCH, buf32, name);
 }
 
-static void ric_RICO_transform(struct ric_stream *stream,
-                               struct RICO_transform *data)
+static void sav_ric_transform(struct ric_stream *stream,
+                               struct ric_transform *data)
 {
     ADD_FIELD(V_EPOCH, struct vec3, position);
     ADD_FIELD(V_EPOCH, struct quat, orientation);
     ADD_FIELD(V_EPOCH, struct vec3, scale);
 }
 
-static void ric_RICO_object(struct ric_stream *stream,
-                            struct RICO_object *data)
+static void sav_ric_object(struct ric_stream *stream,
+                            struct ric_object *data)
 {
-    ADD_STRUCT(V_EPOCH, struct uid, uid, ric_uid);
+    ADD_STRUCT(V_EPOCH, struct uid, uid, sav_uid);
     ADD_FIELD(V_EPOCH, enum RICO_object_type, type);
-    ADD_STRUCT(V_EPOCH, struct RICO_transform, xform, ric_RICO_transform);
+    ADD_STRUCT(V_EPOCH, struct ric_transform, xform, sav_ric_transform);
     ADD_FIELD(V_EPOCH, pkid, mesh_id);
     ADD_FIELD(V_EPOCH, pkid, material_id);
 }
 
-static void ric_bar(struct ric_stream *stream, struct ric_bar *data)
+static void sav_ric_bar(struct ric_stream *stream, struct ric_bar *data)
 {
     ADD_FIELD(V_EPOCH, u32, check1);
     ADD_FIELD(V_EPOCH, struct vec3, pos);
     ADD_FIELD(V_EPOCH, u32, check2);
 }
 
-static void ric_foo(struct ric_stream *stream, struct ric_foo *data)
+static void sav_ric_foo(struct ric_stream *stream, struct ric_foo *data)
 {
     ADD_FIELD(V_EPOCH, u32, check1);
-    ADD_STRUCT_PTR(V_EPOCH, struct ric_bar *, bar, ric_bar);
+    ADD_STRUCT_PTR(V_EPOCH, struct sav_ric_bar *, bar, sav_ric_bar);
     ADD_FIELD_PTR(V_EPOCH, u32 *, baz);
     ADD_FIELD(V_EPOCH, u32, check2);
 }
 
-static void ric_RICO_scene(struct ric_stream *stream, struct RICO_scene *data)
+static void sav_ric_scene(struct ric_stream *stream, struct ric_scene *data)
 {
     ADD_FIELD(V_EPOCH, u32, object_count);
-    ADD_STRUCT_ARRAY(V_EPOCH, struct RICO_object, objects, data->object_count,
-                     ric_RICO_object);
-    ADD_STRUCT(V_EPOCH, struct ric_foo, foo, ric_foo);
+    ADD_STRUCT_ARRAY(V_EPOCH, struct ric_object, objects, data->object_count,
+                     sav_ric_object);
+    ADD_STRUCT(V_EPOCH, struct sav_ric_foo, foo, sav_ric_foo);
 }
 
-static void ric_header(struct ric_stream *stream, struct ric_header *data)
+static void sav_ric_header(struct ric_stream *stream, struct ric_header *data)
 {
     STREAM_RW(&stream->version, sizeof(stream->version));
     ADD_FIELD(V_EPOCH, u32, arena_size);
@@ -292,10 +277,10 @@ static void ric_header(struct ric_stream *stream, struct ric_header *data)
     }
 }
 
-static void ric_scene(struct ric_stream *stream, struct ric_scene *data)
+static void sav_ric_save(struct ric_stream *stream, struct ric_save *data)
 {
-    ric_header(stream, (struct ric_header *)data);
-    ADD_STRUCT_PTR(V_EPOCH, struct RICO_scene *, scene, ric_RICO_scene);
+    sav_ric_header(stream, (struct ric_header *)data);
+    ADD_STRUCT_PTR(V_EPOCH, struct ric_scene *, scene, sav_ric_scene);
 }
 
 static void ric_close(struct ric_stream *stream)
@@ -319,11 +304,11 @@ static void ric_test_write(struct ric_arena *arena, const char *filename)
     RICO_ASSERT(stream->fp);
 
     // Generate data
-    struct ric_scene file = { 0 };
+    struct ric_save file = { 0 };
     file.header.arena_size = stream->arena->size;
     file.scene = ric_arena_push(stream->arena, sizeof(*file.scene));
 
-    struct RICO_scene *scene = file.scene;
+    struct ric_scene *scene = file.scene;
     scene->object_count = 10;
     scene->objects = ric_arena_push(stream->arena, sizeof(scene->objects[0]) *
                                     scene->object_count);
@@ -350,7 +335,7 @@ static void ric_test_write(struct ric_arena *arena, const char *filename)
 
     // Write data to file
     printf("[WRITE]\n");
-    ric_scene(stream, &file);
+    sav_ric_save(stream, &file);
     ric_close(stream);
     fflush(stdout);
 }
@@ -364,11 +349,11 @@ static void ric_test_read(struct ric_arena *arena, const char *filename)
     stream->fp = fopen(filename, stream->mode ? "wb" : "rb");
     RICO_ASSERT(stream->fp);
 
-    struct ric_scene file = { 0 };
+    struct ric_save file = { 0 };
     printf("[READ]\n");
-    ric_scene(stream, &file);
+    sav_ric_save(stream, &file);
 
-    struct RICO_scene *scene = file.scene;
+    struct ric_scene *scene = file.scene;
     RICO_ASSERT(scene->object_count == 10);
     for (u32 i = 0; i < scene->object_count; ++i)
     {

@@ -1,25 +1,25 @@
-static void object_delete(struct RICO_object *obj)
+static void object_delete(struct ric_object *obj)
 {
     // TODO: Make sure all of the properties get cleaned up properly
     pack_delete(obj->mesh_id);
     pack_delete(obj->material_id);
 }
 
-static struct RICO_object *object_copy(u32 pack, struct RICO_object *other,
+static struct ric_object *object_copy(u32 pack, struct ric_object *other,
                                        const char *name)
 {
     pkid new_obj_id = RICO_load_object(pack, other->type, 0, name);
-    struct RICO_object *new_obj = RICO_pack_lookup(new_obj_id);
+    struct ric_object *new_obj = RICO_pack_lookup(new_obj_id);
 
     // TODO: Make sure to update any ref counting we're using to prevent e.g.
     //       mesh or texture from being deleted when still in use.
     void *dst = (u8 *)new_obj + sizeof(struct uid);
     void *src = (u8 *)other + sizeof(struct uid);
-    memcpy(dst, src, sizeof(struct RICO_object) - sizeof(struct uid));
+    memcpy(dst, src, sizeof(struct ric_object) - sizeof(struct uid));
 
     return new_obj;
 }
-static void object_update_obb(struct RICO_object *obj)
+static void object_update_obb(struct ric_object *obj)
 {
     struct RICO_obb *obb = &obj->obb;
     obb->e = obj->aabb.e;
@@ -53,7 +53,7 @@ static void object_update_obb(struct RICO_object *obj)
     DLB_ASSERT(dot3 == 0.0f);
 #endif
 }
-static void object_update_aabb_world(struct RICO_object *obj)
+static void object_update_aabb_world(struct ric_object *obj)
 {
     obj->aabb_world.c = obj->obb.c;
     obj->aabb_world.e = VEC3_ZERO;
@@ -68,7 +68,7 @@ static void object_update_aabb_world(struct RICO_object *obj)
         obj->aabb_world.e.z += ABS(v3_dot(&axis, &VEC3_Z));
     }
 }
-static void object_update_sphere(struct RICO_object *obj)
+static void object_update_sphere(struct ric_object *obj)
 {
     struct sphere *sphere = &obj->sphere;
     sphere->center = obj->obb.c;
@@ -76,13 +76,13 @@ static void object_update_sphere(struct RICO_object *obj)
                             obj->obb.e.y * obj->obb.e.y +
                             obj->obb.e.z * obj->obb.e.z));
 }
-static void object_update_colliders(struct RICO_object *obj)
+static void object_update_colliders(struct ric_object *obj)
 {
     object_update_obb(obj);
     object_update_aabb_world(obj);
     object_update_sphere(obj);
 }
-static void object_aabb_recalculate(struct RICO_object *obj)
+static void object_aabb_recalculate(struct ric_object *obj)
 {
     struct RICO_mesh *mesh;
     if (obj->mesh_id)
@@ -98,7 +98,7 @@ static void object_aabb_recalculate(struct RICO_object *obj)
 static void object_aabb_recalculate_all(u32 id)
 {
     struct pack *pack = global_packs[id];
-    struct RICO_object *obj;
+    struct ric_object *obj;
     for (u32 index = 1; index < pack->blobs_used; ++index)
     {
         if (pack->index[index].type != RIC_ASSET_OBJECT)
@@ -108,9 +108,9 @@ static void object_aabb_recalculate_all(u32 id)
         object_aabb_recalculate(obj);
     }
 }
-static void object_transform_update(struct RICO_object *obj)
+static void object_transform_update(struct ric_object *obj)
 {
-    struct RICO_transform *xform = &obj->xform;
+    struct ric_transform *xform = &obj->xform;
 
     // HACK: Light test
     if (obj->type == OBJ_LIGHT_TEST)
@@ -153,13 +153,13 @@ static void object_transform_update(struct RICO_object *obj)
 
     object_update_colliders(obj);
 }
-extern void RICO_object_aabb_set(struct RICO_object *obj,
+extern void RICO_object_aabb_set(struct ric_object *obj,
                                  const struct ric_aabb *aabb)
 {
     obj->aabb = *aabb;
     object_update_colliders(obj);
 }
-extern void RICO_object_mesh_set(struct RICO_object *obj, pkid mesh_id)
+extern void RICO_object_mesh_set(struct ric_object *obj, pkid mesh_id)
 {
 #if RICO_DEBUG
     struct uid *uid = RICO_pack_lookup(mesh_id);
@@ -168,7 +168,7 @@ extern void RICO_object_mesh_set(struct RICO_object *obj, pkid mesh_id)
     obj->mesh_id = mesh_id;
     object_aabb_recalculate(obj);
 }
-extern void RICO_object_material_set(struct RICO_object *obj, pkid material_id)
+extern void RICO_object_material_set(struct ric_object *obj, pkid material_id)
 {
 #if RICO_DEBUG
     struct uid *uid = RICO_pack_lookup(material_id);
@@ -176,54 +176,54 @@ extern void RICO_object_material_set(struct RICO_object *obj, pkid material_id)
 #endif
     obj->material_id = material_id;
 }
-extern void RICO_object_trans(struct RICO_object *obj, const struct vec3 *v)
+extern void RICO_object_trans(struct ric_object *obj, const struct vec3 *v)
 {
     v3_add(&obj->xform.position, v);
     object_transform_update(obj);
 }
-extern const struct vec3 *RICO_object_trans_get(struct RICO_object *obj)
+extern const struct vec3 *RICO_object_trans_get(struct ric_object *obj)
 {
     return &obj->xform.position;
 }
-extern void RICO_object_trans_set(struct RICO_object *obj,
+extern void RICO_object_trans_set(struct ric_object *obj,
                                   const struct vec3 *v)
 {
     obj->xform.position = *v;
     object_transform_update(obj);
 }
-static void object_rot(struct RICO_object *obj, const struct quat *q)
+static void object_rot(struct ric_object *obj, const struct quat *q)
 {
     quat_mul(&obj->xform.orientation, q);
     object_transform_update(obj);
 }
-static void object_rot_set(struct RICO_object *obj, const struct quat *q)
+static void object_rot_set(struct ric_object *obj, const struct quat *q)
 {
     obj->xform.orientation = *q;
     object_transform_update(obj);
 }
-static const struct quat *object_rot_get(struct RICO_object *obj)
+static const struct quat *object_rot_get(struct ric_object *obj)
 {
     return &obj->xform.orientation;
 }
-static void object_scale(struct RICO_object *obj, const struct vec3 *v)
+static void object_scale(struct ric_object *obj, const struct vec3 *v)
 {
     v3_add(&obj->xform.scale, v);
     object_transform_update(obj);
 }
-static void object_scale_set(struct RICO_object *obj, const struct vec3 *v)
+static void object_scale_set(struct ric_object *obj, const struct vec3 *v)
 {
     obj->xform.scale = *v;
     object_transform_update(obj);
 }
-static const struct vec3 *object_scale_get(struct RICO_object *obj)
+static const struct vec3 *object_scale_get(struct ric_object *obj)
 {
     return &obj->xform.scale;
 }
-static const struct mat4 *object_matrix_get(struct RICO_object *obj)
+static const struct mat4 *object_matrix_get(struct ric_object *obj)
 {
     return &obj->xform.matrix;
 }
-static bool object_collide_ray(float *_dist, struct RICO_object *obj,
+static bool object_collide_ray(float *_dist, struct ric_object *obj,
                                const struct ray *ray)
 {
     return collide_ray_obb(_dist, ray, &obj->aabb, &obj->xform.matrix);
@@ -234,7 +234,7 @@ static bool object_collide_ray_type(pkid *_object_id, float *_dist,
     bool collided = false;
     float closest = Z_FAR; // Track closest object
 
-    struct RICO_object *obj = 0;
+    struct ric_object *obj = 0;
     for (u32 i = RIC_PACK_ID_COUNT; i < ARRAY_COUNT(global_packs); ++i)
     {
         if (!global_packs[i])
@@ -375,7 +375,7 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
             if (global_packs[i]->index[index].type != RIC_ASSET_OBJECT)
                 continue;
 
-            struct RICO_object *obj = pack_read(global_packs[i], index);
+            struct ric_object *obj = pack_read(global_packs[i], index);
 
             if (RICO_state_is_edit())
             {
@@ -390,7 +390,7 @@ static void object_render_all(r64 alpha, struct RICO_camera *camera)
 }
 static void object_render(struct pack *pack, GLint model_location, bool shadow)
 {
-    struct RICO_object *obj = 0;
+    struct ric_object *obj = 0;
     u32 prev_type = 0;
     for (u32 index = 1; index < pack->blobs_used; ++index)
     {
@@ -435,7 +435,7 @@ static void object_render(struct pack *pack, GLint model_location, bool shadow)
     }
 }
 
-static void object_print(struct RICO_object *obj)
+static void object_print(struct ric_object *obj)
 {
     string_free_slot(RIC_STRING_SLOT_SELECTED_OBJ);
 
