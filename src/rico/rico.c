@@ -6,23 +6,24 @@
 #define DLB_MATH_PRINT
 #define DLB_MATH_IMPLEMENTATION
 #include "dlb_math.h"
+#define DLB_HASH_IMPLEMENTATION
+#include "dlb_hash.h"
 
+#include "rico_types.c"
 #include "rico_error.c"
+#include "rico_arena.c"
+#include "rico_stream.c"
 #include "rico_util.c"
 #include "rico_resource.c"
 #include "rico_audio.c"
-
-#include "rico_types.c"
 #include "rico_shader.c"
 #include "rico_program.c"
 #include "rico_camera.c"
 #include "rico_aabb.c"
-
 #include "rico_material.c"
 #include "rico_shadow.c"
 #include "rico_object.c"
 #include "rico_editor.c"
-
 #include "rico_primitives.c"
 #include "rico_collision.c"
 #include "rico_convert.c"
@@ -30,9 +31,7 @@
 #include "rico_mesh.c"
 #include "rico_physics.c"
 #include "rico_pack.c"
-
 #include "rico_state.c"
-
 #include "rico_string.c"
 #include "rico_texture.c"
 #include "rico_file.c"

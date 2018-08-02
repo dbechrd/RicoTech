@@ -19,20 +19,24 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\chet\chet_packs.c">
+    <ClCompile Include="src\chet\chet_pack.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\chet\chet.c" />
-    <ClCompile Include="src\chet\chet_packs_alpha.c">
+    <ClCompile Include="src\chet\chet_pack_alpha.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="src\chet\chet_packs_clash.c">
+    <ClCompile Include="src\chet\chet_pack_clash.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\rico\rico.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_arena.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
@@ -81,6 +85,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\rico\rico_resource.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_stream.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
@@ -162,11 +170,13 @@
     <ClInclude Include="src\dlb\dlb_types.h" />
     <ClInclude Include="src\rico\ri.h" />
     <ClInclude Include="src\rico\rico.h" />
+    <ClInclude Include="src\rico\rico_arena.h" />
     <ClInclude Include="src\rico\rico_audio.h" />
     <ClInclude Include="src\rico\rico_aabb.h" />
     <ClInclude Include="src\rico\rico_camera.h" />
     <ClInclude Include="src\rico\rico_error.h" />
     <ClInclude Include="src\rico\rico_heiro.h" />
+    <ClInclude Include="src\rico\rico_stream.h" />
     <ClInclude Include="src\rico\rico_types.h" />
     <ClInclude Include="src\rico\rico_mesh.h" />
     <ClInclude Include="src\rico\rico_object.h" />
@@ -176,7 +186,6 @@
     <ClInclude Include="src\rico\rico_string.h" />
     <ClInclude Include="src\rico\rico_ui.h" />
     <ClInclude Include="src\rico\ri_pool.h" />
-    <ClInclude Include="src\rico\ri_program.h" />
     <ClInclude Include="src\rico\ri_program_pbr.h" />
     <ClInclude Include="src\rico\ri_program_primitive.h" />
     <ClInclude Include="src\rico\ri_program_shadow_cubemap.h" />

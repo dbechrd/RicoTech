@@ -1,27 +1,28 @@
 #ifndef RICO_H
 #define RICO_H
 
-#include "dlb_types.h"
-#define DLB_MATH_PRINT
-#include "dlb_math.h"
+//#include <stdint.h>
+//#include <stdio.h>
+//#include <limits.h>
+//#include <math.h>
+#include <stdlib.h>
+//#include <string.h>
 
 #include "AL/al.h"
 #include "AL/alc.h"
-#include "ft2build.h"
-#include FT_FREETYPE_H
 #include "GL/gl3w.h"
-#include "SDL/SDL.h"
+#include "MurmurHash3.h"
 
-// TODO: Use perf timer, not ticks. Make ric_timer class.
-#define PERF_START(name) u32 perf_##name = SDL_GetTicks()
-#define PERF_END(name) \
-    printf("[PERF][%s][%u ticks]\n", #name, SDL_GetTicks() - perf_##name);
-#define PERF_END_MSG(name, fmt, ...) \
-    printf("[PERF][%s][%u ticks] ", #name, SDL_GetTicks() - perf_##name); \
-    printf(fmt, ##__VA_ARGS__);
+#include "dlb_types.h"
+#define DLB_MATH_PRINT
+#include "dlb_math.h"
+#include "dlb_string.h"
+#include "dlb_hash.h"
 
-#include "rico_error.h"
 #include "rico_types.h"
+#include "rico_error.h"
+#include "rico_arena.h"
+#include "rico_stream.h"
 #include "rico_aabb.h"
 #include "rico_primitives.h"
 #include "rico_mesh.h"

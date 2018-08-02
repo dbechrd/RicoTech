@@ -13,9 +13,9 @@ static struct ric_object *object_copy(u32 pack, struct ric_object *other,
 
     // TODO: Make sure to update any ref counting we're using to prevent e.g.
     //       mesh or texture from being deleted when still in use.
-    void *dst = (u8 *)new_obj + sizeof(struct uid);
-    void *src = (u8 *)other + sizeof(struct uid);
-    memcpy(dst, src, sizeof(struct ric_object) - sizeof(struct uid));
+    void *dst = (u8 *)new_obj + sizeof(struct ric_uid);
+    void *src = (u8 *)other + sizeof(struct ric_uid);
+    memcpy(dst, src, sizeof(struct ric_object) - sizeof(struct ric_uid));
 
     return new_obj;
 }
@@ -115,7 +115,7 @@ static void object_transform_update(struct ric_object *obj)
     // HACK: Light test
     if (obj->type == OBJ_LIGHT_TEST)
     {
-        global_prog_pbr->frag.lights[NUM_LIGHT_DIR].pos = obj->xform.position;
+        global_prog_pbr->sval.frag.lights[NUM_LIGHT_DIR].pos = obj->xform.position;
     }
 
     // HACK: Order of these operations might not always be the same.. should
@@ -162,7 +162,7 @@ extern void ric_object_aabb_set(struct ric_object *obj,
 extern void ric_object_mesh_set(struct ric_object *obj, pkid mesh_id)
 {
 #if RICO_DEBUG
-    struct uid *uid = ric_pack_lookup(mesh_id);
+    struct ric_uid *uid = ric_pack_lookup(mesh_id);
     RICO_ASSERT(uid->type == RIC_ASSET_MESH);
 #endif
     obj->mesh_id = mesh_id;
@@ -171,7 +171,7 @@ extern void ric_object_mesh_set(struct ric_object *obj, pkid mesh_id)
 extern void ric_object_material_set(struct ric_object *obj, pkid material_id)
 {
 #if RICO_DEBUG
-    struct uid *uid = ric_pack_lookup(material_id);
+    struct ric_uid *uid = ric_pack_lookup(material_id);
     RICO_ASSERT(uid->type == RIC_ASSET_MATERIAL);
 #endif
     obj->material_id = material_id;
@@ -291,7 +291,7 @@ static void object_render_all(r64 alpha, struct ric_camera *camera)
     struct vec3 new_dir = VEC3(x, y, 0.0f);
     v3_normalize(&new_dir);
     //printf("Light: %f, %f\n", new_dir.x, new_dir.y);
-    prog->frag.lights[0].directional.dir = new_dir;
+    prog->sval.frag.lights[0].directional.dir = new_dir;
 
     glPolygonMode(GL_FRONT_AND_BACK, camera->fill_mode);
 
@@ -314,26 +314,26 @@ static void object_render_all(r64 alpha, struct ric_camera *camera)
     // Lighting
     for (u32 i = 0; i < NUM_LIGHT_DIR + NUM_LIGHT_POINT; ++i)
     {
-        if (!prog->frag.lights[i].on)
+        if (!prog->sval.frag.lights[i].on)
             continue;
 
         glUniform1i(prog->locations.frag.lights[i].type,
-                    prog->frag.lights[i].type);
+                    prog->sval.frag.lights[i].type);
         glUniform1i(prog->locations.frag.lights[i].on,
-                    prog->frag.lights[i].on);
+                    prog->sval.frag.lights[i].on);
         glUniform3fv(prog->locations.frag.lights[i].col, 1,
-                     &prog->frag.lights[i].col.r);
+                     &prog->sval.frag.lights[i].col.r);
         glUniform3fv(prog->locations.frag.lights[i].pos, 1,
-                     &prog->frag.lights[i].pos.x);
+                     &prog->sval.frag.lights[i].pos.x);
         glUniform1f(prog->locations.frag.lights[i].intensity,
-                    prog->frag.lights[i].intensity);
+                    prog->sval.frag.lights[i].intensity);
         glUniform3fv(prog->locations.frag.lights[i].dir, 1,
-                     &prog->frag.lights[i].directional.dir.x);
+                     &prog->sval.frag.lights[i].directional.dir.x);
 
         // TODO: Move this somewhere sane
 #       define SHADOW_TEXTURE_OFFSET 4
         glActiveTexture(GL_TEXTURE0 + SHADOW_TEXTURE_OFFSET + i);
-        if (prog->frag.lights[i].type == RIC_LIGHT_DIRECTIONAL)
+        if (prog->sval.frag.lights[i].type == RIC_LIGHT_DIRECTIONAL)
         {
             glBindTexture(GL_TEXTURE_2D, shadow_textures[i]);
             glUniform1i(prog->locations.frag.shadow_textures[i],
@@ -343,7 +343,7 @@ static void object_render_all(r64 alpha, struct ric_camera *camera)
             glUniformMatrix4fv(prog->locations.vert.light_space, 1, GL_TRUE,
                                shadow_lightspace[0].a);
         }
-        else if (prog->frag.lights[i].type == RIC_LIGHT_POINT)
+        else if (prog->sval.frag.lights[i].type == RIC_LIGHT_POINT)
         {
             glBindTexture(GL_TEXTURE_CUBE_MAP, shadow_cubemaps[i - NUM_LIGHT_DIR]);
             glUniform1i(prog->locations.frag.shadow_cubemaps[i- NUM_LIGHT_DIR],

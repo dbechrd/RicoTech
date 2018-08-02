@@ -53,7 +53,7 @@ static void *blob_start(struct pack *pack, enum ric_asset_type type, u32 min_siz
 
     pkid pkid = PKID_GENERATE(pack->id, id);
 
-    struct uid *uid = push_bytes(pack, min_size);
+    struct ric_uid *uid = push_bytes(pack, min_size);
     uid->pkid = pkid;
     uid->type = type;
     memcpy(uid->name, name, MIN(sizeof(uid->name) - 1, dlb_strlen(name)));
@@ -359,7 +359,7 @@ extern pkid ric_pack_first(u32 pack_id)
     if (pack->blobs_used <= 1)
         return 0;
 
-    struct uid *first = pack_read(pack, 1);
+    struct ric_uid *first = pack_read(pack, 1);
     return first->pkid;
 }
 extern pkid ric_pack_last(u32 pack_id)
@@ -370,7 +370,7 @@ extern pkid ric_pack_last(u32 pack_id)
     if (pack->blobs_used <= 1)
         return 0;
 
-    struct uid *last = pack_read(pack, pack->blobs_used - 1);
+    struct ric_uid *last = pack_read(pack, pack->blobs_used - 1);
     return last->pkid;
 }
 extern pkid ric_pack_next(pkid id)
@@ -390,7 +390,7 @@ extern pkid ric_pack_next(pkid id)
     u32 idx = pack->lookup[blob_id] + 1;
     if (idx < pack->blobs_used)
     {
-        struct uid *uid = pack_read(pack, idx);
+        struct ric_uid *uid = pack_read(pack, idx);
         next = uid ? uid->pkid : 0;
     }
     return next;
@@ -412,7 +412,7 @@ extern pkid ric_pack_prev(pkid id)
     u32 idx = pack->lookup[blob_id];
     if (idx > 1)
     {
-        struct uid *uid = pack_read(pack, idx - 1);
+        struct ric_uid *uid = pack_read(pack, idx - 1);
         prev = uid ? uid->pkid : 0;
     }
     return prev;
@@ -448,7 +448,7 @@ extern pkid ric_pack_first_type(u32 pack_id, enum ric_asset_type type)
     {
         if (pack->index[idx].type == type)
         {
-            struct uid *uid = pack_read(pack, idx);
+            struct ric_uid *uid = pack_read(pack, idx);
             first = uid->pkid;
             break;
         }
@@ -468,7 +468,7 @@ extern pkid ric_pack_last_type(u32 pack_id, enum ric_asset_type type)
     {
         if (pack->index[idx].type == type)
         {
-            struct uid *uid = pack_read(pack, idx);
+            struct ric_uid *uid = pack_read(pack, idx);
             last = uid->pkid;
             break;
         }
@@ -493,7 +493,7 @@ extern pkid ric_pack_next_type(pkid id, enum ric_asset_type type)
     {
         if (pack->index[idx].type == type)
         {
-            struct uid *uid = pack_read(pack, idx);
+            struct ric_uid *uid = pack_read(pack, idx);
             next = uid->pkid;
             break;
         }
@@ -518,7 +518,7 @@ extern pkid ric_pack_prev_type(pkid id, enum ric_asset_type type)
     {
         if (pack->index[idx].type == type)
         {
-            struct uid *uid = pack_read(pack, idx);
+            struct ric_uid *uid = pack_read(pack, idx);
             prev = uid->pkid;
             break;
         }
@@ -748,8 +748,7 @@ extern pkid ric_load_texture(u32 pack_id, const char *name, GLenum target,
 {
     struct pack *pack = global_packs[pack_id];
 
-    struct ric_texture *tex = blob_start(pack, RIC_ASSET_TEXTURE,
-                                          sizeof(struct ric_texture), name);
+    struct ric_texture *tex = blob_start(pack, RIC_ASSET_TEXTURE, 0, name);
     tex->width = width;
     tex->height = height;
     tex->bpp = bpp;

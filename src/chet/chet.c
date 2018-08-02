@@ -1,6 +1,8 @@
 ﻿#include "chet.h"
 #include "rico.c"
-#include "chet_packs.c"
+#include "chet_pack.c"
+#include "chet_pack_alpha.c"
+#include "chet_pack_clash.c"
 
 enum actions
 {
@@ -1264,8 +1266,6 @@ int main(int argc, char **argv)
     //pack_build_all();
 	pack_load_all();
 
-    ric_test();
-
     ric_bind_action(CHET_ACTION_TEST_SOUND, RIC_CHORD1(SDL_SCANCODE_Z));
     ric_bind_action(CHET_ACTION_TYPE_NEXT, RIC_CHORD1(SDL_SCANCODE_X));
     ric_bind_action(CHET_ACTION_TYPE_PREV, RIC_CHORD1(SDL_SCANCODE_C));
@@ -1368,18 +1368,18 @@ int main(int argc, char **argv)
         // Render light bounds
         for (int i = 0; i < NUM_LIGHT_DIR + NUM_LIGHT_POINT; i++)
         {
-            if (!global_prog_pbr->frag.lights[i].on)
+            if (!global_prog_pbr->sval.frag.lights[i].on)
                 continue;
 
             struct sphere light_sphere = { 0 };
-            light_sphere.center = global_prog_pbr->frag.lights[i].pos;
+            light_sphere.center = global_prog_pbr->sval.frag.lights[i].pos;
             light_sphere.r = 0.1f;
 
-            struct vec4 color = VEC4(global_prog_pbr->frag.lights[i].col.r,
-                                     global_prog_pbr->frag.lights[i].col.g,
-                                     global_prog_pbr->frag.lights[i].col.b,
+            struct vec4 color = VEC4(global_prog_pbr->sval.frag.lights[i].col.r,
+                                     global_prog_pbr->sval.frag.lights[i].col.g,
+                                     global_prog_pbr->sval.frag.lights[i].col.b,
                                      1.0f);
-            if (global_prog_pbr->frag.lights[i].type == RIC_LIGHT_DIRECTIONAL)
+            if (global_prog_pbr->sval.frag.lights[i].type == RIC_LIGHT_DIRECTIONAL)
             {
                 ric_prim_draw_sphere_xform(&light_sphere, &color, &sun_xform);
             }
@@ -1406,7 +1406,7 @@ int main(int argc, char **argv)
         ric_prim_draw_line_xform(&VEC3_ZERO, &y, &COLOR_GREEN, &sun_xform);
         ric_prim_draw_line_xform(&VEC3_ZERO, &z, &COLOR_BLUE, &sun_xform);
         ric_prim_draw_line_xform(&VEC3_ZERO,
-                                  &global_prog_pbr->frag.lights[0].directional.dir,
+                                  &global_prog_pbr->sval.frag.lights[0].directional.dir,
                                   &COLOR_YELLOW, &sun_xform);
 
         // Cleanup: Debug transform matrices

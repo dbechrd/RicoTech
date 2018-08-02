@@ -89,9 +89,6 @@
     <ClCompile Include="src\rico\rico_util.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
-    <ClCompile Include="src\chet\chet_packs.c">
-      <Filter>Source Files\chet</Filter>
-    </ClCompile>
     <ClCompile Include="src\rico\rico.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
@@ -101,17 +98,11 @@
     <ClCompile Include="src\rico\rico_ui.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
-    <ClCompile Include="src\chet\chet_packs_alpha.c">
-      <Filter>Source Files\chet</Filter>
-    </ClCompile>
     <ClCompile Include="src\rico\rico_cereal.c">
       <Filter>Source Files\rico</Filter>
     </ClCompile>
     <ClCompile Include="src\rico\rico_heiro.c">
       <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\chet\chet_packs_clash.c">
-      <Filter>Source Files\chet</Filter>
     </ClCompile>
     <ClCompile Include="src\rico\rico_editor.c">
       <Filter>Source Files\rico</Filter>
@@ -127,6 +118,21 @@
     </ClCompile>
     <ClCompile Include="src\rico\rico_aabb.c">
       <Filter>Source Files\rico</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_arena.c">
+      <Filter>Source Files\rico</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_stream.c">
+      <Filter>Source Files\rico</Filter>
+    </ClCompile>
+    <ClCompile Include="src\chet\chet_pack.c">
+      <Filter>Source Files\chet</Filter>
+    </ClCompile>
+    <ClCompile Include="src\chet\chet_pack_alpha.c">
+      <Filter>Source Files\chet</Filter>
+    </ClCompile>
+    <ClCompile Include="src\chet\chet_pack_clash.c">
+      <Filter>Source Files\chet</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -193,9 +199,6 @@
     <ClInclude Include="src\rico\ri_pool.h">
       <Filter>Header Files\rico</Filter>
     </ClInclude>
-    <ClInclude Include="src\rico\ri_program.h">
-      <Filter>Header Files\rico</Filter>
-    </ClInclude>
     <ClInclude Include="src\rico\ri_program_pbr.h">
       <Filter>Header Files\rico</Filter>
     </ClInclude>
@@ -212,6 +215,12 @@
       <Filter>Header Files\rico</Filter>
     </ClInclude>
     <ClInclude Include="src\rico\rico_aabb.h">
+      <Filter>Header Files\rico</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rico\rico_arena.h">
+      <Filter>Header Files\rico</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rico\rico_stream.h">
       <Filter>Header Files\rico</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,6 +1,11 @@
 #ifndef RICO_INTERNAL_H
 #define RICO_INTERNAL_H
 
+#ifdef __APPLE__
+#define __gl_h_
+//#define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
+#endif
+
 #if defined(__GNUC__) || defined(__clang__)
 #include <x86intrin.h>
 #endif
@@ -12,16 +17,25 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "AL/al.h"
+#include "AL/alc.h"
+#include "ft2build.h"
+#include FT_FREETYPE_H
 #include "GL/gl3w.h"
 #include "SDL/SDL.h"
 //#undef main
-#include "AL/al.h"
-#include "AL/alc.h"
 #include "MurmurHash3.h"
+//#include "CacheLineSize.h"
+//#include "nuklear.h"
+//#include "nuklear_sdl_gl3.h"
+#define STBI_ONLY_TGA
+#include "stb_image.h"
+//#include "tinyobjloader.h"
 
 #include "dlb_types.h"
-#include "dlb_string.h"
+#define DLB_MATH_PRINT
 #include "dlb_math.h"
+#include "dlb_string.h"
 #include "dlb_hash.h"
 
 //------------------------------------------------------------------------------
@@ -67,9 +81,9 @@
     (enum rico_persist)((handle & FLAG_PERSIST) >> 31)
 #define HANDLE_MIDDLE(handle)  ((handle & FLAG_MIDDLE) >> 15)
 #define HANDLE_VALUE(handle)   ((handle & FLAG_HANDLE) >> 0)
-#define HANDLE_PERSIST_SET(handle, val) ((handle & ~FLAG_PERSIST) & (val << 31))
-#define HANDLE_MIDDLE_SET(handle, val)  ((handle & ~FLAG_MIDDLE) & (val << 15))
-#define HANDLE_VALUE_SET(handle, val)   ((handle & ~FLAG_HANDLE) & (val << 0))
+#define HANDLE_PERSIST_SET(handle, sval) ((handle & ~FLAG_PERSIST) & (sval << 31))
+#define HANDLE_MIDDLE_SET(handle, sval)  ((handle & ~FLAG_MIDDLE) & (sval << 15))
+#define HANDLE_VALUE_SET(handle, sval)   ((handle & ~FLAG_HANDLE) & (sval << 0))
 
 //#define FLAG_PERSIST 31
 //#define BIT_SET(num, bit, val) (num ^= (-val ^ num) & (1 << bit))
@@ -115,22 +129,6 @@
 #  define RICO_ERROR(err, desc, ...) err
 #endif
 
-#include "ri_program.h"
-
-#ifdef __APPLE__
-#define __gl_h_
-//#define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
-#endif
-
-//#include "CacheLineSize.h"
-//#include "nuklear.h"
-//#include "nuklear_sdl_gl3.h"
-
-#define STBI_ONLY_TGA
-#include "stb_image.h"
-#include "tinyobjloader.h"
-#include "MurmurHash3.h"
-
 ///////////////////////////////////////////////////////////
 // Globals
 ///////////////////////////////////////////////////////////
@@ -169,6 +167,165 @@ extern pkid global_string_slots[RIC_STRING_SLOT_COUNT + 64];
 extern bool global_lighting_enabled;
 
 ///////////////////////////////////////////////////////////
+// Types
+///////////////////////////////////////////////////////////
+
+#define NUM_LIGHT_DIR 1
+#define NUM_LIGHT_POINT 4
+
+enum program_type
+{
+    PROG_NULL,
+    PROG_PBR,
+    PROG_SHADOW_TEXTURE,
+    PROG_SHADOW_CUBEMAP,
+    PROG_PRIMITIVE,
+    PROG_TEXT,
+    PROG_COUNT
+};
+
+typedef void(*program_attribs_helper)();
+static program_attribs_helper program_attribs[PROG_COUNT];
+
+struct program
+{
+    enum program_type type;
+    u32 ref_count;
+    GLuint gl_id;
+};
+
+#define UNIFORM(type) GLint
+#define UNIFORM_TYPE(type_a, type_b) type_a
+struct pbr_program_locations
+{
+#   include "ri_program_pbr.h"
+};
+
+struct shadow_texture_program_locations
+{
+#   include "ri_program_shadow_texture.h"
+};
+
+struct shadow_cubemap_program_locations
+{
+#   include "ri_program_shadow_cubemap.h"
+};
+
+struct text_program_locations
+{
+#   include "ri_program_text.h"
+};
+
+struct primitive_program_locations
+{
+#   include "ri_program_primitive.h"
+};
+#undef UNIFORM
+#undef UNIFORM_TYPE
+
+#define UNIFORM(type) type
+#define UNIFORM_TYPE(type_a, type_b) type_b
+struct pbr_program_values
+{
+#   include "ri_program_pbr.h"
+};
+
+struct shadow_texture_program_values
+{
+#   include "ri_program_shadow_texture.h"
+};
+
+struct shadow_cubemap_program_values
+{
+#   include "ri_program_shadow_cubemap.h"
+};
+
+struct text_program_values
+{
+#   include "ri_program_text.h"
+};
+
+struct primitive_program_values
+{
+#   include "ri_program_primitive.h"
+};
+#undef UNIFORM
+#undef UNIFORM_TYPE
+
+struct program_pbr
+{
+    struct program program;
+    struct pbr_program_locations locations;
+    struct pbr_program_values sval;
+};
+
+struct program_shadow_texture
+{
+    struct program program;
+    struct shadow_texture_program_locations locations;
+    struct shadow_texture_program_values val;
+};
+
+struct program_shadow_cubemap
+{
+    struct program program;
+    struct shadow_cubemap_program_locations locations;
+    struct shadow_cubemap_program_values val;
+};
+
+struct program_text
+{
+    struct program program;
+    struct text_program_locations locations;
+    struct text_program_values val;
+};
+
+struct program_primitive
+{
+    struct program program;
+    struct primitive_program_locations locations;
+    struct primitive_program_values val;
+};
+
+#define LOCATION_PBR_POSITION 0
+#define LOCATION_PBR_UV       1
+#define LOCATION_PBR_COLOR    2
+#define LOCATION_PBR_NORMAL   3
+
+#define LOCATION_SHADOW_TEXTURE_POSITION 0
+#define LOCATION_SHADOW_CUBEMAP_POSITION 0
+
+#define LOCATION_PRIM_POSITION 0
+#define LOCATION_PRIM_UV       1
+#define LOCATION_PRIM_COLOR    2
+
+#define LOCATION_TEXT_POSITION 0
+#define LOCATION_TEXT_UV       1
+#define LOCATION_TEXT_COLOR    2
+
+struct pbr_vertex
+{
+    struct vec3 pos;
+    struct vec2 uv;
+    struct vec4 col;
+    struct vec3 normal;
+};
+
+struct prim_vertex
+{
+    struct vec3 pos;
+    struct vec2 uv;
+    struct vec4 col;
+};
+
+struct text_vertex
+{
+    struct vec3 pos;
+    struct vec2 uv;
+    struct vec4 col;
+};
+
+///////////////////////////////////////////////////////////
 // Methods
 ///////////////////////////////////////////////////////////
 static void platform_window_swap();
@@ -201,8 +358,8 @@ static bool collide_ray_aabb(float *_t, const struct ray *ray,
 static bool collide_ray_obb(float *_dist, const struct ray *r,
                             const struct ric_aabb *ric_aabb,
                             const struct mat4 *model_matrix);
-bool collide_obb_obb(struct ric_obb *a, struct ric_obb *b, int *axis);
-bool collide_obb_obb_eberly(struct ric_obb *a, struct ric_obb *b);
+static bool collide_obb_obb(struct ric_obb *a, struct ric_obb *b, int *axis);
+static bool collide_obb_obb_eberly(struct ric_obb *a, struct ric_obb *b);
 
 static void edit_init();
 static void edit_free();
@@ -379,6 +536,26 @@ static inline void free_shader(GLuint shader)
 {
     if (shader) glDeleteShader(shader);
 }
+
+static void program_pbr_attribs();
+static int make_program_pbr(struct program_pbr **_program);
+static void free_program_pbr(struct program_pbr **program);
+
+static void program_shadow_texture_attribs();
+static int make_program_shadow_texture(struct program_shadow_texture **_program);
+static void free_program_shadow_texture(struct program_shadow_texture **program);
+
+static void program_shadow_cubemap_attribs();
+static int make_program_shadow_cubemap(struct program_shadow_cubemap **_program);
+static void free_program_shadow_cubemap(struct program_shadow_cubemap **program);
+
+static void program_primitive_attribs();
+static int make_program_primitive(struct program_primitive **_program);
+static void free_program_primitive(struct program_primitive **program);
+
+static void program_text_attribs();
+static int make_program_text(struct program_text **_program);
+static void free_program_text(struct program_text **program);
 
 static void rico_check_key_events();
 

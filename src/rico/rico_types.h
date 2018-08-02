@@ -1,70 +1,48 @@
 #ifndef RICO_TYPES_H
 #define RICO_TYPES_H
 
-////////////////////////////////////////////////////////////////////////////////
+/******************************************************************************/
+// Misc
+/******************************************************************************/
+extern const u32 RIC_SAV_MAGIC;
 
-#define RIC_ASSET_TYPES(f) \
-    f(RIC_ASSET_NULL,      0) \
-    f(RIC_ASSET_OBJECT,    sizeof(struct ric_object))   \
-    f(RIC_ASSET_TEXTURE,   sizeof(struct ric_texture))  \
-    f(RIC_ASSET_MESH,      sizeof(struct ric_mesh))		\
-    f(RIC_ASSET_FONT,      sizeof(struct ric_font))		\
-    f(RIC_ASSET_STRING,    sizeof(struct ric_string))   \
-    f(RIC_ASSET_MATERIAL,  sizeof(struct ric_material))	\
-    f(RIC_ASSET_BBOX,      sizeof(struct ric_aabb))
+//TODO: Move these to a ric_window struct
+extern s32 SCREEN_WIDTH;
+extern s32 SCREEN_HEIGHT;
+#define SCREEN_ASPECT (float)SCREEN_WIDTH / SCREEN_HEIGHT
 
-enum ric_asset_type
-{
-    RIC_ASSET_TYPES(ENUM)
-    RIC_ASSET_TYPE_COUNT
-};
-extern const char *ric_asset_type_string[];
-extern const u32 ric_asset_type_size[];
+#define X_TO_NDC(x) ((float)(x) / (SCREEN_WIDTH / 2.0f) - 1.0f)
+#define Y_TO_NDC(y) (-(float)(y) / (SCREEN_HEIGHT / 2.0f) + 1.0f)
 
-#define RIC_AUDIO_STATES(f) \
-    f(RIC_AUDIO_UNKNOWN)    \
-    f(RIC_AUDIO_STOPPED)    \
-    f(RIC_AUDIO_PLAYING)    \
-    f(RIC_AUDIO_PAUSED)
+// NOTE: Pixel origin is top-left of screen
+// NOTE: NDC origin is center of screen
+// e.g. [0, 0]     -> [-1.0f, 1.0f]
+// e.g. [800, 450] -> [0.0f, 0.0f]
 
-enum ric_audio_state
-{
-    RIC_AUDIO_STATES(ENUM)
-    RIC_AUDIO_STATE_COUNT
-};
-extern const char *ric_audio_state_string[];
+// Calculate relative x/y in pixels, returns x/y in normalized device
+// coordinates (negative values are relative to right and bottom edges of
+// screen)
+#define SCREEN_X(x) (x >= 0.0f ? X_TO_NDC(x) : X_TO_NDC(x + SCREEN_WIDTH))
+#define SCREEN_Y(y) (y >= 0.0f ? Y_TO_NDC(y) : Y_TO_NDC(y + SCREEN_HEIGHT))
 
-#define RIC_LIGHT_TYPES(f) \
-    f(RIC_LIGHT_AMBIENT)        \
-    f(RIC_LIGHT_DIRECTIONAL)    \
-    f(RIC_LIGHT_POINT)          \
-    f(RIC_LIGHT_SPOT)
+// Takes width/height in pixels, returns width/height in NDC
+#define SCREEN_W(x) ((float)(x) / SCREEN_WIDTH * 2.0f)
+#define SCREEN_H(y) (-(float)(y) / SCREEN_HEIGHT * 2.0f)
 
-enum ric_light_type
-{
-    RIC_LIGHT_TYPES(ENUM)
-    RIC_LIGHT_TYPE_COUNT
-};
-extern const char *ric_light_type_string[];
+#define Z_NEAR 1.0f
+#define Z_FAR 32.0f
 
-#define RIC_ENGINE_STATES(f) \
-    f(RIC_ENGINE_PLAY_EXPLORE)   \
-    f(RIC_ENGINE_EDIT_TRANSLATE) \
-    f(RIC_ENGINE_EDIT_ROTATE)    \
-    f(RIC_ENGINE_EDIT_SCALE)     \
-    f(RIC_ENGINE_EDIT_MATERIAL)  \
-    f(RIC_ENGINE_EDIT_MESH)      \
-    f(RIC_ENGINE_MENU_QUIT)      \
-    f(RIC_ENGINE_TEXT_INPUT)     \
-    f(RIC_ENGINE_SHUTDOWN)
+// TODO: Use perf timer, not ticks. ric_timer struct?
+#define PERF_START(name) u32 perf_##name = SDL_GetTicks()
+#define PERF_END(name) \
+    printf("[PERF][%s][%u ticks]\n", #name, SDL_GetTicks() - perf_##name);
+#define PERF_END_MSG(name, fmt, ...) \
+    printf("[PERF][%s][%u ticks] ", #name, SDL_GetTicks() - perf_##name); \
+    printf(fmt, ##__VA_ARGS__);
 
-enum ric_state
-{
-    RIC_ENGINE_STATES(ENUM)
-    RIC_ENGINE_STATE_COUNT
-};
-extern const char *ric_engine_state_string[RIC_ENGINE_STATE_COUNT];
-
+/******************************************************************************/
+// Enums
+/******************************************************************************/
 enum ric_action
 {
     RIC_ACTION_NULL,
@@ -156,30 +134,34 @@ enum ric_action
     RIC_ACTION_COUNT
 };
 
-// TODO: Replace with proper temp / frame arenas.
-enum ric_pack_ids
+#define RIC_ASSET_TYPES(f) \
+    f(RIC_ASSET_NULL,      0) \
+    f(RIC_ASSET_OBJECT,    sizeof(struct ric_object))   \
+    f(RIC_ASSET_TEXTURE,   sizeof(struct ric_texture))  \
+    f(RIC_ASSET_MESH,      sizeof(struct ric_mesh))		\
+    f(RIC_ASSET_FONT,      sizeof(struct ric_font))		\
+    f(RIC_ASSET_STRING,    sizeof(struct ric_string))   \
+    f(RIC_ASSET_MATERIAL,  sizeof(struct ric_material))	\
+    f(RIC_ASSET_BBOX,      sizeof(struct ric_aabb))
+enum ric_asset_type
 {
-    RIC_PACK_ID_DEFAULT,
-    RIC_PACK_ID_TRANSIENT,
-    RIC_PACK_ID_FRAME,
-    RIC_PACK_ID_COUNT
+    RIC_ASSET_TYPES(ENUM)
+    RIC_ASSET_TYPE_COUNT
 };
+extern const char *ric_asset_type_string[];
+extern const u32 ric_asset_type_size[];
 
-#define RIC_STRING_SLOTS(f) \
-    f(RIC_STRING_SLOT_SELECTED_OBJ) \
-    f(RIC_STRING_SLOT_STATE)        \
-    f(RIC_STRING_SLOT_FPS)          \
-    f(RIC_STRING_SLOT_MENU_QUIT)    \
-    f(RIC_STRING_SLOT_DELTA)        \
-    f(RIC_STRING_SLOT_WIDGET)       \
-    f(RIC_STRING_SLOT_DEBUG_CAMERA)
-
-enum ric_string_slot
+#define RIC_AUDIO_STATES(f) \
+    f(RIC_AUDIO_UNKNOWN)    \
+    f(RIC_AUDIO_STOPPED)    \
+    f(RIC_AUDIO_PLAYING)    \
+    f(RIC_AUDIO_PAUSED)
+enum ric_audio_state
 {
-    RIC_STRING_SLOTS(ENUM)
-    RIC_STRING_SLOT_COUNT
+    RIC_AUDIO_STATES(ENUM)
+    RIC_AUDIO_STATE_COUNT
 };
-extern const char *ric_string_slot_string[];
+extern const char *ric_audio_state_string[];
 
 #define RIC_ERRORS(f) \
     f(RIC_SUCCESS)                     \
@@ -228,16 +210,59 @@ enum ric_error
 };
 extern const char *ric_error_string[];
 
-enum ric_ui_type
+#define RIC_LIGHT_TYPES(f) \
+    f(RIC_LIGHT_AMBIENT)        \
+    f(RIC_LIGHT_DIRECTIONAL)    \
+    f(RIC_LIGHT_POINT)          \
+    f(RIC_LIGHT_SPOT)
+
+enum ric_light_type
 {
-    RIC_UI_HUD,
-    RIC_UI_BREAK,
-    RIC_UI_STRING,
-    RIC_UI_BUTTON,
-    RIC_UI_LABEL,
-    RIC_UI_PROGRESS,
-    RIC_UI_COUNT
+    RIC_LIGHT_TYPES(ENUM)
+    RIC_LIGHT_TYPE_COUNT
 };
+extern const char *ric_light_type_string[];
+
+// TODO: Replace with proper temp / frame arenas.
+enum ric_pack_ids
+{
+    RIC_PACK_ID_DEFAULT,
+    RIC_PACK_ID_TRANSIENT,
+    RIC_PACK_ID_FRAME,
+    RIC_PACK_ID_COUNT
+};
+
+#define RIC_ENGINE_STATES(f) \
+    f(RIC_ENGINE_PLAY_EXPLORE)   \
+    f(RIC_ENGINE_EDIT_TRANSLATE) \
+    f(RIC_ENGINE_EDIT_ROTATE)    \
+    f(RIC_ENGINE_EDIT_SCALE)     \
+    f(RIC_ENGINE_EDIT_MATERIAL)  \
+    f(RIC_ENGINE_EDIT_MESH)      \
+    f(RIC_ENGINE_MENU_QUIT)      \
+    f(RIC_ENGINE_TEXT_INPUT)     \
+    f(RIC_ENGINE_SHUTDOWN)
+enum ric_state
+{
+    RIC_ENGINE_STATES(ENUM)
+    RIC_ENGINE_STATE_COUNT
+};
+extern const char *ric_engine_state_string[];
+
+#define RIC_STRING_SLOTS(f) \
+    f(RIC_STRING_SLOT_SELECTED_OBJ) \
+    f(RIC_STRING_SLOT_STATE)        \
+    f(RIC_STRING_SLOT_FPS)          \
+    f(RIC_STRING_SLOT_MENU_QUIT)    \
+    f(RIC_STRING_SLOT_DELTA)        \
+    f(RIC_STRING_SLOT_WIDGET)       \
+    f(RIC_STRING_SLOT_DEBUG_CAMERA)
+enum ric_string_slot
+{
+    RIC_STRING_SLOTS(ENUM)
+    RIC_STRING_SLOT_COUNT
+};
+extern const char *ric_string_slot_string[];
 
 enum ric_ui_event_type
 {
@@ -261,17 +286,26 @@ enum ric_ui_state
     RIC_UI_STATE_COUNT
 };
 
-#define RIC_WIDGETS(f) \
-    f(RIC_WIDGET_TRANSLATE_X) \
-    f(RIC_WIDGET_TRANSLATE_Y) \
-    f(RIC_WIDGET_TRANSLATE_Z)
-
-enum ric_widget
+enum ric_ui_type
 {
-    RIC_WIDGETS(ENUM)
-    RIC_WIDGET_COUNT
+    RIC_UI_HUD,
+    RIC_UI_BREAK,
+    RIC_UI_STRING,
+    RIC_UI_BUTTON,
+    RIC_UI_LABEL,
+    RIC_UI_PROGRESS,
+    RIC_UI_COUNT
 };
-extern const char *ric_widget_string[];
+
+enum ric_version
+{
+    V_EPOCH = 1,
+    //V_20180730 = 2,
+
+    V_NEXT
+};
+#define V_CURRENT (V_NEXT - 1)
+#define V_MAX 2147483647
 
 enum ric_vbo_type
 {
@@ -280,41 +314,43 @@ enum ric_vbo_type
     RIC_VBO_COUNT
 };
 
-////////////////////////////////////////////////////////////////////////////////
+#define RIC_WIDGETS(f) \
+    f(RIC_WIDGET_TRANSLATE_X) \
+    f(RIC_WIDGET_TRANSLATE_Y) \
+    f(RIC_WIDGET_TRANSLATE_Z)
+enum ric_widget
+{
+    RIC_WIDGETS(ENUM)
+    RIC_WIDGET_COUNT
+};
+extern const char *ric_widget_string[];
 
-//TODO: Probably should prefix these? Possibly move to const.h?
-static s32 SCREEN_WIDTH = 1600;
-static s32 SCREEN_HEIGHT = 900;
-#define SCREEN_ASPECT (float)SCREEN_WIDTH / SCREEN_HEIGHT
-
-#define X_TO_NDC(x) ((float)(x) / (SCREEN_WIDTH / 2.0f) - 1.0f)
-#define Y_TO_NDC(y) (-(float)(y) / (SCREEN_HEIGHT / 2.0f) + 1.0f)
-
-// NOTE: Pixel origin is top-left of screen
-// NOTE: NDC origin is center of screen
-// e.g. [0, 0]     -> [-1.0f, 1.0f]
-// e.g. [800, 450] -> [0.0f, 0.0f]
-
-// Calculate relative x/y in pixels, returns x/y in normalized device
-// coordinates (negative values are relative to right and bottom edges of
-// screen)
-#define SCREEN_X(x) (x >= 0.0f ? X_TO_NDC(x) : X_TO_NDC(x + SCREEN_WIDTH))
-#define SCREEN_Y(y) (y >= 0.0f ? Y_TO_NDC(y) : Y_TO_NDC(y + SCREEN_HEIGHT))
-
-// Takes width/height in pixels, returns width/height in NDC
-#define SCREEN_W(x) ((float)(x) / SCREEN_WIDTH * 2.0f)
-#define SCREEN_H(y) (-(float)(y) / SCREEN_HEIGHT * 2.0f)
-
-#define Z_NEAR 1.0f
-#define Z_FAR 32.0f
-
-////////////////////////////////////////////////////////////////////////////////
-
+/******************************************************************************/
+// Types
+/******************************************************************************/
 typedef u32 pkid;
-
 typedef u8 buf32[32];
 
-struct uid
+struct ric_arena
+{
+    u32 size;
+    u32 offset;
+    void *buffer;
+};
+
+struct ric_stream
+{
+    struct ric_arena *arena;
+    const u8 *filename;
+    u8 mode;
+    FILE *fp;
+
+    u32 magic;
+    s32 version;
+    s32 v_max;   // Used to propagate an ARRAY_REMOVE's v_remove
+};
+
+struct ric_uid
 {
     pkid pkid;
     enum ric_asset_type type;
@@ -333,8 +369,6 @@ struct ric_audio_buffer
 {
     ALuint al_buffer_id;
 };
-
-////////////////////////////////////////////////////////////////////////////////
 
 struct ric_aabb
 {
@@ -463,20 +497,6 @@ struct light_spot
 };
 */
 
-struct ric_mesh
-{
-    struct uid uid;
-    u32 vertex_size;
-    u32 vertex_count;
-    u32 element_count;
-    enum program_type prog_type;
-    struct ric_aabb aabb;
-
-    // TODO: Remove these fields. Load data directly into VRAM then free buffer.
-    u32 vertices_offset;
-    u32 elements_offset;
-};
-
 struct ric_keychord
 {
     u16 keys[3];
@@ -547,12 +567,6 @@ struct blob_index
     u32 min_size;
 };
 
-// Memory layout
-// -----------------------
-// struct pack;
-// struct pack_entry index[index_count];
-// struct pack_entry fast_index[index_count];
-// u8 data[data_size];
 struct pack
 {
     char magic[4];
@@ -576,9 +590,6 @@ struct pack
     u8 *buffer;
 };
 
-////////////////////////////////////////////////////////////////////////////////
-// TODO: Move this to its own header if it works
-
 struct ric_sprite
 {
     struct ric_spritesheet *sheet;
@@ -591,8 +602,6 @@ struct ric_spritesheet
     u32 sprite_count;
     struct ric_sprite *sprites;
 };
-
-////////////////////////////////////////////////////////////////////////////////
 
 #define MAX_TOOLTIPS 32
 struct ui_tooltip
@@ -688,7 +697,7 @@ struct ric_transform
 
 struct ric_object
 {
-    struct uid uid;
+    struct ric_uid uid;
     u32 type;
     struct ric_transform xform;
 
@@ -716,8 +725,8 @@ struct ric_object
 #define RICO_FILE_VERSION_CURRENT 1
 #define RICO_FILE_VERSION_MINIMUM_SUPPORTED 1
 #define RICO_FILE_VERSION_MAXIMUM_SUPPORTED RICO_FILE_VERSION_CURRENT
-#define RICO_FILE_VERSION_COUNT 1 + (RICO_FILE_VERSION_MAXIMUM_SUPPORTED -\
-                                     RICO_FILE_VERSION_MINIMUM_SUPPORTED)
+#define RICO_FILE_VERSION_COUNT 1 + \
+    (RICO_FILE_VERSION_MAXIMUM_SUPPORTED - RICO_FILE_VERSION_MINIMUM_SUPPORTED)
 
 struct ric_file
 {
@@ -740,11 +749,11 @@ struct ric_file
 #define FONT_WIDTH 8.0f
 #define FONT_HEIGHT 16.0f
 
-#define BFG_MAXSTRING 511  // Maximum string length
+#define BFG_MAXSTRING (512 - 1)  // Maximum string length
 
 struct ric_font
 {
-    struct uid uid;
+    struct ric_uid uid;
     u32 cell_x;
     u32 cell_y;
     u8 base_char;
@@ -777,7 +786,7 @@ struct ric_heiro_glyph
 //       shader to use when rendering.
 struct ric_material
 {
-    struct uid uid;
+    struct ric_uid uid;
 
     //TODO: vert_shader, frag_shader
 
@@ -785,15 +794,6 @@ struct ric_material
     pkid tex_mrao;
     pkid tex_emission;
     // TODO: pkid tex_normal;
-};
-
-struct rgl_mesh
-{
-    GLuint vao;
-    GLuint vbos[2];
-    u32 vertices;
-    u32 elements;
-    struct rgl_mesh *next;
 };
 
 struct rico_physics
@@ -806,7 +806,7 @@ struct rico_physics
 
 struct ric_string
 {
-    struct uid uid;
+    struct ric_uid uid;
     u32 slot;
     u32 lifespan;
 
@@ -825,7 +825,7 @@ struct rgl_texture
 
 struct ric_texture
 {
-    struct uid uid;
+    struct ric_uid uid;
     u32 width;
     u32 height;
     u8 bpp;
@@ -834,5 +834,120 @@ struct ric_texture
     // TODO: Remove this field. Load data directly into VRAM then free buffer.
     u32 pixels_offset;
 };
+
+struct rgl_mesh
+{
+    GLuint vao;
+    GLuint vbos[2];
+    u32 vertices;
+    u32 elements;
+    struct rgl_mesh *next;
+};
+
+struct ric_mesh
+{
+    struct ric_uid uid;
+    u32 vertex_size;
+    u32 vertex_count;
+    u32 element_count;
+    enum program_type prog_type;
+    struct ric_aabb aabb;
+
+    // TODO: Remove these fields. Load data directly into VRAM then free buffer.
+    u32 vertices_offset;
+    u32 elements_offset;
+};
+
+/******************************************************************************/
+// Serialization
+/******************************************************************************/
+#define RIC_SAV_READ  1
+#define RIC_SAV_WRITE 2
+
+#define RIC_STREAM_RW(buf, size) \
+    if (stream->mode == RIC_SAV_WRITE) { \
+        ric_stream_write(stream, buf, size); \
+    } else { \
+        ric_stream_read(stream, buf, size); \
+    }
+
+#define RIC_ARENA_PUSH(field, count, size) \
+    if (!field && stream->mode == RIC_SAV_READ) { \
+        field = ric_arena_push(stream->arena, size * count); \
+    }
+
+#define RIC_SAV_VCHECK_REM(v_add, v_remove) \
+    if (stream->version >= v_add && stream->version < v_remove) {
+#define RIC_SAV_VCHECK_ADD(v_add) \
+    if (stream->version >= v_add) {
+#define RIC_SAV_VCHECK_END }
+
+#define ADD_FIELD(v_add, type, field) \
+    RIC_SAV_VCHECK_ADD(v_add) \
+        RIC_STREAM_RW(&data->field, sizeof(data->field)); \
+    RIC_SAV_VCHECK_END
+
+#define REM_FIELD(v_add, v_remove, type, field) \
+    type field; \
+    RIC_SAV_VCHECK_REM(v_add, v_remove) \
+        RIC_STREAM_RW(&field, sizeof(field)); \
+    RIC_SAV_VCHECK_END
+
+#define ADD_STRUCT(v_add, type, field) \
+    RIC_SAV_VCHECK_ADD(v_add) \
+        type##_sav(stream, &data->field); \
+    RIC_SAV_VCHECK_END
+
+#define REM_STRUCT(v_add, v_remove, type, field) \
+    struct type field; \
+    RIC_SAV_VCHECK_REM(v_add, v_remove) \
+        type##_sav(stream, &field); \
+    RIC_SAV_VCHECK_END
+
+#define ADD_FIELD_PTR(v_add, type, field) \
+    RIC_SAV_VCHECK_ADD(v_add) \
+        RIC_ARENA_PUSH(data->field, 1, sizeof(*data->field)) \
+        RIC_STREAM_RW(data->field, sizeof(*data->field)); \
+    RIC_SAV_VCHECK_END
+
+#define REM_FIELD_PTR(v_add, v_remove, type, field) \
+    type *field; \
+    RIC_SAV_VCHECK_REM(v_add, v_remove) \
+        RIC_ARENA_PUSH(field, 1, sizeof(*field)) \
+        RICO_ASSERT(field); \
+        RIC_STREAM_RW(field, sizeof(*field)); \
+    RIC_SAV_VCHECK_END
+
+#define ADD_STRUCT_PTR(v_add, type, field) \
+    RIC_SAV_VCHECK_ADD(v_add) \
+        RIC_ARENA_PUSH(data->field, 1, sizeof(*data->field)) \
+        type##_sav(stream, data->field); \
+    RIC_SAV_VCHECK_END
+
+#define REM_STRUCT_PTR(v_add, v_remove, type, field) \
+    struct type *field; \
+    RIC_SAV_VCHECK_REM(v_add, v_remove) \
+        RIC_ARENA_PUSH(field, 1, sizeof(*field)) \
+        type##_sav(stream, field); \
+    RIC_SAV_VCHECK_END
+
+#define ADD_STRUCT_ARRAY(v_add, type, field, count) \
+    RIC_SAV_VCHECK_ADD(v_add) \
+        RIC_ARENA_PUSH(data->field, count, sizeof(data->field[0])); \
+        RICO_ASSERT(data->field); \
+        for (u32 i = 0; i < count; ++i) { \
+            type##_sav(stream, &data->field[i]); \
+        } \
+    RIC_SAV_VCHECK_END
+
+#define REM_STRUCT_ARRAY(v_add, v_remove, type, count, field) \
+    struct type *field; \
+    RIC_SAV_VCHECK_REM(v_add, v_remove) \
+        RIC_ARENA_PUSH(field, count, sizeof(field[0])); \
+        RICO_ASSERT(field); \
+        for (u32 i = 0; i < count; ++i) { \
+            type##_sav(stream, &field[i]); \
+        } \
+    RIC_SAV_VCHECK_END
 
 #endif

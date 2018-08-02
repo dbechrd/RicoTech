@@ -47,6 +47,9 @@ static void test_math()
     RICO_ASSERT(mat4_equals(&ortho_camera_three, &ortho_camera_rico));
 
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
 static void test_geom()
 {
     //TODO: Use Unity test framework (http://www.throwtheswitch.org/unity)
@@ -83,6 +86,9 @@ static void test_geom()
     mat4_mul(&a, &b);
     mat4_print(&a);
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
 static void test_hashtable()
 {
     struct dlb_hash table_;
@@ -121,6 +127,9 @@ static void test_hashtable()
     RICO_ASSERT(hashtable_delete(table, key_id + 2));
     RICO_ASSERT(hashtable_delete(table, key_id + 3));
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
 static void test_ndc_macros()
 {
     const struct vec2 top_left = VEC2(
@@ -154,6 +163,9 @@ static void test_ndc_macros()
     RICO_ASSERT(center_neg.y == 0.0f);
     RICO_ASSERT(center_neg.y == 0.0f);
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
 #if 0
 static int test_pool()
 {
@@ -217,6 +229,252 @@ cleanup:
     return err;
 }
 #endif
+
+////////////////////////////////////////////////////////////////////////////////
+
+struct test_sav_object
+{
+    struct ric_uid uid;
+    struct ric_transform xform;
+    pkid mesh_id;
+    pkid material_id;
+};
+
+struct test_sav_bar
+{
+    u32 ignore1;
+    u32 check1;
+    struct vec3 pos;
+    u32 check2;
+    u32 ignore2;
+};
+
+struct test_sav_foo
+{
+    u32 ignore1;
+    u32 check1;
+    struct test_sav_bar *bar;
+    u32 *baz;
+    u32 check2;
+    u32 ignore2;
+};
+
+struct test_sav_scene
+{
+    u32 object_count;
+    struct test_sav_object *objects;
+    struct test_sav_foo foo;
+};
+
+struct test_sav_save
+{
+    struct test_sav_scene *scene;
+};
+
+static void test_sav_object_sav(struct ric_stream *stream,
+                                struct test_sav_object *data)
+{
+    ADD_STRUCT(V_EPOCH, ric_uid, uid);
+    ADD_STRUCT(V_EPOCH, ric_transform, xform);
+    ADD_FIELD(V_EPOCH, pkid, mesh_id);
+    ADD_FIELD(V_EPOCH, pkid, material_id);
+}
+
+static void test_sav_bar_sav(struct ric_stream *stream,
+                             struct test_sav_bar *data)
+{
+    ADD_FIELD(V_EPOCH, u32, check1);
+    ADD_FIELD(V_EPOCH, struct vec3, pos);
+    ADD_FIELD(V_EPOCH, u32, check2);
+}
+
+static void test_sav_foo_sav(struct ric_stream *stream,
+                             struct test_sav_foo *data)
+{
+    ADD_FIELD(V_EPOCH, u32, check1);
+    ADD_STRUCT_PTR(V_EPOCH, test_sav_bar, bar);
+    ADD_FIELD_PTR(V_EPOCH, u32 *, baz);
+    ADD_FIELD(V_EPOCH, u32, check2);
+}
+
+static void test_sav_scene_sav(struct ric_stream *stream,
+                               struct test_sav_scene *data)
+{
+    ADD_FIELD(V_EPOCH, u32, object_count);
+    ADD_STRUCT_ARRAY(V_EPOCH, test_sav_object, objects, data->object_count);
+    ADD_STRUCT(V_EPOCH, test_sav_foo, foo);
+}
+
+static void test_sav_save_sav(struct ric_stream *stream,
+                              struct test_sav_save *data)
+{
+    ADD_STRUCT_PTR(V_EPOCH, test_sav_scene, scene);
+}
+
+static const u32 TEST_SAV_OBJECTS = 10;
+static const u32 TEST_SAV_IGNORE_ME = 0x4f434952;
+
+static void test_sav_write(struct ric_arena *arena, const char *filename)
+{
+    struct ric_stream stream_ = { 0 };
+    struct ric_stream *stream = &stream_;
+    stream->mode = RIC_SAV_WRITE;
+    stream->filename = filename;
+    stream->version = V_CURRENT;
+    stream->arena = arena;
+
+    ric_stream_open(stream);
+    RICO_ASSERT(stream->fp);
+    RICO_ASSERT(stream->arena->buffer);
+
+    // Generate data
+    struct test_sav_save file = { 0 };
+    file.scene = ric_arena_push(stream->arena, sizeof(*file.scene));
+
+    struct test_sav_scene *scene = file.scene;
+    scene->object_count = TEST_SAV_OBJECTS;
+    scene->objects = ric_arena_push(stream->arena, sizeof(scene->objects[0]) *
+                                    scene->object_count);
+    for (u32 i = 0; i < TEST_SAV_OBJECTS; ++i)
+    {
+        scene->objects[i].xform.position = VEC3((float)i, 10.0f, 10.0f);
+        scene->objects[i].xform.orientation = QUAT_IDENT;
+        scene->objects[i].xform.scale = VEC3_ONE;
+        scene->objects[i].material_id = i + 1;
+        scene->objects[i].mesh_id = i + 1;
+    }
+    scene->foo.ignore1 = TEST_SAV_IGNORE_ME;
+    scene->foo.check1 = 42;
+    scene->foo.bar = ric_arena_push(stream->arena, sizeof(*scene->foo.bar));
+    scene->foo.baz = ric_arena_push(stream->arena, sizeof(*scene->foo.baz));
+    scene->foo.check2 = 43;
+    scene->foo.ignore2 = TEST_SAV_IGNORE_ME;
+    scene->foo.bar->ignore1 = TEST_SAV_IGNORE_ME;
+    scene->foo.bar->check1 = 52;
+    scene->foo.bar->pos = VEC3(1.0f, 2.0f, 3.0f);
+    scene->foo.bar->check2 = 53;
+    scene->foo.bar->ignore2 = TEST_SAV_IGNORE_ME;
+    *scene->foo.baz = 1000;
+
+    // Write data to file
+    printf("[WRITE]\n");
+    test_sav_save_sav(stream, &file);
+    ric_stream_close(stream);
+    fflush(stdout);
+}
+
+static void test_sav_read(struct ric_arena *arena, const char *filename)
+{
+    struct ric_stream stream_ = { 0 };
+    struct ric_stream *stream = &stream_;
+    stream->arena = arena;
+    stream->filename = filename;
+    stream->mode = RIC_SAV_READ;
+
+    ric_stream_open(stream);
+    RICO_ASSERT(stream->fp);
+    RICO_ASSERT(stream->arena->buffer);
+
+    struct test_sav_save file = { 0 };
+    printf("[READ]\n");
+    test_sav_save_sav(stream, &file);
+
+    struct test_sav_scene *scene = file.scene;
+    RICO_ASSERT(scene->object_count == 10);
+    for (u32 i = 0; i < scene->object_count; ++i)
+    {
+        RICO_ASSERT(v3_equals(&scene->objects[i].xform.position,
+                              &VEC3((float)i, 10.0f, 10.0f)));
+        RICO_ASSERT(quat_equals(&scene->objects[i].xform.orientation,
+                                &QUAT_IDENT));
+        RICO_ASSERT(v3_equals(&scene->objects[i].xform.scale, &VEC3_ONE));
+        RICO_ASSERT(scene->objects[i].material_id == i + 1);
+        RICO_ASSERT(scene->objects[i].mesh_id == i + 1);
+    }
+
+    RICO_ASSERT(scene->foo.ignore1 == 0);
+    RICO_ASSERT(scene->foo.check1 == 42);
+    RICO_ASSERT(scene->foo.bar);
+    RICO_ASSERT(scene->foo.check2 == 43);
+    RICO_ASSERT(scene->foo.ignore2 == 0);
+    RICO_ASSERT(scene->foo.bar->ignore1 == 0);
+    RICO_ASSERT(scene->foo.bar->check1 == 52);
+    RICO_ASSERT(v3_equals(&scene->foo.bar->pos, &VEC3(1.0f, 2.0f, 3.0f)));
+    RICO_ASSERT(scene->foo.bar->check2 == 53);
+    RICO_ASSERT(scene->foo.bar->ignore2 == 0);
+    RICO_ASSERT(scene->foo.baz);
+    RICO_ASSERT(*scene->foo.baz == 1000);
+
+    ric_stream_close(stream);
+    fflush(stdout);
+}
+
+static void test_sav_current()
+{
+    const u32 arena_size = KB(8);
+
+    // NOTE: The reason I'm clearing and reusing the write arena is to ensure
+    //       pointer comparisons don't create false positives during the data
+    //       corruption check.
+
+    // Write file into arena
+    struct ric_arena arena = { 0 };
+    ric_arena_alloc(&arena, arena_size);
+    test_sav_write(&arena, "test_sav.bin");
+
+    // Save copy and clear
+    struct ric_arena arena_copy = { 0 };
+    ric_arena_copy(&arena_copy, &arena);
+    ric_arena_clear(&arena);
+
+    // Read file into arena
+    test_sav_read(&arena, "test_sav.bin");
+
+    // Validate that data read is exactly the same as data written (aside from
+    // TEST_SAV_IGNORE_ME values, which are intentionally not serialized to the
+    // file)
+    for (u32 i = 0; i < arena.size; ++i)
+    {
+        if (((u8 *)arena.buffer)[i] != ((u8 *)arena_copy.buffer)[i])
+        {
+            u8 *byte = (u8 *)arena_copy.buffer + i;
+            u32 *word = (u32 *)byte;
+            if (*word == TEST_SAV_IGNORE_ME)
+            {
+                i += sizeof(u32) - sizeof(u8); // Magic ignore value, skip u32
+            }
+            else
+            {
+                RICO_ASSERT(0); // Data doesn't match, something went wrong!
+            };
+        }
+    }
+
+    ric_arena_free(&arena);
+    ric_arena_free(&arena_copy);
+}
+
+static void test_sav()
+{
+    // Ensure atomic type sizes don't change
+    RICO_ASSERT(sizeof(s32) == 4);
+    RICO_ASSERT(sizeof(enum ric_version) == sizeof(s32));
+    RICO_ASSERT(sizeof(u8) == 1);
+    RICO_ASSERT(sizeof(u32) == 4);
+    RICO_ASSERT(sizeof(r32) == 4);
+    RICO_ASSERT(sizeof(float) == 4);
+    RICO_ASSERT(sizeof(bool) == 1);
+    RICO_ASSERT(sizeof(struct vec3) == 12);
+    RICO_ASSERT(sizeof(struct quat) == 16);
+    RICO_ASSERT(sizeof(buf32) == 32);
+
+    //ric_test_1();
+    test_sav_current();
+    RICO_ASSERT(1);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 static void run_tests()
 {
     test_math();
@@ -224,4 +482,5 @@ static void run_tests()
     test_hashtable();
     test_ndc_macros();
     //test_pool();
+    test_sav();
 }

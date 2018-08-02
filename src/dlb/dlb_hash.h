@@ -1,5 +1,16 @@
+//------------------------------------------------------------------------------
+// Copyright 2018 Dan Bechard
+//
+// #include "dlb_hash.h"
+//------------------------------------------------------------------------------
+
+//-- header --------------------------------------------------------------------
 #ifndef DLB_HASH_H
 #define DLB_HASH_H
+
+#include <stdio.h>
+#include "MurmurHash3.h"
+#include "dlb_types.h"
 
 // S = "slot" (struct dlb_hash_entry, a key/value bucket)
 // S0 = First bucket, w/ linked list which points to tail
@@ -45,7 +56,11 @@ static inline struct dlb_hash_entry *chains(struct dlb_hash *table)
 {
     return table->buckets + table->bucket_count;
 }
+#endif
+//-- end of header -------------------------------------------------------------
 
+//-- implementation ------------------------------------------------------------
+#ifdef DLB_HASH_IMPLEMENTATION
 static void hashtable_init(struct dlb_hash *table, const char *name,
                            u32 bucket_count, u32 chain_length)
 {
