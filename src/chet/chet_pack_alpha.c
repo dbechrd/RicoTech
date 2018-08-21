@@ -57,6 +57,8 @@ void pack_build_alpha(struct pack_info *pack_info)
         pack_dat, "mesh/alpha_staircase_001.obj", 0, PROG_PBR);
     ric_load_obj_file(
         pack_dat, "mesh/alpha_wall_001.obj", 0, PROG_PBR);
+    ric_load_obj_file(
+        pack_dat, "mesh/alpha_room.obj", 0, PROG_PBR);
 
     DLB_ASSERT(mesh_door_id);
     DLB_ASSERT(mesh_terrain_id);

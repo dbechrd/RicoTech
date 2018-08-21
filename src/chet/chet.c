@@ -1263,7 +1263,7 @@ int main(int argc, char **argv)
 
 	//main_nuklear(argc, argv);
     ric_init();
-    //pack_build_all();
+    pack_build_all();
 	pack_load_all();
 
     ric_bind_action(CHET_ACTION_TEST_SOUND, RIC_CHORD1(SDL_SCANCODE_Z));
@@ -1427,7 +1427,7 @@ int main(int argc, char **argv)
 
         if (ric_state_is_edit())
         {
-            debug_render_colliders();
+            //debug_render_colliders();
         }
         //if (rayviz_sphere.r > 0.0f)
         //{
