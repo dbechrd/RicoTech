@@ -3,6 +3,8 @@
 #include "ri.h"
 #include "rico.h"
 
+#define DLB_MEMORY_IMPLEMENTATION
+#include "dlb_memory.h"
 #define DLB_MATH_PRINT
 #define DLB_MATH_IMPLEMENTATION
 #include "dlb_math.h"

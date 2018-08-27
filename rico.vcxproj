@@ -164,10 +164,13 @@
   <ItemGroup>
     <ClInclude Include="src\chet\chet_packs.h" />
     <ClInclude Include="src\chet\chet.h" />
+    <ClInclude Include="src\dlb\dlb_arena.h" />
     <ClInclude Include="src\dlb\dlb_hash.h" />
     <ClInclude Include="src\dlb\dlb_math.h" />
+    <ClInclude Include="src\dlb\dlb_memory.h" />
     <ClInclude Include="src\dlb\dlb_string.h" />
     <ClInclude Include="src\dlb\dlb_types.h" />
+    <ClInclude Include="src\dlb\dlb_vector.h" />
     <ClInclude Include="src\rico\ri.h" />
     <ClInclude Include="src\rico\rico.h" />
     <ClInclude Include="src\rico\rico_arena.h" />
@@ -267,10 +270,11 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Link>
       <AdditionalDependencies>SDL2main.lib;SDL2.lib;opengl32.lib;openal32.lib;freetype.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -293,10 +297,11 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <SDLCheck>false</SDLCheck>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>

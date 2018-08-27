@@ -33,7 +33,7 @@
 //#include "tinyobjloader.h"
 
 #include "dlb_types.h"
-#define DLB_MATH_PRINT
+#include "dlb_memory.h"
 #include "dlb_math.h"
 #include "dlb_string.h"
 #include "dlb_hash.h"

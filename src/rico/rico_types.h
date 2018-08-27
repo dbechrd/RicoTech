@@ -286,17 +286,6 @@ enum ric_ui_state
     RIC_UI_STATE_COUNT
 };
 
-enum ric_ui_type
-{
-    RIC_UI_HUD,
-    RIC_UI_BREAK,
-    RIC_UI_STRING,
-    RIC_UI_BUTTON,
-    RIC_UI_LABEL,
-    RIC_UI_PROGRESS,
-    RIC_UI_COUNT
-};
-
 enum ric_version
 {
     V_EPOCH = 1,
@@ -618,6 +607,18 @@ struct ric_ui_event
 };
 
 typedef void (*ric_ui_event_handler)(const struct ric_ui_event *e);
+
+enum ric_ui_type
+{
+    RIC_UI_HUD,
+    RIC_UI_BREAK,
+    RIC_UI_BUTTON,
+    RIC_UI_LABEL,
+    RIC_UI_PROGRESS,
+    RIC_UI_COUNT
+};
+
+extern size_t ric_ui_size[];
 
 struct ric_ui_head
 {

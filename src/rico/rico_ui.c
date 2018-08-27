@@ -1,16 +1,22 @@
-// TODO: Alignment
-static u8 ui_stack[KB(32)];
-static u8 *ui_stack_ptr;
-
 enum ui_rect_fill_mode
 {
     UI_RECT_FILL,
     UI_RECT_OUTLINE
 };
 
-/*----------------------------------------------------------------------------*/
-// Create
-/*----------------------------------------------------------------------------*/
+extern size_t ric_ui_size[] =
+{
+    [RIC_UI_HUD] = sizeof(struct ric_ui_hud),
+    [RIC_UI_BREAK] = sizeof(struct ric_ui_element),
+    [RIC_UI_BUTTON] = sizeof(struct ric_ui_button),
+    [RIC_UI_LABEL] = sizeof(struct ric_ui_label),
+    [RIC_UI_PROGRESS] = sizeof(struct ric_ui_progress),
+};
+
+// TODO: Alignment
+static u8 ui_stack[KB(32)];
+static u8 *ui_stack_ptr;
+
 static void rico_ui_init()
 {
     ui_stack_ptr = ui_stack;
@@ -29,10 +35,11 @@ static inline void *ui_stack_push(u32 bytes)
     memset(ptr, 0, bytes);
     return ptr;
 }
-static void *ui_push_element(u32 bytes, enum ric_ui_type type,
-                             struct ric_ui_hud *parent)
+static void *ui_push_element(enum ric_ui_type type, struct ric_ui_hud *parent)
 {
 #if 1
+    size_t bytes = ric_ui_size[type];
+
     struct ric_ui_head *ui = ui_stack_push(bytes);
     ui->type = type;
 
@@ -75,35 +82,27 @@ static void *ui_push_element(u32 bytes, enum ric_ui_type type,
 
 extern struct ric_ui_hud *ric_ui_hud()
 {
-    return ui_push_element(sizeof(struct ric_ui_hud), RIC_UI_HUD,
-                           NULL);
+    return ui_push_element(RIC_UI_HUD, NULL);
 }
 extern struct ric_ui_head *ric_ui_line_break(struct ric_ui_hud *parent)
 {
-    return ui_push_element(sizeof(struct ric_ui_hud), RIC_UI_BREAK,
-                           parent);
+    return ui_push_element(RIC_UI_BREAK, parent);
 }
 extern struct ric_ui_button *ric_ui_button(struct ric_ui_hud *parent)
 {
-    return ui_push_element(sizeof(struct ric_ui_button),
-                           RIC_UI_BUTTON, parent);
+    return ui_push_element(RIC_UI_BUTTON, parent);
 }
 extern struct ric_ui_label *ric_ui_label(struct ric_ui_hud *parent)
 {
-    return ui_push_element(sizeof(struct ric_ui_label), RIC_UI_LABEL,
-                           parent);
+    return ui_push_element(RIC_UI_LABEL, parent);
 }
 extern struct ric_ui_progress *ric_ui_progress(struct ric_ui_hud *parent)
 {
-    return ui_push_element(sizeof(struct ric_ui_progress),
-                           RIC_UI_PROGRESS, parent);
+    return ui_push_element(RIC_UI_PROGRESS, parent);
 }
 
-/*----------------------------------------------------------------------------*/
-// Layout
-/*----------------------------------------------------------------------------*/
-static bool ui_layout(struct ric_ui_head *head, s32 x, s32 y,
-                              s32 max_w, s32 max_h)
+static bool ui_layout(struct ric_ui_head *head, s32 x, s32 y, s32 max_w,
+                      s32 max_h)
 {
     if (head->type == RIC_UI_BREAK)
     {
@@ -254,9 +253,6 @@ extern bool ric_ui_layout(struct ric_ui_element *element, s32 x, s32 y,
     return fit;
 }
 
-/*----------------------------------------------------------------------------*/
-// Draw
-/*----------------------------------------------------------------------------*/
 static inline bool rect_intersects(const struct rect *rect, s32 x, s32 y)
 {
     bool hover = x >= rect->x &&

@@ -50,6 +50,12 @@ typedef double r64;
 #define SIZEOF_MEMBER(type, member) sizeof(((type *)0)->member)
 #define STRING(s) (#s)
 
+// Note: Alignment must be power of 2
+#define ALIGN_DOWN(n, a) ((n) & ~((a) - 1))
+#define ALIGN_UP(n, a) ALIGN_DOWN((n) + (a) - 1, (a))
+#define ALIGN_DOWN_PTR(p, a) ((void *)ALIGN_DOWN((uintptr_t)(p), (a)))
+#define ALIGN_UP_PTR(p, a) ((void *)ALIGN_UP((uintptr_t)(p), (a)))
+
 #define DLB_ASSERT_HANDLER(name) \
     void name(const char *expr, const char *file, u32 line)
 typedef DLB_ASSERT_HANDLER(DLB_assert_handler_def);

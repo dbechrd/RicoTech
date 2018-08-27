@@ -223,5 +223,14 @@
     <ClInclude Include="src\rico\rico_stream.h">
       <Filter>Header Files\rico</Filter>
     </ClInclude>
+    <ClInclude Include="src\dlb\dlb_vector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dlb\dlb_arena.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dlb\dlb_memory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
