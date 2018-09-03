@@ -175,13 +175,14 @@ static void render_shadow_cubemap(r64 alpha, struct ric_light *lights)
 
     for (int light = 0; light < NUM_LIGHT_DIR; ++light)
     {
+        DLB_ASSERT(lights[light].type == RIC_LIGHT_DIRECTIONAL);
         if (!lights[light].on)
             continue;
 
         // projection * view
         struct mat4 proj = shadow_ortho;
 
-        struct vec3 light_view = lights[light].directional.dir;
+        struct vec3 light_view = lights[light].directional.direction;
         struct mat4 view = mat4_init_lookat(&light_view, &VEC3_ZERO, &VEC3_UP);
         mat4_mul(&proj, &view);
         shadow_lightspace[light] = proj;
@@ -214,12 +215,13 @@ static void render_shadow_cubemap(r64 alpha, struct ric_light *lights)
     for (int light = NUM_LIGHT_DIR; light < NUM_LIGHT_DIR + NUM_LIGHT_POINT;
          ++light)
     {
+        DLB_ASSERT(lights[light].type == RIC_LIGHT_POINT);
         if (!lights[light].on)
             continue;
 
         glUniform3fv(prob_cube->locations.frag.light_pos, 1,
-                     &lights[light].pos.x);
-        struct vec3 light_pos_neg = lights[light].pos;
+                     &lights[light].position.x);
+        struct vec3 light_pos_neg = lights[light].position;
         v3_negate(&light_pos_neg);
 
         // projection * rotate * translate

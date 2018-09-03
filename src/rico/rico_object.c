@@ -115,7 +115,8 @@ static void object_transform_update(struct ric_object *obj)
     // HACK: Light test
     if (obj->type == OBJ_LIGHT_TEST)
     {
-        global_prog_pbr->sval.frag.lights[NUM_LIGHT_DIR].pos = obj->xform.position;
+        DLB_ASSERT(global_prog_pbr->val.frag.lights[NUM_LIGHT_DIR].type == RIC_LIGHT_POINT);
+        global_prog_pbr->val.frag.lights[NUM_LIGHT_DIR].position = obj->xform.position;
     }
 
     // HACK: Order of these operations might not always be the same.. should
@@ -291,7 +292,7 @@ static void object_render_all(r64 alpha, struct ric_camera *camera)
     struct vec3 new_dir = VEC3(x, y, 0.0f);
     v3_normalize(&new_dir);
     //printf("Light: %f, %f\n", new_dir.x, new_dir.y);
-    prog->sval.frag.lights[0].directional.dir = new_dir;
+    prog->val.frag.lights[0].directional.direction = new_dir;
 
     glPolygonMode(GL_FRONT_AND_BACK, camera->fill_mode);
 
@@ -314,26 +315,26 @@ static void object_render_all(r64 alpha, struct ric_camera *camera)
     // Lighting
     for (u32 i = 0; i < NUM_LIGHT_DIR + NUM_LIGHT_POINT; ++i)
     {
-        if (!prog->sval.frag.lights[i].on)
+        if (!prog->val.frag.lights[i].on)
             continue;
 
         glUniform1i(prog->locations.frag.lights[i].type,
-                    prog->sval.frag.lights[i].type);
+                    prog->val.frag.lights[i].type);
         glUniform1i(prog->locations.frag.lights[i].on,
-                    prog->sval.frag.lights[i].on);
+                    prog->val.frag.lights[i].on);
         glUniform3fv(prog->locations.frag.lights[i].col, 1,
-                     &prog->sval.frag.lights[i].col.r);
+                     &prog->val.frag.lights[i].color.r);
         glUniform3fv(prog->locations.frag.lights[i].pos, 1,
-                     &prog->sval.frag.lights[i].pos.x);
+                     &prog->val.frag.lights[i].position.x);
         glUniform1f(prog->locations.frag.lights[i].intensity,
-                    prog->sval.frag.lights[i].intensity);
+                    prog->val.frag.lights[i].intensity);
         glUniform3fv(prog->locations.frag.lights[i].dir, 1,
-                     &prog->sval.frag.lights[i].directional.dir.x);
+                     &prog->val.frag.lights[i].directional.direction.x);
 
         // TODO: Move this somewhere sane
 #       define SHADOW_TEXTURE_OFFSET 4
         glActiveTexture(GL_TEXTURE0 + SHADOW_TEXTURE_OFFSET + i);
-        if (prog->sval.frag.lights[i].type == RIC_LIGHT_DIRECTIONAL)
+        if (prog->val.frag.lights[i].type == RIC_LIGHT_DIRECTIONAL)
         {
             glBindTexture(GL_TEXTURE_2D, shadow_textures[i]);
             glUniform1i(prog->locations.frag.shadow_textures[i],
@@ -343,7 +344,7 @@ static void object_render_all(r64 alpha, struct ric_camera *camera)
             glUniformMatrix4fv(prog->locations.vert.light_space, 1, GL_TRUE,
                                shadow_lightspace[0].a);
         }
-        else if (prog->sval.frag.lights[i].type == RIC_LIGHT_POINT)
+        else if (prog->val.frag.lights[i].type == RIC_LIGHT_POINT)
         {
             glBindTexture(GL_TEXTURE_CUBE_MAP, shadow_cubemaps[i - NUM_LIGHT_DIR]);
             glUniform1i(prog->locations.frag.shadow_cubemaps[i- NUM_LIGHT_DIR],

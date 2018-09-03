@@ -362,7 +362,7 @@ extern void ric_render_objects()
     struct program_pbr *prog = global_prog_pbr;
 
     // Render shadow maps
-    render_shadow_cubemap(sim_alpha, prog->sval.frag.lights);
+    render_shadow_cubemap(sim_alpha, prog->val.frag.lights);
 
     // Render scene
     object_render_all(sim_alpha, &cam_player);
@@ -463,8 +463,8 @@ static int shared_engine_events()
         }
         string_truncate(buf, sizeof(buf), len);
         ric_load_string(RIC_PACK_ID_TRANSIENT, RIC_STRING_SLOT_COUNT,
-                         SCREEN_X(-FONT_WIDTH * 12), SCREEN_Y(0), COLOR_GRAY_5,
-                         1000, 0, buf);
+                        SCREEN_X(-FONT_WIDTH * 12), SCREEN_Y(0), COLOR_GRAY_5,
+                        1000, 0, buf);
     }
     // Pause simulation
     else if (action_active(RIC_ACTION_ENGINE_SIM_PAUSE))
@@ -1116,40 +1116,43 @@ static int rico_init_shaders()
     // TODO: Lights should be objects around the world and the shader should
     //       render the 4 closest ones to the player's position.
     const float INTENSITY = 0.000001f;
-    global_prog_pbr->sval.frag.lights[0].type = RIC_LIGHT_DIRECTIONAL;
-    global_prog_pbr->sval.frag.lights[1].type = RIC_LIGHT_POINT;
-    global_prog_pbr->sval.frag.lights[2].type = RIC_LIGHT_POINT;
-    global_prog_pbr->sval.frag.lights[3].type = RIC_LIGHT_POINT;
-    global_prog_pbr->sval.frag.lights[4].type = RIC_LIGHT_POINT;
-    global_prog_pbr->sval.frag.lights[0].directional.dir = VEC3(-1.0f, -1.0f, 0.0f);
-    v3_normalize(&global_prog_pbr->sval.frag.lights[0].directional.dir);
-    global_prog_pbr->sval.frag.lights[1].pos = VEC3(0.0f, 4.0f, 0.0f);
 
-    //global_prog_pbr->sval.frag.lights[2].pos = VEC3(-4.0f, 4.0f, 3.0f);
-    //global_prog_pbr->sval.frag.lights[3].pos = VEC3(4.0f, 5.0f, 3.0f);
-    //global_prog_pbr->sval.frag.lights[4].pos = VEC3(1.0f, 6.0f, 3.0f);
-    global_prog_pbr->sval.frag.lights[2].pos = VEC3(-1.0f, 4.0f, 3.0f);
-    global_prog_pbr->sval.frag.lights[3].pos = VEC3(0.0f, 4.0f, 3.0f);
-    global_prog_pbr->sval.frag.lights[4].pos = VEC3(1.0f, 4.0f, 3.0f);
+    global_prog_pbr->val.frag.lights[0].type = RIC_LIGHT_DIRECTIONAL;
+    global_prog_pbr->val.frag.lights[0].directional.direction = VEC3(-1.0f, -1.0f, 0.0f);
+    v3_normalize(&global_prog_pbr->val.frag.lights[0].directional.direction);
 
-    global_prog_pbr->sval.frag.lights[0].col = VEC3(1.0f, 1.0f, 1.0f);
-    global_prog_pbr->sval.frag.lights[1].col = VEC3(1.0f, 1.0f, 1.0f);
-    global_prog_pbr->sval.frag.lights[2].col = VEC3(1.0f, 0.0f, 0.0f);
-    global_prog_pbr->sval.frag.lights[3].col = VEC3(0.0f, 1.0f, 0.0f);
-    global_prog_pbr->sval.frag.lights[4].col = VEC3(0.0f, 0.0f, 1.0f);
-    global_prog_pbr->sval.frag.lights[0].intensity = 1.0f;
-    global_prog_pbr->sval.frag.lights[1].intensity = INTENSITY;
-    global_prog_pbr->sval.frag.lights[2].intensity = INTENSITY;
-    global_prog_pbr->sval.frag.lights[3].intensity = INTENSITY;
-    global_prog_pbr->sval.frag.lights[4].intensity = INTENSITY;
-    global_prog_pbr->sval.frag.lights[0].on = global_lighting_enabled && true;
-    global_prog_pbr->sval.frag.lights[1].on = global_lighting_enabled && false;
-    global_prog_pbr->sval.frag.lights[2].on = global_lighting_enabled && false;
-    global_prog_pbr->sval.frag.lights[3].on = global_lighting_enabled && false;
-    global_prog_pbr->sval.frag.lights[4].on = global_lighting_enabled && false;
-    //global_prog_pbr->sval.frag.light.kc = 1.0f;
-    //global_prog_pbr->sval.frag.light.kl = 0.05f;
-    //global_prog_pbr->sval.frag.light.kq = 0.001f;
+    global_prog_pbr->val.frag.lights[1].type = RIC_LIGHT_POINT;
+    global_prog_pbr->val.frag.lights[1].position = VEC3(0.0f, 4.0f, 0.0f);
+
+    global_prog_pbr->val.frag.lights[2].type = RIC_LIGHT_POINT;
+    global_prog_pbr->val.frag.lights[3].type = RIC_LIGHT_POINT;
+    global_prog_pbr->val.frag.lights[4].type = RIC_LIGHT_POINT;
+
+    //global_prog_pbr->val.frag.lights[2].position = VEC3(-4.0f, 4.0f, 3.0f);
+    //global_prog_pbr->val.frag.lights[3].position = VEC3(4.0f, 5.0f, 3.0f);
+    //global_prog_pbr->val.frag.lights[4].position = VEC3(1.0f, 6.0f, 3.0f);
+    global_prog_pbr->val.frag.lights[2].position = VEC3(-1.0f, 4.0f, 3.0f);
+    global_prog_pbr->val.frag.lights[3].position = VEC3(0.0f, 4.0f, 3.0f);
+    global_prog_pbr->val.frag.lights[4].position = VEC3(1.0f, 4.0f, 3.0f);
+
+    global_prog_pbr->val.frag.lights[0].color = VEC3(1.0f, 1.0f, 1.0f);
+    global_prog_pbr->val.frag.lights[1].color = VEC3(1.0f, 1.0f, 1.0f);
+    global_prog_pbr->val.frag.lights[2].color = VEC3(1.0f, 0.0f, 0.0f);
+    global_prog_pbr->val.frag.lights[3].color = VEC3(0.0f, 1.0f, 0.0f);
+    global_prog_pbr->val.frag.lights[4].color = VEC3(0.0f, 0.0f, 1.0f);
+    global_prog_pbr->val.frag.lights[0].intensity = 1.0f;
+    global_prog_pbr->val.frag.lights[1].intensity = INTENSITY;
+    global_prog_pbr->val.frag.lights[2].intensity = INTENSITY;
+    global_prog_pbr->val.frag.lights[3].intensity = INTENSITY;
+    global_prog_pbr->val.frag.lights[4].intensity = INTENSITY;
+    global_prog_pbr->val.frag.lights[0].on = global_lighting_enabled && true;
+    global_prog_pbr->val.frag.lights[1].on = global_lighting_enabled && false;
+    global_prog_pbr->val.frag.lights[2].on = global_lighting_enabled && false;
+    global_prog_pbr->val.frag.lights[3].on = global_lighting_enabled && false;
+    global_prog_pbr->val.frag.lights[4].on = global_lighting_enabled && false;
+    //global_prog_pbr->val.frag.light.kc = 1.0f;
+    //global_prog_pbr->val.frag.light.kl = 0.05f;
+    //global_prog_pbr->val.frag.light.kq = 0.001f;
 
     return err;
 }

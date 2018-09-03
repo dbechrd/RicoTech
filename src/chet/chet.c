@@ -1368,18 +1368,18 @@ int main(int argc, char **argv)
         // Render light bounds
         for (int i = 0; i < NUM_LIGHT_DIR + NUM_LIGHT_POINT; i++)
         {
-            if (!global_prog_pbr->sval.frag.lights[i].on)
+            if (!global_prog_pbr->val.frag.lights[i].on)
                 continue;
 
             struct sphere light_sphere = { 0 };
-            light_sphere.center = global_prog_pbr->sval.frag.lights[i].pos;
+            light_sphere.center = global_prog_pbr->val.frag.lights[i].position;
             light_sphere.r = 0.1f;
 
-            struct vec4 color = VEC4(global_prog_pbr->sval.frag.lights[i].col.r,
-                                     global_prog_pbr->sval.frag.lights[i].col.g,
-                                     global_prog_pbr->sval.frag.lights[i].col.b,
+            struct vec4 color = VEC4(global_prog_pbr->val.frag.lights[i].color.r,
+                                     global_prog_pbr->val.frag.lights[i].color.g,
+                                     global_prog_pbr->val.frag.lights[i].color.b,
                                      1.0f);
-            if (global_prog_pbr->sval.frag.lights[i].type == RIC_LIGHT_DIRECTIONAL)
+            if (global_prog_pbr->val.frag.lights[i].type == RIC_LIGHT_DIRECTIONAL)
             {
                 ric_prim_draw_sphere_xform(&light_sphere, &color, &sun_xform);
             }
@@ -1406,7 +1406,7 @@ int main(int argc, char **argv)
         ric_prim_draw_line_xform(&VEC3_ZERO, &y, &COLOR_GREEN, &sun_xform);
         ric_prim_draw_line_xform(&VEC3_ZERO, &z, &COLOR_BLUE, &sun_xform);
         ric_prim_draw_line_xform(&VEC3_ZERO,
-                                  &global_prog_pbr->sval.frag.lights[0].directional.dir,
+                                  &global_prog_pbr->val.frag.lights[0].directional.direction,
                                   &COLOR_YELLOW, &sun_xform);
 
         // Cleanup: Debug transform matrices

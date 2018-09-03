@@ -970,7 +970,7 @@ extern pkid ric_load_string(u32 pack_id, enum ric_string_slot slot, float x,
     return pkid;
 }
 extern int ric_load_obj_file(u32 pack_id, const char *filename,
-                              pkid *_last_mesh_id, enum program_type prog_type)
+                             pkid *_last_mesh_id, enum program_type prog_type)
 {
     enum ric_error err;
     u32 last_mesh_id = 0;

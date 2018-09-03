@@ -6,11 +6,7 @@ static void string_delete(struct ric_string *str)
     printf("[strg][free] uid=%d\n", str->id);
 #endif
 
-    if (str->slot < RIC_STRING_SLOT_COUNT)
-    {
-        // Remove from slot table
-        global_string_slots[str->slot] = 0;
-    }
+    global_string_slots[str->slot] = 0;
 
     pack_delete(str->mesh_id);
     // Note: Let font engine manage font texture

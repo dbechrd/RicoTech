@@ -256,7 +256,7 @@ struct program_pbr
 {
     struct program program;
     struct pbr_program_locations locations;
-    struct pbr_program_values sval;
+    struct pbr_program_values val;
 };
 
 struct program_shadow_texture

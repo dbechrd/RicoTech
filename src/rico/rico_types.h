@@ -210,19 +210,6 @@ enum ric_error
 };
 extern const char *ric_error_string[];
 
-#define RIC_LIGHT_TYPES(f) \
-    f(RIC_LIGHT_AMBIENT)        \
-    f(RIC_LIGHT_DIRECTIONAL)    \
-    f(RIC_LIGHT_POINT)          \
-    f(RIC_LIGHT_SPOT)
-
-enum ric_light_type
-{
-    RIC_LIGHT_TYPES(ENUM)
-    RIC_LIGHT_TYPE_COUNT
-};
-extern const char *ric_light_type_string[];
-
 // TODO: Replace with proper temp / frame arenas.
 enum ric_pack_ids
 {
@@ -405,86 +392,63 @@ struct ric_heiro_string
     struct text_vertex *verts;
 };
 
-struct ric_light
+//------------------------------------------------------------------------------
+
+#define RIC_LIGHT_TYPES(f) \
+    f(RIC_LIGHT_AMBIENT)        \
+    f(RIC_LIGHT_DIRECTIONAL)    \
+    f(RIC_LIGHT_POINT)          \
+    f(RIC_LIGHT_SPOT)
+
+enum ric_light_type
 {
-    enum ric_light_type type;
-    bool on;
-    struct vec3 col;
-    struct vec3 pos;
-    float intensity;
-
-    union
-    {
-        struct
-        {
-            struct vec3 dir;
-        } directional;
-
-        struct
-        {
-            // Distance fall-off
-            float kc;  // Constant
-            float kl;  // Linear
-            float kq;  // Quadratic
-        } point;
-
-        struct
-        {
-            struct vec3 dir;
-
-            // Point / Spot lights
-            // Distance fall-off
-            float kc;  // Constant
-            float kl;  // Linear
-            float kq;  // Quadratic
-
-            // Angle of inner (full intensity) and outer (fall-off to zero) cone
-            float theta_inner;
-            float theta_outer;
-        } spot;
-    };
+    RIC_LIGHT_TYPES(ENUM)
+    RIC_LIGHT_TYPE_COUNT
 };
+extern const char *ric_light_type_string[];
 
-/*
-struct light_ambient
+struct ric_light_directional
 {
-    struct vec3 color;
-};
-
-struct light_directional
-{
-    struct vec3 color;
     struct vec3 direction;
 };
 
-struct light_point
+struct ric_light_point
 {
-    struct vec3 color;
-    struct vec3 position;
-    float intensity;
-
     // Distance fall-off
     float kc;  // Constant
     float kl;  // Linear
     float kq;  // Quadratic
 };
 
-struct light_spot
+struct ric_light_spot
 {
-    struct vec3 color;
-    struct vec3 position;
     struct vec3 direction;
+
+    // Distance fall-off
+    float kc;  // Constant
+    float kl;  // Linear
+    float kq;  // Quadratic
 
     // Angle of inner (full intensity) and outer (fall-off to zero) cone
     float theta_inner;
     float theta_outer;
-
-    // Distance fall-off
-    float kc;  // Constant
-    float kl;  // Linear
-    float kq;  // Quadratic
 };
-*/
+
+struct ric_light
+{
+    bool on;
+    float intensity;
+    struct vec3 color;
+    struct vec3 position;
+    enum ric_light_type type;
+    union
+    {
+        //struct ric_light_ambient ambient;
+        struct ric_light_directional directional;
+        struct ric_light_point point;
+        struct ric_light_spot spot;
+    };
+};
 
 struct ric_keychord
 {
