@@ -8,8 +8,12 @@
 #define DLB_MATH_PRINT
 #define DLB_MATH_IMPLEMENTATION
 #include "dlb_math.h"
+#define DLB_VECTOR_IMPLEMENTATION
+#include "dlb_vector.h"
 #define DLB_HASH_IMPLEMENTATION
 #include "dlb_hash.h"
+#define DLB_HEAP_IMPLEMENTATION
+#include "dlb_heap.h"
 
 #include "rico_types.c"
 #include "rico_error.c"

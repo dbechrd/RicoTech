@@ -1,3 +1,31 @@
+static void dlb_heap_test()
+{
+    dlb_heap _heap = { 0 };
+    dlb_heap *heap = &_heap;
+    void *peek, *pop;
+    dlb_heap_init(heap);
+
+    peek = dlb_heap_peek(heap);
+    DLB_ASSERT(peek == NULL);
+
+    dlb_heap_push(heap, 25, (void *)1);
+    DLB_ASSERT(!dlb_heap_empty(heap));
+    DLB_ASSERT(dlb_heap_size(heap) == 1);
+
+    peek = dlb_heap_peek(heap);
+    DLB_ASSERT((int)peek == 1);
+
+    pop = dlb_heap_pop(heap);
+    DLB_ASSERT((int)pop == 1);
+    DLB_ASSERT(dlb_heap_empty(heap));
+    DLB_ASSERT(dlb_heap_size(heap) == 0);
+
+
+
+    // DEBUG: Hard stop
+    DLB_ASSERT(0);
+}
+
 static void test_math()
 {
     //new THREE.PerspectiveCamera(90, 1, 0.01, 1000).projectionMatrix
@@ -477,6 +505,7 @@ static void test_sav()
 
 static void run_tests()
 {
+    dlb_heap_test();
     test_math();
     test_geom();
     test_hashtable();

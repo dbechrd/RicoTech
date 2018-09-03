@@ -97,4 +97,11 @@ static inline void swap_r32(r32 *a, r32 *b)
     *b = t;
 }
 
+static inline void swap_int(int *a, int *b)
+{
+    int t = *a;
+    *a = *b;
+    *b = t;
+}
+
 #endif

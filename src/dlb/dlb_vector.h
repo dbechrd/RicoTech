@@ -2,6 +2,17 @@
 // Copyright 2018 Dan Bechard
 //------------------------------------------------------------------------------
 
+#if 0
+    int *store = NULL;
+    for (int i = 0; i < 1024; i++) {
+        dlb_vec_push(store, i);
+    }
+    for (size_t i = 0; i < dlb_vec_len(store); i++) {
+        assert(store[i] == i);
+    }
+    dlb_vec_free(store);
+#endif
+
 //-- header --------------------------------------------------------------------
 #ifndef DLB_VECTOR_H
 #define DLB_VECTOR_H
@@ -27,13 +38,13 @@ typedef struct dlb_vec__hdr {
 #define dlb_vec_push(b, ...) \
     (dlb_vec_reserve((b), 1 + dlb_vec_len(b)), \
                      (b)[dlb_vec__hdr(b)->len++] = (__VA_ARGS__))
+#define dlb_vec_pop(b) (dlb_vec_len(b) > 0 ? dlb_vec__hdr(b)->len-- : 0)
 #define dlb_vec_free(b) ((b) ? (free(dlb_vec__hdr(b)), (b) = NULL) : 0)
 
 #endif
 //-- end of header -------------------------------------------------------------
 
 //-- implementation ------------------------------------------------------------
-#define DLB_VECTOR_IMPLEMENTATION
 #ifdef DLB_VECTOR_IMPLEMENTATION
 
 void *dlb_vec__grow(const void *buf, size_t len, size_t size) {

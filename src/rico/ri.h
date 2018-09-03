@@ -35,8 +35,10 @@
 #include "dlb_types.h"
 #include "dlb_memory.h"
 #include "dlb_math.h"
+#include "dlb_vector.h"
 #include "dlb_string.h"
 #include "dlb_hash.h"
+#include "dlb_heap.h"
 
 //------------------------------------------------------------------------------
 // Start-up

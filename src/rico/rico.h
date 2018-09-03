@@ -16,8 +16,10 @@
 #include "dlb_types.h"
 #define DLB_MATH_PRINT
 #include "dlb_math.h"
+#include "dlb_vector.h"
 #include "dlb_string.h"
 #include "dlb_hash.h"
+#include "dlb_heap.h"
 
 #include "rico_types.h"
 #include "rico_error.h"
