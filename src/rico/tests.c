@@ -1,3 +1,43 @@
+static u32 flp2(u32 x)
+{
+    x |= (x >> 1);
+    x |= (x >> 2);
+    x |= (x >> 4);
+    x |= (x >> 8);
+    x |= (x >> 16);
+    return x - (x >> 1);
+}
+
+static u32 pow2(u32 x)
+{
+    return (x & (x - 1)) == 0;
+}
+
+static void dlb_heap_print(dlb_heap *heap)
+{
+    printf("--- HEAP -----------\n");
+    size_t size = dlb_heap_size(heap);
+    s32 spaces = (s32)flp2(size);
+    for (size_t i = 1; i <= size; i++)
+    {
+        if (pow2(i) && i > 1)
+        {
+            printf("\n");
+            spaces /= 2;
+        }
+        for (u32 s = spaces - 1; s > 0; s--)
+        {
+            printf(" ");
+        }
+        printf("%d ", heap->nodes[i].priority);
+        for (u32 s = spaces - 1; s > 0; s--)
+        {
+            printf(" ");
+        }
+    }
+    printf("\n--- END ------------\n");
+}
+
 static void dlb_heap_test()
 {
     dlb_heap _heap = { 0 };
@@ -20,10 +60,22 @@ static void dlb_heap_test()
     DLB_ASSERT(dlb_heap_empty(heap));
     DLB_ASSERT(dlb_heap_size(heap) == 0);
 
+    int max = 100;
+    for (int i = 1; i < max; i++)
+    {
+        dlb_heap_push(heap, i, (void *)i);
+        dlb_heap_print(heap);
+    }
+    for (int i = 1; i < max; i++)
+    {
+        int data = (int)dlb_heap_pop(heap);
+        int expected = max - i;
+        DLB_ASSERT(data == expected);
+        dlb_heap_print(heap);
+    }
+    DLB_ASSERT(dlb_heap_pop(heap) == NULL);
 
-
-    // DEBUG: Hard stop
-    DLB_ASSERT(0);
+    dlb_heap_free(heap);
 }
 
 static void test_math()
