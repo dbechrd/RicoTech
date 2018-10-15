@@ -15,9 +15,6 @@
     <Filter Include="Header Files\chet">
       <UniqueIdentifier>{7a3b5cf0-1c59-4629-b6b6-70e6381bd7ca}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\dlb">
-      <UniqueIdentifier>{8b4ecf90-54cf-4b45-a687-0fb4ee52ba8f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\rico">
       <UniqueIdentifier>{2e5045fd-e719-4dbf-9b3f-132145b84041}</UniqueIdentifier>
     </Filter>
@@ -134,20 +131,11 @@
     <ClCompile Include="src\chet\chet_pack_clash.c">
       <Filter>Source Files\chet</Filter>
     </ClCompile>
-    <ClCompile Include="src\dlb\dlb_heap.h">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\chet\chet_pack_default.c">
+      <Filter>Source Files\chet</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\dlb\dlb_math.h">
-      <Filter>Header Files\dlb</Filter>
-    </ClInclude>
-    <ClInclude Include="src\dlb\dlb_string.h">
-      <Filter>Header Files\dlb</Filter>
-    </ClInclude>
-    <ClInclude Include="src\dlb\dlb_types.h">
-      <Filter>Header Files\dlb</Filter>
-    </ClInclude>
     <ClInclude Include="src\chet\chet.h">
       <Filter>Header Files\chet</Filter>
     </ClInclude>
@@ -193,9 +181,6 @@
     <ClInclude Include="src\rico\rico_types.h">
       <Filter>Header Files\rico</Filter>
     </ClInclude>
-    <ClInclude Include="src\dlb\dlb_hash.h">
-      <Filter>Header Files\dlb</Filter>
-    </ClInclude>
     <ClInclude Include="src\rico\ri.h">
       <Filter>Header Files\rico</Filter>
     </ClInclude>
@@ -225,15 +210,6 @@
     </ClInclude>
     <ClInclude Include="src\rico\rico_stream.h">
       <Filter>Header Files\rico</Filter>
-    </ClInclude>
-    <ClInclude Include="src\dlb\dlb_vector.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\dlb\dlb_arena.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\dlb\dlb_memory.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

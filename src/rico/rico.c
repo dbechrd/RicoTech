@@ -50,7 +50,7 @@
 
 #include "CacheLineSize.c"
 //#include "main_nuke.c"
-#include "MurmurHash3.c"
+//#include "MurmurHash3.c"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -241,8 +241,6 @@ int ric_init()
     printf("Cache line min_size: %d bytes\n", cacheSize);
     init_stb();
     init_murmurhash3();
-
-    pack_build_default();
 
     err = init_sdl();
     if (err) goto error;

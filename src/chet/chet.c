@@ -1,6 +1,7 @@
 ﻿#include "chet.h"
 #include "rico.c"
 #include "chet_pack.c"
+#include "chet_pack_default.c"
 #include "chet_pack_alpha.c"
 #include "chet_pack_clash.c"
 
@@ -54,14 +55,13 @@ static struct ric_sprite toolbar_sprites[TOOLBAR_COUNT];
 static struct ric_spritesheet toolbar_sheet;
 static struct ui_tooltip toolbar_tips[TOOLBAR_COUNT];
 
-#define PACK_ALPHA 0
-#define PACK_CLASH 1
-
-static struct pack_info pack_table[] =
-{
-    { "packs/alpha.pak" , "packs/alpha.sav" },
-    { "packs/clash.pak" , "packs/clash.sav" }
+// TODO: Remove hard-coded pack name enum; use strings / ids
+enum {
+    PACK_ALPHA = 1,
+    PACK_CLASH = 2
 };
+
+static struct pack_info *pack_table;
 
 //-------------------------------------------------------------------
 // TODO: Scale by delta_time properly
@@ -71,39 +71,22 @@ static const float COEF_ELASTICITY = 0.15f;
 
 void pack_build_all()
 {
-    PERF_START(pack_build_alpha);
-    pack_build_alpha(&pack_table[PACK_ALPHA]);
-    PERF_END_MSG(pack_build_alpha, "Built pack '%s'\n",
-                 pack_table[PACK_ALPHA].path_pak);
-
-    PERF_START(pack_build_clash);
-    pack_build_clash_of_cubes(&pack_table[PACK_CLASH]);
-    PERF_END_MSG(pack_build_clash, "Built pack '%s'\n",
-                 pack_table[PACK_CLASH].path_pak);
-}
-
-int pack_load(u32 pack_idx)
-{
-    PERF_START(pack_load);
-    enum ric_error err;
-    err = ric_pack_load(pack_table[pack_idx].path_pak,
-                         &pack_table[pack_idx].pak_id);
-    if (err) return err;
-    err = ric_pack_load(pack_table[pack_idx].path_sav,
-                         &pack_table[pack_idx].sav_id);
-    PERF_END_MSG(pack_load, "Loaded pack '%s'\n",
-                 pack_table[pack_idx].path_pak);
-    return err;
+    pack_build_default(&pack_table, "packs/default.pak");
+    pack_build_alpha(&pack_table, "packs/alpha.pak");
+    pack_build_clash_of_cubes(&pack_table, "packs/clash.pak");
 }
 
 int pack_load_all()
 {
 	enum ric_error err;
 
-    err = pack_load(PACK_ALPHA);
-    if (err) return err;
-    err = pack_load(PACK_CLASH);
-    if (err) return err;
+    for (struct pack_info *pack = pack_table; pack != dlb_vec_end(pack_table); pack++)
+    {
+        PERF_START(pack_load);
+        err = ric_pack_load(pack->path, &pack->id);
+        if (err) return err;
+        PERF_END_MSG(pack_load, "Loaded pack '%s'\n", pack->path);
+    }
 
 	return err;
 }
@@ -1285,7 +1268,7 @@ int main(int argc, char **argv)
     // HACK: Find Timmy by name and use light/audio flags to determine start-up
     //       state of lighting and audio.
     struct timmy *timmy =
-        ric_pack_lookup_by_name(pack_table[PACK_ALPHA].sav_id, "timmy");
+        ric_pack_lookup_by_name(pack_table[PACK_ALPHA].id, "timmy");
     DLB_ASSERT(timmy);
     timmy_state_hacks(timmy->lights_on, timmy->audio_on);
 

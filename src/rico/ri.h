@@ -24,7 +24,7 @@
 #include "GL/gl3w.h"
 #include "SDL/SDL.h"
 //#undef main
-#include "MurmurHash3.h"
+//#include "MurmurHash3.h"
 //#include "CacheLineSize.h"
 //#include "nuklear.h"
 //#include "nuklear_sdl_gl3.h"
@@ -145,15 +145,6 @@ extern struct dlb_hash global_materials;
 extern struct dlb_hash global_meshes;
 extern struct dlb_hash global_textures;
 
-extern pkid global_default_font;
-extern pkid global_default_font_texture;
-extern pkid global_default_texture_diff;
-extern pkid global_default_texture_spec;
-extern pkid global_default_texture_emis;
-extern pkid global_default_material;
-extern pkid global_default_mesh_cube;
-extern pkid global_default_mesh_sphere;
-
 #define PACK_PUSH_CLEAR_MEM
 #define MAX_PACKS 32
 extern struct pack *global_packs[MAX_PACKS];
@@ -175,23 +166,12 @@ extern bool global_lighting_enabled;
 #define NUM_LIGHT_DIR 1
 #define NUM_LIGHT_POINT 4
 
-enum program_type
-{
-    PROG_NULL,
-    PROG_PBR,
-    PROG_SHADOW_TEXTURE,
-    PROG_SHADOW_CUBEMAP,
-    PROG_PRIMITIVE,
-    PROG_TEXT,
-    PROG_COUNT
-};
-
 typedef void(*program_attribs_helper)();
 static program_attribs_helper program_attribs[PROG_COUNT];
 
 struct program
 {
-    enum program_type type;
+    enum ric_shader_type type;
     u32 ref_count;
     GLuint gl_id;
 };

@@ -1,6 +1,15 @@
 #ifndef RICO_PACK_H
 #define RICO_PACK_H
 
+extern pkid global_default_font;
+extern pkid global_default_font_texture;
+extern pkid global_default_texture_diff;
+extern pkid global_default_texture_spec;
+extern pkid global_default_texture_emis;
+extern pkid global_default_material;
+extern pkid global_default_mesh_cube;
+extern pkid global_default_mesh_sphere;
+
 #define PKID_BLOB_BITS 24
 #define PKID_BLOB_MASK ((1 << PKID_BLOB_BITS) - 1)
 #define PKID_PACK_MASK (0xffffffff ^ PKID_BLOB_MASK)
@@ -43,11 +52,11 @@ extern pkid ric_load_font_file(u32 pack_id, const char *name,
 extern pkid ric_load_mesh(u32 pack_id, const char *name, u32 vertex_size,
                           u32 vertex_count, const void *vertex_data,
                           u32 element_count, const GLuint *element_data,
-                          enum program_type prog_type);
+                          enum ric_shader_type prog_type);
 extern pkid ric_load_string(u32 pack_id, enum ric_string_slot slot, float x,
                             float y, struct vec4 color, u32 lifespan,
                             pkid font, const char *text);
 extern int ric_load_obj_file(u32 pack_id, const char *filename,
-                             pkid *_last_mesh_id, enum program_type prog_type);
+                             pkid *_last_mesh_id, enum ric_shader_type prog_type);
 
 #endif

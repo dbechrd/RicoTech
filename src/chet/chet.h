@@ -48,10 +48,8 @@ struct small_cube
 
 struct pack_info
 {
-    const char *path_pak;
-    const char *path_sav;
-    u32 pak_id;
-    u32 sav_id;
+    const char *path;
+    u32 id;
 };
 
 enum body_type

@@ -543,6 +543,17 @@ struct pack
     u8 *buffer;
 };
 
+enum ric_shader_type
+{
+    PROG_NULL,
+    PROG_PBR,
+    PROG_SHADOW_TEXTURE,
+    PROG_SHADOW_CUBEMAP,
+    PROG_PRIMITIVE,
+    PROG_TEXT,
+    PROG_COUNT
+};
+
 struct ric_sprite
 {
     struct ric_spritesheet *sheet;
@@ -815,7 +826,7 @@ struct ric_mesh
     u32 vertex_size;
     u32 vertex_count;
     u32 element_count;
-    enum program_type prog_type;
+    enum ric_shader_type prog_type;
     struct ric_aabb aabb;
 
     // TODO: Remove these fields. Load data directly into VRAM then free buffer.

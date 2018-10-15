@@ -260,64 +260,6 @@ static void pack_delete(pkid id)
             break;
     }
 }
-static void pack_build_default()
-{
-    // TODO: This entire pack could be embedded as binary data in the .exe once
-    //       the contents are finalized. This would allow the engine to run even
-    //       when the data directory is missing.
-    const char *filename = "packs/default.pak";
-
-#if 0
-    FILE *default_pack = fopen(filename, "rb");
-    if (default_pack)
-    {
-        fclose(default_pack);
-        return;
-    }
-#endif
-
-    u32 pack = ric_pack_init(RIC_PACK_ID_DEFAULT, filename, 16, MB(1));
-    RICO_ASSERT(pack == 0); // RIC_PACK_ID_DEFAULT *must* be id 0!
-
-    global_default_font = ric_load_font_file(pack, "[global_default_font]",
-                                       "font/cousine_regular.bff");
-    struct ric_font *font = ric_pack_lookup(global_default_font);
-    global_default_font_texture = font->tex_id;
-
-    //pkid diff_id = ric_load_texture_file(pack, "[TEX_DIFF_DEFAULT]",
-    //                                      "texture/pbr_default_0.tga");
-    //pkid spec_id = ric_load_texture_file(pack, "[TEX_SPEC_DEFAULT]",
-    //                                      "texture/pbr_default_1.tga");
-    //pkid emis_id = ric_load_texture_file(pack, "[TEX_EMIS_DEFAULT]",
-    //                                      "texture/pbr_default_2.tga");
-    global_default_texture_diff =
-        ric_load_texture_color(pack, "[DEFAULT_TEX_DIFF]", &COLOR_WHITE);
-    global_default_texture_spec =
-        ric_load_texture_color(pack, "[DEFAULT_TEX_SPEC]", &COLOR_GREEN);
-    global_default_texture_emis =
-        ric_load_texture_color(pack, "[DEFAULT_TEX_EMIS]", &COLOR_TRANSPARENT);
-    global_default_material = ric_load_material(pack, "[DEFAULT_MATERIAL]",
-                           global_default_texture_diff,
-                           global_default_texture_spec,
-                           global_default_texture_emis);
-
-    // HACK: This is a bit of a gross way to get the id of the last mesh
-    ric_load_obj_file(pack, "mesh/prim_cube.obj",
-                       &global_default_mesh_cube, PROG_PBR);
-    ric_load_obj_file(pack, "mesh/prim_sphere.obj",
-                       &global_default_mesh_sphere, PROG_PBR);
-
-    pkid tex_transparent_id =
-        ric_load_texture_color(pack, "[TEX_TRANSPARENT]", &COLOR_TRANSPARENT);
-    pkid tex_translucent_id =
-        ric_load_texture_color(pack, "[TEX_TRANSPLUCENT]", &COLOR_TRANSLUCENT);
-    pkid mat_transparent_id =
-        ric_load_material(pack, "[MAT_TRANSPARENT]", tex_translucent_id,
-                           tex_transparent_id, tex_transparent_id);
-
-    ric_pack_save(pack, true);
-    ric_pack_free(pack);
-}
 
 extern void *ric_pack_lookup(pkid id)
 {
@@ -544,7 +486,7 @@ extern pkid ric_pack_prev_type_loop(pkid id, enum ric_asset_type type)
     return prev;
 }
 extern u32 ric_pack_init(u32 pack_id, const char *name, u32 blob_count,
-                          u32 buffer_size)
+                         u32 buffer_size)
 {
     // HACK: Don't pass id into init().. this was just to make sure packs get
     //       loaded back into the same id they were saved as. Surely there's a
@@ -903,7 +845,7 @@ cleanup:
 extern pkid ric_load_mesh(u32 pack_id, const char *name, u32 vertex_size,
                            u32 vertex_count, const void *vertex_data,
                            u32 element_count, const GLuint *element_data,
-                           enum program_type prog_type)
+                           enum ric_shader_type prog_type)
 {
     struct pack *pack = global_packs[pack_id];
     struct ric_mesh *mesh = blob_start(pack, RIC_ASSET_MESH, 0, name);
@@ -970,7 +912,7 @@ extern pkid ric_load_string(u32 pack_id, enum ric_string_slot slot, float x,
     return pkid;
 }
 extern int ric_load_obj_file(u32 pack_id, const char *filename,
-                             pkid *_last_mesh_id, enum program_type prog_type)
+                             pkid *_last_mesh_id, enum ric_shader_type prog_type)
 {
     enum ric_error err;
     u32 last_mesh_id = 0;

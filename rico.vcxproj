@@ -32,7 +32,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="src\dlb\dlb_heap.h" />
+    <ClCompile Include="src\chet\chet_pack_default.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="src\rico\rico.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -165,13 +168,6 @@
   <ItemGroup>
     <ClInclude Include="src\chet\chet_packs.h" />
     <ClInclude Include="src\chet\chet.h" />
-    <ClInclude Include="src\dlb\dlb_arena.h" />
-    <ClInclude Include="src\dlb\dlb_hash.h" />
-    <ClInclude Include="src\dlb\dlb_math.h" />
-    <ClInclude Include="src\dlb\dlb_memory.h" />
-    <ClInclude Include="src\dlb\dlb_string.h" />
-    <ClInclude Include="src\dlb\dlb_types.h" />
-    <ClInclude Include="src\dlb\dlb_vector.h" />
     <ClInclude Include="src\rico\ri.h" />
     <ClInclude Include="src\rico\rico.h" />
     <ClInclude Include="src\rico\rico_arena.h" />
@@ -276,6 +272,7 @@
       <TreatWarningAsError>false</TreatWarningAsError>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <CompileAs>CompileAsC</CompileAs>
+      <AdditionalIncludeDirectories>C:\Users\User\Documents\dev\source\dlb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalDependencies>SDL2main.lib;SDL2.lib;opengl32.lib;openal32.lib;freetype.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -303,6 +300,7 @@
       <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <CompileAs>CompileAsC</CompileAs>
+      <AdditionalIncludeDirectories>C:\Users\User\Documents\dev\source\dlb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>

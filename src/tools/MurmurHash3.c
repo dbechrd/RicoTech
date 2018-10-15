@@ -116,9 +116,9 @@ void MurmurHash3_x86_32 ( const void * key, int len, void * out )
     k1 *= c1;
     k1 = ROTL32(k1,15);
     k1 *= c2;
-    
+
     h1 ^= k1;
-    h1 = ROTL32(h1,13); 
+    h1 = ROTL32(h1,13);
     h1 = h1*5+0xe6546b64;
   }
 
@@ -145,7 +145,7 @@ void MurmurHash3_x86_32 ( const void * key, int len, void * out )
   h1 = fmix32(h1);
 
   *(uint32_t*)out = h1;
-} 
+}
 
 //-----------------------------------------------------------------------------
 
@@ -159,9 +159,9 @@ void MurmurHash3_x86_128 ( const void * key, int len, void * out )
   uint32_t h3 = MurmurHash3_seed;
   uint32_t h4 = MurmurHash3_seed;
 
-  const uint32_t c1 = 0x239b961b; 
+  const uint32_t c1 = 0x239b961b;
   const uint32_t c2 = 0xab0e9789;
-  const uint32_t c3 = 0x38b34ae5; 
+  const uint32_t c3 = 0x38b34ae5;
   const uint32_t c4 = 0xa1e38b93;
 
   //----------
