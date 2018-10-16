@@ -1381,8 +1381,8 @@ static int engine_init()
 	printf("----------------------------------------------------------\n");
 	//err = ric_pack_load("packs/default.pak", 0);
 	//if (err) return err;
-	//ric_pack_init(RIC_PACK_ID_TRANSIENT, "pack_transient", 512, MB(4));
-	//ric_pack_init(RIC_PACK_ID_FRAME, "pack_frame", 0, 0);
+	ric_pack_init(RIC_PACK_ID_TRANSIENT, "pack_transient", 512, MB(4));
+	ric_pack_init(RIC_PACK_ID_FRAME, "pack_frame", 0, 0);
 
     printf("----------------------------------------------------------\n");
     printf("[MAIN][init] Initializing primitives\n");

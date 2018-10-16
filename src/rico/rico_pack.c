@@ -20,7 +20,7 @@ pkid global_default_mesh_cube;
 pkid global_default_mesh_sphere;
 
 struct pack *global_packs[MAX_PACKS] = { 0 };
-u32 global_packs_next = 0;
+u32 global_packs_next = RIC_PACK_ID_COUNT;
 
 static void pack_compact_buffer(struct pack *pack);
 
@@ -273,6 +273,8 @@ extern void *ric_pack_lookup(pkid id)
     u32 idx = pack->lookup[blob_id];
     return pack_read(pack, idx);
 }
+
+// TODO: Wow this is really dumb. Just make a hash table for name -> pkid
 extern void *ric_pack_lookup_by_name(u32 pack_id, const char *name)
 {
     RICO_ASSERT(pack_id < MAX_PACKS);

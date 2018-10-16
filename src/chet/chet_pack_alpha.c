@@ -20,7 +20,7 @@ void pack_build_alpha(struct pack_info **pack_table, const char *filename)
     pkid tex_bricks_mrao = ric_load_texture_file(entry->id, "bricks_mrao", "texture/cobble_mrao.tga");
     pkid tex_bricks_emis = ric_load_texture_color(entry->id, "bricks_emis", &COLOR_TRANSPARENT);
     pkid mat_bricks = ric_load_material(entry->id, "bricks", tex_bricks_diff, tex_bricks_mrao, tex_bricks_emis);
-    pkid mat_timmy = ric_load_material(entry->id, "timmy", 0, 0, 0);
+    pkid mat_timmy = ric_load_material(entry->id, "mat_timmy", 0, 0, 0);
 
     DLB_ASSERT(tex_bricks_mrao);
     DLB_ASSERT(tex_bricks_diff);

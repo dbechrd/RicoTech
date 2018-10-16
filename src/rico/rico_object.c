@@ -445,6 +445,7 @@ static void object_print(struct ric_object *obj)
 
     if (obj)
     {
+        DLB_ASSERT(obj->uid.type == RIC_ASSET_OBJECT);
         buf32 *pack_name = &global_packs[PKID_PACK(obj->uid.pkid)]->name;
 
         struct ric_mesh *mesh = (obj->mesh_id)

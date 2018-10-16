@@ -66,7 +66,7 @@ static void edit_object_create()
 }
 static void edit_aabb_reset_all()
 {
-    u32 start_id = PKID_PACK(selected_obj_id);
+    u32 start_id = selected_obj_id ? PKID_PACK(selected_obj_id) : RIC_PACK_ID_DEFAULT;
     object_aabb_recalculate_all(start_id);
 
     // Reselect current object
@@ -129,7 +129,7 @@ static void edit_object_next()
     pkid next_id = 0;
     if (selected_obj_id)
     {
-        next_id = ric_pack_next_loop(selected_obj_id);
+        next_id = ric_pack_next_type_loop(selected_obj_id, RIC_ASSET_OBJECT);
     }
     edit_object_select(next_id, false);
 }
@@ -138,7 +138,7 @@ static void edit_object_prev()
     pkid prev_id = 0;
     if (selected_obj_id)
     {
-        prev_id = ric_pack_prev_loop(selected_obj_id);
+        prev_id = ric_pack_prev_type_loop(selected_obj_id, RIC_ASSET_OBJECT);
     }
     edit_object_select(prev_id, false);
 }
@@ -148,6 +148,7 @@ static void edit_print_object()
     if (selected_obj_id)
     {
         obj = ric_pack_lookup(selected_obj_id);
+        DLB_ASSERT(obj->uid.type == RIC_ASSET_OBJECT);
     }
     object_print(obj);
 }

@@ -213,6 +213,7 @@ extern const char *ric_error_string[];
 // TODO: Replace with proper temp / frame arenas.
 enum ric_pack_ids
 {
+    RIC_PACK_ID_NULL,
     RIC_PACK_ID_DEFAULT,
     RIC_PACK_ID_TRANSIENT,
     RIC_PACK_ID_FRAME,
@@ -674,7 +675,7 @@ struct ric_transform
 struct ric_object
 {
     struct ric_uid uid;
-    u32 type;
+    u32 type;  // enum ric_asset_type (virtual)
     struct ric_transform xform;
 
     struct ric_aabb aabb;

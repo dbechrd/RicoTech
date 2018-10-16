@@ -409,6 +409,7 @@ void clash_simulate(struct timmy *timmy)
 {
     struct ric_object *obj;
     struct manifold manifold = { 0 };
+    const float ground_height = 0.0f;
 
     for (u32 i = 1; i < ARRAY_COUNT(global_packs); ++i)
     {
@@ -418,16 +419,26 @@ void clash_simulate(struct timmy *timmy)
         while (id)
         {
             obj = ric_pack_lookup(id);
+            DLB_ASSERT(obj->uid.type == RIC_ASSET_OBJECT);
 
-            //if (obj->rico.type != OBJ_SMALL_CUBE)
-            //    continue;
+            // TODO: Give terrain infinite mass and stop arbitrarily
+            //       transforming objects into the sky -.-
+            if (obj->type == OBJ_TERRAIN)
+            {
+                id = ric_pack_next_type(id, RIC_ASSET_OBJECT);
+                continue;
+            }
 
+            obj->resting = false;
             if (obj->resting)
             {
+                //if (!(v3_equals(&obj->acc, &VEC3_ZERO) &&
+                //      v3_equals(&obj->vel, &VEC3_ZERO) &&
+                //      (obj->xform.position.y == 0.0f ||
+                //      object_intersects(obj, &timmy->rico, &manifold))))
                 if (!(v3_equals(&obj->acc, &VEC3_ZERO) &&
                       v3_equals(&obj->vel, &VEC3_ZERO) &&
-                      (obj->xform.position.y == 0.0f ||
-                      object_intersects(obj, &timmy->rico, &manifold))))
+                      obj->xform.position.y == ground_height + obj->aabb_world.e.y))
                 {
                     obj->resting = false;
                 }
@@ -441,7 +452,7 @@ void clash_simulate(struct timmy *timmy)
                 // TODO: Drag coef
 
                 // TODO: Collision detection
-                if (obj->xform.position.y <= 0.0f)
+                if (obj->xform.position.y <= ground_height + obj->aabb_world.e.y)
                 {
                     struct vec3 p0 = obj->xform.position;
                     v3_sub(&p0, &obj->vel);
@@ -456,7 +467,7 @@ void clash_simulate(struct timmy *timmy)
                         v3_scalef(&v_test, t);
                         v3_add(&obj->xform.position, &v_test);
                         ric_object_trans_set(obj, &obj->xform.position);
-                        if (obj->xform.position.y <= 0.0f)
+                        if (obj->xform.position.y <= ground_height + obj->aabb_world.e.y)
                         {
                             t -= t * 0.5f;
                         }
@@ -479,8 +490,8 @@ void clash_simulate(struct timmy *timmy)
                     {
                         obj->acc = VEC3_ZERO;
                         obj->vel = VEC3_ZERO;
-                        //obj->rico.xform.position.y = 0.0f;
-                        obj->xform.position = VEC3(0.1f, 4.0f, 0.1f);
+                        obj->xform.position.y = ground_height + obj->aabb_world.e.y;
+                        //obj->xform.position = VEC3(0.1f, 4.0f, 0.1f);
                         obj->resting = true;
                     }
                 }
@@ -590,7 +601,7 @@ void DEBUG_render_color_test()
     float x = 0.0f;
     float y = 2.0f;
     const float width = 0.1f;
-    const float padding = width / 2.0f;
+    const float padding = width * 2.0f;
     for (u32 i = 0; i < ARRAY_COUNT(colors); ++i)
     {
         if (colors[i].a == 0.0f)
@@ -1236,19 +1247,8 @@ void play_sound(enum audio_type type, bool loop)
     }
 }
 
-int main(int argc, char **argv)
+void game_setup()
 {
-    UNUSED(argc);
-    UNUSED(argv);
-
-    UNUSED(panel_1);
-    enum ric_error err = RIC_SUCCESS;
-
-	//main_nuklear(argc, argv);
-    ric_init();
-    pack_build_all();
-	pack_load_all();
-
     ric_bind_action(CHET_ACTION_TEST_SOUND, RIC_CHORD1(SDL_SCANCODE_Z));
     ric_bind_action(CHET_ACTION_TYPE_NEXT, RIC_CHORD1(SDL_SCANCODE_X));
     ric_bind_action(CHET_ACTION_TYPE_PREV, RIC_CHORD1(SDL_SCANCODE_C));
@@ -1264,12 +1264,28 @@ int main(int argc, char **argv)
 
     game_toolbar_init();
     lights_init();
+}
 
+int main(int argc, char **argv)
+{
+    UNUSED(argc);
+    UNUSED(argv);
+
+    UNUSED(panel_1);
+    enum ric_error err = RIC_SUCCESS;
+
+	//main_nuklear(argc, argv);
+    ric_init();
+    pack_build_all();
+	pack_load_all();
+
+    game_setup();
+
+    // TODO: Wow this is really dumb. Just make a hash table for name -> pkid
     // HACK: Find Timmy by name and use light/audio flags to determine start-up
     //       state of lighting and audio.
-    struct timmy *timmy =
-        ric_pack_lookup_by_name(pack_table[PACK_ALPHA].id, "timmy");
-    DLB_ASSERT(timmy);
+    struct timmy *timmy = ric_pack_lookup_by_name(4, "timmy");
+    DLB_ASSERT(timmy->rico.uid.type == RIC_ASSET_OBJECT);
     timmy_state_hacks(timmy->lights_on, timmy->audio_on);
 
     ric_simulation_pause();
@@ -1345,6 +1361,8 @@ int main(int argc, char **argv)
         // Render world
         ric_render_objects();
 
+        //DEBUG_render_color_test();
+
         // Debug: Move sun away from origin so it doesn't render inside ground
         struct mat4 sun_xform = mat4_init_translate(&VEC3(0.0f, 10.0f, 0.0f));
 
@@ -1410,7 +1428,7 @@ int main(int argc, char **argv)
 
         if (ric_state_is_edit())
         {
-            //debug_render_colliders();
+            debug_render_colliders();
         }
         //if (rayviz_sphere.r > 0.0f)
         //{

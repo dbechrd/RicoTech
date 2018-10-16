@@ -10,7 +10,7 @@ void pack_build_default(struct pack_info **pack_table, const char *filename)
     struct pack_info *entry = dlb_vec_alloc(*pack_table);
     entry->path = filename;
     entry->id = ric_pack_init(RIC_PACK_ID_DEFAULT, entry->path, 16, MB(1));
-    DLB_ASSERT(entry->id == 0); // RIC_PACK_ID_DEFAULT *must* be id 0!
+    DLB_ASSERT(entry->id == RIC_PACK_ID_DEFAULT); // RIC_PACK_ID_DEFAULT *must* be id 0!
 
     global_default_font = ric_load_font_file(entry->id, "[global_default_font]", "font/cousine_regular.bff");
     struct ric_font *font = ric_pack_lookup(global_default_font);
