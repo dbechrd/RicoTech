@@ -2,6 +2,6 @@
 #!res/mesh/*
 
 # Blacklist
-bin/*.*
-bin/packs/*.*
+bin/*.bin
+bin/packs/*.pak
 **/ignore

@@ -10,8 +10,7 @@
 
 #include "AL/al.h"
 #include "AL/alc.h"
-#include "GL/gl3w.h"
-#include "MurmurHash3.h"
+#include "misc/gl3w.h"
 
 #include "dlb_types.h"
 #define DLB_MATH_PRINT

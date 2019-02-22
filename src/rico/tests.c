@@ -169,47 +169,6 @@ static void test_geom()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-static void test_hashtable()
-{
-    struct dlb_hash table_;
-    struct dlb_hash *table = &table_;
-    hashtable_init(table, "test table 1", 1, 8);
-
-    int data = 123;
-
-    const char key_str[] = "blah blah";
-    u32 key_hash = hash_string(sizeof(key_str), key_str);
-    hashtable_insert(table, key_hash, &data);
-
-    int *lookup_str = hashtable_search(table, key_hash);
-    RICO_ASSERT(*lookup_str == data);
-    RICO_ASSERT(hashtable_delete(table, key_hash));
-
-    //=================================================
-
-    pkid key_id = 12345;
-    hashtable_insert(table, key_id, &data);
-    hashtable_insert(table, key_id + 1, &data);
-    hashtable_insert(table, key_id + 2, &data);
-    hashtable_insert(table, key_id + 3, &data);
-
-    int *lookup_uid = hashtable_search(table, key_id);
-    RICO_ASSERT(*lookup_uid == data);
-    int *lookup_uid1 = hashtable_search(table, key_id + 1);
-    RICO_ASSERT(*lookup_uid1 == data);
-    int *lookup_uid2 = hashtable_search(table, key_id + 2);
-    RICO_ASSERT(*lookup_uid2 == data);
-    int *lookup_uid3 = hashtable_search(table, key_id + 3);
-    RICO_ASSERT(*lookup_uid3 == data);
-
-    RICO_ASSERT(hashtable_delete(table, key_id));
-    RICO_ASSERT(hashtable_delete(table, key_id + 1));
-    RICO_ASSERT(hashtable_delete(table, key_id + 2));
-    RICO_ASSERT(hashtable_delete(table, key_id + 3));
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
 static void test_ndc_macros()
 {
     const struct vec2 top_left = VEC2(
@@ -560,7 +519,7 @@ static void run_tests()
     dlb_heap_test();
     test_math();
     test_geom();
-    test_hashtable();
+    dlb_hash_test();
     test_ndc_macros();
     //test_pool();
     test_sav();

@@ -21,7 +21,7 @@
 #include "AL/alc.h"
 #include "ft2build.h"
 #include FT_FREETYPE_H
-#include "GL/gl3w.h"
+#include "misc/gl3w.h"
 #include "SDL/SDL.h"
 //#undef main
 //#include "MurmurHash3.h"
@@ -29,7 +29,7 @@
 //#include "nuklear.h"
 //#include "nuklear_sdl_gl3.h"
 #define STBI_ONLY_TGA
-#include "stb_image.h"
+#include "misc/stb_image.h"
 //#include "tinyobjloader.h"
 
 #include "dlb_types.h"

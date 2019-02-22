@@ -113,11 +113,11 @@ static void object_transform_update(struct ric_object *obj)
     struct ric_transform *xform = &obj->xform;
 
     // HACK: Light test
-    if (obj->type == OBJ_LIGHT_TEST)
+    /*if (obj->type == OBJ_LIGHT_TEST)
     {
         DLB_ASSERT(global_prog_pbr->val.frag.lights[NUM_LIGHT_DIR].type == RIC_LIGHT_POINT);
         global_prog_pbr->val.frag.lights[NUM_LIGHT_DIR].position = obj->xform.position;
-    }
+    }*/
 
     // HACK: Order of these operations might not always be the same.. should
     //       probably just store the transformation matrix directly rather than

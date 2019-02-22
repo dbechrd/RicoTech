@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.27130.2026
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rico", "rico.vcxproj", "{13382442-3368-4BCD-A10F-E82012C2DB89}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "chet", "chet.vcxproj", "{C370D592-5A8F-4393-A183-BA16334F626C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,14 @@ Global
 		{13382442-3368-4BCD-A10F-E82012C2DB89}.Release|x64.Build.0 = Release|x64
 		{13382442-3368-4BCD-A10F-E82012C2DB89}.Release|x86.ActiveCfg = Release|Win32
 		{13382442-3368-4BCD-A10F-E82012C2DB89}.Release|x86.Build.0 = Release|Win32
+		{C370D592-5A8F-4393-A183-BA16334F626C}.Debug|x64.ActiveCfg = Debug|x64
+		{C370D592-5A8F-4393-A183-BA16334F626C}.Debug|x64.Build.0 = Debug|x64
+		{C370D592-5A8F-4393-A183-BA16334F626C}.Debug|x86.ActiveCfg = Debug|Win32
+		{C370D592-5A8F-4393-A183-BA16334F626C}.Debug|x86.Build.0 = Debug|Win32
+		{C370D592-5A8F-4393-A183-BA16334F626C}.Release|x64.ActiveCfg = Release|x64
+		{C370D592-5A8F-4393-A183-BA16334F626C}.Release|x64.Build.0 = Release|x64
+		{C370D592-5A8F-4393-A183-BA16334F626C}.Release|x86.ActiveCfg = Release|Win32
+		{C370D592-5A8F-4393-A183-BA16334F626C}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

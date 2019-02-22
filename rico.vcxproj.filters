@@ -9,207 +9,180 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="Header Files\rico">
-      <UniqueIdentifier>{b60ead97-7eac-4bed-89f3-7ff37dbc603b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\chet">
-      <UniqueIdentifier>{7a3b5cf0-1c59-4629-b6b6-70e6381bd7ca}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\rico">
-      <UniqueIdentifier>{2e5045fd-e719-4dbf-9b3f-132145b84041}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\chet">
-      <UniqueIdentifier>{10e058fa-db60-4f3b-9ead-75d71d415e93}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\chet\chet.c">
-      <Filter>Source Files\chet</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_audio.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_camera.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_collision.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_convert.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_error.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_file.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_font.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_material.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_mesh.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_object.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_pack.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_physics.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_pool.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_primitives.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_program.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_shader.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_state.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_string.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_texture.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_util.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
     <ClCompile Include="src\rico\rico.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\tests.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_ui.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_cereal.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_heiro.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_editor.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_shadow.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_resource.c">
-      <Filter>Source Files\rico</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rico\rico_types.c">
-      <Filter>Source Files\rico</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\rico\rico_aabb.c">
-      <Filter>Source Files\rico</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\rico\rico_arena.c">
-      <Filter>Source Files\rico</Filter>
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_audio.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_camera.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_cereal.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_collision.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_convert.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_editor.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_error.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_file.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_font.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_heiro.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_material.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_mesh.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_object.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_pack.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_physics.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_pool.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_primitives.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_program.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_resource.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_shader.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_shadow.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_state.c">
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\rico\rico_stream.c">
-      <Filter>Source Files\rico</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\chet\chet_pack.c">
-      <Filter>Source Files\chet</Filter>
+    <ClCompile Include="src\rico\rico_string.c">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\chet\chet_pack_alpha.c">
-      <Filter>Source Files\chet</Filter>
+    <ClCompile Include="src\rico\rico_texture.c">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\chet\chet_pack_clash.c">
-      <Filter>Source Files\chet</Filter>
+    <ClCompile Include="src\rico\rico_types.c">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\chet\chet_pack_default.c">
-      <Filter>Source Files\chet</Filter>
+    <ClCompile Include="src\rico\rico_ui.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\rico_util.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\tests.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\cache_line_size.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rico\gl3w.c">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\chet\chet.h">
-      <Filter>Header Files\chet</Filter>
-    </ClInclude>
-    <ClInclude Include="src\chet\chet_packs.h">
-      <Filter>Header Files\chet</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rico\rico.h">
-      <Filter>Header Files\rico</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rico\rico_audio.h">
-      <Filter>Header Files\rico</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rico\rico_camera.h">
-      <Filter>Header Files\rico</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rico\rico_error.h">
-      <Filter>Header Files\rico</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rico\rico_mesh.h">
-      <Filter>Header Files\rico</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rico\rico_object.h">
-      <Filter>Header Files\rico</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rico\rico_pack.h">
-      <Filter>Header Files\rico</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rico\rico_primitives.h">
-      <Filter>Header Files\rico</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rico\rico_state.h">
-      <Filter>Header Files\rico</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rico\rico_string.h">
-      <Filter>Header Files\rico</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rico\rico_ui.h">
-      <Filter>Header Files\rico</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rico\rico_heiro.h">
-      <Filter>Header Files\rico</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rico\rico_types.h">
-      <Filter>Header Files\rico</Filter>
-    </ClInclude>
     <ClInclude Include="src\rico\ri.h">
-      <Filter>Header Files\rico</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\rico\ri_pool.h">
-      <Filter>Header Files\rico</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\rico\ri_program_pbr.h">
-      <Filter>Header Files\rico</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\rico\ri_program_primitive.h">
-      <Filter>Header Files\rico</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\rico\ri_program_shadow_cubemap.h">
-      <Filter>Header Files\rico</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\rico\ri_program_shadow_texture.h">
-      <Filter>Header Files\rico</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\rico\ri_program_text.h">
-      <Filter>Header Files\rico</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rico\rico_aabb.h">
-      <Filter>Header Files\rico</Filter>
+    <ClInclude Include="include\rico.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rico\rico_arena.h">
-      <Filter>Header Files\rico</Filter>
+    <ClInclude Include="include\rico_aabb.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\rico\rico_stream.h">
-      <Filter>Header Files\rico</Filter>
+    <ClInclude Include="include\rico_arena.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rico_audio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rico_camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rico_error.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rico_heiro.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rico_mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rico_object.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rico_pack.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rico_primitives.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rico_state.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rico_stream.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rico_string.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rico_types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rico_ui.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

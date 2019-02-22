@@ -1,5 +1,5 @@
 ﻿#include "chet.h"
-#include "rico.c"
+#include "../rico/rico.c"
 #include "chet_pack.c"
 #include "chet_pack_default.c"
 #include "chet_pack_alpha.c"

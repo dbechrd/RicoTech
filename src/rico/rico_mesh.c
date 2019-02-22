@@ -66,12 +66,13 @@ static void mesh_upload(struct ric_mesh *mesh, GLenum hint)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     // Store in hash table
-    hashtable_insert(&global_meshes, mesh->uid.pkid, rgl_mesh);
+    dlb_hash_insert(&global_meshes, (void *)&mesh->uid.pkid,
+        sizeof(mesh->uid.pkid), rgl_mesh);
 }
 static void mesh_delete(struct ric_mesh *mesh)
 {
-    struct rgl_mesh *rgl_mesh = hashtable_search(&global_meshes,
-                                                 mesh->uid.pkid);
+    struct rgl_mesh *rgl_mesh = dlb_hash_search(&global_meshes,
+        (void *)&mesh->uid.pkid, sizeof(mesh->uid.pkid));
     if (!rgl_mesh) return;
 
 #if RICO_DEBUG_MESH
@@ -81,20 +82,23 @@ static void mesh_delete(struct ric_mesh *mesh)
     glDeleteBuffers(2, rgl_mesh->vbos);
     glDeleteVertexArrays(1, &rgl_mesh->vao);
 
-    hashtable_delete(&global_meshes, mesh->uid.pkid);
+    dlb_hash_delete(&global_meshes, (void *)&mesh->uid.pkid,
+                    sizeof(mesh->uid.pkid));
 
     rgl_mesh->next = mesh_freelist;
     mesh_freelist = rgl_mesh;
 }
 static struct rgl_mesh *mesh_rgl(pkid pkid)
 {
-    struct rgl_mesh *rgl_mesh = hashtable_search(&global_meshes, pkid);
+    struct rgl_mesh *rgl_mesh = dlb_hash_search(&global_meshes, (void *)&pkid,
+                                                sizeof(pkid));
     if (!rgl_mesh)
     {
         struct ric_mesh *mesh = ric_pack_lookup(pkid);
         RICO_ASSERT(mesh);
         mesh_upload(mesh, GL_STATIC_DRAW);
-        rgl_mesh = hashtable_search(&global_meshes, pkid);
+        rgl_mesh = dlb_hash_search(&global_meshes, (void *)&pkid,
+                                   sizeof(pkid));
         RICO_ASSERT(rgl_mesh);
     }
     return rgl_mesh;

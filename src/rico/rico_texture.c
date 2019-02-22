@@ -154,18 +154,20 @@ static int texture_upload(struct ric_texture *texture)
     glBindTexture(rgl_tex->gl_target, 0);
 
     // Store in hash table
-    hashtable_insert(&global_textures, texture->uid.pkid, rgl_tex);
+    dlb_hash_insert(&global_textures, (void *)&texture->uid.pkid,
+                    sizeof(texture->uid.pkid), rgl_tex);
     return err;
 }
 static void texture_delete(struct ric_texture *texture)
 {
-    struct rgl_texture *rgl_tex =
-        hashtable_search(&global_textures, texture->uid.pkid);
+    struct rgl_texture *rgl_tex = dlb_hash_search(&global_textures,
+        (void *)&texture->uid.pkid, sizeof(texture->uid.pkid));
     if (!rgl_tex) return;
 
     glDeleteTextures(1, &rgl_tex->gl_id);
 
-    hashtable_delete(&global_textures, texture->uid.pkid);
+    dlb_hash_delete(&global_textures, (void *)&texture->uid.pkid,
+                    sizeof(texture->uid.pkid));
 
     rgl_tex->next = texture_freelist;
     texture_freelist = rgl_tex;
@@ -175,13 +177,14 @@ static void texture_bind(pkid pkid, GLenum texture_unit)
     // Catch dumb mistakes, texture unit should be e.g. GL_TEXTURE0
     RICO_ASSERT(texture_unit != GL_TEXTURE_2D);
 
-    struct rgl_texture *rgl_tex = hashtable_search(&global_textures, pkid);
+    struct rgl_texture *rgl_tex =
+        dlb_hash_search(&global_textures, (void *)&pkid, sizeof(pkid));
     if (!rgl_tex)
     {
         struct ric_texture *texture = ric_pack_lookup(pkid);
         RICO_ASSERT(texture);
         texture_upload(texture);
-        rgl_tex = hashtable_search(&global_textures, pkid);
+        rgl_tex = dlb_hash_search(&global_textures, (void *)&pkid, sizeof(pkid));
     }
     RICO_ASSERT(rgl_tex);
     RICO_ASSERT(rgl_tex->gl_id);
@@ -196,7 +199,7 @@ static void texture_bind(pkid pkid, GLenum texture_unit)
 }
 static void texture_unbind(pkid pkid, GLenum texture_unit)
 {
-    struct rgl_texture *rgl_tex = hashtable_search(&global_textures, pkid);
+    struct rgl_texture *rgl_tex = dlb_hash_search(&global_textures, (void *)&pkid, sizeof(pkid));
     RICO_ASSERT(rgl_tex);
 
 #if RICO_DEBUG_TEXTURE

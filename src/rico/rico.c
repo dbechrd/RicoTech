@@ -1,7 +1,7 @@
 #include "gl3w.c"
 
-#include "ri.h"
 #include "rico.h"
+#include "ri.h"
 
 #define DLB_MEMORY_IMPLEMENTATION
 #include "dlb_memory.h"
@@ -11,6 +11,7 @@
 #define DLB_VECTOR_IMPLEMENTATION
 #include "dlb_vector.h"
 #define DLB_HASH_IMPLEMENTATION
+#define DLB_HASH_TEST
 #include "dlb_hash.h"
 #define DLB_HEAP_IMPLEMENTATION
 #include "dlb_heap.h"
@@ -48,12 +49,14 @@
     #include "tests.c"
 #endif
 
-#include "CacheLineSize.c"
+#include "cache_line_size.c"
 //#include "main_nuke.c"
 //#include "MurmurHash3.c"
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "misc/stb_image.h"
+
+#include <stdlib.h>
 
 static SDL_Window *window = 0;
 static SDL_GLContext gl_context = 0;
