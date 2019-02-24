@@ -2,6 +2,7 @@
 !**/mesh/*.obj
 
 # Blacklist
+bin/stdout.txt
 bin/*.bin
 bin/packs/*.pak
 **/ignore

@@ -9,7 +9,8 @@ enum actions
 {
     CHET_ACTION_TEST_SOUND = RIC_ACTION_COUNT,
     CHET_ACTION_TYPE_NEXT,
-    CHET_ACTION_TYPE_PREV
+    CHET_ACTION_TYPE_PREV,
+    CHET_ACTION_COUNT
 };
 
 enum audio_type
@@ -54,12 +55,6 @@ static const char *toolbar_icon_values[] = { TOOLBAR_ICON(ENUM_META) };
 static struct ric_sprite toolbar_sprites[TOOLBAR_COUNT];
 static struct ric_spritesheet toolbar_sheet;
 static struct ui_tooltip toolbar_tips[TOOLBAR_COUNT];
-
-// TODO: Remove hard-coded pack name enum; use strings / ids
-enum {
-    PACK_ALPHA = 1,
-    PACK_CLASH = 2
-};
 
 static struct pack_info *pack_table;
 
@@ -1252,6 +1247,16 @@ void game_setup()
     ric_bind_action(CHET_ACTION_TEST_SOUND, RIC_CHORD1(SDL_SCANCODE_Z));
     ric_bind_action(CHET_ACTION_TYPE_NEXT, RIC_CHORD1(SDL_SCANCODE_X));
     ric_bind_action(CHET_ACTION_TYPE_PREV, RIC_CHORD1(SDL_SCANCODE_C));
+
+    printf("----------------------------------------------------------\n");
+    printf("[chet][ dbg] Key bindings\n");
+    printf("----------------------------------------------------------\n");
+    char chord_str[128] = { 0 };
+    for (int i = 0; i < CHET_ACTION_COUNT; i++)
+    {
+        ric_chord_str(&action_chords[i], CSTR(chord_str));
+        printf("Action: %d  Chord: %s\n", i, chord_str);
+    }
 
     load_sound(AUDIO_WELCOME, "audio/welcome.ric");
     load_sound(AUDIO_THUNDER, "audio/thunder_storm.ric");

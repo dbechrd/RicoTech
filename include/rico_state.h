@@ -19,6 +19,9 @@ extern bool ric_quit();
 extern void ric_mouse_coords(u32 *x, u32 *y);
 extern u32 ric_key_event(u32 *action);
 extern void ric_bind_action(u32 action, struct ric_keychord chord);
+extern struct ric_keychord ric_action_chord(u32 action);
+extern const char *ric_key_str(u16 key);
+extern void ric_chord_str(struct ric_keychord *chord, char *buf, size_t len);
 extern bool ric_mouse_raycast(pkid *_obj_id, float *_dist);
 
 #endif

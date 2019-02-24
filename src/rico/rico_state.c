@@ -69,21 +69,23 @@ static u8 keystate_buffers[2][SDL_NUM_SCANCODES] = { 0 };
 static u8 *keys      = keystate_buffers[0];
 static u8 *keys_prev = keystate_buffers[1];
 
-#define KEY_IS_DOWN(key) (key == 0 || keys[key] || \
-(key == RIC_SCANCODE_ALT   && (keys[SDL_SCANCODE_LALT]   || keys[SDL_SCANCODE_RALT]))  || \
-(key == RIC_SCANCODE_CTRL  && (keys[SDL_SCANCODE_LCTRL]  || keys[SDL_SCANCODE_RCTRL])) || \
-(key == RIC_SCANCODE_SHIFT && (keys[SDL_SCANCODE_LSHIFT] || keys[SDL_SCANCODE_RSHIFT])) || \
-(key == RIC_SCANCODE_LMB && (mouse_buttons & SDL_BUTTON(SDL_BUTTON_LEFT))) || \
-(key == RIC_SCANCODE_MMB && (mouse_buttons & SDL_BUTTON(SDL_BUTTON_MIDDLE))) || \
-(key == RIC_SCANCODE_RMB && (mouse_buttons & SDL_BUTTON(SDL_BUTTON_RIGHT))))
+#define KEY_IS_DOWN(key) (key == 0 || \
+    (key == RIC_SCANCODE_ALT   && (keys[SDL_SCANCODE_LALT]   || keys[SDL_SCANCODE_RALT]))  || \
+    (key == RIC_SCANCODE_CTRL  && (keys[SDL_SCANCODE_LCTRL]  || keys[SDL_SCANCODE_RCTRL])) || \
+    (key == RIC_SCANCODE_SHIFT && (keys[SDL_SCANCODE_LSHIFT] || keys[SDL_SCANCODE_RSHIFT])) || \
+    (key == RIC_SCANCODE_LMB && (mouse_buttons & SDL_BUTTON(SDL_BUTTON_LEFT))) || \
+    (key == RIC_SCANCODE_MMB && (mouse_buttons & SDL_BUTTON(SDL_BUTTON_MIDDLE))) || \
+    (key == RIC_SCANCODE_RMB && (mouse_buttons & SDL_BUTTON(SDL_BUTTON_RIGHT))) || \
+    keys[key])
 
-#define KEY_WAS_DOWN(key) (key == 0 || keys_prev[key] || \
-(key == RIC_SCANCODE_ALT   && (keys_prev[SDL_SCANCODE_LALT]   || keys_prev[SDL_SCANCODE_RALT]))  || \
-(key == RIC_SCANCODE_CTRL  && (keys_prev[SDL_SCANCODE_LCTRL]  || keys_prev[SDL_SCANCODE_RCTRL])) || \
-(key == RIC_SCANCODE_SHIFT && (keys_prev[SDL_SCANCODE_LSHIFT] || keys_prev[SDL_SCANCODE_RSHIFT])) || \
-(key == RIC_SCANCODE_LMB && (mouse_buttons_prev & SDL_BUTTON(SDL_BUTTON_LEFT))) || \
-(key == RIC_SCANCODE_MMB && (mouse_buttons_prev & SDL_BUTTON(SDL_BUTTON_MIDDLE))) || \
-(key == RIC_SCANCODE_RMB && (mouse_buttons_prev & SDL_BUTTON(SDL_BUTTON_RIGHT))))
+#define KEY_WAS_DOWN(key) (key == 0 || \
+    (key == RIC_SCANCODE_ALT   && (keys_prev[SDL_SCANCODE_LALT]   || keys_prev[SDL_SCANCODE_RALT]))  || \
+    (key == RIC_SCANCODE_CTRL  && (keys_prev[SDL_SCANCODE_LCTRL]  || keys_prev[SDL_SCANCODE_RCTRL])) || \
+    (key == RIC_SCANCODE_SHIFT && (keys_prev[SDL_SCANCODE_LSHIFT] || keys_prev[SDL_SCANCODE_RSHIFT])) || \
+    (key == RIC_SCANCODE_LMB && (mouse_buttons_prev & SDL_BUTTON(SDL_BUTTON_LEFT))) || \
+    (key == RIC_SCANCODE_MMB && (mouse_buttons_prev & SDL_BUTTON(SDL_BUTTON_MIDDLE))) || \
+    (key == RIC_SCANCODE_RMB && (mouse_buttons_prev & SDL_BUTTON(SDL_BUTTON_RIGHT))) || \
+    keys_prev[key])
 
 #define KEY_PRESSED(key)  ( KEY_IS_DOWN(key) && !KEY_WAS_DOWN(key))
 #define KEY_RELEASED(key) (!KEY_IS_DOWN(key) &&  KEY_WAS_DOWN(key))
@@ -121,18 +123,14 @@ static inline bool chord_released(u32 action)
 #endif
 static inline bool chord_active(const struct ric_keychord *chord)
 {
-    // Chord is considered active when any of the following is true:
-    // 1) is down and repeat
-    // 2) pressed (is down and wasn't down last frame)
-    // 3) on_release and released (is not down but was last frame).
-    bool active = false;
-    if (chord_is_down(chord))
+    bool active;
+    if (chord->on_release)
     {
-        active = chord->repeat || !chord_was_down(chord);
+        active = !chord_is_down(chord) && chord_was_down(chord);
     }
     else
     {
-        active = chord->on_release && chord_was_down(chord);
+        active = chord_is_down(chord) && (chord->repeat || !chord_was_down(chord));
     }
     return active;
 }
@@ -1201,9 +1199,66 @@ extern u32 ric_key_event(u32 *action)
 }
 extern void ric_bind_action(u32 action, struct ric_keychord chord)
 {
-    RICO_ASSERT(action < ARRAY_COUNT(action_chords));
+    RICO_ASSERT(action < ARRAY_COUNT(action_chords) &&
+        "Action out of bounds, increase size of action_chords table");
     action_chords[action] = chord;
     action_max = MAX(action_max, action);
+}
+extern struct ric_keychord ric_action_chord(u32 action)
+{
+    RICO_ASSERT(action < ARRAY_COUNT(action_chords) &&
+        "Requesting out-of-bounds action");
+    struct ric_keychord chord = action_chords[action];
+    return chord;
+}
+extern const char *ric_key_str(u16 key)
+{
+    const char *name;
+    switch (key) {
+    case RIC_SCANCODE_ALT:
+        name = "Alt";
+        break;
+    case RIC_SCANCODE_CTRL:
+        name = "Ctrl";
+        break;
+    case RIC_SCANCODE_SHIFT:
+        name = "Shift";
+        break;
+    case RIC_SCANCODE_LMB:
+        name = "Left click";
+        break;
+    case RIC_SCANCODE_MMB:
+        name = "Scroll wheel";
+        break;
+    case RIC_SCANCODE_RMB:
+        name = "Right click";
+        break;
+    default:
+        name = SDL_GetScancodeName(key);
+    }
+    return name;
+}
+extern void ric_chord_str(struct ric_keychord *chord, char *buf, size_t len)
+{
+    size_t offset = 0;
+    if (chord)
+    {
+        for (int i = 0; i < ARRAY_COUNT(chord->keys); i++)
+        {
+            if (chord->keys[i])
+            {
+                offset += snprintf(buf + offset, len - offset, "[%s]", ric_key_str(chord->keys[i]));
+            }
+        }
+        if (chord->on_release)
+        {
+            offset += snprintf(buf + offset, len - offset, " (on release)");
+        }
+        else if (chord->repeat)
+        {
+            offset += snprintf(buf + offset, len - offset, " (repeat)");
+        }
+    }
 }
 static int engine_init()
 {
@@ -1332,7 +1387,7 @@ static int engine_init()
 
     state_handlers[RIC_ENGINE_TEXT_INPUT     ].init = &state_text_input_init;
 
-	state_handlers[RIC_ENGINE_SHUTDOWN].run = &state_engine_shutdown;
+	state_handlers[RIC_ENGINE_SHUTDOWN       ].run = &state_engine_shutdown;
 	state_handlers[RIC_ENGINE_MENU_QUIT      ].run = &state_menu_quit;
 	state_handlers[RIC_ENGINE_PLAY_EXPLORE   ].run = &state_play_explore;
 	state_handlers[RIC_ENGINE_EDIT_TRANSLATE ].run = &state_edit_translate;
