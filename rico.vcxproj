@@ -292,26 +292,30 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>$(Configuration)\$(Platform)\$(ProjectName)\</OutDir>
-    <IntDir>$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <OutDir>obj\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <IntDir>obj\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)$(PlatformArchitecture)_d</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>$(Configuration)\$(Platform)\$(ProjectName)\</OutDir>
-    <IntDir>$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <OutDir>obj\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <IntDir>obj\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)$(PlatformArchitecture)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>$(Configuration)\$(Platform)\$(ProjectName)\</OutDir>
-    <IntDir>$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <OutDir>obj\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <IntDir>obj\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)$(PlatformArchitecture)_d</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>$(Configuration)\$(Platform)\$(ProjectName)\</OutDir>
-    <IntDir>$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <OutDir>obj\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <IntDir>obj\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)$(PlatformArchitecture)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <CompileAs>CompileAsC</CompileAs>
       <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)..\dlb</AdditionalIncludeDirectories>
@@ -326,7 +330,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)..\dlb</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <CompileAs>CompileAsC</CompileAs>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
@@ -341,7 +345,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <TreatWarningAsError>false</TreatWarningAsError>
-      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <CompileAs>CompileAsC</CompileAs>
       <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)..\dlb</AdditionalIncludeDirectories>
@@ -360,6 +364,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)..\dlb</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
