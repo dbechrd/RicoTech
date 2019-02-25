@@ -760,7 +760,7 @@ extern pkid ric_load_font_file(u32 pack_id, const char *name,
     // Read font file
     char *buffer = NULL;
     u32 length;
-    err = file_contents(filename, &length, &buffer);
+    err = file_contents(filename, &buffer, &length);
     if (err) goto cleanup;
 
     // Check file signature
@@ -937,11 +937,11 @@ extern int ric_load_obj_file(u32 pack_id, const char *filename,
     long vert_tex = 0;
     long vert_norm = 0;
 
-    u32 length;
     char *buffer;
+    u32 length;
     char *tok;
 
-    err = file_contents(filename, &length, &buffer);
+    err = file_contents(filename, &buffer, &length);
     if (err) goto cleanup;
 
     char *name = NULL;

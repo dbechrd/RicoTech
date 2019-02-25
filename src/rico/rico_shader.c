@@ -6,7 +6,7 @@ static int make_shader(const GLenum type, const char *filename, GLuint *_shader)
     GLuint shader;
     GLint status;
 
-    err = file_contents(filename, &len, &source);
+    err = file_contents(filename, &source, &len);
     if (err) goto cleanup;
     RICO_ASSERT(len <= (u32)INT_MAX);
 

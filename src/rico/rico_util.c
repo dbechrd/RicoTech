@@ -16,7 +16,7 @@ static void string_truncate(char *buf, int buf_count, int length)
         *buf_end = '.';
     }
 }
-static int file_contents(const char *filename, u32 *_length, char **_buffer)
+static int file_contents(const char *filename, char **_buffer, u32 *_length)
 {
     FILE *fs = fopen(filename, "rb");
     if (!fs) {

@@ -20,8 +20,8 @@ extern enum ric_audio_state ric_audio_source_state(struct ric_audio_source
                                                    *source);
 extern void ric_audio_buffer_load_file(struct ric_audio_buffer *buffer,
                                        const char *filename);
-extern void ric_audio_buffer_load(struct ric_audio_buffer *buffer, u32 len,
-                                  char *data);
+extern void ric_audio_buffer_load(struct ric_audio_buffer *buffer, char *data,
+                                  u32 len);
 extern void ric_audio_buffer_free(struct ric_audio_buffer *buffer);
 
 #endif

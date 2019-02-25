@@ -694,7 +694,7 @@ void game_toolbar_init()
 void toolbar_button_click(const struct ric_ui_event *e)
 {
     if ((u32)e->element->metadata == TOOLBAR_CURSOR &&
-        e->event_type == RIC_UI_EVENT_LMB_CLICK)
+        e->event_type == RIC_UI_EVENT_LMB_UP)
     {
         ric_audio_source_play(&audio_sources[AUDIO_BUTTON]);
     }
@@ -808,9 +808,7 @@ void debug_render_ui_stack()
     struct dlb_string progress_tip_str = { 0 };
     char progress_tip_buf[64] = { 0 };
     progress_tip_str.s = progress_tip_buf;
-    progress_tip_str.len = 1 +
-        snprintf(progress_tip_buf, sizeof(progress_tip_buf) - 1,
-                 "%.f%%", progress->percent);
+    progress_tip_str.len = 1 + snprintf(CSTR(progress_tip_buf), "%.f%%", progress->percent);
     struct ric_heiro_string *progress_tip_heiro = 0;
     ric_heiro_build(&progress_tip_heiro, 0, &progress_tip_str, 0);
 
@@ -834,18 +832,26 @@ void debug_render_ui_stack()
     ric_heiro_free(progress_tip_heiro);
 }
 
-#define LIGHTS_X 12
-#define LIGHT_STATES 2
-static u32 lights_board[LIGHTS_X][LIGHTS_X];
+#define LIGHTS_X 4
+#define LIGHT_STATES 4
+static u32 lights_board[LIGHTS_X * LIGHTS_X];
 static struct vec4 colors[LIGHT_STATES][2];
 
 void lights_init()
 {
     colors[0][0] = COLOR_GRAY_3;
     colors[0][1] = COLOR_GRAY_2;
-
     colors[1][0] = COLOR_ORANGE_HIGHLIGHT;
     colors[1][1] = COLOR_ORANGE;
+    colors[2][0] = COLOR_DARK_GREEN_HIGHLIGHT;
+    colors[2][1] = COLOR_DARK_GREEN;
+    colors[3][0] = COLOR_DARK_BLUE_HIGHLIGHT;
+    colors[3][1] = COLOR_DARK_BLUE;
+}
+
+void lights_button_update(u32 i)
+{
+    lights_board[i] = (lights_board[i] + 1) % LIGHT_STATES;
 }
 
 void lights_button_click(const struct ric_ui_event *e)
@@ -853,17 +859,28 @@ void lights_button_click(const struct ric_ui_event *e)
     u32 i = (u32)e->element->metadata;
     if (e->event_type == RIC_UI_EVENT_LMB_CLICK)
     {
-        //e->element->color = COLOR_ORANGE;
         ric_audio_source_play(&audio_sources[AUDIO_BUTTON]);
-        lights_board[i % LIGHTS_X][i / LIGHTS_X]++;
-        lights_board[i % LIGHTS_X][i / LIGHTS_X] %= LIGHT_STATES;
+        lights_button_update(i);
+
+        // LEFT
+        if (i % LIGHTS_X != 0)
+            lights_button_update(i - 1);
+        // UP
+        if (i / LIGHTS_X > 0)
+            lights_button_update(i - LIGHTS_X);
+        // RIGHT
+        if (i % LIGHTS_X < LIGHTS_X - 1)
+            lights_button_update(i + 1);
+        // DOWN
+        if (i / LIGHTS_X < LIGHTS_X - 1)
+            lights_button_update(i + LIGHTS_X);
     }
 }
 
 void game_render_ui_lights()
 {
     struct ric_ui_hud *lights_hud;
-    struct ric_ui_button *lights_buttons[LIGHTS_X * LIGHTS_X];
+    struct ric_ui_button *lights_buttons[ARRAY_COUNT(lights_board)];
 
     s32 button_w = 32;
     s32 pad = 2;
@@ -875,7 +892,7 @@ void game_render_ui_lights()
 
     for (int i = 0; i < ARRAY_COUNT(lights_buttons); ++i)
     {
-        u32 light_state = lights_board[i % LIGHTS_X][i / LIGHTS_X];
+        u32 light_state = lights_board[i];
 
         lights_buttons[i] = ric_ui_button(lights_hud);
         struct ric_ui_button *button = lights_buttons[i];
@@ -885,7 +902,7 @@ void game_render_ui_lights()
         button->color[RIC_UI_STATE_HOVERED] = colors[light_state][0];
         button->color[RIC_UI_STATE_DEFAULT] = colors[light_state][1];
         button->element.metadata = (void *)i;
-        button->sprite = &toolbar_sheet.sprites[15];
+        button->sprite = &toolbar_sheet.sprites[0];
         button->element.event = lights_button_click;
     }
 
@@ -913,7 +930,7 @@ void render_editor_ui()
     rico_ui_reset();
 
     game_render_ui_toolbar();
-    //game_render_ui_lights();
+    game_render_ui_lights();
     debug_render_ui_stack();
     debug_render_cursor();
 }
@@ -1335,7 +1352,7 @@ int main(int argc, char **argv)
                         object_interact();
                         break;
                     case CHET_ACTION_TEST_SOUND:
-                        ric_audio_source_play(&audio_sources[AUDIO_BUTTON]);
+                        play_sound(AUDIO_BUTTON, false);
                         debug_perc += 1.0f;
                         break;
                     default:

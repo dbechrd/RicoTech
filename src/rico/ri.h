@@ -570,7 +570,7 @@ static void ui_draw_element(struct ric_ui_element *element, s32 x, s32 y);
 //                   PFNGLGETSHADERINFOLOGPROC glGet__InfoLog);
 
 static void string_truncate(char *buf, int buf_count, int length);
-static int file_contents(const char *filename, u32 *_length, char **_buffer);
+static int file_contents(const char *filename, char **_buffer, u32 *_length);
 
 static inline int str_starts_with(const char *str, const char *prefix)
 {

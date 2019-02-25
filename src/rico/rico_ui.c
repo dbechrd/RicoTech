@@ -37,7 +37,6 @@ static inline void *ui_stack_push(u32 bytes)
 }
 static void *ui_push_element(enum ric_ui_type type, struct ric_ui_hud *parent)
 {
-#if 1
     size_t bytes = ric_ui_size[type];
 
     struct ric_ui_head *ui = ui_stack_push(bytes);
@@ -57,27 +56,6 @@ static void *ui_push_element(enum ric_ui_type type, struct ric_ui_hud *parent)
     }
 
     return ui;
-#else
-    struct ric_ui_element *element = ui_stack_push(bytes);
-    element->type = type;
-    element->parent = parent;
-
-    if (parent)
-    {
-        if (!element->parent->first_child)
-        {
-            element->parent->first_child = element;
-        }
-        else
-        {
-            element->parent->last_child->next = element;
-            element->prev = element->parent->last_child;
-        }
-        element->parent->last_child = element;
-    }
-
-    return element;
-#endif
 }
 
 extern struct ric_ui_hud *ric_ui_hud()

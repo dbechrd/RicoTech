@@ -96,12 +96,12 @@ extern void ric_audio_source_free(struct ric_audio_source *source)
     alDeleteSources(1, &source->al_source_id);
 }
 extern void ric_audio_buffer_load_file(struct ric_audio_buffer *buffer,
-                                        const char *filename)
+                                       const char *filename)
 {
-    u32 len;
     char *data;
-    file_contents(filename, &len, &data);
-    ric_audio_buffer_load(buffer, len, data);
+    u32 len;
+    file_contents(filename, &data, &len);
+    ric_audio_buffer_load(buffer, data, len);
     free(data);
 }
 #if 0
@@ -156,8 +156,8 @@ extern enum ric_audio_state ric_audio_source_state(struct ric_audio_source *sour
             return RIC_AUDIO_UNKNOWN;
     }
 }
-extern void ric_audio_buffer_load(struct ric_audio_buffer *buffer, u32 len,
-                            char *data)
+extern void ric_audio_buffer_load(struct ric_audio_buffer *buffer, char *data,
+                                  u32 len)
 {
     alGenBuffers(1, &buffer->al_buffer_id);
 
@@ -165,7 +165,7 @@ extern void ric_audio_buffer_load(struct ric_audio_buffer *buffer, u32 len,
 #if 0
     // TODO: Load from file
     const u32 AMPLITUDE = 500;
-    s16 buf[SAMPLE_RATE];
+    s16 buf[SAMPLE_RATE * 10];
 
     //const double TWO_PI = 6.28318;
     const double ring1 = 80.0 / SAMPLE_RATE; //350
@@ -173,20 +173,20 @@ extern void ric_audio_buffer_load(struct ric_audio_buffer *buffer, u32 len,
     double x1 = 0;
     double x2 = 0;
 
-    for (unsigned i = 0; i < SAMPLE_RATE; ++i)
+    for (unsigned i = 0; i < ARRAY_COUNT(buf); ++i)
     {
         buf[i] = (s16)(AMPLITUDE / 2 * (sin(x1 * M_2PI) + sin(x2 * M_2PI)));
         x1 += ring1;
         x2 += ring2;
     }
-    alBufferData(audio_buffer, AL_FORMAT_MONO16, buf, sizeof(buf), SAMPLE_RATE);
+    alBufferData(buffer->al_buffer_id, AL_FORMAT_MONO16, buf, sizeof(buf), SAMPLE_RATE);
 #else
     // TODO: Allow caller to specify format and sample rate
     alBufferData(buffer->al_buffer_id, AL_FORMAT_MONO16, data, len, SAMPLE_RATE);
 #endif
 }
 extern void ric_audio_source_buffer(struct ric_audio_source *source,
-                              struct ric_audio_buffer *buffer)
+                                    struct ric_audio_buffer *buffer)
 {
     //alSourceQueueBuffers(audio_source, 1, &audio_buffer);
     alSourcei(source->al_source_id, AL_BUFFER, buffer->al_buffer_id);
