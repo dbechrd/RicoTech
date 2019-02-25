@@ -28,6 +28,8 @@ static struct game_panel panel_1;
 
 static struct ric_audio_buffer audio_buffers[AUDIO_COUNT];
 static struct ric_audio_source audio_sources[AUDIO_COUNT];
+void play_sound(enum audio_type type);
+void loop_sound(enum audio_type type);
 
 #define TOOLBAR_ICON(f) \
     f(TOOLBAR_CURSOR,     "Cursor")            \
@@ -854,12 +856,13 @@ void lights_button_update(u32 i)
     lights_board[i] = (lights_board[i] + 1) % LIGHT_STATES;
 }
 
-void lights_button_click(const struct ric_ui_event *e)
+void lights_button_event(const struct ric_ui_event *e)
 {
     u32 i = (u32)e->element->metadata;
     if (e->event_type == RIC_UI_EVENT_LMB_CLICK)
     {
         ric_audio_source_play(&audio_sources[AUDIO_BUTTON]);
+        play_sound(AUDIO_BUTTON);
         lights_button_update(i);
 
         // LEFT
@@ -874,6 +877,20 @@ void lights_button_click(const struct ric_ui_event *e)
         // DOWN
         if (i / LIGHTS_X < LIGHTS_X - 1)
             lights_button_update(i + LIGHTS_X);
+
+        bool victory = true;
+        for (u32 i = 0; i < ARRAY_COUNT(lights_board); i++)
+        {
+            if (lights_board[i])
+            {
+                victory = false;
+                break;
+            }
+        }
+        if (victory)
+        {
+            play_sound(AUDIO_VICTORY);
+        }
     }
 }
 
@@ -882,7 +899,7 @@ void game_render_ui_lights()
     struct ric_ui_hud *lights_hud;
     struct ric_ui_button *lights_buttons[ARRAY_COUNT(lights_board)];
 
-    s32 button_w = 32;
+    s32 button_w = 128;
     s32 pad = 2;
     s32 margin = 2;
 
@@ -902,8 +919,8 @@ void game_render_ui_lights()
         button->color[RIC_UI_STATE_HOVERED] = colors[light_state][0];
         button->color[RIC_UI_STATE_DEFAULT] = colors[light_state][1];
         button->element.metadata = (void *)i;
-        button->sprite = &toolbar_sheet.sprites[0];
-        button->element.event = lights_button_click;
+        button->sprite = &toolbar_sheet.sprites[TOOLBAR_NEW];
+        button->element.event = lights_button_event;
     }
 
     s32 min_x = (s32)(pad + LIGHTS_X * (button_w + margin));
@@ -1240,23 +1257,22 @@ void debug_render_text_input()
     ric_heiro_free(string);
 }
 
-void load_sound(enum audio_type type, const char *filename)
+void load_sound(enum audio_type type, const char *filename, float pitch, float gain)
 {
     ric_audio_buffer_load_file(&audio_buffers[type], filename);
+    audio_sources[type].pitch = pitch;
+    audio_sources[type].gain = gain;
     ric_audio_source_init(&audio_sources[type]);
     ric_audio_source_buffer(&audio_sources[type], &audio_buffers[type]);
 }
 
-void play_sound(enum audio_type type, bool loop)
+void play_sound(enum audio_type type)
 {
-    if (loop)
-    {
-        ric_audio_source_play_loop(&audio_sources[type]);
-    }
-    else
-    {
-        ric_audio_source_play(&audio_sources[type]);
-    }
+    ric_audio_source_play(&audio_sources[type]);
+}
+void loop_sound(enum audio_type type)
+{
+    ric_audio_source_play_loop(&audio_sources[type]);
 }
 
 void game_setup()
@@ -1275,14 +1291,13 @@ void game_setup()
         printf("Action: %d  Chord: %s\n", i, chord_str);
     }
 
-    load_sound(AUDIO_WELCOME, "audio/welcome.ric");
-    load_sound(AUDIO_THUNDER, "audio/thunder_storm.ric");
-    load_sound(AUDIO_BUTTON, "audio/bloop2.ric");
-    load_sound(AUDIO_VICTORY, "audio/victory.ric");
+    load_sound(AUDIO_WELCOME, "audio/welcome.ric", 1.0f, 0.1f);
+    load_sound(AUDIO_THUNDER, "audio/thunder_storm.ric", 1.0f, 0.3f);
+    load_sound(AUDIO_BUTTON, "audio/bloop2.ric", 0.8f, 0.1f);
+    load_sound(AUDIO_VICTORY, "audio/victory.ric", 0.9f, 0.5f);
 
-    ric_audio_volume_set(0.1f);
-    play_sound(AUDIO_WELCOME, false);
-    play_sound(AUDIO_THUNDER, true);
+    play_sound(AUDIO_WELCOME);
+    loop_sound(AUDIO_THUNDER);
 
     game_toolbar_init();
     lights_init();
@@ -1352,7 +1367,7 @@ int main(int argc, char **argv)
                         object_interact();
                         break;
                     case CHET_ACTION_TEST_SOUND:
-                        play_sound(AUDIO_BUTTON, false);
+                        play_sound(AUDIO_BUTTON);
                         debug_perc += 1.0f;
                         break;
                     default:

@@ -1,7 +1,7 @@
 static ALCdevice *audio_device = 0;
 static ALCcontext *audio_context = 0;
 
-static ALfloat global_audio_volume = 0;
+static ALfloat global_audio_volume = 1.0f;
 static bool global_audio_muted = false;
 
 static void init_openal()
@@ -112,6 +112,16 @@ static void audio_upload(struct ral_audio_buffer *buffer)
 
 }
 #endif
+extern void ric_audio_source_pitch_set(struct ric_audio_source *source, float pitch)
+{
+    source->pitch = pitch;
+    alSourcef(source->al_source_id, AL_PITCH, source->pitch);
+}
+extern void ric_audio_source_gain_set(struct ric_audio_source *source, float gain)
+{
+    source->gain = gain;
+    alSourcef(source->al_source_id, AL_GAIN, source->gain);
+}
 extern void ric_audio_source_play(struct ric_audio_source *source)
 {
     source->loop = false;

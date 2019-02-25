@@ -11,6 +11,10 @@ extern void ric_audio_source_init(struct ric_audio_source *source);
 extern void ric_audio_source_free(struct ric_audio_source *source);
 extern void ric_audio_source_buffer(struct ric_audio_source *source,
                                     struct ric_audio_buffer *buffer);
+extern void ric_audio_source_pitch_set(struct ric_audio_source *source,
+                                       float pitch);
+extern void ric_audio_source_gain_set(struct ric_audio_source *source,
+                                      float gain);
 extern void ric_audio_source_play(struct ric_audio_source *source);
 extern void ric_audio_source_play_loop(struct ric_audio_source *source);
 extern void ric_audio_source_pause(struct ric_audio_source *source);
