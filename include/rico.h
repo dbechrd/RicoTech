@@ -19,6 +19,7 @@
 #include "dlb_string.h"
 #include "dlb_hash.h"
 #include "dlb_heap.h"
+#include "dlb_rand.h"
 
 #include "rico_types.h"
 #include "rico_error.h"

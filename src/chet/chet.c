@@ -44,7 +44,8 @@ void loop_sound(enum audio_type type);
     f(TOOLBAR_UNDO,       "Undo")              \
     f(TOOLBAR_REDO,       "Redo")              \
     f(TOOLBAR_SAVE,       "Save pack")         \
-    f(TOOLBAR_EXIT,       "Exit")
+    f(TOOLBAR_EXIT,       "Exit")              \
+    f(TOOLBAR_NONE,       "")
 
 enum toolbar_icon
 {
@@ -656,8 +657,8 @@ void game_toolbar_init()
 {
     u32 sprite_count = ARRAY_COUNT(toolbar_sprites);
 
-    toolbar_sheet.tex_id = ric_load_texture_file(RIC_PACK_ID_TRANSIENT, "toolbar",
-                                                  "texture/toolbar.tga");
+    toolbar_sheet.tex_id = ric_load_texture_file(
+        RIC_PACK_ID_TRANSIENT, "toolbar", "texture/toolbar.tga");
     toolbar_sheet.sprites = toolbar_sprites;
     toolbar_sheet.sprite_count = sprite_count;
 
@@ -834,8 +835,8 @@ void debug_render_ui_stack()
     ric_heiro_free(progress_tip_heiro);
 }
 
-#define LIGHTS_X 4
-#define LIGHT_STATES 4
+#define LIGHTS_X 5
+#define LIGHT_STATES 2
 static u32 lights_board[LIGHTS_X * LIGHTS_X];
 static struct vec4 colors[LIGHT_STATES][2];
 
@@ -843,16 +844,30 @@ void lights_init()
 {
     colors[0][0] = COLOR_GRAY_3;
     colors[0][1] = COLOR_GRAY_2;
-    colors[1][0] = COLOR_ORANGE_HIGHLIGHT;
-    colors[1][1] = COLOR_ORANGE;
-    colors[2][0] = COLOR_DARK_GREEN_HIGHLIGHT;
-    colors[2][1] = COLOR_DARK_GREEN;
-    colors[3][0] = COLOR_DARK_BLUE_HIGHLIGHT;
-    colors[3][1] = COLOR_DARK_BLUE;
+    colors[1][0] = COLOR_DARK_RED_HIGHLIGHT;
+    colors[1][1] = COLOR_RED;
+    //colors[2][0] = COLOR_DARK_GREEN_HIGHLIGHT;
+    //colors[2][1] = COLOR_DARK_GREEN;
+    //colors[3][0] = COLOR_DARK_BLUE_HIGHLIGHT;
+    //colors[3][1] = COLOR_DARK_BLUE;
+
+    for (int i = 0; i < LIGHTS_X; i++)
+    {
+        for (int j = 0; j < LIGHTS_X; j++)
+        {
+            lights_board[i * LIGHTS_X + j] = dlb_rand_u32() % 2 == 0;
+        }
+    }
 }
 
 void lights_button_update(u32 i)
 {
+    // TODO: Track score
+    // --------------------------------------
+    // | Time Spent: 14 minutes, 12 seconds |
+    // | Buttons Pressed: 12                |
+    // | Score: 130                         |
+    // --------------------------------------
     lights_board[i] = (lights_board[i] + 1) % LIGHT_STATES;
 }
 
@@ -899,9 +914,9 @@ void game_render_ui_lights()
     struct ric_ui_hud *lights_hud;
     struct ric_ui_button *lights_buttons[ARRAY_COUNT(lights_board)];
 
-    s32 button_w = 128;
-    s32 pad = 2;
-    s32 margin = 2;
+    s32 button_w = 64;
+    s32 pad = 8;
+    s32 margin = 8;
 
     lights_hud = ric_ui_hud();
     lights_hud->element.padding = PAD(pad, pad, 0, 0);
@@ -919,7 +934,7 @@ void game_render_ui_lights()
         button->color[RIC_UI_STATE_HOVERED] = colors[light_state][0];
         button->color[RIC_UI_STATE_DEFAULT] = colors[light_state][1];
         button->element.metadata = (void *)i;
-        button->sprite = &toolbar_sheet.sprites[TOOLBAR_NEW];
+        button->sprite = &toolbar_sheet.sprites[TOOLBAR_NONE];
         button->element.event = lights_button_event;
     }
 

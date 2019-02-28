@@ -15,6 +15,8 @@
 #include "dlb_hash.h"
 #define DLB_HEAP_IMPLEMENTATION
 #include "dlb_heap.h"
+#define DLB_RAND_IMPLEMENTATION
+#include "dlb_rand.h"
 
 #include "rico_types.c"
 #include "rico_error.c"
@@ -57,6 +59,7 @@
 #include "misc/stb_image.h"
 
 #include <stdlib.h>
+#include "time.h"
 
 static SDL_Window *window = 0;
 static SDL_GLContext gl_context = 0;
@@ -240,6 +243,7 @@ int ric_init()
     printf("------------------------------------------------------------\n");
     printf("[MAIN][init] Initializing third party\n");
     printf("------------------------------------------------------------\n");
+    dlb_rand_seed((u32)time(0));
     size_t cacheSize = CacheLineSize();
     printf("Cache line min_size: %d bytes\n", cacheSize);
     init_stb();
