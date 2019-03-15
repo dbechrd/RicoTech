@@ -378,7 +378,7 @@ static void object_render_all(r64 alpha, struct ric_camera *camera)
 
             struct ric_object *obj = pack_read(global_packs[i], index);
 
-            if (ric_state_is_edit())
+            if (ric_state_is_edit(ric_state()))
             {
                 struct vec4 color = (obj->selected)
                     ? COLOR_RED

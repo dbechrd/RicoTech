@@ -9,6 +9,8 @@
 // Editor
 ========================================
 
+- Render UI when 3D object is clicked
+
 Objects
 -------
 - Place lights

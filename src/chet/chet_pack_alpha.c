@@ -39,6 +39,7 @@ void pack_build_alpha(struct pack_info **pack_table, const char *filename)
     pkid mesh_door_id;
     pkid mesh_panel_id;
     pkid mesh_button_id;
+    // TODO: Associate shader program with material, not mesh (how do others handle vertex layouts?)
     ric_load_obj_file(entry->id, "mesh/alpha_terrain_001.obj", &mesh_terrain_id, PROG_PBR);
     ric_load_obj_file(entry->id, "mesh/alpha_door_001.obj", &mesh_door_id, PROG_PBR);
     ric_load_obj_file(entry->id, "mesh/alpha_game_panel.obj", &mesh_panel_id, PROG_PBR);

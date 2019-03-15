@@ -45,12 +45,12 @@ void loop_sound(enum audio_type type);
     f(TOOLBAR_REDO,       "Redo")              \
     f(TOOLBAR_SAVE,       "Save pack")         \
     f(TOOLBAR_EXIT,       "Exit")              \
+    f(TOOLBAR_COUNT,      "")                  \
     f(TOOLBAR_NONE,       "")
 
 enum toolbar_icon
 {
     TOOLBAR_ICON(ENUM)
-    TOOLBAR_COUNT
 };
 //static const char *toolbar_icon_string[] = { TOOLBAR_ICON(ENUM_STRING) };
 static const char *toolbar_icon_values[] = { TOOLBAR_ICON(ENUM_META) };
@@ -779,7 +779,6 @@ void game_render_ui_toolbar()
     }
 }
 
-static r32 debug_perc = 0.0f;
 void debug_render_ui_stack()
 {
     const u32 bar_pad = 2;
@@ -836,7 +835,7 @@ void debug_render_ui_stack()
 }
 
 #define LIGHTS_X 5
-#define LIGHT_STATES 2
+#define LIGHT_STATES 4
 static u32 lights_board[LIGHTS_X * LIGHTS_X];
 static struct vec4 colors[LIGHT_STATES][2];
 
@@ -846,10 +845,10 @@ void lights_init()
     colors[0][1] = COLOR_GRAY_2;
     colors[1][0] = COLOR_DARK_RED_HIGHLIGHT;
     colors[1][1] = COLOR_RED;
-    //colors[2][0] = COLOR_DARK_GREEN_HIGHLIGHT;
-    //colors[2][1] = COLOR_DARK_GREEN;
-    //colors[3][0] = COLOR_DARK_BLUE_HIGHLIGHT;
-    //colors[3][1] = COLOR_DARK_BLUE;
+    colors[2][0] = COLOR_DARK_GREEN_HIGHLIGHT;
+    colors[2][1] = COLOR_DARK_GREEN;
+    colors[3][0] = COLOR_DARK_BLUE_HIGHLIGHT;
+    colors[3][1] = COLOR_DARK_BLUE;
 
     for (int i = 0; i < LIGHTS_X; i++)
     {
@@ -943,16 +942,16 @@ void game_render_ui_lights()
     if (ric_ui_layout(&lights_hud->element, min_x, min_y, min_x, min_y))
     {
         s32 start_x = (SCREEN_WIDTH / 2) - (lights_hud->element.size.w / 2);
-        ric_ui_draw(&lights_hud->element, start_x, 100);
+        ric_ui_draw(&lights_hud->element, start_x, 150);
     }
 }
 
 void debug_render_cursor()
 {
     //struct rect cursor_rect = { mouse_x - 16, mouse_y - 16, 32, 32 };
-    //struct rect cursor_rect = { mouse_x, mouse_y, 32, 32 };
-    //ric_prim_draw_rect_tex(&cursor_rect, &COLOR_TRANSPARENT, tex_toolbar);
-    //ric_prim_draw_rect(&RECT(mouse_x - 1, mouse_y - 1, 1, 1), &COLOR_RED);
+    struct rect cursor_rect = { mouse_x, mouse_y, 32, 32 };
+    ric_prim_draw_sprite(&cursor_rect, &toolbar_sprites[TOOLBAR_CURSOR], &COLOR_TRANSPARENT);
+    //ric_prim_draw_rect(&RECT(mouse_x - 2, mouse_y - 2, 2, 2), &COLOR_RED);
 }
 
 void render_editor_ui()
@@ -962,9 +961,9 @@ void render_editor_ui()
     rico_ui_reset();
 
     game_render_ui_toolbar();
-    game_render_ui_lights();
+    //game_render_ui_lights();
     debug_render_ui_stack();
-    debug_render_cursor();
+    //debug_render_cursor();
 }
 
 #if RICO_DEBUG
@@ -1383,7 +1382,6 @@ int main(int argc, char **argv)
                         break;
                     case CHET_ACTION_TEST_SOUND:
                         play_sound(AUDIO_BUTTON);
-                        debug_perc += 1.0f;
                         break;
                     default:
                         break;
@@ -1478,9 +1476,9 @@ int main(int argc, char **argv)
         //    }
         //}
 
-        if (ric_state_is_edit())
+        if (ric_state_is_edit(ric_state()))
         {
-            debug_render_colliders();
+            //debug_render_colliders();
         }
         //if (rayviz_sphere.r > 0.0f)
         //{
@@ -1488,12 +1486,12 @@ int main(int argc, char **argv)
         //}
 
         // Render overlays
-        if (ric_state_is_edit())
+        if (ric_state_is_edit(ric_state()))
         {
             render_editor_ui();
             ric_render_editor();
         }
-        else if (ric_state_is_menu())
+        else if (ric_state_is_menu(ric_state()))
         {
             ric_render_editor();
         }

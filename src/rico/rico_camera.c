@@ -259,18 +259,11 @@ static void camera_player_update(struct ric_camera *camera, s32 dx, s32 dy,
 static void camera_render(struct ric_camera *camera)
 {
 #if 0
-    struct vec3 x = VEC3_RIGHT;
-    struct vec3 y = VEC3_UP;
-    v3_mul_quat(v3_scalef(&x, 0.01f / QUAT_SCALE_HACK), &camera->view);
-    v3_mul_quat(v3_scalef(&y, 0.01f / QUAT_SCALE_HACK), &camera->view);
-    v3_add(&x, &camera->pos);
-    v3_add(&y, &camera->pos);
-
-    ric_prim_draw_line(&camera->pos, &x, &COLOR_RED);
-    ric_prim_draw_line(&camera->pos, &y, &COLOR_GREEN);
-#else
     ric_prim_draw_line2d(0.0f, 0.0f, SCREEN_W(10), 0.0f, &COLOR_RED);
     ric_prim_draw_line2d(0.0f, 0.0f, 0.0f, SCREEN_H(-10), &COLOR_GREEN);
+#else
+    ric_prim_draw_line2d(SCREEN_W(-4), 0.0f, SCREEN_W(4), 0.0f, &COLOR_TRANSLUCENT);
+    ric_prim_draw_line2d(0.0f, SCREEN_H(4), 0.0f, SCREEN_H(-4), &COLOR_TRANSLUCENT);
 #endif
 }
 static void camera_fwd_ray(struct ric_camera *camera, struct ray *ray)

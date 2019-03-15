@@ -185,12 +185,12 @@ extern enum ric_state ric_state()
 {
     return state;
 }
-extern bool ric_state_is_menu()
+extern bool ric_state_is_menu(enum ric_state state)
 {
     return (state == RIC_ENGINE_MENU_QUIT ||
             state == RIC_ENGINE_TEXT_INPUT);
 }
-extern bool ric_state_is_edit()
+extern bool ric_state_is_edit(enum ric_state state)
 {
     return (state == RIC_ENGINE_EDIT_TRANSLATE ||
             state == RIC_ENGINE_EDIT_ROTATE ||
@@ -342,7 +342,7 @@ extern int ric_update()
 
     // TODO: Handle mouse movements in the state callbacks. Camera movement
     //       is not the correct response to mouse movement in all states.
-    if (mouse_lock && !ric_state_is_menu())
+    if (mouse_lock && !ric_state_is_menu(state))
     {
         struct vec3 camera_acc = player_acc;
         if (player_sprint) v3_scalef(&camera_acc, CAM_SPRINT_MULTIPLIER);
@@ -378,9 +378,7 @@ extern void ric_frame_swap()
     platform_window_swap();
 
     // Clear previous frame
-    //glClearColor(0.46f, 0.70f, 1.0f, 1.0f);
-    //glClearDepth(0.0f);
-    glClearColor(0.1f, 0.1f, 0.2f, 1.0f);
+    glClearColor(0.46f, 0.7f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 #if RICO_DEBUG
@@ -561,11 +559,17 @@ static int state_play_explore()
 
 static int shared_edit_events()
 {
-    RICO_ASSERT(ric_state_is_edit());
+    RICO_ASSERT(ric_state_is_edit(state));
 
     enum ric_error err = RIC_SUCCESS;
 
     bool cursor_moved = false;
+
+    if (!ric_state_is_edit(state_prev))
+    {
+        edit_pack_next();
+        edit_aabb_reset_all();
+    }
 
     // Raycast object selection
     if (action_active(RIC_ACTION_EDIT_MOUSE_PICK_START))
@@ -1050,7 +1054,7 @@ static int state_edit_cleanup()
 {
     enum ric_error err = RIC_SUCCESS;
 
-    if (ric_state_is_edit())
+    if (ric_state_is_edit(state))
     {
         string_free_slot(RIC_STRING_SLOT_SELECTED_OBJ);
     }
