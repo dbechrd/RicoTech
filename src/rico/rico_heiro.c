@@ -12,7 +12,7 @@ static struct rect glyph_max_extents;
 // TODO: Use hash table instead
 static struct ric_heiro_glyph glyphs[(HEIRO_CODEPOINT_LAST + 1) -
                                       HEIRO_CODEPOINT_FIRST];
-//static struct dlb_hash glyphs;
+//static dlb_hash glyphs;
 
 #define FT_TRY(expr, code) \
     ft_err = (expr); \

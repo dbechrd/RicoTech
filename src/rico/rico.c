@@ -64,6 +64,21 @@
 static SDL_Window *window = 0;
 static SDL_GLContext gl_context = 0;
 
+#if _DEBUG
+DLB_ASSERT_HANDLER(handle_assert)
+{
+    fprintf(stdout,
+        "\n---[DLB_ASSERT_HANDLER]---------------------------------------------------------\n"
+        "Source file: %s:%d\n\n"
+        "%s\n"
+        "--------------------------------------------------------------------------------\n",
+        filename, line, expr);
+    UNUSED(getchar());
+    exit(-1);
+}
+dlb_assert_handler_def *dlb_assert_handler = handle_assert;
+#endif
+
 static inline void init_stb();
 static inline void init_murmurhash3();
 static int sdl_gl_attrib(SDL_GLattr attr, int value);

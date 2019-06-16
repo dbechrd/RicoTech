@@ -140,10 +140,10 @@ extern struct program_shadow_cubemap *global_prog_shadow_cubemap;
 extern struct program_primitive *global_prog_primitive;
 extern struct program_text *global_prog_text;
 
-extern struct dlb_hash global_fonts;
-extern struct dlb_hash global_materials;
-extern struct dlb_hash global_meshes;
-extern struct dlb_hash global_textures;
+extern dlb_hash global_fonts;
+extern dlb_hash global_materials;
+extern dlb_hash global_meshes;
+extern dlb_hash global_textures;
 
 #define PACK_PUSH_CLEAR_MEM
 #define MAX_PACKS 32
