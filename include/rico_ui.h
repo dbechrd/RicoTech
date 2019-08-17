@@ -1,6 +1,7 @@
 #ifndef RIC_UI_STATE_H
 #define RIC_UI_STATE_H
 
+extern void rico_ui_reset();
 extern struct ric_ui_hud *ric_ui_hud();
 extern struct ric_ui_head *ric_ui_line_break(struct ric_ui_hud *parent);
 extern struct ric_ui_button *ric_ui_button(struct ric_ui_hud *parent);

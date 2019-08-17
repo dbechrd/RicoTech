@@ -1,9 +1,12 @@
 ﻿#include "chet.h"
-#include "../rico/rico.c"
+#include "../rico/ri.h"
 #include "chet_pack.c"
 #include "chet_pack_default.c"
 #include "chet_pack_alpha.c"
 #include "chet_pack_clash.c"
+
+#define DLB_MATH_IMPLEMENTATION
+#include "dlb_math.h"
 
 enum actions
 {
@@ -21,6 +24,9 @@ enum audio_type
     AUDIO_VICTORY,
     AUDIO_COUNT
 };
+
+static u32 mouse_x;
+static u32 mouse_y;
 
 //-------------------------------------------------------------------
 
@@ -91,7 +97,6 @@ int pack_load_all()
 
 void timmy_state_hacks(bool lights_on, bool audio_on)
 {
-    global_lighting_enabled = lights_on;
     if (audio_on)
     {
         ric_audio_unmute();
@@ -365,10 +370,10 @@ void clash_detect()
 
                     bool collide_aabb = ric_aabb_intersects(
                         &a_obj->aabb_world, &b_obj->aabb_world);
-
+#if 0
                     bool collide_obb = collide_obb_obb(
                         &a_obj->obb, &b_obj->obb, 0);
-
+#endif
                     if (collide_sphere)
                     {
                         a_obj->collide_sphere = true;
@@ -379,12 +384,13 @@ void clash_detect()
                         a_obj->collide_aabb = true;
                         b_obj->collide_aabb = true;
                     }
+#if 0
                     if (collide_obb)
                     {
                         a_obj->collide_obb = true;
                         b_obj->collide_obb = true;
                     }
-
+#endif
                     b_id = ric_pack_next_type(b_id, RIC_ASSET_OBJECT);
                 }
             }
@@ -779,6 +785,7 @@ void game_render_ui_toolbar()
     }
 }
 
+#if 0
 void debug_render_ui_stack()
 {
     const u32 bar_pad = 2;
@@ -833,6 +840,7 @@ void debug_render_ui_stack()
     ric_heiro_free(label_heiro);
     ric_heiro_free(progress_tip_heiro);
 }
+#endif
 
 #define LIGHTS_X 5
 #define LIGHT_STATES 4
@@ -962,7 +970,7 @@ void render_editor_ui()
 
     game_render_ui_toolbar();
     //game_render_ui_lights();
-    debug_render_ui_stack();
+    //debug_render_ui_stack();
     //debug_render_cursor();
 }
 
@@ -980,7 +988,7 @@ struct text_input_state
     u32 cursor;
     u32 buffer_len;
     IF_DEBUG(u8 memchk1;)
-    char buffer[HEIRO_MAX_LEN];
+    char buffer[1024];
     IF_DEBUG(u8 memchk2;)
 };
 struct text_input_state text_input;
@@ -1295,6 +1303,7 @@ void game_setup()
     ric_bind_action(CHET_ACTION_TYPE_NEXT, RIC_CHORD1(SDL_SCANCODE_X));
     ric_bind_action(CHET_ACTION_TYPE_PREV, RIC_CHORD1(SDL_SCANCODE_C));
 
+#if 0
     printf("----------------------------------------------------------\n");
     printf("[chet][ dbg] Key bindings\n");
     printf("----------------------------------------------------------\n");
@@ -1304,6 +1313,7 @@ void game_setup()
         ric_chord_str(&action_chords[i], CSTR(chord_str));
         printf("Action: %d  Chord: %s\n", i, chord_str);
     }
+#endif
 
     load_sound(AUDIO_WELCOME, "audio/welcome.ric", 1.0f, 0.1f);
     load_sound(AUDIO_THUNDER, "audio/thunder_storm.ric", 1.0f, 0.3f);
@@ -1413,6 +1423,7 @@ int main(int argc, char **argv)
 
         //DEBUG_render_color_test();
 
+#if 0
         // Debug: Move sun away from origin so it doesn't render inside ground
         struct mat4 sun_xform = mat4_init_translate(&VEC3(0.0f, 10.0f, 0.0f));
 
@@ -1459,6 +1470,7 @@ int main(int argc, char **argv)
         ric_prim_draw_line_xform(&VEC3_ZERO,
                                   &global_prog_pbr->val.frag.lights[0].directional.direction,
                                   &COLOR_YELLOW, &sun_xform);
+#endif
 
         // Cleanup: Debug transform matrices
         //for (u32 y = 0; y < 6; y++)

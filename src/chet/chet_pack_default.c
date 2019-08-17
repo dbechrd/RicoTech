@@ -1,4 +1,5 @@
 #include "chet_packs.h"
+#include "SDL/SDL.h"
 
 // TODO: This entire pack could be embedded as binary data in the .exe once
 //       the contents are finalized. This would allow the engine to run even

@@ -72,7 +72,7 @@ static void mesh_upload(struct ric_mesh *mesh, GLenum hint)
 static void mesh_delete(struct ric_mesh *mesh)
 {
     struct rgl_mesh *rgl_mesh = dlb_hash_search(&global_meshes,
-        (void *)&mesh->uid.pkid, sizeof(mesh->uid.pkid));
+        (void *)&mesh->uid.pkid, sizeof(mesh->uid.pkid), 0);
     if (!rgl_mesh) return;
 
 #if RICO_DEBUG_MESH
@@ -91,14 +91,14 @@ static void mesh_delete(struct ric_mesh *mesh)
 static struct rgl_mesh *mesh_rgl(pkid pkid)
 {
     struct rgl_mesh *rgl_mesh = dlb_hash_search(&global_meshes, (void *)&pkid,
-                                                sizeof(pkid));
+                                                sizeof(pkid), 0);
     if (!rgl_mesh)
     {
         struct ric_mesh *mesh = ric_pack_lookup(pkid);
         RICO_ASSERT(mesh);
         mesh_upload(mesh, GL_STATIC_DRAW);
         rgl_mesh = dlb_hash_search(&global_meshes, (void *)&pkid,
-                                   sizeof(pkid));
+                                   sizeof(pkid), 0);
         RICO_ASSERT(rgl_mesh);
     }
     return rgl_mesh;

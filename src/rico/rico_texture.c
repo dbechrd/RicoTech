@@ -161,7 +161,7 @@ static int texture_upload(struct ric_texture *texture)
 static void texture_delete(struct ric_texture *texture)
 {
     struct rgl_texture *rgl_tex = dlb_hash_search(&global_textures,
-        (void *)&texture->uid.pkid, sizeof(texture->uid.pkid));
+        (void *)&texture->uid.pkid, sizeof(texture->uid.pkid), 0);
     if (!rgl_tex) return;
 
     glDeleteTextures(1, &rgl_tex->gl_id);
@@ -178,13 +178,14 @@ static void texture_bind(pkid pkid, GLenum texture_unit)
     RICO_ASSERT(texture_unit != GL_TEXTURE_2D);
 
     struct rgl_texture *rgl_tex =
-        dlb_hash_search(&global_textures, (void *)&pkid, sizeof(pkid));
+        dlb_hash_search(&global_textures, (void *)&pkid, sizeof(pkid), 0);
     if (!rgl_tex)
     {
         struct ric_texture *texture = ric_pack_lookup(pkid);
         RICO_ASSERT(texture);
         texture_upload(texture);
-        rgl_tex = dlb_hash_search(&global_textures, (void *)&pkid, sizeof(pkid));
+        rgl_tex = dlb_hash_search(&global_textures, (void *)&pkid, sizeof(pkid),
+            0);
     }
     RICO_ASSERT(rgl_tex);
     RICO_ASSERT(rgl_tex->gl_id);
@@ -195,11 +196,12 @@ static void texture_bind(pkid pkid, GLenum texture_unit)
 #endif
 
     glActiveTexture(texture_unit);
-    glBindTexture(rgl_tex->gl_target, rgl_tex->gl_id); 
+    glBindTexture(rgl_tex->gl_target, rgl_tex->gl_id);
 }
 static void texture_unbind(pkid pkid, GLenum texture_unit)
 {
-    struct rgl_texture *rgl_tex = dlb_hash_search(&global_textures, (void *)&pkid, sizeof(pkid));
+    struct rgl_texture *rgl_tex = dlb_hash_search(&global_textures,
+        (void *)&pkid, sizeof(pkid), 0);
     RICO_ASSERT(rgl_tex);
 
 #if RICO_DEBUG_TEXTURE

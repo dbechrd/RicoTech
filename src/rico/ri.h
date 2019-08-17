@@ -340,7 +340,6 @@ static bool collide_ray_aabb(float *_t, const struct ray *ray,
 static bool collide_ray_obb(float *_dist, const struct ray *r,
                             const struct ric_aabb *ric_aabb,
                             const struct mat4 *model_matrix);
-static bool collide_obb_obb(struct ric_obb *a, struct ric_obb *b, int *axis);
 static bool collide_obb_obb_eberly(struct ric_obb *a, struct ric_obb *b);
 
 static void edit_init();
@@ -554,7 +553,6 @@ static void texture_bind(pkid pkid, GLenum texture_unit);
 static void texture_unbind(pkid pkid, GLenum texture_unit);
 
 static void rico_ui_init();
-static void rico_ui_reset();
 static void ui_draw_element(struct ric_ui_element *element, s32 x, s32 y);
 
 //int file_contents(const char *filename, int *_length, char **_buffer);

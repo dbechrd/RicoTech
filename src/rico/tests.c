@@ -502,7 +502,7 @@ static void test_sav()
     RICO_ASSERT(sizeof(u32) == 4);
     RICO_ASSERT(sizeof(r32) == 4);
     RICO_ASSERT(sizeof(float) == 4);
-    RICO_ASSERT(sizeof(bool) == 1);
+    RICO_ASSERT(sizeof(bool) == 4);
     RICO_ASSERT(sizeof(struct vec3) == 12);
     RICO_ASSERT(sizeof(struct quat) == 16);
     RICO_ASSERT(sizeof(buf32) == 32);

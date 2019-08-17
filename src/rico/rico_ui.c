@@ -22,7 +22,7 @@ static void rico_ui_init()
     ui_stack_ptr = ui_stack;
     rico_ui_reset();
 }
-static void rico_ui_reset()
+extern void rico_ui_reset()
 {
     ui_stack_ptr = ui_stack;
     glClear(GL_DEPTH_BUFFER_BIT);
