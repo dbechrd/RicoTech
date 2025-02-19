@@ -8,5 +8,4 @@ This is MIT Licensed software. Attribution is appreciated but not required. Not 
 
 This engine is no longer in active development. It has been completely rewritten and succeeded by a new engine currently in development in a private repo. Check YouTube for some demos: https://www.youtube.com/user/dandymcgee
 
-## Screenshots
-https://www.youtube.com/watch?v=hj6kCIs1Dok&list=PLqIpHxOAboS4CUYUuuhqsB09c8bT_zDK7
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/hj6kCIs1Dok/0.jpg)](https://www.youtube.com/watch?v=hj6kCIs1Dok&list=PLqIpHxOAboS4CUYUuuhqsB09c8bT_zDK7)
